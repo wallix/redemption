@@ -67,11 +67,15 @@ public:
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
     void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
 
-    void set_pointer(uint16_t cache_idx, Pointer const& pointer, SetPointerMode mode) override
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
     {
         (void)cache_idx;
-        (void)pointer;
-        (void)mode;
+        (void)cursor;
+    }
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        (void)cache_idx;
     }
 
     QPixmap& get_pixmap() noexcept { return this->cache; }

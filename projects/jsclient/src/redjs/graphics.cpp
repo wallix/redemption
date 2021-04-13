@@ -133,7 +133,6 @@ namespace
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
-        constexpr char const* set_pointer = "setPointer";
 
         constexpr char const* frame_marker = "frameMarker";
 
@@ -664,43 +663,43 @@ void Graphics::draw(RDPSetSurfaceCommand const & /*cmd*/) { }
 
 void Graphics::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }
 
-
-void Graphics::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+namespace
 {
-    // LOG(LOG_INFO, "Graphics::Pointer %d", mode);
-
-    switch (mode) {
-    case SetPointerMode::Cached:
-        emval_call(this->callbacks, jsnames::cached_pointer, cache_idx);
-        break;
-    case SetPointerMode::New: {
+    void set_pointer(
+        emscripten::val& callbacks,
+        gdi::CachePointerIndex cache_idx,
+        const RdpPointerView & cursor)
+    {
         const redclient::RGBA8888Image image = redclient::pointer_to_rgba8888(cursor);
-        const auto hotspot = cursor.get_hotspot();
+        const auto hotspot = cursor.hotspot();
 
-        emval_call(this->callbacks, jsnames::new_pointer,
+        emval_call(callbacks, jsnames::new_pointer,
             image.data(),
             image.width,
             image.height,
-            cache_idx,
+            cache_idx.cache_index(),
             hotspot.x,
             hotspot.y
         );
-        break;
     }
-    case SetPointerMode::Insert: {
-        const redclient::RGBA8888Image image = redclient::pointer_to_rgba8888(cursor);
-        const auto hotspot = cursor.get_hotspot();
+}
 
-        emval_call(this->callbacks, jsnames::set_pointer,
-            image.data(),
-            image.width,
-            image.height,
-            hotspot.x,
-            hotspot.y
-        );
-        break;
+void Graphics::new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor)
+{
+    set_pointer(this->callbacks, cache_idx, cursor);
+}
+
+void Graphics::cached_pointer(gdi::CachePointerIndex cache_idx)
+{
+    if (cache_idx.is_predefined_pointer()) {
+        auto predefined_cursor = cache_idx.as_predefined_pointer();
+        if (!is_cached_pointers[unsigned(predefined_cursor)]) {
+            is_cached_pointers[unsigned(predefined_cursor)] = true;
+            auto& cursor = predefined_pointer_to_pointer(predefined_cursor);
+            set_pointer(this->callbacks, cache_idx, cursor);
+        }
     }
-    }
+    emval_call(this->callbacks, jsnames::cached_pointer, cache_idx.cache_index());
 }
 
 void Graphics::begin_update()

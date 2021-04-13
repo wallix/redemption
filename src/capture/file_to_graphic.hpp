@@ -70,8 +70,8 @@ private:
     StateChunk ssc;
 
     std::unique_ptr<BmpCache> bmp_cache;
-    PointerCache   ptr_cache;
     GlyphCache     gly_cache;
+    PointerCache   ptr_cache;
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size;
@@ -119,13 +119,13 @@ private:
         T * * last = arr;
     };
 
-    fixed_ptr_array<gdi::GraphicApi, 10> graphic_consumers;
-    fixed_ptr_array<gdi::CaptureApi, 10> capture_consumers;
-    fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
-    fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
-    fixed_ptr_array<gdi::ExternalCaptureApi, 10> external_event_consumers;
-    fixed_ptr_array<gdi::RelayoutApi, 10> relayout_consumers;
-    fixed_ptr_array<gdi::ResizeApi, 10> resize_consumers;
+    fixed_ptr_array<gdi::GraphicApi, 8> graphic_consumers;
+    fixed_ptr_array<gdi::CaptureApi, 8> capture_consumers;
+    fixed_ptr_array<gdi::KbdInputApi, 8> kbd_input_consumers;
+    fixed_ptr_array<gdi::CaptureProbeApi, 8> capture_probe_consumers;
+    fixed_ptr_array<gdi::ExternalCaptureApi, 8> external_event_consumers;
+    fixed_ptr_array<gdi::RelayoutApi, 8> relayout_consumers;
+    fixed_ptr_array<gdi::ResizeApi, 8> resize_consumers;
 
     bool meta_ok;
     bool timestamp_ok;
@@ -214,6 +214,11 @@ public:
     WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
     MonotonicTimePoint get_monotonic_time() const noexcept { return this->record_now; }
     RealTimePoint get_real_time() const noexcept { return this->last_real_time + (this->record_now - this->monotonic_real_time); }
+
+    PointerCache::SourcePointersView pointers_view() const noexcept
+    {
+        return this->ptr_cache.source_pointers_view();
+    }
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,

@@ -472,6 +472,11 @@ private:
             return this->get_graphics().bmp_cache;
         }
 
+        [[nodiscard]] PointerCache::SourcePointersView get_pointer_cache() const
+        {
+            return this->get_graphics().pointer_cache.source_pointers_view();
+        }
+
         [[nodiscard]] uint16_t get_bmp_cache_max_cell_size() const
         {
             return this->get_graphics().bmp_cache.get_max_cell_size();
@@ -525,7 +530,6 @@ private:
 
 private:
     GraphicsPointer orders;
-
     not_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
 
     void set_gd(gdi::GraphicApi * new_gd) {
@@ -941,15 +945,20 @@ public:
             "Front::server_relayout: done");
     }
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
-        this->gd->set_pointer(cache_idx, cursor, mode);
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        this->gd->cached_pointer(cache_idx);
+    }
+
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+    {
+        this->gd->new_pointer(cache_idx, cursor);
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
         this->orders.graphics_update_pdu().update_pointer_position(xPos, yPos);
     }
-
 
     bool has_ocr_pattern_check()
     {
@@ -1077,7 +1086,8 @@ public:
 
         DrawableParams const drawable_params = DrawableParams::delayed_drawable(
             this->client_info.screen_info.width,
-            this->client_info.screen_info.height
+            this->client_info.screen_info.height,
+            this->orders.get_pointer_cache()
         );
 
         MetaParams const meta_params {};
@@ -3484,7 +3494,8 @@ private:
                     }
 
                     this->client_info.pointer_cache_entries =
-                        std::min<int>(pointer_caps.colorPointerCacheSize, MAX_POINTER_COUNT);
+                        std::min(pointer_caps.colorPointerCacheSize,
+                                 uint16_t(PointerCache::MAX_POINTER_COUNT));
                     this->client_info.supported_new_pointer_update =
                         (pointer_caps.pointerCacheSize != 0);
                 }

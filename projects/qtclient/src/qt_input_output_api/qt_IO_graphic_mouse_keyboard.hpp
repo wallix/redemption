@@ -24,6 +24,7 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include "qt_input_output_api/graphics.hpp"
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
@@ -80,9 +81,19 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
             }
         }
 
-        void set_pointer(uint16_t /*cache_idx*/, Pointer const& pointer, SetPointerMode /*mode*/) override
+        void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
         {
-            // TODO use cache_idx and mode
+            if (!cache_idx.is_predefined_pointer()) {
+                this->pointer_cache[cache_idx.cache_index()] = cursor;
+            }
+        }
+
+        void cached_pointer(gdi::CachePointerIndex cache_idx) override
+        {
+            auto const& pointer = cache_idx.is_predefined_pointer()
+                ? predefined_pointer_to_pointer(cache_idx.as_predefined_pointer())
+                : pointer_cache[cache_idx.cache_index()];
+
             auto hotspot = pointer.get_hotspot();
             auto rgba_cursor = redclient::pointer_to_rgba8888(pointer);
             QImage cursor_image(
@@ -107,6 +118,7 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
 
     private:
         int update_counter = 0;
+        std::array<RdpPointer, gdi::CachePointerIndex::MAX_POINTER_COUNT> pointer_cache;
     };
 
     Graphics graphics;

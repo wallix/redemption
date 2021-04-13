@@ -24,11 +24,11 @@ Vnc encoder module for Cursor Pseudo Encoding
 
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/buf64k.hpp"
-#include "gdi/graphic_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "mod/vnc/encoder/pointer_loader_vnc.hpp"
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
+#include "gdi/graphic_api.hpp"
 
 
 // 7.7.2   Cursor Pseudo-encoding
@@ -79,7 +79,7 @@ struct Cursor
     uint8_t blue_shift;
     VNCVerbose verbose;
 
-    EncoderState operator()(Buf64k & buf, gdi::GraphicApi & drawable)
+    EncoderState operator()(Buf64k & buf, gdi::GraphicApi & gd)
     {
         if (this->rect.isempty()) {
             // TODO: empty Pointer: no cursor data to read. Should we set an invisible pointer ? If so we should have some flag to configure it
@@ -120,13 +120,15 @@ struct Cursor
             hexdump_d(mask);
         }
 
-        Pointer cursor = pointer_loader_vnc(
+        PointerLoaderVnc pointer_loader_vnc;
+        RdpPointerView cursor = pointer_loader_vnc.load(
             this->Bpp, this->rect.cx, this->rect.cy, this->rect.x, this->rect.y,
             data, mask,
             this->red_shift, this->red_max,
             this->green_shift, this->green_max,
             this->blue_shift, this->blue_max);
-        drawable.set_pointer(0, cursor, gdi::GraphicApi::SetPointerMode::Insert);
+        // TODO use a local cache and a local cache_idx
+        gd.new_pointer(0, cursor);
 
         return EncoderState::Exit;
     }

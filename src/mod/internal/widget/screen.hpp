@@ -40,13 +40,10 @@ public:
 
     CompositeArray composite_array;
 
-    Pointer normal_pointer;
-    Pointer edit_pointer;
-
     Font const & font;
 
-    WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier, Theme theme);
+    WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
+                 Font const & font, NotifyApi * notifier, Theme theme);
 
     ~WidgetScreen() override;
 

@@ -45,6 +45,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/png.hpp"
+#include "utils/ref.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/monotonic_time_to_real_time.hpp"
 
@@ -98,7 +99,8 @@ private:
  * starting with chunk_type, chunk_size and order_count
  *  (whatever it means, depending on chunks)
  */
-class GraphicToFile : public RDPSerializer
+class GraphicToFile
+: public RDPSerializer
 {
     enum {
         GTF_SIZE_KEYBUF_REC = 1024
@@ -130,6 +132,9 @@ class GraphicToFile : public RDPSerializer
     const bool remote_app;
     Rect rail_window_rect;
 
+    PointerCache::SourcePointersView ptr_cache;
+    std::array<bool, PointerCache::Cache::original_max_entries> ptr_cached {};
+
 public:
     GraphicToFile(MonotonicTimePoint now
                 , RealTimePoint real_now
@@ -140,12 +145,12 @@ public:
                 , Rect rail_window_rect
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
-                , PointerCache & ptr_cache
+                , PointerCache::SourcePointersView ptr_cache
                 , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , RDPSerializerVerbose verbose)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
-                   , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, true, verbose)
+                   , bmp_cache, gly_cache, 0, true, true, 32 * 1024, true, verbose)
     , compression_builder(trans, wrm_compression_algorithm)
     , trans_target(trans)
     , trans(this->compression_builder.get())
@@ -158,6 +163,7 @@ public:
     , wrm_format_version(remote_app ? 5 : (bool(this->compression_builder.get_algorithm()) ? 4 : 3))
     , remote_app(remote_app)
     , rail_window_rect(rail_window_rect)
+    , ptr_cache(ptr_cache)
     {
         if (wrm_compression_algorithm != this->compression_builder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
@@ -364,22 +370,6 @@ public:
         }
     }
 
-    void save_ptr_cache() {
-        for (int index = 0; index < MAX_POINTER_COUNT; ++index) {
-            this->pointer_cache.set_cached(index, false);
-        }
-    }
-
-    void send_caches_chunk()
-    {
-        this->save_bmp_caches();
-        this->save_glyph_caches();
-        this->save_ptr_cache();
-        if (this->order_count > 0) {
-            this->send_orders_chunk();
-        }
-    }
-
     void breakpoint()
     {
         this->flush_orders();
@@ -396,7 +386,12 @@ public:
         this->send_timestamp_chunk();
         this->send_save_state_chunk();
         this->send_image_chunk(true);
-        this->send_caches_chunk();
+        this->save_bmp_caches();
+        this->save_glyph_caches();
+        this->ptr_cached.fill(false);
+        if (this->order_count > 0) {
+            this->send_orders_chunk();
+        }
     }
 
 private:
@@ -446,28 +441,29 @@ public:
         this->stream_bitmaps.rewind();
     }
 
-protected:
-    void send_pointer(int cache_idx, const Pointer & cursor) override {
-        assert(cursor.get_native_xor_bpp() != BitsPerPixel{0});
+private:
+    void send_pointer(uint16_t cache_idx, RdpPointerView const& cursor)
+    {
+        assert(cursor.xor_bits_per_pixel() != BitsPerPixel{0});
 
-        StaticOutStream<32+Pointer::MAX_WIDTH*Pointer::MAX_HEIGHT*::nbbytes(Pointer::MAX_BPP)> payload;
+        StaticOutStream<32+RdpPointer::MAX_WIDTH*RdpPointer::MAX_HEIGHT*::nbbytes(RdpPointer::MAX_BPP)> payload;
 
-        payload.out_uint16_le(static_cast<uint16_t>(cursor.get_native_xor_bpp()));
+        payload.out_uint16_le(safe_int(cursor.xor_bits_per_pixel()));
 
         payload.out_uint16_le(cache_idx);
 
-        const auto hotspot = cursor.get_hotspot();
+        const auto hotspot = cursor.hotspot();
 
         payload.out_uint16_le(hotspot.x);
         payload.out_uint16_le(hotspot.y);
 
-        auto const dimensions = cursor.get_dimensions();
+        auto const dimensions = cursor.dimensions();
 
         payload.out_uint16_le(dimensions.width);
         payload.out_uint16_le(dimensions.height);
 
-        auto av_and_mask = cursor.get_monochrome_and_mask();
-        auto av_xor_mask = cursor.get_native_xor_mask();
+        auto av_and_mask = cursor.and_mask();
+        auto av_xor_mask = cursor.xor_mask();
 
         payload.out_uint16_le(av_and_mask.size());
         payload.out_uint16_le(av_xor_mask.size());
@@ -483,7 +479,8 @@ protected:
         this->trans.send(payload.get_produced_bytes());
     }
 
-    void cached_pointer_update(int cache_idx) override {
+    void cached_pointer_update(uint16_t cache_idx)
+    {
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index
@@ -498,6 +495,23 @@ protected:
     }
 
 public:
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        const auto idx = cache_idx.cache_index();
+        if (!ptr_cached[idx]) {
+            this->send_pointer(idx, this->ptr_cache.pointer(cache_idx));
+            ptr_cached[idx] = true;
+        }
+        this->cached_pointer_update(idx);
+    }
+
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+    {
+        (void)cache_idx;
+        (void)cursor;
+        // assume that ptr_cache is updated from the outside
+    }
+
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list)
     {
         if (this->timer < now) {
@@ -624,7 +638,6 @@ class WrmCaptureImpl :
 
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
-    PointerCache ptr_cache;
 
     OutMetaSequenceTransport out;
 
@@ -762,14 +775,20 @@ public:
         }
     }
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
-        this->graphic_to_file.set_pointer(cache_idx, cursor, mode);
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        this->graphic_to_file.cached_pointer(cache_idx);
+    }
+
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+    {
+        this->graphic_to_file.new_pointer(cache_idx, cursor);
     }
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
         gdi::ImageFrameApi & image_frame_api, ImageView const & image_view,
-        Rect rail_window_rect)
+        Rect rail_window_rect, PointerCache::SourcePointersView ptr_cache)
     : next_break(capture_params.now + wrm_params.break_interval)
     , break_interval(wrm_params.break_interval)
     , original_monotonic_to_real(capture_params.now, capture_params.real_now)
@@ -782,7 +801,6 @@ public:
         BmpCache::CacheOption(),
         BmpCache::CacheOption(),
         BmpCache::Verbose::none)
-    , ptr_cache(/*pointer_cache_entries=*/0x19)
     , out(
         wrm_params.cctx,
         wrm_params.rnd,
@@ -799,16 +817,17 @@ public:
         capture_params.now, capture_params.real_now,
         this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         rail_window_rect, this->bmp_cache, this->gly_cache,
-        this->ptr_cache, image_frame_api, wrm_params.wrm_compression_algorithm,
+        ptr_cache, image_frame_api, wrm_params.wrm_compression_algorithm,
         wrm_params.wrm_verbose)
     {}
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
-        gdi::ImageFrameApi & image_frame_api, Rect rail_window_rect)
+        gdi::ImageFrameApi & image_frame_api, Rect rail_window_rect,
+        PointerCache::SourcePointersView ptr_cache)
     : WrmCaptureImpl(
         capture_params, wrm_params, image_frame_api,
-        image_frame_api.get_image_view(), rail_window_rect)
+        image_frame_api.get_image_view(), rail_window_rect, ptr_cache)
     {}
 
     void visibility_rects_event(Rect rect)

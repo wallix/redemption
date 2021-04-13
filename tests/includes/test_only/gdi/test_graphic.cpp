@@ -68,21 +68,6 @@ void TestGraphic::resize(uint16_t w, uint16_t h)
     this->d->gd.resize(w, h);
 }
 
-void TestGraphic::trace_mouse()
-{
-    this->d->gd.trace_mouse();
-}
-
-void TestGraphic::clear_mouse()
-{
-    this->d->gd.clear_mouse();
-}
-
-void TestGraphic::set_mouse_cursor_pos(uint16_t x, uint16_t y)
-{
-    this->d->gd.set_mouse_cursor_pos(x, y);
-}
-
 WritableImageView TestGraphic::get_writable_image_view()
 {
     return gdi::get_writable_image_view(this->d->gd);

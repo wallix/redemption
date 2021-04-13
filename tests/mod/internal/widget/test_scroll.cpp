@@ -24,6 +24,7 @@
 #include "test_only/core/font.hpp"
 
 #include "mod/internal/widget/scroll.hpp"
+#include "utils/bitfu.hpp"
 
 
 struct TestScrollCtx

@@ -28,7 +28,8 @@ using namespace std::chrono_literals;
 WaitMod::WaitMod(
     WaitModVariables vars,
     EventContainer& events,
-    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+    gdi::GraphicApi & drawable,
+    FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
     bool showform, uint32_t flag

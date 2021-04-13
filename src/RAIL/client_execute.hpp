@@ -34,15 +34,22 @@ class mod_api;
 class Font;
 class InStream;
 class WindowListCaps;
-namespace CHANNELS { class ChannelDef; }
-namespace gdi { class GraphicApi; }
+namespace CHANNELS
+{
+    class ChannelDef;
+}
+namespace gdi
+{
+    class GraphicApi;
+    class CachablePointerApi;
+}
 
 enum {BORDER_WIDTH_HEIGHT = 3 };
 
 class ClientExecute : public windowing_api
 {
-          FrontAPI             & front_;
-          gdi::GraphicApi      & drawable_;
+          FrontAPI                & front_;
+          gdi::GraphicApi         & drawable_;
           mod_api              * mod_     = nullptr;
     const CHANNELS::ChannelDef * channel_ = nullptr;
     const Font                 * font_    = nullptr;
@@ -230,23 +237,23 @@ public:
             return MOUSE_BUTTON_PRESSED_NONE;
         }
 
-        static inline Pointer const& get_pointer(int zone)
+        static inline PredefinedPointer get_pointer(int zone)
         {
             switch (zone){
             case ZONE_N  :
-            case ZONE_S  : return size_NS_pointer();
+            case ZONE_S  : return PredefinedPointer::NS;
             case ZONE_E  :
-            case ZONE_W  : return size_WE_pointer();
+            case ZONE_W  : return PredefinedPointer::WE;
             case ZONE_NWN:
             case ZONE_NWW:
+            case ZONE_SES:
+            case ZONE_SEE: return PredefinedPointer::NWSE;
             case ZONE_SWW:
             case ZONE_SWS:
-            case ZONE_SES:
-            case ZONE_SEE:
             case ZONE_NEE:
-            case ZONE_NEN: return size_NESW_pointer();
+            case ZONE_NEN: return PredefinedPointer::NESW;
             }
-            return normal_pointer();
+            return PredefinedPointer::Normal;
         }
     } zone;
 
@@ -268,10 +275,10 @@ private:
                  unsigned int work_area_count = 0;
     Rect work_areas[max_work_area];
     std::string window_title;
+    PredefinedPointer current_mouse_pointer = PredefinedPointer::SystemNormal;
     bool const window_level_supported_ex;
     bool allow_resize_hosted_desktop_    = false;
     bool enable_resizing_hosted_desktop_ = false;
-    Pointer const* current_mouse_pointer = nullptr;
     bool rail_enabled = false;
 
     EventsGuard events_guard;
@@ -280,7 +287,8 @@ private:
 public:
     ClientExecute(
         EventContainer& events,
-        gdi::GraphicApi & drawable, FrontAPI & front,
+        gdi::GraphicApi & drawable,
+        FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 
     ~ClientExecute();

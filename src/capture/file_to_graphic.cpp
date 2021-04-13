@@ -69,6 +69,7 @@ FileToGraphic::FileToGraphic(
     , trans_source(&trans)
     , trans(&trans)
     , bmp_cache(nullptr)
+    , ptr_cache(PointerCache::MAX_POINTER_COUNT)
     // variables used to read batch of orders "chunks"
     , chunk_size(0)
     , chunk_type(WrmChunkType::INVALID_CHUNK)
@@ -121,6 +122,7 @@ void FileToGraphic::clear_consumer()
     this->kbd_input_consumers.clear();
     this->capture_probe_consumers.clear();
     this->external_event_consumers.clear();
+    this->relayout_consumers.clear();
     this->resize_consumers.clear();
 }
 
@@ -735,21 +737,21 @@ void FileToGraphic::interpret_order()
         // this->stream.in_remain() ?
         if (  chunk_size - WRM_HEADER_SIZE > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             size_t start_offset = this->stream.get_offset();
-            const Pointer cursor = pointer_loader_32x32(this->stream);
+            const RdpPointerView cursor = pointer_loader_32x32(this->stream);
 
-            this->ptr_cache.add_pointer_static(cursor, cache_idx);
+            this->ptr_cache.insert(cache_idx, cursor);
+
             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
-                gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
+                gd->new_pointer(cache_idx, cursor);
+                gd->cached_pointer(cache_idx);
             }
 
             this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
             this->statistics.CachePointer.count++;
         }
         else {
-            Pointer const& cursor = this->ptr_cache.Pointers[cache_idx];
             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
+                gd->cached_pointer(cache_idx);
             }
             this->statistics.PointerIndex.count++;
         }
@@ -762,13 +764,15 @@ void FileToGraphic::interpret_order()
         size_t start_offset = this->stream.get_offset();
         this->mouse_x = this->stream.in_uint16_le();
         this->mouse_y = this->stream.in_uint16_le();
-        uint8_t cache_idx     = this->stream.in_uint8();
-        const Pointer cursor = pointer_loader_2(this->stream);
+        uint8_t cache_idx = this->stream.in_uint8();
+        const RdpPointerView cursor = pointer_loader_2(this->stream);
 
-        this->ptr_cache.add_pointer_static(cursor, cache_idx);
+        this->ptr_cache.insert(cache_idx, cursor);
+
         for (gdi::GraphicApi * gd : this->graphic_consumers){
-            gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
+            gd->new_pointer(cache_idx, cursor);
         }
+
         this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
         this->statistics.CachePointer.count++;
     }
@@ -784,19 +788,14 @@ void FileToGraphic::interpret_order()
 
         const uint16_t cache_idx = this->stream.in_uint16_le();
 
-        const Pointer cursor = pointer_loader_new(data_bpp, this->stream);
+        const RdpPointerView cursor = pointer_loader_new(data_bpp, this->stream);
 
-/*
-        this->mouse_x = this->stream.in_uint16_le();
-        this->mouse_y = this->stream.in_uint16_le();
-        uint8_t cache_idx     = this->stream.in_uint8();
-        const Pointer cursor = pointer_loader_2(this->stream);
-*/
+        this->ptr_cache.insert(cache_idx, cursor);
 
-        this->ptr_cache.add_pointer_static(cursor, cache_idx);
         for (gdi::GraphicApi * gd : this->graphic_consumers){
-            gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
+            gd->new_pointer(cache_idx, cursor);
         }
+
         this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
         this->statistics.CachePointer.count++;
     }

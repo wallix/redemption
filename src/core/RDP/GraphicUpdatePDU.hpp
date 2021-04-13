@@ -448,7 +448,9 @@ namespace detail
     };
 } // namespace detail
 
-class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer
+class GraphicsUpdatePDU
+: private detail::GraphicsUpdatePDUBuffer
+, public RDPSerializer
 {
     uint16_t     & userid;
     int          & shareid;
@@ -463,6 +465,8 @@ class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSer
     bool           compression;
 
     Transport & trans;
+
+    PointerCache & pointer_cache;
 
 public:
     GraphicsUpdatePDU( Transport & trans
@@ -486,8 +490,8 @@ public:
                      )
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
-                       , bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, max_data_block_size
+                       , bpp, bmp_cache, gly_cache, bitmap_cache_version
+                       , use_bitmap_comp, op2, max_data_block_size
                        , experimental_enable_serializer_data_block_size_limit, verbose)
         , userid(userid)
         , shareid(shareid)
@@ -497,7 +501,9 @@ public:
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
         , compression(compression)
-        , trans(trans) {
+        , trans(trans)
+        , pointer_cache(pointer_cache)
+    {
         this->init_orders();
         this->init_bitmaps();
     }
@@ -561,6 +567,7 @@ protected:
         }
     }
 
+private:
 // 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
 // ==========================================
 
@@ -847,11 +854,12 @@ protected:
 //    +---------------------------|------------------------------+
 
 
-    void send_pointer(int cache_idx, const Pointer & cursor) override {
+    void send_pointer(uint16_t cache_idx, RdpPointerView const& cursor)
+    {
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
-            "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
+            "GraphicsUpdatePDU::send_pointer(cache_idx=%u)", cache_idx);
 
-        assert(cursor.get_native_xor_bpp() != BitsPerPixel{0});
+        assert(cursor.xor_bits_per_pixel() != BitsPerPixel{0});
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         bool new_pointer_update_used = emit_native_pointer(stream.get_data_stream(), cache_idx, cursor);
@@ -878,9 +886,10 @@ protected:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void cached_pointer_update(int cache_idx) override {
+    void cached_pointer_update(uint16_t cache_idx)
+    {
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
-            "GraphicsUpdatePDU::set_pointer(cache_idx=%d)", cache_idx);
+            "GraphicsUpdatePDU::cached_pointer_update(cache_idx=%d)", cache_idx);
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         stream.get_data_stream().out_uint16_le(cache_idx);
@@ -891,10 +900,27 @@ protected:
                             , 0, stream, underlying_cast(this->verbose));
 
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
-            "GraphicsUpdatePDU::set_pointer done");
+            "GraphicsUpdatePDU::cached_pointer_update done");
     }   // void cached_pointer_update(int cache_idx)
 
 public:
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        auto result_cache = this->pointer_cache.use(cache_idx);
+        auto idx = result_cache.destination_idx;
+
+        if (!result_cache.is_cached) {
+            this->send_pointer(idx, this->pointer_cache.pointer(cache_idx));
+        }
+
+        this->cached_pointer_update(idx);
+    }
+
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+    {
+        this->pointer_cache.insert(cache_idx, cursor);
+    }
+
     void send_set_surface_command(RDPSetSurfaceCommand const & cmd) {
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::surface_commands), LOG_INFO,
             "GraphicsUpdatePDU::send_surface_command");
@@ -909,8 +935,6 @@ public:
                                     , this->encrypt, this->userid, SERVER_UPDATE_GRAPHICS_SURFCMDS
                                     , 0, stream, underlying_cast(this->verbose));
     }
-
-    using RDPSerializer::set_pointer;
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos)
     {

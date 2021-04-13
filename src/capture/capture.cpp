@@ -80,6 +80,7 @@
 #include "capture/wrm_capture.hpp"
 #include "capture/utils/match_finder.hpp"
 #include "utils/video_cropper.hpp"
+#include "utils/drawable_pointer.hpp"
 
 #ifndef REDEMPTION_NO_FFMPEG
 # include "capture/video_capture.hpp"
@@ -650,7 +651,8 @@ class Capture::PngCapture : public gdi::CaptureApi
 {
 protected:
     OutFilenameSequenceTransport trans;
-    RDPDrawable & drawable;
+    Drawable & drawable;
+    DrawablePointer const & drawable_pointer;
     MonotonicTimePoint last_time_capture;
     const std::chrono::microseconds frame_interval;
 
@@ -666,7 +668,7 @@ protected:
 
     explicit PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
-        RDPDrawable & drawable,
+        Drawable & drawable, DrawablePointer const & drawable_pointer,
         gdi::ImageFrameApi & imageFrameApi, WritableImageView const & image_view)
     : trans(
         capture_params.record_tmp_path,
@@ -680,6 +682,7 @@ protected:
             }
         })
     , drawable(drawable)
+    , drawable_pointer(drawable_pointer)
     , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , monotonic_to_real(capture_params.now, capture_params.real_now)
@@ -695,9 +698,10 @@ protected:
 public:
     PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
-        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
+        Drawable & drawable, DrawablePointer const & drawable_pointer,
+        gdi::ImageFrameApi & imageFrameApi)
     : PngCapture(
-        capture_params, png_params, drawable,
+        capture_params, png_params, drawable, drawable_pointer,
         imageFrameApi, imageFrameApi.get_writable_image_view())
     {}
 
@@ -726,8 +730,9 @@ public:
         std::chrono::microseconds const interval = this->frame_interval;
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
-            if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
-                this->drawable.trace_mouse();
+            if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
+                DrawablePointer::BufferSaver buffer_saver;
+                this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
                 tm ptm;
                 time_t t = to_time_t(now, this->monotonic_to_real);
                 localtime_r(&t, &ptm);
@@ -740,7 +745,7 @@ public:
 
                 this->timestamp_tracer.clear();
                 this->last_time_capture = now;
-                this->drawable.clear_mouse();
+                this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
 
                 return WaitingTimeBeforeNextSnapshot(interval.count()
                     ? interval - duration % interval
@@ -765,8 +770,9 @@ class Capture::PngCaptureRT : public PngCapture
 public:
     explicit PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
-        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
-    : PngCapture(capture_params, png_params, drawable, imageFrameApi)
+        Drawable & drawable, DrawablePointer const & drawable_pointer,
+        gdi::ImageFrameApi & imageFrameApi)
+    : PngCapture(capture_params, png_params, drawable, drawable_pointer, imageFrameApi)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
@@ -1334,6 +1340,7 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
     }
 }
 
+
 Capture::Capture(
     const CaptureParams& capture_params,
     const DrawableParams& drawable_params,
@@ -1349,7 +1356,8 @@ Capture::Capture(
     UpdateProgressData * update_progress_data,
     Rect const & crop_rect,
     Rect const & rail_window_rect)
-: update_progress_data(update_progress_data)
+: ptr_cache(drawable_params.ptr_cache)
+, update_progress_data(update_progress_data)
 , mouse_info{
     capture_params.now,
     static_cast<uint16_t>(drawable_params.width / 2),
@@ -1393,6 +1401,10 @@ Capture::Capture(
         }
         this->gds.emplace_back(*this->gd_drawable);
 
+        this->drawable_pointer = std::make_unique<DrawablePointer>(normal_pointer());
+        drawable_pointer->set_position(this->gd_drawable->width() / 2,
+                                       this->gd_drawable->height() / 2);
+
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()
@@ -1430,20 +1442,23 @@ Capture::Capture(
                 this->png_real_time_capture_obj =
                     std::make_unique<PngCaptureRT>(capture_params,
                                                    png_params,
-                                                   *this->gd_drawable,
+                                                   this->gd_drawable->impl(),
+                                                   *this->drawable_pointer,
                                                    *image_frame_api_real_time_ptr);
             }
             else {
                 this->png_capture_obj =
                     std::make_unique<PngCapture>(capture_params,
                                                  png_params,
-                                                 *this->gd_drawable,
+                                                 this->gd_drawable->impl(),
+                                                 *this->drawable_pointer,
                                                  *image_frame_api_ptr);
             }
         }
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
-                capture_params, wrm_params, *this->gd_drawable, rail_window_rect);
+                capture_params, wrm_params, *this->gd_drawable, rail_window_rect,
+                drawable_params.ptr_cache);
         }
 
 #ifndef REDEMPTION_NO_FFMPEG
@@ -1455,13 +1470,13 @@ Capture::Capture(
             }
             this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
                 capture_params, png_params.png_width, png_params.png_height,
-                *this->gd_drawable, *image_frame_api_ptr, video_params,
-                sequenced_video_params, notifier);
+                this->gd_drawable->impl(), *this->drawable_pointer,
+                *image_frame_api_ptr, video_params, sequenced_video_params, notifier);
         }
 
         if (capture_video_full) {
             this->full_video_capture_obj = std::make_unique<FullVideoCaptureImpl>(
-                capture_params, *this->gd_drawable,
+                capture_params, this->gd_drawable->impl(), *this->drawable_pointer,
                 *image_frame_api_ptr, video_params, full_video_params);
         }
 #else
@@ -1609,9 +1624,8 @@ void Capture::relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
 
 void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
 {
-    if (this->gd_drawable) {
-        this->gd_drawable->mouse_cursor_pos_x = cursor_x;
-        this->gd_drawable->mouse_cursor_pos_y = cursor_y;
+    if (this->drawable_pointer) {
+        this->drawable_pointer->set_position(cursor_x, cursor_y);
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
@@ -1762,9 +1776,8 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
     MonotonicTimePoint now,
     uint16_t cursor_x, uint16_t cursor_y
 ) {
-    if (this->gd_drawable) {
-        this->gd_drawable->mouse_cursor_pos_x = cursor_x;
-        this->gd_drawable->mouse_cursor_pos_y = cursor_y;
+    if (this->drawable_pointer) {
+        this->drawable_pointer->set_position(cursor_x, cursor_y);
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
@@ -1915,11 +1928,22 @@ void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)
     }
 }
 
-void Capture::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+void Capture::cached_pointer(gdi::CachePointerIndex cache_idx)
 {
     if (this->capture_drawable) {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.set_pointer(cache_idx, cursor, mode);
+        for (gdi::GraphicApi & gd : this->gds) {
+            gd.cached_pointer(cache_idx);
+        }
+
+        this->drawable_pointer->set_cursor(this->ptr_cache.pointer(cache_idx));
+    }
+}
+
+void Capture::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor)
+{
+    if (this->capture_drawable) {
+        for (gdi::GraphicApi & gd : this->gds) {
+            gd.new_pointer(cache_idx, cursor);
         }
     }
 }

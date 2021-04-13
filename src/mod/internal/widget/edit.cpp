@@ -74,7 +74,7 @@ WidgetEdit::WidgetEdit(
     this->h_text = tm.height;
     this->h_text -= 1;
 
-    this->pointer_flag = Pointer::POINTER_EDIT;
+    this->pointer_flag = PointerType::Edit;
 }
 
 Dimension WidgetEdit::get_optimal_dim() const

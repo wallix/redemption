@@ -157,7 +157,6 @@ protected:
     // TODO: check how caches are managed by recording layer
     BmpCache      & bmp_cache;
     GlyphCache    & glyph_cache;
-    PointerCache  & pointer_cache;
 
     RDPSerializerVerbose verbose;
 
@@ -168,7 +167,6 @@ public:
                  , const BitsPerPixel bpp
                  , BmpCache & bmp_cache
                  , GlyphCache & glyph_cache
-                 , PointerCache & pointer_cache
                  , const int bitmap_cache_version
                  , const bool use_bitmap_comp
                  , const bool use_compact_packets
@@ -187,7 +185,6 @@ public:
                                     std::numeric_limits<decltype(max_data_block_size)>::max())))
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
-    , pointer_cache(pointer_cache)
     , verbose{verbose}
     {
     }
@@ -208,9 +205,6 @@ public:
 protected:
     virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
-
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) = 0;
-    virtual void cached_pointer_update(int cache_idx) = 0;
 
 public:
     /*****************************************************************************/
@@ -797,34 +791,6 @@ public:
         }
         if (bool(this->verbose & RDPSerializerVerbose::bitmap_update)) {
             bitmap_data.log(LOG_INFO);
-        }
-    }
-
-    void set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode mode) override
-    {
-        int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
-        case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, cursor);
-        break;
-        default:
-        case POINTER_ALLREADY_SENT:
-            if (this->bmp_cache.owner == BmpCache::Recorder
-             && !this->pointer_cache.is_cached(cache_idx)
-            ) {
-                this->send_pointer(cache_idx, cursor);
-                this->pointer_cache.set_cached(cache_idx, true);
-                break;
-            }
-        }
-
-        switch (mode) {
-        case SetPointerMode::Cached:
-        case SetPointerMode::Insert:
-            this->cached_pointer_update(cache_idx);
-            break;
-        case SetPointerMode::New:
-            break;
         }
     }
 

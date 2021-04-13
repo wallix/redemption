@@ -74,14 +74,18 @@ struct TestGd : gdi::GraphicApiForwarder<gdi::GraphicApi&>
 {
     using gdi::GraphicApiForwarder<gdi::GraphicApi&>::GraphicApiForwarder;
 
-    void set_pointer(uint16_t cache_idx, const Pointer & cursor, gdi::GraphicApi::SetPointerMode mode) override
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
     {
-        (void)cache_idx;
-        (void)mode;
-        this->last_cursor = cursor;
+        this->last_cursor = cache_idx.cache_index();
     }
 
-    Pointer last_cursor;
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+    {
+        (void)cache_idx;
+        (void)cursor;
+    }
+
+    uint16_t last_cursor = 0xFFFF;
 };
 
 RED_AUTO_TEST_CASE(TestRailHostMod)
@@ -123,13 +127,13 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     RED_CHECK_IMG(front, IMG_TEST_PATH "rail1.png");
 
     // set pointer mod
-    mod_ref.gd->set_pointer(0, normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+    mod_ref.gd->cached_pointer(PredefinedPointer::Normal);
 
     // move to top border
     host_mod.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 19, nullptr);
-    RED_TEST((gd.last_cursor == size_NS_pointer()));
+    RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::NS).cache_index());
 
     // move to widget
     host_mod.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 100, nullptr);
-    RED_TEST((gd.last_cursor == normal_pointer()));
+    RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::Normal).cache_index());
 }

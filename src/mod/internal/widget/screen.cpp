@@ -22,20 +22,19 @@
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/tooltip.hpp"
 #include "gdi/graphic_api.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include <cassert>
 
 
 WidgetScreen::WidgetScreen(
-    gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
-    NotifyApi * notifier, Theme theme
+    gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
+    Font const & font, NotifyApi * notifier, Theme theme
 )
     : WidgetParent(drawable, *this, notifier)
     , theme(std::move(theme))
     , tooltip(nullptr)
     , current_over(nullptr)
-    , normal_pointer(::normal_pointer())
-    , edit_pointer(::edit_pointer())
     , font(font)
 {
     this->set_wh(width, height);
@@ -173,22 +172,21 @@ void WidgetScreen::redo_mouse_pointer_change(int x, int y)
     Widget * w = this->last_widget_at_pos(x, y);
     if (this->current_over != w){
         if (this->allow_mouse_pointer_change_) {
-            using SetPointerMode = gdi::GraphicApi::SetPointerMode;
-            switch (w ? w->pointer_flag : Pointer::POINTER_NULL) {
-            case Pointer::POINTER_EDIT:
-                this->drawable.set_pointer(0, ::edit_pointer(), SetPointerMode::Insert);
+            switch (w ? w->pointer_flag : PointerType::Normal) {
+            case PointerType::Edit:
+                this->drawable.cached_pointer(PredefinedPointer::Edit);
             break;
-            case Pointer::POINTER_CUSTOM: {
-                if (Pointer const* custom_pointer = w->get_pointer()) {
-                    this->drawable.set_pointer(0, *custom_pointer, SetPointerMode::Insert);
+            case PointerType::Custom: {
+                if (auto const* cache_index = w->get_cache_pointer_index()) {
+                    this->drawable.cached_pointer(*cache_index);
                     break;
                 }
                 else {
                     [[fallthrough]];
                 }
             }
-            default:
-                this->drawable.set_pointer(0, ::normal_pointer(), SetPointerMode::Insert);
+            case PointerType::Normal:
+                this->drawable.cached_pointer(PredefinedPointer::Normal);
             }
         }
         this->current_over = w;

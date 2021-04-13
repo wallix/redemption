@@ -283,7 +283,8 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(
-                trans, front.gd(), osd, events, session_log, front, info, redir_info, gen,
+                trans, front.gd(), osd, events,
+                session_log, front, info, redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params,
                 license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
@@ -535,8 +536,9 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(
-                t, front.gd(), osd, events, session_log, front, info, redir_info, gen,
-                channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
+                t, front.gd(), osd, events,
+                session_log, front, info, redir_info, gen, channels_authorizations,
+                mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
             RED_CHECK_EQUAL(info.screen_info.width, 1024);

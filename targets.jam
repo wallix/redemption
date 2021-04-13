@@ -240,6 +240,7 @@ exe rdpproxy :
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -447,7 +448,6 @@ exe ppocr_extract_text :
   <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/utils/drawable.o
   <library>src/utils/stacktrace.o
@@ -496,6 +496,7 @@ lib libredrec :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -754,6 +755,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -813,7 +815,6 @@ test-run tests/capture/test_ocr :
   <library>crypto
   <library>png
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -833,7 +834,6 @@ test-run tests/capture/test_ppocr :
   <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -883,6 +883,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -1449,6 +1450,7 @@ test-run tests/core/RDP/caches/test_pointercache :
 :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/caches/pointercache.hpp
@@ -1979,7 +1981,6 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2061,7 +2062,6 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2525,6 +2525,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -2697,6 +2698,7 @@ test-run tests/core/test_session :
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -2800,6 +2802,7 @@ test-run tests/front/test_front :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -2833,7 +2836,6 @@ test-run tests/gdi/test_protected_graphics :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2860,7 +2862,6 @@ test-run tests/gdi/test_text_metrics :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2944,6 +2945,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -2993,7 +2995,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
 :
   <library>crypto
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3504,7 +3505,6 @@ test-run tests/mod/internal/widget/test_composite :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4118,7 +4118,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -4288,7 +4287,6 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4401,7 +4399,6 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4431,10 +4428,6 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
 test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget.hpp
 ;
 test-run tests/mod/internal/widget/test_widget_rect :
@@ -4882,7 +4875,6 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -5079,6 +5071,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -5144,6 +5137,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -5209,6 +5203,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
@@ -5689,7 +5684,6 @@ test-run tests/utils/test_bitmap :
 :
   <library>crypto
   <library>png
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
@@ -5735,6 +5729,11 @@ test-run tests/utils/test_bitstream :
   $(REDEMPTION_TEST_PATH)/utils/test_bitstream.cpp
 :
   <covfile>src/utils/bitstream.hpp
+;
+test-run tests/utils/test_cache_index_mapping :
+  $(REDEMPTION_TEST_PATH)/utils/test_cache_index_mapping.cpp
+:
+  <covfile>src/utils/cache_index_mapping.hpp
 ;
 test-run tests/utils/test_cfgloader :
   $(REDEMPTION_TEST_PATH)/utils/test_cfgloader.cpp
@@ -5801,7 +5800,6 @@ test-run tests/utils/test_drawable :
 :
   <library>crypto
   <library>png
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
@@ -5828,11 +5826,13 @@ test-run tests/utils/test_drawable_pointer :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/utils/drawable_pointer.cpp
   <covfile>src/utils/drawable_pointer.hpp
 ;
 test-run tests/utils/test_ellipse :
@@ -6060,7 +6060,6 @@ test-run tests/utils/test_video_cropper :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -6243,6 +6242,7 @@ obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj src/utils/crypto/ssl_mod_exp_direct.o : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/drawable.o : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
+obj src/utils/drawable_pointer.o : $(REDEMPTION_SRC_PATH)/utils/drawable_pointer.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/hexadecimal_string_to_buffer.o : $(REDEMPTION_SRC_PATH)/utils/hexadecimal_string_to_buffer.cpp ;
 obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
@@ -6582,6 +6582,7 @@ alias test_bitmap_data_allocator : tests/utils/test_bitmap_data_allocator ;
 alias test_bitmap_from_file : tests/utils/test_bitmap_from_file ;
 alias test_bitset_stream : tests/utils/test_bitset_stream ;
 alias test_bitstream : tests/utils/test_bitstream ;
+alias test_cache_index_mapping : tests/utils/test_cache_index_mapping ;
 alias test_cfgloader : tests/utils/test_cfgloader ;
 alias test_channels_authorizations : tests/utils/test_channels_authorizations ;
 alias test_cli : tests/utils/test_cli ;
@@ -6917,6 +6918,7 @@ alias test_bitmap_data_allocator.coverage : tests/utils/test_bitmap_data_allocat
 alias test_bitmap_from_file.coverage : tests/utils/test_bitmap_from_file.coverage ;
 alias test_bitset_stream.coverage : tests/utils/test_bitset_stream.coverage ;
 alias test_bitstream.coverage : tests/utils/test_bitstream.coverage ;
+alias test_cache_index_mapping.coverage : tests/utils/test_cache_index_mapping.coverage ;
 alias test_cfgloader.coverage : tests/utils/test_cfgloader.coverage ;
 alias test_cli.coverage : tests/utils/test_cli.coverage ;
 alias test_colors.coverage : tests/utils/test_colors.coverage ;
@@ -7366,6 +7368,7 @@ alias tests/utils.norec :
   tests/utils/test_bitmap_from_file
   tests/utils/test_bitset_stream
   tests/utils/test_bitstream
+  tests/utils/test_cache_index_mapping
   tests/utils/test_cfgloader
   tests/utils/test_channels_authorizations
   tests/utils/test_cli

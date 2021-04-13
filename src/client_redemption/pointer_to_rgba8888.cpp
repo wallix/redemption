@@ -247,20 +247,20 @@ namespace
     }
 }
 
-redclient::RGBA8888Image redclient::pointer_to_rgba8888(Pointer const& pointer)
+redclient::RGBA8888Image redclient::pointer_to_rgba8888(RdpPointerView const& pointer)
 {
-    auto const dimensions = pointer.get_dimensions();
+    auto const dimensions = pointer.dimensions();
     auto const width = dimensions.width;
     auto const height = dimensions.height;
-    auto const source = pointer.get_native_xor_mask();
-    auto const mask = pointer.get_monochrome_and_mask();
+    auto const source = pointer.xor_mask();
+    auto const mask = pointer.and_mask();
     auto* pdata = new uint8_t[width * height * 4]; /*NOLINT*/
     RGBA8888Image img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
 
     auto* xor_mask = source.data();
     auto* and_mask = mask.data();
 
-    switch (pointer.get_native_xor_bpp()) {
+    switch (pointer.xor_bits_per_pixel()) {
         case BitsPerPixel::BitsPP1:
             init_with_bpp1(pdata, width, height, xor_mask, and_mask);
             break;

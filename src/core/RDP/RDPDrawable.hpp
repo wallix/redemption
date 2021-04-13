@@ -21,16 +21,12 @@
 
 #pragma once
 
-#include <utility>
-
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/image_frame_api.hpp"
 #include "gdi/resize_api.hpp"
 
-
-#include "utils/drawable_pointer.hpp"
 #include "utils/drawable.hpp"
 
 
@@ -40,28 +36,16 @@ class RDPDrawable final
     using Color = Drawable::Color;
 
     Drawable drawable;
-    uint8_t  save_mouse[96 * 96 * 4];   // 96 lines * 96 columns * 4 bytes per pixel
-    uint16_t save_mouse_x;
-    uint16_t save_mouse_y;
-public:
-    // TODO private
-    uint16_t mouse_cursor_pos_x;
-    uint16_t mouse_cursor_pos_y;
-private:
-    int mouse_cursor_hotspot_x;
-    int mouse_cursor_hotspot_y;
-    DrawablePointer current_pointer;
 
     int frame_start_count;
     BGRPalette mod_palette_rgb;
 
-    uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
-
     unsigned int last_update_index = 1;
+
+    uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height);
-    RDPDrawable(const uint16_t width, const uint16_t height, Pointer const& cursor);
 
     void resize(uint16_t width, uint16_t height) override;
 
@@ -195,13 +179,8 @@ public:
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) override {}
     void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
-
-    void set_mouse_cursor_pos(uint16_t x, uint16_t y)
-    {
-        this->mouse_cursor_pos_x = x;
-        this->mouse_cursor_pos_y = y;
-    }
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override;
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override;
 
     void set_palette(const BGRPalette & palette) override
     {

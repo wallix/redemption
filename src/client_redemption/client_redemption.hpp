@@ -35,6 +35,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/RDP/gcc/userdata/cs_net.hpp"
+#include "core/RDP/caches/pointercache.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/osd_api.hpp"
@@ -72,7 +73,9 @@
 
 
 
-class ClientRedemption : public ClientRedemptionAPI, public gdi::GraphicApi
+class ClientRedemption
+: public ClientRedemptionAPI
+, public gdi::GraphicApi
 {
 public:
     ClientRedemptionConfig & config;
@@ -144,15 +147,31 @@ private:
     {
         RDPDrawable drawable;
         WrmCaptureImpl wrm_capture;
+        std::array<RdpPointer, PointerCache::MAX_POINTER_COUNT> pointers;
 
         Capture(
             const uint16_t width, const uint16_t height,
-            CaptureParams const& capture_params, WrmParams const& wrm_params)
+            RealTimePoint real_time, char const* movie_name, char const* record_path,
+            WrmParams const& wrm_params)
         : drawable(width, height)
-        , wrm_capture(capture_params, wrm_params, this->drawable, Rect())
+        , wrm_capture(
+            CaptureParams{
+                MonotonicTimePoint::clock::now(),
+                real_time,
+                movie_name,
+                record_path,
+                record_path,
+                0,
+                nullptr,
+                SmartVideoCropping{},
+                0
+            },
+            wrm_params, this->drawable, Rect(),
+            PointerCache::SourcePointersView{pointers}
+        )
         {}
     };
-    std::unique_ptr<Capture>  capture;
+    std::unique_ptr<Capture> capture;
 
     struct WRMGraphicStat {
 
@@ -655,14 +674,17 @@ public:
         }
     }
 
-    virtual void set_capture() {
+    virtual void set_capture()
+    {
         std::string record_path = this->config.REPLAY_DIR + "/";
         std::string hash_path = this->config.REPLAY_DIR + "/signatures/";
-        time_t now;
-        time(&now);
-        std::string movie_name = ctime(&now);
-        movie_name.pop_back();
-        movie_name += "-Replay";
+
+        auto real_time = RealTimePoint::clock::now();
+        time_t now = std::chrono::duration_cast<std::chrono::seconds>(
+            real_time.time_since_epoch()).count();
+        std::string_view str_time = ctime(&now);
+        str_time.remove_suffix(1);
+        std::string movie_name = str_concat(str_time, "-Replay");
 
         bool const is_remoteapp = false;
         WrmParams wrmParams{
@@ -677,17 +699,9 @@ public:
             , FilePermissions(0777)
         };
 
-        CaptureParams captureParams;
-        captureParams.now = MonotonicTimePoint::clock::now();
-        captureParams.basename = movie_name.c_str();
-        captureParams.record_tmp_path = record_path.c_str();
-        captureParams.record_path = record_path.c_str();
-        captureParams.groupid = 0;
-        captureParams.session_log = nullptr;
-
         this->capture = std::make_unique<Capture>(
             this->config.info.screen_info.width, this->config.info.screen_info.height,
-            captureParams, wrmParams);
+            real_time, movie_name.c_str(), record_path.c_str(), wrmParams);
     }
 
 
@@ -1052,8 +1066,16 @@ public:
         this->draw_impl(no_log{}, order);
     }
 
-    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override
-    {}
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        (void)cache_idx;
+    }
+
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+    {
+        (void)cache_idx;
+        (void)cursor;
+    }
 
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
         //TODO: this->draw_impl(no_log{}, cmd);

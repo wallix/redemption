@@ -22,7 +22,7 @@ Author(s): Jonathan Poelen
 
 #include <memory>
 
-class Pointer;
+class RdpPointerView;
 
 namespace redclient
 {
@@ -36,5 +36,5 @@ namespace redclient
         uint8_t* data() const { return this->buffer.get(); }
     };
 
-    RGBA8888Image pointer_to_rgba8888(Pointer const& pointer);
+    RGBA8888Image pointer_to_rgba8888(RdpPointerView const& pointer);
 }

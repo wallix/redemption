@@ -88,9 +88,14 @@ public:
     void draw(RDPColCache   const & cmd) override { this->drawable.draw(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->drawable.draw(cmd); }
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
     {
-        this->drawable.set_pointer(cache_idx, cursor, mode);
+        this->drawable.new_pointer(cache_idx, cursor);
+    }
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        this->drawable.cached_pointer(cache_idx);
     }
 
     void set_palette(BGRPalette const & palette) override

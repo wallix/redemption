@@ -42,10 +42,6 @@ const newRdpPointer = function(canvasElement, module) {
         _cachePointers: _cachePointers,
         // @}
 
-        setPointer: function(idata, w, h, x, y) {
-            canvasElement.style.cursor = _image2CSS(idata, w, h, x, y);
-        },
-
         newPointer: function(idata, w, h, offset, x, y) {
             const data = _image2CSS(idata, w, h, x, y);
             _cachePointers[offset] = data;

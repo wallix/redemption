@@ -343,8 +343,8 @@ RED_JS_AUTO_TEST_CASE(
 
 
     // Pointer
-    gd.set_pointer(
-        0, Pointer::build_from_native(
+    gd.new_pointer(
+        0, RdpPointer(
             CursorSize{10, 10}, Hotspot{3, 4}, BitsPerPixel::BitsPP16,
             "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
             "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -367,8 +367,8 @@ RED_JS_AUTO_TEST_CASE(
             "\xF3\xFF"
             "\xF3\xFF"
             "\xF3\xFF"
-            ""_av),
-        gdi::GraphicApi::SetPointerMode::Insert);
+            ""_av));
+    gd.cached_pointer(0);
     RED_CHECK(canvas["style"]["cursor"].as<std::string>() == "url(data:image/png;base64,"
         "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABmJLR0QA/wD/AP+gvaeTA"
         "AAAI0lEQVQYlWNgwAT/oRgFMGFRiBVQXyEjAxb3UGQiNjDYfA0AHvsFCwqC2C8AAAAASU"

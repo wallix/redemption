@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 #endif
 
 #include "gdi/graphic_api.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 
@@ -82,7 +83,8 @@ public:
     void draw(RDPSetSurfaceCommand const & cmd) override;
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & /*content*/) override;
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override;
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override;
 
     void begin_update() override;
     void end_update() override;
@@ -98,6 +100,7 @@ private:
     uint16_t height;
     emscripten::val callbacks;
     std::array<uint32_t, 3> image_data_index {0};
+    std::array<bool, unsigned(PredefinedPointer::COUNT)> is_cached_pointers {};
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 };

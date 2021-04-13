@@ -1773,8 +1773,6 @@ class mod_rdp : public mod_api, public rdp_api
         DISCONNECTED,
     } connection_finalization_state = EARLY;
 
-    Pointer cursors[32];
-
     const RDPVerbose verbose;
     const BmpCache::Verbose cache_verbose;
 
@@ -2694,12 +2692,12 @@ public:
 
             case FastPath::UpdateType::PTR_NULL:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer null (Fast)");
-                drawable.set_pointer(0, null_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+                drawable.cached_pointer(PredefinedPointer::Null);
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer default (Fast)");
-                drawable.set_pointer(0, system_normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+                drawable.cached_pointer(PredefinedPointer::SystemNormal);
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
@@ -3754,12 +3752,13 @@ public:
 
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
+                // 5 cursor reserved by client_execute
+                // TODO min(CachePointer::MAX_POINTER_COUNT - 5, front.PointerCacheSize)
+                // TODO min(CachePointer::MAX_POINTER_COUNT - 5, front.colorPointerCacheSize)
                 if (!this->enable_new_pointer) {
-                    // TODO std::size(this->cursors) = 32
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
-                    assert(pointer_caps.colorPointerCacheSize <= std::size(this->cursors));
                 }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     pointer_caps.log("Sending to server");
@@ -4096,10 +4095,10 @@ public:
                 (system_pointer_type == RDP_NULL_POINTER) ? "NULL" : "DEFAULT");
 
             if (system_pointer_type == RDP_NULL_POINTER) {
-                drawable.set_pointer(0, null_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+                drawable.cached_pointer(PredefinedPointer::Null);
             }
             else {
-                drawable.set_pointer(0, normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+                drawable.cached_pointer(PredefinedPointer::Normal);
             }
         }
         break;
@@ -5751,22 +5750,8 @@ public:
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
             LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
 
-        // TODO Add check that the idx transmitted is actually an used pointer
         uint16_t pointer_idx = stream.in_uint16_le();
-        if (pointer_idx >= std::size(this->cursors)) {
-            LOG(LOG_ERR,
-                "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)",
-                pointer_idx);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
-        }
-        Pointer & cursor = this->cursors[pointer_idx];
-        if (cursor.is_valid()) {
-            drawable.set_pointer(pointer_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
-        }
-        else {
-            LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
-                pointer_idx);
-        }
+        drawable.cached_pointer(pointer_idx);
 
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
             LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -5846,16 +5831,8 @@ public:
             LOG_INFO, "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
             data_bpp, pointer_idx);
 
-        if (pointer_idx >= std::size(this->cursors)) {
-            LOG(LOG_ERR,
-                "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%u)",
-                pointer_idx);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
-        }
-
-        Pointer& cursor = this->cursors[pointer_idx];
-        cursor = pointer_loader_new(data_bpp, stream);
-        drawable.set_pointer(pointer_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
+        auto cursor = pointer_loader_new(data_bpp, stream);
+        drawable.new_pointer(pointer_idx, cursor);
     }   // process_new_pointer_pdu
 
 private:

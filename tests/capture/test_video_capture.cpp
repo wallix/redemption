@@ -29,11 +29,13 @@
 #include "capture/video_capture.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/caches/pointercache.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/sequenced_video_params.hpp"
 #include "capture/capture_params.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/drawable_pointer.hpp"
 
 #include <chrono>
 
@@ -45,12 +47,16 @@ namespace
 {
     void simple_movie(
         MonotonicTimePoint now, unsigned duration, RDPDrawable & drawable,
+        DrawablePointer & drawable_pointer,
         gdi::CaptureApi & capture, gdi::GraphicApi & video_drawable, bool mouse
     ) {
         Rect screen(0, 0, drawable.width(), drawable.height());
         auto const color_cxt = gdi::ColorCtx::depth24();
         drawable.draw(RDPOpaqueRect(screen, encode_color24()(BLUE)), screen, color_cxt);
         video_drawable.draw(RDPOpaqueRect(screen, encode_color24()(BLUE)), screen, color_cxt);
+
+        drawable_pointer.set_position(drawable.width() / 2, drawable.height() / 2);
+        drawable_pointer.set_cursor(normal_pointer());
 
         Rect r(10, 10, 50, 50);
         int vx = 5;
@@ -65,7 +71,7 @@ namespace
             //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
             uint16_t cursor_x = mouse ? uint16_t(r.x + 10) : 0;
             uint16_t cursor_y = mouse ? uint16_t(r.y + 10) : 0;
-            drawable.set_mouse_cursor_pos(cursor_x, cursor_y);
+            drawable_pointer.set_position(cursor_x, cursor_y);
             capture.periodic_snapshot(now, cursor_x, cursor_y);
             capture.periodic_snapshot(now, cursor_x, cursor_y);
             if ((r.x + r.cx >= drawable.width())  || (r.x < 0)) { vx = -vx; }
@@ -99,6 +105,7 @@ namespace
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
+        DrawablePointer drawable_pointer(normal_pointer());
         VideoParams video_params{
             25, codec.name, codec.options, false, 0};
         SequencedVideoParams sequenced_video_params { video_interval, false };
@@ -107,11 +114,11 @@ namespace
             nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 0 /* png_width */, 0 /* png_height */,
-            drawable, drawable, video_params, sequenced_video_params,
-            next_video_notifier);
+            drawable.impl(), drawable_pointer, drawable, video_params,
+            sequenced_video_params, next_video_notifier);
         simple_movie(
-            monotonic_time, loop_duration, drawable, video_capture,
-            video_capture.graphics_api(), mouse);
+            monotonic_time, loop_duration, drawable, drawable_pointer,
+            video_capture, video_capture.graphics_api(), mouse);
     }
 
     void simple_full_video(
@@ -121,16 +128,18 @@ namespace
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
+        DrawablePointer drawable_pointer(normal_pointer());
         VideoParams video_params{
             25, codec.name, codec.options, false, 0};
         CaptureParams capture_params{
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
-            capture_params, drawable, drawable, video_params, FullVideoParams{});
+            capture_params, drawable.impl(), drawable_pointer, drawable,
+            video_params, FullVideoParams{});
         simple_movie(
-            monotonic_time, loop_duration, drawable, video_capture,
-            video_capture.graphics_api(), mouse);
+            monotonic_time, loop_duration, drawable, drawable_pointer,
+            video_capture, video_capture.graphics_api(), mouse);
     }
 } // namespace
 
@@ -147,7 +156,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 23021 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 22338 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 23267 +- 2000_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 24767 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 23767 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000004.mp4"), 23044 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000005.mp4"), 5315 +- 2000_v);
 }

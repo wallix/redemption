@@ -33,6 +33,7 @@
 #include "utils/ref.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "capture/rail_screen_computation.hpp"
+#include "core/RDP/caches/pointercache.hpp"
 
 #include <vector>
 #include <memory>
@@ -55,6 +56,7 @@ class PngParams;
 class SequencedVideoParams;
 class VideoParams;
 class WrmParams;
+class DrawablePointer;
 
 class Capture final
 : public gdi::GraphicApi
@@ -120,7 +122,8 @@ public:
         uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override;
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override;
 
     void set_palette(const BGRPalette & palette) override;
 
@@ -218,6 +221,9 @@ private:
 
     std::unique_ptr<RDPDrawable> gd_drawable_;
     RDPDrawable* gd_drawable = nullptr;
+
+    std::unique_ptr<DrawablePointer> drawable_pointer;
+    PointerCache::SourcePointersView ptr_cache;
 
     std::unique_ptr<VideoCropper> video_cropper;
     std::unique_ptr<VideoCropper> video_cropper_real_time;

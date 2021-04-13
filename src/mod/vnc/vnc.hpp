@@ -38,7 +38,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 
 #include "gdi/screen_functions.hpp"
 #include "gdi/graphic_api.hpp"
@@ -821,7 +820,7 @@ public:
     };
     ServerInitCtx server_init_ctx;
 
-    void initial_clear_screen(gdi::GraphicApi & drawable);
+    void initial_clear_screen();
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override;
@@ -1080,7 +1079,7 @@ private:
     bool tlsSwitch;
 
 public:
-    void draw_event(gdi::GraphicApi & gd);
+    void draw_event();
 
 private:
     static const char *securityTypeString(int32_t t);
@@ -1091,7 +1090,7 @@ private:
 
     bool treatVeNCrypt();
 
-    bool draw_event_impl(gdi::GraphicApi & gd);
+    bool draw_event_impl();
 
 private:
     void check_timeout();
@@ -1160,7 +1159,7 @@ private:
 
         size_t last_avail = 0;
 
-        bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        bool run(Buf64k & buf, mod_vnc & vnc)
         {
             Result r = Result::fail();
 
@@ -1284,7 +1283,7 @@ private:
                         }
 
                         // Pre Assertion: we have an encoder
-                        switch (encoder(buf, drawable)){
+                        switch (encoder(buf, vnc.gd)){
                             case VNC::Encoder::EncoderState::Ready:
                                 r = Result::ok(State::Data);
                                 this->last = VNC::Encoder::EncoderState::Ready;
@@ -1338,7 +1337,7 @@ private:
     bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
         drawable.begin_update();
-        const bool ok = this->frame_buffer_update_ctx.run(buf, *this, drawable);
+        const bool ok = this->frame_buffer_update_ctx.run(buf, *this);
         drawable.end_update();
         if (!ok) {
             return false;
@@ -1720,8 +1719,6 @@ private:
     [[nodiscard]] bool is_up_and_running() const override {
         return (UP_AND_RUNNING == this->state);
     }
-
-    void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable);
 
 public:
     bool server_error_encountered() const override { return false; }

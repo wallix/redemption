@@ -22,6 +22,7 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "keyboard/scancode/unicode_to_scancode.hpp"
 #include <openssl/tls1.h>
 #include <openssl/tls1.h>
@@ -109,7 +110,7 @@ mod_vnc::mod_vnc( Transport & t
                 300s,
                 [this](Event& /*event*/)
                 {
-                    this->draw_event(this->gd);
+                    this->draw_event();
                 },
                 [](Event& /*event*/){}
             );
@@ -162,21 +163,19 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     return true;
 }
 
-void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
+void mod_vnc::initial_clear_screen()
 {
     LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
 
     // set almost null cursor, this is the little dot cursor
-    drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+    this->gd.cached_pointer(PredefinedPointer::Dot);
 
     this->session_log.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
 
     Rect const screen_rect(0, 0, this->width, this->height);
 
-    drawable.begin_update();
     RDPOpaqueRect orect(screen_rect, RDPColor{});
-    drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette_update_ctx.get_palette()));
-    drawable.end_update();
+    this->gd.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette_update_ctx.get_palette()));
 
     this->state = UP_AND_RUNNING;
     this->front.can_be_start_capture(this->session_log);
@@ -492,7 +491,7 @@ bool mod_vnc::doTlsSwitch()
 }
 
 
-void mod_vnc::draw_event(gdi::GraphicApi & gd)
+void mod_vnc::draw_event()
 {
     bool can_read = true;
 
@@ -545,7 +544,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
     [[maybe_unused]]
     uint64_t const data_server_before = this->server_data_buf.remaining();
 
-    while (this->draw_event_impl(gd) && !this->tlsSwitch) {
+    while (this->draw_event_impl() && !this->tlsSwitch) {
     }
 
     uint64_t const data_server_after = this->server_data_buf.remaining();
@@ -784,19 +783,19 @@ bool mod_vnc::treatVeNCrypt() {
 }
 
 
-bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
+bool mod_vnc::draw_event_impl()
 {
     switch (this->state)
     {
     case DO_INITIAL_CLEAR_SCREEN:
-        this->initial_clear_screen(gd);
+        this->initial_clear_screen();
         return false;
 
     case UP_AND_RUNNING:
         LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "state=UP_AND_RUNNING");
 
         try {
-            while (this->up_and_running_ctx.run(this->server_data_buf, gd, *this)) {
+            while (this->up_and_running_ctx.run(this->server_data_buf, this->gd, *this)) {
                 this->up_and_running_ctx.restart();
             }
             this->update_screen(Rect(0, 0, this->width, this->height), 1);
@@ -2083,28 +2082,7 @@ void mod_vnc::rdp_gdi_up_and_running()
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->initial_clear_screen(this->gd);
-    }
-}
-
-
-void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
-{
-    const uint16_t TILE_CX = 32;
-    const uint16_t TILE_CY = 32;
-
-    for (int y = 0; y < rect.cy ; y += TILE_CY) {
-        uint16_t cy = std::min(TILE_CY, uint16_t(rect.cy - y));
-
-        for (int x = 0; x < rect.cx ; x += TILE_CX) {
-            uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
-
-            const Rect src_tile(x, y, cx, cy);
-            const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
-            const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
-            const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-            drawable.draw(cmd2, dst_tile, tiled_bmp);
-        }
+        this->initial_clear_screen();
     }
 }
 

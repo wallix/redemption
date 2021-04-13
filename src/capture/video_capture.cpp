@@ -25,6 +25,8 @@
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/drawable_pointer.hpp"
+#include "utils/drawable.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
 
@@ -70,6 +72,31 @@ namespace
                 : ImageByInterval::ZeroOrOneWithTimestamp)
             ;
     }
+
+    struct MouseTracer
+    {
+        MouseTracer(
+            Drawable & drawable,
+            DrawablePointer const & drawable_pointer) noexcept
+        : drawable(drawable)
+        , drawable_pointer(drawable_pointer)
+        {}
+
+        void trace_mouse()
+        {
+            drawable_pointer.trace_mouse(drawable, buffer_saver);
+        }
+
+        void clear_mouse()
+        {
+            drawable_pointer.clear_mouse(drawable, buffer_saver);
+        }
+
+    private:
+        Drawable & drawable;
+        DrawablePointer const & drawable_pointer;
+        DrawablePointer::BufferSaver buffer_saver;
+    };
 }
 
 
@@ -82,11 +109,13 @@ VideoCaptureCtx::VideoCaptureCtx(
     RealTimePoint real_now,
     ImageByInterval image_by_interval,
     unsigned frame_rate,
-    RDPDrawable & drawable,
+    Drawable & drawable,
+    DrawablePointer const & drawable_pointer,
     gdi::ImageFrameApi & image_frame,
     array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
 )
 : drawable(drawable)
+, drawable_pointer(drawable_pointer)
 , monotonic_last_time_capture(now)
 , monotonic_to_real(now, real_now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
@@ -107,7 +136,8 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
     this->image_frame_api.prepare_image_frame();
 
-    this->drawable.trace_mouse();
+    MouseTracer mouse_tracer{this->drawable, this->drawable_pointer};
+    mouse_tracer.trace_mouse();
 
     if (this->has_timestamp) {
         this->timestamp_tracer.trace(to_tm_t(
@@ -120,7 +150,7 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
         this->timestamp_tracer.clear();
     }
 
-    this->drawable.clear_mouse();
+    mouse_tracer.clear_mouse();
 }
 
 void VideoCaptureCtx::frame_marker_event(
@@ -185,9 +215,11 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                                 ;
         bool const update_pointer = (update_image || update_timestamp);
 
+        MouseTracer mouse_tracer{this->drawable, this->drawable_pointer};
+
         if (update_pointer) {
             this->image_frame_api.prepare_image_frame();
-            this->drawable.trace_mouse();
+            mouse_tracer.trace_mouse();
         }
 
         if (update_pointer
@@ -286,7 +318,7 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         }
 
         if (update_pointer) {
-            this->drawable.clear_mouse();
+            mouse_tracer.clear_mouse();
         }
     }
     return WaitingTimeBeforeNextSnapshot(frame_interval - tick);
@@ -309,14 +341,16 @@ static void log_video_params(VideoParams const& video_params)
 
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     CaptureParams const & capture_params,
-    RDPDrawable & drawable, gdi::ImageFrameApi & image_frame,
+    Drawable & drawable,
+    DrawablePointer const & drawable_pointer,
+    gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : video_cap_ctx(
     capture_params.now, capture_params.real_now,
     video_params_to_image_by_interval(
         video_params.no_timestamp,
         full_video_params.bogus_vlc_frame_rate),
-    video_params.frame_rate, drawable, image_frame,
+    video_params.frame_rate, drawable, drawable_pointer, image_frame,
     video_params.updatable_frame_marker_end_bitset_view)
 , recorder(
     str_concat(
@@ -411,7 +445,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
     auto const duration = now - this->monotonic_start_capture;
     if (duration >= interval) {
         auto video_interval = this->break_interval;
-        if (this->ic_drawable.logical_frame_ended()
+        if (this->ic_drawable.logical_frame_ended
          || duration > 2s
          || duration >= video_interval
         ) {
@@ -469,7 +503,8 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::video_sequencer_periodi
 SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     CaptureParams const & capture_params,
     unsigned png_width, unsigned png_height,
-    /* const */RDPDrawable & drawable,
+    Drawable & drawable,
+    DrawablePointer const & drawable_pointer,
     gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params,
     SequencedVideoParams const& sequenced_video_params,
@@ -480,7 +515,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     capture_params.now, capture_params.real_now,
     video_params_to_image_by_interval(
         video_params.no_timestamp, sequenced_video_params.bogus_vlc_frame_rate),
-    video_params.frame_rate, drawable, image_frame,
+    video_params.frame_rate, drawable, drawable_pointer, image_frame,
     video_params.updatable_frame_marker_end_bitset_view)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
 , ic_filename_generator(capture_params.record_path, capture_params.basename, "png")

@@ -158,8 +158,15 @@ public:
         this->qt_graphic.set_ErrorMsg(error);
     }
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
-        this->qt_graphic.get_graphics().set_pointer(cache_idx, cursor, mode);
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
+    {
+        this->qt_graphic.get_graphics().new_pointer(cache_idx, cursor);
+    }
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        this->qt_graphic.get_graphics().cached_pointer(cache_idx);
+        (void)cache_idx;
     }
 
     bool init_mod() override {

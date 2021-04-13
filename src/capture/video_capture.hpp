@@ -39,7 +39,8 @@
 class CaptureParams;
 class FullVideoParams;
 class SequencedVideoParams;
-class RDPDrawable;
+class DrawablePointer;
+class Drawable;
 
 
 struct VideoCaptureCtx : noncopyable
@@ -57,7 +58,8 @@ struct VideoCaptureCtx : noncopyable
         RealTimePoint real_time,
         ImageByInterval image_by_interval,
         unsigned frame_rate,
-        RDPDrawable & drawable,
+        Drawable & drawable,
+        DrawablePointer const & drawable_pointer,
         gdi::ImageFrameApi & image_frame,
         array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
     );
@@ -84,7 +86,8 @@ struct VideoCaptureCtx : noncopyable
 private:
     void preparing_video_frame(video_recorder & recorder);
 
-    RDPDrawable & drawable;
+    Drawable & drawable;
+    DrawablePointer const & drawable_pointer;
     MonotonicTimePoint monotonic_last_time_capture;
     MonotonicTimeToRealTime monotonic_to_real;
     MonotonicTimePoint::duration frame_interval;
@@ -113,7 +116,9 @@ class FullVideoCaptureImpl final : public gdi::CaptureApi
 public:
     FullVideoCaptureImpl(
         CaptureParams const & capture_params,
-        RDPDrawable & drawable, gdi::ImageFrameApi & image_frame,
+        Drawable & drawable,
+        DrawablePointer const & drawable_pointer,
+        gdi::ImageFrameApi & image_frame,
         VideoParams const & video_params, FullVideoParams const & full_video_params
     );
 
@@ -146,7 +151,8 @@ public:
     SequencedVideoCaptureImpl(
         CaptureParams const & capture_params,
         unsigned png_width, unsigned png_height,
-        /* const */RDPDrawable & drawable,
+        Drawable & drawable,
+        DrawablePointer const & drawable_pointer,
         gdi::ImageFrameApi & image_frame,
         VideoParams const& video_params,
         SequencedVideoParams const& sequenced_video_params,
@@ -210,7 +216,7 @@ private:
     std::optional<video_recorder> recorder;
     FilenameGenerator ic_filename_generator;
 
-    /* const */ RDPDrawable & ic_drawable;
+    Drawable & ic_drawable;
 
     gdi::ImageFrameApi & image_frame_api;
 

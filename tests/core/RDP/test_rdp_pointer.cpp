@@ -30,13 +30,13 @@
 
 RED_AUTO_TEST_CASE(TestDataSize)
 {
-    RED_CHECK_EQUAL(Pointer().get_native_xor_mask().size(), 0);
+    RED_CHECK_EQUAL(RdpPointer().get_native_xor_mask().size(), 0);
     RED_CHECK_EQUAL(normal_pointer().get_native_xor_mask().size(), 32 * 32 * 3);
 }
 
 RED_AUTO_TEST_CASE(TestPointerNormal)
 {
-    Pointer p = normal_pointer();
+    RdpPointer p = normal_pointer();
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
     uint8_t expected[] = {
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
 
 RED_AUTO_TEST_CASE(TestPointerEdit)
 {
-    Pointer p = edit_pointer();
+    RdpPointer p = edit_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -126,101 +126,9 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
         "\x09\xb3\xc6\x81\x07\xef\x2e\xd4\xcb\x1a\xa9\xeb\x2c\xb8\xe9\x13\xfb\xaf\xe2\xe3");
 }
 
-RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
-{
-    Pointer p = drawable_default_pointer();
-
-    RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
-
-    uint8_t expected[] = {
-        /* 0000 */   0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0008 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0010 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0018 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0020 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0028 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0030 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0038 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xbc, 0x3f, 0xFF, 0xFF
-        /* 0040 */ , 0x18, 0x7f, 0xFF, 0xFF
-                   , 0x08, 0x7f, 0xFF, 0xFF
-        /* 0048 */ , 0x00, 0xff, 0xFF, 0xFF
-                   , 0x00, 0x0f, 0xFF, 0xFF
-        /* 0050 */ , 0x00, 0x0f, 0xFF, 0xFF
-                   , 0x00, 0x1f, 0xFF, 0xFF
-        /* 0058 */ , 0x00, 0x3f, 0xFF, 0xFF
-                   , 0x00, 0x7f, 0xFF, 0xFF
-        /* 0060 */ , 0x00, 0xff, 0xFF, 0xFF
-                   , 0x01, 0xff, 0xFF, 0xFF
-        /* 0068 */ , 0x03, 0xff, 0xFF, 0xFF
-                   , 0x07, 0xff, 0xFF, 0xFF
-        /* 0070 */ , 0x0f, 0xff, 0xFF, 0xFF
-                   , 0x1f, 0xff, 0xFF, 0xFF
-        /* 0078 */ , 0x3f, 0xff, 0xFF, 0xFF
-                   , 0x7f, 0xff, 0xFF, 0xFF
-    };
-    RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_native_xor_mask();
-    RED_CHECK_SIG(av,
-        "\x46\x59\xfc\xbc\x13\x24\x18\xd6\x83\xa3\x6a\xc2\xea\xf8\x93\x2b\x30\x4f\x80\x0e");
-}
-
-RED_AUTO_TEST_CASE(TestPointerSystemDefault)
-{
-    Pointer p = system_default_pointer();
-
-    RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
-
-    uint8_t expected[] = {
-        /* 0000 */   0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xcf, 0xFF
-        /* 0008 */ , 0xFF, 0xFF, 0x87, 0xFF
-                   , 0xFF, 0xFF, 0x87, 0xFF
-        /* 0010 */ , 0xFF, 0xFF, 0x0f, 0xFF
-                   , 0xFF, 0xdf, 0x0f, 0xFF
-        /* 0018 */ , 0xFF, 0xce, 0x1f, 0xFF
-                   , 0xFF, 0xc6, 0x1f, 0xFF
-        /* 0020 */ , 0xFF, 0xc0, 0x3f, 0xFF
-                   , 0xFF, 0xc0, 0x3f, 0xFF
-        /* 0028 */ , 0xFF, 0xc0, 0x03, 0xFF
-                   , 0xFF, 0xc0, 0x07, 0xFF
-        /* 0030 */ , 0xFF, 0xc0, 0x0f, 0xFF
-                   , 0xFF, 0xc0, 0x1f, 0xFF
-        /* 0038 */ , 0xFF, 0xc0, 0x3f, 0xFF
-                   , 0xFF, 0xc0, 0x7f, 0xFF
-        /* 0040 */ , 0xFF, 0xc0, 0xFF, 0xFF
-                   , 0xFF, 0xc1, 0xFF, 0xFF
-        /* 0048 */ , 0xFF, 0xc3, 0xFF, 0xFF
-                   , 0xFF, 0xc7, 0xFF, 0xFF
-        /* 0050 */ , 0xFF, 0xcf, 0xFF, 0xFF
-                   , 0xFF, 0xdf, 0xFF, 0xFF
-        /* 0058 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0060 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0068 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0070 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-        /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
-                   , 0xFF, 0xFF, 0xFF, 0xFF
-    };
-    RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_native_xor_mask();
-    RED_CHECK_SIG(av,
-        "\xc5\xc1\x0e\x3a\x17\x39\x56\x0c\xf9\xd7\x66\xac\x3b\x23\x23\xad\xec\xb5\xd9\x46");
-}
-
 RED_AUTO_TEST_CASE(TestPointerSizeNS)
 {
-    Pointer p = size_NS_pointer();
+    RdpPointer p = size_NS_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -266,7 +174,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 {
-    Pointer p = size_NESW_pointer();
+    RdpPointer p = size_NESW_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -313,7 +221,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 {
-    Pointer p = size_NWSE_pointer();
+    RdpPointer p = size_NWSE_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -360,7 +268,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 
 RED_AUTO_TEST_CASE(TestPointerSizeWE)
 {
-    Pointer p = size_WE_pointer();
+    RdpPointer p = size_WE_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -504,14 +412,14 @@ Mask For Cursor
     };
 
     InStream in_stream_cursor(buffer);
-    Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor);
+    RdpPointerView cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor);
 
-    RED_CHECK_EQ(cursor.get_hotspot().x, 8);
-    RED_CHECK_EQ(cursor.get_hotspot().y, 9);
-    RED_CHECK_EQ(cursor.get_dimensions().width, 32);
-    RED_CHECK_EQ(cursor.get_dimensions().height, 32);
-    auto d = cursor.get_native_xor_mask();
-    auto m = cursor.get_monochrome_and_mask();
+    RED_CHECK_EQ(cursor.hotspot().x, 8);
+    RED_CHECK_EQ(cursor.hotspot().y, 9);
+    RED_CHECK_EQ(cursor.dimensions().width, 32);
+    RED_CHECK_EQ(cursor.dimensions().height, 32);
+    auto d = cursor.xor_mask();
+    auto m = cursor.and_mask();
 
     RED_CHECK_EQUAL(m.size(), 32 * 4);
     RED_CHECK_SIG(m,
@@ -793,14 +701,14 @@ RED_AUTO_TEST_CASE(TestLinux32bppPointer)
     };
 
     InStream stream(new_pointer_32bpp);
-    Pointer cursor = pointer_loader_new(BitsPerPixel{32}, stream);
+    RdpPointerView cursor = pointer_loader_new(BitsPerPixel{32}, stream);
 
-    RED_CHECK_EQ(cursor.get_hotspot().x, 15);
-    RED_CHECK_EQ(cursor.get_hotspot().y, 10);
-    RED_CHECK_EQ(cursor.get_dimensions().width, 32);
-    RED_CHECK_EQ(cursor.get_dimensions().height, 32);
-    auto d = cursor.get_native_xor_mask();
-    auto m = cursor.get_monochrome_and_mask();
+    RED_CHECK_EQ(cursor.hotspot().x, 15);
+    RED_CHECK_EQ(cursor.hotspot().y, 10);
+    RED_CHECK_EQ(cursor.dimensions().width, 32);
+    RED_CHECK_EQ(cursor.dimensions().height, 32);
+    auto d = cursor.xor_mask();
+    auto m = cursor.and_mask();
 
     RED_CHECK_EQUAL(m.size(), 32 * 4);
     RED_CHECK_SIG(m,

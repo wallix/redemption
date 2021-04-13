@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
 
     LoginMod d(ini, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
-        Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+               Rect(0, 0, 799, 599), client_execute, global_font(), theme);
     d.init();
 
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -78,7 +78,7 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 
     LoginMod d(ini, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
-        Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
+               Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
     d.init();
 
     using namespace std::literals::chrono_literals;

@@ -29,7 +29,6 @@
 
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/rdp_draw_glyphs.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -123,23 +122,10 @@ namespace
 
 
 RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height)
-: RDPDrawable(width, height, drawable_default_pointer())
-{}
-
-RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height, Pointer const& cursor)
 : drawable(width, height)
-, save_mouse_x(0)
-, save_mouse_y(0)
-, mouse_cursor_pos_x(width / 2)
-, mouse_cursor_pos_y(height / 2)
-, current_pointer(cursor)
 , frame_start_count(0)
 , mod_palette_rgb(BGRPalette::classic_332())
-{
-    const auto hotspot = cursor.get_hotspot();
-    this->mouse_cursor_hotspot_x = hotspot.x;
-    this->mouse_cursor_hotspot_y = hotspot.y;
-}
+{}
 
 void RDPDrawable::resize(uint16_t width, uint16_t height)
 {
@@ -534,24 +520,13 @@ void RDPDrawable::draw(const RDP::FrameMarker & order)
     this->last_update_index++;
 }
 
-void RDPDrawable::trace_mouse()
+void RDPDrawable::new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor)
 {
-    this->save_mouse_x = this->mouse_cursor_pos_x;
-    this->save_mouse_y = this->mouse_cursor_pos_y;
-    int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
-    int y = this->save_mouse_y - this->mouse_cursor_hotspot_y;
-    return this->drawable.trace_mouse(this->current_pointer, x, y, this->save_mouse);
+    (void)cache_idx;
+    (void)cursor;
 }
 
-void RDPDrawable::clear_mouse()
+void RDPDrawable::cached_pointer(gdi::CachePointerIndex cache_idx)
 {
-    int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
-    int y = this->save_mouse_y - this->mouse_cursor_hotspot_y;
-    return this->drawable.clear_mouse(this->current_pointer, x, y, this->save_mouse);
-}
-
-void RDPDrawable::set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode /*mode*/)
-{
-    assert(cursor.get_native_xor_bpp() != BitsPerPixel{0});
-    this->current_pointer.set_cursor(cursor);
+    (void)cache_idx;
 }

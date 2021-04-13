@@ -19,6 +19,7 @@
 */
 
 #include "mod/internal/widget/module_host.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
@@ -297,7 +298,7 @@ void WidgetModuleHost::draw(const RDP::RAIL::NonMonitoredDesktop            & cm
 void WidgetModuleHost::draw(RDPColCache   const & cmd)  { Impl::draw_impl(*this, cmd); }
 void WidgetModuleHost::draw(RDPBrushCache const & cmd)  { Impl::draw_impl(*this, cmd); }
 
-void WidgetModuleHost::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+void WidgetModuleHost::cached_pointer(gdi::CachePointerIndex cache_idx)
 {
     Rect rect = this->get_rect();
     rect.x  += (BORDER_WIDTH_HEIGHT - 1);
@@ -305,15 +306,19 @@ void WidgetModuleHost::set_pointer(uint16_t cache_idx, Pointer const& cursor, Se
     rect.cy -= (BORDER_WIDTH_HEIGHT - 1);
 
     if (rect.contains_pt(this->current_pointer_pos_x, this->current_pointer_pos_y)) {
-        Impl::get_drawable(*this).set_pointer(cache_idx, cursor, mode);
+        Impl::get_drawable(*this).cached_pointer(cache_idx);
     }
 
-    this->current_pointer = cursor;
+    this->current_cache_pointer_index = cache_idx;
+}
+
+void WidgetModuleHost::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor)
+{
+    Impl::get_drawable(*this).new_pointer(cache_idx, cursor);
 }
 
 WidgetModuleHost::WidgetModuleHost(
-    gdi::GraphicApi& drawable, Widget& parent,
-    NotifyApi* notifier,
+    gdi::GraphicApi& drawable, Widget& parent, NotifyApi* notifier,
     std::unique_ptr<mod_api>&& managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
     uint16_t front_width, uint16_t front_height,
@@ -326,8 +331,9 @@ WidgetModuleHost::WidgetModuleHost(
 , vscroll(drawable, *this, this, false, BLACK,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
 , monitors(cs_monitor)
+, current_cache_pointer_index(gdi::CachePointerIndex(PredefinedPointer::SystemNormal))
 {
-    this->pointer_flag = Pointer::POINTER_CUSTOM;
+    this->pointer_flag = PointerType::Custom;
 
     this->impl = &composite_array;
 

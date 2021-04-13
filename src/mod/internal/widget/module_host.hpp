@@ -33,8 +33,7 @@ class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
     WidgetModuleHost(
-        gdi::GraphicApi& drawable, Widget& parent,
-        NotifyApi* notifier,
+        gdi::GraphicApi& drawable, Widget& parent, NotifyApi* notifier,
         /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
         uint16_t front_width, uint16_t front_height,
@@ -74,7 +73,8 @@ public:
     void draw(RDPColCache   const & cmd) override;
     void draw(RDPBrushCache const & cmd) override;
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override;
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override;
 
     mod_api& get_managed_mod()
     {
@@ -92,9 +92,9 @@ public:
 
     using WidgetParent::set_wh;
 
-    [[nodiscard]] const Pointer* get_pointer() const override
+    [[nodiscard]] gdi::CachePointerIndex const* get_cache_pointer_index() const override
     {
-        return &this->current_pointer;
+        return &this->current_cache_pointer_index;
     }
 
     // NotifyApi
@@ -193,7 +193,7 @@ private:
 
     GCC::UserData::CSMonitor monitor_one;
 
-    Pointer current_pointer;
+    gdi::CachePointerIndex current_cache_pointer_index;
 
     int current_pointer_pos_x = 0;
     int current_pointer_pos_y = 0;

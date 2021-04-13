@@ -22,47 +22,26 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 
 class FakeSerializer : public RDPSerializer
 {
 public:
-    FakeSerializer( OutStream & stream_orders
-                  , OutStream & stream_bitmaps
-                  , const BitsPerPixel bpp
-                  , BmpCache & bmp_cache
-                  , GlyphCache & glyph_cache
-                  , PointerCache & pointer_cache
-                  , const int bitmap_cache_version
-                  , const bool use_bitmap_comp
-                  , const bool use_compact_packets
-                  , size_t max_data_block_size
-                  , bool experimental_enable_serializer_data_block_size_limit
-                  , RDPSerializerVerbose verbose) :
-        RDPSerializer( stream_orders
-                     , stream_bitmaps
-                     , bpp
-                     , bmp_cache
-                     , glyph_cache
-                     , pointer_cache
-                     , bitmap_cache_version
-                     , use_bitmap_comp
-                     , use_compact_packets
-                     , max_data_block_size
-                     , experimental_enable_serializer_data_block_size_limit
-                     , verbose) {}
+    using RDPSerializer::RDPSerializer;
 
 protected:
     void flush_orders() override {}
     void flush_bitmaps() override {}
 
-    void send_pointer(int cache_idx, const Pointer & cursor) override {
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
+    {
         (void)cache_idx;
         (void)cursor;
     }
-    void cached_pointer_update(int cache_idx) override {
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
         (void)cache_idx;
     }
 };
@@ -288,8 +267,6 @@ RED_AUTO_TEST_CASE(TestXXX)
 
     GlyphCache gly_cache;
 
-    PointerCache ptr_cache;
-
     StaticOutStream<65535> stream_orders;
     StaticOutStream<65535> stream_bitmaps;
 
@@ -300,7 +277,7 @@ RED_AUTO_TEST_CASE(TestXXX)
     bool const experimental_enable_serializer_data_block_size_limit = true;
 
     FakeSerializer serializer(stream_orders, stream_bitmaps, BitsPerPixel{bpp},
-        bmp_cache, gly_cache, ptr_cache, bitmap_cache_version, use_bitmap_comp,
+        bmp_cache, gly_cache, bitmap_cache_version, use_bitmap_comp,
         use_compact_packets, max_data_block_size, experimental_enable_serializer_data_block_size_limit, RDPSerializerVerbose::internal_buffer);
 
     serializer.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), Rect(0, 0, bogus.cx(), bogus.cy()), bogus);

@@ -169,7 +169,8 @@ RED_AUTO_TEST_CASE(TestVncPointer)
                    0x00, 0x00, 0x00,
     };
 
-    Pointer cursor = VNC::pointer_loader_vnc(
+    VNC::PointerLoaderVnc pointer_loader_vnc;
+    RdpPointerView cursor = pointer_loader_vnc.load(
         bytes_per_pixel,
         cx, cy, sx, sy,
         make_array_view(data),
@@ -330,7 +331,7 @@ RED_AUTO_TEST_CASE(TestVncPointer)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         ""_av_hex;
-    RED_CHECK(cursor.get_native_xor_mask() == expected_data);
+    RED_CHECK(cursor.xor_mask() == expected_data);
 
     auto expected_mask =
         "\xff\xff\xff\xff"
@@ -360,7 +361,7 @@ RED_AUTO_TEST_CASE(TestVncPointer)
         "\xff\xff\xff\xff"
         ""_av;
 
-    RED_CHECK(cursor.get_monochrome_and_mask() == expected_mask);
+    RED_CHECK(cursor.and_mask() == expected_mask);
 }
 
 RED_AUTO_TEST_CASE(TestPointerVNC_BW)
@@ -421,13 +422,14 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
 
     // r31 rs<<11 g63 gs<<5 b31 bs<<0
 
-    Pointer vnccursor = VNC::pointer_loader_vnc(BytesPerPixel{2}, 12, 19, 0, 0,
+    VNC::PointerLoaderVnc pointer_loader_vnc;
+    RdpPointerView vnccursor = pointer_loader_vnc.load(BytesPerPixel{2}, 12, 19, 0, 0,
         make_array_view(data), make_array_view(mask), 11, 31, 5, 63, 0, 31);
 
-    RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
-    RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 19);
-    RED_CHECK_EQUAL(vnccursor.get_hotspot().x, 0);
-    RED_CHECK_EQUAL(vnccursor.get_hotspot().y, 0);
+    RED_CHECK_EQUAL(vnccursor.dimensions().width, 32);
+    RED_CHECK_EQUAL(vnccursor.dimensions().height, 19);
+    RED_CHECK_EQUAL(vnccursor.hotspot().x, 0);
+    RED_CHECK_EQUAL(vnccursor.hotspot().y, 0);
 
     auto expected_mask =
         "\xfe\xff\xFF\xFF"
@@ -450,7 +452,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
         "\x3f\xff\xFF\xFF"
         "\x7f\xff\xFF\xFF"
         ""_av_hex;
-    RED_CHECK(vnccursor.get_monochrome_and_mask() == expected_mask);
+    RED_CHECK(vnccursor.and_mask() == expected_mask);
 
     auto expected_data =
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -624,7 +626,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         ""_av_hex;
-    RED_CHECK(vnccursor.get_native_xor_mask() == expected_data);
+    RED_CHECK(vnccursor.xor_mask() == expected_data);
 }
 
 RED_AUTO_TEST_CASE(TestPointerVNC_Color)
@@ -765,16 +767,17 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
                    0b00000001, 0b00000000, 0b00000000,
     };
 
-    Pointer vnccursor = VNC::pointer_loader_vnc(BytesPerPixel{2}, 23, 27, 0, 8,
+    VNC::PointerLoaderVnc pointer_loader_vnc;
+    RdpPointerView vnccursor = pointer_loader_vnc.load(BytesPerPixel{2}, 23, 27, 0, 8,
         make_array_view(data), make_array_view(mask), 11, 31, 5, 63, 0, 31);
 
     // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
-    RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
-    RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 27);
-    RED_CHECK_EQUAL(vnccursor.get_hotspot().x, 0);
-    RED_CHECK_EQUAL(vnccursor.get_hotspot().y, 8);
-    auto d = vnccursor.get_native_xor_mask();
-    auto m = vnccursor.get_monochrome_and_mask();
+    RED_CHECK_EQUAL(vnccursor.dimensions().width, 32);
+    RED_CHECK_EQUAL(vnccursor.dimensions().height, 27);
+    RED_CHECK_EQUAL(vnccursor.hotspot().x, 0);
+    RED_CHECK_EQUAL(vnccursor.hotspot().y, 8);
+    auto d = vnccursor.xor_mask();
+    auto m = vnccursor.and_mask();
 
     RED_CHECK_EQUAL(m.size(), 27*4);
     RED_CHECK_SIG(m,

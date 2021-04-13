@@ -54,6 +54,8 @@ namespace
 
         TestGraphic gd_drawable {scr.cx, scr.cy};
 
+        std::array<RdpPointer, PointerCache::MAX_POINTER_COUNT> pointers;
+
         WrmCaptureImpl wrm;
 
         WrmForTest(
@@ -97,7 +99,8 @@ namespace
                 FilePermissions(0777),
             },
             gd_drawable,
-            rail_window_rect)
+            rail_window_rect,
+            PointerCache::SourcePointersView{pointers})
         {}
     };
 }

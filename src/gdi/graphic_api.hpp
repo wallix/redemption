@@ -29,6 +29,8 @@
 
 #include <cassert>
 
+enum class PredefinedPointer;
+
 class RDPDstBlt;
 class RDPMultiDstBlt;
 class RDPPatBlt;
@@ -50,7 +52,6 @@ class RDPBmpCache;
 #endif
 
 struct RDPBitmapData;
-struct Pointer;
 class Bitmap;
 class GlyphCache;
 
@@ -58,6 +59,7 @@ class RDPColCache;
 class RDPBrushCache;
 class RDPSetSurfaceCommand;
 class RDPSurfaceContent;
+class RdpPointerView;
 
 namespace RDP {
     class RDPMultiPatBlt;
@@ -250,6 +252,40 @@ inline BGRColor color_decode(const RDPColor color, Depth depth, const BGRPalette
     return color_decode(color, ColorCtx{depth, palette});
 }
 
+struct CachePointerIndex
+{
+    static constexpr std::size_t MAX_POINTER_COUNT = 25;
+
+    CachePointerIndex(uint16_t idx) noexcept
+    : idx(idx)
+    {
+        assert(idx < MAX_POINTER_COUNT);
+    }
+
+    CachePointerIndex(PredefinedPointer pointer) noexcept
+    : idx(MAX_POINTER_COUNT + uint16_t(pointer))
+    {}
+
+    bool is_predefined_pointer() const noexcept
+    {
+        return idx >= MAX_POINTER_COUNT;
+    }
+
+    PredefinedPointer as_predefined_pointer() const noexcept
+    {
+        assert(is_predefined_pointer());
+        return PredefinedPointer(idx - MAX_POINTER_COUNT);
+    }
+
+    uint16_t cache_index() const noexcept
+    {
+        return idx;
+    }
+
+private:
+    uint16_t idx;
+};
+
 // TODO: why doesn't GraphicApi give information on drawing surface size ?
 // in vnc copyrect we need that to clip to the whole screen
 struct GraphicApi : private noncopyable
@@ -317,15 +353,10 @@ struct GraphicApi : private noncopyable
 
     virtual void sync() {}
 
-    enum class SetPointerMode : uint8_t
-    {
-        New,
-        Cached,
-        Insert,
-    };
+    virtual void cached_pointer(CachePointerIndex cache_idx) = 0;
 
-    /// \c cache_idx is ignored with \c SetPointerMode::Insert
-    virtual void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) = 0;
+    /// \pre cache_idx.is_predefined_pointer() == false
+    virtual void new_pointer(CachePointerIndex cache_idx, RdpPointerView const& cursor) = 0;
 
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, bytes_view data) { (void)rownum; (void)data; }
@@ -377,7 +408,16 @@ public:
     void draw(RDPColCache   const & /*cmd*/) override {}
     void draw(RDPBrushCache const & /*cmd*/) override {}
 
-    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
+    {
+        (void)cache_idx;
+        (void)cursor;
+    }
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        (void)cache_idx;
+    }
 
 public:
     NullGraphic() = default;

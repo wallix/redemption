@@ -1389,9 +1389,9 @@ public:
                 event_manager.get_time_base(), front.get_palette(), front, front.keymap,
                 front.get_client_info(), font, rail_client_execute, this->ini);
             ModFactory mod_factory(
-                mod_wrapper, event_manager.get_events(), front.get_client_info(), front,
-                front, redir_info, ini, font, theme, rail_client_execute, front.keymap,
-                rnd, cctx);
+                mod_wrapper, event_manager.get_events(), front.get_client_info(),
+                front, front, redir_info, ini, font, theme,
+                rail_client_execute, front.keymap, rnd, cctx);
 
             auto end_loop = EndLoopState::ShowCloseBox;
 

@@ -27,11 +27,6 @@
 #include "configs/config_access.hpp"
 #include "core/events.hpp"
 
-namespace gdi
-{
-    class GraphicApi;
-}
-
 using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user, vcfg::accessmode::get | vcfg::accessmode::is_asked>,
     vcfg::var<cfg::globals::target_device, vcfg::accessmode::get | vcfg::accessmode::ask | vcfg::accessmode::is_asked>,
@@ -55,7 +50,8 @@ public:
         char const* auth_error_message,
         CloseModVariables vars,
         EventContainer& events,
-        gdi::GraphicApi & gd, FrontAPI & front, uint16_t width, uint16_t height,
+        gdi::GraphicApi & gd,
+        FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool back_selector);
 

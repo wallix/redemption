@@ -49,10 +49,6 @@ namespace
         constexpr char const* update_mouse_position = "setPointerPosition";
         constexpr char const* set_time = "setTime";
     }
-
-    using SetPointerMode = gdi::GraphicApi::SetPointerMode;
-
-    const Pointer dummy_cursor; // for gdi::GraphicApi::SetPointerMode::Cached
 }
 
 struct WrmPlayer
@@ -325,10 +321,10 @@ struct WrmPlayer
                 uint8_t const cache_idx = this->in_stream.in_uint8();
 
                 if (this->in_stream.in_remain()) {
-                    const Pointer cursor = pointer_loader_32x32(this->in_stream);
-                    this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
+                    const RdpPointerView cursor = pointer_loader_32x32(this->in_stream);
+                    this->gd.new_pointer(cache_idx, cursor);
                 }
-                this->gd.set_pointer(cache_idx, dummy_cursor, SetPointerMode::Cached);
+                this->gd.cached_pointer(cache_idx);
                 break;
             }
 
@@ -337,8 +333,8 @@ struct WrmPlayer
                 this->_interpret_mouse_position();
 
                 uint8_t cache_idx = this->in_stream.in_uint8();
-                const Pointer cursor = pointer_loader_2(this->in_stream);
-                this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
+                const RdpPointerView cursor = pointer_loader_2(this->in_stream);
+                this->gd.new_pointer(cache_idx, cursor);
                 break;
             }
 
@@ -346,8 +342,8 @@ struct WrmPlayer
             {
                 const BitsPerPixel data_bpp = checked_int{this->in_stream.in_uint16_le()};
                 const uint16_t cache_idx = this->in_stream.in_uint16_le();
-                const Pointer cursor = pointer_loader_new(data_bpp, this->in_stream);
-                this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
+                const RdpPointerView cursor = pointer_loader_new(data_bpp, this->in_stream);
+                this->gd.new_pointer(cache_idx, cursor);
                 break;
             }
 

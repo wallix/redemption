@@ -75,7 +75,7 @@ struct ClientInfo
     int bitmap_cache_version = 0; /* 0 = original version, 2 = v2 */
 
     /* pointer info */
-    int pointer_cache_entries = 0;
+    uint16_t pointer_cache_entries = 0;
     bool supported_new_pointer_update = false;
 
     //uint32_t desktop_cache = 0;

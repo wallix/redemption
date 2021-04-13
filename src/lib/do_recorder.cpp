@@ -1104,43 +1104,44 @@ static inline int replay(
 
                         RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};
 
-                        DrawableParams const drawable_params
-                            = DrawableParams::shared_drawable(rdp_drawable);
-
-                        MetaParams const meta_params{
-                            MetaParams::EnableSessionLog::No,
-                            MetaParams::HideNonPrintable::No,
-                            rp.log_cliboard_activities,
-                            rp.log_file_system_activities,
-                            rp.log_only_relevant_clipboard_activities,
-                        };
-
-                        KbdLogParams const kbd_log_params{
-                            rp.wrm_keyboard_log,
-                            false,
-                            false,
-                            rp.meta_keyboard_log,
-                        };
-
                         cctx.set_trace_type(rp.encryption_type);
-
-                        WrmParams const wrm_params = WrmParams{
-                            rp.wrm_color_depth.get_or(player.get_wrm_info().bpp),
-                            player.get_wrm_info().remote_app,
-                            cctx,
-                            rnd,
-                            rp.hash_path.c_str(),
-                            rp.wrm_break_interval,
-                            rp.wrm_compression_algorithm.get_or(
-                                player.get_wrm_info().compression_algorithm),
-                            rp.wrm_verbosity,
-                            rp.file_permissions
-                        };
 
                         std::optional<Capture> retarded_capture {};
                         auto set_capture_consumer = [&](
                             MonotonicTimePoint now, RealTimePoint real_time
                         ) mutable {
+                            DrawableParams const drawable_params
+                                = DrawableParams::shared_drawable(rdp_drawable,
+                                                                  player.pointers_view());
+
+                            MetaParams const meta_params{
+                                MetaParams::EnableSessionLog::No,
+                                MetaParams::HideNonPrintable::No,
+                                rp.log_cliboard_activities,
+                                rp.log_file_system_activities,
+                                rp.log_only_relevant_clipboard_activities,
+                            };
+
+                            KbdLogParams const kbd_log_params{
+                                rp.wrm_keyboard_log,
+                                false,
+                                false,
+                                rp.meta_keyboard_log,
+                            };
+
+                            WrmParams const wrm_params = WrmParams{
+                                rp.wrm_color_depth.get_or(player.get_wrm_info().bpp),
+                                player.get_wrm_info().remote_app,
+                                cctx,
+                                rnd,
+                                rp.hash_path.c_str(),
+                                rp.wrm_break_interval,
+                                rp.wrm_compression_algorithm.get_or(
+                                    player.get_wrm_info().compression_algorithm),
+                                rp.wrm_verbosity,
+                                rp.file_permissions
+                            };
+
                             CaptureParams capture_params{
                                 now,
                                 real_time,
@@ -1152,6 +1153,7 @@ static inline int replay(
                                 rp.smart_video_cropping,
                                 0
                             };
+
                             auto* ptr = &retarded_capture.emplace(
                                   capture_params
                                 , drawable_params
@@ -1236,7 +1238,8 @@ static inline int replay(
 
                         if (capture_times.begin_cap.count()) {
                             player.add_consumer(
-                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
+                                &rdp_drawable, nullptr, nullptr, nullptr,
+                                &capture_maker, nullptr, nullptr);
                         }
                         else {
                             set_capture_consumer(

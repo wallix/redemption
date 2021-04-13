@@ -29,29 +29,43 @@
 #include <cassert>
 #include <cstring>
 
-Pointer Pointer::build_from_native(
-    CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask)
+RdpPointer::RdpPointer(
+    CursorSize d, Hotspot hs, BitsPerPixel xor_bpp,
+    bytes_view xor_mask, bytes_view and_mask
+) noexcept
 {
-    Pointer pointer;
-
-    pointer.dimensions = d;
-    pointer.hotspot = hs;
-    pointer.native_xor_bpp = xor_bpp;
-    ::memcpy(pointer.data, xor_mask.data(), xor_mask.size());
-    pointer.native_length_xor_mask = xor_mask.size();
-    ::memcpy(pointer.mask, and_mask.data(), and_mask.size());
-    pointer.native_length_and_mask = and_mask.size();
-    return pointer;
+    *this = RdpPointerView{d, hs, xor_bpp, xor_mask, and_mask};
 }
 
-bool Pointer::operator==(const Pointer & other) const
+RdpPointer::RdpPointer(RdpPointer const& pointer) noexcept
 {
-    return other.hotspot.x == this->hotspot.x
-        && other.hotspot.y == this->hotspot.y
-        && other.dimensions.width == this->dimensions.width
-        && other.dimensions.height == this->dimensions.height
-        && (0 == memcmp(this->data, other.data, other.native_length_xor_mask))
-        && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()));
+    *this = pointer.as_view();
+}
+
+RdpPointer::RdpPointer(RdpPointerView const& pointer) noexcept
+{
+    *this = pointer;
+}
+
+RdpPointer& RdpPointer::operator=(RdpPointer const& pointer) noexcept
+{
+    *this = pointer.as_view();
+    return *this;
+}
+
+RdpPointer& RdpPointer::operator=(RdpPointerView const& pointer) noexcept
+{
+    assert(pointer.dimensions().width <= 96);
+    assert(pointer.dimensions().height <= 96);
+
+    this->dimensions = pointer.dimensions();
+    this->hotspot = pointer.hotspot();
+    this->native_xor_bpp = pointer.xor_bits_per_pixel();
+    ::memcpy(this->data, pointer.xor_mask().data(), pointer.xor_mask().size());
+    this->native_length_xor_mask = checked_int{pointer.xor_mask().size()};
+    ::memcpy(this->mask, pointer.and_mask().data(), pointer.and_mask().size());
+    this->native_length_and_mask = checked_int{pointer.and_mask().size()};
+    return *this;
 }
 
 //    2.2.9.1.1.4.4     Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
@@ -81,18 +95,18 @@ bool Pointer::operator==(const Pointer & other) const
 // pointers the XOR data is always padded to a 4-byte boundary per scan line,
 // while color pointer XOR data is still packed on a 2-byte boundary.
 
-bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& cursor)
+bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, RdpPointerView const& cursor)
 {
-    const auto dimensions = cursor.get_dimensions();
-    const auto hotspot = cursor.get_hotspot();
+    const auto dimensions = cursor.dimensions();
+    const auto hotspot = cursor.hotspot();
 
-    const bool new_pointer_update_used = (cursor.get_native_xor_bpp() != BitsPerPixel{24});
+    const bool new_pointer_update_used = (cursor.xor_bits_per_pixel() != BitsPerPixel{24});
 
     if (new_pointer_update_used)
     {
         // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
         //     contained in the colorPtrAttr field.
-        stream.out_uint16_le(static_cast<uint16_t>(cursor.get_native_xor_bpp()));
+        stream.out_uint16_le(static_cast<uint16_t>(cursor.xor_bits_per_pixel()));
     }
 
     // cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
@@ -136,15 +150,15 @@ bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& c
     // lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
     //     the andMaskData field.
 
-    auto av_and_mask = cursor.get_monochrome_and_mask();
-    auto av_xor_mask = cursor.get_native_xor_mask();
+    auto av_and_mask = cursor.and_mask();
+    auto av_xor_mask = cursor.xor_mask();
 
-    stream.out_uint16_le(av_and_mask.size());
+    stream.out_uint16_le(checked_int{av_and_mask.size()});
 
     // lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
     //     the xorMaskData field.
 
-    stream.out_uint16_le(av_xor_mask.size());
+    stream.out_uint16_le(checked_int{av_xor_mask.size()});
 
     // xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
     //     bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -176,57 +190,61 @@ bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& c
     return new_pointer_update_used;
 }
 
-Pointer decode_pointer(BitsPerPixel data_bpp,
-                       uint16_t width,
-                       uint16_t height,
-                       uint16_t hsx,
-                       uint16_t hsy,
-                       uint16_t dlen,
-                       const uint8_t * data,
-                       uint16_t mlen,
-                       const uint8_t * mask)
+namespace
 {
-    return Pointer::build_from_native(CursorSize(width, height),
-                                      Hotspot(hsx, hsy),
-                                      data_bpp,
-                                      bytes_view(data, dlen),
-                                      bytes_view(mask, mlen));
-}
+    RdpPointerView load_rdp_pointer(
+        CursorSize dimensions, Hotspot hotspot, BitsPerPixel data_bpp,
+        uint16_t mlen, uint16_t dlen, InStream& stream)
+    {
+        if (!stream.in_check_rem(mlen + dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
+                mlen, dlen, mlen+dlen, stream.in_remain());
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
 
-Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream& stream)
-{
-    auto hsx      = stream.in_uint16_le();
-    auto hsy      = stream.in_uint16_le();
-    auto width    = stream.in_uint16_le();
-    auto height   = stream.in_uint16_le();
+        if (dimensions.width >= RdpPointer::MAX_WIDTH
+         || dimensions.height >= RdpPointer::MAX_HEIGHT
+         || dlen > RdpPointer::DATA_SIZE
+         || mlen > RdpPointer::MASK_SIZE
+        ) {
+            LOG(LOG_ERR, "cursor too large (width=%u height=%u dlen=%u mlen=%u)",
+                dimensions.width, dimensions.height, dlen, mlen);
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
 
-    uint16_t mlen = stream.in_uint16_le(); /* mask length */
-    uint16_t dlen = stream.in_uint16_le(); /* data length */
+        auto data = stream.in_skip_bytes(dlen);
+        auto mask = stream.in_skip_bytes(mlen);
 
-    assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-    assert(::even_pad_length(::nbbytes_large(width * underlying_cast(data_bpp))) == dlen / height);
-
-    if (!stream.in_check_rem(mlen + dlen)){
-        LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
-            mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
-        throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        return RdpPointerView(
+            dimensions,
+            hotspot,
+            data_bpp,
+            data,
+            mask
+        );
     }
-
-    const uint8_t * data = stream.in_uint8p(dlen);
-    const uint8_t * mask = stream.in_uint8p(mlen);
-
-    return decode_pointer(data_bpp,
-                          width,
-                          height,
-                          hsx,
-                          hsy,
-                          dlen,
-                          data,
-                          mlen,
-                          mask);
 }
 
-Pointer pointer_loader_2(InStream & stream)
+RdpPointerView pointer_loader_new(BitsPerPixel data_bpp, InStream& stream)
+{
+    auto hsx    = stream.in_uint16_le();
+    auto hsy    = stream.in_uint16_le();
+    auto width  = stream.in_uint16_le();
+    auto height = stream.in_uint16_le();
+    auto mlen   = stream.in_uint16_le(); /* mask length */
+    auto dlen   = stream.in_uint16_le(); /* data length */
+
+    return load_rdp_pointer(
+        CursorSize{width, height},
+        Hotspot{hsx, hsy},
+        data_bpp,
+        mlen,
+        dlen,
+        stream
+    );
+}
+
+RdpPointerView pointer_loader_2(InStream & stream)
 {
     uint8_t width     = stream.in_uint8();
     uint8_t height    = stream.in_uint8();
@@ -236,24 +254,17 @@ Pointer pointer_loader_2(InStream & stream)
     uint16_t dlen     = stream.in_uint16_le();
     uint16_t mlen     = stream.in_uint16_le();
 
-    LOG_IF(dlen > Pointer::DATA_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data length too large");
-    LOG_IF(mlen > Pointer::MASK_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
-
-    auto data = stream.in_uint8p(dlen);
-    auto mask = stream.in_uint8p(mlen);
-
-    return decode_pointer(data_bpp,
-                          width,
-                          height,
-                          hsx,
-                          hsy,
-                          dlen,
-                          data,
-                          mlen,
-                          mask);
+    return load_rdp_pointer(
+        CursorSize{width, height},
+        Hotspot{hsx, hsy},
+        data_bpp,
+        mlen,
+        dlen,
+        stream
+    );
 }
 
-Pointer pointer_loader_32x32(InStream & stream)
+RdpPointerView pointer_loader_32x32(InStream & stream)
 {
     const uint8_t width     = 32;
     const uint8_t height    = 32;
@@ -263,33 +274,27 @@ Pointer pointer_loader_32x32(InStream & stream)
     const uint16_t dlen     = 32 * 32 * nb_bytes_per_pixel(data_bpp);
     uint16_t mlen           = 32 * ::nbbytes(32);
 
-    LOG_IF(dlen > Pointer::DATA_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data length too large");
-    LOG_IF(mlen > Pointer::MASK_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
-
-    auto data = stream.in_uint8p(dlen);
-    auto mask = stream.in_uint8p(mlen);
-
-    return decode_pointer(data_bpp,
-                          width,
-                          height,
-                          hsx,
-                          hsy,
-                          dlen,
-                          data,
-                          mlen,
-                          mask);
+    return load_rdp_pointer(
+        CursorSize{width, height},
+        Hotspot{hsx, hsy},
+        data_bpp,
+        mlen,
+        dlen,
+        stream
+    );
 }
 
 namespace
 {
 
-constexpr Pointer predefined_pointer(
+constexpr RdpPointer predefined_pointer(
     const uint16_t width, const uint16_t height, const char * def,
     const uint16_t hsx, const uint16_t hsy)
 {
-    return Pointer::build_from(
-        CursorSize(width, height),
-        Hotspot(hsx, hsy),
+    return RdpPointer(
+        RdpPointer::constexpr_t{},
+        CursorSize{width, height},
+        Hotspot{hsx, hsy},
         BitsPerPixel(24),
         [&](uint8_t * dest, uint8_t * dest_mask)
         {
@@ -392,42 +397,6 @@ constexpr auto edit_pointer_v = predefined_pointer(32, 32,
     /* 0b40 */ "................................"
     /* 0ba0 */ "................................"
     , 15, 16
-);
-
-constexpr auto drawable_default_pointer_v = predefined_pointer(32, 32,
-    /* 0000 */ "................................"
-    /* 0060 */ "................................"
-    /* 00c0 */ "................................"
-    /* 0120 */ "................................"
-    /* 0180 */ "................................"
-    /* 01e0 */ "................................"
-    /* 0240 */ "................................"
-    /* 02a0 */ "................................"
-    /* 0300 */ "................................"
-    /* 0360 */ "................................"
-    /* 03c0 */ "................................"
-    /* 0420 */ "................................"
-    /* 0480 */ "................................"
-    /* 04e0 */ "................................"
-    /* 0540 */ "................................"
-    /* 05a0 */ ".X....X++X......................"
-    /* 0600 */ "X+X..X++X......................."
-    /* 0660 */ "X++X.X++X......................."
-    /* 06c0 */ "X+++X++X........................"
-    /* 0720 */ "X++++++XXXXX...................."
-    /* 0780 */ "X++++++++++X...................."
-    /* 07e0 */ "X+++++++++X....................."
-    /* 0840 */ "X++++++++X......................"
-    /* 08a0 */ "X+++++++X......................."
-    /* 0900 */ "X++++++X........................"
-    /* 0960 */ "X+++++X........................."
-    /* 09c0 */ "X++++X.........................."
-    /* 0a20 */ "X+++X..........................."
-    /* 0a80 */ "X++X............................"
-    /* 0ae0 */ "X+X............................."
-    /* 0b40 */ "XX.............................."
-    /* 0ba0 */ "X..............................."
-    , 0, 0
 );
 
 constexpr auto size_NS_pointer_v = predefined_pointer(32, 32,
@@ -682,52 +651,36 @@ constexpr auto system_normal_pointer_v = predefined_pointer(32, 32,
     , 10, 10
 );
 
-constexpr auto system_default_pointer_v = predefined_pointer(32, 32,
-    /* 0000 */ "--------------------------------"
-    /* 0060 */ "------------------XX------------"
-    /* 00c0 */ "-----------------X++X-----------"
-    /* 0120 */ "-----------------X++X-----------"
-    /* 0180 */ "----------------X++X------------"
-    /* 01e0 */ "----------X-----X++X------------"
-    /* 0240 */ "----------XX---X++X-------------"
-    /* 02a0 */ "----------X+X--X++X-------------"
-    /* 0300 */ "----------X++XX++X--------------"
-    /* 0360 */ "----------X+++X++X--------------"
-    /* 03c0 */ "----------X++++++XXXXX----------"
-    /* 0420 */ "----------X+++++++++X-----------"
-    /* 0480 */ "----------X++++++++X------------"
-    /* 04e0 */ "----------X+++++++X-------------"
-    /* 0540 */ "----------X++++++X--------------"
-    /* 05a0 */ "----------X+++++X---------------"
-    /* 0600 */ "----------X++++X----------------"
-    /* 0660 */ "----------X+++X-----------------"
-    /* 06c0 */ "----------X++X------------------"
-    /* 0720 */ "----------X+X-------------------"
-    /* 0780 */ "----------XX--------------------"
-    /* 07e0 */ "----------X---------------------"
-    /* 0840 */ "--------------------------------"
-    /* 08a0 */ "--------------------------------"
-    /* 0900 */ "--------------------------------"
-    /* 0960 */ "--------------------------------"
-    /* 09c0 */ "--------------------------------"
-    /* 0a20 */ "--------------------------------"
-    /* 0a80 */ "--------------------------------"
-    /* 0ae0 */ "--------------------------------"
-    /* 0b40 */ "--------------------------------"
-    /* 0ba0 */ "--------------------------------"
-    , 10, 10
-);
-
 }
 
-Pointer const& normal_pointer() noexcept { return normal_pointer_v; }
-Pointer const& edit_pointer() noexcept { return edit_pointer_v; }
-Pointer const& drawable_default_pointer() noexcept { return drawable_default_pointer_v; }
-Pointer const& size_NS_pointer() noexcept { return size_NS_pointer_v; }
-Pointer const& size_NESW_pointer() noexcept { return size_NESW_pointer_v; }
-Pointer const& size_NWSE_pointer() noexcept { return size_NWSE_pointer_v; }
-Pointer const& size_WE_pointer() noexcept { return size_WE_pointer_v; }
-Pointer const& dot_pointer() noexcept { return dot_pointer_v; }
-Pointer const& null_pointer() noexcept { return null_pointer_v; }
-Pointer const& system_normal_pointer() noexcept { return system_normal_pointer_v; }
-Pointer const& system_default_pointer() noexcept { return system_default_pointer_v; }
+RdpPointer const& normal_pointer() noexcept { return normal_pointer_v; }
+RdpPointer const& edit_pointer() noexcept { return edit_pointer_v; }
+RdpPointer const& size_NS_pointer() noexcept { return size_NS_pointer_v; }
+RdpPointer const& size_NESW_pointer() noexcept { return size_NESW_pointer_v; }
+RdpPointer const& size_NWSE_pointer() noexcept { return size_NWSE_pointer_v; }
+RdpPointer const& size_WE_pointer() noexcept { return size_WE_pointer_v; }
+RdpPointer const& dot_pointer() noexcept { return dot_pointer_v; }
+RdpPointer const& null_pointer() noexcept { return null_pointer_v; }
+RdpPointer const& system_normal_pointer() noexcept { return system_normal_pointer_v; }
+
+RdpPointer const& predefined_pointer_to_pointer(PredefinedPointer pointer) noexcept
+{
+    switch (pointer)
+    {
+        case PredefinedPointer::SystemNormal: return system_normal_pointer();
+        case PredefinedPointer::Edit: return edit_pointer();
+        case PredefinedPointer::Null: return null_pointer();
+        case PredefinedPointer::Dot:  return dot_pointer();
+        case PredefinedPointer::NS:   return size_NS_pointer();
+        case PredefinedPointer::NESW: return size_NESW_pointer();
+        case PredefinedPointer::NWSE: return size_NWSE_pointer();
+        case PredefinedPointer::WE:   return size_WE_pointer();
+
+        case PredefinedPointer::Normal:
+        case PredefinedPointer::COUNT:
+            break;
+    }
+
+    assert(pointer == PredefinedPointer::Normal);
+    return normal_pointer();
+}

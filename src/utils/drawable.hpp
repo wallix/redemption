@@ -309,6 +309,11 @@ public:
         return this->impl_.data(x, y);
     }
 
+    [[nodiscard]] uint8_t * first_pixel(int x, int y) noexcept
+    {
+        return this->impl_.first_pixel(x, y);
+    }
+
     [[nodiscard]] uint16_t width() const noexcept
     {
         return this->impl_.width();
@@ -418,9 +423,6 @@ public:
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color);
 
     void set_row(size_t rownum, bytes_view data);
-
-    void trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
-    void clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
 
     operator ImageView () const
     {

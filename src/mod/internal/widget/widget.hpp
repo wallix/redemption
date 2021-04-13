@@ -25,7 +25,6 @@
 #include "utils/colors.hpp"
 #include "utils/sugar/zstring_view.hpp"
 #include "core/callback.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 
 class CopyPaste;
 
@@ -33,6 +32,7 @@ struct Keymap2;
 namespace gdi
 {
     class GraphicApi;
+    class CachePointerIndex;
 } // namespace gdi
 
 enum NotifyEventType
@@ -65,6 +65,13 @@ public:
         // FORCE_FOCUS  = 0x04
     };
 
+    enum class PointerType : uint8_t
+    {
+        Custom,
+        Normal,
+        Edit,
+    };
+
 public:
     Widget & parent;
     gdi::GraphicApi & drawable;
@@ -77,7 +84,7 @@ public:
     int group_id;
     int tab_flag;
     int focus_flag;
-    int pointer_flag;
+    PointerType pointer_flag;
     bool has_focus;
     int notify_value;
 
@@ -89,7 +96,7 @@ public:
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
-    , pointer_flag(Pointer::POINTER_NORMAL)
+    , pointer_flag(PointerType::Normal)
     , has_focus(false)
     , notify_value(0)
     {}
@@ -294,7 +301,7 @@ public:
         return this->rect;
     }
 
-    [[nodiscard]] virtual const Pointer* get_pointer() const
+    [[nodiscard]] virtual gdi::CachePointerIndex const* get_cache_pointer_index() const
     {
         return nullptr;
     }

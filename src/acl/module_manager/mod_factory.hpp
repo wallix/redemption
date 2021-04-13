@@ -171,7 +171,8 @@ public:
         auto new_mod = new SelectorMod(
             this->ini,
             this->events,
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -210,7 +211,8 @@ private:
             auth_error_message.c_str(),
             this->ini,
             this->events,
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -228,7 +230,8 @@ public:
         auto new_mod = new InteractiveTargetMod(
             this->ini,
             this->events,
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -269,7 +272,8 @@ private:
         auto new_mod = new DialogMod(
             this->ini,
             this->events,
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -294,7 +298,8 @@ public:
         auto new_mod = new WaitMod(
             this->ini,
             this->events,
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -314,7 +319,8 @@ public:
         auto new_mod = new TransitionMod(
             TR(trkeys::wait_msg, language(this->ini)),
             this->events,
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -357,7 +363,8 @@ public:
             this->events,
             username,
             "", // password
-            this->graphics, this->front,
+            this->graphics,
+            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -399,7 +406,8 @@ public:
     auto create_vnc_mod(SessionLogApi& session_log) -> ModPack
     {
         auto mod_pack = create_mod_vnc(
-            this->mod_wrapper.get_graphics(), this->ini,
+            this->mod_wrapper.get_graphics(),
+            this->ini,
             this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,

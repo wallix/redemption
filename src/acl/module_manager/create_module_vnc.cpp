@@ -91,7 +91,8 @@ public:
            , VNCMetrics * metrics
            , SessionLogApi& session_log)
     : mod_vnc(
-        t, gd, events, username, password, front, front_width, front_height,
+        t, gd, events, username, password,
+        front, front_width, front_height,
         keylayout, key_flags, clipboard_up, clipboard_down, encodings,
         clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
         server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
@@ -122,8 +123,9 @@ private:
 
 public:
     ModWithSocketAndMetrics(
-        gdi::GraphicApi & drawable, Inifile & ini,
-        const char * name, unique_fd sck, SocketTransport::Verbose verbose,
+        gdi::GraphicApi & drawable,
+        Inifile & ini, const char * name, unique_fd sck,
+        SocketTransport::Verbose verbose,
         std::string * error_message,
         EventContainer& events,
         SessionLogApi& session_log,

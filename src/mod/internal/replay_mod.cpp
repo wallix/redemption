@@ -99,7 +99,9 @@ struct ReplayMod::Reader
                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
         }
 
-        this->reader.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+        this->reader.add_consumer(
+            &drawable, nullptr, nullptr, nullptr,
+            nullptr, nullptr, nullptr);
     }
 };
 

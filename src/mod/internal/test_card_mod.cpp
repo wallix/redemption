@@ -34,7 +34,10 @@
 #include "utils/sugar/algostring.hpp"
 
 
-TestCardMod::TestCardMod(gdi::GraphicApi & gd, uint16_t width, uint16_t height, Font const & font, bool unit_test)
+TestCardMod::TestCardMod(
+    gdi::GraphicApi & gd,
+    uint16_t width, uint16_t height,
+    Font const & font, bool unit_test)
 : front_width(width)
 , front_height(height)
 , font(font)
@@ -45,7 +48,7 @@ TestCardMod::TestCardMod(gdi::GraphicApi & gd, uint16_t width, uint16_t height, 
 
 void TestCardMod::init()
 {
-    this->draw_event(this->gd);
+    this->draw_event();
 }
 
 Rect TestCardMod::get_screen_rect() const
@@ -68,7 +71,7 @@ void TestCardMod::rdp_input_scancode(
     }
 }
 
-void TestCardMod::draw_event(gdi::GraphicApi & gd)
+void TestCardMod::draw_event()
 {
     gd.begin_update();
 
@@ -206,10 +209,12 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
 /* 0060 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
 /* 0070 */ "\x88\x00\x00\x00\x00\x00\x00\x00\x88\x00"                         // ..........
             ;
-        InStream pointer_stream({pointer_data, 122});
-        Pointer pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream);
+        InStream pointer_stream(pointer_data);
+        RdpPointerView pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream);
 
-        gd.set_pointer(9, pointer, gdi::GraphicApi::SetPointerMode::New);
+        auto cache_idx = gdi::CachePointerIndex(9);
+        gd.new_pointer(cache_idx, pointer);
+        gd.cached_pointer(cache_idx);
     }
 
     gd.end_update();

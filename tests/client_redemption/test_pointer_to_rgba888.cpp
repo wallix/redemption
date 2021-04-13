@@ -47,13 +47,7 @@ struct ReadableCursor
 
 RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
 {
-    auto pointer = normal_pointer();
-    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(decode_pointer(
-        BitsPerPixel(24),
-        pointer.get_dimensions().width, pointer.get_dimensions().height,
-        pointer.get_hotspot().x, pointer.get_hotspot().y,
-        pointer.get_native_xor_mask().size(), pointer.get_native_xor_mask().data(),
-        pointer.get_monochrome_and_mask().size(), pointer.get_monochrome_and_mask().data()));
+    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(normal_pointer());
 
     RED_REQUIRE(32u == img.width);
     RED_REQUIRE(32u == img.height);
@@ -319,16 +313,12 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    redclient::RGBA8888Image img =
-        redclient::pointer_to_rgba8888(decode_pointer(BitsPerPixel(24),
-                                                      32,
-                                                      32,
-                                                      0,
-                                                      0,
-                                                      sizeof(xor_mask),
-                                                      xor_mask,
-                                                      sizeof(and_mask),
-                                                      and_mask));
+    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(RdpPointerView(
+        CursorSize{32, 32},
+        Hotspot{0, 0},
+        BitsPerPixel(24),
+        make_array_view(xor_mask),
+        make_array_view(and_mask)));
 
     RED_REQUIRE(32u == img.width);
     RED_REQUIRE(32u == img.height);

@@ -206,10 +206,10 @@ RED_AUTO_TEST_CASE(TestFront)
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, front.gd(), osd, events, session_log, front, info, redir_info,
-        gen2, channels_authorizations, mod_rdp_params, tls_client_params,
-        license_store, ini, metrics,
-        file_validator_service, mod_rdp_factory);
+        t, front.gd(), osd, events, session_log,
+        front, info, redir_info, gen2, channels_authorizations, mod_rdp_params,
+        tls_client_params, license_store, ini, metrics, file_validator_service,
+        mod_rdp_factory);
 
     // incoming connexion data
     RED_CHECK_EQUAL(front.screen_info().width, 1024);

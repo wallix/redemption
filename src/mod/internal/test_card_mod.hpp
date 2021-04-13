@@ -48,8 +48,7 @@ class TestCardMod : public mod_api
 
 public:
     TestCardMod(
-        gdi::GraphicApi & gd,
-        uint16_t width, uint16_t height,
+        gdi::GraphicApi & gd, uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true); /*NOLINT*/
 
     void init() override;
@@ -78,8 +77,6 @@ public:
 
     [[nodiscard]] Dimension get_dim() const override;
 
-    void draw_event(gdi::GraphicApi & gd);
-
     [[nodiscard]] bool is_up_and_running() const override
     {
         return true;
@@ -90,4 +87,7 @@ public:
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
 
     void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
+private:
+    void draw_event();
 };

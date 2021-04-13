@@ -122,10 +122,17 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override
+    void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
     {
         if (this->drawable) {
-            this->drawable->set_pointer(cache_idx, cursor, mode);
+            this->drawable->new_pointer(cache_idx, cursor);
+        }
+    }
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+    {
+        if (this->drawable) {
+            this->drawable->cached_pointer(cache_idx);
         }
     }
 

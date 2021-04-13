@@ -81,6 +81,7 @@ namespace
         bool capture_meta = false;
         bool capture_kbd;
 
+        std::array<RdpPointer, PointerCache::MAX_POINTER_COUNT> pointers;
 
         MetaParams meta_params {};
         VideoParams video_params {};
@@ -115,7 +116,8 @@ namespace
         , record_tmp_path(record_wd.dirname())
         , record_path(record_tmp_path)
         , hash_path(hash_wd.dirname())
-        , drawable_params(DrawableParams::delayed_drawable(cx, cy))
+        , drawable_params(DrawableParams::delayed_drawable(cx, cy,
+            PointerCache::SourcePointersView{pointers}))
         , wrm_params{
             BitsPerPixel{24},
             false,
@@ -291,13 +293,13 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_decimal_chars(st2.st_mtim.tv_sec), ' ',
         int_to_decimal_chars(st2.st_ctim.tv_sec), " 1007 1008\n")});
 
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.png"), 3102);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.png"), 3127);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000002.png"), 3145);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000003.png"), 3162);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000004.png"), 3175);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000005.png"), 3201);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000006.png"), 3225);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.png"), 3097);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.png"), 3123);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000002.png"), 3139);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000003.png"), 3155);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000004.png"), 3170);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000005.png"), 3196);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000006.png"), 3220);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000000.wrm"), array_view{str_concat(
         "v2\n\n\ntest_capture-000000.wrm 1691 ",
@@ -354,12 +356,12 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         MonotonicTimePoint now{1000s};
 
         auto const color_cxt = gdi::ColorCtx::depth16();
-        capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+        capture.cached_pointer(PredefinedPointer::Edit);
 
         capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 5);
+        capture.periodic_snapshot(now, 15, 21);
     });
 
     RED_CHECK_IMG(record_wd.add_file("test_capture-000000.png"),
@@ -1181,7 +1183,7 @@ namespace
 
         BmpCache bmp_cache;
         GlyphCache gly_cache;
-        PointerCache ptr_cache;
+        std::array<RdpPointer, PointerCache::MAX_POINTER_COUNT> pointers;
         RDPDrawable drawable;
         GraphicToFile consumer;
 
@@ -1197,7 +1199,8 @@ namespace
         )
         , drawable(scr.cx, scr.cy)
         , consumer(now, RealTimePoint{now.time_since_epoch()},
-            trans, BitsPerPixel{24}, false, Rect(), bmp_cache, gly_cache, ptr_cache,
+            trans, BitsPerPixel{24}, false, Rect(), bmp_cache, gly_cache,
+            PointerCache::SourcePointersView{pointers},
             drawable, WrmCompressionAlgorithm::no_compression,
             RDPSerializerVerbose::none)
         {}

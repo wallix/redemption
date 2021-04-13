@@ -57,9 +57,8 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 
     auto& event_cont = detail::ProtectedEventContainer::get_events(events);
     {
-        CloseMod d("message", ini, events, front.gd(), front,
-            screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
-            global_font_deja_vu_14(), theme, false);
+        CloseMod d("message", ini, events, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
+                   client_execute, global_font_deja_vu_14(), theme, false);
         d.init();
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -120,14 +119,18 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     {
         using gdi::GraphicApiForwarder<gdi::GraphicApi&>::GraphicApiForwarder;
 
-        void set_pointer(uint16_t cache_idx, const Pointer & cursor, gdi::GraphicApi::SetPointerMode mode) override
+        void cached_pointer(gdi::CachePointerIndex cache_idx) override
         {
-            (void)cache_idx;
-            (void)mode;
-            this->last_cursor = cursor;
+            this->last_cursor = cache_idx.cache_index();
         }
 
-        Pointer last_cursor;
+        void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+        {
+            (void)cache_idx;
+            (void)cursor;
+        }
+
+        uint16_t last_cursor = 0xFFFF;
     };
 
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
@@ -165,13 +168,13 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_rail.png");
 
     // set pointer mod
-    gd.set_pointer(0, normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+    gd.last_cursor = gdi::CachePointerIndex(PredefinedPointer::Normal).cache_index();
 
     // move to top border
     d.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 59, nullptr);
-    RED_TEST((gd.last_cursor == size_NS_pointer()));
+    RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::NS).cache_index());
 
     // move to widget
     d.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 100, nullptr);
-    RED_TEST((gd.last_cursor == normal_pointer()));
+    RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::Normal).cache_index());
 }
