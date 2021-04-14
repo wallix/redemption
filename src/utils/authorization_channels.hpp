@@ -52,6 +52,7 @@ public:
     bool cliprdr_file_is_authorized() const noexcept;
 
     bool rdpsnd_audio_output_is_authorized() const noexcept;
+    bool rdpsnd_audio_input_is_authorized() const noexcept;
 
     REDEMPTION_FRIEND_OSTREAM(out, AuthorizationChannels const & auth);
 
@@ -85,6 +86,13 @@ private:
         }};
     }
 
+    static constexpr std::array<array_view_const_char, 1> rdpcap_list()
+    {
+        return {{
+            cstr_array_view("rdpcap_audio_input,"),
+        }};
+    }
+
     array_view<CHANNELS::ChannelNameId const> rng_allow() const;
     array_view<CHANNELS::ChannelNameId const> rng_deny() const;
 
@@ -96,4 +104,5 @@ private:
     std::array<bool, decltype(rdpdr_list())().size()> rdpdr_restriction_ {{}};
     std::array<bool, decltype(cliprde_list())().size()> cliprdr_restriction_ {{}};
     std::array<bool, decltype(rdpsnd_list())().size()> rdpsnd_restriction_ {{}};
+    std::array<bool, decltype(rdpcap_list())().size()> rdpcap_restriction_ {{}};
 };

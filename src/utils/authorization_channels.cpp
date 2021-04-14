@@ -140,6 +140,7 @@ AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::str
         this->rdpdr_restriction_.fill(true);
         this->cliprdr_restriction_.fill(true);
         this->rdpsnd_restriction_.fill(true);
+        this->rdpcap_restriction_.fill(true);
     }
 
     auto normalize = [this](
@@ -150,6 +151,7 @@ AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::str
         ::normalize(ids, large_ids, channel_names::cliprdr, set, this->cliprdr_restriction_, cliprde_list());
         ::normalize(ids, large_ids, channel_names::rdpdr, set, this->rdpdr_restriction_, rdpdr_list());
         ::normalize(ids, large_ids, channel_names::rdpsnd, set, this->rdpsnd_restriction_, rdpsnd_list());
+        ::normalize(ids, large_ids, CHANNELS::ChannelNameId(), set, this->rdpcap_restriction_, rdpcap_list());
     };
 
     normalize(true, allow_ids, allow_large_ids);
@@ -263,6 +265,11 @@ bool AuthorizationChannels::rdpsnd_audio_output_is_authorized() const noexcept
     return this->rdpsnd_restriction_[0];
 }
 
+bool AuthorizationChannels::rdpsnd_audio_input_is_authorized() const noexcept
+{
+    return this->rdpcap_restriction_[0];
+}
+
 REDEMPTION_OSTREAM(out, AuthorizationChannels const & auth)
 {
     auto p = [&](
@@ -352,6 +359,7 @@ void AuthorizationChannels::update_authorized_channels(
         for (auto str : AuthorizationChannels::rdpsnd_list()) {
             remove(s, str.data());
         }
+        // not name for audio capture because not a static channel
         if (!s.empty() && s.back() == ',') {
             s.pop_back();
         }
@@ -371,13 +379,16 @@ void AuthorizationChannels::update_authorized_channels(
         {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
         {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
 
-        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" }
+        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" },
+
+        {"RDP_AUDIO_INPUT",    ",rdpcap_audio_input"  },
     };
 
     static_assert(
         decltype(AuthorizationChannels::cliprde_list())().size()
-        + decltype(AuthorizationChannels::rdpdr_list())().size()
-        + decltype(AuthorizationChannels::rdpsnd_list())().size()
+      + decltype(AuthorizationChannels::rdpdr_list())().size()
+      + decltype(AuthorizationChannels::rdpsnd_list())().size()
+      + decltype(AuthorizationChannels::rdpcap_list())().size()
     == std::extent<decltype(opts_channels)>::value
     , "opts_channels.size() error");
 
