@@ -37,9 +37,9 @@ session_timeout = integer(min=0, default=900)
 #_hidden
 inactivity_timeout = integer(min=0, default=0)
 
-# Keepalive.
+# Internal keepalive between sesman and rdp proxy
 # (is in second)
-#_advanced
+#_hidden
 keepalive_grace_delay = integer(min=0, default=30)
 
 # Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).

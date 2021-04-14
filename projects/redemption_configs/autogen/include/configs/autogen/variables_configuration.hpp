@@ -341,7 +341,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// Keepalive. <br/>
+    /// Internal keepalive between sesman and rdp proxy <br/>
     /// type: std::chrono::seconds <br/>
     /// value{30} <br/>
     struct globals::keepalive_grace_delay {

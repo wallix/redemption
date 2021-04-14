@@ -41,9 +41,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #inactivity_timeout = 0
 
-# Keepalive.
+# Internal keepalive between sesman and rdp proxy
 # (is in second)
-#_advanced
+#_hidden
 #keepalive_grace_delay = 30
 
 # Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
