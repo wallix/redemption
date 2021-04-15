@@ -253,7 +253,10 @@ RdpNegociation::RdpNegociation(
     , cs_monitor_ex(info.cs_monitor_ex)
     , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
     , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
-    , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
+    , info_packet_extra_flags(InfoPacketFlags(
+        (info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
+      | (info.has_sound_capture_code ? INFO_AUDIOCAPTURE : InfoPacketFlags{})
+    ))
     , has_managed_drive(has_managed_drive)
     , convert_remoteapp_to_desktop(convert_remoteapp_to_desktop)
     , send_channel_index(0)
@@ -1612,6 +1615,10 @@ void RdpNegociation::send_client_info_pdu()
     if (!this->channels_authorizations.rdpsnd_audio_output_is_authorized()) {
         infoPacket.flags &= ~INFO_REMOTECONSOLEAUDIO;
         infoPacket.flags |=  INFO_NOAUDIOPLAYBACK;
+    }
+
+    if (!this->channels_authorizations.rdpsnd_audio_input_is_authorized()) {
+        infoPacket.flags &= ~INFO_AUDIOCAPTURE;
     }
 
     if (this->perform_automatic_reconnection) {

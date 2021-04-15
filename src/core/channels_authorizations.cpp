@@ -263,6 +263,11 @@ bool ChannelsAuthorizations::rdpsnd_audio_output_is_authorized() const noexcept
     return this->rdpsnd_restriction_[0];
 }
 
+bool ChannelsAuthorizations::rdpsnd_audio_input_is_authorized() const noexcept
+{
+    return this->rdpcap_restriction_[0];
+}
+
 REDEMPTION_OSTREAM(out, ChannelsAuthorizations const & auth)
 {
     auto p = [&](
@@ -344,6 +349,7 @@ void ChannelsAuthorizations::update_authorized_channels(
         remove(s, "cliprdr,");
         remove(s, "rdpdr,");
         remove(s, "rdpsnd,");
+        // not name for audio capture because not a static channel
         for (auto str : ChannelsAuthorizations::cliprde_list()) {
             remove(s, {str.data(), str.size()});
         }
@@ -372,13 +378,16 @@ void ChannelsAuthorizations::update_authorized_channels(
         {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
         {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
 
-        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" }
+        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" },
+
+        {"RDP_AUDIO_INPUT",    ",rdpcap_audio_input"  },
     };
 
     static_assert(
         decltype(ChannelsAuthorizations::cliprde_list())().size()
-        + decltype(ChannelsAuthorizations::rdpdr_list())().size()
-        + decltype(ChannelsAuthorizations::rdpsnd_list())().size()
+      + decltype(ChannelsAuthorizations::rdpdr_list())().size()
+      + decltype(ChannelsAuthorizations::rdpsnd_list())().size()
+      + decltype(ChannelsAuthorizations::rdpcap_list())().size()
     == std::extent<decltype(opts_channels)>::value
     , "opts_channels.size() error");
 
