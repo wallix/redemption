@@ -379,16 +379,17 @@ void AuthorizationChannels::update_authorized_channels(
         {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
         {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
 
-        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" },
+        // enable audio input with audio output...
+        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output,rdpcap_audio_input" },
 
-        {"RDP_AUDIO_INPUT",    ",rdpcap_audio_input"  },
+        // {"RDP_AUDIO_INPUT",    ",rdpcap_audio_input"  },
     };
 
     static_assert(
         decltype(AuthorizationChannels::cliprde_list())().size()
       + decltype(AuthorizationChannels::rdpdr_list())().size()
       + decltype(AuthorizationChannels::rdpsnd_list())().size()
-      + decltype(AuthorizationChannels::rdpcap_list())().size()
+      //+ decltype(AuthorizationChannels::rdpcap_list())().size()
     == std::extent<decltype(opts_channels)>::value
     , "opts_channels.size() error");
 

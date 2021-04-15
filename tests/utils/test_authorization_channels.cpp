@@ -278,8 +278,8 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     allow = "";
     deny = "*";
     AuthorizationChannels::update_authorized_channels(allow, deny, "RDP_AUDIO_OUTPUT");
-    RED_CHECK_EQUAL(allow, "rdpsnd_audio_output");
-    RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpcap_audio_input");
+    RED_CHECK_EQUAL(allow, "rdpsnd_audio_output,rdpcap_audio_input");
+    RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "*";
     deny = "";
@@ -506,6 +506,7 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels6)
     RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
 
     RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK_EQUAL(authorization.rdpsnd_audio_input_is_authorized(), false);
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels7)
@@ -516,8 +517,8 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels7)
     allow = "";
     deny = "*";
     AuthorizationChannels::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_FILE,RDP_DRIVE_READ,RDP_DRIVE_WRITE,RDP_AUDIO_OUTPUT");
-    RED_CHECK_EQUAL(allow, "cliprdr_file,rdpdr_drive_read,rdpdr_drive_write,rdpsnd_audio_output");
-    RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpcap_audio_input");
+    RED_CHECK_EQUAL(allow, "cliprdr_file,rdpdr_drive_read,rdpdr_drive_write,rdpsnd_audio_output,rdpcap_audio_input");
+    RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard");
     AuthorizationChannels authorization(allow, deny);
     RED_CHECK_EQUAL(authorization.cliprdr_down_is_authorized(), false);
     RED_CHECK_EQUAL(authorization.cliprdr_up_is_authorized(), false);
@@ -538,4 +539,5 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels7)
     RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
 
     RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), true);
+    RED_CHECK_EQUAL(authorization.rdpsnd_audio_input_is_authorized(), true);
 }
