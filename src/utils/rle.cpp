@@ -587,8 +587,10 @@ void decompress_(
             count--;
             out += Bpp;
             out_x_count += 1;
-            if (out_x_count == dst_cx){
+//            if (out_x_count == dst_cx){
+            if (out_x_count == src_cx){
                 memset(out, 0, (dst_cx - src_cx) * Bpp);
+                out += (dst_cx - src_cx) * Bpp;
                 out_x_count = 0;
             }
         }
@@ -671,8 +673,10 @@ void decompress_(
             count--;
             out += Bpp;
             out_x_count += 1;
-            if (out_x_count == dst_cx){
+//            if (out_x_count == dst_cx){
+            if (out_x_count == src_cx){
                 memset(out, 0, (dst_cx - src_cx) * Bpp);
+                out += (dst_cx - src_cx) * Bpp;
                 out_x_count = 0;
             }
         }

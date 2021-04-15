@@ -764,7 +764,10 @@ public:
         this->bitmap_count++;
     }
 
-    void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+    void draw( const RDPBitmapData & bitmap_data_, const Bitmap & bmp) override {
+RDPBitmapData bitmap_data(bitmap_data_);
+bitmap_data.width = bmp.cx();
+
         if (bmp.has_data_compressed() && (bitmap_data.flags & BITMAP_COMPRESSION)) {
             auto data_compressed = bmp.data_compressed();
             this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
