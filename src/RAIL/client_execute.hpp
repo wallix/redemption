@@ -41,7 +41,6 @@ namespace CHANNELS
 namespace gdi
 {
     class GraphicApi;
-    class CachablePointerApi;
 }
 
 enum {BORDER_WIDTH_HEIGHT = 3 };
@@ -174,88 +173,12 @@ public:
             NUMBER_OF_ZONES
         };
 
-        static inline Rect get_zone(size_t zone, Rect w)
-        {
-            // if (allow_resize_hosted_desktop)
-            if (zone >= ZONE_CLOSE && zone <= ZONE_RESIZE){
-                return Rect(w.x + w.cx-1-button_width*(zone-ZONE_CLOSE+1), w.y + 1, button_width, corner-1);
-            }
-            if (zone == ZONE_TITLE){
-                return Rect(w.x+22, w.y+1, w.cx-23-button_width*3, corner-1);
-            }
-            if (zone == ZONE_ICON){
-                return Rect(w.x+1, w.y+1, 21, corner-1);
-            }
-            if (zone >= ZONE_N && zone <= ZONE_NEN){
-                static constexpr uint8_t data[12][4] ={
-                    { 1, 0, 0}, // North
-                    { 0, 0, 0}, // North West North
-                    { 0, 0, 1}, // North West West
-                    { 0, 1, 1}, // West
-                    { 0, 2, 1}, // South West West
-                    { 0, 2, 0}, // South West South
-                    { 1, 2, 0}, // South
-                    { 2, 2, 0}, // South East South
-                    { 2, 2, 1}, // South East East
-                    { 2, 1, 1}, // East
-                    { 2, 0, 1}, // North East East
-                    { 2, 0, 0}, // North East North
-                };
+        static Rect get_zone(size_t zone, Rect w);
 
-                // d[0] 0=left or 1=middle, 2=right
-                // d[1] 0=top or 1=middle or 2=bottom
-                // d[2] 0=horizontal 1=vectical
+        static int get_button(int zone);
 
-                auto & d = data[zone];
-
-                return Rect(
-                    w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
-                    w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
-                    (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
-                    (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
-                );
-            }
-            return Rect(0,0,0,0);
-        }
-
-        static inline int get_button(int zone)
-        {
-            switch (zone){
-            case ZONE_N  : return MOUSE_BUTTON_PRESSED_NORTH;
-            case ZONE_NWN:
-            case ZONE_NWW: return MOUSE_BUTTON_PRESSED_NORTHWEST;
-            case ZONE_W  : return MOUSE_BUTTON_PRESSED_WEST;
-            case ZONE_SWW:
-            case ZONE_SWS: return MOUSE_BUTTON_PRESSED_SOUTHWEST;
-            case ZONE_S  : return MOUSE_BUTTON_PRESSED_SOUTH;
-            case ZONE_SES:
-            case ZONE_SEE: return MOUSE_BUTTON_PRESSED_SOUTHEAST;
-            case ZONE_E  : return MOUSE_BUTTON_PRESSED_EAST;
-            case ZONE_NEE:
-            case ZONE_NEN: return MOUSE_BUTTON_PRESSED_NORTHEAST;
-            }
-            return MOUSE_BUTTON_PRESSED_NONE;
-        }
-
-        static inline PredefinedPointer get_pointer(int zone)
-        {
-            switch (zone){
-            case ZONE_N  :
-            case ZONE_S  : return PredefinedPointer::NS;
-            case ZONE_E  :
-            case ZONE_W  : return PredefinedPointer::WE;
-            case ZONE_NWN:
-            case ZONE_NWW:
-            case ZONE_SES:
-            case ZONE_SEE: return PredefinedPointer::NWSE;
-            case ZONE_SWW:
-            case ZONE_SWS:
-            case ZONE_NEE:
-            case ZONE_NEN: return PredefinedPointer::NESW;
-            }
-            return PredefinedPointer::Normal;
-        }
-    } zone;
+        static PredefinedPointer get_pointer(int zone);
+    };
 
     /// \return true when \c xPos and \c yPos are captured
     bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos);
@@ -275,7 +198,7 @@ private:
                  unsigned int work_area_count = 0;
     Rect work_areas[max_work_area];
     std::string window_title;
-    PredefinedPointer current_mouse_pointer = PredefinedPointer::SystemNormal;
+    PredefinedPointer current_mouse_pointer;
     bool const window_level_supported_ex;
     bool allow_resize_hosted_desktop_    = false;
     bool enable_resizing_hosted_desktop_ = false;

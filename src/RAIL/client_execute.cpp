@@ -54,6 +54,89 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
+inline Rect ClientExecute::Zone::get_zone(size_t zone, Rect w)
+{
+    // if (allow_resize_hosted_desktop)
+    if (zone >= ZONE_CLOSE && zone <= ZONE_RESIZE){
+        return Rect(w.x + w.cx-1-button_width*(zone-ZONE_CLOSE+1), w.y + 1, button_width, corner-1);
+    }
+    if (zone == ZONE_TITLE){
+        return Rect(w.x+22, w.y+1, w.cx-23-button_width*3, corner-1);
+    }
+    if (zone == ZONE_ICON){
+        return Rect(w.x+1, w.y+1, 21, corner-1);
+    }
+    if (zone >= ZONE_N && zone <= ZONE_NEN){
+        static constexpr uint8_t data[12][4] ={
+            { 1, 0, 0}, // North
+            { 0, 0, 0}, // North West North
+            { 0, 0, 1}, // North West West
+            { 0, 1, 1}, // West
+            { 0, 2, 1}, // South West West
+            { 0, 2, 0}, // South West South
+            { 1, 2, 0}, // South
+            { 2, 2, 0}, // South East South
+            { 2, 2, 1}, // South East East
+            { 2, 1, 1}, // East
+            { 2, 0, 1}, // North East East
+            { 2, 0, 0}, // North East North
+        };
+
+        // d[0] 0=left or 1=middle, 2=right
+        // d[1] 0=top or 1=middle or 2=bottom
+        // d[2] 0=horizontal 1=vectical
+
+        auto & d = data[zone];
+
+        return Rect(
+            w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
+            w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
+            (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
+            (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
+        );
+    }
+    return Rect(0,0,0,0);
+}
+
+inline int ClientExecute::Zone::get_button(int zone)
+{
+    switch (zone){
+    case ZONE_N  : return MOUSE_BUTTON_PRESSED_NORTH;
+    case ZONE_NWN:
+    case ZONE_NWW: return MOUSE_BUTTON_PRESSED_NORTHWEST;
+    case ZONE_W  : return MOUSE_BUTTON_PRESSED_WEST;
+    case ZONE_SWW:
+    case ZONE_SWS: return MOUSE_BUTTON_PRESSED_SOUTHWEST;
+    case ZONE_S  : return MOUSE_BUTTON_PRESSED_SOUTH;
+    case ZONE_SES:
+    case ZONE_SEE: return MOUSE_BUTTON_PRESSED_SOUTHEAST;
+    case ZONE_E  : return MOUSE_BUTTON_PRESSED_EAST;
+    case ZONE_NEE:
+    case ZONE_NEN: return MOUSE_BUTTON_PRESSED_NORTHEAST;
+    }
+    return MOUSE_BUTTON_PRESSED_NONE;
+}
+
+inline PredefinedPointer ClientExecute::Zone::get_pointer(int zone)
+{
+    switch (zone){
+    case ZONE_N  :
+    case ZONE_S  : return PredefinedPointer::NS;
+    case ZONE_E  :
+    case ZONE_W  : return PredefinedPointer::WE;
+    case ZONE_NWN:
+    case ZONE_NWW:
+    case ZONE_SES:
+    case ZONE_SEE: return PredefinedPointer::NWSE;
+    case ZONE_SWW:
+    case ZONE_SWS:
+    case ZONE_NEE:
+    case ZONE_NEN: return PredefinedPointer::NESW;
+    }
+    return PredefinedPointer::Normal;
+}
+
+
 ClientExecute::ClientExecute(
     EventContainer& events, gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
@@ -63,6 +146,7 @@ ClientExecute::ClientExecute(
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin), BLACK))
 , auxiliary_window_id(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID)
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
+, current_mouse_pointer(PredefinedPointer::SystemNormal)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , events_guard(events)
 {
@@ -153,12 +237,12 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
 
     auto const depth = gdi::ColorCtx::depth24();
 
-    RDPOpaqueRect order(this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect), bg_color);
+    RDPOpaqueRect order(Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect), bg_color);
 
     this->drawable_.draw(order, r, depth);
 
     if (this->enable_resizing_hosted_desktop_) {
-        Rect rect = this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect);
+        Rect rect = Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect);
 
         rect.x  += 22;
         rect.y  += 8;
@@ -205,7 +289,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         }
     }
     else {
-        Rect rect = this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect);
+        Rect rect = Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect);
 
         rect.x  += 15;
         rect.y  += 6;
@@ -260,7 +344,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 
     auto const depth = gdi::ColorCtx::depth24();
 
-    auto rect_maxi = this->zone.get_zone(Zone::ZONE_MAXI, this->window_rect);
+    auto rect_maxi = Zone::get_zone(Zone::ZONE_MAXI, this->window_rect);
     RDPOpaqueRect order(rect_maxi, bg_color);
 
     this->drawable_.draw(order, r, depth);
@@ -335,7 +419,7 @@ void ClientExecute::input_invalidate(const Rect r)
     auto const depth = gdi::ColorCtx::depth24();
     bool is_updated = false;
 
-    if (auto icon_rect = this->zone.get_zone(Zone::ZONE_ICON, this->window_rect)
+    if (auto icon_rect = Zone::get_zone(Zone::ZONE_ICON, this->window_rect)
       ; r.has_intersection(icon_rect))
     {
         RDPOpaqueRect order(icon_rect, encode_color24()(WHITE));
@@ -358,7 +442,7 @@ void ClientExecute::input_invalidate(const Rect r)
         is_updated = true;
     }
 
-    if (auto title_rect = this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect)
+    if (auto title_rect = Zone::get_zone(Zone::ZONE_TITLE, this->window_rect)
       ; r.has_intersection(title_rect))
     {
         RDPOpaqueRect order(title_rect, encode_color24()(WHITE));
@@ -385,7 +469,7 @@ void ClientExecute::input_invalidate(const Rect r)
         this->draw_resize_hosted_desktop_box(false, r);
     }
 
-    if (auto rect_minimize = this->zone.get_zone(Zone::ZONE_MINI, this->window_rect)
+    if (auto rect_minimize = Zone::get_zone(Zone::ZONE_MINI, this->window_rect)
       ; r.has_intersection(rect_minimize))
     {
         RDPOpaqueRect order(rect_minimize, encode_color24()(WHITE));
@@ -410,7 +494,7 @@ void ClientExecute::input_invalidate(const Rect r)
 
     this->draw_maximize_box(false, r);
 
-    if (auto rect_close = this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect)
+    if (auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect)
       ; r.has_intersection(rect_close))
     {
         RDPOpaqueRect order(rect_close, encode_color24()(WHITE));
@@ -1179,8 +1263,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     // Mouse pointer managment
     if (!this->move_size_initialized) {
         for (int i = 0; i < Zone::NUMBER_OF_ZONES; i++){
-            if (this->zone.get_zone(i, this->window_rect).contains_pt(xPos, yPos)){
-                PredefinedPointer pointer = this->zone.get_pointer(i);
+            if (Zone::get_zone(i, this->window_rect).contains_pt(xPos, yPos)){
+                PredefinedPointer pointer = Zone::get_pointer(i);
                 if (pointer != this->current_mouse_pointer){
                     this->current_mouse_pointer = pointer;
                     this->drawable_.cached_pointer(pointer);
@@ -1199,14 +1283,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
         if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
             if (!this->maximized) {
-                if (this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect).contains_pt(xPos, yPos))
+                if (Zone::get_zone(Zone::ZONE_TITLE, this->window_rect).contains_pt(xPos, yPos))
                 {
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
                 }
                 else {
                     for (int i = Zone::ZONE_N ; i <= Zone::ZONE_NEN ; i++){
-                        if (this->zone.get_zone(i, this->window_rect).contains_pt(xPos, yPos)){
-                            this->pressed_mouse_button = this->zone.get_button(i);
+                        if (Zone::get_zone(i, this->window_rect).contains_pt(xPos, yPos)){
+                            this->pressed_mouse_button = Zone::get_button(i);
                         }
                     }
                 }
@@ -1249,16 +1333,16 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
             }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
             else if (allow_resize_hosted_desktop
-            && this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect).contains_pt(xPos, yPos))
+            && Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect).contains_pt(xPos, yPos))
             {
-                this->draw_resize_hosted_desktop_box(true, this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect));
+                this->draw_resize_hosted_desktop_box(true, Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect));
                 this->drawable_.sync();
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
 
             }
-            else if (this->zone.get_zone(Zone::ZONE_MINI, this->window_rect).contains_pt(xPos, yPos))
+            else if (Zone::get_zone(Zone::ZONE_MINI, this->window_rect).contains_pt(xPos, yPos))
             {
-                auto rect_mini = this->zone.get_zone(Zone::ZONE_MINI, this->window_rect);
+                auto rect_mini = Zone::get_zone(Zone::ZONE_MINI, this->window_rect);
 
                 RDPOpaqueRect order(rect_mini, encode_color24()(BGRColor{0xCBCACA}));
                 this->drawable_.draw(order, rect_mini, gdi::ColorCtx::depth24());
@@ -1279,15 +1363,15 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
 
             }
-            else if (this->zone.get_zone(Zone::ZONE_MAXI, this->window_rect).contains_pt(xPos, yPos)) {
-                auto rect_maxi = this->zone.get_zone(Zone::ZONE_MAXI, this->window_rect);
+            else if (Zone::get_zone(Zone::ZONE_MAXI, this->window_rect).contains_pt(xPos, yPos)) {
+                auto rect_maxi = Zone::get_zone(Zone::ZONE_MAXI, this->window_rect);
                 this->draw_maximize_box(true, rect_maxi);
                 this->drawable_.sync();
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
 
             }
-            else if (this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect).contains_pt(xPos, yPos)) {
-                auto rect_close = this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect);
+            else if (Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect).contains_pt(xPos, yPos)) {
+                auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect);
                 RDPOpaqueRect order(rect_close, encode_color24()(BGRColor{0x2311E8}));
 
                 this->drawable_.draw(order, rect_close, gdi::ColorCtx::depth24());
@@ -1474,14 +1558,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }
         else if (allow_resize_hosted_desktop
              && (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
-            auto rect_resize = this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect);
+            auto rect_resize = Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect);
             this->draw_resize_hosted_desktop_box(rect_resize.contains_pt(xPos, yPos), rect_resize);
             this->drawable_.sync();
 
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
 
-            auto rect_mini = this->zone.get_zone(Zone::ZONE_MINI, this->window_rect);
+            auto rect_mini = Zone::get_zone(Zone::ZONE_MINI, this->window_rect);
             this->draw_maximize_box(rect_mini.contains_pt(xPos, yPos), rect_mini);
             this->drawable_.sync();
             auto front_color = encode_color24()(BLACK);
@@ -1508,13 +1592,13 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             this->drawable_.sync();
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
-            auto rect_maxi = this->zone.get_zone(Zone::ZONE_MAXI, this->window_rect);
+            auto rect_maxi = Zone::get_zone(Zone::ZONE_MAXI, this->window_rect);
             this->draw_maximize_box(rect_maxi.contains_pt(xPos, yPos), rect_maxi);
             this->drawable_.sync();
 
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
-            auto rect_close = this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect);
+            auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect);
             auto front_color = (rect_close.contains_pt(xPos, yPos))
                              ? encode_color24()(WHITE)
                              : encode_color24()(BLACK);
@@ -1549,7 +1633,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
             this->enable_resizing_hosted_desktop_ = (!this->enable_resizing_hosted_desktop_);
 
-            this->draw_resize_hosted_desktop_box(false, this->zone.get_zone(Zone::ZONE_RESIZE, this->window_rect));
+            this->draw_resize_hosted_desktop_box(false, Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect));
 
             this->drawable_.sync();
 
@@ -1560,7 +1644,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
             this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
-            auto rect_mini = this->zone.get_zone(Zone::ZONE_MINI, this->window_rect);
+            auto rect_mini = Zone::get_zone(Zone::ZONE_MINI, this->window_rect);
 
             {
                 RDPOpaqueRect order(rect_mini, encode_color24()(WHITE));
@@ -1641,7 +1725,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
             this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
-            auto rect_maxi = this->zone.get_zone(Zone::ZONE_MAXI, this->window_rect);
+            auto rect_maxi = Zone::get_zone(Zone::ZONE_MAXI, this->window_rect);
             this->draw_maximize_box(false, rect_maxi);
             this->drawable_.sync();
             if (rect_maxi.contains_pt(xPos, yPos)) {
@@ -1650,7 +1734,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }   // else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
             this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
-            auto rect_close = this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect);
+            auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect);
 
             {
                 RDPOpaqueRect order(rect_close, encode_color24()(WHITE));
@@ -1797,8 +1881,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }   // else if ((MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) &&
     }   // else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags)
     else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags) {
-        if ((this->zone.get_zone(Zone::ZONE_N, this->window_rect).contains_pt(xPos, yPos)
-        || this->zone.get_zone(Zone::ZONE_S, this->window_rect).contains_pt(xPos, yPos))
+        if ((Zone::get_zone(Zone::ZONE_N, this->window_rect).contains_pt(xPos, yPos)
+        || Zone::get_zone(Zone::ZONE_S, this->window_rect).contains_pt(xPos, yPos))
         && !this->maximized) {
 
             Rect work_area_rect = this->get_current_work_area_rect();
@@ -1848,14 +1932,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             this->update_widget();
 
             this->on_new_or_existing_window(adjusted_window_rect);
-        }   // if (this->zone.get_zone(Zone::ZONE_S, this->window_rect).contains_pt(xPos, yPos))
-        else if (this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect).contains_pt(xPos, yPos)) {
+        }   // if (Zone::get_zone(Zone::ZONE_S, this->window_rect).contains_pt(xPos, yPos))
+        else if (Zone::get_zone(Zone::ZONE_TITLE, this->window_rect).contains_pt(xPos, yPos)) {
             this->maximize_restore_window();
-        }   // else if (this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect).contains_pt(xPos, yPos))
-        else if (this->zone.get_zone(Zone::ZONE_ICON, this->window_rect).contains_pt(xPos, yPos)) {
+        }   // else if (Zone::get_zone(Zone::ZONE_TITLE, this->window_rect).contains_pt(xPos, yPos))
+        else if (Zone::get_zone(Zone::ZONE_ICON, this->window_rect).contains_pt(xPos, yPos)) {
             LOG(LOG_INFO, "ClientExecute::input_mouse: Close by user (Title Bar Icon)");
             throw Error(ERR_WIDGET);    // Title Bar Icon Double-clicked
-        }   // else if (this->zone.get_zone(Zone::ZONE_ICON, this->window_rect).contains_pt(xPos, yPos))
+        }   // else if (Zone::get_zone(Zone::ZONE_ICON, this->window_rect).contains_pt(xPos, yPos))
     }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
 
     return zone_found;
