@@ -22,9 +22,22 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include "mod/vnc/dsm.hpp"
+#include "mod/vnc/dsm.hpp"
+#include "mod/vnc/vnc_metrics.hpp"
+#include "mod/vnc/newline_convert.hpp"
+#include "core/log_id.hpp"
 #include "core/RDP/rdp_pointer.hpp"
+#include "core/server_notifier_api.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "gdi/screen_functions.hpp"
+#include "RAIL/client_execute.hpp"
+#include "utils/d3des.hpp"
+#include "utils/diffiehellman.hpp"
+#include "utils/hexdump.hpp"
 #include "keyboard/scancode/unicode_to_scancode.hpp"
-#include <openssl/tls1.h>
+
 #include <openssl/tls1.h>
 
 using namespace std::literals::chrono_literals;
@@ -34,6 +47,35 @@ using namespace std::literals::chrono_literals;
 #else
 # define IF_ENABLE_METRICS(m) do {} while(0)
 #endif
+
+
+void mod_vnc::VncTransport::send(bytes_view buffer)
+{
+    if (m_mod.dsmEncryption) {
+        BufMaker<0x10000> tmpBuf;
+        writable_bytes_view tmp = tmpBuf.dyn_array(buffer.size());
+
+        m_mod.dsm->encrypt(buffer.data(), buffer.size(), tmp);
+        m_trans.send(tmp);
+    } else {
+        m_trans.send(buffer);
+    }
+}
+
+mod_vnc::VncBuf64k::size_type
+mod_vnc::VncBuf64k::read_from(mod_vnc::VncTransport vncTrans)
+{
+    Transport & trans = vncTrans.getTransport();
+
+    const size_type read_len = Buf64k::read_from(trans);
+
+    if (m_mod.dsmEncryption){
+        writable_bytes_view buf = this->av();
+        m_mod.dsm->decrypt(buf.data(), read_len, buf);
+    }
+
+    return read_len;
+}
 
 mod_vnc::mod_vnc( Transport & t
            , gdi::GraphicApi & gd

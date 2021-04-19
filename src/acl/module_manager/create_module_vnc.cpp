@@ -27,12 +27,14 @@
 #include "mod/vnc/vnc.hpp"
 #include "mod/metrics_hmac.hpp"
 #include "mod/vnc/vnc.hpp"
+#include "mod/vnc/vnc_metrics.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "transport/socket_transport.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
 #include "acl/connect_to_target_host.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "RAIL/client_execute.hpp"
 
 
 namespace

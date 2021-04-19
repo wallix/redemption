@@ -23,61 +23,40 @@
 
 #pragma once
 
-#include <cstdlib>
+#include "transport/transport.hpp"
 
-#include "core/log_id.hpp"
+#include "core/events.hpp"
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
-#include "core/channel_names.hpp"
-#include "transport/transport.hpp"
 #include "core/front_api.hpp"
-#include "core/server_notifier_api.hpp"
 #include "core/RDP/clipboard.hpp"
-#include "core/RDP/clipboard/format_list_serialize.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 
-#include "gdi/screen_functions.hpp"
 #include "gdi/graphic_api.hpp"
 
-#include "keyboard/keymap2.hpp"
 #include "keyboard/keymapsym.hpp"
-#include "main/version.hpp"
-#include "RAIL/client_execute.hpp"
-#include "mod/mod_api.hpp"
-#include "utils/diffiehellman.hpp"
-#include "utils/hexdump.hpp"
-#include "utils/d3des.hpp"
-#include "utils/log.hpp"
-#include "utils/sugar/numerics/safe_conversions.hpp"
+
 #include "utils/utf.hpp"
-#include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
+#include "utils/monotonic_clock.hpp"
+#include "utils/stream.hpp"
 
-#include "utils/timebase.hpp"
-#include "core/events.hpp"
+#include "mod/mod_api.hpp"
 
-#include "mod/vnc/vnc_metrics.hpp"
-
-#include "mod/vnc/dsm.hpp"
 #include "mod/vnc/encoder/copyrect.hpp"
 #include "mod/vnc/encoder/cursor.hpp"
-#include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/encoder/hextile.hpp"
 #include "mod/vnc/encoder/raw.hpp"
 #include "mod/vnc/encoder/rre.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
-#include "mod/vnc/newline_convert.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
-#include "acl/auth_api.hpp"
 
 #include "configs/autogen/enums.hpp"
 
 
 class UltraDSM;
-class mod_vnc;
+class VNCMetrics;
+class ClientExecute;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -114,17 +93,7 @@ public:
             send(bytes_view(buffer, len));
         }
 
-        void send(bytes_view buffer) {
-            if (m_mod.dsmEncryption) {
-                BufMaker<0x10000> tmpBuf;
-                writable_bytes_view tmp = tmpBuf.dyn_array(buffer.size());
-
-                m_mod.dsm->encrypt(buffer.data(), buffer.size(), tmp);
-                m_trans.send(tmp);
-            } else {
-                m_trans.send(buffer);
-            }
-        }
+        void send(bytes_view buffer);
 
         Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) {
             return m_trans.enable_client_tls(server_notifier, tls_client_params);
@@ -149,19 +118,7 @@ public:
         {
         }
 
-        size_type read_from(VncTransport vncTrans)
-        {
-            Transport & trans = vncTrans.getTransport();
-
-            const size_type read_len = Buf64k::read_from(trans);
-
-            if (m_mod.dsmEncryption){
-                writable_bytes_view buf = this->av();
-                m_mod.dsm->decrypt(buf.data(), read_len, buf);
-            }
-
-            return read_len;
-        }
+        size_type read_from(VncTransport vncTrans);
 
     private:
         mod_vnc & m_mod;
