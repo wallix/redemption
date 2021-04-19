@@ -168,7 +168,7 @@ bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_
     return true;
 }
 
-
+// TODO remove that
 std::string UTF8toUTF16_asString(bytes_view source) noexcept
 {
     auto res = UTF8toUTF16(source);
@@ -920,13 +920,4 @@ size_t Latin1toUTF8(
     }
 
     return (current_utf8_target - utf8_target);
-}
-
-size_t UTF16StrLen(const uint8_t * utf16_s) noexcept {
-    size_t length = 0;
-    while (utf16_s[0] | utf16_s[1]) {
-        utf16_s += 2;
-        length++;
-    }
-    return length;
 }

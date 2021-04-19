@@ -309,12 +309,6 @@ RED_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 0), 0u);
 }
 
-RED_AUTO_TEST_CASE(TestUTF16StrLen) {
-    RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x00\x00")), 0u);
-    RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00")), 3u);
-    RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00\x31\x00\x30\x00\x30\x00")), 3u);
-}
-
 RED_AUTO_TEST_CASE(TestUtf16UpperCase)
 {
     uint8_t test[] =  "\x92\x02\xaf\x03\xdb\x03\x51\x04"  /* ʒ ί ϛ ё */
