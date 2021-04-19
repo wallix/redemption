@@ -2800,10 +2800,9 @@ public:
     void front_nla(Transport & trans, bytes_view data)
     {
         LOG(LOG_INFO, "starting NLA NegoServer");
-        std::vector<uint8_t> result;
-        credssp::State st = credssp::State::Cont;
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
-        result << this->nego_server->credssp.authenticate_next(data);
+
+        std::vector<uint8_t> result = this->nego_server->credssp.authenticate_next(data);
 
         if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
             bytes_view buffer = this->nego_server->credssp.authenticate.UserName.buffer;
@@ -2813,12 +2812,11 @@ public:
             this->ini.ask<cfg::context::nla_password_hash>();
         }
 
-        st = this->nego_server->credssp.state;
         if (not result.empty()){
             trans.send(result);
         }
 
-        switch (st) {
+        switch (this->nego_server->credssp.state) {
         case credssp::State::Err: {
             LOG(LOG_INFO, "NLA NegoServer Authentication Failed");
             throw Error(ERR_NLA_AUTHENTICATION_FAILED);
@@ -2837,16 +2835,13 @@ public:
     void front_nla_got_password(Transport & trans)
     {
         LOG(LOG_INFO, "starting NLA NegoServer");
-        std::vector<uint8_t> result;
-        credssp::State st = credssp::State::Cont;
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
-        result << this->nego_server->credssp.authenticate_next({});
-        st = this->nego_server->credssp.state;
+        std::vector<uint8_t> result = this->nego_server->credssp.authenticate_next({});
         if (not result.empty()){
             trans.send(result);
         }
 
-        switch (st) {
+        switch (this->nego_server->credssp.state) {
         case credssp::State::Err: {
             LOG(LOG_INFO, "NLA NegoServer Authentication Failed");
             throw Error(ERR_NLA_AUTHENTICATION_FAILED);
