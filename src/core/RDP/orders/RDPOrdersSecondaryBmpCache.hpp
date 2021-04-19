@@ -971,7 +971,7 @@ class RDPBmpCache {
         this->idx = stream.in_2BUE();
         //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
 
-        const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
+        const auto bitmapDataStream = stream.in_skip_bytes(bitmapLength);
         //if (this->verbose & 0x8000) {
         //    LOG(LOG_INFO,
         //        "RDPBmpCache::receive_raw_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
@@ -982,7 +982,7 @@ class RDPBmpCache {
         //    hexdump_d(bitmapDataStream, bitmapLength);
         //}
         this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
-            bitmapDataStream, bitmapLength, false);
+            bitmapDataStream.data(), bitmapDataStream.size(), false);
 
         if (bitmapLength != this->bmp.bmp_size()){
             LOG( LOG_WARNING
@@ -1054,7 +1054,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         // TODO some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).
-        const uint8_t * buf = stream.in_uint8p(bufsize);
+        const auto buf = stream.in_skip_bytes(bufsize);
         //if (this->verbose & 0x8000) {
         //    LOG(LOG_INFO,
         //        "Uncompressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
@@ -1064,7 +1064,7 @@ class RDPBmpCache {
         //    LOG(LOG_INFO, "Bitmap");
         //    hexdump_d(buf, bufsize);
         //}
-        this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, buf, bufsize);
+        this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, buf.data(), buf.size());
 
         if (bufsize != this->bmp.bmp_size()){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -1109,7 +1109,7 @@ class RDPBmpCache {
         //LOG(LOG_INFO, "RDPBmpCache::receive_compressed_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
 
         if (cbr2_flags & CBR2_NO_BITMAP_COMPRESSION_HDR) {
-            const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
+            const auto bitmapDataStream = stream.in_skip_bytes(bitmapLength);
             //if (this->verbose & 0x8000) {
             //    LOG(LOG_INFO,
             //        "CRDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
@@ -1120,7 +1120,7 @@ class RDPBmpCache {
             //    hexdump_d(bitmapDataStream, bitmapLength);
             //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
-                bitmapDataStream, bitmapLength, true);
+                bitmapDataStream.data(), bitmapDataStream.size(), true);
         }
         else {
             // Compressed Data Header (TS_CD_HEADER).
@@ -1129,7 +1129,7 @@ class RDPBmpCache {
             uint16_t cbScanWidth        = stream.in_uint16_le();
             uint16_t cbUncompressedSize = stream.in_uint16_le();
 
-            const uint8_t * bitmapDataStream = stream.in_uint8p(cbCompMainBodySize);
+            const auto bitmapDataStream = stream.in_skip_bytes(cbCompMainBodySize);
 
             //if (this->verbose & 0x8000) {
             //    LOG(LOG_INFO,
@@ -1141,7 +1141,7 @@ class RDPBmpCache {
             //    hexdump_d(bitmapDataStream, cbCompMainBodySize);
             //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
-                bitmapDataStream, cbCompMainBodySize, true);
+                bitmapDataStream.data(), bitmapDataStream.size(), true);
             if (cbScanWidth != (this->bmp.bmp_size() / this->bmp.cy())){
                 LOG( LOG_WARNING
                    , "RDPBmpCache::receive_compressed_v2: "
@@ -1167,7 +1167,7 @@ class RDPBmpCache {
         this->idx = stream.in_uint16_le();
 
         if (header.flags & NO_BITMAP_COMPRESSION_HDR) {
-            const uint8_t* data = stream.in_uint8p(bufsize);
+            const auto data = stream.in_skip_bytes(bufsize);
             //if (this->verbose & 0x8000) {
             //    LOG(LOG_INFO,
             //        "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
@@ -1177,14 +1177,14 @@ class RDPBmpCache {
             //    LOG(LOG_INFO, "Bitmap");
             //    hexdump_d(data, bufsize);
             //}
-            this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data, bufsize, true);
+            this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data.data(), data.size(), true);
         }
         else {
             stream.in_uint16_le(); // skip padding
             uint16_t size = stream.in_uint16_le();       // actual size of compressed buffer
             uint16_t row_size = stream.in_uint16_le();   // size of a row
             uint16_t final_size = stream.in_uint16_le(); // size of bitmap after decompression
-            const uint8_t* data = stream.in_uint8p(size);
+            const auto data = stream.in_skip_bytes(size);
 
             //if (this->verbose & 0x8000) {
             //    LOG(LOG_INFO,
@@ -1195,7 +1195,7 @@ class RDPBmpCache {
             //    LOG(LOG_INFO, "Bitmap");
             //    hexdump_d(data, size);
             //}
-            this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data, size, true);
+            this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data.data(), data.size(), true);
             if (row_size != (this->bmp.bmp_size() / this->bmp.cy())){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }

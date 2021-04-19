@@ -94,14 +94,14 @@ public:
 
         t.recv_boom(buf, 5);  /* magic(4) + version(1) */
 
-        const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
-              uint8_t   version = stream.in_uint8();
+        auto magic      = stream.in_skip_bytes(4);  /* magic(4) */
+        uint8_t version = stream.in_uint8();
 
         //LOG( LOG_INFO, "BmpCachePersister: magic=\"%c%c%c%c\""
         //   , magic[0], magic[1], magic[2], magic[3]);
         //LOG( LOG_INFO, "BmpCachePersister: version=%u", version);
 
-        if (0 != ::memcmp(magic, "PDBC", 4)) {
+        if (0 != ::memcmp(magic.data(), "PDBC", magic.size())) {
             LOG( LOG_ERR
                , "BmpCachePersister::BmpCachePersister: "
                  "File is not a persistent bitmap cache file. filename=\"%s\""
@@ -252,14 +252,14 @@ public:
 
         t.recv_boom(buf, 5);  /* magic(4) + version(1) */
 
-        const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
-              uint8_t   version = stream.in_uint8();
+        auto magic      = stream.in_skip_bytes(4);  /* magic(4) */
+        uint8_t version = stream.in_uint8();
 
         //LOG( LOG_INFO, "BmpCachePersister: magic=\"%c%c%c%c\""
         //   , magic[0], magic[1], magic[2], magic[3]);
         //LOG( LOG_INFO, "BmpCachePersister: version=%u", version);
 
-        if (0 != ::memcmp(magic, "PDBC", 4)) {
+        if (0 != ::memcmp(magic.data(), "PDBC", magic.size())) {
             LOG( LOG_ERR
                , "BmpCachePersister::load_all_from_disk: "
                  "File is not a persistent bitmap cache file. filename=\"%s\""

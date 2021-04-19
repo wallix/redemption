@@ -61,7 +61,7 @@ inline void process_glyphcache(GlyphCache & gly_cache, InStream & stream) {
         const uint16_t height     = stream.in_uint16_le();
 
         const unsigned int   datasize = (height * nbbytes(width) + 3) & ~3;
-        const uint8_t      * data     = stream.in_uint8p(datasize);
+        const uint8_t      * data     = stream.in_skip_bytes(datasize).data();
 
         server_add_char(gly_cache, cacheId, cacheIndex, offset, baseline, width, height, data);
     }

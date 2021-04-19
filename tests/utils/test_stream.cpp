@@ -162,26 +162,6 @@ RED_AUTO_TEST_CASE(TestStream_uint64)
     RED_CHECK(s.get_current() == out_data + 16);
 }
 
-RED_AUTO_TEST_CASE(TestStream_in_uint8p)
-{
-    // test in buffer access to some block of data
-    // in_uint8p returns a pointer to current beginning of buffer
-    // and advance by some given amount of characters.
-
-    InStream s("\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF"_av);
-
-    uint8_t const * oldp = s.get_current();
-
-    RED_CHECK_EQUAL(s.in_uint8p(8), oldp);
-    RED_CHECK_EQUAL(oldp+8, s.get_current());
-
-    RED_CHECK_EQUAL(s.in_uint8p(8), oldp+8);
-    RED_CHECK_EQUAL(oldp+16, s.get_current());
-
-    // empty is OK
-    RED_CHECK(!s.in_remain());
-}
-
 RED_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 {
     // test use of skip_bytes that skip a given number of bytes
@@ -190,7 +170,8 @@ RED_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 
     uint8_t const * oldp = s.get_current();
 
-    s.in_skip_bytes(10);
+    auto v = s.in_skip_bytes(10);
+    RED_CHECK_EQUAL(v.size(), 10);
     RED_CHECK_EQUAL(oldp+10, s.get_current());
     RED_CHECK_EQUAL(s.in_uint8(), 0x0A);
 

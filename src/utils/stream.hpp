@@ -224,11 +224,6 @@ public:
         return this->in_copy_bytes({v, n});
     }
 
-    const uint8_t *in_uint8p(unsigned int n) noexcept {
-        assert(this->in_check_rem(n));
-        return this->p.in_uint8p(n);
-    }
-
     [[nodiscard]] bytes_view view_bytes(unsigned int n) const noexcept {
         assert(this->in_check_rem(n));
         return u8_array_view{this->get_current(), n};

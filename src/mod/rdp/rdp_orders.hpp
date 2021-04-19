@@ -522,7 +522,7 @@ private:
             const uint16_t height     = stream.in_uint16_le();
 
             const unsigned int   datasize = (height * nbbytes(width) + 3) & ~3;
-            const uint8_t      * data     = stream.in_uint8p(datasize);
+            const uint8_t      * data     = stream.in_skip_bytes(datasize).data();
 
             this->server_add_char(cacheId, cacheIndex, offset, baseline, width, height, data);
         }

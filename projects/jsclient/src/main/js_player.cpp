@@ -275,7 +275,7 @@ struct WrmPlayer
                     }
                 }
 
-                const uint8_t * data = this->in_stream.in_uint8p(bitmap_data.bitmap_size());
+                const uint8_t * data = this->in_stream.in_skip_bytes(bitmap_data.bitmap_size()).data();
 
                 Bitmap bitmap( this->wrm_info.bpp
                             , checked_int(bitmap_data.bits_per_pixel)
@@ -297,7 +297,7 @@ struct WrmPlayer
                 RDPBitmapData bitmap_data;
                 bitmap_data.receive(this->in_stream);
 
-                const uint8_t * data = this->in_stream.in_uint8p(bitmap_data.bitmap_size());
+                const uint8_t * data = this->in_stream.in_skip_bytes(bitmap_data.bitmap_size()).data();
 
                 Bitmap bitmap( this->wrm_info.bpp
                             , checked_int(bitmap_data.bits_per_pixel)

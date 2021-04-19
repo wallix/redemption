@@ -195,7 +195,7 @@ public:
             this->data = std::make_unique<uint8_t[]>(size);
         }
         this->size       = size;
-        memcpy(this->data.get(), stream.in_uint8p(this->size), this->size);
+        stream.in_copy_bytes({this->data.get(), size});
     }
 
     bool operator==(const RDPBrushCache & other) const {

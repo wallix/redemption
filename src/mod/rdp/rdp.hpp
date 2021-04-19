@@ -5985,7 +5985,7 @@ private:
             //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
             //                    bufsize, bitmap.bmp_size, width, height, bpp);
             //            }
-            const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
+            const uint8_t * data = stream.in_skip_bytes(bmpdata.bitmap_size()).data();
             Bitmap bitmap( this->orders.get_bpp()
                          , checked_int(bmpdata.bits_per_pixel)
                          , &this->orders.global_palette

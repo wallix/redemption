@@ -220,7 +220,7 @@ public:
         uint16_t size = this->datasize();
 
         this->aj = std::make_unique<uint8_t[]>(size);
-        memcpy(this->aj.get(), stream.in_uint8p(size), size);
+        stream.in_copy_bytes({this->aj.get(), size});
     }
 
     size_t str(char * buffer, size_t sz) const {

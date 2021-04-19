@@ -154,11 +154,6 @@ public:
         this->p += v.size();
     }
 
-    const uint8_t *in_uint8p(unsigned int n) noexcept {
-        this->p+=n;
-        return this->p - n;
-    }
-
     void in_skip_bytes(unsigned int n) noexcept {
         this->p+=n;
     }

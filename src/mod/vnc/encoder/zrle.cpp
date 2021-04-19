@@ -435,9 +435,9 @@ namespace
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
 
-            const uint8_t * tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
+            const auto tile_data = uncompressed_data_buffer.in_skip_bytes(tile_data_length);
 
-            this->draw_tile(tile_data_p, drawable);
+            this->draw_tile(tile_data.data(), drawable);
         }
 
         //    1:  A solid tile consisting of a single colour. The pixel value follows:
@@ -449,7 +449,7 @@ namespace
         void solidTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
-            const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+            const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_skip_bytes(this->Bpp).data();
 
             auto const color_context= gdi::ColorCtx::depth16();
             auto pixel_color = RDPColor::from((cpixel_pattern[1]<<8)+cpixel_pattern[0]);
@@ -504,7 +504,7 @@ namespace
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
 
-            const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
+            const uint8_t * palette = uncompressed_data_buffer.in_skip_bytes(palette_size).data();
 
             uint8_t pixels_per_byte = (subencoding>4)?2:(subencoding>2)?4:8;
             size_t line_bytes_width = (subencoding>4)?((this->tile.cx+1)>>1)
@@ -518,7 +518,7 @@ namespace
                 LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (missing palette data)");
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
-            const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
+            const uint8_t * packed_pixels = uncompressed_data_buffer.in_skip_bytes(packed_pixels_length).data();
             for (size_t y = 0 ; y < this->tile.cy ; y++){
                 size_t x = 0;
                 for (size_t i = 0 ; i < line_bytes_width ; i++){
@@ -624,7 +624,7 @@ namespace
                     LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE)");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
-                const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+                const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_skip_bytes(this->Bpp).data();
                 size_t length = uncompressed_data_buffer.in_uint8() + 1;
                 if (length == 256){ // multi bytes length
                     length -= 1;
@@ -700,7 +700,7 @@ namespace
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
 
-            const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
+            const uint8_t * palette = uncompressed_data_buffer.in_skip_bytes(palette_size).data();
 
             uint8_t    tile_data[4*64*64];    // max size with 32 bpp
             uint8_t  * tmp_tile_data = tile_data;

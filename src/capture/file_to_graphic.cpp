@@ -676,7 +676,7 @@ void FileToGraphic::interpret_order()
             }
         }
 
-        const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+        const uint8_t * data = this->stream.in_skip_bytes(bitmap_data.bitmap_size()).data();
 
         Bitmap bitmap( this->info.bpp
                      , checked_int(bitmap_data.bits_per_pixel)
@@ -708,7 +708,7 @@ void FileToGraphic::interpret_order()
         auto bitmap_data = receive_order.read<RDPBitmapData>(
             this->statistics.BitmapUpdate, Verbose::rdp_orders);
 
-        const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+        const uint8_t * data = this->stream.in_skip_bytes(bitmap_data.bitmap_size()).data();
 
         Bitmap bitmap( this->info.bpp
                      , checked_int(bitmap_data.bits_per_pixel)
