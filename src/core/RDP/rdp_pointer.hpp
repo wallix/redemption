@@ -974,11 +974,8 @@ inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t he
             unsigned pixel = 0;
             if (x < width) {
                 for(size_t i = 0 ; i < underlying_cast(Bpp); i++){
-                    pixel = (pixel<<8) + vncdata[source_offset+i];
+                    pixel |= unsigned(vncdata[source_offset+i]) << (i*8);
                 }
-            }
-            else {
-                pixel = 0;
             }
             const unsigned red = (pixel >> red_shift) & red_max;
             const unsigned green = (pixel >> green_shift) & green_max;
