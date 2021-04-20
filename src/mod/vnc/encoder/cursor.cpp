@@ -129,6 +129,7 @@ struct Cursor
             this->blue_shift, this->blue_max);
         // TODO use a local cache and a local cache_idx
         gd.new_pointer(0, cursor);
+        gd.cached_pointer(0);
 
         return EncoderState::Exit;
     }
