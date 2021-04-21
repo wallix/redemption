@@ -85,13 +85,13 @@ show_duration jsclient
 echo -e "
 using gcc : 10.0 : g++-10 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
-using clang : 12.0 : clang++-12 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 " > project-config.jam
 valgrind_compiler=gcc-8
 toolset_gcc=toolset=gcc-10
 toolset_wab=toolset=gcc-8
 gcovbin=gcov-10
-toolset_clang=toolset=clang-12.0
+toolset_clang=toolset=clang
 
 export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
