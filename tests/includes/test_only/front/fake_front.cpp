@@ -42,7 +42,7 @@ FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server)
 {
     this->d->gd.resize(screen_server.width, screen_server.height);
     this->d->screen_info.bpp = screen_server.bpp;
-    return ResizeResult::done;
+    return ResizeResult::no_need;
 }
 
 FakeFront::operator ConstImageDataView() const

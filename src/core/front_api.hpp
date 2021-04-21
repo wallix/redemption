@@ -53,7 +53,8 @@ public:
         done    = 1,
         fail    = -1,
         instant_done = 2,
-        remoteapp = 3
+        remoteapp = 3,
+        remoteapp_done = 4
     };
     virtual ResizeResult server_resize(ScreenInfo screen_server) = 0;
 

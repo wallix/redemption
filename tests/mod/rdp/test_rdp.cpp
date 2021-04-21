@@ -38,15 +38,18 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 
+
+#ifdef GENERATE_TESTING_DATA
 // Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "utils/netutils.hpp"
+#include "core/listen.hpp"
+#include "utils/netutils.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include "transport/socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <openssl/ssl.h>
+#include <openssl/ssl.h>
+#endif
 
 /*
 RED_AUTO_TEST_CASE(TestModRDPXPServer)
@@ -138,8 +141,10 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
 
 RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
+#ifdef GENERATE_TESTING_DATA
     // Uncomment the code block below to generate testing data.
-    //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
+    SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
+#endif
 
     ClientInfo info;
     info.build = 2600;
@@ -165,28 +170,32 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
+#ifdef GENERATE_TESTING_DATA
     // Uncomment the code block below to generate testing data.
-    //SSL_library_init();
+    SSL_library_init();
+#endif
 
     FakeFront front(info.screen_info);
 
+#ifdef GENERATE_TESTING_DATA
     // Uncomment the code block below to generate testing data.
-    //const char * name = "RDP W2008 Target";
-    //auto client_sck = ip_connect("10.10.44.101", 3389);
+    const char * name = "RDP W2008 Target";
+    auto client_sck = ip_connect("10.10.44.101", 3389);
 
     // Uncomment the code block below to generate testing data.
-    //std::string error_message;
-    //SocketTransport t( name
-    //                 , std::move(client_sck)
-    //                 , "10.10.44.101"
-    //                 , 3389
-    //                 , std::chrono::seconds(1)
-    //                 , STVerbose
-    //                 , nullptr);
-
+    std::string error_message;
+    SocketTransport t( name
+                     , std::move(client_sck)
+                     , "10.10.44.101"
+                     , 3389
+                     , std::chrono::seconds(1)
+                     , STVerbose
+                     , nullptr);
+#else
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
+#endif
 
     Inifile ini;
     Theme theme;
@@ -244,22 +253,28 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
+
+#ifdef GENERATE_TESTING_DATA
+    session_reactor.execute_timers(
+        SessionReactor::EnableGraphics{true},
+        [&]()->gdi::GraphicApi&{ return front.gd(); });
+    unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
+        (void)sck;
+        execute_graphics_event(session_reactor, front.gd());
+        LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
+        return !mod->is_up_and_running();
+    });
+#else
     // Comment the code block below to generate testing data.
+/*
     execute_negociate_mod(session_reactor, *mod, front.gd());
     for (int count = 0; count < 38; ++count) {
         execute_graphics_event(session_reactor, front.gd());
     }
-
-    //session_reactor.execute_timers(
-    //    SessionReactor::EnableGraphics{true},
-    //    [&]()->gdi::GraphicApi&{ return front.gd(); });
-    //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
-    //    (void)sck;
-    //    execute_graphics_event(session_reactor, front.gd());
-    //    LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
-    //    return !mod->is_up_and_running();
-    //});
-
+*/
+    t.disable_remaining_error();
+    execute_mod(session_reactor, *mod, front.gd(), 70);
+#endif
     //front.dump_png("trace_w2008_");
 }
 

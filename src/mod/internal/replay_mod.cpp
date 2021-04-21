@@ -238,6 +238,7 @@ struct ReplayMod::Reader
                 break;
             case FrontAPI::ResizeResult::instant_done:
             case FrontAPI::ResizeResult::remoteapp:
+            case FrontAPI::ResizeResult::remoteapp_done:
             case FrontAPI::ResizeResult::done:
                 // resizing done;
                 is_resized = true;
