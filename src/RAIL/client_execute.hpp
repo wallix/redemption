@@ -43,171 +43,15 @@ namespace gdi
     class GraphicApi;
 }
 
-enum {BORDER_WIDTH_HEIGHT = 3 };
-
 class ClientExecute : public windowing_api
 {
-          FrontAPI                & front_;
-          gdi::GraphicApi         & drawable_;
-          mod_api              * mod_     = nullptr;
-    const CHANNELS::ChannelDef * channel_ = nullptr;
-    const Font                 * font_    = nullptr;
-
-    uint16_t client_order_type = 0;
-
-    WindowsExecuteShellParams windows_execute_shell_params;
-
 public:
-    bool should_ignore_first_client_execute_ = true;
-
-private:
-    bool server_execute_result_sent = false;
-
-    void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
-    void set_mouse_pointer(uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
-
     enum {
-        MOUSE_BUTTON_PRESSED_NONE,
-
-        MOUSE_BUTTON_PRESSED_NORTH,
-        MOUSE_BUTTON_PRESSED_NORTHWEST,
-        MOUSE_BUTTON_PRESSED_WEST,
-        MOUSE_BUTTON_PRESSED_SOUTHWEST,
-        MOUSE_BUTTON_PRESSED_SOUTH,
-        MOUSE_BUTTON_PRESSED_SOUTHEAST,
-        MOUSE_BUTTON_PRESSED_EAST,
-        MOUSE_BUTTON_PRESSED_NORTHEAST,
-
-        MOUSE_BUTTON_PRESSED_TITLEBAR,
-        MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX,
-        MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
-        MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
-        MOUSE_BUTTON_PRESSED_CLOSEBOX,
+        BORDER_WIDTH_HEIGHT = 3,
+        TITLE_BAR_HEIGHT = 24,
+        TITLE_BAR_BUTTON_WIDTH = 37,
     };
 
-    int window_offset_x = 0;
-    int window_offset_y = 0;
-
-    Rect virtual_screen_rect;
-
-    Rect task_bar_rect;
-
-    Rect window_rect;
-    Rect window_rect_saved;
-    Rect window_rect_normal;
-    Rect window_rect_old;
-
-//    Rect minimize_box_rect;
-//    Rect maximize_box_rect;
-    Rect resize_hosted_desktop_box_rect;
-
-    int button_1_down_timer;
-
-    int button_1_down_x = 0;
-    int button_1_down_y = 0;
-
-    int button_1_down = MOUSE_BUTTON_PRESSED_NONE;
-
-    uint16_t captured_mouse_x = 0;
-    uint16_t captured_mouse_y = 0;
-
-    int pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
-    bool move_size_initialized = false;
-    bool verbose = false;
-
-    void update_rects(const bool allow_resize_hosted_desktop);
-
-public:
-    struct Zone
-    {
-        //                 title_bar_rect
-        //                       |
-        // +---------------------|---------------------------------------------------+
-        // | +----+              |                       +----+ +----+ +----+ +----+ |
-        // | |    |              |                       |    | |    | |    | |    | |
-        // | |  | |                                      |  | | |  | | |  | | |  | | |
-        // | +--|-+                                      +--|-+ +--|-+ +--|-+ +--|-+ |
-        // +----|-------------------------------------------|------|------|------|---+
-        //      |                                           |      |      |      |
-        //  title_bar_icon_rect    resize_hosted desktop_box rect  |      |      |
-        //                                            minimize_box rect   |      |
-        //                                                   maximize_box_rect   |
-        //                                                            close_box_rect
-
-
-        //                          corner
-        //                        |-------|
-        //                  cx
-        //    |---------------------------|
-        //        1         0        11
-        //    +--NWN--\-----N-----|--NEN--+      +   +
-        //    |                           |      |   |
-        // 2 NWW                         NEE 10  |   | corner
-        //    |                           |      |   |
-        //    +         N = North         +      |   +
-        //    |         S = South         |      |
-        //    |         E = East          |      |
-        // 3  W         W = West          E 9    | cy
-        //    |                           |      |
-        //    |                           |      |
-        //    +                           +      |
-        //    |                           |      |
-        // 4 SWW                         SEE 8   |
-        //    |                           |      |
-        //    +--SWS--\-----S-----|--SES--+      °
-        //        5         6         7
-
-        static const uint16_t corner = 24; // TITLE_BAR_HEIGHT
-        static const uint16_t thickness = 3; // BORDER_WIDTH_HEIGHT
-        static const uint16_t button_width = 37; // TITLE_BAR_BUTTON_WIDTH
-
-        enum {
-            ZONE_N, ZONE_NWN, ZONE_NWW,
-            ZONE_W, ZONE_SWW, ZONE_SWS,
-            ZONE_S, ZONE_SES, ZONE_SEE,
-            ZONE_E, ZONE_NEE, ZONE_NEN,
-
-            ZONE_ICON, ZONE_TITLE, ZONE_CLOSE,
-            ZONE_MAXI, ZONE_MINI, ZONE_RESIZE,
-
-            NUMBER_OF_ZONES
-        };
-
-        static Rect get_zone(size_t zone, Rect w);
-
-        static int get_button(int zone);
-
-        static PredefinedPointer get_pointer(int zone);
-    };
-
-    /// \return true when \c xPos and \c yPos are captured
-    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos);
-
-private:
-
-    uint16_t front_width  = 0;
-    uint16_t front_height = 0;
-
-    bool full_window_drag_enabled = false;
-    bool internal_module_window_created = false;
-    bool maximized = false;
-    Bitmap wallix_icon_min;
-    uint32_t auxiliary_window_id;
-    Rect auxiliary_window_rect;
-    const static unsigned int max_work_area   = 32;
-                 unsigned int work_area_count = 0;
-    Rect work_areas[max_work_area];
-    std::string window_title;
-    PredefinedPointer current_mouse_pointer;
-    bool const window_level_supported_ex;
-    bool allow_resize_hosted_desktop_    = false;
-    bool enable_resizing_hosted_desktop_ = false;
-    bool rail_enabled = false;
-
-    EventsGuard events_guard;
-    Rect protocol_window_rect;
-
-public:
     ClientExecute(
         EventContainer& events,
         gdi::GraphicApi & drawable,
@@ -216,7 +60,10 @@ public:
 
     ~ClientExecute();
 
-    void set_verbose(bool verbose);
+    bool should_ignore_first_client_execute() const noexcept
+    {
+        return this->should_ignore_first_client_execute_;
+    }
 
     void enable_remote_program(bool enable);
 
@@ -262,7 +109,160 @@ public:
 
     void adjust_window_to_mod();
 
+    /// \return true when \c xPos and \c yPos are captured
+    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos);
+
+public:
+    struct Zone
+    {
+        //                 title_bar_rect
+        //                       |
+        // +---------------------|---------------------------------------------------+
+        // | +----+              |                       +----+ +----+ +----+ +----+ |
+        // | |    |              |                       |    | |    | |    | |    | |
+        // | |  | |                                      |  | | |  | | |  | | |  | | |
+        // | +--|-+                                      +--|-+ +--|-+ +--|-+ +--|-+ |
+        // +----|-------------------------------------------|------|------|------|---+
+        //      |                                           |      |      |      |
+        //  title_bar_icon_rect    resize_hosted desktop_box rect  |      |      |
+        //                                            minimize_box rect   |      |
+        //                                                   maximize_box_rect   |
+        //                                                            close_box_rect
+
+
+        //                          corner
+        //                        |-------|
+        //                  cx
+        //    |---------------------------|
+        //        1         0        11
+        //    +--NWN--\-----N-----|--NEN--+      +   +
+        //    |                           |      |   |
+        // 2 NWW                         NEE 10  |   | corner
+        //    |                           |      |   |
+        //    +         N = North         +      |   +
+        //    |         S = South         |      |
+        //    |         E = East          |      |
+        // 3  W         W = West          E 9    | cy
+        //    |                           |      |
+        //    |                           |      |
+        //    +                           +      |
+        //    |                           |      |
+        // 4 SWW                         SEE 8   |
+        //    |                           |      |
+        //    +--SWS--\-----S-----|--SES--+      °
+        //        5         6         7
+
+        static const uint16_t corner = TITLE_BAR_HEIGHT;
+        static const uint16_t thickness = BORDER_WIDTH_HEIGHT;
+        static const uint16_t button_width = TITLE_BAR_BUTTON_WIDTH;
+
+        enum {
+            ZONE_N, ZONE_NWN, ZONE_NWW,
+            ZONE_W, ZONE_SWW, ZONE_SWS,
+            ZONE_S, ZONE_SES, ZONE_SEE,
+            ZONE_E, ZONE_NEE, ZONE_NEN,
+
+            ZONE_ICON, ZONE_TITLE, ZONE_CLOSE,
+            ZONE_MAXI, ZONE_MINI, ZONE_RESIZE,
+
+            NUMBER_OF_ZONES
+        };
+
+        static Rect get_zone(size_t zone, Rect w);
+
+        static int get_button(int zone);
+
+        static PredefinedPointer get_pointer(int zone);
+    };
+
 private:
+    enum {
+        MOUSE_BUTTON_PRESSED_NONE,
+
+        MOUSE_BUTTON_PRESSED_NORTH,
+        MOUSE_BUTTON_PRESSED_NORTHWEST,
+        MOUSE_BUTTON_PRESSED_WEST,
+        MOUSE_BUTTON_PRESSED_SOUTHWEST,
+        MOUSE_BUTTON_PRESSED_SOUTH,
+        MOUSE_BUTTON_PRESSED_SOUTHEAST,
+        MOUSE_BUTTON_PRESSED_EAST,
+        MOUSE_BUTTON_PRESSED_NORTHEAST,
+
+        MOUSE_BUTTON_PRESSED_TITLEBAR,
+        MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX,
+        MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
+        MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
+        MOUSE_BUTTON_PRESSED_CLOSEBOX,
+    };
+
+          FrontAPI             & front_;
+          gdi::GraphicApi      & drawable_;
+          mod_api              * mod_     = nullptr;
+    const CHANNELS::ChannelDef * channel_ = nullptr;
+    const Font                 * font_    = nullptr;
+
+    uint16_t client_order_type = 0;
+
+    WindowsExecuteShellParams windows_execute_shell_params;
+
+    bool should_ignore_first_client_execute_ = true;
+    bool server_execute_result_sent = false;
+
+    int window_offset_x = 0;
+    int window_offset_y = 0;
+
+    Rect virtual_screen_rect;
+
+    Rect task_bar_rect;
+
+    Rect window_rect;
+    Rect window_rect_saved;
+    Rect window_rect_normal;
+    Rect window_rect_old;
+    Rect resize_hosted_desktop_box_rect;
+
+    int button_1_down_timer;
+
+    int button_1_down_x = 0;
+    int button_1_down_y = 0;
+
+    int button_1_down = MOUSE_BUTTON_PRESSED_NONE;
+
+    uint16_t captured_mouse_x = 0;
+    uint16_t captured_mouse_y = 0;
+
+    int pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
+    bool move_size_initialized = false;
+    bool verbose = false;
+
+    uint16_t front_width  = 0;
+    uint16_t front_height = 0;
+
+    bool full_window_drag_enabled = false;
+    bool internal_module_window_created = false;
+    bool maximized = false;
+    Bitmap wallix_icon_min;
+    uint32_t auxiliary_window_id;
+    Rect auxiliary_window_rect;
+    const static unsigned int max_work_area   = 32;
+                 unsigned int work_area_count = 0;
+    Rect work_areas[max_work_area];
+    std::string window_title;
+    PredefinedPointer current_mouse_pointer;
+    bool const window_level_supported_ex;
+    bool allow_resize_hosted_desktop_    = false;
+    bool enable_resizing_hosted_desktop_ = false;
+    bool rail_enabled = false;
+
+    EventsGuard events_guard;
+    Rect protocol_window_rect;
+
+private:
+    void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
+    void set_mouse_pointer(uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
+
+    void update_rects(bool allow_resize_hosted_desktop);
+
     void update_widget();
 
     void draw_resize_hosted_desktop_box(bool mouse_over, const Rect r);

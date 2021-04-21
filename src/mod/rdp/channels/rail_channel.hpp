@@ -239,10 +239,12 @@ private:
         }
 
         // orderLength(2)
-        std::string error_message = "RemoteProgramsVirtualChannel::";
-        error_message += message;
-        error_message += "::orderLength";
-        ::check_throw(chunk, 2, error_message.c_str(), ERR_RDP_DATA_TRUNCATED);
+        if (!chunk.in_check_rem(2)) {
+            LOG(LOG_ERR,
+                "Truncated RemoteProgramsVirtualChannel::%s::orderLength: expected=2 remains=%zu",
+                message, chunk.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
         auto order_length = chunk.in_uint16_le(); // orderLength(2)
         if (total_length != order_length){
@@ -1279,13 +1281,12 @@ public:
             break;
 
             default:
-                assert(false);
-
                 LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
                     "RemoteProgramsVirtualChannel::process_server_message: "
                         "Delivering unprocessed messages %s(%u) to client.",
                     get_RAIL_orderType_name(this->server_order_type),
                     static_cast<unsigned>(this->server_order_type));
+                assert(false);
             break;
         }   // switch (this->server_order_type)
 

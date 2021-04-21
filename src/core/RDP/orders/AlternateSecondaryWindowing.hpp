@@ -22,6 +22,8 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <string_view>
 
 #include "core/error.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
@@ -1051,7 +1053,8 @@ enum {
 //  This field is present only if the WINDOW_ORDER_FIELD_APPBAR_EDGE flag is
 //  set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
 
-class NewOrExistingWindow {
+class NewOrExistingWindow
+{
 public:
     WindowInformationCommonHeader header;
 
@@ -1422,7 +1425,7 @@ public:
 
     std::string const& TitleInfo() const { return this->title_info; }
 
-    void TitleInfo(const char * TitleInfo_) { this->title_info = TitleInfo_; }
+    void TitleInfo(std::string_view TitleInfo_) { this->title_info = TitleInfo_; }
 
     int32_t ClientOffsetX() const { return this->ClientOffsetX_; }
 

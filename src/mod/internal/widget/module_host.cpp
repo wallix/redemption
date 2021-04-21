@@ -301,9 +301,9 @@ void WidgetModuleHost::draw(RDPBrushCache const & cmd)  { Impl::draw_impl(*this,
 void WidgetModuleHost::cached_pointer(gdi::CachePointerIndex cache_idx)
 {
     Rect rect = this->get_rect();
-    rect.x  += (BORDER_WIDTH_HEIGHT - 1);
-    rect.cx -= (BORDER_WIDTH_HEIGHT - 1) * 2;
-    rect.cy -= (BORDER_WIDTH_HEIGHT - 1);
+    rect.x  += (ClientExecute::BORDER_WIDTH_HEIGHT - 1);
+    rect.cx -= (ClientExecute::BORDER_WIDTH_HEIGHT - 1) * 2;
+    rect.cy -= (ClientExecute::BORDER_WIDTH_HEIGHT - 1);
 
     if (rect.contains_pt(this->current_pointer_pos_x, this->current_pointer_pos_y)) {
         Impl::get_drawable(*this).cached_pointer(cache_idx);
