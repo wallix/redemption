@@ -65,7 +65,7 @@ actions cover
         mv "$GCOV" "$COVER_PATH" || raise 'gcov mv failed'
     done
 
-    python tools/coverage.py $(<) "$TAGS" $COVER_PATH/*.gcov > "$COVER_PATH".report \
+    python3 tools/coverage.py $(<) "$TAGS" $COVER_PATH/*.gcov > "$COVER_PATH".report \
     || raise 'python tools/coverage.py failed'
     cat "$COVER_PATH".report
 
