@@ -652,7 +652,7 @@ void ClientExecute::input_invalidate(const Rect r)
     bool is_updated = false;
 
     auto draw_region_text = [this, &r, &is_updated](
-        unsigned zone, int16_t offset_x, int16_t offset_y
+        unsigned zone, int16_t offset_x, int16_t offset_y, zstring_view text
     ){
         if (auto region_rect = Zone::get_zone(zone, this->window_rect)
           ; r.has_intersection(region_rect))
@@ -662,7 +662,7 @@ void ClientExecute::input_invalidate(const Rect r)
             this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
 
             draw_window_text(
-                this->font_, this->drawable_, this->window_title,
+                this->font_, this->drawable_, text,
                 region_rect.x + offset_x, region_rect.y + offset_y, r);
 
             is_updated = true;
@@ -692,17 +692,17 @@ void ClientExecute::input_invalidate(const Rect r)
         is_updated = true;
     }
 
-    draw_region_text(Zone::ZONE_TITLE, 1, 3);
+    draw_region_text(Zone::ZONE_TITLE, 1, 3, this->window_title);
 
     if (this->allow_resize_hosted_desktop_) {
         this->draw_resize_hosted_desktop_box(false, r);
     }
 
-    draw_region_text(Zone::ZONE_MINI, 12, 3);
+    draw_region_text(Zone::ZONE_MINI, 12, 3, "−"_zv);
 
     this->draw_maximize_box(false, r);
 
-    draw_region_text(Zone::ZONE_CLOSE, 13, 3);
+    draw_region_text(Zone::ZONE_CLOSE, 13, 3, "x"_zv);
 
     if (is_updated) {
         this->drawable_.sync();
