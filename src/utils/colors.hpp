@@ -279,7 +279,7 @@ struct decode_color8
 
     constexpr decode_color8() noexcept = default;
 
-    constexpr BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
+    BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
     {
         // assert(c.as_bgr().as_u32() <= 255);
         return palette[static_cast<uint8_t>(c.as_bgr().as_u32())];
