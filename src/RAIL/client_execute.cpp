@@ -341,6 +341,83 @@ void log_new_or_existing_window(
     }
 }
 
+void refresh_window_rect(mod_api* mod, Rect const& window_rect)
+{
+    if (mod) {
+        mod->rdp_input_invalidate(Rect(
+            window_rect.x,
+            window_rect.y,
+            checked_int(window_rect.x + window_rect.cx),
+            checked_int(window_rect.y + window_rect.cy)
+        ));
+    }
+}
+
+constexpr auto black = encode_color24()(BLACK);
+constexpr auto white = encode_color24()(WHITE);
+
+void draw_window_text(
+    Font const* font, gdi::GraphicApi& gd, zstring_view window_title,
+    int16_t x, int16_t y, Rect rect, RDPColor fg_color, RDPColor bg_color)
+{
+    if (font) {
+        gdi::server_draw_text(
+            gd,
+            *font,
+            x,
+            y,
+            window_title.c_str(),
+            fg_color,
+            bg_color,
+            gdi::ColorCtx::depth24(),
+            rect
+        );
+    }
+}
+
+void draw_window_text(
+    Font const* font, gdi::GraphicApi& gd, zstring_view window_title,
+    int16_t x, int16_t y, Rect rect)
+{
+    draw_window_text(font, gd, window_title, x, y, rect, black, white);
+}
+
+template<class PDUBuilder>
+void send_to_channel(
+    FrontAPI& front, CHANNELS::ChannelDef const* channel,
+    bool verbose, char const* function_name, char const* desc,
+    uint16_t order_type, PDUBuilder&& pdu_builder)
+{
+    assert(channel);
+
+    StaticOutStream<256> out_s;
+    RAILPDUHeader header;
+    header.emit_begin(out_s, order_type);
+
+    auto pdu = pdu_builder();
+    pdu.emit(out_s);
+
+    header.emit_end();
+
+    const size_t   length = out_s.get_offset();
+    const uint32_t flags  = CHANNELS::CHANNEL_FLAG_FIRST
+                          | CHANNELS::CHANNEL_FLAG_LAST;
+
+    if (verbose) {
+        {
+            const bool send              = true;
+            const bool from_or_to_client = true;
+            ::msgdump_c(
+                send, from_or_to_client, uint32_t(length),
+                flags, out_s.get_produced_bytes());
+        }
+        LOG_IF(verbose, LOG_INFO, "ClientExecute::%s: Send to client - %s", function_name, desc);
+        pdu.log(LOG_INFO);
+    }
+
+    front.send_to_channel(*channel, out_s.get_produced_bytes(), length, flags);
+}
+
 } // anonymous namespace
 
 
@@ -444,9 +521,9 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
 
     auto const depth = gdi::ColorCtx::depth24();
 
-    RDPOpaqueRect order(Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect), bg_color);
-
-    this->drawable_.draw(order, r, depth);
+    this->drawable_.draw(
+        RDPOpaqueRect(Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect), bg_color),
+        r, depth);
 
     if (this->enable_resizing_hosted_desktop_) {
         Rect rect = Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect);
@@ -456,44 +533,28 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         rect.cx  = 2;
         rect.cy  = 7;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect.x  -= 4;
         rect.y  += 2;
         rect.cx  = 4;
         rect.cy  = 3;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect.x  -= 2;
         rect.y  -= 3;
         rect.cx  = 2;
         rect.cy  = 9;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect.x  -= 4;
         rect.y  += 4;
         rect.cx  = 4;
         rect.cy  = 1;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
     }
     else {
         Rect rect = Zone::get_zone(Zone::ZONE_RESIZE, this->window_rect);
@@ -503,44 +564,28 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         rect.cx  = 7;
         rect.cy  = 2;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect.x  += 2;
         rect.y  += 2;
         rect.cx  = 3;
         rect.cy  = 4;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect.x  -= 3;
         rect.y  += 4;
         rect.cx  = 9;
         rect.cy  = 2;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect.x  += 4;
         rect.y  += 2;
         rect.cx  = 1;
         rect.cy  = 4;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
     }
 }   // draw_resize_hosted_desktop_box
 
@@ -551,10 +596,9 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 
     auto const depth = gdi::ColorCtx::depth24();
 
-    auto rect_maxi = Zone::get_zone(Zone::ZONE_MAXI, this->window_rect);
-    RDPOpaqueRect order(rect_maxi, bg_color);
+    auto const rect_maxi = Zone::get_zone(Zone::ZONE_MAXI, this->window_rect);
 
-    this->drawable_.draw(order, r, depth);
+    this->drawable_.draw(RDPOpaqueRect(rect_maxi, bg_color), r, depth);
 
     if (this->maximized) {
         Rect rect = rect_maxi;
@@ -564,17 +608,11 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         rect.cx -= 14 * 2 + 2;
         rect.cy -= 7 * 2 + 2;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect = rect.shrink(1);
 
-        {
-            RDPOpaqueRect order(rect, bg_color);
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, bg_color), r, depth);
 
         rect = rect_maxi;
 
@@ -583,17 +621,11 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         rect.cx -= 14 * 2 + 2;
         rect.cy -= 7 * 2 + 2;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect = rect.shrink(1);
 
-        {
-            RDPOpaqueRect order(rect, bg_color);
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, bg_color), r, depth);
     }
     else {
         Rect rect = rect_maxi;
@@ -603,17 +635,11 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         rect.cx -= 14 * 2;
         rect.cy -= 7 * 2;
 
-        {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
 
         rect = rect.shrink(1);
 
-        {
-            RDPOpaqueRect order(rect, bg_color);
-            this->drawable_.draw(order, r, depth);
-        }
+        this->drawable_.draw(RDPOpaqueRect(rect, bg_color), r, depth);
     }
 }   // draw_maximize_box
 
@@ -623,13 +649,30 @@ void ClientExecute::input_invalidate(const Rect r)
 
     if (!this->channel_) return;
 
-    auto const depth = gdi::ColorCtx::depth24();
     bool is_updated = false;
+
+    auto draw_region_text = [this, &r, &is_updated](
+        unsigned zone, int16_t offset_x, int16_t offset_y
+    ){
+        if (auto region_rect = Zone::get_zone(zone, this->window_rect)
+          ; r.has_intersection(region_rect))
+        {
+            RDPOpaqueRect order(region_rect, white);
+
+            this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
+
+            draw_window_text(
+                this->font_, this->drawable_, this->window_title,
+                region_rect.x + offset_x, region_rect.y + offset_y, r);
+
+            is_updated = true;
+        }
+    };
 
     if (auto icon_rect = Zone::get_zone(Zone::ZONE_ICON, this->window_rect)
       ; r.has_intersection(icon_rect))
     {
-        RDPOpaqueRect order(icon_rect, encode_color24()(WHITE));
+        RDPOpaqueRect order(icon_rect, white);
 
         this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
 
@@ -649,80 +692,17 @@ void ClientExecute::input_invalidate(const Rect r)
         is_updated = true;
     }
 
-    if (auto title_rect = Zone::get_zone(Zone::ZONE_TITLE, this->window_rect)
-      ; r.has_intersection(title_rect))
-    {
-        RDPOpaqueRect order(title_rect, encode_color24()(WHITE));
-
-        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
-
-        if (this->font_) {
-            gdi::server_draw_text(this->drawable_,
-                                    *this->font_,
-                                    title_rect.x + 1,
-                                    title_rect.y + 3,
-                                    this->window_title.c_str(),
-                                    encode_color24()(BLACK),
-                                    encode_color24()(WHITE),
-                                    depth,
-                                    r
-                                    );
-        }
-
-        is_updated = true;
-    }
+    draw_region_text(Zone::ZONE_TITLE, 1, 3);
 
     if (this->allow_resize_hosted_desktop_) {
         this->draw_resize_hosted_desktop_box(false, r);
     }
 
-    if (auto rect_minimize = Zone::get_zone(Zone::ZONE_MINI, this->window_rect)
-      ; r.has_intersection(rect_minimize))
-    {
-        RDPOpaqueRect order(rect_minimize, encode_color24()(WHITE));
-
-        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
-
-        if (this->font_) {
-            gdi::server_draw_text(this->drawable_,
-                                    *this->font_,
-                                    rect_minimize.x + 12,
-                                    rect_minimize.y + 3,
-                                    "−",
-                                    encode_color24()(BLACK),
-                                    encode_color24()(WHITE),
-                                    depth,
-                                    r
-                                    );
-        }
-
-        is_updated = true;
-    }
+    draw_region_text(Zone::ZONE_MINI, 12, 3);
 
     this->draw_maximize_box(false, r);
 
-    if (auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect)
-      ; r.has_intersection(rect_close))
-    {
-        RDPOpaqueRect order(rect_close, encode_color24()(WHITE));
-
-        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
-
-        if (this->font_) {
-            gdi::server_draw_text(this->drawable_,
-                                    *this->font_,
-                                    rect_close.x + 13,
-                                    rect_close.y + 3,
-                                    "x",
-                                    encode_color24()(BLACK),
-                                    encode_color24()(WHITE),
-                                    depth,
-                                    r
-                                    );
-        }
-
-        is_updated = true;
-    }
+    draw_region_text(Zone::ZONE_CLOSE, 13, 3);
 
     if (is_updated) {
         this->drawable_.sync();
@@ -732,14 +712,13 @@ void ClientExecute::input_invalidate(const Rect r)
 void ClientExecute::adjust_window_to_mod() {
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::adjust_window_to_mod()");
     this->maximized = false;
-    Rect work_area_rect = this->get_current_work_area_rect();
+    Rect const work_area_rect = this->get_current_work_area_rect();
 
-    Dimension module_dimension;
-    if (this->mod_) {
-        module_dimension = this->mod_->get_dim();
-    }
+    Dimension const module_dimension = this->mod_ ? this->mod_->get_dim() : Dimension{};
 
-    Dimension prefered_window_dimension(module_dimension.w + 2, module_dimension.h + 2 + TITLE_BAR_HEIGHT);
+    Dimension const prefered_window_dimension(
+        module_dimension.w + 2,
+        module_dimension.h + 2 + TITLE_BAR_HEIGHT);
 
     if (((this->window_rect.cx != prefered_window_dimension.w)||(this->window_rect.cy != prefered_window_dimension.h))
      && (work_area_rect.cx > prefered_window_dimension.w)
@@ -772,46 +751,8 @@ void ClientExecute::maximize_restore_window()
 {
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::maximize_restore_window()");
     if (this->maximized) {
-        this->maximized = false;
-
         this->window_rect = this->window_rect_normal;
-
-        Rect work_area_rect = this->get_current_work_area_rect();
-
-        Dimension module_dimension;
-        if (this->mod_) {
-            module_dimension = this->mod_->get_dim();
-        }
-
-        Dimension prefered_window_dimension(
-                module_dimension.w + 2,
-                module_dimension.h + 2 + TITLE_BAR_HEIGHT
-            );
-        if (((this->window_rect.cx != prefered_window_dimension.w) ||
-                (this->window_rect.cy != prefered_window_dimension.h)) &&
-            (work_area_rect.cx > prefered_window_dimension.w) &&
-            (work_area_rect.cy > prefered_window_dimension.h)) {
-            this->window_rect.cx = prefered_window_dimension.w;
-            this->window_rect.cy = prefered_window_dimension.h;
-        }
-
-        this->update_rects(this->allow_resize_hosted_desktop_);
-
-        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
-
-        {
-            RDP::RAIL::NewOrExistingWindow order = create_resize_window_pdu(
-                this->window_level_supported_ex,
-                adjusted_window_rect);
-
-            log_new_or_existing_window(order, this->verbose, "maximize_restore_window");
-
-            this->drawable_.draw(order);
-        }
-
-        this->update_widget();
-
-        this->on_new_or_existing_window(adjusted_window_rect);
+        this->adjust_window_to_mod();
     }   // if (this->maximized)
     else {
         this->maximized = true;
@@ -870,111 +811,42 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
     }
 
     this->channel_ = this->front_.get_channel_list().get_by_name(channel_names::rail);
-    if (!this->channel_) return;
 
-    {
-        uint16_t const orderType = TS_RAIL_ORDER_HANDSHAKE/*TS_RAIL_ORDER_HANDSHAKE_EX*/;
-
-        StaticOutStream<256> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, orderType);
-
-        HandshakePDU handshake_pdu;
-        handshake_pdu.buildNumber(7601);
-
-        HandshakeExPDU handshakeex_pdu;
-        handshakeex_pdu.buildNumber(7601);
-        handshakeex_pdu.railHandshakeFlags(TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF);
-
-        if (TS_RAIL_ORDER_HANDSHAKE == orderType) {
-            handshake_pdu.emit(out_s);
-        }
-        else {
-            handshakeex_pdu.emit(out_s);
-        }
-
-        header.emit_end();
-
-        const size_t   length     = out_s.get_offset();
-        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-        if (this->verbose) {
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            }
-            if (TS_RAIL_ORDER_HANDSHAKE == orderType) {
-                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Handshake PDU");
-                handshake_pdu.log(LOG_INFO);
-            }
-            else {
-                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server HandshakeEx PDU");
-                handshakeex_pdu.log(LOG_INFO);
-            }
-        }
-
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
+    if (!this->channel_) {
+        return;
     }
 
-    {
-        StaticOutStream<256> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+    send_to_channel(
+        this->front_, this->channel_, this->verbose, "ready",
+        "Server Handshake PDU",
+        TS_RAIL_ORDER_HANDSHAKE, []{
+            HandshakePDU handshake_pdu;
+            handshake_pdu.buildNumber(7601);
+            return handshake_pdu;
+        });
+    // send_to_channel(
+    //     this->front_, this->channel_, this->verbose, "ready", "Server HandshakeEx PDU",
+    //     TS_RAIL_ORDER_HANDSHAKE_EX, []{
+    //         HandshakeExPDU handshakeex_pdu;
+    //         handshakeex_pdu.buildNumber(7601);
+    //         handshakeex_pdu.railHandshakeFlags(TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF);
+    //         return handshakeex_pdu;
+    //     });
 
-        ServerSystemParametersUpdatePDU server_system_parameters_update_pdu;
-        server_system_parameters_update_pdu.SystemParam(SPI_SETSCREENSAVESECURE);
-        server_system_parameters_update_pdu.Body(0);
-        server_system_parameters_update_pdu.emit(out_s);
+    auto send_server_system_paramters_update = [this](uint32_t systemParam){
+        send_to_channel(
+            this->front_, this->channel_, this->verbose, "ready",
+            "Server System Parameters Update PDU",
+            TS_RAIL_ORDER_SYSPARAM, [systemParam]{
+                ServerSystemParametersUpdatePDU server_system_parameters_update_pdu;
+                server_system_parameters_update_pdu.SystemParam(systemParam);
+                server_system_parameters_update_pdu.Body(0);
+                return server_system_parameters_update_pdu;
+            });
+    };
 
-        header.emit_end();
-
-        const size_t   length     = out_s.get_offset();
-        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-        if (this->verbose) {
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            }
-            LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
-            server_system_parameters_update_pdu.log(LOG_INFO);
-        }
-
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
-    }
-
-    {
-        StaticOutStream<256> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
-
-        ServerSystemParametersUpdatePDU server_system_parameters_update_pdu;
-        server_system_parameters_update_pdu.SystemParam(SPI_SETSCREENSAVEACTIVE);
-        server_system_parameters_update_pdu.Body(0);
-        server_system_parameters_update_pdu.emit(out_s);
-
-        header.emit_end();
-
-        const size_t length     = out_s.get_offset();
-        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-        if (this->verbose) {
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            }
-            LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
-            server_system_parameters_update_pdu.log(LOG_INFO);
-        }
-
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
-    }
+    send_server_system_paramters_update(SPI_SETSCREENSAVESECURE);
+    send_server_system_paramters_update(SPI_SETSCREENSAVEACTIVE);
 }   // ready
 
 bool ClientExecute::is_ready() const noexcept
@@ -1088,7 +960,7 @@ void ClientExecute::on_new_or_existing_window(Rect const & window_rect)
 
         auto const depth = gdi::ColorCtx::depth24();
         for (Rect const & rect : sub_region.rects) {
-            RDPOpaqueRect order(rect, encode_color24()(BLACK));
+            RDPOpaqueRect order(rect, black);
 
             this->drawable_.draw(order, rect, depth);
         }
@@ -1103,7 +975,7 @@ void ClientExecute::on_delete_window()
     assert(!this->protocol_window_rect.isempty());
 
     auto const depth = gdi::ColorCtx::depth24();
-    RDPOpaqueRect order(this->protocol_window_rect, encode_color24()(BLACK));
+    RDPOpaqueRect order(this->protocol_window_rect, black);
 
     this->drawable_.draw(order, this->protocol_window_rect, depth);
 
@@ -1225,50 +1097,31 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int
 
     // TS_RAIL_ORDER_MINMAXINFO
     // Send to client - Server Min Max Info PDU (0)
-    {
-        StaticOutStream<256> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
+    send_to_channel(
+        this->front_, this->channel_, this->verbose, "initialize_move_size",
+        "Server Min Max Info PDU (0)",
+        TS_RAIL_ORDER_MINMAXINFO, [this]{
+            ServerMinMaxInfoPDU smmipdu;
 
-        const Rect adjusted_virtual_sreen_rect = this->virtual_screen_rect.offset(
-            this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_virtual_sreen_rect = this->virtual_screen_rect.offset(
+                this->window_offset_x, this->window_offset_y);
 
-        ServerMinMaxInfoPDU smmipdu;
+            smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+            smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
+            smmipdu.MaxHeight(adjusted_virtual_sreen_rect.cy - 1);
+            smmipdu.MaxPosX(adjusted_virtual_sreen_rect.eright());
+            smmipdu.MaxPosY(adjusted_virtual_sreen_rect.ebottom());
+            smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
+            smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
+            smmipdu.MaxTrackWidth(adjusted_virtual_sreen_rect.cx - 1);
+            smmipdu.MaxTrackHeight(adjusted_virtual_sreen_rect.cy - 1);
 
-        smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-        smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
-        smmipdu.MaxHeight(adjusted_virtual_sreen_rect.cy - 1);
-        smmipdu.MaxPosX(adjusted_virtual_sreen_rect.eright());
-        smmipdu.MaxPosY(adjusted_virtual_sreen_rect.ebottom());
-        smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
-        smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-        smmipdu.MaxTrackWidth(adjusted_virtual_sreen_rect.cx - 1);
-        smmipdu.MaxTrackHeight(adjusted_virtual_sreen_rect.cy - 1);
-
-        smmipdu.emit(out_s);
-
-        header.emit_end();
-
-        const size_t   length     = out_s.get_offset();
-        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-        if (this->verbose) {
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            }
-            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Min Max Info PDU (0)");
-            smmipdu.log(LOG_INFO);
-        }
-
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
-    }
+            return smmipdu;
+        });
 
     // Send to client - Server Move/Size Start PDU (0)
 
-    int move_size_type = 0;
+    uint16_t move_size_type = 0;
     uint16_t PosX = xPos;
     uint16_t PosY = yPos;
     switch (pressed_mouse_button_) {
@@ -1288,37 +1141,20 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int
     }
 
     if (move_size_type) {
-        StaticOutStream<256> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+        send_to_channel(
+            this->front_, this->channel_, this->verbose, "initialize_move_size",
+            "Server Move/Size Start PDU (0)",
+            TS_RAIL_ORDER_LOCALMOVESIZE, [&]{
+                ServerMoveSizeStartOrEndPDU smssoepdu;
 
-        ServerMoveSizeStartOrEndPDU smssoepdu;
+                smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                smssoepdu.IsMoveSizeStart(1);
+                smssoepdu.MoveSizeType(move_size_type);
+                smssoepdu.PosXOrTopLeftX(PosX);
+                smssoepdu.PosYOrTopLeftY(PosY);
 
-        smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-        smssoepdu.IsMoveSizeStart(1);
-        smssoepdu.MoveSizeType(move_size_type);
-        smssoepdu.PosXOrTopLeftX(PosX);
-        smssoepdu.PosYOrTopLeftY(PosY);
-
-        smssoepdu.emit(out_s);
-
-        header.emit_end();
-
-        const size_t   length     = out_s.get_offset();
-        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-        if (this->verbose) {
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            }
-            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Move/Size Start PDU (0)");
-            smssoepdu.log(LOG_INFO);
-        }
-
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
+                return smssoepdu;
+            });
     }   // if (move_size_type)
 
     this->move_size_initialized = true;
@@ -1422,18 +1258,11 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 RDPOpaqueRect order(rect_mini, encode_color24()(BGRColor{0xCBCACA}));
                 this->drawable_.draw(order, rect_mini, gdi::ColorCtx::depth24());
 
-                if (this->font_) {
-                    gdi::server_draw_text(this->drawable_,
-                                            *this->font_,
-                                            rect_mini.x + 12,
-                                            rect_mini.y + 3,
-                                            "−",
-                                            encode_color24()(BLACK),
-                                            encode_color24()(BGRColor{0xCBCACA}),
-                                            gdi::ColorCtx::depth24(),
-                                            rect_mini
-                                            );
-                }
+                draw_window_text(
+                    this->font_, this->drawable_, this->window_title,
+                    rect_mini.x + 12, rect_mini.y + 3, rect_mini,
+                    black, encode_color24()(BGRColor{0xCBCACA}));
+
                 this->drawable_.sync();
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
 
@@ -1451,18 +1280,10 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
                 this->drawable_.draw(order, rect_close, gdi::ColorCtx::depth24());
 
-                if (this->font_) {
-                    gdi::server_draw_text(this->drawable_,
-                                            *this->font_,
-                                            rect_close.x + 13,
-                                            rect_close.y + 3,
-                                            "x",
-                                            encode_color24()(WHITE),
-                                            encode_color24()(BGRColor{0x2311E8}),
-                                            gdi::ColorCtx::depth24(),
-                                            rect_close
-                                            );
-                }
+                draw_window_text(
+                    this->font_, this->drawable_, this->window_title,
+                    rect_close.x + 13, rect_close.y + 3, rect_close,
+                    black, encode_color24()(BGRColor{0x2311E8}));
 
                 this->drawable_.sync();
 
@@ -1608,27 +1429,20 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             auto rect_mini = Zone::get_zone(Zone::ZONE_MINI, this->window_rect);
             this->draw_maximize_box(rect_mini.contains_pt(xPos, yPos), rect_mini);
             this->drawable_.sync();
-            auto front_color = encode_color24()(BLACK);
+            auto front_color = black;
             auto back_color = (rect_mini.contains_pt(xPos, yPos))
                              ? encode_color24()(BGRColor{0xCBCACA})
-                             : encode_color24()(WHITE);
+                             : white;
 
 
             RDPOpaqueRect order(rect_mini, back_color);
             this->drawable_.draw(order, rect_mini, gdi::ColorCtx::depth24());
 
-            if (this->font_) {
-                gdi::server_draw_text(this->drawable_,
-                                        *this->font_,
-                                        rect_mini.x + 12,
-                                        rect_mini.y + 3,
-                                        "−",
-                                        front_color,
-                                        back_color,
-                                        gdi::ColorCtx::depth24(),
-                                        rect_mini
-                                        );
-            }
+            draw_window_text(
+                this->font_, this->drawable_, this->window_title,
+                rect_mini.x + 12, rect_mini.y + 3, rect_mini,
+                front_color, back_color);
+
             this->drawable_.sync();
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
@@ -1640,28 +1454,21 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
             auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect);
             auto front_color = (rect_close.contains_pt(xPos, yPos))
-                             ? encode_color24()(WHITE)
-                             : encode_color24()(BLACK);
+                             ? white
+                             : black;
 
             auto back_color = (rect_close.contains_pt(xPos, yPos))
                              ? encode_color24()(BGRColor{0x2311E8})
-                             : encode_color24()(WHITE);
+                             : white;
 
             RDPOpaqueRect order(rect_close, back_color);
             this->drawable_.draw(order, rect_close, gdi::ColorCtx::depth24());
 
-            if (this->font_) {
-                gdi::server_draw_text(this->drawable_,
-                                        *this->font_,
-                                        rect_close.x + 13,
-                                        rect_close.y + 3,
-                                        "x",
-                                        front_color,
-                                        back_color,
-                                        gdi::ColorCtx::depth24(),
-                                        rect_close
-                                        );
-            }
+            draw_window_text(
+                this->font_, this->drawable_, this->window_title,
+                rect_close.x + 13, rect_close.y + 3, rect_close,
+                front_color, back_color);
+
             this->drawable_.sync();
 
         }   // else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button)
@@ -1688,21 +1495,12 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             auto rect_mini = Zone::get_zone(Zone::ZONE_MINI, this->window_rect);
 
             this->drawable_.draw(
-                RDPOpaqueRect(rect_mini, encode_color24()(WHITE)),
+                RDPOpaqueRect(rect_mini, white),
                 rect_mini, gdi::ColorCtx::depth24());
 
-            if (this->font_) {
-                gdi::server_draw_text(
-                    this->drawable_,
-                    *this->font_,
-                    rect_mini.x + 12,
-                    rect_mini.y + 3,
-                    "−",
-                    encode_color24()(BLACK),
-                    encode_color24()(WHITE),
-                    gdi::ColorCtx::depth24(),
-                    rect_mini);
-            }
+            draw_window_text(
+                this->font_, this->drawable_, this->window_title,
+                rect_mini.x + 12, rect_mini.y + 3, rect_mini);
 
             this->drawable_.sync();
 
@@ -1715,13 +1513,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->drawable_.draw(order);
                 this->on_delete_window();
 
-                if (this->mod_) {
-                    this->mod_->rdp_input_invalidate(
-                        Rect(this->window_rect.x,
-                             this->window_rect.y,
-                             this->window_rect.x + this->window_rect.cx,
-                             this->window_rect.y + this->window_rect.cy));
-                }
+                refresh_window_rect(this->mod_, this->window_rect);
             }
         }   // if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
@@ -1739,21 +1531,12 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             auto rect_close = Zone::get_zone(Zone::ZONE_CLOSE, this->window_rect);
 
             this->drawable_.draw(
-                RDPOpaqueRect(rect_close, encode_color24()(WHITE)), rect_close,
+                RDPOpaqueRect(rect_close, white), rect_close,
                 gdi::ColorCtx::depth24());
 
-            if (this->font_) {
-                gdi::server_draw_text(
-                    this->drawable_,
-                    *this->font_,
-                    rect_close.x + 13,
-                    rect_close.y + 3,
-                    "x",
-                    encode_color24()(BLACK),
-                    encode_color24()(WHITE),
-                    gdi::ColorCtx::depth24(),
-                    rect_close);
-            }
+            draw_window_text(
+                this->font_, this->drawable_, this->window_title,
+                rect_close.x + 13, rect_close.y + 3, rect_close);
 
             this->drawable_.sync();
 
@@ -1792,39 +1575,25 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             }
 
             if (0 != move_size_type) {
+                send_to_channel(
+                    this->front_, this->channel_, this->verbose, "input_mouse",
+                    "Server Move/Size End PDU (1)",
+                    TS_RAIL_ORDER_LOCALMOVESIZE, [&]{
+                        ServerMoveSizeStartOrEndPDU smssoepdu;
+
+                        const Rect adjusted_window_rect = this->window_rect.offset(
+                            this->window_offset_x, this->window_offset_y);
+
+                        smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                        smssoepdu.IsMoveSizeStart(0);
+                        smssoepdu.MoveSizeType(move_size_type);
+                        smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
+                        smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
+
+                        return smssoepdu;
+                    });
+
                 StaticOutStream<256> out_s;
-                RAILPDUHeader header;
-                header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
-
-                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
-
-                ServerMoveSizeStartOrEndPDU smssoepdu;
-
-                smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                smssoepdu.IsMoveSizeStart(0);
-                smssoepdu.MoveSizeType(move_size_type);
-                smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
-                smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
-
-                smssoepdu.emit(out_s);
-
-                header.emit_end();
-
-                const size_t   length     = out_s.get_offset();
-                const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                            | CHANNELS::CHANNEL_FLAG_LAST;
-
-                if (this->verbose) {
-                    {
-                        const bool send              = true;
-                        const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-                    }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (1)");
-                    smssoepdu.log(LOG_INFO);
-                }
-
-                this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
 
                 this->move_size_initialized = false;
             }   // if (0 != move_size_type)
@@ -2123,34 +1892,21 @@ void ClientExecute::process_client_get_application_id_pdu(InStream& chunk)
     ClientGetApplicationIDPDU cgaipdu;
     cgaipdu.receive(chunk);
 
-    if (this->verbose) { cgaipdu.log(LOG_INFO); }
-
-    {
-        StaticOutStream<1024> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_GET_APPID_RESP);
-
-        ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
-        server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-        server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
-        server_get_application_id_response_pdu.emit(out_s);
-
-        header.emit_end();
-
-        const size_t   length     = out_s.get_offset();
-        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-        LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_get_application_id_pdu: Send to client - Server Get Application ID Response PDU");
-        if (this->verbose) {
-            const bool send              = true;
-            const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            server_get_application_id_response_pdu.log(LOG_INFO);
-        }
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
-        this->server_execute_result_sent = true;
+    if (this->verbose) {
+        cgaipdu.log(LOG_INFO);
     }
+
+    send_to_channel(
+        this->front_, this->channel_, this->verbose, "process_client_get_application_id_pdu",
+        "Server Get Application ID Response PDU",
+        TS_RAIL_ORDER_GET_APPID_RESP, [this]{
+            ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
+            server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+            server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
+            return server_get_application_id_response_pdu;
+        });
+
+    this->server_execute_result_sent = true;
 }   // process_client_get_application_id_pdu
 
 // TS_RAIL_ORDER_HANDSHAKE
@@ -2201,15 +1957,7 @@ void ClientExecute::process_client_system_command_pdu(InStream& chunk)
                     this->on_delete_window();
                 }
 
-                if (this->mod_) {
-                    this->mod_->rdp_input_invalidate(
-                        Rect(
-                                this->window_rect.x,
-                                this->window_rect.y,
-                                this->window_rect.x + this->window_rect.cx,
-                                this->window_rect.y + this->window_rect.cy
-                            ));
-                }
+                refresh_window_rect(this->mod_, this->window_rect);
             }
             break;
 
@@ -2227,15 +1975,7 @@ void ClientExecute::process_client_system_command_pdu(InStream& chunk)
                 this->drawable_.draw(order);
                 this->on_new_or_existing_window(adjusted_window_rect);
 
-                if (this->mod_) {
-                    this->mod_->rdp_input_invalidate(
-                        Rect(
-                                this->window_rect.x,
-                                this->window_rect.y,
-                                this->window_rect.x + this->window_rect.cx,
-                                this->window_rect.y + this->window_rect.cy
-                            ));
-                }
+                refresh_window_rect(this->mod_, this->window_rect);
             }
             break;
     }
@@ -2526,15 +2266,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
             this->drawable_.draw(order);
         }
 
-        if (this->mod_) {
-            this->mod_->rdp_input_invalidate(
-                Rect(
-                        this->window_rect.x,
-                        this->window_rect.y,
-                        this->window_rect.x + this->window_rect.cx,
-                        this->window_rect.y + this->window_rect.cy
-                    ));
-        }
+        refresh_window_rect(this->mod_, this->window_rect);
     }   // if (cspupdu.SystemParam() == SPI_SETWORKAREA)
     else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS) {
         RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
@@ -2606,40 +2338,25 @@ void ClientExecute::process_client_window_move_pdu(InStream& chunk)
             case MOUSE_BUTTON_PRESSED_TITLEBAR:  move_size_type = RAIL_WMSZ_MOVE;        break;
         }
 
-        if (0 != move_size_type) {
-            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+        if (move_size_type) {
+            send_to_channel(
+                this->front_, this->channel_, this->verbose, "process_client_window_move_pdu",
+                "Server Move/Size End PDU",
+                TS_RAIL_ORDER_LOCALMOVESIZE, [&]{
+                    ServerMoveSizeStartOrEndPDU smssoepdu;
 
-            StaticOutStream<256> out_s;
-            RAILPDUHeader header;
-            header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+                    const Rect adjusted_window_rect = this->window_rect.offset(
+                        this->window_offset_x, this->window_offset_y);
 
-            ServerMoveSizeStartOrEndPDU smssoepdu;
+                    smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                    smssoepdu.IsMoveSizeStart(0);
+                    smssoepdu.MoveSizeType(move_size_type);
+                    smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
+                    smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
 
-            smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-            smssoepdu.IsMoveSizeStart(0);
-            smssoepdu.MoveSizeType(move_size_type);
-            smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
-            smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
+                    return smssoepdu;
+                });
 
-            smssoepdu.emit(out_s);
-
-            header.emit_end();
-
-            const size_t   length = out_s.get_offset();
-            const uint32_t flags  = CHANNELS::CHANNEL_FLAG_FIRST
-                                  | CHANNELS::CHANNEL_FLAG_LAST;
-
-            if (this->verbose) {
-                {
-                    const bool send              = true;
-                    const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-                }
-                LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send to client - Server Move/Size End PDU");
-                smssoepdu.log(LOG_INFO);
-            }
-
-            this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
             this->move_size_initialized = false;
         }
 

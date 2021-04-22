@@ -279,7 +279,7 @@ struct decode_color8
 
     constexpr decode_color8() noexcept = default;
 
-    BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
+    constexpr BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
     {
         // assert(c.as_bgr().as_u32() <= 255);
         return palette[static_cast<uint8_t>(c.as_bgr().as_u32())];
@@ -385,7 +385,7 @@ struct with_color8_palette
 {
     static constexpr const BitsPerPixel bpp = Converter::bpp;
 
-    BGRColor operator()(RDPColor c) const noexcept
+    constexpr BGRColor operator()(RDPColor c) const noexcept
     {
         return Converter()(c, this->palette);
     }
@@ -418,7 +418,7 @@ struct encode_color15
     constexpr encode_color15() noexcept = default;
 
     // rgb555
-    RDPColor operator()(BGRasRGBColor c) const noexcept
+    constexpr RDPColor operator()(BGRasRGBColor c) const noexcept
     {
         // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return RDPColor::from(
@@ -439,7 +439,7 @@ struct encode_color16
     constexpr encode_color16() noexcept = default;
 
     // rgb565
-    RDPColor operator()(BGRasRGBColor c) const noexcept
+    constexpr RDPColor operator()(BGRasRGBColor c) const noexcept
     {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return RDPColor::from(
@@ -459,7 +459,7 @@ struct encode_color24
 
     constexpr encode_color24() noexcept = default;
 
-    RDPColor operator()(BGRColor c) const noexcept
+    constexpr RDPColor operator()(BGRColor c) const noexcept
     {
         return RDPColor::from(c.as_u32());
     }
@@ -471,7 +471,7 @@ struct encode_color32
 
     constexpr encode_color32() noexcept = default;
 
-    RDPColor operator()(BGRColor c) const noexcept
+    constexpr RDPColor operator()(BGRColor c) const noexcept
     {
         return RDPColor::from(c.as_u32());
     }
