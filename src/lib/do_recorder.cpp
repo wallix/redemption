@@ -891,11 +891,11 @@ struct CaptureTimes
             auto relative_time_barrier = 31536000s;
 
             if (begin_cap.count() && begin_cap < relative_time_barrier) {
-                begin_cap += Seconds(start_time);
+                begin_cap += start_time;
             }
 
             if (end_cap.count() && end_cap < relative_time_barrier) {
-                end_cap += Seconds(start_time);
+                end_cap += start_time;
             }
         }
     }

@@ -518,6 +518,7 @@ bool mod_vnc::doTlsSwitch()
         break;
     }
     REDEMPTION_DIAGNOSTIC_POP()
+
     NullServerNotifier notifier;
 
     switch (this->t.enable_client_tls(notifier, tlsParams)) {
@@ -530,6 +531,8 @@ bool mod_vnc::doTlsSwitch()
         case Transport::TlsResult::Ok:
             return true;
     }
+
+    REDEMPTION_UNREACHABLE();
 }
 
 

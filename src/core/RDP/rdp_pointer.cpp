@@ -198,7 +198,7 @@ namespace
     {
         if (!stream.in_check_rem(mlen + dlen)){
             LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
-                mlen, dlen, mlen+dlen, stream.in_remain());
+                mlen, dlen, unsigned(mlen)+dlen, stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 

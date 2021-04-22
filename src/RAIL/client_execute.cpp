@@ -53,7 +53,7 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
-inline Rect ClientExecute::Zone::get_zone(size_t zone, Rect w)
+Rect ClientExecute::Zone::get_zone(size_t zone, Rect w)
 {
     // if (allow_resize_hosted_desktop)
     if (zone >= ZONE_CLOSE && zone <= ZONE_RESIZE){
@@ -97,7 +97,7 @@ inline Rect ClientExecute::Zone::get_zone(size_t zone, Rect w)
     return Rect(0,0,0,0);
 }
 
-inline int ClientExecute::Zone::get_button(int zone)
+int ClientExecute::Zone::get_button(int zone)
 {
     switch (zone){
     case ZONE_N  : return MOUSE_BUTTON_PRESSED_NORTH;
@@ -116,7 +116,7 @@ inline int ClientExecute::Zone::get_button(int zone)
     return MOUSE_BUTTON_PRESSED_NONE;
 }
 
-inline PredefinedPointer ClientExecute::Zone::get_pointer(int zone)
+PredefinedPointer ClientExecute::Zone::get_pointer(int zone)
 {
     switch (zone){
     case ZONE_N  :

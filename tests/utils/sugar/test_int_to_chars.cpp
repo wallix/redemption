@@ -120,37 +120,37 @@ RED_AUTO_TEST_CASE(TestIntToHexadecimalChars)
 
 RED_AUTO_TEST_CASE(TestIntToFizedHexadecimalChars)
 {
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0x0u)) == "00000000"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0x1u)) == "00000001"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0x9u)) == "00000009"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0xAu)) == "0000000A"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0xFu)) == "0000000F"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0x10u)) == "00000010"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0x6Bu)) == "0000006B"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0x99u)) == "00000099"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0xFFFu)) == "00000FFF"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0xA39u)) == "00000A39"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint32_t(0xFFFFFFFFu)) == "FFFFFFFF"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint64_t(0xFFFFFFFF'FFFFFFFFu)) == "FFFFFFFFFFFFFFFF"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0x0u) == "00000000"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0x1u) == "00000001"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0x9u) == "00000009"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xAu) == "0000000A"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xFu) == "0000000F"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0x10u) == "00000010"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0x6Bu) == "0000006B"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0x99u) == "00000099"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xFFFu) == "00000FFF"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xA39u) == "00000A39"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xFFFFFFFFu) == "FFFFFFFF"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xFFFFFFFF'FFFFFFFFu) == "FFFFFFFFFFFFFFFF"_av);
 
-    RED_CHECK(int_to_fixed_hexadecimal_lower_chars(uint32_t(0xA39u)) == "00000a39"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_lower_zchars(uint32_t(0xA39u)) == "00000a39"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_lower_chars(0xA39u) == "00000a39"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_lower_zchars(0xA39u) == "00000a39"_av);
 
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<4>(uint32_t(0x1234'5678u)) == "12345678"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<3>(uint32_t(0x1234'5678u)) == "345678"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<2>(uint32_t(0x1234'5678u)) == "5678"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<1>(uint32_t(0x1234'5678u)) == "78"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<0>(uint32_t(0x1234'5678u)) == ""_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<4>(0x1234'5678u) == "12345678"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<3>(0x1234'5678u) == "345678"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<2>(0x1234'5678u) == "5678"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<1>(0x1234'5678u) == "78"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars<0>(0x1234'5678u) == ""_av);
 
-    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(uint64_t(0xFFFFFFFF'FFFFFFFFu)).size() == 16);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_chars(0xFFFFFFFF'FFFFFFFFu).size() == 16);
 
-    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(uint32_t(0x0u)) == "00000000"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(uint32_t(0x1u)) == "00000001"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(uint32_t(0x123u)) == "00000123"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(uint32_t(0xFFFFFFFFu)) == "FFFFFFFF"_av);
-    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(uint64_t(0xFFFFFFFF'FFFFFFFFu)) == "FFFFFFFFFFFFFFFF"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(0x0u) == "00000000"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(0x1u) == "00000001"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(0x123u) == "00000123"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(0xFFFFFFFFu) == "FFFFFFFF"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_upper_zchars(0xFFFFFFFF'FFFFFFFFu) == "FFFFFFFFFFFFFFFF"_av);
 
-    auto d = int_to_fixed_hexadecimal_upper_zchars(uint64_t(0xFFFFFFFF'FFFFFFFFu));
+    auto d = int_to_fixed_hexadecimal_upper_zchars(0xFFFFFFFF'FFFFFFFFu);
     RED_CHECK(d.size() == 16);
     RED_CHECK(d.c_str()[d.size()] == '\0');
 
