@@ -408,6 +408,8 @@ private:
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
 
+    SessionReactor::GraphicTimerPtr gd_up_and_running;
+
     SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_lecalnotice;
 
     std::string end_session_reason;
@@ -2378,6 +2380,7 @@ public:
                                     }
                                 }
                                 else {
+/*
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
 
                                     if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp)){
@@ -2385,6 +2388,7 @@ public:
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                     }
+*/
 
                                     this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
@@ -2632,30 +2636,46 @@ public:
                             uint32_t sessionId = sctrl.payload.in_uint32_le();
 
                             (void)sessionId;
-                            this->send_confirm_active();
-                            this->send_synchronise();
-                            this->send_control(RDP_CTL_COOPERATE);
-                            this->send_control(RDP_CTL_REQUEST_CONTROL);
 
-                            /* Including RDP 5.0 capabilities */
-                            if (this->negociation_result.use_rdp5){
-                                LOG(LOG_INFO, "use rdp5");
-                                if (this->enable_persistent_disk_bitmap_cache &&
-                                    this->persist_bitmap_cache_on_disk) {
-                                    if (!this->deactivation_reactivation_in_progress) {
-                                        this->send_persistent_key_list();
+{
+                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
+
+                            auto const resize_result =
+                                this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
+                            if (FrontAPI::ResizeResult::fail == resize_result){
+                                LOG(LOG_ERR, "Resize not available on older clients,"
+                                    " change client resolution to match server resolution");
+                                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                            }
+
+                            if (resize_result != FrontAPI::ResizeResult::done
+                            and resize_result != FrontAPI::ResizeResult::remoteapp_done) {
+                                this->send_confirm_active();
+                                this->send_synchronise();
+                                this->send_control(RDP_CTL_COOPERATE);
+                                this->send_control(RDP_CTL_REQUEST_CONTROL);
+
+                                /* Including RDP 5.0 capabilities */
+                                if (this->negociation_result.use_rdp5){
+                                    LOG(LOG_INFO, "use rdp5");
+                                    if (this->enable_persistent_disk_bitmap_cache &&
+                                        this->persist_bitmap_cache_on_disk) {
+                                        if (!this->deactivation_reactivation_in_progress) {
+                                            this->send_persistent_key_list();
+                                        }
                                     }
+                                    this->send_fonts(3);
                                 }
-                                this->send_fonts(3);
-                            }
-                            else{
-                                LOG(LOG_INFO, "not using rdp5");
-                                this->send_fonts(1);
-                                this->send_fonts(2);
-                            }
+                                else{
+                                    LOG(LOG_INFO, "not using rdp5");
+                                    this->send_fonts(1);
+                                    this->send_fonts(2);
+                                }
 
-                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-                                (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+                                this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
+                                    (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+                            }
+}
 
 /*
                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
@@ -4952,6 +4972,45 @@ public:
         if (message_type == RDP_INPUT_SYNCHRONIZE) {
             this->last_key_flags_sent = param1;
         }
+    }
+
+    void rdp_input_up_and_running() override {
+        this->gd_up_and_running = session_reactor.create_graphic_timer()
+        .set_delay(std::chrono::milliseconds(0))
+        .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+            gdi::GraphicApi & drawable =
+                ( this->remote_programs_session_manager
+                ? (*this->remote_programs_session_manager)
+                : ( this->graphics_update_disabled
+                    ? gdi::null_gd()
+                    : gd
+                ));
+
+            this->send_confirm_active();
+            this->send_synchronise();
+            this->send_control(RDP_CTL_COOPERATE);
+            this->send_control(RDP_CTL_REQUEST_CONTROL);
+
+            /* Including RDP 5.0 capabilities */
+            if (this->negociation_result.use_rdp5){
+                LOG(LOG_INFO, "use rdp5");
+                if (this->enable_persistent_disk_bitmap_cache &&
+                    this->persist_bitmap_cache_on_disk) {
+                    if (!this->deactivation_reactivation_in_progress) {
+                        this->send_persistent_key_list();
+                    }
+                }
+                this->send_fonts(3);
+            }
+            else{
+                LOG(LOG_INFO, "not using rdp5");
+                this->send_fonts(1);
+                this->send_fonts(2);
+            }
+
+            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
+                (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+        }));
     }
 
     void rdp_input_invalidate(Rect r) override {

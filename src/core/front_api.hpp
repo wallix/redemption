@@ -49,7 +49,8 @@ public:
         done    = 1,
         fail    = -1,
         instant_done = 2,
-        remoteapp = 3
+        remoteapp = 3,
+        remoteapp_done = 4
     };
     virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) = 0;
 

@@ -214,7 +214,7 @@ FakeFront::ResizeResult FakeFront::server_resize(int width, int height, BitsPerP
 {
     this->d->gd.resize(width, height);
     this->d->screen_info.bpp = bpp;
-    return ResizeResult::done;
+    return ResizeResult::no_need;
 }
 
 void FakeFront::save_to_png(const char * filename)
