@@ -511,8 +511,8 @@ Rect ClientExecute::adjust_rect(Rect rect)
                                  rect.y + rect.cy * 10 / 100,
                                  rect.cx * 80 / 100,
                                  rect.cy * 80 / 100);
-        this->window_offset_x = -rect.x;
-        this->window_offset_y = -rect.y;
+        this->window_offset.x = -rect.x;
+        this->window_offset.y = -rect.y;
 
         this->update_rects();
     }
@@ -532,7 +532,7 @@ Rect ClientExecute::get_current_work_area_rect() const
 
     if (!this->window_rect.isempty()) {
         const Rect adjusted_window_rect = this->window_rect.offset(
-            this->window_offset_x, this->window_offset_y);
+            this->window_offset.x, this->window_offset.y);
 
         size_t current_surface_size = 0;
         Rect current_work_area = this->work_areas[0];
@@ -547,10 +547,10 @@ Rect ClientExecute::get_current_work_area_rect() const
             }
         }
 
-        return current_work_area.offset(-this->window_offset_x, -this->window_offset_y);
+        return current_work_area.offset(-this->window_offset.x, -this->window_offset.y);
     }
 
-    return this->work_areas[0].offset(-this->window_offset_x, -this->window_offset_y);
+    return this->work_areas[0].offset(-this->window_offset.x, -this->window_offset.y);
 }
 
 Rect ClientExecute::get_auxiliary_window_rect() const
@@ -780,7 +780,7 @@ void ClientExecute::adjust_window_to_mod()
 
     this->update_rects();
 
-    const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+    const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
     {
         RDP::RAIL::NewOrExistingWindow order = create_resize_window_pdu(
@@ -818,8 +818,7 @@ void ClientExecute::maximize_restore_window()
 
         this->update_rects();
 
-        const Rect adjusted_window_rect = work_area_rect.offset(
-            this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = work_area_rect.offset(this->window_offset);
 
         {
             RDP::RAIL::NewOrExistingWindow order = create_maximized_window_pdu(
@@ -1049,7 +1048,7 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect)
 
     this->auxiliary_window_id = AUXILIARY_WINDOW_ID;
 
-    const Rect adjusted_window_rect = window_rect.offset(this->window_offset_x, this->window_offset_y);
+    const Rect adjusted_window_rect = window_rect.offset(this->window_offset);
 
     RDP::RAIL::NewOrExistingWindow order = create_window_with_title_pdu(
         RDP::RAIL::WINDOW_ORDER_STATE_NEW,
@@ -1154,8 +1153,7 @@ void ClientExecute::initialize_move_size(
         TS_RAIL_ORDER_MINMAXINFO, [this]{
             ServerMinMaxInfoPDU smmipdu;
 
-            const Rect adjusted_virtual_sreen_rect = this->virtual_screen_rect.offset(
-                this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_virtual_sreen_rect = this->virtual_screen_rect.offset(this->window_offset);
 
             smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
             smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
@@ -1445,7 +1443,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                          this->window_rect_saved.cy + offset_cy);
                 this->update_rects();
 
-                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
                 RDP::RAIL::NewOrExistingWindow order = create_window_with_title_pdu(
                     0,
@@ -1600,8 +1598,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             uint16_t const move_size_type = mouse_button_pressed_to_move_size_type(
                 this->pressed_mouse_button);
 
-            const Rect adjusted_window_rect = this->window_rect.offset(
-                this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
             if (move_size_type) {
                 send_to_channel(
@@ -1652,7 +1649,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             this->window_rect = Rect(this->window_rect.x, 0, this->window_rect.cx, work_area_rect.cy - 1);
             this->update_rects();
 
-            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
             {
                 RDP::RAIL::NewOrExistingWindow order = create_move_window_pdu(
@@ -1693,7 +1690,7 @@ Rect ClientExecute::get_window_rect() const
 
 Point ClientExecute::get_window_offset() const
 {
-    return Point(this->window_offset_x, this->window_offset_y);
+    return this->window_offset;
 }
 
 // ==========================================================
@@ -1984,7 +1981,7 @@ void ClientExecute::process_client_system_command_pdu(InStream& chunk)
 
         case SC_RESTORE:
             {
-                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
                 RDP::RAIL::NewOrExistingWindow order = create_window_with_title_pdu(
                     0,
@@ -2057,7 +2054,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
         }
 
         {
-            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
             RDP::RAIL::NewOrExistingWindow order = create_window_with_title_pdu(
                 RDP::RAIL::WINDOW_ORDER_STATE_NEW,
@@ -2333,14 +2330,14 @@ void ClientExecute::process_client_window_move_pdu(InStream& chunk)
 
     if (INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) {
 
-        this->window_rect = Rect(cwmpdu.iLeft() - this->window_offset_x,
-                                 cwmpdu.iTop() - this->window_offset_y,
+        this->window_rect = Rect(cwmpdu.iLeft() - this->window_offset.x,
+                                 cwmpdu.iTop() - this->window_offset.y,
                                  cwmpdu.eRight() - cwmpdu.iLeft(),
                                  cwmpdu.eBottom() - cwmpdu.iTop());
 
         this->update_rects();
 
-        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset);
 
         {
             RDP::RAIL::NewOrExistingWindow order = create_move_window_pdu(
@@ -2362,7 +2359,7 @@ void ClientExecute::process_client_window_move_pdu(InStream& chunk)
                     ServerMoveSizeStartOrEndPDU smssoepdu;
 
                     const Rect adjusted_window_rect = this->window_rect.offset(
-                        this->window_offset_x, this->window_offset_y);
+                        this->window_offset.x, this->window_offset.y);
 
                     smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
                     smssoepdu.IsMoveSizeStart(0);

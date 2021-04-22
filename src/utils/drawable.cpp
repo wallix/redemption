@@ -24,6 +24,7 @@
 #include "utils/drawable.hpp"
 
 #include "core/error.hpp"
+#include "utils/line_equation.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/log.hpp"

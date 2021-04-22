@@ -32,7 +32,57 @@
 #include <cstdlib> // abs
 #include <cstdint>
 #include <cassert>
-#include <cstdio> // snprintf
+#include <cstdio> // sprintf
+
+
+struct Point
+{
+    int16_t x;
+    int16_t y;
+};
+
+
+struct Dimension
+{
+    uint16_t w = 0;
+    uint16_t h = 0;
+
+    Dimension() = default;
+
+    Dimension(uint16_t w, uint16_t h) noexcept
+        : w(w)
+        , h(h)
+    {}
+
+    bool operator==(Dimension const & other) const {
+        return (other.w == this->w
+             && other.h == this->h);
+    }
+
+    void empty() {
+        this->w = 0;
+        this->h = 0;
+    }
+
+    [[nodiscard]] bool isempty() const {
+        return (!this->w || !this->h);
+    }
+
+    REDEMPTION_FRIEND_OSTREAM(out, Dimension const & d) {
+        return out << "(" << d.w << ", " << d.h << ")";
+    }
+};
+
+inline auto log_value(Dimension const & dim) noexcept
+{
+    struct {
+        char buffer[64];
+        char const * value() { return buffer; }
+    } d;
+    ::sprintf(d.buffer, "Dimension(%u %u)", dim.w, dim.h);
+    return d;
+}
+
 
 struct Rect {
     int16_t x = 0;
@@ -77,6 +127,10 @@ struct Rect {
             this->cy = 0;
         }
     }
+
+    Rect(Point point, Dimension dimension) noexcept
+        : Rect(point.x, point.y, dimension.w, dimension.h)
+    {}
 
     [[nodiscard]] bool contains_pt(int16_t x, int16_t y) const {
         // return this->contains(Rect(x,y,1,1));
@@ -159,6 +213,10 @@ struct Rect {
             this->cx,
             this->cy
         );
+    }
+
+    [[nodiscard]] Rect offset(Point point) const {
+        return this->offset(point.x, point.y);
     }
 
     [[nodiscard]] Rect shrink(uint16_t margin) const {
@@ -250,53 +308,6 @@ struct Rect {
     REDEMPTION_FRIEND_OSTREAM(out, Rect const & r) {
         return out << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
     }
-
-    //             |                         |
-    //             |                         |
-    //             |                         |
-    //    UP       |         UP              |      UP
-    //    LEFT     |                         |      RIGHT
-    //             |                         |
-    //-------------+-------------------------+--------------------
-    //             |/ / / / / / / / / / / / /|
-    //             | / / / / / / / / / / / / |
-    //             |/ / / / / / / / / / / / /|
-    //    LEFT     | / / / /   IN  / / / / / |     RIGHT
-    //             |/ / / / / Rect  / / / / /|
-    //             | / / / / / / / / / / / / |
-    //             |/ / / / / / / / / / / / /|
-    //-------------+-------------------------+-------------------
-    //             |                         |
-    //    DOWN     |         DOWN            |     DOWN
-    //    LEFT     |                         |     RIGHT
-    //             |                         |
-    //             |                         |
-
-    enum  t_region {
-        IN = 0x00,
-        UP = 0x01,
-        DOWN = 0x02,
-        LEFT = 0x04,
-        RIGHT = 0x08
-    };
-    // Region of a point outside rect
-    // 0x00 means inside
-    [[nodiscard]] t_region region_pt(int16_t x, int16_t y) const {
-        int res = IN;
-        if (x < this->x) {
-            res |= LEFT;
-        }
-        else if (x >= this->eright()) {
-            res |= RIGHT;
-        }
-        if (y < this->y) {
-            res |= UP;
-        }
-        else if (y >= this->ebottom()) {
-            res |= DOWN;
-        }
-        return static_cast<t_region>(res);
-    }
 };
 
 inline auto log_value(Rect const & rect) noexcept
@@ -308,191 +319,6 @@ inline auto log_value(Rect const & rect) noexcept
     ::sprintf(d.buffer, "Rect(%d %d %u %u)", rect.x, rect.y, rect.cx, rect.cy);
     return d;
 }
-
-
-struct Dimension {
-    uint16_t w = 0;
-    uint16_t h = 0;
-
-    Dimension() = default;
-
-    Dimension(uint16_t w, uint16_t h)
-        : w(w)
-        , h(h)
-    {}
-
-    bool operator==(Dimension const & other) const {
-        return (other.w == this->w
-             && other.h == this->h);
-    }
-
-    void empty() {
-        this->w = 0;
-        this->h = 0;
-    }
-
-    [[nodiscard]] bool isempty() const {
-        return (!this->w || !this->h);
-    }
-
-    REDEMPTION_FRIEND_OSTREAM(out, Dimension const & d) {
-        return out << "(" << d.w << ", " << d.h << ")";
-    }
-};
-
-inline auto log_value(Dimension const & dim) noexcept
-{
-    struct {
-        char buffer[64];
-        char const * value() { return buffer; }
-    } d;
-    ::sprintf(d.buffer, "Dimension(%u %u)", dim.w, dim.h);
-    return d;
-}
-
-
-struct Point {
-    int x;
-    int y;
-
-    Point(int x, int y)
-        : x(x)
-        , y(y)
-    {}
-
-};
-
-inline auto log_value(Point const & p) noexcept
-{
-    struct {
-        char buffer[64];
-        char const * value() { return buffer; }
-    } d;
-    ::sprintf(d.buffer, "Point(%d %d)", p.x, p.y);
-    return d;
-}
-
-
-struct Segment {
-    Point a;
-    Point b;
-
-    Segment(const Point & a, const Point & b)
-        : a(a)
-        , b(b)
-    {}
-};
-
-inline auto log_value(Segment const & segment) noexcept
-{
-    struct {
-        char buffer[128];
-        char const * value() { return buffer; }
-    } d;
-    ::sprintf(d.buffer, "Segment(Point(%d %d), Point(%d %d))",
-        segment.a.x, segment.a.y, segment.b.x, segment.b.y);
-    return d;
-}
-
-
-struct LineEquation {
-    Segment seg;
-    Segment segin;
-
-    int dX;
-    int dY;
-    int c;
-
-    LineEquation(int aX, int aY, int bX, int bY)
-        : seg(Segment(Point(aX, aY), Point(bX, bY)))
-        , segin(Segment(Point(0, 0), Point(0, 0)))
-        , dX(aX - bX)
-        , dY(aY - bY)
-        , c(bY*aX - aY*bX)
-    {
-    }
-
-    [[nodiscard]] int compute_x(int y) const {
-        return (this->dX*y - this->c) / this->dY;
-    }
-
-    [[nodiscard]] int compute_y(int x) const {
-        return (this->dY*x + this->c) / this->dX;
-    }
-
-    bool compute_intersection(Rect rect, int region, int & x, int & y) const {
-        int interX = 0;
-        int interY = 0;
-        bool found = false;
-
-        if (region & Rect::LEFT) {
-            int tmpy = this->compute_y(rect.x);
-            if (tmpy >= rect.y && tmpy < rect.ebottom()) {
-                found = true;
-                interX = rect.x;
-                interY = tmpy;
-            }
-        }
-        else if (region & Rect::RIGHT) {
-            int tmpy = this->compute_y(rect.eright() - 1);
-            if (tmpy >= rect.y && tmpy < rect.ebottom()) {
-                found = true;
-                interX = rect.eright() - 1;
-                interY = tmpy;
-            }
-        }
-
-        if (region & Rect::UP) {
-            int tmpx = this->compute_x(rect.y);
-            if (tmpx >= rect.x && tmpx < rect.eright()) {
-                found = true;
-                interX = tmpx;
-                interY = rect.y;
-            }
-        }
-        else if (region & Rect::DOWN) {
-            int tmpx = this->compute_x(rect.ebottom() - 1);
-            if (tmpx >= rect.x && tmpx < rect.eright()) {
-                found = true;
-                interX = tmpx;
-                interY = rect.ebottom() - 1;
-            }
-        }
-
-        if (found) {
-            x = interX;
-            y = interY;
-        }
-
-        return found;
-    }
-
-    bool resolve(Rect rect) {
-        Rect::t_region aPosition = rect.region_pt(int16_t(this->seg.a.x), int16_t(this->seg.a.y));
-        Rect::t_region bPosition = rect.region_pt(int16_t(this->seg.b.x), int16_t(this->seg.b.y));
-
-        if (aPosition & bPosition) {
-            return false;
-        }
-        bool exist = true;
-        if (!aPosition) {
-            this->segin.a.x = this->seg.a.x;
-            this->segin.a.y = this->seg.a.y;
-        }
-        else {
-            exist &= this->compute_intersection(rect, aPosition, this->segin.a.x, this->segin.a.y);
-        }
-
-        if (!bPosition) {
-            this->segin.b.x = this->seg.b.x;
-            this->segin.b.y = this->seg.b.y;
-        }
-        else {
-            exist &= this->compute_intersection(rect, bPosition, this->segin.b.x, this->segin.b.y);
-        }
-        return exist;
-    }
-};
 
 
 // helper class used to compute differences between two rectangles

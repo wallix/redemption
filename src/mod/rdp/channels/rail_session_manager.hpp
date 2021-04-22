@@ -501,10 +501,8 @@ private:
 
         this->protected_rect = dialog_box_rect;
 
-        Point window_offset = this->rail_client_execute->get_window_offset();
-
         const Rect adjusted_protected_rect = this->protected_rect.offset(
-                    window_offset.x, window_offset.y);
+            this->rail_client_execute->get_window_offset());
 
         {
             RDP::RAIL::NewOrExistingWindow order;
@@ -734,10 +732,8 @@ public:
         this->auxiliary_window_id = this->register_client_window();
 
         {
-            Point window_offset = this->rail_client_execute->get_window_offset();
-
             const Rect adjusted_window_rect = window_rect.offset(
-                        window_offset.x, window_offset.y);
+                this->rail_client_execute->get_window_offset());
 
             RDP::RAIL::NewOrExistingWindow order;
 

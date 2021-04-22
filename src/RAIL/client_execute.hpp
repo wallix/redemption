@@ -210,8 +210,7 @@ private:
     bool should_ignore_first_client_execute_ = true;
     bool server_execute_result_sent = false;
 
-    int window_offset_x = 0;
-    int window_offset_y = 0;
+    Point window_offset {};
 
     Rect virtual_screen_rect;
 

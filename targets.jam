@@ -5890,6 +5890,11 @@ test-run tests/utils/test_key_qvalue_pairs :
 :
   <covfile>src/utils/key_qvalue_pairs.hpp
 ;
+test-run tests/utils/test_line_equation :
+  $(REDEMPTION_TEST_PATH)/utils/test_line_equation.cpp
+:
+  <covfile>src/utils/line_equation.hpp
+;
 test-run tests/utils/test_load_theme :
   $(REDEMPTION_TEST_PATH)/utils/test_load_theme.cpp
 :
@@ -6601,6 +6606,7 @@ alias test_hexadecimal_string_to_buffer : tests/utils/test_hexadecimal_string_to
 alias test_id_manager : tests/utils/test_id_manager ;
 alias test_ip : tests/utils/test_ip ;
 alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
+alias test_line_equation : tests/utils/test_line_equation ;
 alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
@@ -6936,6 +6942,7 @@ alias test_hexadecimal_string_to_buffer.coverage : tests/utils/test_hexadecimal_
 alias test_id_manager.coverage : tests/utils/test_id_manager.coverage ;
 alias test_ip.coverage : tests/utils/test_ip.coverage ;
 alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverage ;
+alias test_line_equation.coverage : tests/utils/test_line_equation.coverage ;
 alias test_load_theme.coverage : tests/utils/test_load_theme.coverage ;
 alias test_log.coverage : tests/utils/test_log.coverage ;
 alias test_log_siem.coverage : tests/utils/test_log_siem.coverage ;
@@ -7387,6 +7394,7 @@ alias tests/utils.norec :
   tests/utils/test_id_manager
   tests/utils/test_ip
   tests/utils/test_key_qvalue_pairs
+  tests/utils/test_line_equation
   tests/utils/test_load_theme
   tests/utils/test_log
   tests/utils/test_log_siem
