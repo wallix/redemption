@@ -457,7 +457,7 @@ struct MouseButtonPressedToMoveSizeType
 
     constexpr uint16_t operator()(MouseButtonPressed mouse_button_pressed) const noexcept
     {
-        return types[safe_int(mouse_button_pressed)];
+        return types[safe_cast<int>(mouse_button_pressed)];
     }
 
 private:
