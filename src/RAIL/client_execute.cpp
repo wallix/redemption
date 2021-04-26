@@ -448,7 +448,7 @@ struct MouseButtonPressedToMoveSizeType
 #undef CASE
             }
 
-            assert(!completed);
+            assert(i == std::size(types));
             completed = true;
         }
 
@@ -457,7 +457,7 @@ struct MouseButtonPressedToMoveSizeType
 
     constexpr uint16_t operator()(MouseButtonPressed mouse_button_pressed) const noexcept
     {
-        return types[safe_cast<int>(mouse_button_pressed)];
+        return types[underlying_cast(mouse_button_pressed)];
     }
 
 private:
@@ -501,7 +501,8 @@ void ClientExecute::enable_remote_program(bool enable)
 
 Rect ClientExecute::adjust_rect(Rect rect)
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::adjust_rect(Rect %s)", rect);
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::adjust_rect(%s)", rect);
+
     if (!this->rail_enabled) {
         return rect;
     }
@@ -650,9 +651,9 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 
     this->drawable_.draw(RDPOpaqueRect(rect_maxi, bg_color), r, depth);
 
-    if (this->maximized) {
-        Rect rect = rect_maxi;
+    Rect rect = rect_maxi;
 
+    if (this->maximized) {
         rect.x  += 14 + 2;
         rect.y  += 7;
         rect.cx -= 14 * 2 + 2;
@@ -672,25 +673,19 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         rect.cy -= 7 * 2 + 2;
 
         this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
-
-        rect = rect.shrink(1);
-
-        this->drawable_.draw(RDPOpaqueRect(rect, bg_color), r, depth);
     }
     else {
-        Rect rect = rect_maxi;
-
         rect.x  += 14;
         rect.y  += 7;
         rect.cx -= 14 * 2;
         rect.cy -= 7 * 2;
 
         this->drawable_.draw(RDPOpaqueRect(rect, black), r, depth);
-
-        rect = rect.shrink(1);
-
-        this->drawable_.draw(RDPOpaqueRect(rect, bg_color), r, depth);
     }
+
+    rect = rect.shrink(1);
+
+    this->drawable_.draw(RDPOpaqueRect(rect, bg_color), r, depth);
 }   // draw_maximize_box
 
 void ClientExecute::input_invalidate(const Rect r)

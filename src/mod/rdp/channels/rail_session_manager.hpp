@@ -486,7 +486,9 @@ public:
 
 private:
     void dialog_box_create(DialogBoxType type) {
-        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id) return;
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id) {
+            return;
+        }
 
         this->dialog_box_window_id = this->register_client_window();
 

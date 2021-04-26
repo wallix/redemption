@@ -39,8 +39,6 @@ RailModuleHostMod* create_mod_rail(
     Theme const& theme,
     bool can_resize_hosted_desktop)
 {
-    // TODO: this should be external, not in mod_factory
-    // Host Mod In Widget
     LOG(LOG_INFO, "Creation of internal module 'RailModuleHostMod'");
 
     std::string target_info = str_concat(

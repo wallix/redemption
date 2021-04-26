@@ -78,12 +78,12 @@ public:
 
     mod_api& get_managed_mod()
     {
-        return this->module_holder;
+        return *this->managed_mod;
     }
 
     [[nodiscard]] const mod_api& get_managed_mod() const
     {
-        return this->module_holder;
+        return *this->managed_mod;
     }
 
     void set_xy(int16_t x, int16_t y) override;
@@ -126,51 +126,7 @@ private:
 
     void screen_copy(Rect old_rect, Rect new_rect);
 
-
-    class ModuleHolder : public mod_api
-    {
-    private:
-        const std::unique_ptr<mod_api> managed_mod;
-
-    public:
-        ModuleHolder(/*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
-
-        // Callback
-        void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
-                                 InStream& chunk, size_t length,
-                                 uint32_t flags) override;
-
-        // mod_api
-
-        [[nodiscard]] bool is_up_and_running() const override;
-
-        bool is_auto_reconnectable() const override;
-
-        bool server_error_encountered() const override;
-
-        // RdpInput
-
-        void rdp_input_invalidate(Rect r) override;
-
-        void rdp_input_mouse(int device_flags, int x, int y,
-                             Keymap2* keymap) override;
-
-        void rdp_input_scancode(long param1, long param2, long param3,
-                                long param4, Keymap2* keymap) override;
-
-        void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
-                                   int16_t param1, int16_t param2) override;
-
-        void rdp_gdi_up_and_running() override;
-
-        void rdp_gdi_down() override;
-
-        void refresh(Rect r) override;
-
-        [[nodiscard]] Dimension get_dim() const override;
-
-        void acl_update(AclFieldMask const& acl_fields) override;
-    } module_holder;
+    const std::unique_ptr<mod_api> managed_mod;
 
     CompositeArray composite_array;
 

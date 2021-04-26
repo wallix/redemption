@@ -51,95 +51,6 @@ class RDPPolygonCB;
 class RDPPolygonSC;
 
 
-WidgetModuleHost::ModuleHolder::ModuleHolder(std::unique_ptr<mod_api>&& managed_mod)
-: managed_mod(std::move(managed_mod))
-{
-    assert(this->managed_mod);
-}
-
-// Callback
-void WidgetModuleHost::ModuleHolder::send_to_mod_channel(
-    CHANNELS::ChannelNameId front_channel_name,
-    InStream& chunk, size_t length,
-    uint32_t flags)
-{
-    this->managed_mod->send_to_mod_channel(
-        front_channel_name,
-        chunk,
-        length,
-        flags
-    );
-}
-
-// mod_api
-
-bool WidgetModuleHost::ModuleHolder::is_up_and_running() const
-{
-    return this->managed_mod->is_up_and_running();
-}
-
-bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable() const
-{
-    return this->managed_mod->is_auto_reconnectable();
-}
-
-bool WidgetModuleHost::ModuleHolder::server_error_encountered() const
-{
-    return this->managed_mod->server_error_encountered();
-}
-
-// RdpInput
-
-void WidgetModuleHost::ModuleHolder::rdp_input_invalidate(Rect r)
-{
-    this->managed_mod->rdp_input_invalidate(r);
-}
-
-void WidgetModuleHost::ModuleHolder::rdp_input_mouse(
-    int device_flags, int x, int y, Keymap2* keymap)
-{
-    this->managed_mod->rdp_input_mouse(device_flags, x, y, keymap);
-}
-
-void WidgetModuleHost::ModuleHolder::rdp_input_scancode(
-    long param1, long param2, long param3, long param4, Keymap2* keymap)
-{
-    this->managed_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
-}
-
-void WidgetModuleHost::ModuleHolder::rdp_input_synchronize(
-    uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-{
-    this->managed_mod->rdp_input_synchronize(time, device_flags,
-        param1, param2);
-}
-
-void WidgetModuleHost::ModuleHolder::rdp_gdi_up_and_running()
-{
-    this->managed_mod->rdp_gdi_up_and_running();
-}
-
-void WidgetModuleHost::ModuleHolder::rdp_gdi_down()
-{
-    this->managed_mod->rdp_gdi_down();
-}
-
-void WidgetModuleHost::ModuleHolder::refresh(Rect r)
-{
-    this->managed_mod->refresh(r);
-}
-
-Dimension WidgetModuleHost::ModuleHolder::get_dim() const
-{
-    return this->managed_mod->get_dim();
-}
-
-void WidgetModuleHost::ModuleHolder::acl_update(AclFieldMask const& acl_fields)
-{
-    this->managed_mod->acl_update(acl_fields);
-}
-
-
 struct WidgetModuleHost::Impl
 {
     inline static gdi::GraphicApi& get_drawable(WidgetModuleHost const& wmh) noexcept
@@ -324,7 +235,7 @@ WidgetModuleHost::WidgetModuleHost(
     uint16_t front_width, uint16_t front_height,
     int group_id)
 : WidgetParent(drawable, parent, notifier, group_id)
-, module_holder(std::move(managed_mod))
+, managed_mod(std::move(managed_mod))
 , drawable(drawable)
 , hscroll(drawable, *this, this, true, BLACK,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
@@ -357,7 +268,7 @@ WidgetModuleHost::WidgetModuleHost(
 
 void WidgetModuleHost::update_rects()
 {
-    const Dimension module_dim = this->module_holder.get_dim();
+    const Dimension module_dim = this->managed_mod->get_dim();
 
     this->vision_rect = this->get_rect();
 
@@ -587,7 +498,7 @@ void WidgetModuleHost::notify(Widget& /*widget*/, NotifyApi::notify_event_t even
             Rect src_rect  = dest_rect.offset(-offset_x, 0);
 
             if (src_rect.intersect(dest_rect).isempty()) {
-                this->module_holder.rdp_input_invalidate(dest_rect.offset(
+                this->managed_mod->rdp_input_invalidate(dest_rect.offset(
                         -this->x() + this->mod_visible_rect.x,
                         -this->y() + this->mod_visible_rect.y
                     ));
@@ -602,7 +513,7 @@ void WidgetModuleHost::notify(Widget& /*widget*/, NotifyApi::notify_event_t even
 
                 assert(region.rects.size() == 1);
 
-                this->module_holder.rdp_input_invalidate(region.rects[0].offset(
+                this->managed_mod->rdp_input_invalidate(region.rects[0].offset(
                         -this->x() + this->mod_visible_rect.x,
                         -this->y() + this->mod_visible_rect.y
                     ));
@@ -622,7 +533,7 @@ void WidgetModuleHost::notify(Widget& /*widget*/, NotifyApi::notify_event_t even
             Rect src_rect  = dest_rect.offset(0, -offset_y);
 
             if (src_rect.intersect(dest_rect).isempty()) {
-                this->module_holder.rdp_input_invalidate(dest_rect.offset(
+                this->managed_mod->rdp_input_invalidate(dest_rect.offset(
                         -this->x() + this->mod_visible_rect.x,
                         -this->y() + this->mod_visible_rect.y
                     ));
@@ -637,7 +548,7 @@ void WidgetModuleHost::notify(Widget& /*widget*/, NotifyApi::notify_event_t even
 
                 assert(region.rects.size() == 1);
 
-                this->module_holder.rdp_input_invalidate(region.rects[0].offset(
+                this->managed_mod->rdp_input_invalidate(region.rects[0].offset(
                         -this->x() + this->mod_visible_rect.x,
                         -this->y() + this->mod_visible_rect.y
                     ));
@@ -682,7 +593,7 @@ void WidgetModuleHost::rdp_input_invalidate(Rect clip)
         Rect mod_update_rect = clip.intersect(this->vision_rect);
         mod_update_rect = mod_update_rect.offset(-this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
         if (!mod_update_rect.isempty()) {
-            this->module_holder.rdp_input_invalidate(mod_update_rect);
+            this->managed_mod->rdp_input_invalidate(mod_update_rect);
         }
 
         if (this->hscroll_added) {
@@ -702,7 +613,7 @@ void WidgetModuleHost::rdp_input_mouse(int device_flags, int x, int y, Keymap2 *
     this->current_pointer_pos_y = y;
 
     if (this->vision_rect.contains_pt(x, y)) {
-        this->module_holder.rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y, keymap);
+        this->managed_mod->rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y, keymap);
     }
 
     WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
@@ -710,12 +621,12 @@ void WidgetModuleHost::rdp_input_mouse(int device_flags, int x, int y, Keymap2 *
 
 void WidgetModuleHost::rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
 {
-    this->module_holder.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->managed_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
 }
 
 void WidgetModuleHost::rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
 {
-    this->module_holder.rdp_input_synchronize(time, device_flags, param1, param2);
+    this->managed_mod->rdp_input_synchronize(time, device_flags, param1, param2);
 }
 
 // Widget
