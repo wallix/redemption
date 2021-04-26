@@ -48,6 +48,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/orders/for_each_delta_rect.hpp"
 #include "gdi/clip_from_cmd.hpp"
+#include "utils/line_equation.hpp"
 
 #include "client_redemption/pointer_to_rgba8888.hpp"
 
