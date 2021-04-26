@@ -20,12 +20,11 @@
 
 #pragma once
 
-#include "mod/internal/widget/rail_module_host.hpp"
-
 #include "mod/mod_api.hpp"
 #include "mod/internal/mouse_state.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "mod/internal/widget/module_host.hpp"
 
 
 class ClientExecute;
@@ -99,12 +98,12 @@ public:
 
     ~RailModuleHostMod();
 
+    gdi::GraphicApi& proxy_gd() { return this->module_host; }
+
     void init() override;
 
     void notify(Widget& /*widget*/, notify_event_t /*event*/) override
     {}
-
-    RailModuleHost& get_module_host();
 
     // RdpInput
 
@@ -146,7 +145,7 @@ public:
     void acl_update(AclFieldMask const& acl_fields) override;
 
 private:
-    RailModuleHost rail_module_host;
+    WidgetModuleHost module_host;
 
     bool can_resize_hosted_desktop = false;
 };

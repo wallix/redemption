@@ -53,15 +53,10 @@ class RDPPolygonSC;
 
 struct WidgetModuleHost::Impl
 {
-    inline static gdi::GraphicApi& get_drawable(WidgetModuleHost const& wmh) noexcept
-    {
-        return wmh.drawable;
-    }
-
     template<class Cmd>
     static void draw_impl(WidgetModuleHost const& wmh, const Cmd& cmd)
     {
-        get_drawable(wmh).draw(cmd);
+        wmh.drawable.draw(cmd);
     }
 
     template<class Cmd>
@@ -91,7 +86,7 @@ struct WidgetModuleHost::Impl
         Cmd new_cmd = cmd;
         new_cmd.move(wmh.x() - wmh.mod_visible_rect.x, wmh.y() - wmh.mod_visible_rect.y);
 
-        get_drawable(wmh).draw(new_cmd, new_clip, args...);
+        wmh.drawable.draw(new_cmd, new_clip, args...);
     }
 
     template<class Cmd, class... Args, typename std::enable_if<
@@ -102,7 +97,7 @@ struct WidgetModuleHost::Impl
         Rect new_clip = compute_clip(wmh, clip);
         if (new_clip.isempty()) { return; }
 
-        get_drawable(wmh).draw(cmd, new_clip, args...);
+        wmh.drawable.draw(cmd, new_clip, args...);
     }
 
     static void draw_impl(WidgetModuleHost const& wmh, const RDPBitmapData& bitmap_data, const Bitmap& bmp)
@@ -127,7 +122,7 @@ struct WidgetModuleHost::Impl
         const Rect src_rect(cmd.srcx, cmd.srcy, cmd.rect.cx, cmd.rect.cy);
 
         if (wmh.mod_visible_rect.contains(src_rect)) {
-            get_drawable(wmh).draw(new_cmd, new_clip);
+            wmh.drawable.draw(new_cmd, new_clip);
         }
         else {
             wmh.rdp_input_invalidate(new_clip);
@@ -159,16 +154,16 @@ struct WidgetModuleHost::Impl
                               sub_dest_rect.y + delta_y,
                               sub_dest_rect.cx, sub_dest_rect.cy);
 
-            LOG(LOG_INFO, "Rect(%d %d %u %u)", sub_src_rect.x, sub_src_rect.y, sub_src_rect.cx, sub_src_rect.cy);
+            // LOG(LOG_INFO, "Rect(%d %d %u %u)", sub_src_rect.x, sub_src_rect.y, sub_src_rect.cx, sub_src_rect.cy);
 
             src_rect = src_rect.disjunct(sub_src_rect);
         }
 
-        LOG(LOG_INFO, "Rect(%d %d %u %u)", wmh.mod_visible_rect.x, wmh.mod_visible_rect.y, wmh.mod_visible_rect.cx, wmh.mod_visible_rect.cy);
-        LOG(LOG_INFO, "Rect(%d %d %u %u)", src_rect.x, src_rect.y, src_rect.cx, src_rect.cy);
+        // LOG(LOG_INFO, "Rect(%d %d %u %u)", wmh.mod_visible_rect.x, wmh.mod_visible_rect.y, wmh.mod_visible_rect.cx, wmh.mod_visible_rect.cy);
+        // LOG(LOG_INFO, "Rect(%d %d %u %u)", src_rect.x, src_rect.y, src_rect.cx, src_rect.cy);
 
         if (wmh.mod_visible_rect.contains(src_rect)) {
-            get_drawable(wmh).draw(new_cmd, new_clip);
+            wmh.drawable.draw(new_cmd, new_clip);
         }
         else {
             wmh.rdp_input_invalidate(new_clip);
@@ -217,7 +212,7 @@ void WidgetModuleHost::cached_pointer(gdi::CachePointerIndex cache_idx)
     rect.cy -= (ClientExecute::BORDER_WIDTH_HEIGHT - 1);
 
     if (rect.contains_pt(this->current_pointer_pos_x, this->current_pointer_pos_y)) {
-        Impl::get_drawable(*this).cached_pointer(cache_idx);
+        this->drawable.cached_pointer(cache_idx);
     }
 
     this->current_cache_pointer_index = cache_idx;
@@ -225,7 +220,7 @@ void WidgetModuleHost::cached_pointer(gdi::CachePointerIndex cache_idx)
 
 void WidgetModuleHost::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor)
 {
-    Impl::get_drawable(*this).new_pointer(cache_idx, cursor);
+    this->drawable.new_pointer(cache_idx, cursor);
 }
 
 WidgetModuleHost::WidgetModuleHost(
@@ -375,7 +370,7 @@ void WidgetModuleHost::screen_copy(Rect old_rect, Rect new_rect)
 
     RDPScrBlt cmd(new_rect, 0xCC, old_rect.x, old_rect.y);
 
-    Impl::get_drawable(*this).draw(cmd, new_rect);
+    this->drawable.draw(cmd, new_rect);
 
     GCC::UserData::CSMonitor& cs_monitor = this->monitors;
     if (!cs_monitor.monitorCount) {
@@ -638,10 +633,10 @@ void WidgetModuleHost::refresh(Rect/* clip*/)
 
 void WidgetModuleHost::begin_update()
 {
-    Impl::get_drawable(*this).begin_update();
+    this->drawable.begin_update();
 }
 
 void WidgetModuleHost::end_update()
 {
-    Impl::get_drawable(*this).end_update();
+    this->drawable.end_update();
 }

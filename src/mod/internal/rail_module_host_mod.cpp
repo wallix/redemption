@@ -18,11 +18,10 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
-#include "configs/config.hpp"
-#include "utils/timebase.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
+
+#include "utils/timebase.hpp"
 #include "RAIL/client_execute.hpp"
-#include "core/front_api.hpp"
 #include "core/RDP/slowpath.hpp"
 
 
@@ -85,16 +84,16 @@ RailModuleHostMod::RailModuleHostMod(
     , mouse_state(events)
     , disconnection_reconnection_timer(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
-    , rail_module_host(drawable, widget_rect.x, widget_rect.y,
-                       widget_rect.cx, widget_rect.cy,
-                       this->screen, this, std::move(managed_mod),
-                       font, cs_monitor, width, height)
+    , module_host(drawable, this->screen, /*notifier=*/nullptr,
+                  std::move(managed_mod), font, cs_monitor, width, height)
     , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
     this->screen.set_wh(width, height);
     this->screen.move_xy(widget_rect.x, widget_rect.y);
-    this->screen.add_widget(&this->rail_module_host);
-    this->screen.set_widget_focus(&this->rail_module_host, Widget::focus_reason_tabkey);
+    this->screen.add_widget(&this->module_host);
+    this->module_host.set_xy(widget_rect.x, widget_rect.y);
+    this->module_host.set_wh(widget_rect.cx, widget_rect.cy);
+    this->screen.set_widget_focus(&this->module_host, Widget::focus_reason_tabkey);
 }
 
 RailModuleHostMod::~RailModuleHostMod()
@@ -113,16 +112,10 @@ void RailModuleHostMod::init()
     }
 }
 
-
-RailModuleHost& RailModuleHostMod::get_module_host()
-{
-    return this->rail_module_host;
-}
-
 // RdpInput
 void RailModuleHostMod::rdp_gdi_up_and_running()
 {
-    mod_api& mod = this->rail_module_host.get_managed_mod();
+    mod_api& mod = this->module_host.get_managed_mod();
     mod.rdp_gdi_up_and_running();
 }
 
@@ -133,7 +126,7 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
     if (!client_execute_auxiliary_window_rect.isempty()
      && client_execute_auxiliary_window_rect.contains_pt(x, y)
     ) {
-        mod_api& mod = this->rail_module_host.get_managed_mod();
+        mod_api& mod = this->module_host.get_managed_mod();
 
         mod.rdp_input_mouse(device_flags, x, y, keymap);
     }
@@ -201,7 +194,7 @@ void RailModuleHostMod::send_to_mod_channel(
         this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
     }
 
-    mod_api& mod = this->rail_module_host.get_managed_mod();
+    mod_api& mod = this->module_host.get_managed_mod();
     mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
 }
 
@@ -209,17 +202,17 @@ void RailModuleHostMod::send_to_mod_channel(
 
 bool RailModuleHostMod::is_up_and_running() const
 {
-    return this->rail_module_host.get_managed_mod().is_up_and_running();
+    return this->module_host.get_managed_mod().is_up_and_running();
 }
 
 bool RailModuleHostMod::is_auto_reconnectable() const
 {
-    return this->rail_module_host.get_managed_mod().is_auto_reconnectable();
+    return this->module_host.get_managed_mod().is_auto_reconnectable();
 }
 
 bool RailModuleHostMod::server_error_encountered() const
 {
-    return this->rail_module_host.get_managed_mod().server_error_encountered();
+    return this->module_host.get_managed_mod().server_error_encountered();
 }
 
 void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t width,
@@ -227,7 +220,8 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 {
     Dimension dim = this->get_dim();
 
-    this->rail_module_host.move_size_widget(left, top, width, height);
+    this->module_host.set_xy(left, top);
+    this->module_host.set_wh(width, height);
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()
@@ -236,7 +230,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
             1s, "RAIL Module Host Disconnection Reconnection Timeout",
             [this](Event&)
             {
-                if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
+                if (this->module_host.get_managed_mod().is_auto_reconnectable()){
                     throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
                 }
             }
@@ -246,7 +240,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 
 Dimension RailModuleHostMod::get_dim() const
 {
-    const mod_api& mod = this->rail_module_host.get_managed_mod();
+    const mod_api& mod = this->module_host.get_managed_mod();
 
     return mod.get_dim();
 }
@@ -258,5 +252,5 @@ bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 
 void RailModuleHostMod::acl_update(AclFieldMask const& acl_fields)
 {
-    return this->rail_module_host.get_managed_mod().acl_update(acl_fields);
+    return this->module_host.get_managed_mod().acl_update(acl_fields);
 }

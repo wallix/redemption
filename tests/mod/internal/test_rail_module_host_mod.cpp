@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
         client_execute, font, theme, cs_monitor, false);
     host_mod.init();
 
-    mod_ref.gd = &host_mod.get_module_host().proxy_gd();
+    mod_ref.gd = &host_mod.proxy_gd();
 
     RED_TEST(w == host_mod.get_dim().w);
     RED_TEST(h == host_mod.get_dim().h);
