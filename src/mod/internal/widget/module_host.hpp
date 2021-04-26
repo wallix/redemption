@@ -23,24 +23,26 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/widget/scroll.hpp"
 #include "mod/internal/widget/composite.hpp"
-#include "mod/mod_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "utils/ref.hpp"
 
-#include <memory>
+class mod_api;
 
 class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
     WidgetModuleHost(
         gdi::GraphicApi& drawable, Widget& parent, NotifyApi* notifier,
-        /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod, Font const & font,
+        Ref<mod_api> managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
-        uint16_t front_width, uint16_t front_height,
+        Rect widget_rect, uint16_t front_width, uint16_t front_height,
         int group_id = 0); /*NOLINT*/
 
+    void set_mod(Ref<mod_api> managed_mod) noexcept;
+
     void draw(RDP::FrameMarker    const & cmd) override;
-    void draw(RDPDstBlt          const & cmd, Rect clip) override;
+    void draw(RDPDstBlt           const & cmd, Rect clip) override;
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override;
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
@@ -122,11 +124,11 @@ public:
 private:
     class Impl;
 
-    void update_rects();
+    void update_rects(const Dimension module_dim);
 
     void screen_copy(Rect old_rect, Rect new_rect);
 
-    const std::unique_ptr<mod_api> managed_mod;
+    not_null_ptr<mod_api> managed_mod;
 
     CompositeArray composite_array;
 

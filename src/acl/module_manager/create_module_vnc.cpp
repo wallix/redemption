@@ -312,8 +312,22 @@ ModPack create_mod_vnc(
 
     const auto vnc_verbose = safe_cast<VNCVerbose>(ini.get<cfg::debug::mod_vnc>());
 
+    std::unique_ptr<RailModuleHostMod> host_mod {
+        client_info.remote_program
+        ? create_mod_rail(ini,
+                          events,
+                          drawable,
+                          front,
+                          client_info,
+                          rail_client_execute,
+                          glyphs,
+                          theme,
+                          false)
+        : nullptr
+    };
+
     auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
-        drawable,
+        host_mod ? host_mod->proxy_gd() : drawable,
         ini,
         name,
         std::move(client_sck),
@@ -351,23 +365,9 @@ ModPack create_mod_vnc(
     auto tmp_psocket_transport = &new_mod->socket_transport;
 
     if (!client_info.remote_program) {
-        auto mod = new_mod.release();
-        return ModPack{mod, nullptr, nullptr, false, false, tmp_psocket_transport};
+        return ModPack{new_mod.release(), nullptr, nullptr, false, false, tmp_psocket_transport};
     }
 
-    auto* host_mod = create_mod_rail(
-        ini,
-        events,
-        drawable,
-        front,
-        client_info,
-        rail_client_execute.adjust_rect(client_info.get_widget_rect()),
-        std::move(new_mod),
-        rail_client_execute,
-        glyphs,
-        theme,
-        false
-    );
-
-    return ModPack{host_mod, nullptr, nullptr, false, false, tmp_psocket_transport};
+    host_mod->set_mod(std::move(new_mod));
+    return ModPack{host_mod.release(), nullptr, nullptr, false, false, tmp_psocket_transport};
 }

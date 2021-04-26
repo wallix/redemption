@@ -114,8 +114,9 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     const Rect widget_rect = client_execute.adjust_rect(cs_monitor.get_widget_rect(w, h));
 
     RailModuleHostMod host_mod(
-        events, gd, front, w, h, widget_rect, std::move(mod),
+        events, gd, front, w, h, widget_rect,
         client_execute, font, theme, cs_monitor, false);
+    host_mod.set_mod(std::move(mod));
     host_mod.init();
 
     mod_ref.gd = &host_mod.proxy_gd();

@@ -92,9 +92,11 @@ public:
         EventContainer& events,
         gdi::GraphicApi & drawable,
         FrontAPI& front, uint16_t width, uint16_t height,
-        Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
+        Rect const widget_rect, ClientExecute& rail_client_execute,
+        Font const& font, Theme const& theme,
         const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);
+
+    void set_mod(std::unique_ptr<mod_api>&& managed_mod) noexcept;
 
     ~RailModuleHostMod();
 
@@ -145,6 +147,7 @@ public:
     void acl_update(AclFieldMask const& acl_fields) override;
 
 private:
+    std::unique_ptr<mod_api> managed_mod;
     WidgetModuleHost module_host;
 
     bool can_resize_hosted_desktop = false;

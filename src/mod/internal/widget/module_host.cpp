@@ -225,12 +225,12 @@ void WidgetModuleHost::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerV
 
 WidgetModuleHost::WidgetModuleHost(
     gdi::GraphicApi& drawable, Widget& parent, NotifyApi* notifier,
-    std::unique_ptr<mod_api>&& managed_mod, Font const & font,
+    Ref<mod_api> managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
-    uint16_t front_width, uint16_t front_height,
+    Rect const widget_rect, uint16_t front_width, uint16_t front_height,
     int group_id)
 : WidgetParent(drawable, parent, notifier, group_id)
-, managed_mod(std::move(managed_mod))
+, managed_mod(&managed_mod.get())
 , drawable(drawable)
 , hscroll(drawable, *this, this, true, BLACK,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
@@ -259,12 +259,21 @@ WidgetModuleHost::WidgetModuleHost(
     this->monitor_one.monitorDefArray[0].top    = 0;
     this->monitor_one.monitorDefArray[0].right  = front_width - 1;
     this->monitor_one.monitorDefArray[0].bottom = front_height - 1;
+
+    WidgetParent::set_xy(widget_rect.x, widget_rect.y);
+    WidgetParent::set_wh(widget_rect.cx, widget_rect.cy);
+    this->update_rects(Dimension{0, 0});
 }
 
-void WidgetModuleHost::update_rects()
+void WidgetModuleHost::set_mod(Ref<mod_api> managed_mod) noexcept
 {
-    const Dimension module_dim = this->managed_mod->get_dim();
+    this->managed_mod = &managed_mod.get();
+    this->update_rects(this->managed_mod->get_dim());
+}
 
+
+void WidgetModuleHost::update_rects(const Dimension module_dim)
+{
     this->vision_rect = this->get_rect();
 
     const bool old_hscroll_added = this->hscroll_added;
@@ -406,7 +415,7 @@ void WidgetModuleHost::set_xy(int16_t x, int16_t y)
 
     WidgetParent::set_xy(x, y);
 
-    this->update_rects();
+    this->update_rects(this->managed_mod->get_dim());
 
     if (!old_rect.isempty()) {
         Rect new_rect = this->get_rect();
@@ -432,7 +441,7 @@ void WidgetModuleHost::set_wh(uint16_t w, uint16_t h)
 
     WidgetParent::set_wh(w, h);
 
-    this->update_rects();
+    this->update_rects(this->managed_mod->get_dim());
 
     Rect new_mod_visible_rect = this->mod_visible_rect;
     Rect new_rect = this->get_rect();
@@ -628,7 +637,7 @@ void WidgetModuleHost::rdp_input_synchronize(uint32_t time, uint16_t device_flag
 
 void WidgetModuleHost::refresh(Rect/* clip*/)
 {
-    this->update_rects();
+    this->update_rects(this->managed_mod->get_dim());
 }
 
 void WidgetModuleHost::begin_update()
