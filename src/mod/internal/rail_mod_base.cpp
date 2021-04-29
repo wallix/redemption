@@ -21,10 +21,10 @@ Author(s): Proxy Team
 #include "mod/internal/rail_mod_base.hpp"
 #include "RAIL/client_execute.hpp"
 #include "gdi/graphic_api.hpp"
+#include "core/RDP/slowpath.hpp"
 
 
 RailModBase::RailModBase(
-    EventContainer& events,
     gdi::GraphicApi & gd,
     FrontAPI & front,
     uint16_t width, uint16_t height,
@@ -36,7 +36,6 @@ RailModBase::RailModBase(
     , screen(gd, front_width, front_height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
-    , mouse_state(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
 {
     this->screen.set_wh(this->front_width, this->front_height);
@@ -54,7 +53,7 @@ void RailModBase::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
-            *this, this->front_width, this->front_height, this->screen.font,
+            *this, this->screen.font,
             this->is_resizing_hosted_desktop_allowed());
 
         this->dvc_manager.ready(this->front);
@@ -97,10 +96,6 @@ void RailModBase::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keym
 
     bool mouse_is_captured
         = this->rail_client_execute.input_mouse(device_flags, x, y);
-
-    if (this->mouse_state.next_event_is_double_click(device_flags)) {
-        this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y);
-    }
 
     if (mouse_is_captured) {
         this->screen.allow_mouse_pointer_change(false);

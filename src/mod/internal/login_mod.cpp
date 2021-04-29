@@ -71,9 +71,7 @@ LoginMod::LoginMod(
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : RailModBase(
-        events, drawable, front,
-        width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , events_guard(events)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),

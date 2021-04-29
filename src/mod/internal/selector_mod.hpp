@@ -52,7 +52,7 @@ class SelectorMod : public RailModBase, public NotifyApi
 public:
     SelectorMod(
         SelectorModVariables ini,
-        EventContainer& events, gdi::GraphicApi & drawable,
+        gdi::GraphicApi & drawable,
         FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);

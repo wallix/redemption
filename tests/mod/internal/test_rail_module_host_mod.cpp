@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     FakeFront front(screen_info);
     WindowListCaps win_caps;
     TestGd gd(front.gd());
-    ClientExecute client_execute(events, gd, front, win_caps, false);
+    ClientExecute client_execute(events.get_time_base(), gd, front, win_caps, false);
     const Theme theme;
     const GCC::UserData::CSMonitor cs_monitor;
     Font const& font = global_font_deja_vu_14();

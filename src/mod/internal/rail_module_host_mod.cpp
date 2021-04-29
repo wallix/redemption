@@ -76,13 +76,10 @@ RailModuleHostMod::RailModuleHostMod(
     Rect const widget_rect, ClientExecute& rail_client_execute,
     Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
-    : front_width(width)
-    , front_height(height)
-    , front(front)
+    : front(front)
     , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
-    , mouse_state(events)
     , disconnection_reconnection_timer(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , managed_mod(std::make_unique<null_mod>())
@@ -113,8 +110,7 @@ void RailModuleHostMod::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
-            *this, this->front_width, this->front_height,
-            this->font(), this->is_resizing_hosted_desktop_allowed());
+            *this, this->font(), this->is_resizing_hosted_desktop_allowed());
         this->dvc_manager.ready(this->front);
     }
 }
@@ -154,10 +150,6 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
 
         bool mouse_is_captured
           = this->rail_client_execute.input_mouse(device_flags, x, y);
-
-        if (this->mouse_state.next_event_is_double_click(device_flags)) {
-            this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y);
-        }
 
         if (mouse_is_captured) {
             this->screen.allow_mouse_pointer_change(false);

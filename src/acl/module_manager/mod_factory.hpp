@@ -170,7 +170,6 @@ public:
     {
         auto new_mod = new SelectorMod(
             this->ini,
-            this->events,
             this->graphics,
             this->front,
             this->client_info.screen_info.width,
@@ -229,7 +228,6 @@ public:
     {
         auto new_mod = new InteractiveTargetMod(
             this->ini,
-            this->events,
             this->graphics,
             this->front,
             this->client_info.screen_info.width,
@@ -271,7 +269,6 @@ private:
     {
         auto new_mod = new DialogMod(
             this->ini,
-            this->events,
             this->graphics,
             this->front,
             this->client_info.screen_info.width,
@@ -318,7 +315,6 @@ public:
     {
         auto new_mod = new TransitionMod(
             TR(trkeys::wait_msg, language(this->ini)),
-            this->events,
             this->graphics,
             this->front,
             this->client_info.screen_info.width,

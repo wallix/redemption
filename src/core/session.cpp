@@ -1381,7 +1381,7 @@ public:
             RedirectionInfo redir_info;
 
             ClientExecute rail_client_execute(
-                event_manager.get_events(), front, front,
+                event_manager.get_time_base(), front, front,
                 front.get_client_info().window_list_caps,
                 ini.get<cfg::debug::mod_internal>() & 1);
 

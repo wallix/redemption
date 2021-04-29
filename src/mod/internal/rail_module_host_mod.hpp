@@ -21,10 +21,10 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "mod/internal/mouse_state.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/module_host.hpp"
+#include "core/events.hpp"
 
 
 class ClientExecute;
@@ -60,9 +60,6 @@ public:
     void refresh(Rect r) override;
 
 private:
-    uint16_t front_width;
-    uint16_t front_height;
-
     FrontAPI & front;
 
     WidgetScreen screen;
@@ -70,7 +67,6 @@ private:
 
     DVCManager dvc_manager;
 
-    MouseState mouse_state;
     EventRef2 disconnection_reconnection_timer;
 
     bool alt_key_pressed = false;

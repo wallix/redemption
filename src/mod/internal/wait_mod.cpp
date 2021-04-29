@@ -34,9 +34,7 @@ WaitMod::WaitMod(
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
     bool showform, uint32_t flag
 )
-    : RailModBase(
-        events, drawable, front,
-        width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
     , wait_widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,

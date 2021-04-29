@@ -38,7 +38,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, events, front.gd(), front, 800, 600, Rect(0, 0, 799, 599), client_execute,
+    InteractiveTargetMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599), client_execute,
                            global_font(), theme);
     d.init();
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, events, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
+    InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
                            client_execute, global_font(), theme);
     d.init();
     keymap.push_kevent(Keymap2::KEVENT_ESC);
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -99,7 +99,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, events, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
+    InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
                            client_execute, global_font(), theme);
     d.init();
 
@@ -134,7 +134,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge2)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -145,7 +145,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge2)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, events, front.gd(), front, screen_info.width, screen_info.height, Rect(800, 600, 799, 599),
+    InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(800, 600, 799, 599),
                            client_execute, global_font(), theme);
     d.init();
 

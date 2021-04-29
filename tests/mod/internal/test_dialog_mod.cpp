@@ -28,15 +28,15 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
-#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 RED_AUTO_TEST_CASE(TestDialogMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    TimeBase time_base;
+    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    DialogMod d(ini, events, front.gd(), front, screen_info.width, screen_info.height,
+    DialogMod d(ini, front.gd(), front, screen_info.width, screen_info.height,
                 Rect(0, 0, 799, 599), "Title", "Hello, World", "OK",
                 client_execute, global_font(), theme);
     d.init();
@@ -60,8 +60,8 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    TimeBase time_base;
+    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    DialogMod d(ini, events, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
+    DialogMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
                 "Title", "Hello, World", "Cancel", client_execute, global_font(), theme);
     d.init();
 
@@ -84,8 +84,8 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    TimeBase time_base;
+    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -93,7 +93,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    DialogMod d(ini, events, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
+    DialogMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
                 "Title", "Hello, World", "Cancel", client_execute, global_font(),
                 theme, CHALLENGE_ECHO);
     d.init();
@@ -127,8 +127,8 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     ScreenInfo screen_info{1600, 1200, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    TimeBase time_base;
+    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    DialogMod d(ini, events, front.gd(), front, 1600, 1200, Rect(800, 600, 799, 599),
+    DialogMod d(ini, front.gd(), front, 1600, 1200, Rect(800, 600, 799, 599),
                 "Title", "Hello, World", "Cancel", client_execute, global_font(),
                 theme, CHALLENGE_ECHO);
     d.init();

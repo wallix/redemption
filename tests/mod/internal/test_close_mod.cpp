@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     WindowListCaps window_list_caps;
     EventManager event_manager;
     auto& events = event_manager.get_events();
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Theme theme;
 
@@ -93,7 +93,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     WindowListCaps window_list_caps;
     EventManager event_manager;
     auto& events = event_manager.get_events();
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
     Theme theme;
 
     Keymap2 keymap;
@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     WindowListCaps window_list_caps;
     EventManager event_manager;
     auto& events = event_manager.get_events();
-    ClientExecute client_execute(events, gd, front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), gd, front, window_list_caps, false);
 
     Theme theme;
 

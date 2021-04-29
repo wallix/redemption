@@ -30,6 +30,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/stream_throw_helpers.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
 // ========================================================
@@ -3060,9 +3061,9 @@ public:
 
     void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
 
-    const char* ApplicationId() const { return this->application_id.c_str(); }
+    zstring_view ApplicationId() const { return this->application_id; }
 
-    void ApplicationId(const char * ApplicationId_) { this->application_id = ApplicationId_; }
+    void ApplicationId(std::string_view ApplicationId_) { this->application_id = ApplicationId_; }
 
     static size_t size() {
         return 516; // WindowId(4) + ApplicationId(512)

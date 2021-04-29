@@ -23,15 +23,12 @@
 
 TransitionMod::TransitionMod(
     char const * message,
-    EventContainer& events,
     gdi::GraphicApi & drawable,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : RailModBase(
-        events, drawable, front,
-        width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , ttmessage(drawable, this->screen, nullptr, message,
                 theme.tooltip.fgcolor, theme.tooltip.bgcolor,
                 theme.tooltip.border_color, font)

@@ -21,11 +21,12 @@
 #pragma once
 
 #include "core/RDP/rdp_pointer.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
-#include "core/RDP/windows_execute_shell_params.hpp"
-#include "core/events.hpp"
+#include "utils/ref.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <string>
 
@@ -34,6 +35,7 @@ class mod_api;
 class Font;
 class InStream;
 class WindowListCaps;
+class TimeBase;
 namespace CHANNELS
 {
     class ChannelDef;
@@ -53,10 +55,11 @@ public:
     };
 
     ClientExecute(
-        EventContainer& events,
+        CRef<TimeBase> time_base,
         gdi::GraphicApi & drawable,
         FrontAPI & front,
-        WindowListCaps const & window_list_caps, bool verbose);
+        WindowListCaps const & window_list_caps,
+        bool verbose);
 
     ~ClientExecute();
 
@@ -77,7 +80,7 @@ public:
 
     [[nodiscard]] Rect get_auxiliary_window_rect() const;
 
-    void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop);
+    void ready(mod_api & mod, Font const & font, bool allow_resize_hosted_desktop);
 
     bool is_ready() const noexcept;
 
@@ -88,14 +91,6 @@ public:
     void input_invalidate(const Rect r);
 
     const WindowsExecuteShellParams & get_windows_execute_shell_params();
-
-    [[nodiscard]] uint16_t Flags() const;
-
-    [[nodiscard]] const char * ExeOrFile() const;
-
-    [[nodiscard]] const char * WorkingDir() const;
-
-    [[nodiscard]] const char * Arguments() const;
 
     void create_auxiliary_window(Rect const window_rect) override;
 
@@ -113,90 +108,136 @@ public:
     bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos);
 
 public:
-    // TODO private
-    enum class MouseButtonPressed
+    //                 title_bar
+    //                       |
+    // +---------------------|---------------------------------------------------+
+    // | +----+              |                       +----+ +----+ +----+ +----+ |
+    // | |    |              |                       |    | |    | |    | |    | |
+    // | |  | |                                      |  | | |  | | |  | | |  | | |
+    // | +--|-+                                      +--|-+ +--|-+ +--|-+ +--|-+ |
+    // +----|-------------------------------------------|------|------|------|---+
+    //      |                                           |      |      |      |
+    //    icon                       resize_hosted_desktop_box |      |      |
+    //                                                   minimize_box |      |
+    //                                                          maximize_box |
+    //                                                                   close_box
+    //                          corner
+    //                        |-------|
+    //                  cx
+    //    |---------------------------|
+    //        1         0        11
+    //    +--NWN--\-----N-----|--NEN--+      +   +
+    //    |                           |      |   |
+    // 2 NWW                         NEE 10  |   | corner
+    //    |                           |      |   |
+    //    +         N = North         +      |   +
+    //    |         S = South         |      |
+    //    |         E = East          |      |
+    // 3  W         W = West          E 9    | cy
+    //    |                           |      |
+    //    |                           |      |
+    //    +                           +      |
+    //    |                           |      |
+    // 4 SWW                         SEE 8   |
+    //    |                           |      |
+    //    +--SWS--\-----S-----|--SES--+      °
+    //        5         6         7
+    enum class WindowArea : uint8_t
     {
-        None,
+        N, NWN, NWW,
+        W, SWW, SWS,
+        S, SES, SEE,
+        E, NEE, NEN,
 
-        North,
-        NorthWest,
-        West,
-        SouthWest,
-        South,
-        SouthEast,
-        East,
-        NorthEast,
+        Icon, Title, Close,
+        Maxi, Mini, Resize,
 
-        TitleBar,
-        ResizeHostedDesktopBox,
-        MinimizeBox,
-        MaximizeBox,
-        CloseBox,
+        NUMBER_OF_AREAS_OR_INVALID
     };
 
     struct Zone
     {
-        //                 title_bar_rect
-        //                       |
-        // +---------------------|---------------------------------------------------+
-        // | +----+              |                       +----+ +----+ +----+ +----+ |
-        // | |    |              |                       |    | |    | |    | |    | |
-        // | |  | |                                      |  | | |  | | |  | | |  | | |
-        // | +--|-+                                      +--|-+ +--|-+ +--|-+ +--|-+ |
-        // +----|-------------------------------------------|------|------|------|---+
-        //      |                                           |      |      |      |
-        //  title_bar_icon_rect    resize_hosted desktop_box rect  |      |      |
-        //                                            minimize_box rect   |      |
-        //                                                   maximize_box_rect   |
-        //                                                            close_box_rect
-
-
-        //                          corner
-        //                        |-------|
-        //                  cx
-        //    |---------------------------|
-        //        1         0        11
-        //    +--NWN--\-----N-----|--NEN--+      +   +
-        //    |                           |      |   |
-        // 2 NWW                         NEE 10  |   | corner
-        //    |                           |      |   |
-        //    +         N = North         +      |   +
-        //    |         S = South         |      |
-        //    |         E = East          |      |
-        // 3  W         W = West          E 9    | cy
-        //    |                           |      |
-        //    |                           |      |
-        //    +                           +      |
-        //    |                           |      |
-        // 4 SWW                         SEE 8   |
-        //    |                           |      |
-        //    +--SWS--\-----S-----|--SES--+      °
-        //        5         6         7
-
         static const uint16_t corner = TITLE_BAR_HEIGHT;
         static const uint16_t thickness = BORDER_WIDTH_HEIGHT;
         static const uint16_t button_width = TITLE_BAR_BUTTON_WIDTH;
 
-        enum {
-            ZONE_N, ZONE_NWN, ZONE_NWW,
-            ZONE_W, ZONE_SWW, ZONE_SWS,
-            ZONE_S, ZONE_SES, ZONE_SEE,
-            ZONE_E, ZONE_NEE, ZONE_NEN,
-
-            ZONE_ICON, ZONE_TITLE, ZONE_CLOSE,
-            ZONE_MAXI, ZONE_MINI, ZONE_RESIZE,
-
-            NUMBER_OF_ZONES
-        };
-
-        static Rect get_zone(size_t zone, Rect w);
-
-        static MouseButtonPressed get_button(int zone);
-
-        static PredefinedPointer get_pointer(int zone);
+        static Rect get_zone(WindowArea area, Rect w);
     };
 
+    struct MouseAction
+    {
+        enum class EventAction : uint8_t
+        {
+            Nothing,
+
+            // left click pressed
+            CapturedClick,
+
+            ResizeHostedDesktop,
+            Minimize,
+            // double click on title bar or maximize/restore button
+            Maximaze,
+            // top or bottom border
+            MaximazeVertical,
+            // double click on icon or close button
+            Close,
+
+            StartMoveResize,
+            StopMoveResize,
+            MoveResize,
+
+            // left click down on button
+            ActiveButton,
+            // left click release
+            UnactiveButton,
+        };
+
+        enum class IsMaximized : bool;
+        enum class ResizableHosted : bool;
+
+        struct ActionResult
+        {
+            Rect rect;
+            WindowArea area;
+            EventAction action;
+        };
+
+        ActionResult next_mouse_action(
+            Rect const& window_rect,
+            IsMaximized is_maximized, ResizableHosted resizable_hosted,
+            MonotonicTimePoint now,
+            uint16_t flags, uint16_t x, uint16_t y);
+
+        uint16_t pressed_button_down_x() const noexcept { return safe_button_down_x; }
+        uint16_t pressed_button_down_y() const noexcept { return safe_button_down_y; }
+        WindowArea pressed_mouse_button() const noexcept { return pressed_area; }
+
+    private:
+        EventAction _next_action(
+            WindowArea area, MonotonicTimePoint now,
+            uint16_t flags, uint16_t x, uint16_t y);
+
+        enum class State : uint8_t;
+
+        MonotonicTimePoint button_down_timepoint {};
+        WindowArea pressed_area = WindowArea::NUMBER_OF_AREAS_OR_INVALID;
+        uint16_t safe_button_down_x {};
+        uint16_t safe_button_down_y {};
+        State state {};
+    };
+
+    static Rect move_resize_rect(
+        WindowArea pressed_button,
+        int original_offset_x, int original_offset_y, Rect const& r) noexcept;
+
 private:
+    enum class MaximizedState : uint8_t
+    {
+        No,
+        VerticalScreen,
+        FullScreen,
+    };
+
           FrontAPI             & front_;
           gdi::GraphicApi      & drawable_;
           mod_api              * mod_     = nullptr;
@@ -208,38 +249,25 @@ private:
     WindowsExecuteShellParams windows_execute_shell_params;
 
     bool should_ignore_first_client_execute_ = true;
-    bool server_execute_result_sent = false;
 
     Point window_offset {};
 
     Rect virtual_screen_rect;
 
-    Rect task_bar_rect;
-
     Rect window_rect;
+    // rect before start move
     Rect window_rect_saved;
+    // rect before resize
     Rect window_rect_normal;
 
-    int button_1_down_timer;
+    MouseAction mouse_action;
 
-    int button_1_down_x = 0;
-    int button_1_down_y = 0;
-
-    MouseButtonPressed button_1_down = MouseButtonPressed::None;
-
-    uint16_t captured_mouse_x = 0;
-    uint16_t captured_mouse_y = 0;
-
-    MouseButtonPressed pressed_mouse_button = MouseButtonPressed::None;
     bool move_size_initialized = false;
     bool verbose = false;
 
-    uint16_t front_width  = 0;
-    uint16_t front_height = 0;
-
     bool full_window_drag_enabled = false;
     bool internal_module_window_created = false;
-    bool maximized = false;
+    MaximizedState maximized_state = MaximizedState::No;
     Bitmap wallix_icon_min;
     uint32_t auxiliary_window_id;
     Rect auxiliary_window_rect;
@@ -253,24 +281,20 @@ private:
     bool enable_resizing_hosted_desktop_ = false;
     bool rail_enabled = false;
 
-    EventsGuard events_guard;
+    TimeBase const& time;
+    WindowArea previous_area = WindowArea::NUMBER_OF_AREAS_OR_INVALID;
+    Rect previous_rect;
     Rect protocol_window_rect;
 
 private:
-    void initialize_move_size(uint16_t xPos, uint16_t yPos, MouseButtonPressed pressed_mouse_button_);
-    void set_mouse_pointer(uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
+    void initialize_move_size(uint16_t xPos, uint16_t yPos);
 
     void update_rects();
 
     void update_widget();
 
-    void draw_resize_hosted_desktop_box(bool mouse_over, const Rect r);
-
-    void draw_maximize_box(bool mouse_over, const Rect r);
-
-    void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message);
-
     void maximize_restore_window();
+    void maximize_vertical_restore_window();
 
     void process_client_system_command_pdu(InStream& chunk);
     void process_client_get_application_id_pdu(InStream& chunk);
@@ -281,3 +305,4 @@ private:
     void on_new_or_existing_window(Rect const & window_rect);
     void on_delete_window();
 };  // class ClientExecute
+

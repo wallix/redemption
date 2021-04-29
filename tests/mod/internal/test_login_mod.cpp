@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     EventContainer events;
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     WindowListCaps window_list_caps;
     EventManager event_manager;
     auto& events = event_manager.get_events();
-    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

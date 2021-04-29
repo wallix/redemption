@@ -42,6 +42,7 @@
 #include "utils/timebase.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "core/events.hpp"
 
 #include <string>
 

@@ -58,15 +58,12 @@ namespace
 
 SelectorMod::SelectorMod(
     SelectorModVariables ini,
-    EventContainer& events,
     gdi::GraphicApi & drawable,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
-    : RailModBase(
-        events, drawable, front,
-        width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , ini(ini)
     , language_button(
         ini.get<cfg::client::keyboard_layout_proposals>(),

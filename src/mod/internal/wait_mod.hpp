@@ -28,6 +28,7 @@
 #include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/widget/flat_wait.hpp"
 #include "mod/internal/widget/language_button.hpp"
+#include "core/events.hpp"
 
 
 using WaitModVariables = vcfg::variables<

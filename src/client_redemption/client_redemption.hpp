@@ -260,7 +260,7 @@ public:
         , _callback(this)
         , event_manager(event_manager)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(event_manager.get_events(), *this, *this,
+        , rail_client_execute(event_manager.get_time_base(), *this, *this,
             this->config.info.window_list_caps,
             bool((RDPVerbose::rail | RDPVerbose::rail_dump) & this->config.verbose))
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
