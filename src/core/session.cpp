@@ -297,6 +297,10 @@ private:
             return EndSessionResult::retry;
         }
 
+        if (e.id == ERR_RAIL_RESIZING_REQUIRED) {
+            return EndSessionResult::retry;
+        }
+
         if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
             LOG(LOG_INFO, "Retry Automatic Reconnection Required");
             return EndSessionResult::reconnection;
@@ -618,6 +622,8 @@ private:
         rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
 
+        mod_wrapper.disconnect();
+
         SessionLogApi& session_log_api = session_log.already_session_log();
         try {
             this->target_connection_start_time = MonotonicTimePoint::clock::now();
@@ -626,13 +632,11 @@ private:
             return true;
         }
         catch (Error const& /*error*/) {
-            mod_wrapper.disconnect();
             front.must_be_stop_capture();
             this->secondary_session_creation_failed(session_log);
             mod_wrapper.set_mod(next_state, mod_factory.create_transition_mod());
         }
         catch (...) {
-            mod_wrapper.disconnect();
             front.must_be_stop_capture();
             this->secondary_session_creation_failed(session_log);
         }

@@ -155,6 +155,7 @@
     f(ERR_RAIL_STARTING_PROGRAM)                             \
     f(ERR_RAIL_UNAUTHORIZED_PROGRAM)                         \
     f(ERR_RAIL_NO_SUCH_WINDOW_EXIST)                         \
+    f(ERR_RAIL_RESIZING_REQUIRED)                            \
                                                              \
     fv(ERR_RDPDR_PDU_TRUNCATED, 22300)                       \
                                                              \

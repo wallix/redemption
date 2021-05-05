@@ -229,8 +229,9 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
             1s, "RAIL Module Host Disconnection Reconnection Timeout",
             [this](Event&)
             {
+                // TODO there is a channel to resize the session, we should use it
                 if (this->module_host.get_managed_mod().is_auto_reconnectable()){
-                    throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                    throw Error(ERR_RAIL_RESIZING_REQUIRED);
                 }
             }
         );

@@ -802,11 +802,12 @@ public:
     }
 
 private:
-    inline void create_remote_programs_virtual_channel(
-                    FrontAPI& front,
-                    ServerTransportContext & stc,
-                    const ModRdpVariables & vars,
-                    RailCaps const & client_rail_caps) {
+    void create_remote_programs_virtual_channel(
+        FrontAPI& front,
+        ServerTransportContext & stc,
+        const ModRdpVariables & vars,
+        RailCaps const & client_rail_caps)
+    {
         assert(!this->remote_programs_to_client_sender &&
             !this->remote_programs_to_server_sender);
 
