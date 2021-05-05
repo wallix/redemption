@@ -186,17 +186,15 @@ WidgetSelector::WidgetSelector(
     this->add_widget(&this->logout);
     this->add_widget(&this->connect);
 
-    if (has_target_helpicon)
-    {
+    if (has_target_helpicon) {
         this->add_widget(&this->target_helpicon);
+        this->target_helpicon.tab_flag = IGNORE_TAB;
+        this->target_helpicon.focus_flag = IGNORE_FOCUS;
     }
 
     if (extra_button) {
         this->add_widget(extra_button);
     }
-
-    this->target_helpicon.tab_flag = IGNORE_TAB;
-    this->target_helpicon.focus_flag = IGNORE_FOCUS;
 
     this->move_size_widget(left, top, width, height);
 }
@@ -339,8 +337,7 @@ void WidgetSelector::rearrange()
 
         WidgetLabel& target_header_label = this->header_labels[IDX_TARGET];
 
-        this->target_helpicon.set_xy(this->left
-                                     + target_header_label.x()
+        this->target_helpicon.set_xy(target_header_label.x()
                                      + target_header_label.get_optimal_dim().w + 4,
                                      labels_y);
     }
