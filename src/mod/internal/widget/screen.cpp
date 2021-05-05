@@ -61,7 +61,7 @@ void WidgetScreen::show_tooltip(
     else if (this->tooltip == nullptr) {
         Rect display_rect = this->get_rect();
         if (!preferred_display_rect.isempty()) {
-            display_rect = this->get_rect().intersect(preferred_display_rect);
+            display_rect = display_rect.intersect(preferred_display_rect);
         }
 
         this->tooltip = std::make_unique<WidgetTooltip>(
@@ -79,8 +79,9 @@ void WidgetScreen::show_tooltip(
         int w = this->tooltip->cx();
         int h = this->tooltip->cy();
         int sw = display_rect.x + display_rect.cx;
+        int sh = display_rect.y + display_rect.cy;
         int posx = ((x + w) > sw) ? (sw - w) : x;
-        int posy = (y > h) ? (y - h) : 0;
+        int posy = (y - h >= display_rect.y) ? (y - h) : (y + h > sh) ? (sh - h) : y;
         this->tooltip->set_xy(posx, posy);
 
         this->add_widget(this->tooltip.get());

@@ -58,14 +58,13 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_1.png");
 }
 
-inline
-void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget * w, const char * text)
+static void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget * w, const char * text)
 {
     parent->rdp_input_mouse(device_flags, x, y, keymap);
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = parent->widget_at_pos(x, y);
         if (wid == w) {
-            parent->show_tooltip(w, text, x, y, Rect(0, 0, 0, 0));
+            parent->show_tooltip(w, text, x, y, Rect(0, 0, 500, 41));
         }
     }
 

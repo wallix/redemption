@@ -419,7 +419,6 @@ void WidgetSelector::notify(Widget& widget, notify_event_t event)
             }
         }
     }
-
     else if (widget.group_id == this->column_expansion_buttons[0].group_id) {
         if (NOTIFY_SUBMIT == event) {
             this->priority_column_index = 0;
@@ -444,7 +443,6 @@ void WidgetSelector::notify(Widget& widget, notify_event_t event)
             this->rdp_input_invalidate(this->get_rect());
         }
     }
-
     else {
         WidgetParent::notify(widget, event);
     }
@@ -475,17 +473,19 @@ void WidgetSelector::rdp_input_scancode(long int param1, long int param2, long i
 
 void WidgetSelector::rdp_input_mouse(int device_flags, int x, int y, Keymap2 *keymap)
 {
-    if (device_flags == MOUSE_FLAG_MOVE)
-    {
+    if (device_flags == MOUSE_FLAG_MOVE) {
         Widget *wid = this->widget_at_pos(x, y);
 
-        if (wid == &this->target_helpicon)
-        {
+        if (wid == &this->target_helpicon) {
+            auto rect = this->get_rect();
+            // exclude title bar when remoteapp
+            rect.y += 30;
+            rect.cy -= 30;
             this->show_tooltip(wid,
                                this->tr(trkeys::target_accurate_filter_help),
                                x,
                                y,
-                               this->get_rect());
+                               rect);
         }
     }
 

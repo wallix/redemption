@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier4.last_event == NOTIFY_SUBMIT);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
-    wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 0, 0));
+    wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 500, 41));
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_12.png");
