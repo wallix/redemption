@@ -414,7 +414,7 @@ private:
         EventManager& event_manager)
     {
         LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
-            LOG_INFO, " Current Mod is %s Previous %s",
+            LOG_INFO, "Current Mod is %s Previous %s",
             get_module_name(mod_wrapper.current_mod),
             get_module_name(next_state)
         );
@@ -758,6 +758,9 @@ private:
         ModWrapper& mod_wrapper, ModFactory& mod_factory
     )
     {
+        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+            LOG_INFO, "Session: Main loop");
+
         assert(auth_sck != INVALID_SOCKET);
 
         FinalSocketTransport auth_trans(
@@ -807,22 +810,26 @@ private:
                 auto* pmod_trans = mod_wrapper.get_mod_transport();
                 const bool front_has_data_to_write    = front_trans.has_data_to_write();
                 const bool front_has_tls_pending_data = front_trans.has_tls_pending_data();
-                const bool mod_has_data_to_write      = pmod_trans
-                                                     && pmod_trans->has_data_to_write()
+                const bool mod_trans_is_valid         = pmod_trans
                                                      && pmod_trans->get_fd() != INVALID_SOCKET;
-                const bool mod_has_tls_pending_data   = pmod_trans
-                                                     && pmod_trans->has_tls_pending_data()
-                                                     && pmod_trans->get_fd() != INVALID_SOCKET;
+                const bool mod_has_data_to_write      = mod_trans_is_valid
+                                                     && pmod_trans->has_data_to_write();
+                const bool mod_has_tls_pending_data   = mod_trans_is_valid
+                                                     && pmod_trans->has_tls_pending_data();
 
                 Select ioswitch;
 
                 // writing pending, do not read anymore (excepted acl)
-                if (mod_has_data_to_write || front_has_data_to_write) {
+                if (REDEMPTION_UNLIKELY(mod_has_data_to_write || front_has_data_to_write)) {
                     if (front_has_data_to_write) {
+                        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                            LOG_INFO, "Session: Front has data to write");
                         ioswitch.set_write_sck(front_trans.get_fd());
                     }
 
                     if (mod_has_data_to_write) {
+                        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                            LOG_INFO, "Session: Mod has data to write");
                         ioswitch.set_write_sck(pmod_trans->get_fd());
                     }
                 }
@@ -849,10 +856,14 @@ private:
                 }
 
                 if (front_has_tls_pending_data) {
+                    LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                        LOG_INFO, "Session: Front has tls pending data");
                     ioswitch.set_read_sck(front_trans.get_fd());
                 }
 
                 if (mod_has_tls_pending_data) {
+                    LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                        LOG_INFO, "Session: Mod has tls pending data");
                     ioswitch.set_read_sck(pmod_trans->get_fd());
                 }
 
@@ -1315,6 +1326,9 @@ public:
 
         TpduBuffer rbuf;
         int auth_sck = INVALID_SOCKET;
+
+        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+            LOG_INFO, "Session: Wait front.is_up_and_running()");
 
         try {
             null_mod no_mod;
