@@ -185,7 +185,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
   <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/rail_module_host.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/selector.o
@@ -2453,7 +2452,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
   <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/rail_module_host.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/selector.o
@@ -2603,7 +2601,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
   <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/rail_module_host.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/selector.o
@@ -3180,7 +3177,6 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
@@ -3197,23 +3193,18 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/module_host.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/rail_module_host.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -5926,7 +5917,6 @@ obj src/mod/internal/widget/module_host.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 obj src/mod/internal/widget/multiline.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/multiline.cpp ;
 obj src/mod/internal/widget/number_edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/number_edit.cpp ;
 obj src/mod/internal/widget/password.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/password.cpp ;
-obj src/mod/internal/widget/rail_module_host.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/rail_module_host.cpp ;
 obj src/mod/internal/widget/screen.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/screen.cpp ;
 obj src/mod/internal/widget/scroll.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/scroll.cpp ;
 obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/selector.cpp ;

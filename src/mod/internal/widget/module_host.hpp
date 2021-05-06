@@ -23,11 +23,10 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/widget/scroll.hpp"
 #include "mod/internal/widget/composite.hpp"
-#include "mod/mod_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 
-#include <memory>
+class mod_api;
 
 class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
@@ -35,13 +34,15 @@ public:
     WidgetModuleHost(
         gdi::GraphicApi& drawable, Widget& parent,
         NotifyApi* notifier,
-        /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod, Font const & font,
+        mod_api& managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
-        uint16_t front_width, uint16_t front_height,
+        Rect widget_rect, uint16_t front_width, uint16_t front_height,
         int group_id = 0); /*NOLINT*/
 
+    void set_mod(mod_api& managed_mod) noexcept;
+
     void draw(RDP::FrameMarker    const & cmd) override;
-    void draw(RDPDstBlt          const & cmd, Rect clip) override;
+    void draw(RDPDstBlt           const & cmd, Rect clip) override;
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override;
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
@@ -78,12 +79,12 @@ public:
 
     mod_api& get_managed_mod()
     {
-        return this->module_holder;
+        return *this->managed_mod;
     }
 
     [[nodiscard]] const mod_api& get_managed_mod() const
     {
-        return this->module_holder;
+        return *this->managed_mod;
     }
 
     void set_xy(int16_t x, int16_t y) override;
@@ -122,57 +123,11 @@ public:
 private:
     class Impl;
 
-    void update_rects();
+    void update_rects(const Dimension module_dim);
 
     void screen_copy(Rect old_rect, Rect new_rect);
 
-
-    class ModuleHolder : public mod_api
-    {
-    private:
-        const std::unique_ptr<mod_api> managed_mod;
-
-    public:
-        ModuleHolder(/*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
-
-        // Callback
-        void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
-                                 InStream& chunk, size_t length,
-                                 uint32_t flags) override;
-
-        void create_shadow_session(const char * userdata, const char * type) override;
-        void send_auth_channel_data(const char * data) override;
-        void send_checkout_channel_data(const char * data) override;
-
-        // mod_api
-
-        [[nodiscard]] bool is_up_and_running() const override;
-
-        bool is_auto_reconnectable() const override;
-
-        bool server_error_encountered() const override;
-
-        // RdpInput
-
-        void rdp_input_invalidate(Rect r) override;
-
-        void rdp_input_mouse(int device_flags, int x, int y,
-                             Keymap2* keymap) override;
-
-        void rdp_input_scancode(long param1, long param2, long param3,
-                                long param4, Keymap2* keymap) override;
-
-        void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
-                                   int16_t param1, int16_t param2) override;
-
-        void rdp_gdi_up_and_running() override;
-
-        void rdp_gdi_down() override;
-
-        void refresh(Rect r) override;
-
-        [[nodiscard]] Dimension get_dim() const override;
-    } module_holder;
+    not_null_ptr<mod_api> managed_mod;
 
     CompositeArray composite_array;
 

@@ -977,6 +977,21 @@ ModPack create_mod_rdp(
 
     gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
 
+    std::unique_ptr<RailModuleHostMod> host_mod {
+        host_mod_in_widget
+        ? create_mod_rail(ini,
+                          time_base,
+                          events,
+                          drawable,
+                          front,
+                          client_info,
+                          rail_client_execute,
+                          glyphs,
+                          theme,
+                          true)
+        : nullptr
+    };
+
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,
         ini,
@@ -987,7 +1002,7 @@ ModPack create_mod_rdp(
         time_base,
         events,
         sesman,
-        drawable,
+        host_mod ? host_mod->proxy_gd() : drawable,
         front,
         client_info,
         redir_info,
@@ -1032,25 +1047,12 @@ ModPack create_mod_rdp(
 
     auto tmp_psocket_transport = &new_mod->get_transport();
 
-    if (!host_mod_in_widget) {
+    if (!host_mod) {
         auto mod = new_mod.release();
         return ModPack{mod, &mod->mod, mod->mod.get_windowing_api(), false, false, tmp_psocket_transport};
     }
 
-    auto* host_mod = create_mod_rail(
-        ini,
-        time_base,
-        events,
-        drawable,
-        front,
-        client_info,
-        rail_client_execute.adjust_rect(client_info.get_widget_rect()),
-        std::move(new_mod),
-        rail_client_execute,
-        glyphs,
-        theme,
-        true
-    );
-
-    return ModPack{host_mod, nullptr, &rail_client_execute, false, false, tmp_psocket_transport};
+    host_mod->set_mod(std::move(new_mod));
+    auto mod = host_mod.release();
+    return ModPack{mod, nullptr, &rail_client_execute, false, false, tmp_psocket_transport};
 }

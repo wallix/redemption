@@ -136,7 +136,7 @@ private:
 
 public:
     ModWithSocketAndMetrics(
-        ModWrapper & mod_wrapper, Inifile & ini,
+        ModWrapper & mod_wrapper, Inifile & ini, gdi::GraphicApi& drawable,
         const char * name, unique_fd sck, SocketTransport::Verbose verbose,
         std::string * error_message,
         TimeBase& time_base,
@@ -167,7 +167,7 @@ public:
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
     , mod(
-          this->socket_transport, time_base, mod_wrapper.get_graphics(),
+          this->socket_transport, time_base, drawable,
           events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
@@ -341,11 +341,29 @@ ModPack create_mod_vnc(
             ini.get<cfg::metrics::log_interval>());
     }
 
+    gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
+
+    std::unique_ptr<RailModuleHostMod> host_mod {
+        client_info.remote_program
+        ? create_mod_rail(ini,
+                          time_base,
+                          events,
+                          drawable,
+                          front,
+                          client_info,
+                          rail_client_execute,
+                          glyphs,
+                          theme,
+                          false)
+        : nullptr
+    };
+
     const auto vnc_verbose = safe_cast<VNCVerbose>(ini.get<cfg::debug::mod_vnc>());
 
     auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
         mod_wrapper,
         ini,
+        host_mod ? host_mod->proxy_gd() : drawable,
         name,
         std::move(client_sck),
         safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
@@ -387,22 +405,7 @@ ModPack create_mod_vnc(
         return ModPack{mod, nullptr, nullptr, false, false, tmp_psocket_transport};
     }
 
-    gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
-
-    auto* host_mod = create_mod_rail(
-        ini,
-        time_base,
-        events,
-        drawable,
-        front,
-        client_info,
-        rail_client_execute.adjust_rect(client_info.get_widget_rect()),
-        std::move(new_mod),
-        rail_client_execute,
-        glyphs,
-        theme,
-        false
-    );
-
-    return ModPack{host_mod, nullptr, nullptr, false, false, tmp_psocket_transport};
+    host_mod->set_mod(std::move(new_mod));
+    auto mod = host_mod.release();
+    return ModPack{mod, nullptr, nullptr, false, false, tmp_psocket_transport};
 }

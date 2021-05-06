@@ -20,13 +20,11 @@
 
 #pragma once
 
-#include "mod/internal/widget/rail_module_host.hpp"
-
 #include "mod/mod_api.hpp"
 #include "mod/internal/mouse_state.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
-
+#include "mod/internal/widget/module_host.hpp"
 
 class ClientExecute;
 class TimeBase;
@@ -97,18 +95,20 @@ public:
         TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
-        Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
+        Rect const widget_rect, ClientExecute& rail_client_execute,
+        Font const& font, Theme const& theme,
         const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);
+
+    void set_mod(std::unique_ptr<mod_api>&& managed_mod) noexcept;
 
     ~RailModuleHostMod();
 
     void init() override;
 
+    gdi::GraphicApi& proxy_gd() { return this->module_host; }
+
     void notify(Widget* /*sender*/, notify_event_t /*event*/) override
     {}
-
-    RailModuleHost& get_module_host();
 
     // RdpInput
 
@@ -152,7 +152,8 @@ public:
     [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const;
 
 private:
-    RailModuleHost rail_module_host;
+    std::unique_ptr<mod_api> managed_mod;
+    WidgetModuleHost module_host;
 
     bool can_resize_hosted_desktop = false;
 };

@@ -20,16 +20,12 @@ Author(s): Proxy Team
 
 #pragma once
 
-#include <memory>
-
 class RailModuleHostMod;
 class Inifile;
 class TimeBase;
 class EventContainer;
 class FrontAPI;
 class ClientInfo;
-class Rect;
-class mod_api;
 class ClientExecute;
 class Font;
 class Theme;
@@ -46,8 +42,6 @@ RailModuleHostMod* create_mod_rail(
     gdi::GraphicApi & drawable,
     FrontAPI& front,
     ClientInfo const& client_info,
-    Rect const& widget_rect,
-    std::unique_ptr<mod_api>&& managed_mod,
     ClientExecute& rail_client_execute,
     Font const& font,
     Theme const& theme,
