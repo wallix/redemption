@@ -208,6 +208,8 @@ public:
             MonotonicTimePoint now,
             uint16_t flags, uint16_t x, uint16_t y);
 
+        void remove_move_resize_state() noexcept;
+
         uint16_t pressed_button_down_x() const noexcept { return safe_button_down_x; }
         uint16_t pressed_button_down_y() const noexcept { return safe_button_down_y; }
         WindowArea pressed_mouse_button() const noexcept { return pressed_area; }
@@ -215,7 +217,7 @@ public:
     private:
         EventAction _next_action(
             WindowArea area, MonotonicTimePoint now,
-            uint16_t flags, uint16_t x, uint16_t y);
+            uint16_t flags, uint16_t x, uint16_t y) noexcept;
 
         enum class State : uint8_t;
 

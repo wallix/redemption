@@ -1405,8 +1405,6 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos)
 {
     assert(!this->move_size_initialized);
 
-    // TODO resize if FullScreen or VerticalScreen
-
     this->window_rect_saved = this->window_rect;
 
     // TS_RAIL_ORDER_MINMAXINFO
@@ -1528,7 +1526,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         event_action_to_cstr_map(event.action), area_to_cstr(event.area), event.rect,
         pointerFlags, xPos, yPos, area_to_cstr(previous_pressed_area));
 
-    // resize/move then click down without release is possible
+    // resize/move then click down without release is possible -> EventAction::StopMoveResize
     if (this->move_size_initialized
      && event.action != EventAction::MoveResize
      && (pointerFlags & SlowPath::PTRFLAGS_BUTTON1)
@@ -1578,6 +1576,9 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }
 
         this->on_new_or_existing_window(adjusted_window_rect);
+
+        // possibly VerticalScreen
+        this->maximized_state = MaximizedState::No;
     }
 
     bool resized = false;
@@ -1663,9 +1664,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }
 
         case EventAction::StartMoveResize:
-            this->initialize_move_size(
-                this->mouse_action.pressed_button_down_x(),
-                this->mouse_action.pressed_button_down_y());
+            if (this->maximized_state == MaximizedState::FullScreen) {
+                this->mouse_action.remove_move_resize_state();
+            }
+            else {
+                this->initialize_move_size(
+                    this->mouse_action.pressed_button_down_x(),
+                    this->mouse_action.pressed_button_down_y());
+            }
             break;
 
         case EventAction::StopMoveResize:
@@ -1674,7 +1680,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
         case EventAction::MoveResize:
             resized = true;
-            if (this->maximized_state != MaximizedState::FullScreen && this->full_window_drag_enabled) {
+            if (this->full_window_drag_enabled) {
                 uint16_t const captured_mouse_x = this->mouse_action.pressed_button_down_x();
                 uint16_t const captured_mouse_y = this->mouse_action.pressed_button_down_y();
 
@@ -2570,9 +2576,14 @@ ClientExecute::MouseAction::ActionResult ClientExecute::MouseAction::next_mouse_
     };
 }
 
+void ClientExecute::MouseAction::remove_move_resize_state() noexcept
+{
+    this->state = State::CapturedClick;
+}
+
 inline ClientExecute::MouseAction::EventAction ClientExecute::MouseAction::_next_action(
     WindowArea area, MonotonicTimePoint now,
-    uint16_t flags, uint16_t x, uint16_t y)
+    uint16_t flags, uint16_t x, uint16_t y) noexcept
 {
     if (SlowPath::PTRFLAGS_MOVE == flags)
     {

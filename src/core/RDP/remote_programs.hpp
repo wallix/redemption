@@ -2703,7 +2703,7 @@ const char* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
 //  the server that is being moved or resized.
 
 // IsMoveSizeStart (2 bytes): An unsigned 16-bit integer. Indicates the move
-//  or resize is ending. This field MUST be set to 0.
+//  or resize is ending. This field MUST be set to a nonzero value.
 
 // MoveSizeType (2 bytes): An unsigned 16-bit integer. Indicates the type of
 //  the move/size.
