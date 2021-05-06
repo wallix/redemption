@@ -441,24 +441,15 @@ public:
         // There should be a way to prepare some objects useful for the remaining work to do
 
         if (this->remote_app.enable_remote_program) {
-            char session_probe_window_title[32] = { 0 };
             uint32_t const r = this->gen.rand32();
-
-            snprintf(session_probe_window_title,
-                sizeof(session_probe_window_title),
-                "%X%X%X%X",
-                (r & 0xFF000000) >> 24,
-                (r & 0x00FF0000) >> 16,
-                (r & 0x0000FF00) >> 8,
-                 r & 0x000000FF
-            );
+            auto session_probe_window_title = int_to_fixed_hexadecimal_upper_zchars(r);
 
             if (mod_rdp_params.session_probe_params.enable_session_probe) {
                 this->init_remote_program_with_session_probe(
                     mod_rdp_params.remote_app_params,
                     mod_rdp_params.application_params,
                     mod_rdp_params.session_probe_params,
-                    session_probe_window_title);
+                    session_probe_window_title.c_str());
             }
             else {
                 this->init_remote_program_without_session_probe(
@@ -468,7 +459,7 @@ public:
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
                 this->events, gd, mod_rdp, mod_rdp_params.lang,
-                mod_rdp_params.font, mod_rdp_params.theme, session_probe_window_title,
+                mod_rdp_params.font, mod_rdp_params.theme, session_probe_window_title.c_str(),
                 mod_rdp_params.remote_app_params.rail_client_execute,
                 mod_rdp_params.remote_app_params.rail_disconnect_message_delay,
                 this->verbose
