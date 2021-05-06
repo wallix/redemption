@@ -1636,16 +1636,16 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }
 
         case EventAction::Maximaze:
+            resized = true;
             if (this->maximized_state == MaximizedState::VerticalScreen
              && event.area == WindowArea::Title
             ) {
-                [[fallthrough]];
+                this->maximize_vertical_restore_window();
             }
             else {
-                resized = true;
                 this->maximize_restore_window();
-                break;
             }
+            break;
 
         case EventAction::MaximazeVertical:
             resized = true;
@@ -2365,7 +2365,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
 
         // task_bar_rect
         LOG_IF(this->verbose, LOG_INFO,
-            "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%d, %d, %u, %u)",
+            "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%d, %d, %d, %d)",
             body_r.iLeft(), body_r.iTop(),
             body_r.eRight() - body_r.iLeft(), body_r.eBottom() - body_r.iTop());
     }   // else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS)
