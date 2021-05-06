@@ -2257,7 +2257,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     {
         kbd_capture.kbd_input(time, 'a');
         // flush report buffer then empty buffer
-        kbd_capture.flush();
+        kbd_capture.possible_active_window_change();
 
         RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
     }
@@ -2267,7 +2267,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
     {
         kbd_capture.kbd_input(time, 'a');
-        kbd_capture.flush();
+        kbd_capture.possible_active_window_change();
 
         // prob is not enabled
         RED_CHECK_EQUAL(report_message.s.size(), 0);
@@ -2287,7 +2287,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
         report_message.s.clear();
 
         kbd_capture.kbd_input(time, 'a');
-        kbd_capture.flush();
+        kbd_capture.possible_active_window_change();
 
         RED_CHECK_EQUAL(report_message.s.size(), 0);
     }
