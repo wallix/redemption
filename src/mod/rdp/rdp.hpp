@@ -1103,7 +1103,7 @@ public:
     static void replace(std::string & text_with_tags, std::string_view marker, std::string_view replacement){
         size_t pos = 0;
         while ((pos = text_with_tags.find(marker, pos)) != std::string::npos) {
-            text_with_tags.replace(pos, marker.size(), replacement.data());
+            text_with_tags.replace(pos, marker.size(), replacement.data(), replacement.size());
             pos += replacement.size();
         }
     }
@@ -1188,10 +1188,8 @@ public:
             this->remote_app.windows_execute_shell_params.exe_or_file = session_probe_params.exe_or_file;
 
             // Executable file name of SP.
-            char exe_var_str[16] {};
-            if (session_probe_params.customize_executable_name) {
-                ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
-            }
+            static_assert(std::is_signed_v<decltype(::getpid())>);
+            auto exe_var_str = int_to_decimal_chars(-::getpid());
 
             // Target informations
             str_assign(this->session_probe.target_informations, application_params.target_application, ':');
@@ -1210,13 +1208,13 @@ public:
                 this->remote_app.windows_execute_shell_params.working_dir = "%TMP%";
             }
             else {
-                this->remote_app.windows_execute_shell_params.working_dir = "%";
-                this->remote_app.windows_execute_shell_params.working_dir.append(session_probe_params.alternate_directory_environment_variable);
-                this->remote_app.windows_execute_shell_params.working_dir.append("%");
+                str_assign(this->remote_app.windows_execute_shell_params.working_dir,
+                    '%', session_probe_params.alternate_directory_environment_variable, '%');
             }
-            LOG(LOG_INFO, "(SPADEV) WorkingDir: \"%s\"", this->remote_app.windows_execute_shell_params.working_dir.c_str());
+            LOG(LOG_INFO, "(SPADEV) WorkingDir: \"%s\"",
+                this->remote_app.windows_execute_shell_params.working_dir);
 
-            this->remote_app.windows_execute_shell_params.arguments   = session_probe_params.arguments;
+            this->remote_app.windows_execute_shell_params.arguments = session_probe_params.arguments;
             mod_rdp_channels::replace_probe_arguments(this->remote_app.windows_execute_shell_params.arguments,
                 "${EXE_VAR}", exe_var_str,
                 "${TITLE_VAR} ", title_param,
@@ -1253,16 +1251,16 @@ public:
         char (&directory)[512])
     {
         // Executable file name of SP.
-        char exe_var_str[16] {};
-        if (session_probe_params.customize_executable_name) {
-            ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
-        }
+        static_assert(std::is_signed_v<decltype(::getpid())>);
+        auto exe_var_str = int_to_decimal_chars(-::getpid());
 
         // Target informations
-        str_assign(this->session_probe.target_informations, application_params.target_application, ':');
-        if (!session_probe_params.is_public_session) {
-            this->session_probe.target_informations += application_params.primary_user_id;
-        }
+        str_assign(this->session_probe.target_informations,
+            application_params.target_application, ':',
+            session_probe_params.is_public_session
+                ? std::string_view()
+                : std::string_view(application_params.primary_user_id)
+        );
 
         if (session_probe_params.used_clipboard_based_launcher
             && application_params.target_application && *application_params.target_application
@@ -1314,16 +1312,15 @@ public:
             "${EXE_VAR}", exe_var_str,
             "${TITLE_VAR} ", "",
             "/${COOKIE_VAR} ", cookie_param,
-            "${CBSPL_VAR} ", used_clipboard_based_launcher ? cd_tmp.c_str() : ""
+            "${CBSPL_VAR} ", used_clipboard_based_launcher ? std::string_view(cd_tmp) : ""
         );
 
-        std::string alternate_shell = session_probe_params.exe_or_file;
-
-        if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
-            alternate_shell.erase(0, 2);
+        std::string_view exe_or_file = session_probe_params.exe_or_file;
+        if (exe_or_file[0] == '|' && exe_or_file[1] == '|') {
+            exe_or_file.remove_prefix(2);
         }
 
-        str_append(alternate_shell, ' ', arguments);
+        std::string alternate_shell = str_concat(exe_or_file, ' ', arguments);
 
         if (application_params.target_application && *application_params.target_application) {
             std::string shell_arguments = get_shell_arguments(application_params);

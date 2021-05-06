@@ -20,8 +20,13 @@ Author(s): Proxy Team
 
 #pragma once
 
+#include "utils/sugar/zstring_view.hpp"
+
 #include <type_traits>
 #include <cstring>
+
+#include <string_view>
+
 
 namespace detail
 {
@@ -34,6 +39,9 @@ struct int_to_chars_result
 
     char const* data() const noexcept { return buffer + ibeg; }
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
+
+    std::string_view sv() const noexcept { return {data(), size()}; }
+    operator std::string_view() const noexcept { return sv(); }
 
 private:
     friend detail::int_to_chars_result_access;
@@ -53,6 +61,15 @@ struct int_to_zchars_result
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
 
     char const* c_str() const noexcept { return data(); }
+
+    std::string_view sv() const noexcept { return {data(), size()}; }
+    zstring_view zv() const noexcept
+    {
+        return zstring_view{zstring_view::is_zero_terminated(), data(), size()};
+    }
+
+    operator std::string_view() const noexcept { return sv(); }
+    operator zstring_view() const noexcept { return zv(); }
 
 private:
     friend detail::int_to_chars_result_access;
