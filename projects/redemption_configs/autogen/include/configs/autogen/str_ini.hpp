@@ -1150,9 +1150,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x00: none
 #   0x01: png
 #   0x02: wrm
-#   0x04: video
 #   0x08: ocr
-# Note: values can be added (enable all: 0x01 + 0x02 + 0x04 + 0x08 = 0x0f)
+# Note: values can be added (enable all: 0x01 + 0x02 + 0x08 = 0x0b)
 #_advanced
 #_hex
 #capture_flags = 11

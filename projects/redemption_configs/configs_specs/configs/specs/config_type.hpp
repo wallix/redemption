@@ -51,7 +51,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("none")
       .value("png")
       .value("wrm")
-      .value("video")
+      .value("video").exclude()
       .value("ocr")
     ;
 
