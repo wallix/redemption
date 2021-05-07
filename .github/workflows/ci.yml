@@ -69,6 +69,7 @@ jobs:
             find /usr/lib* -type f -name 'libboost_*'
           } | xargs cp --recursive --parents --target-directory "$DPKG_CACHE"
         fi
+        sudo find /usr/include/ -iname gssapi.h -exec ls -l {} \;
 
 
     # install bjam
