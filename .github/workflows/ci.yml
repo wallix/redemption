@@ -53,6 +53,8 @@ jobs:
           sudo apt update
           sudo apt install -yq ${deps[@]}
 
+          find /usr/include/ -iname gssapi* 
+
           # fix snappy version
           sudo sed -i \
             -e 's/^#define SNAPPY_MAJOR.*/#define SNAPPY_MAJOR 1/' \
