@@ -85,7 +85,7 @@ rule create_generator ( name : file : libraries * : requirements * )
         # return lhs.to_sv() >= std::string_view(rhs);
         #                    ^~
         #                    nullptr
-        # <toolset>clang:<cxxflags>-Wno-zero-as-null-pointer-constant
+        <toolset>clang:<cxxflags>-Wno-zero-as-null-pointer-constant
     ;
     exe make_$(name) : src/configs/write_$(name).cpp.o : $(libraries) ;
 }
