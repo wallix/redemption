@@ -497,12 +497,38 @@ private:
 public:
     void cached_pointer(gdi::CachePointerIndex cache_idx) override
     {
-        const auto idx = cache_idx.cache_index();
-        if (!ptr_cached[idx]) {
-            this->send_pointer(idx, this->ptr_cache.pointer(cache_idx));
-            ptr_cached[idx] = true;
+        if (!cache_idx.is_predefined_pointer()) {
+            const auto idx = cache_idx.cache_index();
+            if (!ptr_cached[idx]) {
+                this->send_pointer(idx, this->ptr_cache.pointer(cache_idx));
+                ptr_cached[idx] = true;
+            }
+
+            size_t size = 2  // mouse x
+                        + 2  // mouse y
+                        + 1  // cache index
+                        ;
+            send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
+
+            StaticOutStream<16> payload;
+            payload.out_uint16_le(this->mouse_x);
+            payload.out_uint16_le(this->mouse_y);
+            payload.out_uint8(idx);
+            this->trans.send(payload.get_produced_bytes());
         }
-        this->cached_pointer_update(idx);
+        else {
+            size_t size = 2  // mouse x
+                        + 2  // mouse y
+                        + 1  // pointer type
+                        ;
+            send_wrm_chunk(this->trans, WrmChunkType::INTERNAL_POINTER, size, 0);
+
+            StaticOutStream<16> payload;
+            payload.out_uint16_le(this->mouse_x);
+            payload.out_uint16_le(this->mouse_y);
+            payload.out_uint8(safe_int(cache_idx.as_predefined_pointer()));
+            this->trans.send(payload.get_produced_bytes());
+        }
     }
 
     void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override

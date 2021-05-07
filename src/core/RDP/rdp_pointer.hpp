@@ -297,7 +297,7 @@ RdpPointer const& dot_pointer() noexcept;
 RdpPointer const& null_pointer() noexcept;
 RdpPointer const& system_normal_pointer() noexcept;
 
-enum class PredefinedPointer
+enum class PredefinedPointer : uint8_t
 {
     Normal,
     Edit,

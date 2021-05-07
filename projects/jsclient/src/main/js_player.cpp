@@ -347,6 +347,22 @@ struct WrmPlayer
                 break;
             }
 
+            case WrmChunkType::INTERNAL_POINTER:
+            {
+                this->_interpret_mouse_position();
+
+                auto cache_idx = this->in_stream.in_uint8();
+
+                if (cache_idx < safe_cast<uint8_t>(PredefinedPointer::COUNT)) {
+                    this->gd.cached_pointer(PredefinedPointer(cache_idx));
+                }
+                else {
+                    LOG(LOG_ERR, "invalid INTERNAL_POINTER index %u", unsigned(cache_idx));
+                    throw Error(ERR_WRM);
+                }
+                break;
+            }
+
             case WrmChunkType::RESET_CHUNK:
                 this->wrm_info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
                 // TODO

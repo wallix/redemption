@@ -726,6 +726,7 @@ void FileToGraphic::interpret_order()
 
     }
     break;
+
     case WrmChunkType::POINTER:
     {
         LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "POINTER");
@@ -757,6 +758,7 @@ void FileToGraphic::interpret_order()
         }
     }
     break;
+
     case WrmChunkType::POINTER2:
     {
         LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "POINTER2");
@@ -798,6 +800,28 @@ void FileToGraphic::interpret_order()
 
         this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
         this->statistics.CachePointer.count++;
+    }
+    break;
+
+    case WrmChunkType::INTERNAL_POINTER:
+    {
+        LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "INTERNAL_POINTER");
+
+        this->mouse_x  = this->stream.in_uint16_le();
+        this->mouse_y  = this->stream.in_uint16_le();
+        auto cache_idx = this->stream.in_uint8();
+
+        if (cache_idx < safe_cast<uint8_t>(PredefinedPointer::COUNT)) {
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->cached_pointer(PredefinedPointer(cache_idx));
+            }
+        }
+        else {
+            LOG(LOG_ERR, "invalid INTERNAL_POINTER index %u", unsigned(cache_idx));
+            throw Error(ERR_WRM);
+        }
+
+        this->statistics.PointerIndex.count++;
     }
     break;
 
@@ -916,7 +940,7 @@ void FileToGraphic::interpret_order()
 
     case WrmChunkType::INVALID_CHUNK:
     default:
-        LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
+        LOG(LOG_ERR, "FileToGraphic: unknown chunk type %d", this->chunk_type);
         throw Error(ERR_WRM);
     }
     REDEMPTION_DIAGNOSTIC_POP()

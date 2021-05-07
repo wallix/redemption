@@ -29,7 +29,7 @@
 
 #include <cassert>
 
-enum class PredefinedPointer;
+enum class PredefinedPointer : uint8_t;
 
 class RDPDstBlt;
 class RDPMultiDstBlt;
