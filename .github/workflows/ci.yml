@@ -36,9 +36,7 @@ jobs:
       run: |
         DPKG_CACHE=~/dpkg_cache3
         if [[ "$CACHE_HIT" == 'true' ]]; then
-          sudo find "$DPKG_CACHE" -iname gssapi*
-          sudo cp --force --recursive "$DPKG_CACHE"/* /
-          sudo find / -iname gssapi*
+          sudo cp -af "$DPKG_CACHE"/* /
         else
           # libbz2-dev libpng-dev libssl-dev already installed and freeze restoration
           deps=(
