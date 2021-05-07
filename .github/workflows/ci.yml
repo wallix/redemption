@@ -36,7 +36,9 @@ jobs:
       run: |
         DPKG_CACHE=~/dpkg_cache3
         if [[ "$CACHE_HIT" == 'true' ]]; then
+          sudo find "$DPKG_CACHE" -iname gssapi*
           sudo cp --force --recursive "$DPKG_CACHE"/* /
+          sudo find / -iname gssapi*
         else
           # libbz2-dev libpng-dev libssl-dev already installed and freeze restoration
           deps=(
@@ -52,8 +54,6 @@ jobs:
           )
           sudo apt update
           sudo apt install -yq ${deps[@]}
-
-          find /usr/include/ -iname gssapi* 
 
           # fix snappy version
           sudo sed -i \
