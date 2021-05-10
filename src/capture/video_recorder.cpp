@@ -243,12 +243,11 @@ struct video_recorder::D
     SwsContext* frame_convert_ctx = nullptr;
     SwsContext* timestamp_convert_ctx = nullptr;
 
-    AVPacket pkt;
+    AVPacket* pkt = nullptr;
     int original_height;
     int timestamp_height;
 
     std::unique_ptr<uint8_t, default_av_free> dst_frame_buffer;
-    std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
     /* custom IO */
     std::unique_ptr<uint8_t, default_av_free> custom_io_buffer;
@@ -258,6 +257,7 @@ struct video_recorder::D
     : out_file(filename, groupid, acl_report)
     , dst_frame(av_frame_alloc())
     , src_frame(av_frame_alloc())
+    , pkt(av_packet_alloc())
     {}
 
     ~D()
@@ -270,6 +270,7 @@ struct video_recorder::D
         avcodec_free_context(&this->codec_ctx);
         av_frame_free(&this->dst_frame);
         av_frame_free(&this->src_frame);
+        av_packet_free(&this->pkt);
     }
 };
 
@@ -412,13 +413,9 @@ video_recorder::video_recorder(
     check_errnum(avcodec_parameters_from_context(this->d->video_st->codecpar, this->d->codec_ctx),
         "Failed to copy codec parameters");
 
-    int const video_outbuf_size = width * height * 3 * 5;
-
-    this->d->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
-    throw_if(!this->d->video_outbuf, "Failed to allocate video output buffer");
-    av_init_packet(&this->d->pkt);
-    this->d->pkt.data = this->d->video_outbuf.get();
-    this->d->pkt.size = video_outbuf_size;
+    throw_if(
+        av_new_packet(this->d->pkt, av_image_get_buffer_size(src_pix_fmt, width, height, 1)),
+        "Failed to allocate pkt buf");
 
     // init picture frame
     if (int const size = av_image_get_buffer_size(dst_pix_fmt, width, height, 1)) {
@@ -494,7 +491,6 @@ static std::pair<int, char const*> encode_frame(
     }
 
     while (errnum >= 0) {
-        av_init_packet(pkt);
         errnum = avcodec_receive_packet(codec_ctx, pkt);
 
         if (errnum < 0) {
@@ -519,7 +515,7 @@ video_recorder::~video_recorder() /*NOLINT*/
     // flush the encoder
     auto [errnum, errmsg] = encode_frame(
         nullptr, this->d->oc, this->d->codec_ctx,
-        this->d->video_st, &this->d->pkt);
+        this->d->video_st, this->d->pkt);
 
     check_errnum(errnum, errmsg);
 
@@ -563,7 +559,7 @@ void video_recorder::encoding_video_frame(int64_t frame_index)
     this->d->dst_frame->pts = frame_index;
     auto [errnum, errmsg] = encode_frame(
         this->d->dst_frame, this->d->oc, this->d->codec_ctx,
-        this->d->video_st, &this->d->pkt);
+        this->d->video_st, this->d->pkt);
 
     check_errnum(errnum, errmsg);
 }
