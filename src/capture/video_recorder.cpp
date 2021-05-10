@@ -235,19 +235,19 @@ struct video_recorder::D
 
     AVStream* video_st = nullptr;
 
-    AVFrame* picture = nullptr;
-    AVFrame* original_picture = nullptr;
+    AVFrame* dst_frame = nullptr;
+    AVFrame* src_frame = nullptr;
 
     AVCodecContext* codec_ctx = nullptr;
     AVFormatContext* oc = nullptr;
-    SwsContext* img_convert_ctx = nullptr;
-    SwsContext* img_convert_timestamp_ctx = nullptr;
+    SwsContext* frame_convert_ctx = nullptr;
+    SwsContext* timestamp_convert_ctx = nullptr;
 
     AVPacket pkt;
     int original_height;
     int timestamp_height;
 
-    std::unique_ptr<uint8_t, default_av_free> picture_buf;
+    std::unique_ptr<uint8_t, default_av_free> dst_frame_buffer;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
     /* custom IO */
@@ -256,48 +256,37 @@ struct video_recorder::D
 
     D(std::string_view filename, const int groupid, AclReportApi * acl_report)
     : out_file(filename, groupid, acl_report)
-    , picture(av_frame_alloc())
-    , original_picture(av_frame_alloc())
+    , dst_frame(av_frame_alloc())
+    , src_frame(av_frame_alloc())
     {}
 
     ~D()
     {
         this->out_file.close();
         avio_context_free(&this->custom_io_context);
-        sws_freeContext(this->img_convert_ctx);
-        sws_freeContext(this->img_convert_timestamp_ctx);
+        sws_freeContext(this->frame_convert_ctx);
+        sws_freeContext(this->timestamp_convert_ctx);
         avformat_free_context(this->oc);
         avcodec_free_context(&this->codec_ctx);
-        av_frame_free(&this->picture);
-        av_frame_free(&this->original_picture);
+        av_frame_free(&this->dst_frame);
+        av_frame_free(&this->src_frame);
     }
 };
 
-template<class... ExtraMsg>
-static void throw_if(bool test, char const* msg, ExtraMsg const& ... extra_msg)
+static void throw_if(bool test, char const* msg, char const* extra_msg = "")
 {
     if (test) {
-        if constexpr (sizeof...(ExtraMsg) == 0) {
-            LOG(LOG_ERR, "video recorder: %s", msg);
-        }
-        else {
-            LOG(LOG_ERR, "video recorder: %s%s", msg, extra_msg...);
-        }
+        LOG(LOG_ERR, "video recorder: %s%s", msg, extra_msg);
         throw Error(ERR_VIDEO_RECORDER);
     }
 }
 
-static void log_av_errnum(int errnum, char const* msg)
-{
-    char errbuf[AV_ERROR_MAX_STRING_SIZE]{};
-    LOG(LOG_ERR, "video recorder: %s: %s",
-        msg, av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, errnum));
-}
-
 static void check_errnum(int errnum, char const* msg)
 {
-    if (errnum < 0) {
-        log_av_errnum(errnum, msg);
+    if (REDEMPTION_UNLIKELY(errnum < 0)) {
+        char errbuf[AV_ERROR_MAX_STRING_SIZE]{};
+        LOG(LOG_ERR, "video recorder: %s: %s",
+            msg, av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, errnum));
         throw Error(ERR_VIDEO_RECORDER);
     }
 }
@@ -312,9 +301,10 @@ video_recorder::video_recorder(
 )
 : d(std::make_unique<D>(filename, groupid, acl_report))
 {
-    d->original_height = image_view.height();
-    const int image_view_width = image_view.width();
-    const int image_view_height = image_view.height();
+    const int width = image_view.width();
+    const int height = image_view.height();
+
+    d->original_height = height;
 
     #if LIBAVCODEC_VERSION_MAJOR <= 57
     /* initialize libavcodec, and register all codecs and formats */
@@ -354,8 +344,8 @@ video_recorder::video_recorder(
     // this->d->codec_ctx->bit_rate = bitrate;
     // this->d->codec_ctx->bit_rate_tolerance = bitrate;
     // resolution must be a multiple of 2
-    this->d->codec_ctx->width = image_view_width & ~1;
-    this->d->codec_ctx->height = image_view_height & ~1;
+    this->d->codec_ctx->width = width & ~1;
+    this->d->codec_ctx->height = height & ~1;
 
     // time base: this is the fundamental unit of time (in seconds)
     // in terms of which frame timestamps are represented.
@@ -412,10 +402,8 @@ video_recorder::video_recorder(
     {
         AVDictionary *av_dict = nullptr;
         SCOPE_EXIT(av_dict_free(&av_dict));
-        int errnum = av_dict_parse_string(&av_dict, codec_options, "=", " ", 0);
-        if (errnum < 0) {
-            log_av_errnum(errnum, "av_dict_parse_string error");
-        }
+        check_errnum(av_dict_parse_string(&av_dict, codec_options, "=", " ", 0),
+            "av_dict_parse_string error");
 
         check_errnum(avcodec_open2(this->d->codec_ctx, codec, &av_dict),
             "Failed to open codec, possible bad codec option");
@@ -424,7 +412,7 @@ video_recorder::video_recorder(
     check_errnum(avcodec_parameters_from_context(this->d->video_st->codecpar, this->d->codec_ctx),
         "Failed to copy codec parameters");
 
-    int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
+    int const video_outbuf_size = width * height * 3 * 5;
 
     this->d->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
     throw_if(!this->d->video_outbuf, "Failed to allocate video output buffer");
@@ -433,25 +421,23 @@ video_recorder::video_recorder(
     this->d->pkt.size = video_outbuf_size;
 
     // init picture frame
-    {
-        int const size = av_image_get_buffer_size(dst_pix_fmt, image_view_width, image_view_height, 1);
-        if (size) {
-            this->d->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
-            std::fill_n(this->d->picture_buf.get(), size, 0);
-        }
-        throw_if(!this->d->picture_buf, "Failed to allocate picture buf");
-        av_image_fill_arrays(
-            this->d->picture->data, this->d->picture->linesize,
-            this->d->picture_buf.get(), dst_pix_fmt, image_view_width, image_view_height, 1
-        );
-
-        this->d->picture->width = image_view_width;
-        this->d->picture->height = image_view_height;
-        this->d->picture->format = dst_pix_fmt;
-        this->d->original_picture->format = src_pix_fmt;
+    if (int const size = av_image_get_buffer_size(dst_pix_fmt, width, height, 1)) {
+        this->d->dst_frame_buffer.reset(static_cast<uint8_t*>(av_malloc(size)));
+        std::fill_n(this->d->dst_frame_buffer.get(), size, uint8_t());
     }
 
-    const std::size_t io_buffer_size = 32768;
+    throw_if(!this->d->dst_frame_buffer, "Failed to allocate picture buf");
+
+    av_image_fill_arrays(
+        this->d->dst_frame->data, this->d->dst_frame->linesize,
+        this->d->dst_frame_buffer.get(), dst_pix_fmt, width, height, 1
+    );
+
+    this->d->dst_frame->width = width;
+    this->d->dst_frame->height = height;
+    this->d->dst_frame->format = dst_pix_fmt;
+
+    const std::size_t io_buffer_size = 128 * 1024;
 
     this->d->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(io_buffer_size)));
     throw_if(!this->d->custom_io_buffer, "Failed to allocate io");
@@ -469,33 +455,32 @@ video_recorder::video_recorder(
             return static_cast<VideoRecorderOutputFile*>(data)->seek(offset, whence);
         }
     );
-    if (!this->d->custom_io_context) {
-        throw Error(ERR_RECORDER_ALLOCATION_FAILED);
-    }
+    throw_if(!this->d->custom_io_context, "Failed to allocate AVIOContext");
 
     this->d->oc->pb = this->d->custom_io_context;
 
     check_errnum(avformat_write_header(this->d->oc, nullptr), "video recorder: Failed to write header");
 
+    this->d->src_frame->format = src_pix_fmt;
     av_image_fill_arrays(
-        this->d->original_picture->data, this->d->original_picture->linesize,
-        image_view.data(), src_pix_fmt, image_view.width(), image_view.height(), 1
+        this->d->src_frame->data, this->d->src_frame->linesize,
+        image_view.data(), src_pix_fmt, width, height, 1
     );
 
-    this->d->img_convert_ctx = sws_getContext(
-        image_view.width(), image_view.height(), src_pix_fmt,
-        image_view.width(), image_view.height(), dst_pix_fmt,
+    this->d->frame_convert_ctx = sws_getContext(
+        width, height, src_pix_fmt,
+        width, height, dst_pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     );
-    throw_if(!this->d->img_convert_ctx, "Cannot initialize the conversion context");
+    throw_if(!this->d->frame_convert_ctx, "Cannot initialize the conversion context");
 
-    this->d->timestamp_height = std::min(int(image_view.height()), original_timestamp_height);
-    this->d->img_convert_timestamp_ctx = sws_getContext(
-        image_view.width(), this->d->timestamp_height, src_pix_fmt,
-        image_view.width(), this->d->timestamp_height, dst_pix_fmt,
+    this->d->timestamp_height = std::min(height, original_timestamp_height);
+    this->d->timestamp_convert_ctx = sws_getContext(
+        width, this->d->timestamp_height, src_pix_fmt,
+        width, this->d->timestamp_height, dst_pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     );
-    throw_if(!this->d->img_convert_timestamp_ctx, "Cannot initialize the conversion context");
+    throw_if(!this->d->timestamp_convert_ctx, "Cannot initialize the conversion context");
 }
 
 static std::pair<int, char const*> encode_frame(
@@ -536,9 +521,7 @@ video_recorder::~video_recorder() /*NOLINT*/
         nullptr, this->d->oc, this->d->codec_ctx,
         this->d->video_st, &this->d->pkt);
 
-    if (errnum < 0) {
-        log_av_errnum(errnum, errmsg);
-    }
+    check_errnum(errnum, errmsg);
 
     /* write the trailer, if any.  the trailer must be written
      * before you close the CodecContexts open when you wrote the
@@ -551,35 +534,35 @@ void video_recorder::preparing_video_frame()
 {
     /* stat */// LOG(LOG_INFO, "preparing_video_frame");
     sws_scale(
-        this->d->img_convert_ctx,
-        this->d->original_picture->data,
-        this->d->original_picture->linesize,
+        this->d->frame_convert_ctx,
+        this->d->src_frame->data,
+        this->d->src_frame->linesize,
         0,
         this->d->original_height,
-        this->d->picture->data,
-        this->d->picture->linesize);
+        this->d->dst_frame->data,
+        this->d->dst_frame->linesize);
 }
 
 void video_recorder::preparing_timestamp_video_frame()
 {
     /* stat */// LOG(LOG_INFO, "preparing_timestamp_video_frame");
     sws_scale(
-        this->d->img_convert_timestamp_ctx,
-        this->d->original_picture->data,
-        this->d->original_picture->linesize,
+        this->d->timestamp_convert_ctx,
+        this->d->src_frame->data,
+        this->d->src_frame->linesize,
         0,
         this->d->timestamp_height,
-        this->d->picture->data,
-        this->d->picture->linesize);
+        this->d->dst_frame->data,
+        this->d->dst_frame->linesize);
 }
 
 void video_recorder::encoding_video_frame(int64_t frame_index)
 {
     /* stat */// LOG(LOG_INFO, "encoding_video_frame %ld", frame_index);
 
-    this->d->picture->pts = frame_index;
+    this->d->dst_frame->pts = frame_index;
     auto [errnum, errmsg] = encode_frame(
-        this->d->picture, this->d->oc, this->d->codec_ctx,
+        this->d->dst_frame, this->d->oc, this->d->codec_ctx,
         this->d->video_st, &this->d->pkt);
 
     check_errnum(errnum, errmsg);

@@ -121,7 +121,6 @@
                                                              \
     fv(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, 13006)       \
                                                              \
-    fv(ERR_RECORDER_ALLOCATION_FAILED, 13014)                \
     fv(ERR_RECORDER_EMPTY_IMAGE, 13016)                      \
     fv(ERR_RECORDER_SNAPSHOT_FAILED, 13020)                  \
                                                              \
