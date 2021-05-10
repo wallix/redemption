@@ -328,11 +328,12 @@ video_recorder::video_recorder(
     throw_if(!this->d->oc, "Failed allocating output media context");
 
     /* auto detect the output format from the name. default is mpeg. */
-    AVOutputFormat *fmt = av_guess_format(codec_name, nullptr, nullptr);
+    AVOutputFormat * fmt = av_guess_format(codec_name, nullptr, nullptr);
     throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE, "Could not find codec ", codec_name);
 
     const auto codec_id = fmt->video_codec;
-    const AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
+    const AVPixelFormat dst_pix_fmt = AV_PIX_FMT_YUV420P;
+    const AVPixelFormat src_pix_fmt = AV_PIX_FMT_BGR24;
 
     this->d->oc->oformat = fmt;
 
@@ -367,7 +368,7 @@ video_recorder::video_recorder(
     // keyframe managed by this->d->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
     this->d->codec_ctx->gop_size = std::max(2, frame_rate);
 
-    this->d->codec_ctx->pix_fmt = pix_fmt;
+    this->d->codec_ctx->pix_fmt = dst_pix_fmt;
 
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch")
@@ -433,7 +434,7 @@ video_recorder::video_recorder(
 
     // init picture frame
     {
-        int const size = av_image_get_buffer_size(pix_fmt, image_view_width, image_view_height, 1);
+        int const size = av_image_get_buffer_size(dst_pix_fmt, image_view_width, image_view_height, 1);
         if (size) {
             this->d->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
             std::fill_n(this->d->picture_buf.get(), size, 0);
@@ -441,13 +442,13 @@ video_recorder::video_recorder(
         throw_if(!this->d->picture_buf, "Failed to allocate picture buf");
         av_image_fill_arrays(
             this->d->picture->data, this->d->picture->linesize,
-            this->d->picture_buf.get(), pix_fmt, image_view_width, image_view_height, 1
+            this->d->picture_buf.get(), dst_pix_fmt, image_view_width, image_view_height, 1
         );
 
         this->d->picture->width = image_view_width;
         this->d->picture->height = image_view_height;
-        this->d->picture->format = codec_id;
-        this->d->original_picture->format = codec_id;
+        this->d->picture->format = dst_pix_fmt;
+        this->d->original_picture->format = src_pix_fmt;
     }
 
     const std::size_t io_buffer_size = 32768;
@@ -478,20 +479,20 @@ video_recorder::video_recorder(
 
     av_image_fill_arrays(
         this->d->original_picture->data, this->d->original_picture->linesize,
-        image_view.data(), AV_PIX_FMT_BGR24, image_view.width(), image_view.height(), 1
+        image_view.data(), src_pix_fmt, image_view.width(), image_view.height(), 1
     );
 
     this->d->img_convert_ctx = sws_getContext(
-        image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
-        image_view.width(), image_view.height(), pix_fmt,
+        image_view.width(), image_view.height(), src_pix_fmt,
+        image_view.width(), image_view.height(), dst_pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     );
     throw_if(!this->d->img_convert_ctx, "Cannot initialize the conversion context");
 
     this->d->timestamp_height = std::min(int(image_view.height()), original_timestamp_height);
     this->d->img_convert_timestamp_ctx = sws_getContext(
-        image_view.width(), this->d->timestamp_height, AV_PIX_FMT_BGR24,
-        image_view.width(), this->d->timestamp_height, pix_fmt,
+        image_view.width(), this->d->timestamp_height, src_pix_fmt,
+        image_view.width(), this->d->timestamp_height, dst_pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     );
     throw_if(!this->d->img_convert_timestamp_ctx, "Cannot initialize the conversion context");
