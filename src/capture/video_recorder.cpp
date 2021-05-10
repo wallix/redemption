@@ -319,7 +319,8 @@ video_recorder::video_recorder(
     throw_if(!this->d->oc, "Failed allocating output media context");
 
     /* auto detect the output format from the name. default is mpeg. */
-    AVOutputFormat * fmt = av_guess_format(codec_name, nullptr, nullptr);
+    // AVOutputFormat* <= ffmpeg4.4 ; AVOutputFormat const* > ffmpeg4.4
+    auto* fmt = av_guess_format(codec_name, nullptr, nullptr);
     throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE, "Could not find codec ", codec_name);
 
     const auto codec_id = fmt->video_codec;
@@ -334,7 +335,8 @@ video_recorder::video_recorder(
 
     this->d->video_st->time_base = AVRational{1, frame_rate};
 
-    AVCodec * codec = avcodec_find_encoder(codec_id);
+    // AVCodec* <= ffmpeg4.4 ; AVCodec const* > ffmpeg4.4
+    auto* codec = avcodec_find_encoder(codec_id);
     throw_if(!codec, "Codec not found");
 
     this->d->codec_ctx = avcodec_alloc_context3(codec);
