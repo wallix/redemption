@@ -862,7 +862,7 @@ ClientExecute::ClientExecute(
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin), BLACK))
 , auxiliary_window_id(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID)
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
-, current_mouse_pointer(PredefinedPointer::SystemNormal)
+, current_mouse_pointer(PredefinedPointer::Normal)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , time(time_base)
 {

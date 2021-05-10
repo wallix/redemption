@@ -4087,7 +4087,7 @@ public:
                 drawable.cached_pointer(PredefinedPointer::Null);
             }
             else {
-                drawable.cached_pointer(PredefinedPointer::Normal);
+                drawable.cached_pointer(PredefinedPointer::SystemNormal);
             }
         }
         break;

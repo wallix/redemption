@@ -144,7 +144,8 @@ enum ServerUpdateType {
     SERVER_UPDATE_POINTER_COLOR,
     SERVER_UPDATE_POINTER_CACHED,
     SERVER_UPDATE_POINTER_POSITION,
-    SERVER_UPDATE_POINTER_NEW
+    SERVER_UPDATE_POINTER_NEW,
+    SERVER_UPDATE_POINTER_PREDEFINED,
 };
 
 inline
@@ -220,6 +221,13 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             case SERVER_UPDATE_POINTER_NEW:
                 updateCode = FastPath::UpdateType::POINTER;
                 break;
+
+            case SERVER_UPDATE_POINTER_PREDEFINED:
+                updateCode = InStream(data_common.get_data_stream().get_produced_bytes()).in_uint32_le() == RDP_NULL_POINTER
+                    ? FastPath::UpdateType::PTR_NULL
+                    : FastPath::UpdateType::PTR_DEFAULT;
+                data_common.get_data_stream().rewind();
+                break;
         }
 
         bytes_view fullPacket = data_common.get_packet();
@@ -275,7 +283,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             fragmentPayload->copy_to_head(update_header.get_produced_bytes());
 
             StaticOutStream<256> server_update_header;
-             // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
             FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
                                                     , fragmentPayload->get_packet().data()
                                                     , fragmentPayload->get_packet().size()
@@ -333,6 +341,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             case SERVER_UPDATE_POINTER_CACHED:
             case SERVER_UPDATE_POINTER_POSITION:
             case SERVER_UPDATE_POINTER_NEW:
+            case SERVER_UPDATE_POINTER_PREDEFINED:
                 {
                     pduType2 = PDUTYPE2_POINTER;
 
@@ -340,7 +349,8 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                         RDP_POINTER_COLOR,
                         RDP_POINTER_CACHED,
                         RDP_POINTER_MOVE,
-                        RDP_POINTER_NEW
+                        RDP_POINTER_NEW,
+                        RDP_POINTER_SYSTEM,
                     };
                     static_assert(SERVER_UPDATE_POINTER_COLOR + 1 == SERVER_UPDATE_POINTER_CACHED );
                     static_assert(SERVER_UPDATE_POINTER_CACHED + 1 == SERVER_UPDATE_POINTER_POSITION );
@@ -906,14 +916,31 @@ private:
 public:
     void cached_pointer(gdi::CachePointerIndex cache_idx) override
     {
-        auto result_cache = this->pointer_cache.use(cache_idx);
-        auto idx = result_cache.destination_idx;
-
-        if (!result_cache.is_cached) {
-            this->send_pointer(idx, this->pointer_cache.pointer(cache_idx));
+        if (cache_idx.is_predefined_pointer()
+         && (cache_idx.as_predefined_pointer() == PredefinedPointer::SystemNormal
+          || cache_idx.as_predefined_pointer() == PredefinedPointer::Null
+        )) {
+            StaticOutReservedStreamHelper<1024, 126> stream;
+            stream.get_data_stream().out_uint32_le(
+                cache_idx.as_predefined_pointer() == PredefinedPointer::Null
+                    ? RDP_NULL_POINTER
+                    : RDP_DEFAULT_POINTER);
+            ::send_server_update( this->trans, this->fastpath_support, this->compression
+                                , this->mppc_enc, this->shareid, this->encryptionLevel
+                                , this->encrypt, this->userid
+                                , SERVER_UPDATE_POINTER_PREDEFINED
+                                , 0, stream, underlying_cast(this->verbose));
         }
+        else {
+            auto result_cache = this->pointer_cache.use(cache_idx);
+            auto idx = result_cache.destination_idx;
 
-        this->cached_pointer_update(idx);
+            if (!result_cache.is_cached) {
+                this->send_pointer(idx, this->pointer_cache.pointer(cache_idx));
+            }
+
+            this->cached_pointer_update(idx);
+        }
     }
 
     void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override

@@ -237,7 +237,7 @@ WidgetModuleHost::WidgetModuleHost(
 , vscroll(drawable, *this, this, false, BLACK,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
 , monitors(cs_monitor)
-, current_cache_pointer_index(gdi::CachePointerIndex(PredefinedPointer::SystemNormal))
+, current_cache_pointer_index(gdi::CachePointerIndex(PredefinedPointer::Normal))
 {
     this->pointer_flag = PointerType::Custom;
 
