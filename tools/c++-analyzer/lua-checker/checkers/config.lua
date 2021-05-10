@@ -41,6 +41,10 @@ function init(args)
     values['cfg::icap_server_up::port'] = true
     values['cfg::icap_server_up::service_name'] = true
     values['cfg::icap_server_up::tls'] = true
+    values['cfg::mod_rdp::krb_armoring_account'] = true
+    values['cfg::mod_rdp::krb_armoring_fallback_password'] = true
+    values['cfg::mod_rdp::krb_armoring_fallback_user'] = true
+    values['cfg::mod_rdp::krb_armoring_realm'] = true
     -- translation
     values['cfg::translation::password_fr'] = true
     values['cfg::translation::password_en'] = true
