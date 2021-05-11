@@ -3042,139 +3042,7 @@ namespace cfg
         type value { RdpStoreFile::never };
     };
 
-    /// Ip or fqdn of ICAP server <br/>
-    /// type: std::string <br/>
-    /// default: {} <br/>
-    struct icap_server_down::host {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value {  };
-    };
-    /// Port of ICAP server <br/>
-    /// type: unsigned <br/>
-    /// default: 1344 <br/>
-    struct icap_server_down::port {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
-        type value { 1344 };
-    };
-    /// Service name on ICAP server <br/>
-    /// type: std::string <br/>
-    /// default: "avscan" <br/>
-    struct icap_server_down::service_name {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value { "avscan" };
-    };
-    /// ICAP server uses tls <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct icap_server_down::tls {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value {  };
-    };
-    /// Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct icap_server_down::enable_x_context {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
-    };
-    /// Filename sent to ICAP as percent encoding <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct icap_server_down::filename_percent_encoding {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
 
-    /// Ip or fqdn of ICAP server <br/>
-    /// type: std::string <br/>
-    /// default: {} <br/>
-    struct icap_server_up::host {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value {  };
-    };
-    /// Port of ICAP server <br/>
-    /// type: unsigned <br/>
-    /// default: 1344 <br/>
-    struct icap_server_up::port {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
-        type value { 1344 };
-    };
-    /// Service name on ICAP server <br/>
-    /// type: std::string <br/>
-    /// default: "avscan" <br/>
-    struct icap_server_up::service_name {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value { "avscan" };
-    };
-    /// ICAP server uses tls <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct icap_server_up::tls {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value {  };
-    };
-    /// Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct icap_server_up::enable_x_context {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
-    };
-    /// Filename sent to ICAP as percent encoding <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct icap_server_up::filename_percent_encoding {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
 
     /// 0 - Wait for Escape, 1 - End session <br/>
     /// type: bool <br/>
@@ -5652,24 +5520,6 @@ struct file_storage
 : cfg::file_storage::store_file
 { static constexpr bool is_section = true; };
 
-struct icap_server_down
-: cfg::icap_server_down::host
-, cfg::icap_server_down::service_name
-, cfg::icap_server_down::port
-, cfg::icap_server_down::tls
-, cfg::icap_server_down::enable_x_context
-, cfg::icap_server_down::filename_percent_encoding
-{ static constexpr bool is_section = true; };
-
-struct icap_server_up
-: cfg::icap_server_up::host
-, cfg::icap_server_up::service_name
-, cfg::icap_server_up::port
-, cfg::icap_server_up::tls
-, cfg::icap_server_up::enable_x_context
-, cfg::icap_server_up::filename_percent_encoding
-{ static constexpr bool is_section = true; };
-
 struct mod_replay
 : cfg::mod_replay::on_end_of_data
 , cfg::mod_replay::replay_on_loop
@@ -5887,8 +5737,6 @@ struct VariablesConfiguration
 , cfg_section::metrics
 , cfg_section::file_verification
 , cfg_section::file_storage
-, cfg_section::icap_server_down
-, cfg_section::icap_server_up
 , cfg_section::mod_replay
 , cfg_section::ocr
 , cfg_section::video

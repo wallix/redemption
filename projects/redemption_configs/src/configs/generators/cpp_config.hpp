@@ -37,6 +37,7 @@
 #include <memory>
 #include <bitset>
 #include <charconv>
+#include <functional> // std::not_fn
 
 #include <cerrno>
 #include <cstring>
@@ -467,6 +468,10 @@ struct CppConfigWriterBase
         this->out_member_.str("");
         std::string str = this->out_body_parser_.str();
         if (!str.empty()) {
+            // all members are attr::external
+            if (this->sections.back().members.empty()) {
+                str.clear();
+            }
             this->sections_parser.emplace_back(section_names.cpp, str);
             this->out_body_parser_.str("");
         }
@@ -477,137 +482,151 @@ struct CppConfigWriterBase
     void evaluate_member(Names const& section_names, Pack const & infos, type_enumerations& enums)
     {
         Names const& names = infos;
-        std::string const& varname = names.cpp;
 
-        auto type = get_t_elem<cfg_attributes::type_>(infos);
-        using cpp_type_t = typename decltype(type)::type;
-        this->members.push_back({varname, alignof(cpp_type_t)});
-
-        std::string const & varname_with_section = section_names.cpp.empty()
-            ? varname
-            : str_concat(section_names.cpp, "::", varname);
-
-        using sesman_io = sesman::internal::io;
-
-        auto const properties = value_or<sesman_io_t>(infos, sesman::no_sesman).value;
-        if (bool(/*PropertyFieldFlags::read & */properties)) {
-            this->variables_acl.emplace_back(varname_with_section);
+        if constexpr (std::is_convertible_v<Pack, is_external_attr_t>) {
+            auto& ini_name = names.ini_name();
+            this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
+            "            // ignored\n"
+            "        }\n";
         }
+        else {
+            std::string const& varname = names.cpp;
 
-        if constexpr (is_convertible_v<Pack, desc>) {
-            this->out_member_ << cpp_doxygen_comment(cfg_attributes::desc(infos).value, 4);
-        }
-        std::string sesman_name;
-        if (bool(properties)) {
-            sesman_name = sesman_network_name(infos, section_names);
-            this->authstrs.emplace_back(sesman_name);
-            this->full_names.sesman.emplace_back(sesman_name);
-        }
-        this->out_member_ << "    /// type: " << html_entitifier([&](std::ostream& out){
-            write_type(out, type);
-        }) << " <br/>\n";
+            auto type = get_t_elem<cfg_attributes::type_>(infos);
+            using cpp_type_t = typename decltype(type)::type;
+            this->members.push_back({varname, alignof(cpp_type_t)});
 
-        if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
-            if constexpr (!is_convertible_v<Pack, connection_policy_t>) {
-                this->out_member_ << "    /// sesman ⇒ proxy <br/>\n";
+            std::string const & varname_with_section = section_names.cpp.empty()
+                ? varname
+                : str_concat(section_names.cpp, "::", varname);
+
+            using sesman_io = sesman::internal::io;
+
+            constexpr bool has_sesman = is_convertible_v<Pack, sesman_io_t>;
+            auto const properties = value_or<sesman_io_t>(infos, sesman::no_sesman).value;
+
+            if constexpr (has_sesman) {
+                this->variables_acl.emplace_back(varname_with_section);
             }
-        }
-        else if ((properties & sesman_io::rw) == sesman_io::proxy_to_sesman) {
-            this->out_member_ << "    /// sesman ⇐ proxy <br/>\n";
-        }
-        else if ((properties & sesman_io::rw) == sesman_io::rw) {
-            this->out_member_ << "    /// sesman ⇔ proxy <br/>\n";
-        }
 
-        if (!names.sesman.empty()) {
-            this->out_member_ << "    /// sesman::name: " << sesman_name << " <br/>\n";
-        }
-        else if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-            this->out_member_ << "    /// connpolicy -> proxy";
-            if (!names.connpolicy.empty() || is_convertible_v<Pack, connpolicy::section>) {
-                this->out_member_ << "    [name: "
-                    << value_or<connpolicy::section>(
-                        infos, connpolicy::section{section_names.cpp.c_str()}).name
-                    << "::" << names.connpolicy_name() << "]"
-                ;
+            if constexpr (is_convertible_v<Pack, desc>) {
+                this->out_member_ << cpp_doxygen_comment(cfg_attributes::desc(infos).value, 4);
+            }
+
+            std::string sesman_name;
+            if constexpr (has_sesman) {
+                sesman_name = sesman_network_name(infos, section_names);
+                this->authstrs.emplace_back(sesman_name);
+                this->full_names.sesman.emplace_back(sesman_name);
+            }
+            this->out_member_ << "    /// type: " << html_entitifier([&](std::ostream& out){
+                write_type(out, type);
+            }) << " <br/>\n";
+
+            if constexpr (has_sesman) {
+                if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
+                    if constexpr (!is_convertible_v<Pack, connection_policy_t>) {
+                        this->out_member_ << "    /// sesman ⇒ proxy <br/>\n";
+                    }
+                }
+                else if ((properties & sesman_io::rw) == sesman_io::proxy_to_sesman) {
+                    this->out_member_ << "    /// sesman ⇐ proxy <br/>\n";
+                }
+                else if ((properties & sesman_io::rw) == sesman_io::rw) {
+                    this->out_member_ << "    /// sesman ⇔ proxy <br/>\n";
+                }
+            }
+
+            if (!names.sesman.empty()) {
+                this->out_member_ << "    /// sesman::name: " << sesman_name << " <br/>\n";
+            }
+            else if constexpr (is_convertible_v<Pack, connection_policy_t>) {
+                this->out_member_ << "    /// connpolicy -> proxy";
+                if (!names.connpolicy.empty() || is_convertible_v<Pack, connpolicy::section>) {
+                    this->out_member_ << "    [name: "
+                        << value_or<connpolicy::section>(
+                            infos, connpolicy::section{section_names.cpp.c_str()}).name
+                        << "::" << names.connpolicy_name() << "]"
+                    ;
+                }
+                this->out_member_ << " <br/>\n";
+
+                this->out_member_ << "    /// sesmanName: " << sesman_name << " <br/>\n";
+            }
+
+            constexpr bool has_default = is_t_convertible_v<Pack, default_>;
+            this->out_member_ << "    /// default: ";
+            if constexpr (has_default) {
+                write_assignable_default(this->out_member_, enums, type, infos);
+            }
+            else if constexpr (std::is_same_v<cpp_type_t, bool>) {
+                this->out_member_ << "false";
+            }
+            else {
+                this->out_member_ << (is_convertible_v<cpp_type_t, types::integer_base> ? "0" : "{}");
             }
             this->out_member_ << " <br/>\n";
+            this->out_member_ << "    struct " << varname_with_section << " {\n";
+            this->out_member_ << "        static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";
+            this->out_member_ << "        static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman_io::proxy_to_sesman) ? "true" : "false") << ";\n";
 
-            this->out_member_ << "    /// sesmanName: " << sesman_name << " <br/>\n";
-        }
-
-        constexpr bool has_default = is_t_convertible_v<Pack, default_>;
-        this->out_member_ << "    /// default: ";
-        if constexpr (has_default) {
-            write_assignable_default(this->out_member_, enums, type, infos);
-        }
-        else if constexpr (std::is_same_v<cpp_type_t, bool>) {
-            this->out_member_ << "false";
-        }
-        else {
-            this->out_member_ << (is_convertible_v<cpp_type_t, types::integer_base> ? "0" : "{}");
-        }
-        this->out_member_ << " <br/>\n";
-        this->out_member_ << "    struct " << varname_with_section << " {\n";
-        this->out_member_ << "        static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";
-        this->out_member_ << "        static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman_io::proxy_to_sesman) ? "true" : "false") << ";\n";
-
-        if (bool(properties)) {
-            this->out_member_ << "        // for old cppcheck\n";
-            this->out_member_ << "        // cppcheck-suppress obsoleteFunctionsindex\n";
-            this->out_member_ << "        static constexpr ::configs::authid_t index {"
-                " ::configs::cfg_indexes::section" << this->sections.size() << " + "
-                << (this->authid_policy.size() - this->start_section_index) << "};\n";
-            this->authid_policy.emplace_back(infos);
-        }
-
-        this->out_member_ << "        using type = ";
-        write_type(this->out_member_, type);
-        this->out_member_ << ";\n";
-
-        // write type
-        if (bool(properties) || is_convertible_v<Pack, spec_attr_t>) {
-            auto type_sesman = get_type<spec::type_>(infos);
-            this->out_member_ << "        using sesman_and_spec_type = ";
-            auto buf_size = write_type_spec(this->out_member_, type_sesman);
-            if (bool(/*PropertyFieldFlags::read & */properties)) {
-                this->max_str_buffer_size
-                    = std::max(this->max_str_buffer_size, std::size_t(buf_size));
+            if constexpr (has_sesman) {
+                this->out_member_ << "        // for old cppcheck\n";
+                this->out_member_ << "        // cppcheck-suppress obsoleteFunctionsindex\n";
+                this->out_member_ << "        static constexpr ::configs::authid_t index {"
+                    " ::configs::cfg_indexes::section" << this->sections.size() << " + "
+                    << (this->authid_policy.size() - this->start_section_index) << "};\n";
+                this->authid_policy.emplace_back(infos);
             }
+
+            this->out_member_ << "        using type = ";
+            write_type(this->out_member_, type);
             this->out_member_ << ";\n";
-            this->out_member_ << "        using mapped_type = sesman_and_spec_type;\n";
-        }
-        else {
-            this->out_member_ << "        using mapped_type = type;\n";
-        }
 
-        // write value
-        this->out_member_ << "        type value { ";
-        if constexpr (has_default) {
-            write_assignable_default(this->out_member_, enums, type, infos);
-        }
-        this->out_member_ << " };\n";
+            // write type
+            if constexpr (has_sesman || is_convertible_v<Pack, spec_attr_t>) {
+                auto type_sesman = get_type<spec::type_>(infos);
+                this->out_member_ << "        using sesman_and_spec_type = ";
+                auto buf_size = write_type_spec(this->out_member_, type_sesman);
+                if (bool(/*PropertyFieldFlags::read & */properties)) {
+                    this->max_str_buffer_size
+                        = std::max(this->max_str_buffer_size, std::size_t(buf_size));
+                }
+                this->out_member_ << ";\n";
+                this->out_member_ << "        using mapped_type = sesman_and_spec_type;\n";
+            }
+            else {
+                this->out_member_ << "        using mapped_type = type;\n";
+            }
 
-        this->out_member_ << "    };\n";
+            // write value
+            this->out_member_ << "        type value { ";
+            if constexpr (has_default) {
+                write_assignable_default(this->out_member_, enums, type, infos);
+            }
+            this->out_member_ << " };\n";
 
-        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
-            auto& ini_name = names.ini_name();
-            this->full_names.spec.emplace_back(str_concat(section_names.cpp, ':', ini_name));
-            auto type_spec = get_type<spec::type_>(infos);
-            this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
-            "            ::config_parse_and_log(\n"
-            "                this->section_name, key.c_str(),\n"
-            "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
-            "                ::configs::spec_type<";
-            write_type_spec(this->out_body_parser_, type_spec);
-            this->out_body_parser_ << ">{},\n"
-            "                value\n"
-            "            );\n"
-            "        }\n";
-            str_append(this->cfg_values, "cfg::"_av, varname_with_section, ",\n"_av);
-            str_append(this->cfg_str_values,
-                "{\""_av, section_names.ini_name(), "\"_zv, \""_av,
-                names.ini_name(), "\"_zv},\n"_av);
+            this->out_member_ << "    };\n";
+
+            if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+                auto& ini_name = names.ini_name();
+                this->full_names.spec.emplace_back(str_concat(section_names.cpp, ':', ini_name));
+                auto type_spec = get_type<spec::type_>(infos);
+                this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
+                "            ::config_parse_and_log(\n"
+                "                this->section_name, key.c_str(),\n"
+                "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
+                "                ::configs::spec_type<";
+                write_type_spec(this->out_body_parser_, type_spec);
+                this->out_body_parser_ << ">{},\n"
+                "                value\n"
+                "            );\n"
+                "        }\n";
+                str_append(this->cfg_values, "cfg::"_av, varname_with_section, ",\n"_av);
+                str_append(this->cfg_str_values,
+                    "{\""_av, section_names.ini_name(), "\"_zv, \""_av,
+                    names.ini_name(), "\"_zv},\n"_av);
+            }
         }
     }
 };
@@ -665,7 +684,7 @@ inline void write_variables_configuration_fwd(std::ostream & out_varconf, CppCon
                 out_varconf << "    struct " << var << ";\n";
             }
         }
-        else {
+        else if (!section.members.empty()) {
             out_varconf << "    struct " << section.section_name << " {\n";
             for (auto & var : section.members) {
                 out_varconf << "        struct " << var << ";\n";
@@ -748,8 +767,11 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
         "namespace cfg_section {\n"
     ;
     using Member = typename CppConfigWriterBase::Member;
+    auto has_values = [](CppConfigWriterBase::Section const& body){
+        return !body.section_name.empty() && !body.members.empty();
+    };
     for (auto & body : writer.sections) {
-        if (!body.section_name.empty()) {
+        if (has_values(body)) {
             std::vector<std::reference_wrapper<Member>> v(body.members.begin(), body.members.end());
             std::stable_sort(v.begin(), v.end(), [](Member& a, Member& b){
                 return a.align_of > b.align_of;
@@ -766,7 +788,7 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
       ": "
     ;
     join(section_names, "", "\n");
-    auto it = std::find_if(begin(writer.sections), end(writer.sections), [](auto & p){ return p.section_name.empty(); });
+    auto it = std::find_if(begin(writer.sections), end(writer.sections), std::not_fn(has_values));
     if (it != writer.sections.end()) {
         for (Member& mem : it->members) {
             out_varconf << ", cfg::" << mem.name << "\n";
@@ -783,7 +805,7 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
 
     std::vector<std::bitset<64>> loggables;
     std::vector<std::bitset<64>> unloggable_if_value_contains_passwords;
-    int i = 0;
+    size_t i = 0;
 
     for (auto log_policy : writer.authid_policy)
     {
@@ -853,13 +875,25 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
     ;
     id = 1;
     for (auto & body : writer.sections_parser) {
+        // all members are attr::external
         out_set_value <<
             "    else if (this->section_id == " << id << ") {\n"
-            "        if (0) {}\n" << body.second << "\n"
-            "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
-            "            LOG(LOG_WARNING, \"unknown parameter %s in section [%s]\",\n"
-            "                key, this->section_name);\n"
-            "        }\n"
+        ;
+        if (!body.second.empty()) {
+            out_set_value <<
+                "        if (0) {}\n" << body.second << "\n"
+                "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
+                "            LOG(LOG_WARNING, \"unknown parameter %s in section [%s]\",\n"
+                "                key, this->section_name);\n"
+                "        }\n"
+            ;
+        }
+        else {
+            out_set_value <<
+                "        // all members are external\n"
+            ;
+        }
+        out_set_value <<
             "    }\n"
         ;
         ++id;

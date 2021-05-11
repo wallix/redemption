@@ -136,6 +136,9 @@ template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return
 struct no_spec_attr_t {};
 struct no_sesman_io_t {};
 
+struct is_external_attr_t {};
+struct not_external_attr_t {};
+
 struct spec_attr_t { cfg_attributes::spec::internal::attr value; };
 struct sesman_io_t { cfg_attributes::sesman::internal::io value; };
 struct log_policy_t { cfg_attributes::spec::log_policy value; };
@@ -147,6 +150,9 @@ struct connection_policy_t : sesman_io_t
 
 namespace detail_
 {
+    template<bool b>
+    using external_attr_t = std::conditional_t<b, is_external_attr_t, not_external_attr_t>;
+
     template<class T>
     auto normalize_info_arg(T const& x)
     {
@@ -180,6 +186,20 @@ namespace detail_
         }
         else {
             return T(x);
+        }
+    }
+
+    template<class T>
+    constexpr int external_attr_info()
+    {
+        if constexpr (is_convertible_v<T, cfg_attributes::spec::internal::attr>) {
+            return bool(T::value & cfg_attributes::spec::internal::attr::external) ? 1 : 0;
+        }
+        else if constexpr (is_convertible_v<T, cfg_attributes::sesman::internal::io>) {
+            return (T::value == cfg_attributes::sesman::no_sesman) ? 0 : 2;
+        }
+        else {
+            return 0;
         }
     }
 
@@ -242,10 +262,15 @@ public:
     template<class... Ts>
     void member(Ts const& ... args)
     {
-        static_assert((is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...),
-            "spec::attr is missing");
+        constexpr bool has_attr = (is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...);
         constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
         constexpr bool has_sesman_io = (is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...);
+        constexpr int external_info = (detail_::external_attr_info<Ts>() | ...);
+        constexpr bool has_external = (1 & external_info);
+
+        static_assert(has_external ? !(external_info > 1 || has_conn_policy) : true,
+            "spec::attr::external with sesman::io or connection_policy");
+        static_assert(has_attr, "spec::attr is missing");
         static_assert(has_conn_policy || has_sesman_io,
             "sesman::io or connection_policy are missing");
         static_assert(!(has_conn_policy && has_sesman_io),
@@ -263,8 +288,11 @@ public:
             is_convertible_v<Ts, decltype(cfg_attributes::sesman::constants::no_sesman)>
          )|| ...), "sesman::is_target_context is missing or specified with no_sesman");
 
-        using infos_type = pack_type<decltype(detail_::normalize_info_arg(args))...>;
-        const infos_type infos{detail_::normalize_info_arg(args)...};
+
+        using external_attr = detail_::external_attr_t<has_external>;
+
+        using infos_type = pack_type<decltype(detail_::normalize_info_arg(args))..., external_attr>;
+        const infos_type infos{detail_::normalize_info_arg(args)..., external_attr{}};
 
         detail_::check_names(infos,
             !(is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)> || ...),

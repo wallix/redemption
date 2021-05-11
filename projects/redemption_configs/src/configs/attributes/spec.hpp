@@ -181,6 +181,7 @@ namespace spec
             iptables_in_gui = 1 << 5,
             password_in_gui = 1 << 6,
             image_in_gui    = 1 << 7,
+            external        = 1 << 8,
         };
 
         constexpr attr operator | (attr x, attr y) {
@@ -231,6 +232,7 @@ namespace spec
         inline constexpr internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
         inline constexpr internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
         inline constexpr internal::spec_attr_t<internal::attr::image_in_gui>    image_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::external>        external{};
 
         inline constexpr auto loggable = log_policy::loggable;
         inline constexpr auto unloggable = log_policy::unloggable;
@@ -291,9 +293,10 @@ namespace sesman
     {
         enum class io {
             none,
-            sesman_to_proxy   = 1 << 0,
-            proxy_to_sesman   = 1 << 1,
+            sesman_to_proxy = 1 << 0,
+            proxy_to_sesman = 1 << 1,
             rw = sesman_to_proxy | proxy_to_sesman,
+            sesman_only     = 1 << 2,
         };
 
         inline io operator | (io x, io y) {
@@ -314,6 +317,7 @@ namespace sesman
         inline constexpr internal::sesman_io_t<internal::io::proxy_to_sesman>   proxy_to_sesman{};
         inline constexpr internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
         inline constexpr internal::sesman_io_t<internal::io::rw>                sesman_rw{};
+        inline constexpr internal::sesman_io_t<internal::io::sesman_only>       sesman_only{};
     }
 
     struct connection_policy

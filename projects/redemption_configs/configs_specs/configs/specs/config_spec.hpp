@@ -528,7 +528,7 @@ void config_spec_definition(Writer && W)
                 "To resolve the session freeze issue with Windows 7/Windows Server 2008 target."
             },
             set(false));
-        
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_account"},
             desc{
                 "Account to be used for armoring Kerberos tickets. "
@@ -630,26 +630,26 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpStoreFile>(), spec::type_<std::string>(), names{"store_file"}, set(RdpStoreFile::never), desc{"Enable storage of transferred files (via RDP Clipboard)."});
     });
 
+    // for validator only
     for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
         // TODO temporary
         // please, update $REDEMPTION/tools/c++-analyzer/lua-checker/checkers/config.lua for each changement of value
         W.section(section_name, [&]
         {
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"host"}, desc{"Ip or fqdn of ICAP server"});
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<types::unsigned_>(), names{"port"}, desc{"Port of ICAP server"}, set(1344));
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"service_name"}, desc{"Service name on ICAP server"}, set("avscan"));
+            W.member(external | ini_and_gui, no_sesman, L, type_<std::string>(), names{"host"},
+                desc{"Ip or fqdn of ICAP server"});
+            W.member(external | ini_and_gui, no_sesman, L, type_<types::unsigned_>(), names{"port"},
+                desc{"Port of ICAP server"}, set(1344));
+            W.member(external | ini_and_gui, no_sesman, L, type_<std::string>(), names{"service_name"},
+                desc{"Service name on ICAP server"}, set("avscan"));
 
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"tls"}, desc{"ICAP server uses tls"});
-            // for validator only
-            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_x_context"},
-                    desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
-            // for validator only
-            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"filename_percent_encoding"},
-                     desc{"Filename sent to ICAP as percent encoding"}, set(false));
+            W.member(external | ini_and_gui, no_sesman, L, type_<bool>(), names{"tls"},
+                desc{"ICAP server uses tls"});
+            W.member(external | advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_x_context"},
+                desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"},
+                set(true));
+            W.member(external | advanced_in_gui, no_sesman, L, type_<bool>(), names{"filename_percent_encoding"},
+                desc{"Filename sent to ICAP as percent encoding"}, set(false));
         });
     }
 

@@ -254,24 +254,6 @@ namespace cfg
         struct store_file;
     };
 
-    struct icap_server_down {
-        struct host;
-        struct port;
-        struct service_name;
-        struct tls;
-        struct enable_x_context;
-        struct filename_percent_encoding;
-    };
-
-    struct icap_server_up {
-        struct host;
-        struct port;
-        struct service_name;
-        struct tls;
-        struct enable_x_context;
-        struct filename_percent_encoding;
-    };
-
     struct mod_replay {
         struct on_end_of_data;
         struct replay_on_loop;
