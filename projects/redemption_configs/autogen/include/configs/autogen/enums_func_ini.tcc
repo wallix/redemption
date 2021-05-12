@@ -1840,4 +1840,66 @@ parse_error parse_from_cfg(LoginLanguage & x, ::configs::spec_type<std::string> 
         x, value, "bad value, expected: Auto, EN, FR");
 }
 
+inline constexpr zstring_view enum_zstr_BannerType[] {
+    "info"_zv,
+    "warn"_zv,
+    "alert"_zv,
+};
+
+inline constexpr zstring_view enum_zint_BannerType[] {
+    "0"_zv,
+    "1"_zv,
+    "2"_zv,
+};
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<BannerType> /*type*/,
+    BannerType x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<BannerType>::is_valid(uint8_t(x)));
+    return enum_zint_BannerType[uint8_t(x)];
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<std::string> /*type*/,
+    BannerType x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<BannerType>::is_valid(uint8_t(x)));
+    return enum_zstr_BannerType[uint8_t(x)];
+}
+
+parse_error parse_from_cfg(BannerType & x, ::configs::spec_type<BannerType> /*type*/, bytes_view value)
+{
+    using ul = uint8_t;
+
+    ul xi = 0;
+    if (parse_error err = parse_integral(
+        xi, value,
+        zero_integral<ul>(),
+        std::integral_constant<ul, 2>()
+    )) {
+        return err;
+    }
+
+    x = static_cast<BannerType>(xi);
+    return no_parse_error;
+}
+
+
+inline constexpr std::pair<chars_view, BannerType> enum_str_value_BannerType[] {
+    {"INFO"_av, BannerType::info},
+    {"WARN"_av, BannerType::warn},
+    {"ALERT"_av, BannerType::alert},
+};
+
+parse_error parse_from_cfg(BannerType & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+{
+    return parse_str_value_pairs<enum_str_value_BannerType>(
+        x, value, "bad value, expected: info, warn, alert");
+}
+
 } // anonymous namespace
