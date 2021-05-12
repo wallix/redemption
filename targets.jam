@@ -688,6 +688,44 @@ test-run tests/acl/test_license_api :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/license_api.hpp
 ;
+test-run tests/acl/test_mod_wrapper :
+  $(REDEMPTION_TEST_PATH)/acl/test_mod_wrapper.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexadecimal_string_to_buffer.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/fake_front.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/acl/mod_wrapper.hpp
+;
 test-run tests/acl/test_session_inactivity :
   $(REDEMPTION_TEST_PATH)/acl/test_session_inactivity.cpp
 :
@@ -6353,6 +6391,7 @@ alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_kv_list_from_strings : tests/acl/test_kv_list_from_strings ;
 alias test_license_api : tests/acl/test_license_api ;
+alias test_mod_wrapper : tests/acl/test_mod_wrapper ;
 alias test_session_inactivity : tests/acl/test_session_inactivity ;
 alias test_session_logfile : tests/acl/test_session_logfile ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
@@ -6711,6 +6750,7 @@ alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_kv_list_from_strings.coverage : tests/acl/test_kv_list_from_strings.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
+alias test_mod_wrapper.coverage : tests/acl/test_mod_wrapper.coverage ;
 alias test_session_inactivity.coverage : tests/acl/test_session_inactivity.coverage ;
 alias test_session_logfile.coverage : tests/acl/test_session_logfile.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
@@ -7051,6 +7091,7 @@ alias tests/acl.norec :
   tests/acl/test_auth_api
   tests/acl/test_kv_list_from_strings
   tests/acl/test_license_api
+  tests/acl/test_mod_wrapper
   tests/acl/test_session_inactivity
   tests/acl/test_session_logfile
 ;

@@ -430,5 +430,10 @@ cfg::context::rd_shadow_invitation_id ⇒ rd_shadow_invitation_id   [std::string
 cfg::context::rd_shadow_invitation_addr ⇒ rd_shadow_invitation_addr   [std::string]
 cfg::context::rd_shadow_invitation_port ⇒ rd_shadow_invitation_port   [uint16_t]
 cfg::context::smartcard_login ⇒ smartcard_login   [std::string]
+cfg::context::banner_message ⇐ banner_message   [std::string]
+cfg::context::banner_type ⇐ banner_type   [BannerType]
+      0: info
+      1: warn
+      2: alert
 
 

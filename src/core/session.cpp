@@ -594,6 +594,30 @@ private:
         }
 
         mod_wrapper.set_mod(next_state, mod_pack);
+
+        if (!this->ini.get<cfg::context::banner_message>().empty())
+        {
+            gdi::OsdMsgUrgency omu = gdi::OsdMsgUrgency::NORMAL;
+
+            switch (this->ini.get<cfg::context::banner_type>())
+            {
+                case BannerType::info :
+                    omu = gdi::OsdMsgUrgency::INFO;
+                    break;
+                case BannerType::warn :
+                    omu = gdi::OsdMsgUrgency::WARNING;
+                    break;
+                case BannerType::alert :
+                    omu = gdi::OsdMsgUrgency::ALERT;
+                    break;
+            }
+
+            mod_wrapper.display_osd_message(
+                this->ini.get<cfg::context::banner_message>(),
+                omu);
+
+            this->ini.set<cfg::context::banner_message>("");
+        }
     }
 
     void secondary_session_creation_failed(SessionLog & session_log)
