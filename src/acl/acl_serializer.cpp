@@ -239,7 +239,7 @@ namespace
                     auto value = reader.read_value(zkey).as_chars();
                     if (bool(verbose & Verbose::variable)) {
                         chars_view display_val
-                            = (field.loggable_category() == configs::LoggableCategory::Loggable)
+                            = (unused_connpolicy.loggable_cat == configs::LoggableCategory::Loggable)
                             ? value
                             : ::get_printable_password(value, ini.get<cfg::debug::password>());
 
