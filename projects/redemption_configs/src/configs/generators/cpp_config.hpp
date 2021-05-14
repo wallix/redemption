@@ -371,10 +371,12 @@ struct CppConfigWriterBase
 
     std::vector<std::pair<std::string, std::string>> sections_parser;
     std::vector<std::string> authstrs;
+    std::vector<std::string> sesman_and_connpolicy_strs;
     std::vector<Section> sections;
     std::vector<Member> members;
     std::vector<std::string> variables_acl;
-    std::vector<log_policy_t> authid_policy;
+    std::vector<log_policy_t> authid_policies;
+    std::vector<log_policy_t> sesman_and_connpolicy_policies;
     std::size_t start_section_index = 0;
     std::vector<std::size_t> start_indexes;
     std::string cfg_values;
@@ -456,7 +458,7 @@ struct CppConfigWriterBase
         if (!section_names.cpp.empty()) {
             ++this->depth;
         }
-        this->start_section_index = this->authid_policy.size();
+        this->start_section_index = this->authid_policies.size();
     }
 
     void do_stop_section(Names const& section_names)
@@ -475,7 +477,7 @@ struct CppConfigWriterBase
             this->sections_parser.emplace_back(section_names.cpp, str);
             this->out_body_parser_.str("");
         }
-        this->start_indexes.emplace_back(this->authid_policy.size());
+        this->start_indexes.emplace_back(this->authid_policies.size());
     }
 
     template<class Pack>
@@ -484,10 +486,17 @@ struct CppConfigWriterBase
         Names const& names = infos;
 
         if constexpr (std::is_convertible_v<Pack, is_external_attr_t>) {
-            auto& ini_name = names.ini_name();
-            this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
-            "            // ignored\n"
-            "        }\n";
+            if constexpr (!is_convertible_v<Pack, connection_policy_t>) {
+                auto& ini_name = names.ini_name();
+                this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
+                "            // ignored\n"
+                "        }\n";
+            }
+            else {
+                this->sesman_and_connpolicy_policies.emplace_back(infos);
+                this->sesman_and_connpolicy_strs.emplace_back(
+                    sesman_network_name(infos, section_names));
+            }
         }
         else {
             std::string const& varname = names.cpp;
@@ -575,8 +584,8 @@ struct CppConfigWriterBase
                 this->out_member_ << "        // cppcheck-suppress obsoleteFunctionsindex\n";
                 this->out_member_ << "        static constexpr ::configs::authid_t index {"
                     " ::configs::cfg_indexes::section" << this->sections.size() << " + "
-                    << (this->authid_policy.size() - this->start_section_index) << "};\n";
-                this->authid_policy.emplace_back(infos);
+                    << (this->authid_policies.size() - this->start_section_index) << "};\n";
+                this->authid_policies.emplace_back(infos);
             }
 
             this->out_member_ << "        using type = ";
@@ -632,6 +641,58 @@ struct CppConfigWriterBase
 };
 
 
+template<class Cont, class Before, class After>
+inline void join_with_comma(
+    std::ostream& out, Cont const& cont,
+    Before const& before, After const& after)
+{
+    auto first = begin(cont);
+    auto last = end(cont);
+    if (first == last) {
+        return ;
+    }
+    out << before << *first << after;
+    while (++first != last) {
+        out << ", " << before << *first << after;
+    }
+}
+
+inline void write_loggable_bitsets(
+    std::ostream& out, array_view<cfg_generators::log_policy_t> policies,
+    std::string_view loggable_name)
+{
+    std::vector<std::bitset<64>> loggables;
+    std::vector<std::bitset<64>> unloggable_if_value_contains_passwords;
+    size_t i = 0;
+
+    for (auto log_policy : policies)
+    {
+        if ((i % 64) == 0) {
+            i = 0;
+            loggables.push_back(0);
+            unloggable_if_value_contains_passwords.push_back(0);
+        }
+
+        switch (log_policy.value) {
+            case spec::log_policy::loggable:
+                loggables.back().set(i);
+                break;
+            case spec::log_policy::unloggable:
+                break;
+            case spec::log_policy::unloggable_if_value_contains_password:
+                unloggable_if_value_contains_passwords.back().set(i);
+                break;
+        }
+        ++i;
+    }
+
+    out << "constexpr U64BitFlags<" << loggables.size() << "> " << loggable_name << "{ {\n  ";
+    join_with_comma(out, loggables, "0b", "\n");
+    out << "},\n{\n  ";
+    join_with_comma(out, unloggable_if_value_contains_passwords, "0b", "\n");
+    out << "} };\n";
+}
+
 inline void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer)
 {
     out_authid << cpp_comment(do_not_edit, 0) <<
@@ -653,6 +714,7 @@ inline void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase&
       "#pragma once\n"
       "\n"
       "#include \"utils/sugar/zstring_view.hpp\"\n"
+      "#include \"configs/loggable.hpp\"\n"
       "#include \"configs/autogen/authid.hpp\"\n"
       "\n"
       "namespace configs\n"
@@ -664,7 +726,21 @@ inline void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase&
     }
     out_authid <<
       "    };\n\n"
-      "}\n"
+      "\n"
+      "    // value from connpolicy but not used by the proxy\n"
+      "    constexpr zstring_view const unused_connpolicy_authstr[] = {\n"
+    ;
+    for (auto & authstr : writer.sesman_and_connpolicy_strs) {
+        out_authid << "        \"" << authstr << "\"_zv,\n";
+    }
+    out_authid <<
+      "    };\n\n"
+      "\n"
+    ;
+    write_loggable_bitsets(
+        out_authid, writer.sesman_and_connpolicy_policies, "unused_connpolicy_loggable");
+    out_authid <<
+      "} // namespace configs\n"
     ;
 }
 
@@ -703,6 +779,7 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
         "#pragma once\n"
         "\n"
         "#include \"configs/autogen/authid.hpp\"\n"
+        "#include \"configs/loggable.hpp\"\n"
         "#include <cstdint>\n"
         "\n"
         "namespace configs\n"
@@ -744,20 +821,8 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
         out_varconf << section.member_struct << "\n";
     }
 
-    auto join = [&](
-        auto const & cont,
-        auto const & before,
-        auto const & after
-    ) {
-        auto first = begin(cont);
-        auto last = end(cont);
-        if (first == last) {
-            return ;
-        }
-        out_varconf << before << *first << after;
-        while (++first != last) {
-            out_varconf << ", " << before << *first << after;
-        }
+    auto join = [&](auto const & cont, auto const & before, auto const & after) {
+        join_with_comma(out_varconf, cont, before, after);
     };
 
     std::vector<std::string> section_names;
@@ -803,46 +868,9 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
       ">;\n\n\n"
     ;
 
-    std::vector<std::bitset<64>> loggables;
-    std::vector<std::bitset<64>> unloggable_if_value_contains_passwords;
-    size_t i = 0;
+    write_loggable_bitsets(out_varconf, writer.authid_policies, "loggable_field");
 
-    for (auto log_policy : writer.authid_policy)
-    {
-        if ((i % 64) == 0) {
-            i = 0;
-            loggables.push_back(0);
-            unloggable_if_value_contains_passwords.push_back(0);
-        }
-
-        switch (log_policy.value) {
-            case spec::log_policy::loggable:
-                loggables.back().set(i);
-                break;
-            case spec::log_policy::unloggable:
-                break;
-            case spec::log_policy::unloggable_if_value_contains_password:
-                unloggable_if_value_contains_passwords.back().set(i);
-                break;
-        }
-        ++i;
-    }
-
-    out_varconf <<
-      "struct BitFlags {\n"
-      "  uint64_t bits_[" << loggables.size() << "];\n"
-      "  bool operator()(unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }\n"
-      "};\n\n"
-    ;
-
-    out_varconf << "constexpr BitFlags is_loggable{{\n  ";
-    join(loggables, "0b", "\n");
-    out_varconf << "}};\nconstexpr BitFlags is_unloggable_if_value_with_password{{\n  ";
-    join(unloggable_if_value_contains_passwords, "0b", "\n");
-    out_varconf <<
-      "}};\n"
-      "} // namespace configs\n"
-    ;
+    out_varconf << "} // namespace configs\n";
 }
 
 inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriterBase& writer)

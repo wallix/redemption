@@ -118,9 +118,17 @@ public:
                 dialog = " ⇒ ";
             }
 
+            if constexpr (std::is_convertible_v<Pack, is_external_attr_t>) {
+                this->out << "<sesman only>";
+            }
+            else {
+                this->out
+                    << "cfg::" << section_names.sesman_name() << "::"
+                    << static_cast<Names const&>(infos).cpp
+                ;
+            }
+
             this->out
-                << "cfg::" << section_names.sesman_name() << "::"
-                << static_cast<Names const&>(infos).cpp
                 << dialog
                 << sesman_network_name(infos, section_names)
                 << "   ["

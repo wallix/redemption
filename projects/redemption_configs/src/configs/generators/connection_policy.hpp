@@ -161,10 +161,10 @@ struct ConnectionPolicyWriterBase
         std::ofstream out_sesman(this->python_spec.filename);
 
         out_sesman <<
-          "#!/usr/bin/python -O\n"
-          "# -*- coding: utf-8 -*-\n\n"
-          << python_comment(do_not_edit, 0) << "\n"
-          "cp_spec = {\n"
+            "#!/usr/bin/env python3\n"
+            "# -*- coding: utf-8 -*-\n\n"
+            << python_comment(do_not_edit, 0) << "\n"
+            "cp_spec = {\n"
         ;
 
         for (auto& section_name : this->ordered_section) {

@@ -206,10 +206,6 @@ namespace cfg
         struct auto_reconnection_on_losing_target_link;
         struct forward_client_build_number;
         struct bogus_monitor_layout_treatment;
-        struct krb_armoring_account;
-        struct krb_armoring_realm;
-        struct krb_armoring_fallback_user;
-        struct krb_armoring_fallback_password;
         struct effective_krb_armoring_user;
         struct effective_krb_armoring_password;
     };

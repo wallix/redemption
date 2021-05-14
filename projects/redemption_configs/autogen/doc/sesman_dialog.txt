@@ -242,13 +242,13 @@ cfg::mod_rdp::forward_client_build_number ⇐ mod_rdp:forward_client_build_numbe
     Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
 cfg::mod_rdp::bogus_monitor_layout_treatment ⇐ mod_rdp:bogus_monitor_layout_treatment   [bool]
     To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
-cfg::mod_rdp::krb_armoring_account ⇐ mod_rdp:krb_armoring_account   [std::string]
+<sesman only> ⇐ mod_rdp:krb_armoring_account   [std::string]
     Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.
-cfg::mod_rdp::krb_armoring_realm ⇐ mod_rdp:krb_armoring_realm   [std::string]
+<sesman only> ⇐ mod_rdp:krb_armoring_realm   [std::string]
     Realm to be used for armoring Kerberos tickets. 
-cfg::mod_rdp::krb_armoring_fallback_user ⇐ mod_rdp:krb_armoring_fallback_user   [std::string]
+<sesman only> ⇐ mod_rdp:krb_armoring_fallback_user   [std::string]
     Fallback username to be used for armoring Kerberos tickets. 
-cfg::mod_rdp::krb_armoring_fallback_password ⇐ mod_rdp:krb_armoring_fallback_password   [std::string]
+<sesman only> ⇐ mod_rdp:krb_armoring_fallback_password   [std::string]
     Fallback password to be used for armoring Kerberos tickets.
 cfg::mod_rdp::effective_krb_armoring_user ⇐ effective_krb_armoring_user   [std::string]
     Effective username to be used for armoring Kerberos tickets.

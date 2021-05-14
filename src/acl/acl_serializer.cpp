@@ -234,6 +234,19 @@ namespace
                         }
                     }
                 }
+                else if (auto unused_connpolicy = ini.unused_connpolicy_by_name(key)) {
+                    auto zkey = unused_connpolicy.name;
+                    auto value = reader.read_value(zkey).as_chars();
+                    if (bool(verbose & Verbose::variable)) {
+                        chars_view display_val
+                            = (field.loggable_category() == configs::LoggableCategory::Loggable)
+                            ? value
+                            : ::get_printable_password(value, ini.get<cfg::debug::password>());
+
+                        LOG(LOG_INFO, "receiving '%s'='%.*s'",
+                            zkey, int(display_val.size()), display_val.data());
+                    }
+                }
                 else {
                     char sauthid[256];
                     std::size_t const min = std::min(std::size(sauthid)-1, key.size());
@@ -270,7 +283,7 @@ namespace
         StaticOutStream<buf_len> out_stream;
 
     public:
-        Writer(Transport & trans, Verbose verbose, uint32_t n)
+        Writer(Transport & trans, Verbose verbose, uint16_t n)
         : trans(trans)
         , verbose(verbose)
         {

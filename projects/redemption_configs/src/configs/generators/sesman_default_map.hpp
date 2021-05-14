@@ -195,7 +195,7 @@ public:
     {
         out.open(filename);
         out <<
-            "#!/usr/bin/env python3 -O\n"
+            "#!/usr/bin/env python3\n"
             "# -*- coding: utf-8 -*-\n\n"
             << python_comment(do_not_edit, 0) << "\n"
         ;

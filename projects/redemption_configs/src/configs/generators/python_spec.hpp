@@ -544,6 +544,12 @@ struct IniPythonSpecWriterBase
     }
 };
 
+template<class Pack>
+constexpr bool is_candidate_for_spec = is_convertible_v<Pack, spec_attr_t>
+                                   && ( !std::is_convertible_v<Pack, is_external_attr_t>
+                                     || !is_convertible_v<Pack, connection_policy_t>
+                                      );
+
 struct PythonSpecWriterBase : IniPythonSpecWriterBase
 {
     using IniPythonSpecWriterBase::IniPythonSpecWriterBase;
@@ -551,7 +557,7 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
     template<class Pack>
     void evaluate_member(Names const& /*section_names*/, Pack const & infos, type_enumerations& enums)
     {
-        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+        if constexpr (is_candidate_for_spec<Pack>) {
             Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
             std::string const& member_name = names.ini_name();

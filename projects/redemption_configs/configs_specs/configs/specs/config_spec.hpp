@@ -529,7 +529,7 @@ void config_spec_definition(Writer && W)
             },
             set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_account"},
+        W.member(external, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_account"},
             desc{
                 "Account to be used for armoring Kerberos tickets. "
                 "Must be in the form 'account_name@domain_name[@device_name]'. "
@@ -537,17 +537,17 @@ void config_spec_definition(Writer && W)
                 "otherwise the below fallback username and password will be used instead."
             }
         );
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_realm"},
+        W.member(external, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_realm"},
             desc{
                 "Realm to be used for armoring Kerberos tickets. "
             }
         );
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_fallback_user"},
+        W.member(external, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"krb_armoring_fallback_user"},
             desc{
                 "Fallback username to be used for armoring Kerberos tickets. "
             }
         );
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, NL, type_<std::string>(), names{"krb_armoring_fallback_password"},
+        W.member(external, rdp_connpolicy | advanced_in_connpolicy, NL, type_<std::string>(), names{"krb_armoring_fallback_password"},
             desc{
                 "Fallback password to be used for armoring Kerberos tickets."
             }

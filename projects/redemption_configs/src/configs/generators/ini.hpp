@@ -192,7 +192,7 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
     template<class Pack>
     void evaluate_member(Names const& /*section_names*/, Pack const & infos, type_enumerations& enums)
     {
-        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+        if constexpr (python_spec_writer::is_candidate_for_spec<Pack>) {
             Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
             std::string const& member_name = names.ini_name();

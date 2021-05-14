@@ -4,6 +4,7 @@
 #pragma once
 
 #include "utils/sugar/zstring_view.hpp"
+#include "configs/loggable.hpp"
 #include "configs/autogen/authid.hpp"
 
 namespace configs
@@ -104,10 +105,6 @@ namespace configs
         "mod_rdp:auto_reconnection_on_losing_target_link"_zv,
         "mod_rdp:forward_client_build_number"_zv,
         "mod_rdp:bogus_monitor_layout_treatment"_zv,
-        "mod_rdp:krb_armoring_account"_zv,
-        "mod_rdp:krb_armoring_realm"_zv,
-        "mod_rdp:krb_armoring_fallback_user"_zv,
-        "mod_rdp:krb_armoring_fallback_password"_zv,
         "effective_krb_armoring_user"_zv,
         "effective_krb_armoring_password"_zv,
         "clipboard_up"_zv,
@@ -222,4 +219,20 @@ namespace configs
         "smartcard_login"_zv,
     };
 
-}
+
+    // value from connpolicy but not used by the proxy
+    constexpr zstring_view const unused_connpolicy_authstr[] = {
+        "mod_rdp:krb_armoring_account"_zv,
+        "mod_rdp:krb_armoring_realm"_zv,
+        "mod_rdp:krb_armoring_fallback_user"_zv,
+        "mod_rdp:krb_armoring_fallback_password"_zv,
+    };
+
+
+constexpr U64BitFlags<1> unused_connpolicy_loggable{ {
+  0b0000000000000000000000000000000000000000000000000000000000000111
+},
+{
+  0b0000000000000000000000000000000000000000000000000000000000000000
+} };
+} // namespace configs

@@ -153,6 +153,20 @@ Inifile::FieldReference Inifile::get_acl_field_by_name(chars_view name)
     return {};
 }
 
+Inifile::UnusedConnPolicy Inifile::unused_connpolicy_by_name(chars_view name)
+{
+    for (zstring_view const& zv : configs::unused_connpolicy_authstr) {
+        if (zv.size() == name.size()
+         && 0 == memcmp(zv.data(), name.data(), name.size())
+        ) {
+            auto i = unsigned(&zv - &configs::unused_connpolicy_authstr[0]);
+            return {true, configs::unused_connpolicy_loggable(i), zv};
+        }
+    }
+
+    return {};
+}
+
 ::Language language(Inifile const & ini)
 {
     return ini.get<cfg::translation::language>();

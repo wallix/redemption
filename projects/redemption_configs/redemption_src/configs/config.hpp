@@ -43,6 +43,7 @@
 //@}
 
 #include "config_variant.hpp"
+#include "configs/loggable.hpp"
 
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/variables_configuration_fwd.hpp"
@@ -138,12 +139,7 @@ public:
 
     using ZStringBuffer = std::array<char, configs::max_str_buffer_size + 1>;
 
-    enum class LoggableCategory : char
-    {
-        Unloggable,
-        Loggable,
-        LoggableButWithPassword,
-    };
+    using LoggableCategory = configs::LoggableCategory;
 
     struct FieldConstReference
     {
@@ -163,13 +159,7 @@ public:
 
         [[nodiscard]] LoggableCategory loggable_category() const
         {
-            if (configs::is_loggable(unsigned(this->authid())))  {
-                return LoggableCategory::Loggable;
-            }
-            if (configs::is_unloggable_if_value_with_password(unsigned(this->authid()))) {
-                return LoggableCategory::LoggableButWithPassword;
-            }
-            return LoggableCategory::Unloggable;
+            return configs::loggable_field(unsigned(this->authid()));
         }
 
     private:
@@ -207,7 +197,7 @@ public:
         [[nodiscard]] LoggableCategory loggable_category() const
         {
             assert(bool(*this));
-            return FieldConstReference(*this->ini, this->id).loggable_category();
+            return configs::loggable_field(unsigned(this->id));
         }
 
         void ask()
@@ -243,6 +233,20 @@ public:
     };
 
     FieldReference get_acl_field_by_name(chars_view name);
+
+    struct UnusedConnPolicy
+    {
+        bool has_value;
+        LoggableCategory loggable_cat;
+        zstring_view name;
+
+        explicit operator bool () const noexcept
+        {
+            return this->has_value;
+        }
+    };
+
+    UnusedConnPolicy unused_connpolicy_by_name(chars_view name);
 
     void clear_acl_fields_changed()
     {
