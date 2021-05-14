@@ -200,8 +200,9 @@ void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y, Keymap2* k
     }
     else {
         if ((device_flags == MOUSE_FLAG_BUTTON1)
-            && this->button.state) {
-            this->button.state = 0;
+          && this->button.state == WidgetFlatButton::State::Pressed
+        ) {
+            this->button.state = WidgetFlatButton::State::Normal;
             this->rdp_input_invalidate(this->button.get_rect());
         }
         this->editbox->rdp_input_mouse(device_flags, x, y, keymap);
@@ -233,8 +234,6 @@ void WidgetEditValid::notify(Widget& widget, NotifyApi::notify_event_t event)
         }
     }
     if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        if (this->notifier) {
-            this->notifier->notify(widget, event);
-        }
+        this->send_notify(widget, event);
     }
 }

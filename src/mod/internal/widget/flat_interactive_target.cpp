@@ -251,9 +251,7 @@ void FlatInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t eve
         this->next_focus();
     }
     if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        if (this->notifier) {
-            this->notifier->notify(widget, event);
-        }
+        this->send_notify(widget, event);
     }
 }
 

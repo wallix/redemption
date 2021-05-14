@@ -40,22 +40,23 @@ class Theme;
 
 class FlatDialog : public WidgetParent
 {
-public:
     CompositeArray composite_array;
 
     WidgetLabel        title;
     WidgetRect         separator;
     WidgetVerticalScrollText dialog;
+
+public:
     std::unique_ptr<WidgetEdit> challenge;
     WidgetFlatButton   ok;
     std::unique_ptr<WidgetFlatButton> cancel;
+private:
     WidgetImage        img;
     WidgetFlatButton * extra_button;
 
-    Font const & font;
-
     BGRColor bg_color;
 
+public:
     FlatDialog(gdi::GraphicApi & drawable,
                int16_t left, int16_t top, int16_t width, int16_t height,
                Widget & parent, NotifyApi* notifier,

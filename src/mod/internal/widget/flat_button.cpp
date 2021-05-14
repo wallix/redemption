@@ -40,8 +40,7 @@ WidgetFlatButton::WidgetFlatButton(
 , x_text(xtext)
 , y_text(ytext)
 , border_width(border_width)
-, state(0)
-, event(NOTIFY_SUBMIT)
+, state(State::Normal)
 , fg_color(fgcolor)
 , bg_color(bgcolor)
 , focus_color(focuscolor)
@@ -110,7 +109,7 @@ void WidgetFlatButton::draw(
     Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
     bool logo, bool has_focus, char const* text,
     RDPColor fg_color, RDPColor bg_color, RDPColor focuscolor, gdi::ColorCtx color_ctx,
-    Rect label_rect, int state, unsigned border_width, Font const& font, int xtext, int ytext)
+    Rect label_rect, State state, unsigned border_width, Font const& font, int xtext, int ytext)
 {
     if (label_rect.isempty()) {
         label_rect = rect;
@@ -130,7 +129,7 @@ void WidgetFlatButton::draw(
     // background
     drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, color_ctx);
 
-    if (state & 1)  {
+    if (state == State::Pressed)  {
         Rect temp_rect = label_rect.offset(1, 1);
         temp_rect.cx--;
         temp_rect.cy--;
@@ -167,15 +166,15 @@ void WidgetFlatButton::draw(
 
 void WidgetFlatButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
-    if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
-        this->state |= 1;
+    if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && this->state == State::Normal) {
+        this->state = State::Pressed;
         this->rdp_input_invalidate(this->get_rect());
     }
-    else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
-        this->state &= ~1;
+    else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state == State::Pressed) {
+        this->state = State::Normal;
         this->rdp_input_invalidate(this->get_rect());
         if (this->get_rect().contains_pt(x, y)) {
-            this->send_notify(this->event);
+            this->send_notify(NOTIFY_SUBMIT);
         }
     }
     else {
@@ -191,11 +190,11 @@ void WidgetFlatButton::rdp_input_scancode(long int param1, long int param2, long
         switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ENTER:
                 keymap->get_kevent();
-                this->send_notify(this->event);
+                this->send_notify(NOTIFY_SUBMIT);
                 break;
             case Keymap2::KEVENT_KEY:
                 if (keymap->get_char() == ' ') {
-                    this->send_notify(this->event);
+                    this->send_notify(NOTIFY_SUBMIT);
                 }
                 break;
             default:
@@ -209,7 +208,7 @@ void WidgetFlatButton::rdp_input_scancode(long int param1, long int param2, long
 void WidgetFlatButton::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 {
     if (!(flag & SlowPath::KBDFLAGS_RELEASE) && (unicode == 0x0020)) {
-        this->send_notify(this->event);
+        this->send_notify(NOTIFY_SUBMIT);
     }
     else {
         Widget::rdp_input_unicode(unicode, flag);

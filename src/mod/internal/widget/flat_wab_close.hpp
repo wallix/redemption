@@ -36,7 +36,6 @@ class Theme;
 
 class FlatWabClose : public WidgetParent
 {
-public:
     CompositeArray composite_array;
 
     WidgetLabel        connection_closed_label;
@@ -51,12 +50,13 @@ public:
     WidgetLabel        timeleft_label;
     WidgetLabel        timeleft_value;
 
+public:
     WidgetFlatButton   cancel;
+private:
     WidgetFlatButton * back;
 
     WidgetImage        img;
 
-private:
     BGRColor bg_color;
 
     long prev_time;

@@ -35,14 +35,12 @@ WidgetLabel::WidgetLabel(
     int xtext, int ytext
 )
     : Widget(drawable, parent, notifier, group_id)
-    , initial_x_text(xtext)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , tool(false)
     , w_border(x_text)
-    , h_border(y_text)
     , font(font)
 {
     this->tab_flag = IGNORE_TAB;

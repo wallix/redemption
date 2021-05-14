@@ -32,7 +32,6 @@ namespace gdi
 
 class WidgetRect : public Widget
 {
-public:
     BGRColor color;
 
 public:

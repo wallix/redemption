@@ -34,14 +34,6 @@ class NotifyApi;
 class WidgetScreen : public WidgetParent
 {
 public:
-    Theme theme;
-    std::unique_ptr<WidgetTooltip> tooltip;
-    Widget * current_over;
-
-    CompositeArray composite_array;
-
-    Font const & font;
-
     WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
                  Font const & font, NotifyApi * notifier, Theme theme);
 
@@ -62,6 +54,17 @@ public:
     void allow_mouse_pointer_change(bool allow);
 
     void redo_mouse_pointer_change(int x, int y);
+
+public:
+    Theme theme;
+    std::unique_ptr<WidgetTooltip> tooltip;
+private:
+    Widget * current_over;
+
+    CompositeArray composite_array;
+
+public:
+    Font const & font;
 
 private:
     bool allow_mouse_pointer_change_ = true;

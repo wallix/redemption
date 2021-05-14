@@ -96,6 +96,7 @@ protected:
 public:
     Widget * current_focus;
 
+public:
     WidgetParent(gdi::GraphicApi & drawable, Widget & parent,
                  NotifyApi * notifier, int group_id = 0); /*NOLINT*/
 

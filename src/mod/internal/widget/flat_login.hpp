@@ -34,24 +34,27 @@ class FlatLogin : public WidgetParent
 {
     CompositeArray composite_array;
 
-public:
-    // TODO private
     WidgetLabel        error_message_label;
     WidgetLabel        login_label;
+public:
     WidgetEditValid    login_edit;
+private:
     WidgetLabel        password_label;
+public:
     WidgetEditValid    password_edit;
+private:
     WidgetLabel        target_label;
+public:
     WidgetEditValid    target_edit;
+private:
     WidgetVerticalScrollText message_label;
     WidgetImage        img;
     WidgetLabel        version_label;
+public:
     WidgetFlatButton   helpicon;
+private:
     WidgetFlatButton * extra_button;
 
-    Font const & font;
-
-private:
     Translator tr;
 
     bool labels_added = false;

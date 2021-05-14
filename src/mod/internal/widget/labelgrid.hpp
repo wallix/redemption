@@ -29,8 +29,6 @@ struct WidgetLabelGrid : public WidgetGrid
     static constexpr unsigned x_padding_label = 3;
     static constexpr unsigned y_padding_label = 1;
 
-    Font const & font;
-
     WidgetLabelGrid(gdi::GraphicApi & drawable, Widget & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
                BGRColor bg_color_1, BGRColor fg_color_1,
@@ -44,4 +42,7 @@ struct WidgetLabelGrid : public WidgetGrid
     void add_line(array_view<chars_view> entries);
 
     const char * get_cell_text(uint16_t row_index, uint16_t column_index);
+
+private:
+    Font const & font;
 };

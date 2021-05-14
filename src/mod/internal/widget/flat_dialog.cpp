@@ -67,7 +67,6 @@ FlatDialog::FlatDialog(
           theme.global.bgcolor,
           -8)
     , extra_button(extra_button)
-    , font(font)
     , bg_color(theme.global.bgcolor)
 {
     this->impl = &composite_array;
@@ -217,9 +216,7 @@ void FlatDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
         this->send_notify(NOTIFY_SUBMIT);
     }
     else if (event == NOTIFY_PASTE) {
-        if (this->notifier) {
-            this->notifier->notify(widget, event);
-        }
+        this->send_notify(widget, event);
     }
     else {
         WidgetParent::notify(widget, event);

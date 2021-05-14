@@ -68,18 +68,19 @@ public:
     const BGRColor bg_color_2;    // Even
     const BGRColor fg_color_2;
 
+private:
     const BGRColor bg_color_focus;
     const BGRColor fg_color_focus;
 
     const BGRColor bg_color_selection;
     const BGRColor fg_color_selection;
 
+public:
     const uint16_t border;    // Width and height of cell's border.
 
 private:
     uint16_t selection_y = static_cast<uint16_t>(-1u);   // Index of seleted row.
 
-    // TODO: see why grid object need a difftimer ?
     struct difftimer
     {
         MonotonicTimePoint t {};

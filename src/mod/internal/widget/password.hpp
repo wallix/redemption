@@ -26,12 +26,12 @@
 
 class WidgetPassword : public WidgetEdit
 {
-public:
     WidgetLabel masked_text;
 
     int w_char;
     int h_char;
 
+public:
     WidgetPassword(gdi::GraphicApi & drawable,
                    Widget& parent, NotifyApi* notifier, const char * text,
                    int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color, Font const & font,

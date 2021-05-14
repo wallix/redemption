@@ -32,15 +32,21 @@ public:
     size_t num_chars;
     size_t edit_buffer_pos;
     size_t edit_pos;
+private:
     size_t cursor_px_pos;
     int w_text;
     int h_text;
     BGRColor cursor_color;
+public:
     BGRColor focus_color;
+private:
     bool drawall;
+public:
     bool draw_border_focus;
+private:
     Font const & font;
 
+public:
     WidgetEdit(gdi::GraphicApi & drawable,
                Widget & parent, NotifyApi* notifier, const char * text,
                int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,

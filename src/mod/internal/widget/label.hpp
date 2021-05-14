@@ -37,15 +37,16 @@ public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
-    int initial_x_text;
+
+public:
     int x_text;
     int y_text;
     BGRColor bg_color;
     BGRColor fg_color;
     bool tool;
 
+private:
     int w_border;
-    int h_border;
 
     Font const & font;
 

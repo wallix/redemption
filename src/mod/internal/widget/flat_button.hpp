@@ -45,17 +45,27 @@ private:
     unsigned border_width;
 
 public:
-    int state;
-    notify_event_t event;
-    BGRColor fg_color;
-    BGRColor bg_color;
-    BGRColor focus_color;
-    bool logo;
+    enum class State : bool
+    {
+        Normal,
+        Pressed,
+    };
+
+    State state;
+
+public:
+    const BGRColor fg_color;
+    const BGRColor bg_color;
+    const BGRColor focus_color;
+
+private:
+    const bool logo;
 
     Font const & font;
 
     Rect label_rect;
 
+public:
     WidgetFlatButton(gdi::GraphicApi & drawable, Widget& parent,
                      NotifyApi* notifier, const char * text,
                      int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
@@ -77,7 +87,7 @@ public:
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      bool logo, bool has_focus, char const* text,
                      RDPColor fg_color, RDPColor bg_color, RDPColor focuscolor, gdi::ColorCtx color_ctx,
-                     Rect label_rect, int state, unsigned border_width, Font const& font, int xtext, int ytext);
+                     Rect label_rect, State state, unsigned border_width, Font const& font, int xtext, int ytext);
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
 

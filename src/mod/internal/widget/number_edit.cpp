@@ -30,11 +30,12 @@ WidgetNumberEdit::WidgetNumberEdit(
     int xtext, int ytext)
 : WidgetEdit(drawable, parent, notifier, text, group_id, fgcolor, bgcolor,
                 focus_color, font, edit_position, xtext, ytext)
+, initial_x_text(xtext)
 {}
 
 void WidgetNumberEdit::set_text(const char * text)
 {
-    this->label.x_text = this->label.initial_x_text;
+    this->label.x_text = this->initial_x_text;
     this->WidgetEdit::set_text(text);
 }
 

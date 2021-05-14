@@ -216,7 +216,9 @@ public:
                 }
             }
 
-            this->waiting_screen_draw(this->disconnect_now_button_clicked ? 1 : 0);
+            this->waiting_screen_draw(this->disconnect_now_button_clicked
+                ? WidgetFlatButton::State::Pressed
+                : WidgetFlatButton::State::Normal);
 
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN)
              && this->disconnect_now_button_rect.contains_pt(x, y)
@@ -466,7 +468,7 @@ public:
                     ) {
                         LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
                         this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
-                        this->waiting_screen_draw(0);
+                        this->waiting_screen_draw(WidgetFlatButton::State::Normal);
                     }
                     event.garbage = true;
                 });
@@ -650,7 +652,7 @@ private:
         this->drawable->end_update();
     }
 
-    void waiting_screen_draw(int state) {
+    void waiting_screen_draw(WidgetFlatButton::State state) {
         if (!this->drawable) return;
 
         this->drawable->begin_update();

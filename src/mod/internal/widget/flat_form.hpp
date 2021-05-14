@@ -33,17 +33,22 @@ class Theme;
 
 class FlatForm : public WidgetParent
 {
-public:
     CompositeArray composite_array;
 
     WidgetLabel      warning_msg;
     WidgetLabel      duration_label;
+public:
     WidgetEdit       duration_edit;
+private:
     WidgetLabel      duration_format;
     WidgetLabel      ticket_label;
+public:
     WidgetEdit       ticket_edit;
+private:
     WidgetLabel      comment_label;
+public:
     WidgetEdit       comment_edit;
+private:
     WidgetLabel      notes;
     WidgetFlatButton confirm;
 
@@ -52,6 +57,10 @@ public:
     unsigned flags;
     std::chrono::minutes duration_max;
 
+    char warning_buffer[512];
+
+public:
+    // TODO enum class
     enum {
         NONE               = 0x00,
         COMMENT_DISPLAY    = 0x01,
@@ -61,8 +70,6 @@ public:
         DURATION_DISPLAY   = 0x10,
         DURATION_MANDATORY = 0x20,
     };
-
-    char warning_buffer[512];
 
     FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget & parent, NotifyApi* notifier, int group_id,

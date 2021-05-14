@@ -391,9 +391,7 @@ void WidgetSelector::rearrange()
 
 void WidgetSelector::ask_for_connection()
 {
-    if (this->notifier) {
-        this->notifier->notify(this->connect, NOTIFY_SUBMIT);
-    }
+    this->send_notify(this->connect, NOTIFY_SUBMIT);
 }
 
 
@@ -407,16 +405,12 @@ void WidgetSelector::notify(Widget& widget, notify_event_t event)
     }
     else if (widget.group_id == this->apply.group_id) {
         if (NOTIFY_SUBMIT == event || NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-            if (this->notifier) {
-                this->notifier->notify(widget, event);
-            }
+            this->send_notify(widget, event);
         }
     }
     else if (widget.group_id == this->logout.group_id) {
         if (NOTIFY_SUBMIT == event) {
-            if (this->notifier) {
-                this->notifier->notify(widget, NOTIFY_CANCEL);
-            }
+            this->send_notify(widget, NOTIFY_CANCEL);
         }
     }
     else if (widget.group_id == this->column_expansion_buttons[0].group_id) {

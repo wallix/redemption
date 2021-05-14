@@ -147,9 +147,7 @@ void FlatWait::notify(Widget& widget, NotifyApi::notify_event_t event)
         this->send_notify(NOTIFY_TEXT_CHANGED);
     }
     else if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        if (this->notifier) {
-            this->notifier->notify(widget, event);
-        }
+        this->send_notify(widget, event);
     }
     else {
         WidgetParent::notify(widget, event);

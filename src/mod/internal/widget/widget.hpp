@@ -74,7 +74,9 @@ public:
 
 public:
     Widget & parent;
+protected:
     gdi::GraphicApi & drawable;
+public:
     NotifyApi * notifier;
 
 private:
@@ -86,7 +88,6 @@ public:
     int focus_flag;
     PointerType pointer_flag;
     bool has_focus;
-    int notify_value;
 
 public:
     Widget(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0) /*NOLINT*/
@@ -98,7 +99,6 @@ public:
     , focus_flag(NORMAL_FOCUS)
     , pointer_flag(PointerType::Normal)
     , has_focus(false)
-    , notify_value(0)
     {}
 
     virtual bool next_focus()
@@ -183,6 +183,13 @@ public:
     {
         if (this->notifier) {
             this->notifier->notify(*this, event);
+        }
+    }
+
+    void send_notify(Widget & widget, NotifyApi::notify_event_t event)
+    {
+        if (this->notifier) {
+            this->notifier->notify(widget, event);
         }
     }
 

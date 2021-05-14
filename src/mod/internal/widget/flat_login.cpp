@@ -88,7 +88,6 @@ FlatLogin::FlatLogin(
                 theme.global.fgcolor, theme.global.bgcolor,
                 theme.global.focus_color, 2, font, 6, 2)
     , extra_button(extra_button)
-    , font(font)
     , tr(tr)
     , show_target(enable_target_field)
     , bg_color(theme.global.bgcolor)
@@ -361,9 +360,7 @@ void FlatLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
         this->send_notify(NOTIFY_SUBMIT);
     }
     if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        if (this->notifier) {
-            this->notifier->notify(widget, event);
-        }
+        this->send_notify(widget, event);
     }
 }
 

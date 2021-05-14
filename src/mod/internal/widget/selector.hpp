@@ -76,7 +76,6 @@ public:
 
     WidgetFlatButton first_page;
     WidgetFlatButton prev_page;
-
     WidgetNumberEdit current_page;
     WidgetLabel number_page;
     WidgetFlatButton next_page;
@@ -87,7 +86,6 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
-private:
     WidgetFlatButton target_helpicon;
 
     Translator tr;
@@ -107,6 +105,7 @@ public:
         IDX_CLOSETIME
     };
 
+private:
     enum {
         HORIZONTAL_MARGIN = 15,
         VERTICAL_MARGIN = 10,
@@ -121,7 +120,7 @@ public:
 
     const char * label[WidgetSelectorParams::nb_max_columns] = {nullptr};
 
-
+public:
     WidgetSelector(gdi::GraphicApi & drawable,
                    const char * device_name,
                    int16_t left, int16_t top, uint16_t width, uint16_t height,

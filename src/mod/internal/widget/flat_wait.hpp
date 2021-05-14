@@ -30,7 +30,6 @@
 
 class FlatWait : public WidgetParent
 {
-private:
     CompositeArray composite_array;
 
     WidgetGroupBox     groupbox;

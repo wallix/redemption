@@ -61,17 +61,22 @@ public:
 private:
     CompositeArray composite_array;
 
-public:
     WidgetLabel        caption_label;
     WidgetRect         separator;
     WidgetLabel        device_label;
     WidgetLabel        device;
+public:
     WidgetEditValid    device_edit;
+private:
     WidgetLabel        login_label;
     WidgetLabel        login;
+public:
     WidgetEditValid    login_edit;
+private:
     WidgetLabel        password_label;
+public:
     WidgetEditValid    password_edit;
+private:
     WidgetFlatButton * extra_button;
 
     Widget * last_interactive;
