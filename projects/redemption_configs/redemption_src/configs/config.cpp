@@ -126,7 +126,7 @@ zstring_view Inifile::FieldConstReference::to_zstring_view(
         this->ini->variables, writable_chars_view(buffer));
 }
 
-zstring_view Inifile::FieldConstReference::get_acl_name() const
+zstring_view Inifile::FieldConstReference::get_acl_name() const noexcept
 {
     return configs::authstr[unsigned(this->id)];
 }
@@ -140,25 +140,23 @@ bool Inifile::FieldReference::parse(bytes_view value)
     return ok;
 }
 
-Inifile::FieldReference Inifile::get_acl_field_by_name(chars_view name)
+Inifile::FieldReference Inifile::get_acl_field_by_name(chars_view name) noexcept
 {
+    auto name_sv = std::string_view{name.data(), name.size()};
     using int_type = std::underlying_type_t<configs::authid_t>;
     for (int_type i = 0; i < int_type(configs::max_authid); ++i) {
-        if (configs::authstr[i].size() == name.size()
-         && 0 == memcmp(configs::authstr[i].data(), name.data(), name.size())
-        ) {
+        if (configs::authstr[i].to_sv() == name_sv) {
             return {*this, authid_t(i)};
         }
     }
     return {};
 }
 
-Inifile::UnusedConnPolicy Inifile::unused_connpolicy_by_name(chars_view name)
+Inifile::UnusedConnPolicy Inifile::unused_connpolicy_by_name(chars_view name) noexcept
 {
+    auto name_sv = std::string_view{name.data(), name.size()};
     for (zstring_view const& zv : configs::unused_connpolicy_authstr) {
-        if (zv.size() == name.size()
-         && 0 == memcmp(zv.data(), name.data(), name.size())
-        ) {
+        if (zv.to_sv() == name_sv) {
             auto i = unsigned(&zv - &configs::unused_connpolicy_authstr[0]);
             return {true, configs::unused_connpolicy_loggable(i), zv};
         }

@@ -92,7 +92,7 @@ public:
     }
 
     template<class T>
-    void ask()
+    void ask() noexcept
     {
         static_assert(T::is_sesman_to_proxy, "T isn't askable");
         this->to_send_index.insert(T::index);
@@ -100,7 +100,7 @@ public:
     }
 
     template<class T>
-    bool is_asked() const
+    bool is_asked() const noexcept
     {
         static_assert(T::is_sesman_to_proxy, "T isn't askable");
         return this->asked_table.get(T::index);
@@ -111,7 +111,7 @@ public:
         void set_section(zstring_view section) override;
         void set_value(zstring_view key, zstring_view value) override;
 
-        void start()
+        void start() noexcept
         {
             this->section_id = 0;
             this->section_name = "";
@@ -120,7 +120,7 @@ public:
     private:
         friend class Inifile;
 
-        explicit ConfigurationHolder(configs::VariablesConfiguration & variables)
+        explicit ConfigurationHolder(configs::VariablesConfiguration & variables) noexcept
         : variables(variables)
         {}
 
@@ -129,7 +129,7 @@ public:
         configs::VariablesConfiguration & variables;
     };
 
-    ::ConfigurationHolder & configuration_holder()
+    ::ConfigurationHolder & configuration_holder() noexcept
     {
         this->conf_holder.start();
         return this->conf_holder;
@@ -143,21 +143,21 @@ public:
 
     struct FieldConstReference
     {
-        [[nodiscard]] bool is_asked() const
+        [[nodiscard]] bool is_asked() const noexcept
         {
             return this->ini->asked_table.get(this->id);
         }
 
         [[nodiscard]] zstring_view to_zstring_view(ZStringBuffer& buffer) const;
 
-        [[nodiscard]] zstring_view get_acl_name() const;
+        [[nodiscard]] zstring_view get_acl_name() const noexcept;
 
-        [[nodiscard]] authid_t authid() const
+        [[nodiscard]] authid_t authid() const noexcept
         {
             return this->id;
         }
 
-        [[nodiscard]] LoggableCategory loggable_category() const
+        [[nodiscard]] LoggableCategory loggable_category() const noexcept
         {
             return configs::loggable_field(unsigned(this->authid()));
         }
@@ -166,7 +166,7 @@ public:
         Inifile const* ini;
         authid_t id;
 
-        FieldConstReference(Inifile const& ini, authid_t id)
+        FieldConstReference(Inifile const& ini, authid_t id) noexcept
         : ini(&ini)
         , id(id)
         {}
@@ -176,42 +176,42 @@ public:
 
     struct FieldReference
     {
-        [[nodiscard]] bool is_asked() const
+        bool is_asked() const noexcept
         {
             assert(bool(*this));
             return FieldConstReference(*this->ini, this->id).is_asked();
         }
 
-        [[nodiscard]] zstring_view to_zstring_view(ZStringBuffer& buffer) const
+        zstring_view to_zstring_view(ZStringBuffer& buffer) const
         {
             assert(bool(*this));
             return FieldConstReference(*this->ini, this->id).to_zstring_view(buffer);
         }
 
-        [[nodiscard]] zstring_view get_acl_name() const
+        zstring_view get_acl_name() const noexcept
         {
             assert(bool(*this));
             return FieldConstReference(*this->ini, this->id).get_acl_name();
         }
 
-        [[nodiscard]] LoggableCategory loggable_category() const
+        LoggableCategory loggable_category() const noexcept
         {
             assert(bool(*this));
             return configs::loggable_field(unsigned(this->id));
         }
 
-        void ask()
+        void ask() noexcept
         {
             assert(bool(*this));
             this->ini->asked_table.set(this->id);
         }
 
-        explicit operator bool () const
+        explicit operator bool () const noexcept
         {
             return this->id != configs::max_authid;
         }
 
-        [[nodiscard]] authid_t authid() const
+        [[nodiscard]] authid_t authid() const noexcept
         {
             return this->id;
         }
@@ -224,7 +224,7 @@ public:
 
         FieldReference() = default;
 
-        FieldReference(Inifile& ini, authid_t id)
+        FieldReference(Inifile& ini, authid_t id) noexcept
         : ini(&ini)
         , id(id)
         {}
@@ -232,7 +232,7 @@ public:
         friend class Inifile;
     };
 
-    FieldReference get_acl_field_by_name(chars_view name);
+    FieldReference get_acl_field_by_name(chars_view name) noexcept;
 
     struct UnusedConnPolicy
     {
@@ -246,9 +246,9 @@ public:
         }
     };
 
-    UnusedConnPolicy unused_connpolicy_by_name(chars_view name);
+    UnusedConnPolicy unused_connpolicy_by_name(chars_view name) noexcept;
 
-    void clear_acl_fields_changed()
+    void clear_acl_fields_changed() noexcept
     {
         this->to_send_index.clear();
     }
@@ -257,18 +257,18 @@ public:
     {
         struct iterator
         {
-            iterator & operator++()
+            iterator & operator++() noexcept
             {
                 ++this->it;
                 return *this;
             }
 
-            bool operator != (iterator const & other) const
+            bool operator != (iterator const & other) const noexcept
             {
                 return this->it != other.it;
             }
 
-            FieldConstReference operator*() const
+            FieldConstReference operator*() const noexcept
             {
                 return {*this->ini, *this->it};
             }
@@ -279,28 +279,38 @@ public:
 
             friend struct FieldsChanged;
 
-            iterator(authid_t const * it, Inifile const & ini)
+            iterator(authid_t const * it, Inifile const & ini) noexcept
             : it(it)
             , ini(&ini)
             {}
         };
 
-        [[nodiscard]] iterator begin() const { return {this->ini->to_send_index.cbegin(), *this->ini}; }
-        [[nodiscard]] iterator end() const { return {this->ini->to_send_index.cend(), *this->ini}; }
+        iterator begin() const noexcept
+        {
+            return {this->ini->to_send_index.cbegin(), *this->ini};
+        }
 
-        [[nodiscard]] std::size_t size() const { return this->ini->to_send_index.size(); }
+        iterator end() const noexcept
+        {
+            return {this->ini->to_send_index.cend(), *this->ini};
+        }
+
+        std::size_t size() const noexcept
+        {
+            return this->ini->to_send_index.size();
+        }
 
     private:
         Inifile const * ini;
 
         friend class Inifile;
 
-        constexpr FieldsChanged(Inifile const & ini)
+        constexpr FieldsChanged(Inifile const & ini) noexcept
         :ini(&ini)
         {}
     };
 
-    FieldsChanged get_acl_fields_changed() const
+    FieldsChanged get_acl_fields_changed() const noexcept
     {
         return {*this};
     }
@@ -316,35 +326,35 @@ private:
 
         std::array<uint_fast, word_count> words {};
 
-        void set(authid_t id)
+        void set(authid_t id) noexcept
         {
             uint_fast i = uint_fast(id);
             this->get_word(i) |= this->get_mask(i);
         }
 
-        void clear(authid_t id)
+        void clear(authid_t id) noexcept
         {
             uint_fast i = uint_fast(id);
             this->get_word(i) &= ~this->get_mask(i);
         }
 
-        [[nodiscard]] bool get(authid_t id) const
+        [[nodiscard]] bool get(authid_t id) const noexcept
         {
             uint_fast i = uint_fast(id);
             return bool(this->get_word(i) & this->get_mask(i));
         }
 
-        [[nodiscard]] static uint_fast get_mask(uint_fast i)
+        [[nodiscard]] static uint_fast get_mask(uint_fast i) noexcept
         {
             return uint_fast{1} << (i % sizeof(uint_fast));
         }
 
-        [[nodiscard]] uint_fast& get_word(uint_fast i)
+        [[nodiscard]] uint_fast& get_word(uint_fast i) noexcept
         {
             return this->words[i / sizeof(uint_fast)];
         }
 
-        [[nodiscard]] uint_fast get_word(uint_fast i) const
+        [[nodiscard]] uint_fast get_word(uint_fast i) const noexcept
         {
             return this->words[i / sizeof(uint_fast)];
         }
@@ -399,7 +409,7 @@ private:
     ConfigurationHolder conf_holder {variables};
 
     template<class T>
-    void push_to_send_index()
+    void push_to_send_index() noexcept
     {
         static_assert(T::is_proxy_to_sesman, "is not writable");
         this->to_send_index.insert(T::index);
