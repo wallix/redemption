@@ -28,11 +28,6 @@ function init(args)
     types['KeyboardLogFlagsCP'] = true
 
     values = match_and_setk(patternVar, utils.readall('projects/redemption_configs/autogen/include/configs/autogen/variables_configuration.hpp'), false)
-    -- not used by rdpproxy...
-    values['cfg::mod_rdp::krb_armoring_account'] = true
-    values['cfg::mod_rdp::krb_armoring_fallback_password'] = true
-    values['cfg::mod_rdp::krb_armoring_fallback_user'] = true
-    values['cfg::mod_rdp::krb_armoring_realm'] = true
 end
 
 function file(content)
