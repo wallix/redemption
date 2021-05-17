@@ -551,7 +551,7 @@ public:
                     if (!this->sespro_params.launch_application_driver &&
                         delay_disabled_redirected_drive)
                     {
-                        send_client_message([this](OutStream & out_s) {
+                        send_client_message([](OutStream & out_s) {
                             out_s.out_copy_bytes("Confirm=LaunchProcessStopped"_av);
                         });
                     }
