@@ -28,22 +28,6 @@ class RDPDrawable;
 
 struct DrawableParams
 {
-    // width and height are ignored when rdp_drawable != nullptr
-    uint16_t width;
-    uint16_t height;
-
-    RDPDrawable* rdp_drawable;
+    RDPDrawable& rdp_drawable;
     PointerCache::SourcePointersView ptr_cache;
-
-    static DrawableParams delayed_drawable(
-        uint16_t width, uint16_t height, PointerCache::SourcePointersView ptr_cache)
-    {
-        return {width, height, nullptr, ptr_cache};
-    }
-
-    static DrawableParams shared_drawable(
-        RDPDrawable& rdp_drawable, PointerCache::SourcePointersView ptr_cache)
-    {
-        return {0, 0, &rdp_drawable, ptr_cache};
-    }
 };

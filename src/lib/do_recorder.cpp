@@ -1110,9 +1110,10 @@ static inline int replay(
                         auto set_capture_consumer = [&](
                             MonotonicTimePoint now, RealTimePoint real_time
                         ) mutable {
-                            DrawableParams const drawable_params
-                                = DrawableParams::shared_drawable(rdp_drawable,
-                                                                  player.pointers_view());
+                            DrawableParams const drawable_params{
+                                rdp_drawable,
+                                player.pointers_view()
+                            };
 
                             MetaParams const meta_params{
                                 MetaParams::EnableSessionLog::No,

@@ -99,6 +99,8 @@ namespace
         const char * record_path;
         const char * hash_path;
 
+        RDPDrawable rdp_drawable;
+
         DrawableParams const drawable_params;
 
         WrmParams const wrm_params;
@@ -116,8 +118,11 @@ namespace
         , record_tmp_path(record_wd.dirname())
         , record_path(record_tmp_path)
         , hash_path(hash_wd.dirname())
-        , drawable_params(DrawableParams::delayed_drawable(cx, cy,
-            PointerCache::SourcePointersView{pointers}))
+        , rdp_drawable(cx, cy)
+        , drawable_params{
+            rdp_drawable,
+            PointerCache::SourcePointersView{pointers},
+        }
         , wrm_params{
             BitsPerPixel{24},
             false,
@@ -161,7 +166,7 @@ namespace
                 video_params, nullptr, Rect(), Rect()
             );
 
-            f(capture, Rect(0, 0, drawable_params.width, drawable_params.height));
+            f(capture, Rect(0, 0, rdp_drawable.width(), rdp_drawable.height()));
         }
     };
 

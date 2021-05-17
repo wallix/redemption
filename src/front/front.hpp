@@ -41,6 +41,7 @@
 #include "capture/wrm_params.hpp"
 #include "capture/session_update_buffer.hpp"
 #include "configs/config.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/GraphicUpdatePDU.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -141,15 +142,77 @@ public:
 private:
     struct PrivCapture
     {
-        explicit operator bool () const { return bool(this->_capture); }
+        explicit operator bool () const { return bool(this->_capture_ctx); }
 
-        Capture * operator->() const { return this->_capture.operator->(); }
-        Capture * get() const { return this->_capture.get(); }
+        Capture * operator->() const { return this->get(); }
+        Capture * get() const { return &this->_capture_ctx->capture; }
 
-        void reset() { this->_capture.reset(); }
+        void init_capture(
+            SessionLogApi & session_log,
+            ScreenInfo const& screen_info,
+            PointerCache::SourcePointersView ptr_cache,
+            const CaptureParams& capture_params,
+            bool capture_wrm, const WrmParams& wrm_params,
+            bool capture_png, const PngParams& png_params,
+            bool capture_pattern_checker, const PatternParams& pattern_params,
+            bool capture_ocr, const OcrParams& ocr_params,
+            bool capture_kbd, const KbdLogParams& kbd_log_params,
+            Rect const & rail_window_rect)
+        {
+            this->_session_log = &session_log;
+            this->_capture_ctx = std::make_unique<CaptureCtx>(
+                screen_info,
+                ptr_cache,
+                capture_params
+              , capture_wrm, wrm_params
+              , capture_png, png_params
+              , capture_pattern_checker, pattern_params
+              , capture_ocr, ocr_params
+              , capture_kbd, kbd_log_params
+              , rail_window_rect
+            );
+        }
 
-        std::unique_ptr<Capture> _capture;
+        void reset() { this->_capture_ctx.reset(); }
+
         SessionLogApi* _session_log;
+
+    private:
+        struct CaptureCtx
+        {
+            RDPDrawable rdp_drawable;
+            Capture capture;
+
+            CaptureCtx(
+                ScreenInfo const& screen_info,
+                PointerCache::SourcePointersView ptr_cache,
+                const CaptureParams& capture_params,
+                bool capture_wrm, const WrmParams& wrm_params,
+                bool capture_png, const PngParams& png_params,
+                bool capture_pattern_checker, const PatternParams& pattern_params,
+                bool capture_ocr, const OcrParams& ocr_params,
+                bool capture_kbd, const KbdLogParams& kbd_log_params,
+                Rect const & rail_window_rect)
+            : rdp_drawable(screen_info.width, screen_info.height)
+            , capture(
+                capture_params,
+                DrawableParams{this->rdp_drawable, ptr_cache},
+                capture_wrm, wrm_params,
+                capture_png, png_params,
+                capture_pattern_checker, pattern_params,
+                capture_ocr, ocr_params,
+                false, SequencedVideoParams{},
+                false, FullVideoParams{},
+                false, MetaParams{},
+                capture_kbd, kbd_log_params,
+                VideoParams{},
+                nullptr,
+                Rect(),
+                rail_window_rect)
+            {}
+        };
+
+        std::unique_ptr<CaptureCtx> _capture_ctx;
     };
     PrivCapture capture;
     SessionUpdateBuffer session_update_buffer;
@@ -1057,11 +1120,7 @@ public:
                 );
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-
         const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        const bool capture_video = false;
-        const bool capture_video_full = false;
-        const bool capture_meta = false;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || this->has_kbd_pattern_check();
@@ -1084,21 +1143,9 @@ public:
         bool const capture_png = bool(capture_flags & CaptureFlags::png)
                               && (png_params.png_limit > 0);
 
-        DrawableParams const drawable_params = DrawableParams::delayed_drawable(
-            this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            this->orders.get_pointer_cache()
-        );
-
-        MetaParams const meta_params {};
-
         KbdLogParams const kbd_log_params = kbd_log_params_capture_from_ini(ini);
 
         PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams const sequenced_video_params {};
-        FullVideoParams const full_video_params {};
-        VideoParams const video_params {};
 
         WrmParams const wrm_params = wrm_params_from_ini(
             this->capture_bpp,
@@ -1121,25 +1168,18 @@ public:
             ini.get<cfg::debug::capture>()
         };
 
-        this->capture = {
-            std::make_unique<Capture>(
-                capture_params
-              , drawable_params
-              , capture_wrm, wrm_params
-              , capture_png, png_params
-              , capture_pattern_checker, pattern_params
-              , capture_ocr, ocr_params
-              , capture_video, sequenced_video_params
-              , capture_video_full, full_video_params
-              , capture_meta, meta_params
-              , capture_kbd, kbd_log_params
-              , video_params
-              , nullptr
-              , Rect()
-              , this->client_info.remote_program ? this->rail_window_rect : Rect()
-            ),
-            &session_log
-        };
+        this->capture.init_capture(
+            session_log,
+            this->client_info.screen_info,
+            this->orders.get_pointer_cache(),
+            capture_params,
+            capture_wrm, wrm_params,
+            capture_png, png_params,
+            capture_pattern_checker, pattern_params,
+            capture_ocr, ocr_params,
+            capture_kbd, kbd_log_params,
+            this->client_info.remote_program ? this->rail_window_rect : Rect()
+        );
 
         if (this->capture->has_graphic_api()) {
             this->set_gd(this->capture.get());

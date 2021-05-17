@@ -219,8 +219,7 @@ private:
     } null_notifier_next_video;
     //@}
 
-    std::unique_ptr<RDPDrawable> gd_drawable_;
-    RDPDrawable* gd_drawable = nullptr;
+    RDPDrawable& gd_drawable;
 
     std::unique_ptr<DrawablePointer> drawable_pointer;
     PointerCache::SourcePointersView ptr_cache;
