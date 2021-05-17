@@ -616,9 +616,12 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     uint16_t cx = 100;
 
     WidgetPassword wpassword(drawable, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, global_font_lato_light_16());
+    parent.add_widget(&wpassword);
+
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
+
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
@@ -684,4 +687,15 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.last_event = 0;
 
     RED_CHECK("aurézlie"sv == wpassword.get_text());
+
+    // cursor overflow
+
+    for (int i = 0; i < 10; i++) {
+        keymap.event(0, 17, ctrl_alt_delete); // 'z'
+        wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    }
+    wpassword.rdp_input_invalidate(wpassword.get_rect());
+
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_41.png");
+
 }

@@ -119,7 +119,11 @@ void WidgetPassword::update_draw_cursor(Rect old_cursor)
 {
     this->drawable.begin_update();
     this->masked_text.rdp_input_invalidate(old_cursor);
-    this->draw_cursor(this->get_cursor_rect());
+    auto cursort_rect = this->get_cursor_rect();
+    auto rect = this->get_rect();
+    if (rect.x + 1 < cursort_rect.x && cursort_rect.x < rect.eright()) {
+        this->draw_cursor(cursort_rect);
+    }
     this->drawable.end_update();
 }
 
