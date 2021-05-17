@@ -58,7 +58,8 @@ enum {
 
 // Proxy Options
 enum {
-    OPTION_DELAY_DISABLED_LAUNCH_MASK = 0x00000001
+    OPTION_DELAY_DISABLED_LAUNCH_MASK      = 0x00000001,
+    OPTION_DELAY_DISABLED_REDIRECTED_DRIVE = 0x00000002
 };
 
 // Session Probe Options
@@ -526,7 +527,8 @@ public:
                         this->options);
                 }
 
-                bool const delay_disabled_launch_mask = (this->options & OPTION_DELAY_DISABLED_LAUNCH_MASK);
+                bool const delay_disabled_launch_mask      = (this->options & OPTION_DELAY_DISABLED_LAUNCH_MASK);
+                bool const delay_disabled_redirected_drive = (this->options & OPTION_DELAY_DISABLED_REDIRECTED_DRIVE);
 
                 error_type err_id = NO_ERROR;
 
@@ -546,6 +548,14 @@ public:
                         this->session_probe_stop_launch_sequence_notifier = nullptr;
                     }
 
+                    if (!this->sespro_params.launch_application_driver &&
+                        delay_disabled_redirected_drive)
+                    {
+                        send_client_message([this](OutStream & out_s) {
+                            out_s.out_copy_bytes("Confirm=LaunchProcessStopped"_av);
+                        });
+                    }
+
                     this->session_probe_ready = true;
                 }
 
@@ -556,7 +566,8 @@ public:
                     this->callbacks.enable_graphics_update();
                 }
 
-                if (!this->sespro_params.launch_application_driver) {
+                if (!this->sespro_params.launch_application_driver &&
+                    !delay_disabled_redirected_drive) {
                     this->file_system_virtual_channel.disable_session_probe_drive();
                 }
 
@@ -753,8 +764,6 @@ public:
                 this->callbacks.enable_graphics_update();
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableRedirectedDrive")) {
-                assert(this->sespro_params.launch_application_driver);
-
                 this->file_system_virtual_channel.disable_session_probe_drive();
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get target informations")) {
