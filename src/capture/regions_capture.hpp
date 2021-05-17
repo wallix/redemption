@@ -24,7 +24,9 @@ Author(s): Proxies Team
 #include "utils/rect.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "configs/autogen/enums.hpp"
-#include "capture/file_to_graphic.hpp"
+#include "capture/file_to_graphic_verbose.hpp"
+
+#include <memory>
 
 class Transport;
 
@@ -38,7 +40,7 @@ struct RegionsCapture
         MonotonicTimePoint end_capture,
         bool play_video_with_corrupted_bitmap,
         ExplicitCRef<bool> requested_to_shutdown,
-        FileToGraphic::Verbose verbose);
+        FileToGraphicVerbose verbose);
 
     bool      is_remote_app = false;
     Rect      rail_window_rect_start;

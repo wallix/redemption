@@ -19,6 +19,7 @@ Author(s): Wallix Team
 */
 
 #include "capture/cryptofile.hpp"
+#include "capture/file_to_graphic.hpp"
 #include "core/front_api.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"

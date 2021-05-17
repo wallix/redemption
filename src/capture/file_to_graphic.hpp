@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "capture/file_to_graphic_verbose.hpp"
 #include "capture/wrm_meta_chunk.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
@@ -187,20 +188,14 @@ public:
         Order DeletedWindow;
     } statistics;
 
+    using Verbose = FileToGraphicVerbose;
+
 private:
     bool play_video_with_corrupted_bitmap;
 
-public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        play            = 8,
-        timestamp       = 16,
-        rdp_orders      = 32,
-        probe           = 64,
-        frame_marker    = 128
-    };
+    Verbose verbose;
 
+public:
     FileToGraphic(
         Transport & trans,
         // TODO monotonic_clock or real_clock ?

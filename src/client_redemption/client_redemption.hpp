@@ -724,7 +724,7 @@ public:
             // , ClientRedemptionConfig::BALISED_FRAME
             , false
             , false
-            , FileToGraphic::Verbose()
+            , FileToGraphicVerbose()
             );
 
             this->_callback.set_replay(this->replay_mod.get());

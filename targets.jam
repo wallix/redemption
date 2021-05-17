@@ -1351,7 +1351,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_channels/client_remoteapp_channel.cpp
   <covfile>src/client_redemption/client_channels/client_remoteapp_channel.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
@@ -3336,7 +3335,6 @@ test-run tests/mod/internal/test_replay_mod :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/replay_mod.cpp
   <covfile>src/mod/internal/replay_mod.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/mod/internal/test_selector_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_selector_mod.cpp
@@ -6115,7 +6113,7 @@ obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
-obj src/client_redemption/client_channels/client_remoteapp_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_remoteapp_channel.cpp : <define>ZLIB_CONST ;
+obj src/client_redemption/client_channels/client_remoteapp_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_remoteapp_channel.cpp ;
 obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_clipboard_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_clipboard_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_disk_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_disk_config.cpp ;
@@ -6135,7 +6133,7 @@ obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRAC
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/core/pid_file.o : $(REDEMPTION_SRC_PATH)/core/pid_file.cpp ;
-obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
+obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp ;
 obj src/core/session_events.o : $(REDEMPTION_SRC_PATH)/core/session_events.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;

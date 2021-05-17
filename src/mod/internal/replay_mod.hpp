@@ -25,19 +25,23 @@
 
 #pragma once
 
-#include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
+#include "capture/file_to_graphic_verbose.hpp"
 #include "mod/mod_api.hpp"
 #include "core/events.hpp"
 
+#include <string>
+#include <memory>
 
 class FrontAPI;
-struct EventContainer;
-struct Event;
+namespace gdi
+{
+    class GraphicApi;
+}
 
 class ReplayMod : public mod_api
 {
 public:
-    using Verbose = FileToGraphic::Verbose;
+    using Verbose = FileToGraphicVerbose;
 
     ReplayMod( EventContainer & events
              , gdi::GraphicApi & drawable

@@ -135,7 +135,7 @@ public:
             !this->ini.get<cfg::mod_replay::on_end_of_data>(),
             this->ini.get<cfg::mod_replay::replay_on_loop>(),
             this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
-            safe_cast<FileToGraphic::Verbose>(this->ini.get<cfg::debug::capture>())
+            safe_cast<FileToGraphicVerbose>(this->ini.get<cfg::debug::capture>())
         );
         return {new_mod, nullptr, nullptr, false, false, nullptr};
     }

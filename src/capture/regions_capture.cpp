@@ -95,7 +95,7 @@ RegionsCapture RegionsCapture::compute_regions(
     MonotonicTimePoint end_capture,
     bool play_video_with_corrupted_bitmap,
     ExplicitCRef<bool> requested_to_shutdown,
-    FileToGraphic::Verbose verbose)
+    FileToGraphicVerbose verbose)
 {
     RegionsCapture ret;
 
