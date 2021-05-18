@@ -21,14 +21,13 @@
 #pragma once
 
 #include <iterator>
-#include <cstring>
 
 #include "utils/sugar/range.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/array.hpp"
 
-
-template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
+template<class ForwardIterator,
+         class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
 class splitter
 {
     ForwardIterator first_;
@@ -40,11 +39,18 @@ class splitter
     using range = ::range<ForwardIterator>;
 
 public:
-    splitter(ForwardIterator first, ForwardIterator last, value_type sep)
+    splitter(ForwardIterator first, ForwardIterator last, value_type const& sep)
     : first_(first)
     , last_(last)
     , cur_(first)
     , sep_(sep)
+    {}
+
+    splitter(ForwardIterator first, ForwardIterator last, value_type&& sep)
+    : first_(first)
+    , last_(last)
+    , cur_(first)
+    , sep_(std::move(sep))
     {}
 
     range next() {
@@ -115,7 +121,7 @@ public:
 
 template<class ForwardIterator, class T>
 splitter<ForwardIterator, typename std::decay<T>::type>
-get_split(ForwardIterator first, ForwardIterator last, T && sep)
+make_splitter(ForwardIterator first, ForwardIterator last, T && sep)
 {
     return {first, last, std::forward<T>(sep)};
 }
@@ -134,20 +140,9 @@ template<class T, std::size_t n> struct container_traits<T(&)[n]> { using iterat
 
 template<class Cont, class T>
 splitter<typename container_traits<Cont>::iterator, typename std::decay<T>::type>
-get_split(Cont && cont, T && sep)
+make_splitter(Cont && cont, T && sep)
 {
     return {utils::begin(cont), utils::end(cont), std::forward<T>(sep)};
-}
-
-
-inline splitter<char const *> get_line(const char * s, char sep = '\n') /*NOLINT*/
-{
-    return {s, s+strlen(s), sep};
-}
-
-inline splitter<char *> get_line(char * s, char sep = '\n') /*NOLINT*/
-{
-    return {s, s+strlen(s), sep};
 }
 
 inline splitter<char const *> get_line(chars_view s, char sep = '\n') /*NOLINT*/

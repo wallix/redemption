@@ -309,7 +309,8 @@ public:
                         drive_params.proxy_managed_drives);
                 }
 
-                for (auto & r : get_line(drive_params.proxy_managed_drives, ',')) {
+                // TODO proxy_managed_drives should be a std::string
+                for (auto r : get_line(std::string_view(drive_params.proxy_managed_drives), ',')) {
                     auto const trimmed_range = trim(r);
 
                     if (trimmed_range.empty()) continue;

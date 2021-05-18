@@ -46,7 +46,7 @@ std::string TflSuffixGenerator::name_at(uint64_t i)
         *p = '0';
     }
 
-    std::to_chars_result const chars_result = std::to_chars(p, end(path), i);
+    std::to_chars_result const chars_result = std::to_chars(p, std::end(path), i);
     std::ptrdiff_t const len = std::distance(p, chars_result.ptr);
 
     auto prefix_len = (len >= count_max_digit_prefix ? 0 : count_max_digit_prefix - len);

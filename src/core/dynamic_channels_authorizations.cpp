@@ -34,8 +34,8 @@ DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
         chars_view list,
         std::vector<std::string> & names)
     {
-        for (auto && r : get_split(list.begin(), list.end(), ',')) {
-            auto trimmed = trim(begin(r), end(r));
+        for (auto r : make_splitter(list, ',')) {
+            auto trimmed = trim(r);
             if (trimmed.empty()) {
                 continue;
             }

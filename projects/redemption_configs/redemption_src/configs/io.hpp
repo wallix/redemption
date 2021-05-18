@@ -315,11 +315,11 @@ parse_error parse_from_cfg(
 template<class IntOrigin>
 parse_error parse_integral_list(std::string & x, bytes_view value) {
     const auto chars = value.as_chars();
-    for (auto r : get_split(chars, ',')) {
+    for (auto r : make_splitter(chars, ',')) {
         IntOrigin i;
         auto rng = trim(r);
         if (auto err = parse_integral<true>(
-            i, {rng.begin(), rng.size()},
+            i, rng.as<bytes_view>(),
             min_integral<IntOrigin>(),
             max_integral<IntOrigin>())
         ) {

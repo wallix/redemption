@@ -62,7 +62,7 @@ LanguageButton::LanguageButton(
     }
 
 
-    for (auto && r : get_split(enable_locales, ',')) {
+    for (auto && r : make_splitter(enable_locales, ',')) {
         auto const trimmed_range = trim(r);
         auto cstr = begin(trimmed_range).base();
         auto cend = end(trimmed_range).base();

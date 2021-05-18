@@ -26,7 +26,7 @@
 
 RED_AUTO_TEST_CASE(TestSplitter)
 {
-    const char text[] = "abc,de,efg,h,ijk,lmn";
+    auto text = "abc,de,efg,h,ijk,lmn"_av;
     std::string s;
     for (auto r : get_line(text, ',')) {
         s.append(r.begin(), r.end()) += ':';
@@ -34,8 +34,8 @@ RED_AUTO_TEST_CASE(TestSplitter)
     RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
 
     s.clear();
-    std::string stest(text);
-    for (auto r : get_split(stest, ',')) {
+    auto stest = text.as<std::string>();
+    for (auto r : make_splitter(stest, ',')) {
         s.append(r.begin(), r.end()) += ':';
     }
     RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestSplitter)
 
 RED_AUTO_TEST_CASE(TestSplitter2)
 {
-    const char * drives = " export ,, , \t share \t ,";
+    auto drives = " export ,, , \t share \t ,"_av;
 
     std::string s;
     for (auto r : get_line(drives, ',')) {
@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestSplitter2)
 
         if (trimmed_range.empty()) continue;
 
-        s.append(begin(trimmed_range), end(trimmed_range)) += ',';
+        s.append(std::begin(trimmed_range), std::end(trimmed_range)) += ',';
     }
     RED_CHECK_EQUAL(s, "export,share,");
 }

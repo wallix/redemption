@@ -107,11 +107,12 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::stri
         std::vector<chars_view> & large_ids
     ) {
         bool all = false;
-        for (auto && r : get_split(list.begin(), list.end(), ',')) {
-            auto trimmed = trim(begin(r), end(r));
+        for (auto r : make_splitter(list, ',')) {
+            auto trimmed = trim(r);
             if (trimmed.empty()) {
                 continue;
             }
+
             if (trimmed[0] == '*') {
                 all = true;
             }

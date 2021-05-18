@@ -61,31 +61,29 @@ PatternValue get_pattern_value(chars_view const pattern_rule)
         if (end_option_list != av.end() && end_option_list+1 != av.end()) {
             chars_view options(av.begin()+1, end_option_list);
             bool is_exact = false;
-            for (auto token : get_split(options, IsWordSeparator{})) {
-                auto eq = [](range<char const*> b, chars_view a) {
-                    return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
-                };
+            for (auto token_av : make_splitter(options, IsWordSeparator{})) {
+                auto token = token_av.as<std::string_view>();
 
-                if (eq(token, cstr_array_view("exact"))) {
+                if (token == "exact") {
                     is_exact = true;
                 }
                 else {
-                    if (eq(token, cstr_array_view("ocr"))) {
+                    if (token == "ocr") {
                         pattern_value.is_ocr = true;
                         if (is_exact) {
                             pattern_value.cat = Cat::is_exact_str;
                         }
                     }
-                    else if (eq(token, cstr_array_view("kbd"))) {
+                    else if (token == "kbd") {
                         pattern_value.is_kbd = true;
                         if (is_exact) {
                             pattern_value.cat = Cat::is_exact_str;
                         }
                     }
-                    else if (eq(token, cstr_array_view("regex"))) {
+                    else if (token == "regex") {
                         pattern_value.cat = is_exact ? Cat::is_exact_reg : Cat::is_reg;
                     }
-                    else if (eq(token, cstr_array_view("content"))) {
+                    else if (token == "content") {
                         pattern_value.cat = is_exact ? Cat::is_exact_str : Cat::is_str;
                     }
                     else {
@@ -98,6 +96,7 @@ PatternValue get_pattern_value(chars_view const pattern_rule)
                     is_exact = false;
                 }
             }
+
             if (is_exact) {
                 pattern_value.cat = Cat::is_exact_str;
             }

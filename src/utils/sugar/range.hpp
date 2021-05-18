@@ -20,11 +20,10 @@
 
 #pragma once
 
-#include <iterator>
-#include <type_traits>
+#include "utils/sugar/array.hpp"
+#include "utils/sugar/array_view.hpp"
 
-using std::begin; /*NOLINT*/
-using std::end; /*NOLINT*/
+#include <type_traits>
 
 template<class It>
 struct range
@@ -42,14 +41,14 @@ struct range
     using iterator = It;
     using const_iterator = It;
 
-    [[nodiscard]] std::size_t size() const { return this->last_ - this->first_; }
+    std::size_t size() const { return std::size_t(this->last_ - this->first_); }
 
-    [[nodiscard]] bool empty() const { return this->last_ == this->first_; }
+    bool empty() const { return this->last_ == this->first_; }
 
-    [[nodiscard]] const_reference front() const { return *(this->first_); }
+    const_reference front() const { return *(this->first_); }
     reference       front()       { return *(this->first_); }
 
-    [[nodiscard]] const_reference back() const  { return *(this->last_-1); }
+    const_reference back() const  { return *(this->last_-1); }
     reference       back()        { return *(this->last_-1); }
 
     const_reference operator[](std::size_t i) const { return this->first_[i]; }
@@ -63,17 +62,31 @@ struct range
         return !(a == b);
     }
 
-    [[nodiscard]] It begin() const { return this->first_; }
-    [[nodiscard]] It end()   const { return this->last_; }
+    It begin() const { return this->first_; }
+    It end()   const { return this->last_; }
+
+    template<class T>
+    T as() const
+    {
+        if constexpr (std::is_pointer_v<It>) {
+            array_view av(begin(), end());
+            return av.template as<T>();
+        }
+        else {
+            return T(begin(), end());
+        }
+    }
 };
 
 template<class Cont>
-auto make_range(Cont & cont) -> range<decltype(begin(cont))> {
-    return {begin(cont), end(cont)};
+auto make_range(Cont & cont) -> range<decltype(utils::begin(cont))>
+{
+    return {utils::begin(cont), utils::end(cont)};
 }
 
 template<class It>
-range<It> make_range(It first, It last) {
+range<It> make_range(It first, It last)
+{
     return {first, last};
 }
 

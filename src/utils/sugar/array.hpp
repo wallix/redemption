@@ -79,13 +79,13 @@ namespace utils
 
         template<class C>
         constexpr auto begin_impl(C && c)
-        noexcept(noexcept(size(static_cast<C&&>(c))))
+        noexcept(noexcept(begin(static_cast<C&&>(c))))
         -> decltype(begin(static_cast<C&&>(c)))
         { return begin(static_cast<C&&>(c)); }
 
         template<class C>
         constexpr auto end_impl(C && c)
-        noexcept(noexcept(size(static_cast<C&&>(c))))
+        noexcept(noexcept(end(static_cast<C&&>(c))))
         -> decltype(end(static_cast<C&&>(c)))
         { return end(static_cast<C&&>(c)); }
     }  // namespace detail_
