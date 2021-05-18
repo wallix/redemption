@@ -84,6 +84,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
 
 RED_AUTO_TEST_CASE(TestFilePatternMatchA)
 {
-    RED_CHECK(FilePatternMatchA("toto.exe", "*.exe"));
-    RED_CHECK(!FilePatternMatchA("toto.exe", "*.com"));
+    RED_CHECK(FilePatternMatchA("toto.exe"_zv, "*.exe"_zv));
+    RED_CHECK(!FilePatternMatchA("toto.exe"_zv, "*.com"_zv));
 }

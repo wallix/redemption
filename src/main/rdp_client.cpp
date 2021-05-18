@@ -207,7 +207,7 @@ int main(int argc, char** argv)
                 recorder.add_info(contents);
             }
             for (auto cstr : make_array_view(argv+1, argv+argc)) {
-                recorder.add_info({cstr, strlen(cstr)});
+                recorder.add_info(std::string_view{cstr});
             }
             trans = &recorder;
         }

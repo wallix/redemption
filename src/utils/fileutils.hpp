@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "utils/sugar/not_null_ptr.hpp"
+
 #include <string>
 #include <limits>
 #include <sys/types.h> // mode_t
@@ -49,6 +51,9 @@ char * basename_len(char * path, size_t & len) noexcept;
 
 int64_t filesize(const char * path) noexcept;
 int64_t filesize(std::string const& path) noexcept;
+
+/// \return true when path == '.' or path == '..',  otherwise false
+bool is_special_dirname(not_null_ptr<char const> path) noexcept;
 
 bool file_exist(const char * path) noexcept;
 bool file_exist(std::string const& path) noexcept;

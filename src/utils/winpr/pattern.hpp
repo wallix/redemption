@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "utils/sugar/zstring_view.hpp"
+
 #include <cstdio>
 #include <cstring>
 
@@ -211,14 +213,8 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
 }
 
 // TODO this function is incompatiable with utf8
-static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
+static bool FilePatternMatchA(zstring_view lpFileName, zstring_view lpPattern)
 {
-    size_t cchPattern;
-    size_t cchFileName;
-    unsigned int dwFlags;
-    unsigned int dwNextFlags;
-    const char * lpWildcard;
-
     /**
      * Wild Card Matching
      *
@@ -233,18 +229,11 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
      * '~.' DOS_DOT - matches either a '.' or zero characters beyond name string.
      */
 
-    if (!lpPattern)
-    {
-        return false;
-    }
-
-    if (!lpFileName)
-    {
-        return false;
-    }
-
-    cchPattern = strlen(lpPattern);
-    cchFileName = strlen(lpFileName);
+    const size_t cchPattern = lpPattern.size();
+    const size_t cchFileName = lpFileName.size();
+    unsigned int dwFlags;
+    unsigned int dwNextFlags;
+    const char * lpWildcard;
 
     /**
      * First and foremost the file system starts off name matching with the expression “*”.
@@ -270,8 +259,8 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 
     if (lpPattern[0] == '*')
     {
-        const char * const lpTail = &lpPattern[1];
-        size_t const cchTail = strlen(lpTail);
+        const char * const lpTail = lpPattern.data() + 1;
+        size_t const cchTail = lpPattern.size() - 1;
 
         if (!FilePatternFindNextWildcardA(lpTail, &dwFlags))
         {
@@ -282,7 +271,7 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
                 return false;
             }
 
-            return strcasecmp(&lpFileName[cchFileName - cchTail], lpTail) == 0;
+            return strcasecmp(lpFileName.data() + (cchFileName - cchTail), lpTail) == 0;
         }
     }
 

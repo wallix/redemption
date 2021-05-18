@@ -366,6 +366,13 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
     return status;
 }
 
+bool is_special_dirname(not_null_ptr<char const> path) noexcept
+{
+    return (path[0] == '.' && path[1] == '\0')
+        || (path[0] == '.' && path[1] == '.' && path[2] == '\0')
+        ;
+}
+
 int recursive_delete_directory(const char * directory_path_char_ptr)
 {
     // TODO: use string for recursive_delete_directory() parameter
@@ -382,10 +389,7 @@ int recursive_delete_directory(const char * directory_path_char_ptr)
         while (!return_value && (ent = readdir(dir)))
         {
             /* Skip the names "." and ".." as we don't want to recurse on them. */
-            if ('.' == ent->d_name[0] && (
-                '\0' ==  ent->d_name[1]
-             || ('.' == ent->d_name[1] && '\0' == ent->d_name[2])
-            )) {
+            if (is_special_dirname(ent->d_name)) {
                 continue;
             }
 

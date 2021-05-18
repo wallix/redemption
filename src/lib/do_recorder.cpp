@@ -2076,7 +2076,7 @@ extern "C" {
         }
 
         while (struct dirent * result = readdir(d)) {
-            if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
+            if (is_special_dirname(result->d_name)) {
                 continue;
             }
 
@@ -2085,15 +2085,11 @@ extern "C" {
             }
 
             strncpy(buffer + path_len, result->d_name, file_len);
-            size_t const name_len = strlen(result->d_name);
-            const char * eob = buffer + path_len + name_len;
-            const bool extension = ((name_len > 4) && (eob[-4] == '.')
-                && ( ((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
-                  || ((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
-                  || ((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's')) ))
-                || ((name_len > 5) && (eob[-5] == '.')
-                   && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
-                ;
+            std::string_view filename = result->d_name;
+            const bool extension = utils::ends_with(filename, ".flv"_av)
+                                || utils::ends_with(filename, ".png"_av)
+                                || utils::ends_with(filename, ".pgs"_av)
+                                || utils::ends_with(filename, ".meta"_av);
 
             if (!extension){
                 continue;

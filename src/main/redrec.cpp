@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-// ./bin/gcc-5.4.0/release/redrec redver -i ./tests/includes/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -m ./tests/includes/fixtures/verifier/recorded/ -s ./tests/fixtures/verifier/hash/ --verbose 10
+// redrec -i ./tests/includes/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -m ./tests/includes/fixtures/verifier/recorded/ -s ./tests/fixtures/verifier/hash/ --verbose 10
 
 namespace
 {
@@ -30,12 +30,13 @@ int main(int argc, const char** argv)
     char const * command = "redrec";
     if (argc > 1)
     {
-        struct P { char const * shortname, * name; };
+        std::string_view arg = argv[1];
+        struct P { std::string_view shortname; std::string_view name; };
         for (P pair : {P{"rec", "redrec"}, P{"ver", "redver"}, P{"dec", "reddec"}})
         {
-            if (0 == strcmp(argv[1], pair.shortname) || 0 == strcmp(argv[1], pair.name))
+            if (arg == pair.shortname || arg == pair.name)
             {
-                command = pair.name;
+                command = pair.name.data();
                 ++arg_used;
                 break;
             }
