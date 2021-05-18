@@ -23,7 +23,7 @@
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/winpr/pattern.hpp"
 
 #include <sys/types.h>

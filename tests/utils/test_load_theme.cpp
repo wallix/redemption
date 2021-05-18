@@ -22,7 +22,7 @@
 #include "configs/config.hpp"
 #include "utils/theme.hpp"
 #include "utils/load_theme.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 namespace
 {

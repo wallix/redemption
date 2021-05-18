@@ -118,7 +118,6 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"

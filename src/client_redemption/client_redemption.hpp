@@ -24,8 +24,8 @@
 #include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/strutils.hpp"
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"

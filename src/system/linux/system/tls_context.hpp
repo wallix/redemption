@@ -26,7 +26,6 @@
 #include "core/server_notifier_api.hpp"
 #include "core/app_path.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
 
 #include "transport/transport.hpp" // Transport::TlsResult
 

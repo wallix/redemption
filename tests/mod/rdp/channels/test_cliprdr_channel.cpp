@@ -28,7 +28,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/timebase.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "capture/cryptofile.hpp"
 #include "core/log_id.hpp"
 #include "capture/fdx_capture.hpp"

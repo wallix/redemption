@@ -27,7 +27,7 @@
 
 #include "utils/drawable.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 #include "core/app_path.hpp"

@@ -21,9 +21,9 @@ Author(s): Proxy Team
 #include "acl/module_manager/create_module_rail.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "RAIL/client_execute.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "core/client_info.hpp"
 #include "configs/config.hpp"
+#include "utils/strutils.hpp"
 
 
 RailModuleHostMod* create_mod_rail(

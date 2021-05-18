@@ -38,7 +38,7 @@
 #include "utils/genrandom.hpp"
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/uninit_checked.hpp"

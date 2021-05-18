@@ -19,8 +19,8 @@
 */
 
 #include "capture/fdx_capture.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/strutils.hpp"
 #include "utils/fileutils.hpp"
 
 #include <array>

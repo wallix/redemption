@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/translation.hpp"
+#include "utils/strutils.hpp"
 
 #include <chrono>
 

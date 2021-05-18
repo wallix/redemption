@@ -22,7 +22,7 @@
 #include "mod/internal/widget/flat_wab_close.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "core/app_path.hpp"
 #include "core/font.hpp"
 #include "gdi/graphic_api.hpp"

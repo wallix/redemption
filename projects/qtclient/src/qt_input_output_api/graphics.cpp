@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #include "qt_input_output_api/graphics.hpp"
 
 #include "utils/bitmap.hpp"
+#include "utils/line_equation.hpp"
 
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"

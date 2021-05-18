@@ -25,7 +25,7 @@
 #include "test_only/log_buffered.hpp"
 
 #include "utils/cfgloader.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include <fstream>
 

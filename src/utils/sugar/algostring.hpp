@@ -22,12 +22,8 @@
 
 #include <iterator>
 #include <algorithm>
-#include <string>
-
-#include <cstring>
 
 #include "utils/sugar/range.hpp"
-#include "utils/sugar/array_view.hpp"
 
 struct is_blank_fn
 {
@@ -57,90 +53,4 @@ auto trim(R & r, Pred pred = Pred()) /*NOLINT*/ -> range<decltype(r.begin())> {
     using std::begin;
     using std::end;
     return trim(begin(r), end(r), pred);
-}
-
-
-namespace detail
-{
-    inline chars_view to_string_view_or_char(chars_view av, int /*dummy*/) noexcept
-    {
-        return av;
-    }
-
-    inline chars_view to_string_view_or_char(char const* s, char /*dummy*/) noexcept
-    {
-        return {s, ::strlen(s)};
-    }
-
-    inline char to_string_view_or_char(char c, int /*dummy*/) noexcept
-    {
-        return c;
-    }
-
-
-    inline std::size_t len_from_av_or_char(chars_view av) noexcept
-    {
-        return av.size();
-    }
-
-    inline std::size_t len_from_av_or_char(char c) noexcept
-    {
-        (void)c;
-        return 1;
-    }
-
-
-    inline char* append_from_av_or_char(char* s, chars_view av)
-    {
-        memcpy(s, av.data(), av.size());
-        return s + av.size();
-    }
-
-    inline char* append_from_av_or_char(char* s, char c)
-    {
-        *s = c;
-        return s + 1;
-    }
-
-
-    template<class... StringsOrChars>
-    void str_concat_view(std::string& str, StringsOrChars&&... strs)
-    {
-        auto ipos = str.size();
-        str.resize(str.size() + (... + len_from_av_or_char(strs)));
-        auto p = str.data() + ipos;
-        (..., void(p = append_from_av_or_char(p, strs)));
-    }
-} // namespace detail
-
-
-template<class String, class... Strings>
-[[nodiscard]] std::string str_concat(String&& str, Strings const&... strs)
-{
-    std::string s;
-    detail::str_concat_view(s, detail::to_string_view_or_char(str, 1),
-                               detail::to_string_view_or_char(strs, 1)...);
-    return s;
-}
-
-template<class... Strings>
-[[nodiscard]] std::string str_concat(std::string&& str, Strings const&... strs)
-{
-    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
-    return std::move(str);
-}
-
-
-template<class... Strings>
-void str_append(std::string& str, Strings const&... strs)
-{
-    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
-}
-
-
-template<class... Strings>
-void str_assign(std::string& str, Strings const&... strs)
-{
-    str.clear();
-    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }

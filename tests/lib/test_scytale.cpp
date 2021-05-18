@@ -23,7 +23,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/finally.hpp"
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"

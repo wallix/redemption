@@ -25,7 +25,6 @@
 #include "utils/file.hpp"
 #include "utils/strutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/algostring.hpp"
 
 #include <cstdio>
 #include <cstddef>

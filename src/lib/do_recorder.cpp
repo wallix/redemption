@@ -49,7 +49,6 @@
 #include "utils/cli_chrono.hpp"
 #include "utils/recording_progress.hpp"
 #include "utils/redemption_info_version.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/strutils.hpp"

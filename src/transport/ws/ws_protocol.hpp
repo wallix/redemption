@@ -21,7 +21,6 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/sugar/splitter.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/base64.hpp"
 #include "system/ssl_sha1.hpp"
 

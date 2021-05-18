@@ -21,7 +21,7 @@
 #include "core/pid_file.hpp"
 #include "core/app_path.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 
 #include <cerrno>

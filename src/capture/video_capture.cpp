@@ -24,7 +24,6 @@
 #include "capture/sequenced_video_params.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/drawable_pointer.hpp"
 #include "utils/drawable.hpp"
 

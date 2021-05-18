@@ -19,8 +19,9 @@ Author(s): Jonathan Poelen
 */
 
 #include "capture/session_update_buffer.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+
+#include <cstring>
 
 struct SessionUpdateBuffer::Event::Access
 {
@@ -86,7 +87,7 @@ void SessionUpdateBuffer::append(MonotonicTimePoint time, LogId id, KVLogList kv
 
     auto push_s = [&s](chars_view chars) {
         auto r = s;
-        memcpy(s, chars.data(), chars.size());
+        std::memcpy(s, chars.data(), chars.size());
         s += chars.size();
         return chars_view{r, chars.size()};
     };

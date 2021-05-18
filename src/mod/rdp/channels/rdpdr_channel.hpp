@@ -32,7 +32,6 @@
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "system/ssl_sha256.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"

@@ -24,9 +24,9 @@
 #include "acl/session_logfile.hpp"
 
 #include "configs/config.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/strutils.hpp"
 #include "utils/log_siem.hpp"
 #include "main/version.hpp"
 

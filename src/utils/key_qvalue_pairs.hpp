@@ -22,8 +22,8 @@
 
 #include "core/log_id.hpp"
 #include "acl/auth_api.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
 #include <string>

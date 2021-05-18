@@ -38,7 +38,7 @@
 #include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
 #include "utils/region.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
 #include "mod/rdp/channels/rail_window_id_manager.hpp"      // TODO only for RemoteProgramsWindowIdManager::INVALID_WINDOW_ID
 #include "core/RDP/slowpath.hpp"

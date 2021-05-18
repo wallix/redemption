@@ -32,7 +32,7 @@
 
 #include "transport/transport.hpp"
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/transport/test_transport.hpp"

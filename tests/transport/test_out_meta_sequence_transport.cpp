@@ -23,7 +23,7 @@ Author(s): Jonathan Poelen
 #include "test_only/test_framework/file.hpp"
 
 #include "transport/out_meta_sequence_transport.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "test_only/lcg_random.hpp"
 

@@ -19,8 +19,8 @@
 */
 
 #include "mod/rdp/channels/sespro_channel_params.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/zstring_view.hpp"
+#include "utils/strutils.hpp"
 
 #include <iterator>
 

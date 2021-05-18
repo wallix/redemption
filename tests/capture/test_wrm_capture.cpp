@@ -30,7 +30,7 @@
 #include "transport/file_transport.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/int_to_chars.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/gdi/test_graphic.hpp"

@@ -28,6 +28,7 @@ Author(s): Jonathan Poelen
 #include "cxx/diagnostic.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/strutils.hpp"
 
 namespace
 {

@@ -25,7 +25,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "transport/crypto_transport.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 
 #include <snappy.h> // for SNAPPY_VERSION

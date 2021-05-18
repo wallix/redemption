@@ -20,7 +20,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "transport/crypto_transport.hpp"
 #include "test_only/transport/test_transport.hpp"

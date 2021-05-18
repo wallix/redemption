@@ -23,7 +23,7 @@ Author(s): Jonathan Poelen
 #include "working_directory.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/pp.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "cxx/compiler_version.hpp"
 #include "cxx/cxx.hpp"

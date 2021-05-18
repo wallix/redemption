@@ -21,7 +21,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "acl/kv_list_from_strings.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include <array>
 

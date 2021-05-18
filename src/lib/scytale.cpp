@@ -27,8 +27,8 @@
 #include "test_only/lcg_random.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/c_interface.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/strutils.hpp"
 #include "utils/string_c.hpp"
 
 #include "main/version.hpp"

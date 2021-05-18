@@ -31,7 +31,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 
 TestCardMod::TestCardMod(

@@ -49,7 +49,6 @@
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/multisz.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "utils/sugar/zstring_view.hpp"
 

@@ -23,8 +23,8 @@
 #include "system/ssl_sha256.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/int_to_chars.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/strutils.hpp"
 
 #include <array>
 #include <string>

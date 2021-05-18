@@ -27,6 +27,7 @@
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
 
+
 LanguageButton::LanguageButton(
     std::string const & enable_locales,
     Widget & parent,

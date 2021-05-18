@@ -24,7 +24,7 @@ Author(s): Wallix Team
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_multi_crypto_transport.hpp"

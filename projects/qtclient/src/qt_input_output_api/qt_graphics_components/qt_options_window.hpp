@@ -22,6 +22,7 @@
 #pragma once
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
+#include "utils/strutils.hpp"
 #include "keyboard/keymap2.hpp"
 
 #include <QtWidgets/QCheckBox>

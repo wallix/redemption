@@ -10,7 +10,7 @@
 #include <unordered_set>
 
 #include "utils/sugar/zstring_view.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "keyboard/keymap2.hpp"
 
 namespace
@@ -21,7 +21,7 @@ namespace
                                      const char *hex_prefix_fmt = "0x")
     {
         std::ostringstream oss;
-        
+
         oss << hex_prefix_fmt
             << std::setfill('0')
             << std::setw(STREAM_WIDTH_FIELD)
@@ -93,15 +93,15 @@ namespace
     constexpr auto GEN_DIR_PATH = "src/keyboard/scancode/autogen/"_zv;
     constexpr auto FINAL_HEADER_FILENAME = "all_LCIDs_scancodes.hpp"_zv;
     constexpr auto FINAL_SOURCE_FILENAME = "all_LCIDs_scancodes.cpp"_zv;
-    
-    
+
+
     inline void write_body_all_LCIDs_scancodes_source_file(std::ofstream& ofs,
                                                            const LCIDs_t& lcids)
     {
         ofs << "namespace scancode\n"
             << "{\n";
 
-        
+
         // Write function for get unicode to scancode conversion table
         ofs << "    const std::unordered_map<std::uint16_t, std::pair<std::uint8_t, std::uint8_t>> *get_scancodes_table_ptr(int LCID) noexcept\n"
             << "    {\n"
@@ -120,11 +120,11 @@ namespace
             << "    }\n"
 
 
-        
-            << "\n";
-        
 
-        
+            << "\n";
+
+
+
         // Write function for get extend unicode to scancode conversion table
         ofs << "    const std::unordered_map<std::uint16_t, std::pair<std::uint8_t, std::uint16_t>> *get_extended_scancodes_table_ptr(int LCID) noexcept\n"
             << "    {\n"
@@ -160,7 +160,7 @@ namespace
     }
 
     inline void generate_all_LCIDs_scancodes_source_file(const LCIDs_t& lcids)
-    {        
+    {
         std::string file_path = str_concat(GEN_DIR_PATH,
                                            FINAL_SOURCE_FILENAME);
         std::ofstream ofs;
@@ -183,7 +183,7 @@ namespace
     }
 
 
-    
+
     inline void write_source_all_LCIDs_scancodes_header_file(std::ofstream& ofs)
     {
         ofs << "namespace scancode\n"
@@ -205,7 +205,7 @@ namespace
         std::string file_path = str_concat(GEN_DIR_PATH,
                                            FINAL_HEADER_FILENAME);
         std::ofstream ofs;
-        
+
         ofs.exceptions(std::ofstream::failbit | std::ofstream::badbit);
         try
         {
@@ -224,11 +224,11 @@ namespace
     }
 
 
-    
+
     void write_body_scancodes_LCID_file(std::ofstream& ofs,
                                         const Keylayout& layout,
                                         const std::string& LCID)
-    {   
+    {
         ofs << "// \"" << layout.locale_name << "\" locale \n"
             << "namespace " << LCID << '\n'
             << "{\n";
@@ -240,7 +240,7 @@ namespace
             << "  {\n";
 
         std::unordered_set<std::uint16_t> unicode_occurences;
- 
+
         for (const auto& wrapped_layout :
             {
                 Layout{layout.noMod, Mods::NO_MOD},
@@ -279,26 +279,26 @@ namespace
                             << ", "
                             << Hex8{std::uint8_t(wrapped_layout.mods)}
                             << "}},\n";
-                        
+
                         unicode_occurences.emplace(unicode);
                     }
                 }
                 ++scancode;
             }
         }
-    
+
         ofs << "  };\n\n";
 
 
-    
-        /* Write extended unicode to 
+
+        /* Write extended unicode to
            extended scancode + unicode conversion table */
         ofs << "  // key : extended unicode, value : extended scancode + unicode [8 + 16 bits]\n"
             << "  inline const std::unordered_map<std::uint16_t, std::pair<std::uint8_t, std::uint16_t>> EXTENDED_SCANCODES_TABLE\n"
             << "  {\n";
 
         std::unordered_set<std::uint16_t> extended_unicode_occurences;
-        
+
         for (std::uint8_t i = 0; i < layout.nbDeadkeys; ++i)
         {
             for (std::uint8_t j = 0; j < layout.deadkeys[i].nbSecondKeys; ++j)
@@ -312,7 +312,7 @@ namespace
                     ofs << "    {"
                         << Hex16{extended_unicode}
                         << ", {";
-                
+
                     std::uint8_t extended_scancode =
                         layout.deadkeys[i].extendedKeyCode;
                     std::uint16_t unicode =
@@ -322,19 +322,19 @@ namespace
                         << ", "
                         << Hex16{unicode}
                         << "}},\n";
-                    
+
                     extended_unicode_occurences.emplace(extended_unicode);
                 }
             }
         }
-        
+
         ofs << "  };\n"
-    
+
             << "}\n";
     }
 
     void write_header_scancodes_LCID_file(std::ofstream& ofs)
-    {   
+    {
         ofs << "#pragma once\n\n"
             << "# include <cstdint>\n"
             << "# include <unordered_map>\n\n";
@@ -345,7 +345,7 @@ namespace
     {
         constexpr auto FILENAME_PREFIX = "scancodes_"_zv;
         constexpr auto FILENAME_SUFFIX = ".hpp"_zv;
-    
+
         std::string LCID = number_to_hex_string(layout.LCID, "x");
         std::string filename = str_concat(FILENAME_PREFIX,
                                           LCID,
@@ -360,7 +360,7 @@ namespace
             write_header_scancodes_LCID_file(ofs);
             write_body_scancodes_LCID_file(ofs, layout, LCID);
             ofs.close();
-            
+
             lcids.emplace_back(std::move(LCID));
         }
         catch (const std::ofstream::failure&)
@@ -375,7 +375,7 @@ namespace
     inline bool is_started_with_help_option(int ac, char **av) noexcept
     {
         using namespace std::string_view_literals;
-        
+
         for (int i = 1; i < ac; ++i)
         {
             const char *option = av[i];
@@ -389,7 +389,7 @@ namespace
                 return true;
             }
         }
-        
+
         return false;
     }
 }
@@ -401,7 +401,7 @@ int main(int ac, char **av)
     {
         return EXIT_SUCCESS;
     }
-    
+
     try
     {
         namespace fs = std::filesystem;
@@ -411,21 +411,21 @@ int main(int ac, char **av)
             std::cout << "create \"" << GEN_DIR_PATH << "\" directory\n";
         }
 
-        
+
         std::cout << "generate scancodes from unicodes conversion tables files into \""
                   << GEN_DIR_PATH
                   << "\" directory...\n";
 
-        LCIDs_t lcids; 
+        LCIDs_t lcids;
         array_view<const Keylayout *> keylayouts = Keymap2::keylayouts();
-        
+
         lcids.reserve(keylayouts.size());
         for (const Keylayout *layout_ptr : keylayouts)
         {
             generate_scancodes_LCID_file(*layout_ptr, lcids);
         }
 
-        
+
         generate_all_LCIDs_scancodes_header_file();
         generate_all_LCIDs_scancodes_source_file(lcids);
     }

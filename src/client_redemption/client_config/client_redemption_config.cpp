@@ -27,7 +27,6 @@
 #include "transport/mwrm_reader.hpp"
 #include "utils/cli.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/redemption_info_version.hpp"

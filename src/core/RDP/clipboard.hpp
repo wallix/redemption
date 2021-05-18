@@ -27,9 +27,9 @@
 #include "core/channel_list.hpp"
 #include "core/stream_throw_helpers.hpp"
 #include "utils/stream.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
 #include <charconv>

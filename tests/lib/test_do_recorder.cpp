@@ -25,7 +25,7 @@
 
 #include "lib/do_recorder.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "transport/crypto_transport.hpp"
 #include "test_only/ostream_buffered.hpp"
 

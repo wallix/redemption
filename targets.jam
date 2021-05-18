@@ -283,6 +283,7 @@ exe scancodes_LCID_files_generator :
   src/main/scancodes_LCID_files_generator.o
 :
   <library>src/keyboard/keymap2.o
+  <library>src/utils/strutils.o
   $(EXE_DEPENDENCIES)
 ;
 exe rdpinichecker :
@@ -575,6 +576,7 @@ test-run tests/RAIL/test_client_execute :
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/RAIL/client_execute.cpp
@@ -596,6 +598,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/acl_serializer.cpp
@@ -610,6 +613,7 @@ test-run tests/acl/test_kv_list_from_strings :
   $(REDEMPTION_TEST_PATH)/acl/test_kv_list_from_strings.cpp
 :
   <library>src/acl/kv_list_from_strings.o
+  <library>src/utils/strutils.o
   <covfile>src/acl/kv_list_from_strings.cpp
   <covfile>src/acl/kv_list_from_strings.hpp
 ;
@@ -806,6 +810,7 @@ test-run tests/capture/test_fdx_capture :
 test-run tests/capture/test_mwrm3 :
   $(REDEMPTION_TEST_PATH)/capture/test_mwrm3.cpp
 :
+  <library>src/utils/strutils.o
   <covfile>src/capture/mwrm3.hpp
 ;
 test-run tests/capture/test_ocr :
@@ -840,6 +845,7 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/drawable.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -1034,6 +1040,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -1712,6 +1719,7 @@ test-run tests/core/RDP/gcc/userdata/test_sc_sec1 :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/sc_sec1.hpp
@@ -1804,6 +1812,7 @@ test-run tests/core/RDP/nla/test_nla :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -1984,6 +1993,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2015,6 +2025,7 @@ test-run tests/core/RDP/test_RefreshRectPDU :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/RefreshRectPDU.hpp
@@ -2065,6 +2076,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2075,6 +2087,7 @@ test-run tests/core/RDP/test_clipboard :
 :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/clipboard.hpp
@@ -2087,6 +2100,7 @@ test-run tests/core/RDP/test_fastpath :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/fastpath.hpp
@@ -2267,6 +2281,7 @@ test-run tests/core/RDP/test_x224 :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/x224.hpp
@@ -2838,6 +2853,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -2864,6 +2880,7 @@ test-run tests/gdi/test_text_metrics :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3080,6 +3097,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -3277,6 +3295,7 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -3397,6 +3416,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3475,6 +3495,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -3504,6 +3525,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -3536,6 +3558,7 @@ test-run tests/mod/internal/widget/test_delegated_copy :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3572,6 +3595,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3611,6 +3635,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3647,6 +3672,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3690,6 +3716,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3773,6 +3800,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3944,6 +3972,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3982,6 +4011,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4016,6 +4046,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4051,6 +4082,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4112,6 +4144,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/language_button.cpp
@@ -4142,6 +4175,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4184,6 +4218,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4221,6 +4256,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4257,6 +4293,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4289,6 +4326,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4369,6 +4407,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4401,6 +4440,7 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4440,6 +4480,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4490,6 +4531,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel_send_and_receive.hpp
@@ -4798,6 +4840,7 @@ test-run tests/mod/rdp/test_rdp_params :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_params.hpp
 ;
@@ -4819,6 +4862,7 @@ test-run tests/mod/test_metrics_hmac :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/metrics_hmac.hpp
 ;
@@ -4871,6 +4915,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   <library>z
@@ -5317,6 +5362,7 @@ test-run tests/transport/test_gzip_compression_transport :
   <library>src/core/error.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -5435,6 +5481,7 @@ test-run tests/transport/test_snappy_compression_transport :
   <library>src/core/error.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/snappy_compression_transport.cpp
@@ -5460,6 +5507,7 @@ test-run tests/transport/test_test_transport :
 :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -5671,6 +5719,7 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/bitmap.cpp
@@ -5730,6 +5779,7 @@ test-run tests/utils/test_channels_authorizations :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -5787,6 +5837,7 @@ test-run tests/utils/test_drawable :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/drawable.cpp
@@ -5808,6 +5859,7 @@ test-run tests/utils/test_drawable_pointer :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/drawable_pointer.cpp
@@ -5867,6 +5919,7 @@ test-run tests/utils/test_ip :
 test-run tests/utils/test_key_qvalue_pairs :
   $(REDEMPTION_TEST_PATH)/utils/test_key_qvalue_pairs.cpp
 :
+  <library>src/utils/strutils.o
   <covfile>src/utils/key_qvalue_pairs.hpp
 ;
 test-run tests/utils/test_line_equation :
@@ -5882,6 +5935,7 @@ test-run tests/utils/test_load_theme :
   <library>src/utils/cfgloader.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/load_theme.o
+  <library>src/utils/strutils.o
   <covfile>src/utils/load_theme.cpp
   <covfile>src/utils/load_theme.hpp
 ;
@@ -5990,6 +6044,7 @@ test-run tests/utils/test_scaled_image24 :
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -6055,6 +6110,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)

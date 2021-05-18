@@ -24,7 +24,7 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "capture/fdx_capture.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "test_only/lcg_random.hpp"
 #include "transport/mwrm_reader.hpp"

@@ -24,7 +24,6 @@
 #include "test_only/transport/test_transport.hpp"
 
 #include "mod/file_validator_service.hpp"
-#include "utils/sugar/algostring.hpp"
 
 
 RED_AUTO_TEST_CASE(file_validatorSendFile)

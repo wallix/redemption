@@ -23,7 +23,7 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "utils/fileutils.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "lib/iametrics.hpp"

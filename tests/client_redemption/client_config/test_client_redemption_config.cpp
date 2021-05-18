@@ -31,7 +31,6 @@
 #include "core/RDP/channels/rdpdr.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/algostring.hpp"
 
 #include <string_view>
 

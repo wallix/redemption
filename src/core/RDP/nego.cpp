@@ -28,7 +28,7 @@
 #include "core/RDP/x224.hpp"
 
 #include "utils/sugar/multisz.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 
 // Protocol Security Negotiation Protocols

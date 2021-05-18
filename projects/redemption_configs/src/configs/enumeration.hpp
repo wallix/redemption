@@ -21,7 +21,7 @@
 #pragma once
 
 #include "configs/type_name.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include <vector>
 #include <algorithm>

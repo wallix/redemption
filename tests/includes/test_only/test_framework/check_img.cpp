@@ -22,6 +22,7 @@
 #include "utils/image_view.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/png.hpp"
+#include "utils/strutils.hpp"
 
 #include <cstring>
 

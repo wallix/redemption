@@ -17,7 +17,7 @@ Product name: redemption, a FLOSS RDP proxy
 Copyright (C) Wallix 2010-2020
 */
 
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 
 #include <boost/test/framework.hpp>
 

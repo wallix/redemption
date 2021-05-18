@@ -19,8 +19,8 @@
 */
 
 #include "mod/metrics.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
+#include "utils/strutils.hpp"
 #include "utils/fileutils.hpp"
 
 #include <cerrno>

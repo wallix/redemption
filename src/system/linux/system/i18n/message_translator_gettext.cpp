@@ -22,8 +22,8 @@
 
 #include "core/app_path.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/strutils.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
 
 #include <cerrno>
 #include <clocale>

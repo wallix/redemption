@@ -23,7 +23,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/utf.hpp"
 
 namespace

@@ -38,6 +38,7 @@
 #include "utils/netutils.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/redirection_info.hpp"
+#include "utils/strutils.hpp"
 #include "utils/theme.hpp"
 #include "utils/cli.hpp"
 #include "utils/cli_chrono.hpp"

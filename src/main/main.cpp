@@ -39,7 +39,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "utils/redemption_info_version.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/cli.hpp"
 

@@ -39,7 +39,6 @@
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
 
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -48,6 +47,7 @@
 
 #include "utils/scaled_image24.hpp"
 #include "utils/colors.hpp"
+#include "utils/strutils.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/stream.hpp"
