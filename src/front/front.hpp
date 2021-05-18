@@ -1025,14 +1025,14 @@ public:
 
     bool has_ocr_pattern_check()
     {
-        return ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str());
+        return ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
+            || ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_notify>());
     }
 
     bool has_kbd_pattern_check()
     {
-        return ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_notify>().c_str());
+        return ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_kill>())
+            || ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_notify>());
     }
 
     bool is_capture_necessary()
@@ -1040,8 +1040,8 @@ public:
         return (this->ini.get<cfg::video::allow_rt_without_recording>()
             || this->ini.get<cfg::globals::is_rec>()
             || !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str()));
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>()));
     }
 
     void show_session_config()

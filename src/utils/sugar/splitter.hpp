@@ -24,6 +24,7 @@
 #include <cstring>
 
 #include "utils/sugar/range.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/sugar/array.hpp"
 
 
@@ -149,15 +150,12 @@ inline splitter<char *> get_line(char * s, char sep = '\n') /*NOLINT*/
     return {s, s+strlen(s), sep};
 }
 
-inline splitter<char const *> get_line(std::string const & s, char sep = '\n') /*NOLINT*/
+inline splitter<char const *> get_line(chars_view s, char sep = '\n') /*NOLINT*/
 {
-    return {s.data(), s.data()+s.size(), sep};
+    return {s.begin(), s.end(), sep};
 }
 
-inline splitter<char *> get_line(std::string & s, char sep = '\n') /*NOLINT*/
+inline splitter<char *> get_line(writable_chars_view s, char sep = '\n') /*NOLINT*/
 {
-    return {&s[0], &s[0]+s.size(), sep};
+    return {s.begin(), s.end(), sep};
 }
-
-splitter<char *> get_line(std::string && s, char sep = '\n') = delete; /*NOLINT*/
-splitter<char const *> get_line(std::string const && s, char sep = '\n') = delete; /*NOLINT*/

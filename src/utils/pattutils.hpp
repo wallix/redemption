@@ -22,6 +22,7 @@
 
 #include "utils/sugar/array_view.hpp"
 
+#include <string_view>
 
 struct PatternValue
 {
@@ -37,6 +38,6 @@ constexpr char string_pattern_separator = '\x01';
 
 PatternValue get_pattern_value(chars_view pattern_rule);
 
-bool contains_ocr_pattern(const char * soh_separated_patterns);
-bool contains_kbd_pattern(const char * soh_separated_patterns);
-bool contains_kbd_or_ocr_pattern(const char * soh_separated_patterns);
+bool contains_ocr_pattern(chars_view soh_separated_patterns);
+bool contains_kbd_pattern(chars_view soh_separated_patterns);
+bool contains_kbd_or_ocr_pattern(chars_view soh_separated_patterns);

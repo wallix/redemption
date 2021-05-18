@@ -215,7 +215,7 @@ struct writable_array_view
 
     explicit constexpr writable_array_view(pointer first, pointer last) noexcept
     : p(first)
-    , sz(last - first)
+    , sz(checked_int{last - first})
     {}
 
     template<class U, class = typename detail::filter_dangerous_implicit_array_view<U, decltype(
