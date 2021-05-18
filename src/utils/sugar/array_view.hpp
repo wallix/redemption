@@ -57,6 +57,19 @@ namespace detail
     template<class T>
     using value_type_array_view_from_t
         = std::remove_cv_t<std::remove_pointer_t<decltype(utils::data(std::declval<T>()))>>;
+
+    template<class U>
+    constexpr bool is_convertible_with_two_ptr(...)
+    {
+        return false;
+    }
+
+    template<class U, class P>
+    constexpr auto is_convertible_with_two_ptr(P)
+    -> decltype(bool(((void)U(P(), P()), true)))
+    {
+        return true;
+    }
 } // namespace detail
 
 template<class T>
@@ -172,7 +185,10 @@ struct array_view
     template<class C>
     C as() const
     {
-        return C(this->begin(), this->end());
+        if constexpr (detail::is_convertible_with_two_ptr<C>(pointer()))
+            return C(this->begin(), this->end());
+        else
+            return C(this->data(), this->size());
     }
     //@}
 
@@ -347,7 +363,10 @@ struct writable_array_view
     template<class C>
     C as() const
     {
-        return C(this->begin(), this->end());
+        if constexpr (detail::is_convertible_with_two_ptr<C>(pointer()))
+            return C(this->begin(), this->end());
+        else
+            return C(this->data(), this->size());
     }
     //@}
 
