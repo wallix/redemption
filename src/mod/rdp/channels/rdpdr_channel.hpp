@@ -292,6 +292,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             this->effective_disable_session_probe_drive();
         }
 
+    private:
         void effective_disable_session_probe_drive() {
             if (this->user_logged_on &&
                 !this->waiting_for_server_device_announce_response &&
@@ -304,6 +305,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             }
         }
 
+    public:
         std::string const * get_device_name(uint32_t DeviceId) {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
