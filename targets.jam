@@ -1395,13 +1395,6 @@ test-run tests/core/FSCC/test_FileInformation :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/FSCC/FileInformation.hpp
 ;
-test-run tests/core/HTTP/test_http_parser :
-  $(REDEMPTION_TEST_PATH)/core/HTTP/test_http_parser.cpp
-:
-  <library>src/core/HTTP/http_parser.o
-  <covfile>src/core/HTTP/http_parser.cpp
-  <covfile>src/core/HTTP/http_parser.hpp
-;
 test-run tests/core/RDP/caches/test_bmpcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_bmpcache.cpp
 :
@@ -5603,11 +5596,6 @@ test-run tests/utils/sugar/test_int_to_chars :
 :
   <covfile>src/utils/sugar/int_to_chars.hpp
 ;
-test-run tests/utils/sugar/test_iter :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_iter.cpp
-:
-  <covfile>src/utils/sugar/iter.hpp
-;
 test-run tests/utils/sugar/test_movable_noncopyable :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_movable_noncopyable.cpp
 :
@@ -6118,7 +6106,6 @@ obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTIO
 obj src/client_redemption/client_input_output_api/rdp_clipboard_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_clipboard_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_disk_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_disk_config.cpp ;
 obj src/client_redemption/pointer_to_rgba8888.o : $(REDEMPTION_SRC_PATH)/client_redemption/pointer_to_rgba8888.cpp ;
-obj src/core/HTTP/http_parser.o : $(REDEMPTION_SRC_PATH)/core/HTTP/http_parser.cpp ;
 obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
@@ -6297,7 +6284,6 @@ alias test_client_remoteapp_channel : tests/client_redemption/client_channels/te
 alias test_client_redemption_config : tests/client_redemption/client_config/test_client_redemption_config ;
 alias test_pointer_to_rgba888 : tests/client_redemption/test_pointer_to_rgba888 ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
-alias test_http_parser : tests/core/HTTP/test_http_parser ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
 alias test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister ;
 alias test_brushcache : tests/core/RDP/caches/test_brushcache ;
@@ -6559,7 +6545,6 @@ alias test_cast : tests/utils/sugar/test_cast ;
 alias test_checked_iterator : tests/utils/sugar/test_checked_iterator ;
 alias test_finally : tests/utils/sugar/test_finally ;
 alias test_int_to_chars : tests/utils/sugar/test_int_to_chars ;
-alias test_iter : tests/utils/sugar/test_iter ;
 alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_multisz : tests/utils/sugar/test_multisz ;
 alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
@@ -6646,7 +6631,6 @@ alias test_client_rdpsnd_channel.coverage : tests/client_redemption/client_chann
 alias test_client_remoteapp_channel.coverage : tests/client_redemption/client_channels/test_client_remoteapp_channel.coverage ;
 alias test_client_redemption_config.coverage : tests/client_redemption/client_config/test_client_redemption_config.coverage ;
 alias test_FileInformation.coverage : tests/core/FSCC/test_FileInformation.coverage ;
-alias test_http_parser.coverage : tests/core/HTTP/test_http_parser.coverage ;
 alias test_bmpcache.coverage : tests/core/RDP/caches/test_bmpcache.coverage ;
 alias test_bmpcachepersister.coverage : tests/core/RDP/caches/test_bmpcachepersister.coverage ;
 alias test_brushcache.coverage : tests/core/RDP/caches/test_brushcache.coverage ;
@@ -6897,7 +6881,6 @@ alias test_cast.coverage : tests/utils/sugar/test_cast.coverage ;
 alias test_checked_iterator.coverage : tests/utils/sugar/test_checked_iterator.coverage ;
 alias test_finally.coverage : tests/utils/sugar/test_finally.coverage ;
 alias test_int_to_chars.coverage : tests/utils/sugar/test_int_to_chars.coverage ;
-alias test_iter.coverage : tests/utils/sugar/test_iter.coverage ;
 alias test_movable_noncopyable.coverage : tests/utils/sugar/test_movable_noncopyable.coverage ;
 alias test_multisz.coverage : tests/utils/sugar/test_multisz.coverage ;
 alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
@@ -7007,9 +6990,6 @@ alias tests/client_redemption.norec :
 ;
 alias tests/core/FSCC.norec :
   tests/core/FSCC/test_FileInformation
-;
-alias tests/core/HTTP.norec :
-  tests/core/HTTP/test_http_parser
 ;
 alias tests/core/RDP/caches.norec :
   tests/core/RDP/caches/test_bmpcache
@@ -7345,7 +7325,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_checked_iterator
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_int_to_chars
-  tests/utils/sugar/test_iter
   tests/utils/sugar/test_movable_noncopyable
   tests/utils/sugar/test_multisz
   tests/utils/sugar/test_noncopyable
@@ -7467,15 +7446,11 @@ alias tests/core/FSCC :
 ;
 alias tests/core :
   tests/core/FSCC
-  tests/core/HTTP
   tests/core/RDP
   tests/core/RDPEA
   tests/core/SMB2
   tests/core/WMF
   tests/core.norec
-;
-alias tests/core/HTTP :
-  tests/core/HTTP.norec
 ;
 alias tests/core/RDP/caches :
   tests/core/RDP/caches.norec
@@ -7630,7 +7605,6 @@ explicit
   tests/client_redemption/client_config.norec
   tests/client_redemption.norec
   tests/core/FSCC.norec
-  tests/core/HTTP.norec
   tests/core/RDP/caches.norec
   tests/core/RDP/capabilities.norec
   tests/core/RDP/channels.norec
@@ -7685,7 +7659,6 @@ explicit
   tests/client_redemption/client_config
   tests/core/FSCC
   tests/core
-  tests/core/HTTP
   tests/core/RDP/caches
   tests/core/RDP
   tests/core/RDP/capabilities
