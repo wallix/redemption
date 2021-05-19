@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
         switch (num) {
         case 0:
             RED_REQUIRE_MESSAGE(timeout.tv_sec, "woke up on timeout");
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         default:
         {
             if (io_fd_isset(client_sck, wfds)){

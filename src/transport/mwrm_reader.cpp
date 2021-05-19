@@ -425,7 +425,7 @@ private:
             case '\\':
             case ' ':
                 writer.mes[writer.len++] = '\\';
-                REDEMPTION_CXX_FALLTHROUGH;
+                [[fallthrough]];
             default:
                 writer.mes[writer.len++] = filename[i];
             break;

@@ -190,7 +190,7 @@ void WidgetPassword::rdp_input_scancode(
         case Keymap2::KEVENT_DELETE:
         case Keymap2::KEVENT_KEY:
             this->set_masked_text();
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         case Keymap2::KEVENT_LEFT_ARROW:
         case Keymap2::KEVENT_UP_ARROW:
         case Keymap2::KEVENT_RIGHT_ARROW:

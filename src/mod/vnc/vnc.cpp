@@ -736,7 +736,7 @@ bool mod_vnc::treatVeNCrypt() {
         }
         this->vencryptState = WAIT_VENCRYPT_SUBTYPES;
         this->server_data_buf.advance(1);
-        REDEMPTION_CXX_FALLTHROUGH;
+        [[fallthrough]];
     }
 
     case WAIT_VENCRYPT_SUBTYPES: {
@@ -919,7 +919,7 @@ bool mod_vnc::draw_event_impl()
 
             this->state = WAIT_SECURITY_TYPES_LEVEL;
         }
-        REDEMPTION_CXX_FALLTHROUGH;
+        [[fallthrough]];
 
     case WAIT_SECURITY_TYPES_LEVEL:
         {
@@ -1122,7 +1122,7 @@ bool mod_vnc::draw_event_impl()
             IF_ENABLE_METRICS(data_from_client(16));
         }
         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;
-        REDEMPTION_CXX_FALLTHROUGH;
+        [[fallthrough]];
 
     case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE:
         {
@@ -1157,7 +1157,7 @@ bool mod_vnc::draw_event_impl()
             this->ms_logon_ctx.restart();
         }
         this->state = WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE;
-        REDEMPTION_CXX_FALLTHROUGH;
+        [[fallthrough]];
 
     case WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE:
         {
@@ -1236,7 +1236,7 @@ bool mod_vnc::draw_event_impl()
         this->t.send("\x01", 1); // share flag
         IF_ENABLE_METRICS(data_from_client(1));
         this->state = SERVER_INIT_RESPONSE;
-        REDEMPTION_CXX_FALLTHROUGH;
+        [[fallthrough]];
 
     case SERVER_INIT_RESPONSE:
         {
@@ -1482,7 +1482,7 @@ bool mod_vnc::draw_event_impl()
                 this->rail_client_execute->adjust_window_to_mod();
             }
             // RZ: Continue with FrontAPI::ResizeResult::no_need
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         case FrontAPI::ResizeResult::no_need:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
             // no resizing needed

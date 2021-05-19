@@ -631,7 +631,7 @@ void decompress_(
                     mask = 1;
                     fom_mask = input[0]; input++;
                 }
-                REDEMPTION_CXX_FALLTHROUGH;
+                [[fallthrough]];
             case SPECIAL_FGBG_1:
             case SPECIAL_FGBG_2:
                 if (mask & fom_mask){

@@ -420,7 +420,7 @@ void set_rows_from_image_chunk(
             break;
             case WrmChunkType::LAST_IMAGE_CHUNK:
                 msg_error = "Failed to read embedded image from WRM (transport closed)";
-                REDEMPTION_CXX_FALLTHROUGH;
+                [[fallthrough]];
             default:
                 LOG(LOG_ERR, "%s", msg_error);
                 png_error(png_ptr, msg_error);

@@ -111,27 +111,27 @@ public:
     /// returned value is either true is read was successful
     /// or false if nothing was read (End of File reached at block frontier)
     /// if an exception is thrown buffer is dirty and may have been modified.
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     Read atomic_read(writable_byte_ptr buffer, size_t len)
     {
         return this->do_atomic_read(buffer.as_u8p(), len);
     }
 
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     Read atomic_read(writable_buffer_view buffer)
     {
         return this->do_atomic_read(buffer.as_u8p(), buffer.size());
     }
 
     // TODO returns writable_bytes_view
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     size_t partial_read(writable_byte_ptr buffer, size_t len)
     {
         return this->do_partial_read(buffer.as_u8p(), len);
     }
 
     // TODO returns writable_bytes_view
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     size_t partial_read(writable_buffer_view buffer)
     {
         return this->do_partial_read(buffer.as_u8p(), buffer.size());
@@ -210,10 +210,10 @@ struct InTransport
     void recv_boom(writable_byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
     void recv_boom(writable_buffer_view buffer) { this->t.recv_boom(buffer); }
 
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     Transport::Read atomic_read(writable_byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
 
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     size_t partial_read(writable_byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
 
     Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
@@ -230,9 +230,6 @@ struct InTransport
     bool connect() { return this->t.connect(); }
     bool next() { return this->t.next(); }
     [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
-
-    REDEMPTION_ATTRIBUTE_DEPRECATED
-    [[nodiscard]] Transport & get_transport() const { return this->t; }
 
 private:
     Transport & t;
@@ -262,7 +259,7 @@ struct OutTransport
     bool next() { return this->t.next(); }
     [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 
-    // TODO REDEMPTION_ATTRIBUTE_DEPRECATED
+    // TODO [[deprecated]]
     [[nodiscard]] Transport & get_transport() const { return this->t; }
 
 private:

@@ -307,7 +307,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char *filename)
                 break;
             case 8:
                 file_Qpp = 2;
-                REDEMPTION_CXX_FALLTHROUGH;
+                [[fallthrough]];
             case 4:
                 assert(header.clr_used * 4 <= 8192);
                 if (not read_all(fd, stream_data, header.clr_used * 4)){

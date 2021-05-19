@@ -51,6 +51,7 @@ struct zstring_view
     {}
 
     static constexpr zstring_view from_null_terminated(char const* s, std::size_t n) noexcept
+        REDEMPTION_ATTRIBUTE_NONNULL_ARGS
     {
         return zstring_view(s, n);
     }
@@ -61,16 +62,21 @@ struct zstring_view
     }
 
     static constexpr zstring_view from_null_terminated(char const* s) noexcept
+        REDEMPTION_ATTRIBUTE_NONNULL_ARGS
     {
         return from_null_terminated(std::string_view(s));
     }
 
-    [[nodiscard]] constexpr char const* c_str() const noexcept { return data(); }
+    [[nodiscard]] constexpr char const* c_str() const noexcept REDEMPTION_ATTRIBUTE_RETURNS_NONNULL
+    { return data(); }
 
     // TODO temporary ?
-    constexpr operator char const* () const noexcept { return c_str(); }
+    constexpr operator char const* () const noexcept REDEMPTION_ATTRIBUTE_RETURNS_NONNULL
+    { return c_str(); }
 
-    [[nodiscard]] constexpr char const * data() const noexcept { return this->s; }
+    [[nodiscard]] constexpr char const * data() const noexcept REDEMPTION_ATTRIBUTE_RETURNS_NONNULL
+    { return this->s; }
+
     [[nodiscard]] constexpr std::size_t size() const noexcept { return this->len; }
 
     constexpr char operator[](std::size_t i) const noexcept
@@ -81,8 +87,10 @@ struct zstring_view
 
     [[nodiscard]] constexpr bool empty() const noexcept { return !this->len; }
 
-    [[nodiscard]] constexpr char const * begin() const noexcept { return this->data(); }
-    [[nodiscard]] constexpr char const * end() const noexcept { return this->data() + this->size(); }
+    [[nodiscard]] constexpr char const * begin() const noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
+    { return this->data(); }
+    [[nodiscard]] constexpr char const * end() const noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
+    { return this->data() + this->size(); }
 
     [[nodiscard]] constexpr std::string_view to_sv() const noexcept
     {
@@ -95,14 +103,14 @@ struct zstring_view
     }
 
 private:
-    constexpr zstring_view(char const* s, std::size_t n) noexcept
+    constexpr zstring_view(char const* s, std::size_t n) noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
     : s(s)
     , len(n)
     {
         assert(s[len] == 0);
     }
 
-    char const* s = nullptr;
+    char const* s = "";
     std::size_t len = 0;
 };
 

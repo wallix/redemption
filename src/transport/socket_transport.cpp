@@ -123,7 +123,7 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
                 return Transport::TlsResult::Fail;
             }
             this->tls_state = TLSState::Want;
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         case TLSState::Want: {
             Transport::TlsResult ret = this->tls->enable_client_tls_loop(this->error_message);
             switch (ret) {

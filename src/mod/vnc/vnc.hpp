@@ -354,7 +354,7 @@ public:
                     if (this->state != State::Data) {
                         return false;
                     }
-                    REDEMPTION_CXX_FALLTHROUGH;
+                    [[fallthrough]];
                 case State::Data:
                     this->state = this->read_data(buf, f);
                     if (this->state == State::Size) {
@@ -496,7 +496,7 @@ public:
                     else {
                         return false;
                     }
-                    REDEMPTION_CXX_FALLTHROUGH;
+                    [[fallthrough]];
                 case State::ReasonFail:
                     return this->reason.run(buf, [&f](u8_array_view av){ f(false, av); });
                 case State::Finish:
@@ -709,7 +709,7 @@ public:
                 if (this->state != State::EncodingName) {
                     break;
                 }
-                REDEMPTION_CXX_FALLTHROUGH;
+                [[fallthrough]];
             case State::EncodingName:
                 this->state = this->read_encoding_name(buf, vnc);
                 if (this->state == State::PixelFormat) {

@@ -179,7 +179,7 @@ bool FileToGraphic::next_order()
                     this->statistics.bitmap_update_chunk++;   break;
                 case WrmChunkType::TIMESTAMP_OR_RECORD_DELAY:
                     this->statistics.timestamp_chunk.count++;
-                    REDEMPTION_CXX_FALLTHROUGH;
+                    [[fallthrough]];
                 case WrmChunkType::TIMES:
                 case WrmChunkType::META_FILE:
                 case WrmChunkType::SAVE_STATE:

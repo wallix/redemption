@@ -374,7 +374,7 @@ inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, cons
         case Transport::TlsResult::Want: return false;
         case Transport::TlsResult::Fail:
             LOG(LOG_ERR, "enable_client_tls fail");
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         case Transport::TlsResult::Ok: break;
     }
     return true;

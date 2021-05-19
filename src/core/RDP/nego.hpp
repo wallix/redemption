@@ -88,7 +88,7 @@ private:
     std::string& extra_message;
     Language lang;
 
-    enum class /*REDEMPTION_CXX_NODISCARD*/ State
+    enum class /*[[nodiscard]]*/ State
     {
         Negociate,
         SslHybrid,
@@ -126,7 +126,7 @@ public:
 
     /**
      * \brief Set the identity used for authenticating.
-     * 
+     *
      * \param[in] username User name.
      * \param[in] password User password.
      * \param[in] domain Domain name.
@@ -150,7 +150,7 @@ public:
     }
 
     /// \return false if terminal state
-    REDEMPTION_CXX_NODISCARD
+    [[nodiscard]]
     bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& notifier);
 
 private:

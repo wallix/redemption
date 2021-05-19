@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "cxx/cxx.hpp"
+
 #include <cassert>
 
 
@@ -33,7 +35,8 @@ struct not_null_ptr
     not_null_ptr(decltype(nullptr)) = delete;
     not_null_ptr(int) = delete;
 
-    not_null_ptr(T * ptr) noexcept {
+    not_null_ptr(T * ptr) noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
+    {
         *this = ptr;
     }
 
@@ -42,7 +45,8 @@ struct not_null_ptr
     not_null_ptr& operator = (decltype(nullptr)) noexcept = delete;
     not_null_ptr& operator = (int) noexcept = delete;
 
-    not_null_ptr& operator = (T * ptr) noexcept {
+    not_null_ptr& operator = (T * ptr) noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
+    {
         assert(ptr);
         this->ptr_ = ptr;
         return *this;
@@ -51,10 +55,12 @@ struct not_null_ptr
     not_null_ptr& operator = (not_null_ptr const &) noexcept = default;
 
 
-    [[nodiscard]] T * get() const noexcept { return this->ptr_; }
+    [[nodiscard]] T * get() const noexcept REDEMPTION_ATTRIBUTE_RETURNS_NONNULL { return this->ptr_; }
+
     T & operator*() const noexcept { return *this->ptr_; }
-    T * operator->() const noexcept { return this->ptr_; }
-    operator T * () const noexcept { return this->ptr_; }
+
+    T * operator->() const noexcept REDEMPTION_ATTRIBUTE_RETURNS_NONNULL { return this->ptr_; }
+    operator T * () const noexcept REDEMPTION_ATTRIBUTE_RETURNS_NONNULL { return this->ptr_; }
 
 private:
     T * ptr_;
