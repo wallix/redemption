@@ -70,6 +70,19 @@ namespace detail
     {
         return true;
     }
+
+    template<template<class...> class U>
+    constexpr bool is_convertible_with_two_ptr(...)
+    {
+        return false;
+    }
+
+    template<template<class...> class U, class P>
+    constexpr auto is_convertible_with_two_ptr(P)
+    -> decltype(bool(((void)U(P(), P()), true)))
+    {
+        return true;
+    }
 } // namespace detail
 
 template<class T>
@@ -184,6 +197,15 @@ struct array_view
 
     template<class C>
     C as() const
+    {
+        if constexpr (detail::is_convertible_with_two_ptr<C>(pointer()))
+            return C(this->begin(), this->end());
+        else
+            return C(this->data(), this->size());
+    }
+
+    template<template<class...> class C>
+    auto as() const
     {
         if constexpr (detail::is_convertible_with_two_ptr<C>(pointer()))
             return C(this->begin(), this->end());

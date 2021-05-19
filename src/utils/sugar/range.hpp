@@ -76,6 +76,18 @@ struct range
             return T(begin(), end());
         }
     }
+
+    template<template<class...> class T>
+    auto as() const
+    {
+        if constexpr (std::is_pointer_v<It>) {
+            array_view av(begin(), end());
+            return av.template as<T>();
+        }
+        else {
+            return T(begin(), end());
+        }
+    }
 };
 
 template<class Cont>

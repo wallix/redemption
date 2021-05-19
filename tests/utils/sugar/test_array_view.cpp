@@ -24,6 +24,7 @@
 #include "cxx/diagnostic.hpp"
 #include "utils/sugar/array_view.hpp"
 
+#include <vector>
 #include <string>
 #include <string_view>
 
@@ -109,46 +110,46 @@ RED_AUTO_TEST_CASE(TestArrayView)
     RED_CHECK(chars_view{nullptr}.empty());
 
     {
-    char ca8[3] = {'x', 'y', 'z'};
-    const char * left = &ca8[1];
-    char * right = &ca8[2];
-    auto const avi = make_array_view(left, right);
+        char ca8[3] = {'x', 'y', 'z'};
+        const char * left = &ca8[1];
+        char * right = &ca8[2];
+        auto const avi = make_array_view(left, right);
 
-    RED_CHECK_EQUAL(avi.size(), 1u);
-    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
+        RED_CHECK_EQUAL(avi.size(), 1u);
+        RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
-    char ca8[] = {'x', 'y', 'z', 't'};
-    const char * left = &ca8[1];
-    auto const avi = make_array_view(left, 2);
+        char ca8[] = {'x', 'y', 'z', 't'};
+        const char * left = &ca8[1];
+        auto const avi = make_array_view(left, 2);
 
-    RED_CHECK_EQUAL(avi.size(), 2u);
-    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
+        RED_CHECK_EQUAL(avi.size(), 2u);
+        RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
-    char ca8[] = {'x', 'y', 'z', 't'};
-    const char * left = &ca8[1];
-    const char * right = &ca8[1];
-    auto const avi = make_array_view(left, right);
+        char ca8[] = {'x', 'y', 'z', 't'};
+        const char * left = &ca8[1];
+        const char * right = &ca8[1];
+        auto const avi = make_array_view(left, right);
 
-    RED_CHECK_EQUAL(avi.size(), 0u);
-    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
+        RED_CHECK_EQUAL(avi.size(), 0u);
+        RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
-    const char ca8[] = {'x', 'y', 'z', 't'};
-    auto const avi = make_array_view(ca8);
+        const char ca8[] = {'x', 'y', 'z', 't'};
+        auto const avi = make_array_view(ca8);
 
-    RED_CHECK_EQUAL(avi.size(), 4u);
-    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
+        RED_CHECK_EQUAL(avi.size(), 4u);
+        RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
     }
 
     {
-    auto const avi = cstr_array_view("0123456789");
-    RED_CHECK_EQUAL(avi.size(), 10u);
-//    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
+        auto const avi = cstr_array_view("0123456789");
+        RED_CHECK_EQUAL(avi.size(), 10u);
+        RED_CHECK_EQUAL(voidp(avi.data()), voidp(&avi[0]));
     }
 }
 
@@ -162,6 +163,49 @@ RED_AUTO_TEST_CASE(TestSubArray)
     RED_CHECK_EQUAL_RANGES(a.from_offset(3), cstr_array_view("d"));
     RED_CHECK_EQUAL_RANGES(a.from_offset(1), cstr_array_view("bcd"));
     RED_CHECK_EQUAL_RANGES(a.subarray(1, 2), cstr_array_view("bc"));
+}
+
+namespace
+{
+    template<class T>
+    struct ptr_ptr
+    {
+        ptr_ptr(T* p1, T* p2) : p1(p1), p2(p2) {}
+        T* p1;
+        T* p2;
+    };
+
+    template<class T>
+    struct ptr_size
+    {
+        ptr_size(T* p, std::size_t n) : p(p), n(n) {}
+        T* p;
+        std::size_t n;
+    };
+}
+
+RED_AUTO_TEST_CASE(TestArrayView_as)
+{
+    auto a = cstr_array_view("abcd");
+
+    auto x1 = a.as<ptr_ptr<char const>>();
+    RED_CHECK(voidp(x1.p1) == voidp(a.begin()));
+    RED_CHECK(voidp(x1.p2) == voidp(a.end()));
+
+    auto x2 = a.as<ptr_ptr>();
+    RED_CHECK(voidp(x2.p1) == voidp(a.begin()));
+    RED_CHECK(voidp(x2.p2) == voidp(a.end()));
+
+    auto y1 = a.as<ptr_size<char const>>();
+    RED_CHECK(voidp(y1.p) == voidp(a.data()));
+    RED_CHECK(y1.n == a.size());
+
+    auto y2 = a.as<ptr_size>();
+    RED_CHECK(voidp(y2.p) == voidp(a.data()));
+    RED_CHECK(y2.n == a.size());
+
+    using vec_t = decltype(a.as<std::vector>());
+    std::vector<char> v = vec_t(); // std::is_same
 }
 
 template<class T>
