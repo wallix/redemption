@@ -32,7 +32,6 @@
 #include "mod/file_validator_service.hpp"
 #include "mod/rdp/params/rdp_session_probe_params.hpp"
 #include "mod/rdp/params/rdp_application_params.hpp"
-#include "mod/metrics_hmac.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
@@ -40,6 +39,7 @@
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
+#include "acl/module_manager/create_module_metrics.hpp"
 #include "acl/connect_to_target_host.hpp"
 #include "transport/failure_simulation_socket_transport.hpp"
 #include "transport/socket_transport.hpp"
@@ -83,12 +83,7 @@ ChannelsAuthorizations make_channels_authorizations(Inifile const& ini)
 
 struct RdpData
 {
-    struct ModMetrics : Metrics
-    {
-        using Metrics::Metrics;
-
-        RDPMetrics protocol_metrics{*this};
-    };
+    using ModRdpMetrics = ModMetrics<RDPMetrics>;
 
     struct FileValidator
     {
@@ -159,18 +154,11 @@ public:
 
     ~RdpData() = default;
 
-    void set_metrics(std::unique_ptr<ModMetrics> && metrics, std::chrono::seconds log_interval)
+    void set_metrics(std::unique_ptr<ModRdpMetrics> && metrics, std::chrono::seconds log_interval)
     {
         assert(!this->metrics);
         this->metrics = std::move(metrics);
-        this->events_guard.create_event_timeout(
-            "RDP Metrics Timer",
-            log_interval,
-            [this,log_interval](Event& event)
-            {
-                event.alarm.reset_timeout(log_interval);
-                this->metrics->log(event.alarm.now, this->events_guard.get_time_base().real_time);
-            });
+        this->metrics->timed_log(this->events_guard, log_interval, "RDP Metrics Timer");
     }
 
     void set_file_validator(std::unique_ptr<RdpData::FileValidator>&& file_validator, mod_rdp& mod)
@@ -187,7 +175,7 @@ public:
     }
 
 private:
-    std::unique_ptr<ModMetrics> metrics;
+    std::unique_ptr<ModRdpMetrics> metrics;
 
     EventsGuard events_guard;
 
@@ -774,31 +762,9 @@ ModPack create_mod_rdp(
     bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-    std::unique_ptr<RdpData::ModMetrics> metrics;
-
-    if (enable_metrics) {
-        metrics = std::make_unique<RdpData::ModMetrics>(
-            ini.get<cfg::metrics::log_dir_path>().as_string(),
-            ini.get<cfg::context::session_id>(),
-            hmac_user(
-                ini.get<cfg::globals::auth_user>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_account(
-                ini.get<cfg::globals::target_user>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_device_service(
-                ini.get<cfg::globals::target_device>(),
-                ini.get<cfg::context::target_service>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_client_info(
-                ini.get<cfg::globals::host>(),
-                client_info.screen_info,
-                ini.get<cfg::metrics::sign_key>()),
-            events.get_monotonic_time(),
-            events.get_time_base().real_time,
-            ini.get<cfg::metrics::log_file_turnover_interval>(),
-            ini.get<cfg::metrics::log_interval>());
-    }
+    auto metrics = (!enable_metrics)
+        ? std::unique_ptr<RdpData::ModRdpMetrics>()
+        : RdpData::ModRdpMetrics::make_unique(events, ini, client_info.screen_info);
     // ================== End Metrics ======================
 
 

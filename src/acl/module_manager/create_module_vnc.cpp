@@ -32,6 +32,7 @@
 #include "transport/socket_transport.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
+#include "acl/module_manager/create_module_metrics.hpp"
 #include "acl/connect_to_target_host.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "RAIL/client_execute.hpp"
@@ -42,12 +43,7 @@ namespace
 
 struct VncData
 {
-    struct ModMetrics : Metrics
-    {
-        using Metrics::Metrics;
-
-        VNCMetrics protocol_metrics{*this};
-    };
+    using ModVncMetrics = ModMetrics<VNCMetrics>;
 
     VncData(EventContainer & events)
     : events_guard(events)
@@ -55,22 +51,15 @@ struct VncData
 
     ~VncData() = default;
 
-    void set_metrics(std::unique_ptr<ModMetrics> && metrics, std::chrono::seconds log_interval)
+    void set_metrics(std::unique_ptr<ModVncMetrics> && metrics, std::chrono::seconds log_interval)
     {
         assert(!this->metrics);
         this->metrics = std::move(metrics);
-        this->events_guard.create_event_timeout(
-            "VNC Metrics Timer",
-            log_interval,
-            [this,log_interval](Event& event)
-            {
-                event.alarm.reset_timeout(log_interval);
-                this->metrics->log(event.alarm.now, this->events_guard.get_time_base().real_time);
-            });
+        this->metrics->timed_log(this->events_guard, log_interval, "VNC Metrics Timer");
     }
 
 private:
-    std::unique_ptr<ModMetrics> metrics;
+    std::unique_ptr<ModVncMetrics> metrics;
 
     EventsGuard events_guard;
 };
@@ -260,31 +249,9 @@ ModPack create_mod_vnc(
     bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-    std::unique_ptr<VncData::ModMetrics> metrics;
-
-    if (enable_metrics) {
-        metrics = std::make_unique<VncData::ModMetrics>(
-            ini.get<cfg::metrics::log_dir_path>().as_string(),
-            ini.get<cfg::context::session_id>(),
-            hmac_user(
-                ini.get<cfg::globals::auth_user>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_account(
-                ini.get<cfg::globals::target_user>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_device_service(
-                ini.get<cfg::globals::target_device>(),
-                ini.get<cfg::context::target_service>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_client_info(
-                ini.get<cfg::globals::host>(),
-                client_info.screen_info,
-                ini.get<cfg::metrics::sign_key>()),
-            events.get_monotonic_time(),
-            events.get_time_base().real_time,
-            ini.get<cfg::metrics::log_file_turnover_interval>(),
-            ini.get<cfg::metrics::log_interval>());
-    }
+    auto metrics = (!enable_metrics)
+        ? std::unique_ptr<VncData::ModVncMetrics>()
+        : VncData::ModVncMetrics::make_unique(events, ini, client_info.screen_info);
 
     const auto vnc_verbose = safe_cast<VNCVerbose>(ini.get<cfg::debug::mod_vnc>());
 
