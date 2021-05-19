@@ -1699,7 +1699,7 @@ public:
 #endif
 };
 
-class mod_rdp : public mod_api, public rdp_api
+class mod_rdp final : public mod_api, public rdp_api
 {
 #ifndef __EMSCRIPTEN__
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks

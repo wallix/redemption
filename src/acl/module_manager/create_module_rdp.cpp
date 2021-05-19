@@ -275,7 +275,7 @@ public:
         )
     : socket_transport_ptr([](
             ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport,
-            const char * name, unique_fd sck, const char *ip_address, unsigned port,
+            const char * name, unique_fd sck, const char *ip_address, int port,
             std::chrono::milliseconds recv_timeout, SocketTransport::Verbose verbose,
             std::string * error_message
         ) -> SocketTransport* {
@@ -296,7 +296,7 @@ public:
             );
         }( use_failure_simulation_socket_transport, name, std::move(sck)
          , ini.get<cfg::context::target_host>().c_str()
-         , ini.get<cfg::context::target_port>()
+         , checked_int(ini.get<cfg::context::target_port>())
          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
          , verbose, error_message))
     , mod(*this->socket_transport_ptr, gd

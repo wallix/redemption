@@ -40,7 +40,7 @@
 namespace
 {
 
-struct ModVNCWithMetrics : public mod_vnc
+struct VncData
 {
     struct ModMetrics : Metrics
     {
@@ -49,12 +49,12 @@ struct ModVNCWithMetrics : public mod_vnc
         VNCMetrics protocol_metrics{*this};
     };
 
-private:
-    std::unique_ptr<ModMetrics> metrics;
+    VncData(EventContainer & events)
+    : events_guard(events)
+    {}
 
-    EventsGuard events_guard;
+    ~VncData() = default;
 
-public:
     void set_metrics(std::unique_ptr<ModMetrics> && metrics, std::chrono::seconds log_interval)
     {
         assert(!this->metrics);
@@ -69,62 +69,36 @@ public:
             });
     }
 
-    ModVNCWithMetrics(Transport & t
-           , gdi::GraphicApi & gd
-           , EventContainer & events
-           , const char * username
-           , const char * password
-           , FrontAPI & front
-           // TODO: front width and front height should be provided through info
-           , uint16_t front_width
-           , uint16_t front_height
-           , int keylayout
-           , int key_flags
-           , bool clipboard_up
-           , bool clipboard_down
-           , const char * encodings
-           , ClipboardEncodingType clipboard_server_encoding_type
-           , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , bool server_is_macos
-           , bool server_is_unix
-           , bool cursor_pseudo_encoding_supported
-           , ClientExecute* rail_client_execute
-           , VNCVerbose verbose
-           , VNCMetrics * metrics
-           , SessionLogApi& session_log)
-    : mod_vnc(
-        t, gd, events, username, password,
-        front, front_width, front_height,
-        keylayout, key_flags, clipboard_up, clipboard_down, encodings,
-        clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
-        server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
-        rail_client_execute, verbose, metrics, session_log)
-    , events_guard(events)
-    {
-    }
+private:
+    std::unique_ptr<ModMetrics> metrics;
 
-    ~ModVNCWithMetrics() = default;
-
-    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+    EventsGuard events_guard;
 };
 
 
-class ModWithSocketAndMetrics final : public mod_api
+class ModVNCWithSocketAndMetrics final : public mod_api
 {
     struct FinalSocketTransport final : SocketTransport
     {
         using SocketTransport::SocketTransport;
     };
 
-public:
     FinalSocketTransport socket_transport;
-    ModVNCWithMetrics mod;
+
+public:
+    mod_vnc mod;
+    VncData vnc_data;
 
 private:
     Inifile & ini;
 
 public:
-    ModWithSocketAndMetrics(
+    SocketTransport& get_transport()
+    {
+        return this->socket_transport;
+    }
+
+    ModVNCWithSocketAndMetrics(
         gdi::GraphicApi & drawable,
         Inifile & ini, const char * name, unique_fd sck,
         SocketTransport::Verbose verbose,
@@ -152,7 +126,7 @@ public:
         )
     : socket_transport( name, std::move(sck)
                       , ini.get<cfg::context::target_host>().c_str()
-                      , ini.get<cfg::context::target_port>()
+                      , checked_int(ini.get<cfg::context::target_port>())
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
     , mod(
@@ -162,10 +136,11 @@ public:
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
           rail_client_execute, vnc_verbose, metrics, session_log)
+    , vnc_data(events)
     , ini(ini)
     {}
 
-    ~ModWithSocketAndMetrics()
+    ~ModVNCWithSocketAndMetrics()
     {
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
@@ -257,7 +232,8 @@ public:
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
-    void acl_update(AclFieldMask const& acl_fields) override {
+    void acl_update(AclFieldMask const& acl_fields) override
+    {
         this->mod.acl_update(acl_fields);
     }
 };
@@ -284,10 +260,10 @@ ModPack create_mod_vnc(
     bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-    std::unique_ptr<ModVNCWithMetrics::ModMetrics> metrics;
+    std::unique_ptr<VncData::ModMetrics> metrics;
 
     if (enable_metrics) {
-        metrics = std::make_unique<ModVNCWithMetrics::ModMetrics>(
+        metrics = std::make_unique<VncData::ModMetrics>(
             ini.get<cfg::metrics::log_dir_path>().as_string(),
             ini.get<cfg::context::session_id>(),
             hmac_user(
@@ -326,7 +302,7 @@ ModPack create_mod_vnc(
         : nullptr
     };
 
-    auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
+    auto new_mod = std::make_unique<ModVNCWithSocketAndMetrics>(
         host_mod ? host_mod->proxy_gd() : drawable,
         ini,
         name,
@@ -359,10 +335,10 @@ ModPack create_mod_vnc(
     );
 
     if (enable_metrics) {
-        new_mod->mod.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
+        new_mod->vnc_data.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
     }
 
-    auto tmp_psocket_transport = &new_mod->socket_transport;
+    auto tmp_psocket_transport = &new_mod->get_transport();
 
     if (!client_info.remote_program) {
         return ModPack{new_mod.release(), nullptr, nullptr, false, false, tmp_psocket_transport};
