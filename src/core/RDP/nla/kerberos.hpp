@@ -185,10 +185,10 @@ public:
         const char *cache_name, const char *fast_cache_name)
     {
         krb5_error_code ret;
-        krb5_keytab keytab(0);
+        krb5_keytab keytab(nullptr);
         krb5_creds creds {};
-        krb5_principal princ;
-        krb5_ccache ccache;
+        krb5_principal princ(nullptr);
+        krb5_ccache ccache(nullptr);
         krb5_get_init_creds_opt *opts(nullptr);
 
         // allocate initial credentials options
@@ -272,8 +272,8 @@ public:
         
     cleanup:
         if (opts) krb5_get_init_creds_opt_free(this->ctx, opts);
-        krb5_cc_close(this->ctx, ccache);
-        krb5_free_principal(this->ctx, princ);
+        if (ccache) krb5_cc_close(this->ctx, ccache);
+        if (princ) krb5_free_principal(this->ctx, princ);
         krb5_free_cred_contents(this->ctx, &creds);
 
         return ret;
@@ -285,8 +285,8 @@ public:
     {
         krb5_error_code ret;
         krb5_creds creds {};
-        krb5_principal princ;
-        krb5_ccache ccache;
+        krb5_principal princ(nullptr);
+        krb5_ccache ccache(nullptr);
         krb5_get_init_creds_opt *opts(nullptr);
 
         // allocate initial credentials options
@@ -349,8 +349,8 @@ public:
 
     cleanup:
         if (opts) krb5_get_init_creds_opt_free(this->ctx, opts);
-        krb5_cc_close(this->ctx, ccache);
-        krb5_free_principal(this->ctx, princ);
+        if (ccache) krb5_cc_close(this->ctx, ccache);
+        if (princ) krb5_free_principal(this->ctx, princ);
         krb5_free_cred_contents(this->ctx, &creds);
 
         return ret;
@@ -359,7 +359,7 @@ public:
     int destroy_credentials(const char *cache_name)
     {
         krb5_error_code ret;
-        krb5_ccache ccache;
+        krb5_ccache ccache(nullptr);
 
         // resolve cache name
         ret = resolve_cache_name(cache_name, &ccache);
