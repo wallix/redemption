@@ -25,10 +25,10 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
-void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, BGRColor bg_color)
+void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::Color24 bg_color)
 {
     for (Rect const & rect : region.rects) {
-        drawable.draw(RDPOpaqueRect(rect, encode_color24()(bg_color)), rect, gdi::ColorCtx::depth24());
+        drawable.draw(RDPOpaqueRect(rect, bg_color), rect, gdi::ColorCtx::depth24());
     }
 }
 
@@ -313,7 +313,7 @@ void WidgetParent::refresh_children(Rect clip)
     }
 }
 
-void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
+void WidgetParent::draw_inner_free(Rect clip, Color24 bg_color)
 {
     SubRegion region;
     region.add_rect(clip.intersect(this->get_rect()));

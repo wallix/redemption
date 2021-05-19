@@ -53,6 +53,36 @@ enum NotifyEventType
 class Widget : public WidgetApi, public NotifyApi
 {
 public:
+    struct Color24
+    {
+        constexpr Color24(BGRColor color) noexcept
+        : rdp_color_(encode_color24()(color))
+        {}
+
+        constexpr Color24(NamedBGRColor color) noexcept
+        : rdp_color_(encode_color24()(color))
+        {}
+
+        constexpr Color24(BGRasRGBColor const & color) noexcept
+        : rdp_color_(encode_color24()(color))
+        {}
+
+        constexpr explicit Color24(uint32_t color = 0) noexcept /*NOLINT*/
+        : rdp_color_(RDPColor::from(color))
+        {}
+
+        constexpr RDPColor as_rdp_color() const noexcept { return rdp_color_; }
+        constexpr BGRColor as_bgr() const noexcept { return rdp_color_.as_bgr(); }
+        constexpr BGRasRGBColor as_rgb() const noexcept { return rdp_color_.as_rgb(); }
+
+        constexpr operator RDPColor () const noexcept { return rdp_color_; }
+        constexpr operator BGRColor () const noexcept { return rdp_color_.as_bgr(); }
+        constexpr operator BGRasRGBColor () const noexcept { return rdp_color_.as_rgb(); }
+
+    private:
+        RDPColor rdp_color_;
+    };
+
     // TODO using several booleans may be easier to read than flags
     enum OptionTab {
         IGNORE_TAB = 0x00,
@@ -223,7 +253,7 @@ public:
         this->set_wh(dim.w, dim.h);
     }
 
-    virtual void set_color(BGRColor bg_color, BGRColor fg_color)
+    virtual void set_color(Color24 bg_color, Color24 fg_color)
     {
         (void)bg_color;
         (void)fg_color;

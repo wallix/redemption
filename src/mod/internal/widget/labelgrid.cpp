@@ -25,10 +25,10 @@
 WidgetLabelGrid::WidgetLabelGrid(
     gdi::GraphicApi & drawable, Widget & parent,
     NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
-    BGRColor bg_color_1, BGRColor fg_color_1,
-    BGRColor bg_color_2, BGRColor fg_color_2,
-    BGRColor bg_color_focus, BGRColor fg_color_focus,
-    BGRColor bg_color_selection, BGRColor fg_color_selection,
+    Color24 bg_color_1, Color24 fg_color_1,
+    Color24 bg_color_2, Color24 fg_color_2,
+    Color24 bg_color_focus, Color24 fg_color_focus,
+    Color24 bg_color_selection, Color24 fg_color_selection,
     Font const & font, uint16_t border, int group_id
 )
     : WidgetGrid(

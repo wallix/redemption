@@ -711,9 +711,9 @@ private:
                                false,   // logo
                                true,    // has_focus
                                TR(trkeys::disconnect_now, this->lang),
-                               encode_color24()(this->theme.global.fgcolor),
-                               encode_color24()(this->theme.global.bgcolor),
-                               encode_color24()(this->theme.global.focus_color),
+                               this->theme.global.fgcolor,
+                               this->theme.global.bgcolor,
+                               this->theme.global.focus_color,
                                gdi::ColorCtx::depth24(),
                                Rect(),
                                state,

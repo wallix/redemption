@@ -237,7 +237,7 @@ void FlatInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16_t
     }
 }
 
-BGRColor FlatInteractiveTarget::get_bg_color() const
+Widget::Color24 FlatInteractiveTarget::get_bg_color() const
 {
     return this->bgcolor;
 }

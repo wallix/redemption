@@ -29,13 +29,13 @@
 
 WidgetDelegatedCopy::WidgetDelegatedCopy(
     gdi::GraphicApi & drawable, Widget& delegated, NotifyApi& notifier,
-    BGRColor fgcolor, BGRColor bgcolor, BGRColor activecolor,
+    Color24 fgcolor, Color24 bgcolor, Color24 activecolor,
     Font const & font, int xicon, int yicon
 )
     : Widget(drawable, delegated, &notifier, delegated.group_id)
-    , bg_color(encode_color24()(bgcolor))
-    , fg_color(encode_color24()(fgcolor))
-    , active_color(encode_color24()(activecolor))
+    , bg_color(bgcolor)
+    , fg_color(fgcolor)
+    , active_color(activecolor)
     , optimal_glyph_dim(get_optimal_dim(font, xicon, yicon))
     , x_icon(xicon)
     , y_icon(yicon)
@@ -58,7 +58,7 @@ void WidgetDelegatedCopy::rdp_input_invalidate(Rect clip)
 
 void WidgetDelegatedCopy::draw(
     Rect clip, Rect rect, gdi::GraphicApi & drawable,
-    RDPColor fg, RDPColor bg, int xicon, int yicon)
+    Color24 fg, Color24 bg, int xicon, int yicon)
 {
     drawable.begin_update();
 
@@ -107,10 +107,10 @@ Dimension WidgetDelegatedCopy::get_optimal_dim(Font const & font, int xicon, int
     };
 }
 
-void WidgetDelegatedCopy::set_color(BGRColor bg_color, BGRColor fg_color)
+void WidgetDelegatedCopy::set_color(Color24 bg_color, Color24 fg_color)
 {
-    this->bg_color = encode_color24()(bg_color);
-    this->fg_color = encode_color24()(fg_color);
+    this->bg_color = bg_color;
+    this->fg_color = fg_color;
 }
 
 void WidgetDelegatedCopy::rdp_input_mouse(int device_flags, int /*x*/, int /*y*/, Keymap2* /*unused*/)

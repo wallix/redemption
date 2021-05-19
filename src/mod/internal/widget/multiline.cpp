@@ -28,7 +28,7 @@
 WidgetMultiLine::WidgetMultiLine(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, char const* text, int group_id,
-    BGRColor fgcolor, BGRColor bgcolor, Font const & font,
+    Color24 fgcolor, Color24 bgcolor, Font const & font,
     int xtext, int ytext)
 : Widget(drawable, parent, notifier, group_id)
 , x_text(xtext)
@@ -69,7 +69,7 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
 
         int dy = this->y();
         this->drawable.draw(
-            RDPOpaqueRect(rect_intersect, encode_color24()(this->bg_color)),
+            RDPOpaqueRect(rect_intersect, this->bg_color),
             this->get_rect(), gdi::ColorCtx::depth24());
         for (auto const& line : this->line_metrics.lines()) {
             dy += this->y_text;
@@ -78,8 +78,8 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
                                 , this->x_text + this->x()
                                 , dy
                                 , line.str
-                                , encode_color24()(this->fg_color)
-                                , encode_color24()(this->bg_color)
+                                , this->fg_color
+                                , this->bg_color
                                 , gdi::ColorCtx::depth24()
                                 , rect_intersect.intersect(
                                     Rect(this->x(), dy, this->cx(), this->cy_text))

@@ -32,7 +32,7 @@
 WidgetFlatButton::WidgetFlatButton(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, const char * text,
-    int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
+    int group_id, Color24 fgcolor, Color24 bgcolor, Color24 focuscolor,
     unsigned border_width, Font const & font, int xtext, int ytext,
     bool logo/*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
 : Widget(drawable, parent, notifier, group_id)
@@ -97,8 +97,7 @@ void WidgetFlatButton::rdp_input_invalidate(Rect clip)
 
         this->draw(
             rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus, this->buffer,
-            encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-            encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
+            this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
             this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
 
         this->drawable.end_update();
@@ -108,7 +107,7 @@ void WidgetFlatButton::rdp_input_invalidate(Rect clip)
 void WidgetFlatButton::draw(
     Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
     bool logo, bool has_focus, char const* text,
-    RDPColor fg_color, RDPColor bg_color, RDPColor focuscolor, gdi::ColorCtx color_ctx,
+    Color24 fg_color, Color24 bg_color, Color24 focuscolor, gdi::ColorCtx color_ctx,
     Rect label_rect, State state, unsigned border_width, Font const& font, int xtext, int ytext)
 {
     if (label_rect.isempty()) {

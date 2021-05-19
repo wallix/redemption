@@ -30,14 +30,14 @@ class WidgetDelegatedCopy : public Widget
 public:
     WidgetDelegatedCopy(
         gdi::GraphicApi & drawable, Widget& delegated, NotifyApi& notifier,
-        BGRColor fgcolor, BGRColor bgcolor, BGRColor activecolor,
+        Color24 fgcolor, Color24 bgcolor, Color24 activecolor,
         Font const & font, int xicon, int yicon);
 
     Dimension get_optimal_dim() const override;
 
     static Dimension get_optimal_dim(Font const & font, int xicon, int yicon);
 
-    void set_color(BGRColor bg_color, BGRColor fg_color) override;
+    void set_color(Color24 bg_color, Color24 fg_color) override;
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/) override;
 
@@ -45,12 +45,12 @@ public:
 
     static void draw(
         Rect clip, Rect rect, gdi::GraphicApi & drawable,
-        RDPColor fg, RDPColor bg, int xicon, int yicon);
+        Color24 fg, Color24 bg, int xicon, int yicon);
 
 private:
-    RDPColor bg_color;
-    RDPColor fg_color;
-    RDPColor active_color;
+    Color24 bg_color;
+    Color24 fg_color;
+    Color24 active_color;
 
     Dimension optimal_glyph_dim;
     int x_icon;

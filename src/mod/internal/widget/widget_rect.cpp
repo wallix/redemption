@@ -26,7 +26,7 @@
 
 WidgetRect::WidgetRect(
     gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier,
-    int group_id, BGRColor color)
+    int group_id, Color24 color)
 : Widget(drawable, parent, notifier, group_id)
 , color(color)
 {
@@ -42,10 +42,7 @@ void WidgetRect::rdp_input_invalidate(Rect clip)
         this->drawable.begin_update();
 
         this->drawable.draw(
-            RDPOpaqueRect(
-                rect_intersect,
-                encode_color24()(this->color)
-            ),
+            RDPOpaqueRect(rect_intersect, this->color),
             rect_intersect,
             gdi::ColorCtx::depth24()
         );

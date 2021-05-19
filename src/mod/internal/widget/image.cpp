@@ -29,7 +29,7 @@ WidgetImage::WidgetImage(gdi::GraphicApi& drawable,
                          const char *filename,
                          Widget& parent,
                          NotifyApi *notifier,
-                         BGRColor bg_color,
+                         Color24 bg_color,
                          int group_id) :
     Widget(drawable, parent, notifier, group_id),
     bmp(bitmap_from_file(filename, bg_color))

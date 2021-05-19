@@ -24,8 +24,6 @@
 #include "mod/internal/widget/widget.hpp"
 #include "utils/bitmap.hpp"
 
-struct BGRColor;
-
 class WidgetImage : public Widget
 {
     Bitmap bmp;
@@ -35,7 +33,7 @@ public:
                 const char *filename,
                 Widget& parent,
                 NotifyApi *notifier,
-                BGRColor bg_color,
+                Color24 bg_color,
                 int group_id = 0); /*NOLINT*/
 
     ~WidgetImage();

@@ -60,7 +60,7 @@ private:
     bool labels_added = false;
     bool show_target = false;
 
-    BGRColor bg_color;
+    Color24 bg_color;
 
 public:
     FlatLogin(gdi::GraphicApi & drawable,
@@ -80,7 +80,7 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    [[nodiscard]] BGRColor get_bg_color() const override;
+    [[nodiscard]] Color24 get_bg_color() const override;
 
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 

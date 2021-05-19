@@ -34,7 +34,7 @@
 WidgetEdit::WidgetEdit(
     gdi::GraphicApi & drawable,
     Widget & parent, NotifyApi* notifier, const char * text,
-    int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,
+    int group_id, Color24 fgcolor, Color24 bgcolor, Color24 focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext)
 : Widget(drawable, parent, notifier, group_id)
 , label(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font, xtext, ytext)
@@ -200,24 +200,24 @@ void WidgetEdit::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetEdit::draw_border(Rect clip, BGRColor color)
+void WidgetEdit::draw_border(Rect clip, Color24 color)
 {
     //top
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x(), this->y(), this->cx() - 1, 1
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
     //left
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x(), this->y() + 1, 1, this->cy() - 2
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
     //right
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x() + this->cx() - 1, this->y(), 1, this->cy()
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
     //bottom
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x(), this->y() + this->cy() - 1, this->cx(), 1
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
 }
 
 Rect WidgetEdit::get_cursor_rect() const
@@ -238,7 +238,7 @@ void WidgetEdit::draw_current_cursor()
 void WidgetEdit::draw_cursor(const Rect clip)
 {
     if (!clip.isempty()) {
-        this->drawable.draw(RDPOpaqueRect(clip, encode_color24()(this->cursor_color)), clip, gdi::ColorCtx::depth24());
+        this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), clip, gdi::ColorCtx::depth24());
     }
 }
 

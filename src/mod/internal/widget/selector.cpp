@@ -271,7 +271,7 @@ void WidgetSelector::move_size_widget(int16_t left, int16_t top, uint16_t width,
     this->rearrange();
 }
 
-BGRColor WidgetSelector::get_bg_color() const
+Widget::Color24 WidgetSelector::get_bg_color() const
 {
     return this->bg_color;
 }

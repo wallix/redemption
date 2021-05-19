@@ -32,7 +32,7 @@ public:
     WidgetVerticalScrollText(
         gdi::GraphicApi& drawable, Widget& parent,
         NotifyApi* notifier, int group_id, std::string text,
-        BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
+        Color24 fgcolor, Color24 bgcolor, Color24 focuscolor,
         Font const& font, uint16_t xtext = 0, uint16_t ytext = 0); /*NOLINT*/
 
     void set_xy(int16_t x, int16_t y) override;
@@ -57,9 +57,9 @@ private:
     void _scroll_up();
     void _scroll_down();
 
-    RDPColor const fg_color;
-    RDPColor const bg_color;
-    RDPColor const focus_color;
+    Color24 const fg_color;
+    Color24 const bg_color;
+    Color24 const focus_color;
 
     Font const & font;
 

@@ -30,13 +30,13 @@ class WidgetGroupBox : public WidgetParent
 public:
     WidgetGroupBox( gdi::GraphicApi & drawable, Widget & parent
                   , NotifyApi * notifier, const char * text
-                  , BGRColor fgcolor, BGRColor bgcolor, Font const & font);
+                  , Color24 fgcolor, Color24 bgcolor, Font const & font);
 
     ~WidgetGroupBox() override;
 
     void rdp_input_invalidate(Rect clip) override;
 
-    [[nodiscard]] BGRColor get_bg_color() const override;
+    [[nodiscard]] Color24 get_bg_color() const override;
 
     [[nodiscard]] const char * get_text() const;
     void set_text(const char * text);
@@ -46,8 +46,8 @@ private:
 
     char buffer[buffer_size];
 
-    BGRColor bg_color;
-    BGRColor fg_color;
+    Color24 bg_color;
+    Color24 fg_color;
 
     CompositeArray composite_array;
 

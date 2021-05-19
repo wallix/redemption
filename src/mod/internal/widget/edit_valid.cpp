@@ -30,8 +30,8 @@
 WidgetEditValid::WidgetEditValid(
     gdi::GraphicApi & drawable,
     Widget & parent, NotifyApi* notifier, const char * text,
-    int group_id, BGRColor fgcolor, BGRColor bgcolor,
-    BGRColor focus_color, BGRColor border_none_color, Font const & font,
+    int group_id, Color24 fgcolor, Color24 bgcolor,
+    Color24 focus_color, Color24 border_none_color, Font const & font,
     const char * title, bool use_title, std::size_t edit_position,
     // TODO re-enable
     int /*xtext*/, int /*ytext*/, bool pass
@@ -139,7 +139,7 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
         }
         else {
             this->drawable.draw(
-                RDPOpaqueRect(rect_intersect.intersect(this->button.get_rect()), encode_color24()(this->button.fg_color)),
+                RDPOpaqueRect(rect_intersect.intersect(this->button.get_rect()), this->button.fg_color),
                 rect_intersect, gdi::ColorCtx::depth24()
             );
             this->draw_border(rect_intersect, this->border_none_color);
@@ -149,24 +149,24 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetEditValid::draw_border(const Rect clip, BGRColor color)
+void WidgetEditValid::draw_border(const Rect clip, Color24 color)
 {
     //top
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x(), this->y(), this->cx() - 1, 1
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
     //left
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x(), this->y() + 1, 1, this->cy() - /*2*/1
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
     //right
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x() + this->cx() - 1, this->y(), 1, this->cy()
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
     //bottom
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
         this->x(), this->y() + this->cy() - 1, this->cx(), 1
-    )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
+    )), color), clip, gdi::ColorCtx::depth24());
 }
 
 void WidgetEditValid::focus(int reason)

@@ -200,7 +200,7 @@ void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     }
 }
 
-BGRColor FlatDialog::get_bg_color() const
+Widget::Color24 FlatDialog::get_bg_color() const
 {
     return this->bg_color;
 }
