@@ -73,8 +73,7 @@ class NLAServer
 
         auto bytes_to_zstring_view = [](std::vector<uint8_t>& cont){
             cont.push_back(0);
-            return zstring_view(zstring_view::is_zero_terminated{},
-                byte_ptr(cont.data()).as_charp(), cont.size());
+            return zstring_view::from_null_terminated(byte_ptr(cont.data()).as_charp(), cont.size());
         };
 
         auto [username, domain] = extract_user_domain(this->nla_username);

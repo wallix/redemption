@@ -69,7 +69,7 @@ namespace cpp_enumeration_writer
                     "{\n"
                     "    auto r = std::to_chars(zbuf.begin(), zbuf.end(), " << type << "(x));\n"
                     "    *r.ptr = '\\0';\n"
-                    "    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});\n"
+                    "    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});\n"
                     "}\n\n"
                 ;
                 break;

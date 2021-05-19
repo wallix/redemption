@@ -223,10 +223,6 @@ namespace i18n
     MessageTranslatorGettext::get_translated_text(zstring_view text)
         const noexcept
     {
-        const char *translated_text = gettext(text);
-
-        return zstring_view(zstring_view::is_zero_terminated { },
-                            translated_text,
-                            std::strlen(translated_text));
+        return zstring_view::from_null_terminated(gettext(text));
     }
 }

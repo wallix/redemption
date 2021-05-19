@@ -129,8 +129,7 @@ namespace
 
                         assign_section:
                             configuration_holder.set_section(
-                                zstring_view(zstring_view::is_zero_terminated(),
-                                    {section, end_section})
+                                zstring_view::from_null_terminated({section, end_section})
                             );
                             *end_section = '\0';
                             ++p;
@@ -214,10 +213,8 @@ namespace
                                     ++p;
                                 assign_value:
                                     configuration_holder.set_value(
-                                        zstring_view(zstring_view::is_zero_terminated(),
-                                            {key, end_key}),
-                                        zstring_view(zstring_view::is_zero_terminated(),
-                                            {value, end_value})
+                                        zstring_view::from_null_terminated({key, end_key}),
+                                        zstring_view::from_null_terminated({value, end_value})
                                     );
                                     goto loop;
                             }

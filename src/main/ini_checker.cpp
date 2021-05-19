@@ -58,7 +58,7 @@ namespace
         zbuf[2] = digits[(x & 0070) >> 3];
         zbuf[3] = digits[(x & 0007)];
         zbuf[4] = '\0';
-        return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 4);
+        return zstring_view::from_null_terminated(zbuf.data(), 4);
     }
 
     zstring_view assign_zbuf_from_cfg(
@@ -70,7 +70,7 @@ namespace
         zbuf[0] = '#';
         int_to_fixed_hexadecimal_upper_chars<3>(zbuf.data()+1, x);
         zbuf[7] = '\0';
-        return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 7);
+        return zstring_view::from_null_terminated(zbuf.data(), 7);
     }
 
     template<bool>

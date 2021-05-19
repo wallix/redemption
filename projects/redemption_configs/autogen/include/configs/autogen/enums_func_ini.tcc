@@ -118,7 +118,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(CaptureFlags & x, ::configs::spec_type<CaptureFlags> /*type*/, bytes_view value)
@@ -325,7 +325,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(KeyboardLogFlagsCP & x, ::configs::spec_type<KeyboardLogFlagsCP> /*type*/, bytes_view value)
@@ -352,7 +352,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(KeyboardLogFlags & x, ::configs::spec_type<KeyboardLogFlags> /*type*/, bytes_view value)
@@ -379,7 +379,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(ClipboardLogFlags & x, ::configs::spec_type<ClipboardLogFlags> /*type*/, bytes_view value)
@@ -406,7 +406,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(FileSystemLogFlags & x, ::configs::spec_type<FileSystemLogFlags> /*type*/, bytes_view value)
@@ -524,7 +524,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(ServerNotification & x, ::configs::spec_type<ServerNotification> /*type*/, bytes_view value)
@@ -1436,7 +1436,7 @@ zstring_view assign_zbuf_from_cfg(
 ){
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint16_t(x));
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, {zbuf.data(), r.ptr});
+    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
 
 parse_error parse_from_cfg(SessionProbeDisabledFeature & x, ::configs::spec_type<SessionProbeDisabledFeature> /*type*/, bytes_view value)

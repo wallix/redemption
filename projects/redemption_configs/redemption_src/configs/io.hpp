@@ -77,7 +77,7 @@ inline zstring_view assign_zbuf_from_cfg(
     cfg_s_type<::configs::spec_types::fixed_string> /*type*/,
     char const (&str)[n]
 ) {
-    return zstring_view(zstring_view::is_zero_terminated(), str, strlen(str));
+    return zstring_view::from_null_terminated(str);
 }
 
 inline zstring_view assign_zbuf_from_cfg(
@@ -101,7 +101,7 @@ zstring_view assign_zbuf_from_cfg(
         *p++ = hex[c & 0xf];
     }
     *p = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), p-zbuf.data());
+    return zstring_view::from_null_terminated(zbuf.data(), p-zbuf.data());
 }
 
 template<class T,
@@ -123,8 +123,7 @@ assign_zbuf_from_cfg(writable_chars_view zbuf, cfg_s_type<TInt> /*type*/, TInt c
     auto r = std::to_chars(zbuf.begin(), zbuf.end(), x);
     assert(r.ec == std::errc());
     *r.ptr = '\0';
-    return zstring_view(zstring_view::is_zero_terminated{},
-        zbuf.data(), std::size_t(r.ptr - zbuf.data()));
+    return zstring_view::from_null_terminated(zbuf.data(), std::size_t(r.ptr - zbuf.data()));
 }
 
 template<class T, class Ratio>

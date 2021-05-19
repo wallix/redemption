@@ -32,16 +32,13 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
-#include "utils/sugar/zstring_view.hpp"
 #include "utils/theme.hpp"
-#include "utils/timebase.hpp"
 #include "gdi/osd_api.hpp"
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
 
-#include "redjs/image_data.hpp"
 #include "redjs/transport.hpp"
 #include "redjs/front.hpp"
 #include "redjs/channel_receiver.hpp"

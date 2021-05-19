@@ -71,7 +71,7 @@ public:
 
         [[nodiscard]] zstring_view name() const noexcept
         {
-            return zstring_view(zstring_view::is_zero_terminated(), this->name_, this->len_);
+            return zstring_view::from_null_terminated(this->name_, this->len_);
         }
 
         [[nodiscard]] bool is_valid() const noexcept

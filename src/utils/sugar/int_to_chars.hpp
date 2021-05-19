@@ -65,7 +65,7 @@ struct int_to_zchars_result
     std::string_view sv() const noexcept { return {data(), size()}; }
     zstring_view zv() const noexcept
     {
-        return zstring_view{zstring_view::is_zero_terminated(), data(), size()};
+        return zstring_view::from_null_terminated(data(), size());
     }
 
     operator std::string_view() const noexcept { return sv(); }

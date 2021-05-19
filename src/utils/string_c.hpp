@@ -31,13 +31,21 @@ namespace jln
     {
         static constexpr char const value[sizeof...(cs)+1]{cs..., '\0'};
 
-        static constexpr char const* c_str() noexcept { return value; }
+        static constexpr char const* c_str() noexcept
+        {
+            return value;
+        }
+
         static constexpr zstring_view zstring() noexcept
-        { return {zstring_view::is_zero_terminated{}, value, sizeof...(cs)}; }
+        {
+            return zstring_view::from_null_terminated(value, sizeof...(cs));
+        }
 
         template<char... cs2>
         constexpr string_c<cs..., cs2...> operator+(string_c<cs2...> /*unused*/) const
-        { return {}; }
+        {
+            return {};
+        }
     };
 
     template<class, class>
@@ -59,11 +67,15 @@ namespace jln
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
         template<class C, C... cs>
         string_c<cs...> operator ""_c () noexcept
-        { return {}; }
+        {
+            return {};
+        }
 
         template<class C, C... cs>
         string_c<cs...> operator ""_s () noexcept
-        { return {}; }
+        {
+            return {};
+        }
         REDEMPTION_DIAGNOSTIC_POP()
     } // namespace literals
 

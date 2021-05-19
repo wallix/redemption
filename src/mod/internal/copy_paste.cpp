@@ -78,7 +78,7 @@ void CopyPaste::LimitString::assign(char const * s, size_t n)
 
 zstring_view CopyPaste::LimitString::zstring() const
 {
-    return zstring_view{zstring_view::is_zero_terminated(), this->buf_, this->size_};
+    return zstring_view::from_null_terminated(this->buf_, this->size_);
 }
 
 

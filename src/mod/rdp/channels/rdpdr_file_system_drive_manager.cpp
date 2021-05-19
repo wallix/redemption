@@ -1017,10 +1017,7 @@ public:
 
         dirent * entry = nullptr;
         while ((entry = ::readdir(this->dir))) {
-            zstring_view filename{
-                zstring_view::is_zero_terminated{},
-                entry->d_name, strlen(entry->d_name)
-            };
+            auto filename = zstring_view::from_null_terminated(entry->d_name);
             // TODO this function is incompatible with utf8
             if (::FilePatternMatchA(filename, this->pattern)) {
                 break;

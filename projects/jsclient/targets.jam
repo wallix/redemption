@@ -90,6 +90,7 @@ test-run-js tests/red_channels/test_clipboard :
   src/red_channels/clipboard.bc
   src/core/error.bc
   src/utils/stacktrace.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;

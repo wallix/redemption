@@ -50,18 +50,20 @@ struct zstring_view
     , len(s.size())
     {}
 
-    class is_zero_terminated {};
-
-    constexpr zstring_view(is_zero_terminated const& /*tag*/, char const* s, std::size_t n) noexcept
-    : s(s)
-    , len(n)
+    static constexpr zstring_view from_null_terminated(char const* s, std::size_t n) noexcept
     {
-        assert(s[len] == 0);
+        return zstring_view(s, n);
     }
 
-    constexpr zstring_view(is_zero_terminated const& /*tag*/, chars_view str) noexcept
-    : zstring_view(is_zero_terminated{}, str.data(), str.size())
-    {}
+    static constexpr zstring_view from_null_terminated(chars_view str) noexcept
+    {
+        return zstring_view(str.data(), str.size());
+    }
+
+    static constexpr zstring_view from_null_terminated(char const* s) noexcept
+    {
+        return from_null_terminated(std::string_view(s));
+    }
 
     [[nodiscard]] constexpr char const* c_str() const noexcept { return data(); }
 
@@ -93,6 +95,13 @@ struct zstring_view
     }
 
 private:
+    constexpr zstring_view(char const* s, std::size_t n) noexcept
+    : s(s)
+    , len(n)
+    {
+        assert(s[len] == 0);
+    }
+
     char const* s = nullptr;
     std::size_t len = 0;
 };
@@ -189,7 +198,7 @@ inline constexpr bool operator>=(zstring_view const& lhs, char const* rhs) noexc
 
 constexpr zstring_view operator "" _zv(char const * s, std::size_t len) noexcept
 {
-    return {zstring_view::is_zero_terminated{}, s, len};
+    return zstring_view::from_null_terminated(s, len);
 }
 
 REDEMPTION_OSTREAM(out, zstring_view const& str)

@@ -764,32 +764,32 @@ public:
 
     [[nodiscard]] zstring_view zDomain() const noexcept
     {
-        return zstring_view{zstring_view::is_zero_terminated{},
-            char_ptr_cast(this->Domain), this->cbDomain};
+        return zstring_view::from_null_terminated(char_ptr_cast(this->Domain),
+                                        this->cbDomain);
     }
 
     [[nodiscard]] zstring_view zUserName() const noexcept
     {
-        return zstring_view{zstring_view::is_zero_terminated{},
-            char_ptr_cast(this->UserName), this->cbUserName};
+        return zstring_view::from_null_terminated(char_ptr_cast(this->UserName),
+                                        this->cbUserName);
     }
 
     [[nodiscard]] zstring_view zPassword() const noexcept
     {
-        return zstring_view{zstring_view::is_zero_terminated{},
-            char_ptr_cast(this->Password), this->cbPassword};
+        return zstring_view::from_null_terminated(char_ptr_cast(this->Password),
+                                        this->cbPassword);
     }
 
     [[nodiscard]] zstring_view zWorkingDirectory() const noexcept
     {
-        return zstring_view{zstring_view::is_zero_terminated{},
-            char_ptr_cast(this->WorkingDir), this->cbWorkingDir};
+        return zstring_view::from_null_terminated(char_ptr_cast(this->WorkingDir),
+                                        this->cbWorkingDir);
     }
 
     [[nodiscard]] zstring_view zAlternateShell() const noexcept
     {
-        return zstring_view{zstring_view::is_zero_terminated{},
-            char_ptr_cast(this->AlternateShell), this->cbAlternateShell};
+        return zstring_view::from_null_terminated(char_ptr_cast(this->AlternateShell),
+                                        this->cbAlternateShell);
     }
 
     InfoPacket() = default;
