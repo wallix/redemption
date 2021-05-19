@@ -34,7 +34,7 @@ class WidgetPassword : public WidgetEdit
 public:
     WidgetPassword(gdi::GraphicApi & drawable,
                    Widget& parent, NotifyApi* notifier, const char * text,
-                   int group_id, Color24 fgcolor, Color24 bgcolor, Color24 focus_color,
+                   int group_id, Color fgcolor, Color bgcolor, Color focus_color,
                    Font const & font,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
 

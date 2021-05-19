@@ -32,10 +32,10 @@ namespace gdi
 
 class WidgetRect : public Widget
 {
-    Color24 color;
+    Color color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, Color24 color = BLACK); /*NOLINT*/
+    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, Color color = BLACK); /*NOLINT*/
 
     void rdp_input_invalidate(Rect clip) override;
 };

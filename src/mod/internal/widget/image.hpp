@@ -33,7 +33,7 @@ public:
                 const char *filename,
                 Widget& parent,
                 NotifyApi *notifier,
-                Color24 bg_color,
+                Color bg_color,
                 int group_id = 0); /*NOLINT*/
 
     ~WidgetImage();

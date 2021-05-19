@@ -54,7 +54,7 @@ private:
     WidgetImage        img;
     WidgetFlatButton * extra_button;
 
-    Color24 bg_color;
+    Color bg_color;
 
 public:
     FlatDialog(gdi::GraphicApi & drawable,
@@ -70,7 +70,7 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    [[nodiscard]] Color24 get_bg_color() const override;
+    [[nodiscard]] Color get_bg_color() const override;
 
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 

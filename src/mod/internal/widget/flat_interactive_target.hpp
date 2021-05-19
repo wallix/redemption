@@ -52,7 +52,7 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    [[nodiscard]] Color24 get_bg_color() const override;
+    [[nodiscard]] Color get_bg_color() const override;
 
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
@@ -81,8 +81,8 @@ private:
 
     Widget * last_interactive;
 
-    Color24 fgcolor;
-    Color24 bgcolor;
+    Color fgcolor;
+    Color bgcolor;
 
     bool               ask_device;
     bool               ask_login;

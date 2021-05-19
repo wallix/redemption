@@ -29,7 +29,7 @@ class WidgetMultiLine : public Widget
 public:
     WidgetMultiLine(gdi::GraphicApi & drawable, Widget& parent,
                     NotifyApi* notifier, char const* text, int group_id,
-                    Color24 fgcolor, Color24 bgcolor, Font const & font,
+                    Color fgcolor, Color bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0); /*NOLINT*/
 
     void set_text(const char * text);
@@ -40,7 +40,7 @@ public:
 
     Dimension get_optimal_dim() const override;
 
-    [[nodiscard]] Color24 get_bg_color() const noexcept
+    [[nodiscard]] Color get_bg_color() const noexcept
     {
         return this->bg_color;
     }
@@ -51,7 +51,7 @@ private:
     int x_text;
     int y_text;
     int cy_text;
-    Color24 bg_color;
-    Color24 fg_color;
+    Color bg_color;
+    Color fg_color;
     Font const & font;
 };

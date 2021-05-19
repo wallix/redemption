@@ -62,18 +62,18 @@ private:
     Widgets widgets;
 
 public:
-    const Color24 bg_color_1;    // Odd
-    const Color24 fg_color_1;
+    const Color bg_color_1;    // Odd
+    const Color fg_color_1;
 
-    const Color24 bg_color_2;    // Even
-    const Color24 fg_color_2;
+    const Color bg_color_2;    // Even
+    const Color fg_color_2;
 
 private:
-    const Color24 bg_color_focus;
-    const Color24 fg_color_focus;
+    const Color bg_color_focus;
+    const Color fg_color_focus;
 
-    const Color24 bg_color_selection;
-    const Color24 fg_color_selection;
+    const Color bg_color_selection;
+    const Color fg_color_selection;
 
 public:
     const uint16_t border;    // Width and height of cell's border.
@@ -93,10 +93,10 @@ private:
 public:
     WidgetGrid(gdi::GraphicApi & drawable, Widget & parent,
                NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
-               Color24 bg_color_1, Color24 fg_color_1,
-               Color24 bg_color_2, Color24 fg_color_2,
-               Color24 bg_color_focus, Color24 fg_color_focus,
-               Color24 bg_color_selection, Color24 fg_color_selection,
+               Color bg_color_1, Color fg_color_1,
+               Color bg_color_2, Color fg_color_2,
+               Color bg_color_focus, Color fg_color_focus,
+               Color bg_color_selection, Color fg_color_selection,
                uint16_t border = 0, int group_id = 0); /*NOLINT*/
 
     void clear();

@@ -26,7 +26,7 @@
 WidgetTooltip::WidgetTooltip(
     gdi::GraphicApi & drawable, Widget & parent,
     NotifyApi* notifier, const char * text,
-    Color24 fgcolor, Color24 bgcolor, Color24 border_color,
+    Color fgcolor, Color bgcolor, Color border_color,
     Font const & font
 )
     : Widget(drawable, parent, notifier, 0)

@@ -28,7 +28,7 @@
 WidgetMultiLine::WidgetMultiLine(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, char const* text, int group_id,
-    Color24 fgcolor, Color24 bgcolor, Font const & font,
+    Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext)
 : Widget(drawable, parent, notifier, group_id)
 , x_text(xtext)

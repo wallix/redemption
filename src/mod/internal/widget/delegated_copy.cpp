@@ -29,7 +29,7 @@
 
 WidgetDelegatedCopy::WidgetDelegatedCopy(
     gdi::GraphicApi & drawable, Widget& delegated, NotifyApi& notifier,
-    Color24 fgcolor, Color24 bgcolor, Color24 activecolor,
+    Color fgcolor, Color bgcolor, Color activecolor,
     Font const & font, int xicon, int yicon
 )
     : Widget(drawable, delegated, &notifier, delegated.group_id)
@@ -58,7 +58,7 @@ void WidgetDelegatedCopy::rdp_input_invalidate(Rect clip)
 
 void WidgetDelegatedCopy::draw(
     Rect clip, Rect rect, gdi::GraphicApi & drawable,
-    Color24 fg, Color24 bg, int xicon, int yicon)
+    Color fg, Color bg, int xicon, int yicon)
 {
     drawable.begin_update();
 
@@ -107,7 +107,7 @@ Dimension WidgetDelegatedCopy::get_optimal_dim(Font const & font, int xicon, int
     };
 }
 
-void WidgetDelegatedCopy::set_color(Color24 bg_color, Color24 fg_color)
+void WidgetDelegatedCopy::set_color(Color bg_color, Color fg_color)
 {
     this->bg_color = bg_color;
     this->fg_color = fg_color;

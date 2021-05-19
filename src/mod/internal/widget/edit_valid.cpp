@@ -30,8 +30,8 @@
 WidgetEditValid::WidgetEditValid(
     gdi::GraphicApi & drawable,
     Widget & parent, NotifyApi* notifier, const char * text,
-    int group_id, Color24 fgcolor, Color24 bgcolor,
-    Color24 focus_color, Color24 border_none_color, Font const & font,
+    int group_id, Color fgcolor, Color bgcolor,
+    Color focus_color, Color border_none_color, Font const & font,
     const char * title, bool use_title, std::size_t edit_position,
     // TODO re-enable
     int /*xtext*/, int /*ytext*/, bool pass
@@ -149,7 +149,7 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetEditValid::draw_border(const Rect clip, Color24 color)
+void WidgetEditValid::draw_border(const Rect clip, Color color)
 {
     //top
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(

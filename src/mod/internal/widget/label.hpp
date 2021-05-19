@@ -41,8 +41,8 @@ public:
 public:
     int x_text;
     int y_text;
-    Color24 bg_color;
-    Color24 fg_color;
+    Color bg_color;
+    Color fg_color;
     bool tool;
 
 private:
@@ -53,12 +53,12 @@ private:
 public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
                 NotifyApi* notifier, chars_view text,
-                int group_id, Color24 fgcolor, Color24 bgcolor, Font const & font,
+                int group_id, Color fgcolor, Color bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0); /*NOLINT*/
 
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
                 NotifyApi* notifier, char const* text,
-                int group_id, Color24 fgcolor, Color24 bgcolor, Font const & font,
+                int group_id, Color fgcolor, Color bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0); /*NOLINT*/
 
     void set_text(char const* text);
@@ -69,7 +69,7 @@ public:
     void rdp_input_invalidate(Rect clip) override;
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
-                     char const* text, Color24 fgcolor, Color24 bgcolor, gdi::ColorCtx color_ctx,
+                     char const* text, Color fgcolor, Color bgcolor, gdi::ColorCtx color_ctx,
                      Font const & font, int xtext, int ytext);
 
     Dimension get_optimal_dim() const override;
@@ -78,7 +78,7 @@ public:
 
     bool shift_text(int pos_x);
 
-    void set_color(Color24 bg_color, Color24 fg_color) override;
+    void set_color(Color bg_color, Color fg_color) override;
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/) override;
 

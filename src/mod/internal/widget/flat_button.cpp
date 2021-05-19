@@ -32,7 +32,7 @@
 WidgetFlatButton::WidgetFlatButton(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, const char * text,
-    int group_id, Color24 fgcolor, Color24 bgcolor, Color24 focuscolor,
+    int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
     unsigned border_width, Font const & font, int xtext, int ytext,
     bool logo/*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
 : Widget(drawable, parent, notifier, group_id)
@@ -107,7 +107,7 @@ void WidgetFlatButton::rdp_input_invalidate(Rect clip)
 void WidgetFlatButton::draw(
     Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
     bool logo, bool has_focus, char const* text,
-    Color24 fg_color, Color24 bg_color, Color24 focuscolor, gdi::ColorCtx color_ctx,
+    Color fg_color, Color bg_color, Color focuscolor, gdi::ColorCtx color_ctx,
     Rect label_rect, State state, unsigned border_width, Font const& font, int xtext, int ytext)
 {
     if (label_rect.isempty()) {

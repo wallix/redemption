@@ -26,7 +26,7 @@
 
 WidgetRect::WidgetRect(
     gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier,
-    int group_id, Color24 color)
+    int group_id, Color color)
 : Widget(drawable, parent, notifier, group_id)
 , color(color)
 {

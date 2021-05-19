@@ -31,7 +31,7 @@
 WidgetLabel::WidgetLabel(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, chars_view text,
-    int group_id, Color24 fgcolor, Color24 bgcolor, Font const & font,
+    int group_id, Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
     : Widget(drawable, parent, notifier, group_id)
@@ -51,7 +51,7 @@ WidgetLabel::WidgetLabel(
 WidgetLabel::WidgetLabel(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, char const* text,
-    int group_id, Color24 fgcolor, Color24 bgcolor, Font const & font,
+    int group_id, Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
 : WidgetLabel(drawable, parent, notifier, {text, text ? strlen(text) : 0u},
@@ -98,7 +98,7 @@ void WidgetLabel::rdp_input_invalidate(Rect clip)
 
 void WidgetLabel::draw(
     Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
-    char const* text, Color24 fgcolor, Color24 bgcolor, gdi::ColorCtx color_ctx,
+    char const* text, Color fgcolor, Color bgcolor, gdi::ColorCtx color_ctx,
     Font const & font, int xtext, int ytext)
 {
     drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, color_ctx);
@@ -149,7 +149,7 @@ bool WidgetLabel::shift_text(int pos_x)
     return res;
 }
 
-void WidgetLabel::set_color(Color24 bg_color, Color24 fg_color)
+void WidgetLabel::set_color(Color bg_color, Color fg_color)
 {
     this->bg_color = bg_color;
     this->fg_color = fg_color;

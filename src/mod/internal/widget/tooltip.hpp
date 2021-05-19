@@ -29,7 +29,7 @@ class WidgetTooltip : public Widget
 public:
     WidgetTooltip(gdi::GraphicApi & drawable, Widget & parent,
                   NotifyApi* notifier, const char * text,
-                  Color24 fgcolor, Color24 bgcolor, Color24 border_color,
+                  Color fgcolor, Color bgcolor, Color border_color,
                   Font const & font);
 
     ~WidgetTooltip() override;
@@ -53,5 +53,5 @@ private:
     uint w_border;
     uint h_border;
     WidgetMultiLine desc;
-    Color24 border_color;
+    Color border_color;
 };

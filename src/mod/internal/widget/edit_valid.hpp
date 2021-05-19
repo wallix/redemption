@@ -33,8 +33,8 @@ class WidgetEditValid : public Widget
 public:
     WidgetEditValid(gdi::GraphicApi & drawable,
                     Widget & parent, NotifyApi* notifier, const char * text,
-                    int group_id, Color24 fgcolor, Color24 bgcolor,
-                    Color24 focus_color, Color24 border_none_color, Font const & font,
+                    int group_id, Color fgcolor, Color bgcolor,
+                    Color focus_color, Color border_none_color, Font const & font,
                     const char * title, bool use_title, std::size_t edit_position = -1, /*NOLINT*/
                     // TODO re-enable
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false); /*NOLINT*/
@@ -57,7 +57,7 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    void draw_border(const Rect clip, Color24 color);
+    void draw_border(const Rect clip, Color color);
 
     void focus(int reason) override;
 
@@ -86,5 +86,5 @@ private:
 
     bool use_label_;
 
-    Color24 border_none_color;
+    Color border_none_color;
 };

@@ -275,7 +275,7 @@ void FlatWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     }
 }
 
-Widget::Color24 FlatWabClose::get_bg_color() const
+Widget::Color FlatWabClose::get_bg_color() const
 {
     return this->bg_color;
 }

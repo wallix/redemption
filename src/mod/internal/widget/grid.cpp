@@ -97,10 +97,10 @@ void WidgetGrid::difftimer::update()
 WidgetGrid::WidgetGrid(
     gdi::GraphicApi & drawable, Widget & parent,
     NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
-    Color24 bg_color_1, Color24 fg_color_1,
-    Color24 bg_color_2, Color24 fg_color_2,
-    Color24 bg_color_focus, Color24 fg_color_focus,
-    Color24 bg_color_selection, Color24 fg_color_selection,
+    Color bg_color_1, Color fg_color_1,
+    Color bg_color_2, Color fg_color_2,
+    Color bg_color_focus, Color fg_color_focus,
+    Color bg_color_selection, Color fg_color_selection,
     uint16_t border, int group_id
 )
     : Widget(drawable, parent, notifier, group_id)
@@ -137,8 +137,8 @@ void WidgetGrid::rdp_input_invalidate(Rect clip)
 
 void WidgetGrid::draw_row(uint16_t row_index, Rect const clip)
 {
-    Color24 bg_color;
-    Color24 fg_color;
+    Color bg_color;
+    Color fg_color;
 
     if (this->selection_y == row_index) {
         bg_color = (this->has_focus ? this->bg_color_focus : this->bg_color_selection);

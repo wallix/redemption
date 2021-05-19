@@ -29,7 +29,7 @@
 WidgetGroupBox::WidgetGroupBox(
     gdi::GraphicApi & drawable, Widget & parent,
     NotifyApi * notifier, const char * text,
-    Color24 fgcolor, Color24 bgcolor, Font const & font
+    Color fgcolor, Color bgcolor, Font const & font
 )
   : WidgetParent(drawable, parent, notifier)
   , bg_color(bgcolor)
@@ -105,7 +105,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
     }
 }
 
-Widget::Color24 WidgetGroupBox::get_bg_color() const
+Widget::Color WidgetGroupBox::get_bg_color() const
 {
     return this->bg_color;
 }

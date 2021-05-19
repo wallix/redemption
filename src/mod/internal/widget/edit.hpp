@@ -36,9 +36,9 @@ private:
     size_t cursor_px_pos;
     int w_text;
     int h_text;
-    Color24 cursor_color;
+    Color cursor_color;
 public:
-    Color24 focus_color;
+    Color focus_color;
 private:
     bool drawall;
 public:
@@ -49,7 +49,7 @@ private:
 public:
     WidgetEdit(gdi::GraphicApi & drawable,
                Widget & parent, NotifyApi* notifier, const char * text,
-               int group_id, Color24 fgcolor, Color24 bgcolor, Color24 focus_color,
+               int group_id, Color fgcolor, Color bgcolor, Color focus_color,
                Font const & font, std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
 
     Dimension get_optimal_dim() const override;
@@ -68,7 +68,7 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    void draw_border(Rect clip, Color24 color);
+    void draw_border(Rect clip, Color color);
 
     [[nodiscard]] virtual Rect get_cursor_rect() const;
 

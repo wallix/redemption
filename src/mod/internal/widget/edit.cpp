@@ -34,7 +34,7 @@
 WidgetEdit::WidgetEdit(
     gdi::GraphicApi & drawable,
     Widget & parent, NotifyApi* notifier, const char * text,
-    int group_id, Color24 fgcolor, Color24 bgcolor, Color24 focus_color,
+    int group_id, Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext)
 : Widget(drawable, parent, notifier, group_id)
 , label(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font, xtext, ytext)
@@ -200,7 +200,7 @@ void WidgetEdit::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetEdit::draw_border(Rect clip, Color24 color)
+void WidgetEdit::draw_border(Rect clip, Color color)
 {
     //top
     this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(

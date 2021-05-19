@@ -27,7 +27,7 @@
 class SubRegion;
 class NotifyApi;
 
-void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::Color24 bg_color);
+void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::Color bg_color);
 
 class CompositeContainer
 {
@@ -85,7 +85,7 @@ class WidgetParent : public Widget
 {
     Widget * pressed;
 
-    Color24 bg_color;
+    Color bg_color;
 
     int old_mouse_x = 0;
     int old_mouse_y = 0;
@@ -119,14 +119,14 @@ public:
 
     virtual void refresh_children(Rect clip);
 
-    virtual void draw_inner_free(Rect clip, Color24 bg_color);
+    virtual void draw_inner_free(Rect clip, Color bg_color);
 
-    [[nodiscard]] virtual Color24 get_bg_color() const
+    [[nodiscard]] virtual Color get_bg_color() const
     {
         return this->bg_color;
     }
 
-    virtual void set_bg_color(Color24 color)
+    virtual void set_bg_color(Color color)
     {
         this->bg_color = color;
     }

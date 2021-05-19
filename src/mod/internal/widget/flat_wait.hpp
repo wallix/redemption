@@ -45,7 +45,7 @@ public:
     bool hasform;
 
 private:
-    Color24 bg_color;
+    Color bg_color;
     bool hide_back_to_selector;
 
 public:
@@ -61,7 +61,7 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    [[nodiscard]] Color24 get_bg_color() const override
+    [[nodiscard]] Color get_bg_color() const override
     {
         return this->bg_color;
     }
