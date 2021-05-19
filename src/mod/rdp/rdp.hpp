@@ -2028,12 +2028,7 @@ public:
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
 
-        Dimension const& dim = this->get_dim();
-        Rect const r(0, 0, dim.w, dim.h);
-        RDPOpaqueRect cmd(r, color_encode(BLACK, BitsPerPixel{24}));
-        gd.begin_update();
-        gd.draw(cmd, r, gdi::ColorCtx::depth24());
-        gd.end_update();
+        gdi_clear_screen(gd, this->get_dim());
 
         const std::chrono::seconds open_session_timeout
             = (mod_rdp_params.open_session_timeout != 0s)
@@ -6128,13 +6123,7 @@ public:
 
     void freeze_screen()
     {
-        Rect const r(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
-        RDPPatBlt cmd(r, 0xA0, color_encode(BLACK, BitsPerPixel{24}), color_encode(WHITE, BitsPerPixel{24}),
-            RDPBrush(0, 0, 3, 0xaa, byte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
-        );
-        this->gd.begin_update();
-        this->gd.draw(cmd, r, gdi::ColorCtx::depth24());
-        this->gd.end_update();
+        gdi_freeze_screen(this->gd, this->get_dim());
     }
 
 public:
