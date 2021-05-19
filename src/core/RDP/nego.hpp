@@ -88,7 +88,7 @@ private:
     std::string& extra_message;
     Language lang;
 
-    enum class /*[[nodiscard]]*/ State
+    enum class [[nodiscard]] State
     {
         Negociate,
         SslHybrid,

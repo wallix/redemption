@@ -442,7 +442,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         }
         catch (const Error &){
             LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");
-            this->fallback_to_tls(trans);
+            (void)this->fallback_to_tls(trans);
             return State::Negociate;
         }
     }
