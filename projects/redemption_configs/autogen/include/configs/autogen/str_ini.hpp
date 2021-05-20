@@ -1257,7 +1257,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #play_video_with_corrupted_bitmap = 0
 
-# Allow Realtime display (4eyes) without recording of session
+# Allow real-time view (4 eyes) without session recording enabled in the authorization
 # value: 0 or 1
 #allow_rt_without_recording = 0
 

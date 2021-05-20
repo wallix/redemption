@@ -1070,7 +1070,7 @@ smart_video_cropping = option(0, 1, 2, default=0)
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
-# Allow Realtime display (4eyes) without recording of session
+# Allow real-time view (4 eyes) without session recording enabled in the authorization
 allow_rt_without_recording = boolean(default=False)
 
 # Allow to control permissions on recorded files with octal number

@@ -3310,7 +3310,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
-    /// Allow Realtime display (4eyes) without recording of session <br/>
+    /// Allow real-time view (4 eyes) without session recording enabled in the authorization <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::allow_rt_without_recording {
