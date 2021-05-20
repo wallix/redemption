@@ -255,7 +255,7 @@ namespace
             case BitsPerPixel{16}: format = QImage::Format_RGB16;  break;
             case BitsPerPixel{24}: format = QImage::Format_RGB888; break;
             case BitsPerPixel{32}: format = QImage::Format_RGB32;  break;
-            default: assert(!"unknown bpp");
+            default: assert(!"unknown bpp"); return;
         }
         REDEMPTION_DIAGNOSTIC_POP()
 
