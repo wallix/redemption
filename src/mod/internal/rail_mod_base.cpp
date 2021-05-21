@@ -22,6 +22,7 @@ Author(s): Proxy Team
 #include "RAIL/client_execute.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/slowpath.hpp"
+#include "keyboard/keymap2.hpp"
 
 
 RailModBase::RailModBase(
@@ -119,20 +120,24 @@ void RailModBase::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keym
 void RailModBase::rdp_input_scancode(
     long param1, long param2, long param3, long param4, Keymap2 * keymap)
 {
+    this->check_alt_f4(param1, param3);
     this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+}
 
+void RailModBase::check_alt_f4(long key, long key_flag)
+{
     if (this->rail_enabled) {
         if (!this->alt_key_pressed) {
-            if ((param1 == 56) && !(param3 & SlowPath::KBDFLAGS_RELEASE)) {
+            if ((key == Keymap2::LEFT_ALT) && !(key_flag & SlowPath::KBDFLAGS_RELEASE)) {
                 this->alt_key_pressed = true;
             }
         }
         else {
-            // if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
-            if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
+            // if ((param1 == Keymap2::LEFT_ALT) && (key_flag == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+            if ((key == Keymap2::LEFT_ALT) && (key_flag & SlowPath::KBDFLAGS_RELEASE)) {
                 this->alt_key_pressed = false;
             }
-            else if ((param1 == 62) && !param3) {
+            else if ((key == 62) && !key_flag) {
                 LOG(LOG_INFO, "RailModBase::rdp_input_scancode: Close by user (Alt+F4)");
                 throw Error(ERR_WIDGET);    // F4 key pressed
             }

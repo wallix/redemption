@@ -294,44 +294,43 @@ void SelectorMod::rdp_input_scancode(
     long int param1, long int param2,
     long int param3, long int param4, Keymap2* keymap)
 {
-    RailModBase::rdp_input_scancode(param1, param2, param3, param4, keymap);
+    RailModBase::check_alt_f4(param1, param3);
 
     if (&this->selector.selector_lines == this->selector.current_focus
-        && keymap->nb_kevent_available() > 0) {
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
+     && keymap->nb_kevent_available() > 0
+    ) {
+        switch (underlying_cast(keymap->top_kevent()))
+        {
         case Keymap2::KEVENT_LEFT_ARROW:
             keymap->get_kevent();
             if (this->current_page > 1) {
                 --this->current_page;
                 this->ask_page();
+                return;
             }
             else if (this->current_page == 1 && this->number_page > 1) {
                 this->current_page = this->number_page;
                 this->ask_page();
+                return;
             }
             break;
+
         case Keymap2::KEVENT_RIGHT_ARROW:
             keymap->get_kevent();
             if (this->current_page < this->number_page) {
                 ++this->current_page;
                 this->ask_page();
+                return;
             }
             else if (this->current_page == this->number_page && this->number_page > 1) {
                 this->current_page = 1;
                 this->ask_page();
+                return;
             }
             break;
-        default:
-            this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
-            break;
         }
-        REDEMPTION_DIAGNOSTIC_POP()
     }
-    else {
-        this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
+
     this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
 }
 
