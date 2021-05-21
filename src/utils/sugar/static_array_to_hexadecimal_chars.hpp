@@ -24,6 +24,7 @@ Author(s): Proxies Team
 #include <cstdint>
 
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/sugar/sized_sequence.hpp"
 
 namespace detail
 {
@@ -61,38 +62,21 @@ private:
 };
 
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_chars_result<N>
-static_array_to_hexadecimal_upper_chars(uint8_t const (&a)[N]) noexcept;
+static_array_to_hexadecimal_upper_chars(SizedSeq const& a) noexcept;
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_chars_result<N>
-static_array_to_hexadecimal_lower_chars(uint8_t const (&a)[N]) noexcept;
+static_array_to_hexadecimal_lower_chars(SizedSeq const& a) noexcept;
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_zchars_result<N>
-static_array_to_hexadecimal_upper_zchars(uint8_t const (&a)[N]) noexcept;
+static_array_to_hexadecimal_upper_zchars(SizedSeq const& a) noexcept;
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_zchars_result<N>
-static_array_to_hexadecimal_lower_zchars(uint8_t const (&a)[N]) noexcept;
-
-
-template<std::size_t N>
-static_array_to_hexadecimal_chars_result<N>
-static_array_to_hexadecimal_upper_chars(std::array<uint8_t, N> const& a) noexcept;
-
-template<std::size_t N>
-static_array_to_hexadecimal_chars_result<N>
-static_array_to_hexadecimal_lower_chars(std::array<uint8_t, N> const& a) noexcept;
-
-template<std::size_t N>
-static_array_to_hexadecimal_zchars_result<N>
-static_array_to_hexadecimal_upper_zchars(std::array<uint8_t, N> const& a) noexcept;
-
-template<std::size_t N>
-static_array_to_hexadecimal_zchars_result<N>
-static_array_to_hexadecimal_lower_zchars(std::array<uint8_t, N> const& a) noexcept;
+static_array_to_hexadecimal_lower_zchars(SizedSeq const& a) noexcept;
 
 
 namespace detail
@@ -105,129 +89,55 @@ namespace detail
             return r.buffer;
         }
     };
-
-    template<std::size_t N>
-    struct static_array_u8_view
-    {
-        uint8_t const* p;
-
-        uint8_t const* begin() const noexcept { return p; }
-        uint8_t const* end() const noexcept { return p + N; }
-    };
-
-    template<std::size_t N>
-    static_array_to_hexadecimal_chars_result<N>
-    static_array_to_hexadecimal_upper_chars(detail::static_array_u8_view<N> a) noexcept
-    {
-        static_array_to_hexadecimal_chars_result<N> r;
-        auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
-        for (uint8_t i : a) {
-            p = int_to_fixed_hexadecimal_upper_chars(p, i);
-        }
-        return r;
-    }
-
-    template<std::size_t N>
-    static_array_to_hexadecimal_chars_result<N>
-    static_array_to_hexadecimal_lower_chars(detail::static_array_u8_view<N> a) noexcept
-    {
-        static_array_to_hexadecimal_chars_result<N> r;
-        auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
-        for (uint8_t i : a) {
-            p = int_to_fixed_hexadecimal_lower_chars(p, i);
-        }
-        return r;
-    }
-
-    template<std::size_t N>
-    static_array_to_hexadecimal_zchars_result<N>
-    static_array_to_hexadecimal_upper_zchars(detail::static_array_u8_view<N> a) noexcept
-    {
-        static_array_to_hexadecimal_zchars_result<N> r;
-        auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
-        for (uint8_t i : a) {
-            p = int_to_fixed_hexadecimal_upper_chars(p, i);
-        }
-        *p = '\0';
-        return r;
-    }
-
-    template<std::size_t N>
-    static_array_to_hexadecimal_zchars_result<N>
-    static_array_to_hexadecimal_lower_zchars(detail::static_array_u8_view<N> a) noexcept
-    {
-        static_array_to_hexadecimal_zchars_result<N> r;
-        auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
-        for (uint8_t i : a) {
-            p = int_to_fixed_hexadecimal_lower_chars(p, i);
-        }
-        *p = '\0';
-        return r;
-    }
 }
 
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N>
 static_array_to_hexadecimal_chars_result<N>
-inline static_array_to_hexadecimal_upper_chars(uint8_t const (&a)[N]) noexcept
+inline static_array_to_hexadecimal_upper_chars(SizedSeq const& a) noexcept
 {
-    return detail::static_array_to_hexadecimal_upper_chars(
-        detail::static_array_u8_view<N>{a});
+    static_array_to_hexadecimal_chars_result<N> r;
+    auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
+    for (uint8_t i : a) {
+        p = int_to_fixed_hexadecimal_upper_chars(p, i);
+    }
+    return r;
 }
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N>
 static_array_to_hexadecimal_chars_result<N>
-inline static_array_to_hexadecimal_lower_chars(uint8_t const (&a)[N]) noexcept
+inline static_array_to_hexadecimal_lower_chars(SizedSeq const& a) noexcept
 {
-    return detail::static_array_to_hexadecimal_lower_chars(
-        detail::static_array_u8_view<N>{a});
+    static_array_to_hexadecimal_chars_result<N> r;
+    auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
+    for (uint8_t i : a) {
+        p = int_to_fixed_hexadecimal_lower_chars(p, i);
+    }
+    return r;
 }
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N>
 static_array_to_hexadecimal_zchars_result<N>
-inline static_array_to_hexadecimal_upper_zchars(uint8_t const (&a)[N]) noexcept
+inline static_array_to_hexadecimal_upper_zchars(SizedSeq const& a) noexcept
 {
-    return detail::static_array_to_hexadecimal_upper_zchars(
-        detail::static_array_u8_view<N>{a});
+    static_array_to_hexadecimal_zchars_result<N> r;
+    auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
+    for (uint8_t i : a) {
+        p = int_to_fixed_hexadecimal_upper_chars(p, i);
+    }
+    *p = '\0';
+    return r;
 }
 
-template<std::size_t N>
+template<class SizedSeq, std::size_t N>
 static_array_to_hexadecimal_zchars_result<N>
-inline static_array_to_hexadecimal_lower_zchars(uint8_t const (&a)[N]) noexcept
+inline static_array_to_hexadecimal_lower_zchars(SizedSeq const& a) noexcept
 {
-    return detail::static_array_to_hexadecimal_lower_zchars(
-        detail::static_array_u8_view<N>{a});
-}
-
-
-template<std::size_t N>
-static_array_to_hexadecimal_chars_result<N>
-inline static_array_to_hexadecimal_upper_chars(std::array<uint8_t, N> const& a) noexcept
-{
-    return detail::static_array_to_hexadecimal_upper_chars(
-        detail::static_array_u8_view<N>{a.data()});
-}
-
-template<std::size_t N>
-static_array_to_hexadecimal_chars_result<N>
-inline static_array_to_hexadecimal_lower_chars(std::array<uint8_t, N> const& a) noexcept
-{
-    return detail::static_array_to_hexadecimal_lower_chars(
-        detail::static_array_u8_view<N>{a.data()});
-}
-
-template<std::size_t N>
-static_array_to_hexadecimal_zchars_result<N>
-inline static_array_to_hexadecimal_upper_zchars(std::array<uint8_t, N> const& a) noexcept
-{
-    return detail::static_array_to_hexadecimal_upper_zchars(
-        detail::static_array_u8_view<N>{a.data()});
-}
-
-template<std::size_t N>
-static_array_to_hexadecimal_zchars_result<N>
-inline static_array_to_hexadecimal_lower_zchars(std::array<uint8_t, N> const& a) noexcept
-{
-    return detail::static_array_to_hexadecimal_lower_zchars(
-        detail::static_array_u8_view<N>{a.data()});
+    static_array_to_hexadecimal_zchars_result<N> r;
+    auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
+    for (uint8_t i : a) {
+        p = int_to_fixed_hexadecimal_lower_chars(p, i);
+    }
+    *p = '\0';
+    return r;
 }

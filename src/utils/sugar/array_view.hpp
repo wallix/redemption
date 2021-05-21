@@ -20,16 +20,14 @@
 
 #pragma once
 
-#include <type_traits>
-#include <array>
+#include "utils/sugar/sized_sequence.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
+
+#include "cxx/cxx.hpp"
 
 #include <cstdint>
 #include <cassert>
 
-#include "utils/sugar/array.hpp"
-#include "utils/sugar/numerics/safe_conversions.hpp"
-
-#include "cxx/cxx.hpp"
 
 namespace detail
 {
@@ -85,25 +83,6 @@ namespace detail
         return true;
     }
 
-    template<class T>
-    struct static_array_to_size
-    {};
-
-    template<class T>
-    using static_array_to_size_t = typename static_array_to_size<
-        std::remove_cv_t<std::remove_reference_t<T>>
-    >::type;
-
-    template<class T, std::size_t N>
-    struct static_array_to_size<T[N]>
-    : std::integral_constant<std::size_t, N>
-    {};
-
-    template<class T, std::size_t N>
-    struct static_array_to_size<std::array<T, N>>
-    : std::integral_constant<std::size_t, N>
-    {};
-
     template<class T, class = void>
     struct select_extent
     {
@@ -111,9 +90,9 @@ namespace detail
     };
 
     template<class T>
-    struct select_extent<T, std::void_t<static_array_to_size_t<T>>>
+    struct select_extent<T, std::void_t<sequence_to_static_size_t<T>>>
     {
-        static constexpr std::size_t value = static_array_to_size_t<T>::value;
+        static constexpr std::size_t value = sequence_to_static_size_t<T>::value;
     };
 
     template<class C>
@@ -382,7 +361,7 @@ public:
         return array_view(av.data());
     }
 
-    template<class C, std::size_t N = detail::static_array_to_size<C>::type::value>
+    template<class C, std::size_t N = sequence_to_static_size_t<C>::value>
     static constexpr array_view assumed(C&& a)
         noexcept(detail::is_noexcept_array_view_data_v<C&&>)
     {
@@ -391,7 +370,7 @@ public:
     }
 
     template<class C, class = std::enable_if_t<
-        (detail::static_array_to_size_t<C>::value == Extent),
+        (sequence_to_static_size_t<C>::value == Extent),
         typename detail::filter_dangerous_implicit_array_view<C, decltype(
             *static_cast<const_pointer*>(nullptr) = utils::data(std::declval<C&&>())
         )>::type
@@ -941,7 +920,7 @@ public:
         return writable_array_view(av.data());
     }
 
-    template<class C, std::size_t N = detail::static_array_to_size<C>::type::value>
+    template<class C, std::size_t N = sequence_to_static_size_t<C>::value>
     static constexpr writable_array_view assumed(C&& a)
         noexcept(detail::is_noexcept_array_view_data_v<C&&>)
     {
@@ -950,7 +929,7 @@ public:
     }
 
     template<class C, class = std::enable_if_t<
-        (detail::static_array_to_size_t<C>::value == Extent),
+        (sequence_to_static_size_t<C>::value == Extent),
         typename detail::filter_dangerous_implicit_array_view<C, decltype(
             *static_cast<pointer*>(nullptr) = utils::data(std::declval<C&&>())
         )>::type
@@ -1414,6 +1393,28 @@ private:
 };
 
 
+namespace detail
+{
+    template<class T, std::size_t N>
+    struct sequence_to_static_size_impl<array_view<T, N>>
+    : std::integral_constant<std::size_t, N>
+    {};
+
+    template<class T, std::size_t N>
+    struct sequence_to_static_size_impl<writable_array_view<T, N>>
+    : std::integral_constant<std::size_t, N>
+    {};
+
+    template<class T>
+    struct sequence_to_static_size_impl<array_view<T, dynamic_extent>>
+    {};
+
+    template<class T>
+    struct sequence_to_static_size_impl<writable_array_view<T, dynamic_extent>>
+    {};
+} // namespace detail
+
+
 template<class T>
 writable_array_view(T&&) -> writable_array_view<
     detail::value_type_array_view_from_t<T&&>,
@@ -1643,6 +1644,10 @@ using writable_s64_array_view = writable_array_view<std::int64_t>;
 
 using chars_view = array_view<char>;
 using writable_chars_view = writable_array_view<char>;
+
+template<std::size_t N> using sized_u8_array_view = array_view<std::uint8_t, N>;
+template<std::size_t N> using sized_writable_u8_array_view = writable_array_view<std::uint8_t, N>;
+
 
 // TODO array_view<char, len>
 constexpr chars_view operator "" _av(char const * s, size_t len) noexcept
