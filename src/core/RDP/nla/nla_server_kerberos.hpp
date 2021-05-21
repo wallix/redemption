@@ -591,7 +591,7 @@ class rdpCredsspServerKerberos final
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
         sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update(this->public_key);
-        sha256.final(hash);
+        sha256.final(make_writable_array_view(hash));
         SavedHash = std::vector<uint8_t>(sizeof(hash));
         memcpy(SavedHash.data(), hash, sizeof(hash));
     }
@@ -604,7 +604,7 @@ class rdpCredsspServerKerberos final
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
         sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update(this->public_key);
-        sha256.final(hash);
+        sha256.final(make_writable_array_view(hash));
         SavedHash = std::vector<uint8_t>(sizeof(hash));
         memcpy(SavedHash.data(), hash, sizeof(hash));
     }

@@ -109,14 +109,14 @@ void ClipboardVirtualChannel::ClipCtx::Sig::update(bytes_view data)
 void ClipboardVirtualChannel::ClipCtx::Sig::final()
 {
     assert(this->status == Status::Update);
-    this->sha256.final(this->array);
+    this->sha256.final(make_writable_array_view(this->array));
     this->status = Status::Final;
 }
 
 void ClipboardVirtualChannel::ClipCtx::Sig::broken()
 {
     assert(this->status == Status::Update);
-    this->sha256.final(this->array);
+    this->sha256.final(make_writable_array_view(this->array));
     this->status = Status::Broken;
 }
 

@@ -22,6 +22,7 @@
 
 #include "core/error.hpp"
 #include "system/basic_hmac.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -53,16 +54,9 @@ public:
         }
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
-        if (0 == SHA256_Final(out_data, &this->sha256)){
-            throw Error(ERR_SSL_CALL_SHA256_FINAL_FAILED);
-        }
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        if (0 == SHA256_Final(out_data, &this->sha256)){
+        if (0 == SHA256_Final(out_data.data(), &this->sha256)){
             throw Error(ERR_SSL_CALL_SHA256_FINAL_FAILED);
         }
     }
@@ -85,14 +79,9 @@ public:
         sha256.update(data);
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
         sha256.final(out_data);
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        sha256.unchecked_final(out_data);
     }
 };
 

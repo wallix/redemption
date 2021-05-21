@@ -29,7 +29,7 @@ RED_AUTO_TEST_CASE(TestSign)
     hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[16];
-    hmac.final(sig);
+    hmac.final(make_writable_array_view(sig));
     RED_CHECK(make_array_view(sig) ==
         "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b\x91\xc2\xe2\x12\x39\x80\xe1\x94"_av);
 }

@@ -140,7 +140,7 @@ bool InCryptoTransport::read_qhash(
 
     SslHMAC_Sha256 hm4k(make_array_view(hmac_key));
     hm4k.update({buffer, total_length});
-    hm4k.final(result_hash.hash);
+    hm4k.final(make_writable_array_view(result_hash.hash));
     return true;
 }
 
@@ -171,7 +171,7 @@ bool InCryptoTransport::read_fhash(
         hm4k.update({buffer, size_t(res)});
     } while (true);
 
-    hm4k.final(result_hash.hash);
+    hm4k.final(make_writable_array_view(result_hash.hash));
     return true;
 }
 
@@ -612,8 +612,8 @@ ocrypto::Result ocrypto::close(HashArray & qhash, HashArray & fhash)
     }
 
     if (this->cctx.get_with_checksum()) {
-        this->hm.final(fhash);
-        this->hm4k.final(qhash);
+        this->hm.final(make_writable_array_view(fhash));
+        this->hm4k.final(make_writable_array_view(qhash));
 
     }
     return Result{{this->result_buffer, towrite}, 0u};

@@ -2081,7 +2081,9 @@ public:
         }
         // beware order of parameters for key generation (decrypt/encrypt)
         // is inversed between server and client
-        SEC::KeyBlock key_block(client_random, this->server_random);
+        SEC::KeyBlock key_block(
+            make_array_view(client_random).first<SEC_RANDOM_SIZE>(),
+            make_array_view(this->server_random));
         memcpy(this->encrypt.sign_key, key_block.blob0, 16);
         if (this->encrypt.encryptionMethod == 1) {
             ssllib::sec_make_40bit(this->encrypt.sign_key);

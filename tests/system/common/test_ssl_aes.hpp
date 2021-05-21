@@ -59,7 +59,8 @@ RED_AUTO_TEST_CASE(TestAES128_CBC)
                              }; // message to hide
         uint8_t outbuf[1024] = {};
 
-        SslAes128_CBC aes(key16, iv, AES_direction::SSL_AES_ENCRYPT);
+        SslAes128_CBC aes(make_array_view(key16), make_array_view(iv),
+                          AES_direction::SSL_AES_ENCRYPT);
         aes.crypt_cbc(16, inbuf, outbuf);
 
 //        hexdump_d(outbuf, 16);
@@ -106,7 +107,8 @@ RED_AUTO_TEST_CASE(TestAES128_CBC)
 
         uint8_t decrypted[1024] = {};
 
-        SslAes128_CBC aes2(key16, iv, AES_direction::SSL_AES_DECRYPT);
+        SslAes128_CBC aes2(make_array_view(key16), make_array_view(iv),
+                           AES_direction::SSL_AES_DECRYPT);
         aes2.crypt_cbc(32, outbuf, decrypted);
         aes2.crypt_cbc(32, outbuf+32, decrypted+32);
         aes2.crypt_cbc(32, outbuf+64, decrypted+64);
@@ -160,7 +162,8 @@ RED_AUTO_TEST_CASE(TestAES192_CBC)
                              }; // message to hide
         uint8_t outbuf[1024] = {};
 
-        SslAes192_CBC aes(key24, iv, AES_direction::SSL_AES_ENCRYPT);
+        SslAes192_CBC aes(make_array_view(key24), make_array_view(iv),
+                          AES_direction::SSL_AES_ENCRYPT);
         aes.crypt_cbc(32, inbuf, outbuf);
 
 //        hexdump_d(aes.tiv.iv, 16);
@@ -195,7 +198,8 @@ RED_AUTO_TEST_CASE(TestAES192_CBC)
 
         uint8_t decrypted[1024] = {};
 
-        SslAes192_CBC aes2(key24, iv, AES_direction::SSL_AES_DECRYPT);
+        SslAes192_CBC aes2(make_array_view(key24), make_array_view(iv),
+                           AES_direction::SSL_AES_DECRYPT);
         aes2.crypt_cbc(32, outbuf, decrypted);
         aes2.crypt_cbc(32, outbuf+32, decrypted+32);
         aes2.crypt_cbc(32, outbuf+64, decrypted+64);
@@ -250,7 +254,8 @@ RED_AUTO_TEST_CASE(TestAES256_CBC)
                              }; // message to hide
         uint8_t outbuf[1024] = {};
 
-        SslAes256_CBC aes(key32, iv, AES_direction::SSL_AES_ENCRYPT);
+        SslAes256_CBC aes(make_array_view(key32), make_array_view(iv),
+                          AES_direction::SSL_AES_ENCRYPT);
         aes.crypt_cbc(32, inbuf, outbuf);
 
 //        hexdump_d(aes.tiv.iv, 16);
@@ -281,7 +286,8 @@ RED_AUTO_TEST_CASE(TestAES256_CBC)
 
         uint8_t decrypted[1024] = {};
 
-        SslAes256_CBC aes2(key32, iv, AES_direction::SSL_AES_DECRYPT);
+        SslAes256_CBC aes2(make_array_view(key32), make_array_view(iv),
+                           AES_direction::SSL_AES_DECRYPT);
         aes2.crypt_cbc(32, outbuf, decrypted);
         aes2.crypt_cbc(32, outbuf+32, decrypted+32);
         aes2.crypt_cbc(32, outbuf+64, decrypted+64);

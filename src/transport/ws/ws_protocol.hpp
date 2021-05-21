@@ -87,7 +87,7 @@ struct WsHttpHeader
             uint8_t digest[SslSha1::DIGEST_LENGTH];
             sha1.update(value);
             sha1.update(WS_GUID);
-            sha1.final(digest);
+            sha1.final(make_writable_array_view(digest));
             static_assert(base64_encode_size(sizeof(digest)) == sizeof(this->base64_key_rep));
             base64_encode(make_array_view(digest), writable_bytes_view(this->base64_key_rep));
         });

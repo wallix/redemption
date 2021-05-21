@@ -93,7 +93,7 @@ static inline array_md4 Md4(u8_array_view data)
     array_md4 result;
     SslMd4 md4;
     md4.update(data);
-    md4.unchecked_final(result.data());
+    md4.final(make_writable_array_view(result));
     return result;
 }
 
@@ -127,7 +127,7 @@ static inline array_md5 Md5(u8_array_view data)
     array_md5 result;
     SslMd5 md5;
     md5.update(data);
-    md5.unchecked_final(result.data());
+    md5.final(make_writable_array_view(result));
     return result;
 }
 
@@ -137,7 +137,7 @@ static inline array_md5 Md5(u8_array_view data1, bytes_view data2)
     SslMd5 md5;
     md5.update(data1);
     md5.update(data2);
-    md5.unchecked_final(result.data());
+    md5.final(make_writable_array_view(result));
     return result;
 }
 
@@ -147,7 +147,7 @@ static inline array_md5 HmacMd5(u8_array_view key, u8_array_view data)
     array_md5 result;
     SslHMAC_Md5 hmac_md5(key);
     hmac_md5.update(data);
-    hmac_md5.unchecked_final(result.data());
+    hmac_md5.final(make_writable_array_view(result));
     return result;
 }
 
@@ -157,7 +157,7 @@ static inline array_md5 HmacMd5(u8_array_view key, u8_array_view data1, u8_array
     SslHMAC_Md5 hmac_md5(key);
     hmac_md5.update(data1);
     hmac_md5.update(data2);
-    hmac_md5.unchecked_final(result.data());
+    hmac_md5.final(make_writable_array_view(result));
     return result;
 }
 
@@ -168,7 +168,7 @@ static inline array_md5 HmacMd5(u8_array_view key, u8_array_view data1, u8_array
     hmac_md5.update(data1);
     hmac_md5.update(data2);
     hmac_md5.update(data3);
-    hmac_md5.unchecked_final(result.data());
+    hmac_md5.final(make_writable_array_view(result));
     return result;
 }
 
@@ -180,7 +180,7 @@ static inline array_sha256 Sha256(bytes_view data1, u8_array_view data2, u8_arra
     sha256.update(data1);
     sha256.update(data2);
     sha256.update(data3);
-    sha256.unchecked_final(result.data());
+    sha256.final(make_writable_array_view(result));
     return result;
 }
 

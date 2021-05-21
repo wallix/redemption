@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
+
 #include <cstdint>
 #include <cstring>
 
@@ -104,13 +106,16 @@ public:
         uint8_t iv[16];
     } tiv;
 
-    SslAes_CBC_direct(const uint8_t key[KeyLength/8], const uint8_t (& iv)[16], AES_direction direction)
-        : direction(direction)
+    SslAes_CBC_direct(
+        sized_u8_array_view<KeyLength/8> key,
+        sized_u8_array_view<16> iv,
+        AES_direction direction)
+    : direction(direction)
     {
-        memcpy(this->tiv.iv, iv, sizeof(this->tiv.iv));
+        memcpy(this->tiv.iv, iv.data(), iv.size());
         keyInst.blockLen = 128;
         keyInst.keyLen = KeyLength;
-        memcpy(binKey, key, KeyLength/8);
+        memcpy(binKey, key.data(), key.size());
     }
 
     void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out)

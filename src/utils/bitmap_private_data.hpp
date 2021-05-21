@@ -133,7 +133,7 @@ public:
             for (; first != last; first += this->line_size_) {
                 sha1.update({first, this->line_size_});
             }
-            sha1.final(this->sha1_);
+            sha1.final(make_writable_array_view(this->sha1_));
         }
         memcpy(sig, this->sha1_, sizeof(this->sha1_));
     }

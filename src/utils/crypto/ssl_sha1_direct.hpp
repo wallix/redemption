@@ -77,12 +77,7 @@ public:
         memcpy(&this->ctx.buffer[j], data_remaining.data(), data_remaining.size());
     }
 
-    void final(uint8_t digest[DIGEST_LENGTH]) noexcept
-    {
-        this->unchecked_final(digest);
-    }
-
-    void unchecked_final(uint8_t * digest)
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> digest) noexcept
     {
         /* Add padding and return the message digest. */
         uint8_t finalcount[8];

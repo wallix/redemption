@@ -45,14 +45,9 @@ public:
         MD5_Update(&this->md5, data.as_u8p(), data.size());
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
-        MD5_Final(out_data, &this->md5);
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        MD5_Final(out_data, &this->md5);
+        MD5_Final(out_data.data(), &this->md5);
     }
 };
 

@@ -81,15 +81,10 @@ public:
         }
     }
 
-    void final(uint8_t (&out_data)[DigestLength])
-    {
-        unchecked_final(+out_data);
-    }
-
-    void unchecked_final(uint8_t * out_data)
+    void final(sized_writable_u8_array_view<DigestLength> out_data)
     {
         unsigned int len = 0;
-        int res = HMAC_Final(this->hmac, out_data, &len);
+        int res = HMAC_Final(this->hmac, out_data.data(), &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
@@ -137,28 +132,13 @@ public:
         }
     }
 
-    void final(uint8_t (&out_data)[DigestLength])
+    void final(sized_writable_u8_array_view<DigestLength> out_data)
     {
         if (!this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
         unsigned int len = 0;
-        int res = HMAC_Final(this->hmac, out_data, &len);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-        }
-        assert(len == DigestLength);
-        this->hmac.deinit();
-        this->initialized = false;
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        if (!this->initialized){
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-        }
-        unsigned int len = 0;
-        int res = HMAC_Final(this->hmac, out_data, &len);
+        int res = HMAC_Final(this->hmac, out_data.data(), &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }

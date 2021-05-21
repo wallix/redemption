@@ -108,7 +108,7 @@ struct CryptContext
 
             Sign sign({this->update_key, keylen});
             sign.update({this->key, keylen});
-            sign.final(this->key);
+            sign.final(make_writable_array_view(this->key));
 
             this->rc4.set_key({this->key, keylen});
 
@@ -127,7 +127,7 @@ struct CryptContext
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(bytes_view data, uint8_t (&signature)[8])
+    void sign(bytes_view data, sized_writable_u8_array_view<8> signature)
     {
         uint8_t lenhdr[] = {
             static_cast<uint8_t>(data.size() & 0xff),
@@ -139,6 +139,6 @@ struct CryptContext
         Sign sign({this->sign_key, (this->encryptionMethod==1)?8u:16u});
         sign.update(make_array_view(lenhdr));
         sign.update(data);
-        sign.final(signature);
+        sign.final(make_writable_array_view(signature));
     }
 };

@@ -41,15 +41,11 @@ public:
         this->MD4_update(data.data(), data.size());
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
-        this->MD4_final(out_data);
+        this->MD4_final(out_data.data());
     }
 
-    void unchecked_final(uint8_t * out_data)
-    {
-        this->MD4_final(out_data);
-    }
 private:
     struct {
         uint32_t total[2] {};

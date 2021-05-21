@@ -45,14 +45,9 @@ public:
         MD4_Update(&this->md4, data.as_u8p(), data.size());
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
-        MD4_Final(out_data, &this->md4);
-    }
-    
-    void unchecked_final(uint8_t * out_data)
-    {
-        MD4_Final(out_data, &this->md4);
+        MD4_Final(out_data.data(), &this->md4);
     }
 };
 

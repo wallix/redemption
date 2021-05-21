@@ -45,9 +45,9 @@ public:
         this->sha512_update(data.as_u8p(), data.size());
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH]) noexcept
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data) noexcept
     {
-        this->sha512_sum(out_data);
+        this->sha512_sum(out_data.data());
     }
 
 private:

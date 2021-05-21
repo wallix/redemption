@@ -26,13 +26,16 @@
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
+
 #include <cstdint>
 #include <cstring>
 
 #include <openssl/aes.h>
 
 
-enum class AES_direction : bool {
+enum class AES_direction : bool
+{
     SSL_AES_ENCRYPT = false,
     SSL_AES_DECRYPT = true
 };
@@ -48,16 +51,23 @@ public:
         uint8_t iv[16];
     } tiv;
 
-    SslAes_CBC(const uint8_t key[KeyLength/8], const uint8_t (& iv)[16], AES_direction mode)
+    SslAes_CBC(
+        sized_u8_array_view<KeyLength/8> key,
+        sized_u8_array_view<16> iv,
+        AES_direction mode)
     : mode(mode == AES_direction::SSL_AES_DECRYPT ? AES_DECRYPT : AES_ENCRYPT)
     {
-        (mode == AES_direction::SSL_AES_DECRYPT ? AES_set_decrypt_key : AES_set_encrypt_key)(
-            key, KeyLength, &this->key
-        );
-        memcpy(this->tiv.iv, iv, sizeof(this->tiv.iv));
+        if (mode == AES_direction::SSL_AES_DECRYPT) {
+            AES_set_decrypt_key(key.data(), KeyLength, &this->key);
+        }
+        else {
+            AES_set_encrypt_key(key.data(), KeyLength, &this->key);
+        }
+        std::memcpy(this->tiv.iv, iv.data(), iv.size());
     }
 
-    void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) {
+    void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out)
+    {
        AES_cbc_encrypt(in, out, data_size, &this->key, this->tiv.iv, mode);
     }
 };

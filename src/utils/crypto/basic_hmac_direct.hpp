@@ -51,7 +51,7 @@ public:
         if (key.size() > pad_length) {
             Ssl ssl;
             ssl.update(key);
-            ssl.final(digest);
+            ssl.final(make_writable_array_view(digest));
             key = make_array_view(digest);
         }
 
@@ -72,7 +72,7 @@ public:
         context.update(data);
     }
 
-    void final(uint8_t (&out_data)[Ssl::DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<Ssl::DIGEST_LENGTH> out_data)
     {
         context.final(out_data);
 
@@ -80,11 +80,6 @@ public:
         ssl.update(make_array_view(this->k_opad));
         ssl.update(make_array_view(out_data));
         ssl.final(out_data);
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        this->final(reinterpret_cast<uint8_t(&)[Ssl::DIGEST_LENGTH]>(*out_data));
     }
 };
 
@@ -110,7 +105,7 @@ public:
         if (key_len > pad_length) {
             Ssl ssl;
             ssl.update({key, key_len});
-            ssl.final(digest);
+            ssl.final(make_writable_array_view(digest));
             key_len = Ssl::DIGEST_LENGTH;
             k = digest;
         }
@@ -131,23 +126,13 @@ public:
         context.update(data);
     }
 
-    void final(uint8_t (&out_data)[Ssl::DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<Ssl::DIGEST_LENGTH> out_data)
     {
         context.final(out_data);
 
         Ssl ssl;
         ssl.update(make_array_view(this->k_opad));
         ssl.update(make_array_view(out_data));
-        ssl.final(out_data);
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        context.final(out_data);
-
-        Ssl ssl;
-        ssl.update(make_array_view(this->k_opad));
-        ssl.update(make_array_view(out_data, Ssl::DIGEST_LENGTH));
         ssl.final(out_data);
     }
 };

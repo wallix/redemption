@@ -51,9 +51,9 @@ public:
         }
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
-        if (0 == SHA512_Final(out_data, &this->sha512)){
+        if (0 == SHA512_Final(out_data.data(), &this->sha512)){
             throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
         }
     }

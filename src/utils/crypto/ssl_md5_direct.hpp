@@ -36,7 +36,7 @@
 class SslMd5_direct
 {
 public:
-    enum {  DIGEST_LENGTH = 16 };
+    enum { DIGEST_LENGTH = 16 };
 
     SslMd5_direct()
     {
@@ -48,14 +48,9 @@ public:
         this->md5_update(data.as_u8p(), data.size());
     }
 
-    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
     {
-        this->md5_sum(out_data);
-    }
-
-    void unchecked_final(uint8_t * out_data)
-    {
-        this->md5_sum(out_data);
+        this->md5_sum(out_data.data());
     }
 
 private:

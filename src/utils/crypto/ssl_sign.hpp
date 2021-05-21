@@ -49,14 +49,16 @@ public:
         sha1.update(make_array_view(sha1const));
     }
 
-    void update(bytes_view data) {
+    void update(bytes_view data)
+    {
         this->sha1.update(data);
     }
 
     template<std::size_t OutLen>
-    void final(uint8_t (&out)[OutLen]) {
+    void final(sized_writable_u8_array_view<OutLen> out)
+    {
         uint8_t shasig[SslSha1::DIGEST_LENGTH];
-        this->sha1.final(shasig);
+        this->sha1.final(make_writable_array_view(shasig));
 
         SslMd5 md5;
         md5.update(this->key);
@@ -78,8 +80,8 @@ public:
         }
         else {
             uint8_t tmp[SslMd5::DIGEST_LENGTH];
-            md5.final(tmp);
-            memcpy(out, tmp, OutLen);
+            md5.final(make_writable_array_view(tmp));
+            memcpy(out.data(), tmp, OutLen);
         }
     }
 };

@@ -160,13 +160,13 @@ public:
             {
                 MD_HASH sha256;
                 sha256.update(derivator);
-                sha256.final(tmp);
+                sha256.final(make_writable_array_view(tmp));
             }
             {
                 MD_HASH sha256;
                 sha256.update({tmp, DERIVATOR_LENGTH});
                 sha256.update(make_array_view(this->master_key));
-                sha256.final(tmp);
+                sha256.final(make_writable_array_view(tmp));
             }
             static_assert(sizeof(trace_key) == sizeof(tmp));
             memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
