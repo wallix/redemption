@@ -27,6 +27,7 @@
 #include "transport/transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/translation.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 
 #include <memory>
 #include <vector>
@@ -105,11 +106,8 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        // same as rdp_verbose.hpp
-        //@{
-        credssp     = 0x400,
-        negotiation = 0x800,
-        //@}
+        credssp     = underlying_cast(RDPVerbose::credssp),
+        negotiation = underlying_cast(RDPVerbose::negotiation),
     };
 
     [[nodiscard]] bool enhanced_rdp_security_is_in_effect() const;

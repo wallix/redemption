@@ -55,11 +55,8 @@ namespace
         }
 
         size_t sep_pos = target.find_last_of("+:");
-        if (sep_pos != std::string::npos) {
-            return str_concat(target, target[sep_pos], login);
-        }
-
-        return str_concat(target, ':', login);
+        char sep = (sep_pos != std::string::npos) ? target[sep_pos] : ':';
+        return str_concat(target, sep, login);
     }
 }
 

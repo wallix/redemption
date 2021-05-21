@@ -231,7 +231,7 @@ private:
             ret = this->sspi_credentials->get_credentials(identity->princname,
                 identity->princpass, nullptr, fast_cache_name_ptr);
         }
-    
+
     cleanup:
         // destroy service credentials
         if (fast_cache_name_ptr)
@@ -974,7 +974,7 @@ public:
                 this->error_code = this->ts_request.error_code;
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-                this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
+                this->client_auth_data.input_buffer = this->ts_request.negoTokens;
 
                 if (Res::Err == this->authenticate_send()) {
                     return credssp::State::Err;

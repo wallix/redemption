@@ -446,7 +446,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
             return State::Negociate;
         }
     }
-    // TODO: success should not be default result
+
     return State::Credssp;
 }
 

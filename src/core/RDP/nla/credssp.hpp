@@ -881,7 +881,7 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     }
 
     self.authInfo   = BER::read_optional_octet_string(stream, 2, "TSRequest [2] authInfo", ERR_CREDSSP_TS_REQUEST);
-    self.pubKeyAuth   = BER::read_optional_octet_string(stream, 3, "TSRequest [2] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
+    self.pubKeyAuth = BER::read_optional_octet_string(stream, 3, "TSRequest [2] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
 
     /* [4] errorCode (INTEGER) */
     if (self.use_version >= 3 && self.use_version != 5){
