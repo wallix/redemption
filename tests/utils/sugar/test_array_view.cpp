@@ -44,10 +44,12 @@ RED_AUTO_TEST_CASE(TestArrayView)
     int8_t as8[3] = {-1, 0, 3};
     uint8_t au8[3] = {0, 1, 2};
 
+    array_view<char>{} = array_view<char, 0>{};
     array_view<char>{} = array_view<char>{};
     array_view<char>{} = array_view<char>(a8, short(2));
     array_view<char>{} = writable_array_view<char>{};
     array_view<char>{} = writable_array_view<char>(a8, short(2));
+    array_view<char>{} = array_view(a8, short(2));
     writable_array_view<char>{} = writable_array_view<char>{};
 
     RED_CHECK_EQUAL(test_ambiguous(make_writable_array_view(a8)), 1);
@@ -150,6 +152,31 @@ RED_AUTO_TEST_CASE(TestArrayView)
         auto const avi = cstr_array_view("0123456789");
         RED_CHECK_EQUAL(avi.size(), 10u);
         RED_CHECK_EQUAL(voidp(avi.data()), voidp(&avi[0]));
+    }
+
+    {
+        int ai[3] = {0, 1, 2};
+        array_view<int, 3> a = array_view(ai);
+        [](array_view<int, 3>){}(ai);
+        a = array_view<int, 3>(ai);
+        a = ai;
+        array_view b = a;
+        (void)b;
+    }
+
+    {
+        writable_array_view<char, 3> avn = make_writable_array_view(a8);
+        RED_CHECK_EQUAL(avn.size(), 3);
+        RED_CHECK_EQUAL(voidp(avn.data()), voidp(a8));
+
+        writable_array_view<char, 2> avn2 = avn.last<2>();
+        RED_CHECK_EQUAL(voidp(avn2.data()), voidp(a8+1));
+
+        writable_array_view<char>{} = avn2;
+
+        array_view<char> av = avn;
+        RED_CHECK_EQUAL(av.size(), 3);
+        RED_CHECK_EQUAL(voidp(av.data()), voidp(a8));
     }
 }
 

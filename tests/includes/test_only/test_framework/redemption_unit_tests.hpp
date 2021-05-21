@@ -161,21 +161,31 @@ namespace redemption_unit_test__
     constexpr fn_caller<F> fn_invoker(char const* /*name*/, F f);
 } // namespace redemption_unit_test__
 
-template<class T, class U>  bool operator==(array_view<T>, array_view<U>) { return true; }
-template<class T> bool operator==(array_view<T>, bytes_view) { return true; }
-template<class U> bool operator==(bytes_view, array_view<U>) { return true; }
+template<class T, std::size_t TExtent, class U, std::size_t UExtent>
+bool operator==(array_view<T, TExtent>, array_view<U, UExtent>) { return true; }
+template<class T, std::size_t TExtent>
+bool operator==(array_view<T, TExtent>, bytes_view) { return true; }
+template<class U, std::size_t UExtent>
+bool operator==(bytes_view, array_view<U, UExtent>) { return true; }
 bool operator==(bytes_view, bytes_view);
-template<class T> bool operator==(array_view<T>, ut::flagged_bytes_view) { return true; }
-template<class U> bool operator==(ut::flagged_bytes_view, array_view<U>) { return true; }
+template<class T, std::size_t TExtent>
+bool operator==(array_view<T, TExtent>, ut::flagged_bytes_view) { return true; }
+template<class U, std::size_t UExtent>
+bool operator==(ut::flagged_bytes_view, array_view<U, UExtent>) { return true; }
 bool operator==(ut::flagged_bytes_view, bytes_view);
 bool operator==(bytes_view, ut::flagged_bytes_view);
 
-template<class T, class U>  bool operator!=(array_view<T>, array_view<U>) { return true; }
-template<class T> bool operator!=(array_view<T>, bytes_view) { return true; }
-template<class U> bool operator!=(bytes_view, array_view<U>) { return true; }
+template<class T, std::size_t TExtent, class U, std::size_t UExtent>
+bool operator!=(array_view<T, TExtent>, array_view<U, UExtent>) { return true; }
+template<class T, std::size_t TExtent>
+bool operator!=(array_view<T, TExtent>, bytes_view) { return true; }
+template<class U, std::size_t UExtent>
+bool operator!=(bytes_view, array_view<U, UExtent>) { return true; }
 bool operator!=(bytes_view, bytes_view);
-template<class T> bool operator!=(array_view<T>, ut::flagged_bytes_view) { return true; }
-template<class U> bool operator!=(ut::flagged_bytes_view, array_view<U>) { return true; }
+template<class T, std::size_t TExtent>
+bool operator!=(array_view<T, TExtent>, ut::flagged_bytes_view) { return true; }
+template<class U, std::size_t UExtent>
+bool operator!=(ut::flagged_bytes_view, array_view<U, UExtent>) { return true; }
 bool operator!=(ut::flagged_bytes_view, bytes_view);
 bool operator!=(bytes_view, ut::flagged_bytes_view);
 

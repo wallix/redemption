@@ -1592,10 +1592,6 @@ public:
                         this->client_info.screen_info.bpp = BitsPerPixel{8};
                         switch (cs_core.postBeta2ColorDepth) {
                         case GCC::UserData::RNS_UD_COLOR_8BPP:
-                            /*
-                            this->client_info.bpp =
-                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
-                            */
                             this->client_info.screen_info.bpp = (
                                       (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
                                     ? BitsPerPixel{32}

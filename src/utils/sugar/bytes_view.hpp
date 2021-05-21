@@ -54,25 +54,27 @@ struct writable_bytes_view : writable_array_view<uint8_t>
     : writable_array_view(first.as_u8p(), last.as_u8p())
     {}
 
-    writable_bytes_view(writable_array_view<char> av) noexcept /*NOLINT*/
+    template<std::size_t Extent>
+    writable_bytes_view(writable_array_view<char, Extent> av) noexcept
     : writable_array_view(byte_ptr_cast(av.data()), av.size())
     {}
 
-    writable_bytes_view(writable_array_view<uint8_t> av) noexcept /*NOLINT*/
+    template<std::size_t Extent>
+    writable_bytes_view(writable_array_view<uint8_t, Extent> av) noexcept
     : writable_array_view(av.data(), av.size())
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<writable_array_view<uint8_t>, U&&>::value, bool
     >::type = 1>
-    explicit constexpr writable_bytes_view(U && a) noexcept /*NOLINT*/
+    explicit constexpr writable_bytes_view(U && a) noexcept
     : writable_array_view(a)
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<writable_array_view<char>, U&&>::value, bool
     >::type = 1>
-    explicit constexpr writable_bytes_view(U && a) noexcept /*NOLINT*/
+    explicit constexpr writable_bytes_view(U && a) noexcept
     : writable_bytes_view(writable_array_view<char>(a))
     {}
 
@@ -118,21 +120,22 @@ struct bytes_view : array_view<uint8_t>
     : array_view<uint8_t>(first.as_u8p(), last.as_u8p())
     {}
 
-    bytes_view(array_view<char> av) noexcept /*NOLINT*/
+    template<std::size_t Extent>
+    bytes_view(array_view<char, Extent> av) noexcept
     : array_view<uint8_t>(byte_ptr_cast(av.data()), av.size())
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<uint8_t>, U&&>::value, bool
     >::type = 1>
-    constexpr bytes_view(U && a) noexcept /*NOLINT*/
+    constexpr bytes_view(U && a) noexcept
     : array_view<uint8_t>(a)
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<char>, U&&>::value, bool
     >::type = 1>
-    constexpr bytes_view(U && a) noexcept /*NOLINT*/
+    constexpr bytes_view(U && a) noexcept
     : bytes_view(array_view<char>(a))
     {}
 

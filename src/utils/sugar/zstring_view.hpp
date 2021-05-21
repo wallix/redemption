@@ -103,7 +103,8 @@ struct zstring_view
     }
 
 private:
-    constexpr zstring_view(char const* s, std::size_t n) noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
+    explicit constexpr zstring_view(char const* s, std::size_t n) noexcept
+        REDEMPTION_ATTRIBUTE_NONNULL_ARGS
     : s(s)
     , len(n)
     {
