@@ -21,14 +21,18 @@
 #pragma once
 
 #include "core/error.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 #include <cstdint>
 
 
-class BaseVirtualChannel;
+class RemoteProgramsVirtualChannel;
+class SessionProbeVirtualChannel;
+class ClipboardVirtualChannel;
 class InStream;
 
-class SessionProbeLauncher {
+class SessionProbeLauncher : noncopyable
+{
 public:
     virtual ~SessionProbeLauncher() = default;
 
@@ -56,13 +60,14 @@ public:
     virtual bool process_client_cliprdr_message(InStream & chunk,
         uint32_t length, uint32_t flags) = 0;
 
-    virtual void set_clipboard_virtual_channel(class ClipboardVirtualChannel* channel) = 0;
+    virtual void set_clipboard_virtual_channel(
+        ClipboardVirtualChannel* channel) = 0;
 
     virtual void set_remote_programs_virtual_channel(
-        BaseVirtualChannel* channel) = 0;
+        RemoteProgramsVirtualChannel* channel) = 0;
 
     virtual void set_session_probe_virtual_channel(
-        BaseVirtualChannel* channel) = 0;
+        SessionProbeVirtualChannel* channel) = 0;
 
     virtual void stop(bool bLaunchSuccessful, error_type& id_ref) = 0;
 
@@ -70,4 +75,3 @@ public:
 
     [[nodiscard]] virtual bool is_stopped() const = 0;
 };
-

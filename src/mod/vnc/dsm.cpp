@@ -388,7 +388,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
     const uint8_t *blobInitialKeyIV = s.get_current();
     s.in_skip_bytes(nIVLength);
 
-     static uint8_t g_DefaultPassword[] = {
+    static uint8_t g_DefaultPassword[] = {
         0x69, 0xF4, 0xA4, 0x7C, 0xF8, 0xF1, 0xA6, 0x11, 0xC1, 0x05, 0x81, 0xC4,
         0x95, 0x49, 0xAF, 0x4E, 0xB9, 0x55, 0x22, 0x69, 0x2F, 0x68, 0x32, 0xF4,
         0xD5, 0x64, 0x5D, 0xF5, 0xE2, 0x37, 0x02, 0x70
@@ -411,7 +411,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
     if (m_challengeFlags & svncNewKey) {
         PKCS5_PBKDF2_HMAC_SHA1(passwd, passwdLen, salt, 8, 0x1001, keySize, blobInitialKey);
     } else {
-        EVP_BytesToKey(cipher, EVP_sha1(), salt, reinterpret_cast<uint8_t*>(passwd), passwdLen, 11, blobInitialKey, nullptr);
+        EVP_BytesToKey(cipher, EVP_sha1(), salt, byte_ptr_cast(passwd), passwdLen, 11, blobInitialKey, nullptr);
     }
 
     uint8_t blobMessageDigest[EVP_MAX_MD_SIZE];

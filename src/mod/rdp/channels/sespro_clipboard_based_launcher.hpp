@@ -764,11 +764,10 @@ public:
         this->cliprdr_channel = channel;
     }
 
-    void set_remote_programs_virtual_channel(BaseVirtualChannel* /*channel*/) override {}
+    void set_remote_programs_virtual_channel(RemoteProgramsVirtualChannel* /*channel*/) override {}
 
-    void set_session_probe_virtual_channel(
-            BaseVirtualChannel* channel) override {
-        this->sesprob_channel = reinterpret_cast<SessionProbeVirtualChannel*>(channel);
+    void set_session_probe_virtual_channel(SessionProbeVirtualChannel* channel) override {
+        this->sesprob_channel = channel;
     }
 
     void stop(bool bLaunchSuccessful, error_type& id_ref) override {
