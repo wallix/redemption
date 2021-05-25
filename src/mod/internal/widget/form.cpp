@@ -19,25 +19,25 @@
  *              Meng Tan
  */
 
-#include "mod/internal/widget/flat_form.hpp"
+#include "mod/internal/widget/form.hpp"
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap2.hpp"
 
 using namespace std::chrono_literals;
 
-FlatForm::FlatForm(
+WidgetForm::WidgetForm(
     gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : FlatForm(drawable, parent, notifier, group_id, font, theme, lang, flags, duration_max)
+    : WidgetForm(drawable, parent, notifier, group_id, font, theme, lang, flags, duration_max)
 {
     this->move_size_widget(left, top, width, height);
 }
 
-FlatForm::FlatForm(
+WidgetForm::WidgetForm(
     gdi::GraphicApi& drawable,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Language lang,
@@ -109,12 +109,12 @@ FlatForm::FlatForm(
     this->add_widget(&this->confirm);
 }
 
-FlatForm::~FlatForm()
+WidgetForm::~WidgetForm()
 {
     this->clear();
 }
 
-void FlatForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);
     this->set_wh(width, height);
@@ -197,7 +197,7 @@ void FlatForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     this->confirm.set_xy(left + width - this->confirm.cx(), top + y + 10);
 }
 
-void FlatForm::notify(Widget& widget, NotifyApi::notify_event_t event)
+void WidgetForm::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if ((widget.group_id == this->confirm.group_id)
      && (NOTIFY_COPY != event)
@@ -234,7 +234,7 @@ namespace
 } // anonymous namespace
 
 template<class T, class... Ts>
-void FlatForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)
+void WidgetForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)
 {
     tr.fmt(this->warning_buffer, sizeof(this->warning_buffer), k, to_ctype(xs)...);
     this->warning_msg.set_text(this->warning_buffer);
@@ -283,7 +283,7 @@ namespace
     }
 } // anonymous namespace
 
-void FlatForm::check_confirmation()
+void WidgetForm::check_confirmation()
 {
     if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
         ((this->flags & DURATION_MANDATORY) == DURATION_MANDATORY) &&
@@ -337,7 +337,7 @@ void FlatForm::check_confirmation()
     this->send_notify(this->confirm, NOTIFY_SUBMIT);
 }
 
-void FlatForm::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetForm::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         REDEMPTION_DIAGNOSTIC_PUSH()

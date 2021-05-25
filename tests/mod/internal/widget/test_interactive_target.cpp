@@ -24,7 +24,7 @@
 #include "test_only/test_framework/check_img.hpp"
 
 
-#include "mod/internal/widget/flat_interactive_target.hpp"
+#include "mod/internal/widget/interactive_target.hpp"
 #include "mod/internal/widget/screen.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
@@ -33,21 +33,21 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/interactive_target/"
 
-RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
+RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 {
     {
         // ASK ALL (DEVICE + LOGIN + PASSWORD)
         TestGraphic drawable(800, 600);
 
-        // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
+        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
-        WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
+        WidgetButton * extra_button = nullptr;
+        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           true, true, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", global_font_lato_light_16(), extra_button);
@@ -60,14 +60,14 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK DEVICE
         TestGraphic drawable(800, 600);
 
-        // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
+        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
-        WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
+        WidgetButton * extra_button = nullptr;
+        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           true, false, false, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", global_font_lato_light_16(), extra_button);
@@ -80,14 +80,14 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK PASSWORD
         TestGraphic drawable(800, 600);
 
-        // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
+        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
-        WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
+        WidgetButton * extra_button = nullptr;
+        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           false, false, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", global_font_lato_light_16(), extra_button);
@@ -100,14 +100,14 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK LOGIN + PASSWORD
         TestGraphic drawable(800, 600);
 
-        // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
+        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
-        WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
+        WidgetButton * extra_button = nullptr;
+        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           false, true, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", global_font_lato_light_16(), extra_button);
@@ -120,14 +120,14 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK DEVICE + PASSWORD
         TestGraphic drawable(800, 600);
 
-        // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
+        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
-        WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
+        WidgetButton * extra_button = nullptr;
+        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           true, false, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", global_font_lato_light_16(), extra_button);

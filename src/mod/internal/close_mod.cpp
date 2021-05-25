@@ -23,7 +23,7 @@
 #include "mod/internal/close_mod.hpp"
 #include "utils/timebase.hpp"
 
-static FlatWabClose build_close_widget(
+static WidgetWabClose build_close_widget(
     gdi::GraphicApi & drawable,
     Rect const widget_rect,
     CloseMod & mod,
@@ -63,7 +63,7 @@ static FlatWabClose build_close_widget(
         vars.is_asked<cfg::globals::auth_user>()
      || vars.is_asked<cfg::globals::target_device>());
 
-    return FlatWabClose(
+    return WidgetWabClose(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         screen, &mod, auth_error_message,
         is_asked ? nullptr : vars.get<cfg::globals::auth_user>().c_str(),

@@ -16,75 +16,61 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #pragma once
 
 #include "mod/internal/widget/composite.hpp"
-#include "mod/internal/widget/widget_rect.hpp"
-#include "mod/internal/widget/label.hpp"
-#include "mod/internal/widget/multiline.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/image.hpp"
-#include "mod/internal/widget/flat_button.hpp"
-#include "utils/translation.hpp"
+#include "mod/internal/widget/label.hpp"
+#include "mod/internal/widget/vertical_scroll_text.hpp"
+#include "mod/internal/widget/widget_rect.hpp"
 
-#include <string>
-#include <chrono>
+enum ChallengeOpt
+{
+    NO_CHALLENGE = 0x00,
+    CHALLENGE_ECHO = 0x01,
+    CHALLENGE_HIDE = 0x02
+};
 
+class WidgetEdit;
 class Theme;
 
-class FlatWabClose : public WidgetParent
+class WidgetDialog : public WidgetParent
 {
     CompositeArray composite_array;
 
-    WidgetLabel        connection_closed_label;
+    WidgetLabel        title;
     WidgetRect         separator;
-
-    WidgetLabel        username_label;
-    WidgetLabel        username_value;
-    WidgetLabel        target_label;
-    WidgetLabel        target_value;
-    WidgetLabel        diagnostic_label;
-    WidgetMultiLine    diagnostic_value;
-    WidgetLabel        timeleft_label;
-    WidgetLabel        timeleft_value;
+    WidgetVerticalScrollText dialog;
 
 public:
-    WidgetFlatButton   cancel;
+    std::unique_ptr<WidgetEdit> challenge;
+    WidgetButton   ok;
+    std::unique_ptr<WidgetButton> cancel;
 private:
-    WidgetFlatButton * back;
-
     WidgetImage        img;
+    WidgetButton * extra_button;
 
     Color bg_color;
 
-    long prev_time;
-
-    Language lang;
-
-    bool showtimer;
-
-    Font const & font;
-
-    std::string  diagnostic_text;
-    bool         fixed_format_diagnostic_text;
-
 public:
-    FlatWabClose(gdi::GraphicApi & drawable,
-                 int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
-                 NotifyApi* notifier, const char * diagnostic_text,
-                 const char * username, const char * target,
-                 bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
-                 Language lang, bool back_selector = false); /*NOLINT*/
+    WidgetDialog(gdi::GraphicApi & drawable,
+               int16_t left, int16_t top, int16_t width, int16_t height,
+               Widget & parent, NotifyApi* notifier,
+               const char* caption, const char * text,
+               WidgetButton * extra_button,
+               Theme const & theme, Font const & font, const char * ok_text = "Ok", /*NOLINT*/
+               const char * cancel_text = "Cancel", /*NOLINT*/
+               ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
 
-    ~FlatWabClose();
+    ~WidgetDialog() override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     [[nodiscard]] Color get_bg_color() const override;
-
-    std::chrono::seconds refresh_timeleft(std::chrono::seconds remaining);
 
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 

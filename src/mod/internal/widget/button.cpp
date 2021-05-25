@@ -19,7 +19,7 @@
  *              Meng Tan
  */
 
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/slowpath.hpp"
@@ -29,7 +29,7 @@
 #include "keyboard/keymap2.hpp"
 
 
-WidgetFlatButton::WidgetFlatButton(
+WidgetButton::WidgetButton(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, const char * text,
     int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
@@ -50,23 +50,23 @@ WidgetFlatButton::WidgetFlatButton(
     this->set_text(text);
 }
 
-WidgetFlatButton::~WidgetFlatButton() = default;
+WidgetButton::~WidgetButton() = default;
 
-void WidgetFlatButton::set_xy(int16_t x, int16_t y)
+void WidgetButton::set_xy(int16_t x, int16_t y)
 {
     Widget::set_xy(x, y);
     this->label_rect.x = x + (this->border_width - 1);
     this->label_rect.y = y + (this->border_width - 1);
 }
 
-void WidgetFlatButton::set_wh(uint16_t w, uint16_t h)
+void WidgetButton::set_wh(uint16_t w, uint16_t h)
 {
     Widget::set_wh(w, h);
     this->label_rect.cx = w - (this->border_width * 2 - 1);
     this->label_rect.cy = h - (this->border_width * 2 - 1);
 }
 
-void WidgetFlatButton::set_text(char const* text)
+void WidgetButton::set_text(char const* text)
 {
     this->buffer[0] = 0;
     if (text) {
@@ -88,7 +88,7 @@ void WidgetFlatButton::set_text(char const* text)
     }
 }
 
-void WidgetFlatButton::rdp_input_invalidate(Rect clip)
+void WidgetButton::rdp_input_invalidate(Rect clip)
 {
     Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -104,7 +104,7 @@ void WidgetFlatButton::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetFlatButton::draw(
+void WidgetButton::draw(
     Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
     bool logo, bool has_focus, char const* text,
     Color fg_color, Color bg_color, Color focuscolor, gdi::ColorCtx color_ctx,
@@ -163,7 +163,7 @@ void WidgetFlatButton::draw(
     }
 }
 
-void WidgetFlatButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && this->state == State::Normal) {
         this->state = State::Pressed;
@@ -181,7 +181,7 @@ void WidgetFlatButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* 
     }
 }
 
-void WidgetFlatButton::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetButton::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         REDEMPTION_DIAGNOSTIC_PUSH()
@@ -204,7 +204,7 @@ void WidgetFlatButton::rdp_input_scancode(long int param1, long int param2, long
     }
 }
 
-void WidgetFlatButton::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetButton::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 {
     if (!(flag & SlowPath::KBDFLAGS_RELEASE) && (unicode == 0x0020)) {
         this->send_notify(NOTIFY_SUBMIT);
@@ -214,13 +214,13 @@ void WidgetFlatButton::rdp_input_unicode(uint16_t unicode, uint16_t flag)
     }
 }
 
-Dimension WidgetFlatButton::get_optimal_dim() const
+Dimension WidgetButton::get_optimal_dim() const
 {
     Dimension dm = WidgetLabel::get_optimal_dim(this->font, this->buffer, this->x_text, this->y_text);
     return Dimension(dm.w + (this->border_width * 2 - 1), dm.h + (this->border_width * 2 - 1));
 }
 
-Dimension WidgetFlatButton::get_optimal_dim(unsigned border_width, Font const& font, char const* text, int xtext, int ytext)
+Dimension WidgetButton::get_optimal_dim(unsigned border_width, Font const& font, char const* text, int xtext, int ytext)
 {
     char buffer[buffer_size];
 

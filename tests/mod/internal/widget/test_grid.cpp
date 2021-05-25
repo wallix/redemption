@@ -27,7 +27,7 @@
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "keyboard/keymap2.hpp"
 
 
@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
             snprintf(text, sizeof(text), "Label %ux%u", unsigned(line_index), unsigned(column_index));
             std::unique_ptr<Widget> w;
             if ((line_index == 2) && (column_index == 3)) {
-                w = std::make_unique<WidgetFlatButton>(
+                w = std::make_unique<WidgetButton>(
                     drawable, wgrid, notifier, text, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2,
                     global_font_lato_light_16(), 2, 2);
             }

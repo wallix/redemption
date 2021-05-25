@@ -28,15 +28,15 @@
 #include "mod/internal/widget/widget_rect.hpp"
 
 class Theme;
-class WidgetFlatButton;
+class WidgetButton;
 
-class FlatInteractiveTarget : public WidgetParent
+class WidgetInteractiveTarget : public WidgetParent
 {
 public:
     // ASK DEVICE YES/NO
     // ASK CRED : LOGIN+PASSWORD/PASSWORD/NO
 
-    FlatInteractiveTarget(gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
+    WidgetInteractiveTarget(gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
                           Widget & parent, NotifyApi* notifier,
                           bool ask_device, bool ask_login, bool ask_password,
                           Theme const & theme, const char* caption,
@@ -46,9 +46,9 @@ public:
                           const char * login_str,
                           const char * text_password,
                           Font const & font,
-                          WidgetFlatButton * extra_button);
+                          WidgetButton * extra_button);
 
-    ~FlatInteractiveTarget() override;
+    ~WidgetInteractiveTarget() override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
@@ -77,7 +77,7 @@ private:
 public:
     WidgetEditValid    password_edit;
 private:
-    WidgetFlatButton * extra_button;
+    WidgetButton * extra_button;
 
     Widget * last_interactive;
 

@@ -22,7 +22,7 @@
 #pragma once
 
 #include "mod/internal/widget/composite.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "utils/translation.hpp"
 
@@ -31,7 +31,7 @@
 
 class Theme;
 
-class FlatForm : public WidgetParent
+class WidgetForm : public WidgetParent
 {
     CompositeArray composite_array;
 
@@ -50,7 +50,7 @@ public:
     WidgetEdit       comment_edit;
 private:
     WidgetLabel      notes;
-    WidgetFlatButton confirm;
+    WidgetButton confirm;
 
     Translator tr;
 
@@ -71,19 +71,19 @@ public:
         DURATION_MANDATORY = 0x20,
     };
 
-    FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    WidgetForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Language lang,
              unsigned flags = NONE,
              std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
-    FlatForm(gdi::GraphicApi& drawable,
+    WidgetForm(gdi::GraphicApi& drawable,
              Widget & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Language lang,
              unsigned flags = NONE,
              std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
-    ~FlatForm() override;
+    ~WidgetForm() override;
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
 

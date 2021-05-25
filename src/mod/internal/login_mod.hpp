@@ -24,7 +24,7 @@
 
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
-#include "mod/internal/widget/flat_login.hpp"
+#include "mod/internal/widget/login.hpp"
 #include "mod/internal/widget/language_button.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "core/events.hpp"
@@ -80,7 +80,7 @@ private:
     EventsGuard events_guard;
 
     LanguageButton language_button;
-    FlatLogin login;
+    WidgetLogin login;
 
     CopyPaste copy_paste;
 

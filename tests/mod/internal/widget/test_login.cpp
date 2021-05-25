@@ -22,7 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/flat_login.hpp"
+#include "mod/internal/widget/login.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -35,18 +35,18 @@
 
 constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
-RED_AUTO_TEST_CASE(TraceFlatLogin)
+RED_AUTO_TEST_CASE(TraceWidgetLogin)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatLogin is a flat_login widget at position 0,0 in it's parent context
+    // WidgetLogin is a login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier,
+    WidgetLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier,
                          "test1", "rec", "rec", "",
                          "Login", "Password", "Target", "", LOGON_MESSAGE,
                          extra_button, false, global_font_deja_vu_14(),
@@ -58,17 +58,17 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_1.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLogin2)
+RED_AUTO_TEST_CASE(TraceWidgetLogin2)
 {
     TestGraphic drawable(800, 600);
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
+    // WidgetLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test2",
+    WidgetLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test2",
                          nullptr, nullptr, nullptr,
                          "Login", "Password", "Target", "",
                          LOGON_MESSAGE, extra_button, false,
@@ -84,17 +84,17 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_2.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLogin3)
+RED_AUTO_TEST_CASE(TraceWidgetLogin3)
 {
     TestGraphic drawable(800, 600);
     NotifyTrace notifier;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
 
-    // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
+    // WidgetLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
+    WidgetLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(), Translator{Language::en}, Theme{});
@@ -128,18 +128,18 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
+RED_AUTO_TEST_CASE(TraceWidgetLoginHelp)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
+    // WidgetLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
+    WidgetLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(), Translator{Language::en}, Theme{});
@@ -159,18 +159,18 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_help_2.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLoginClip)
+RED_AUTO_TEST_CASE(TraceWidgetLoginClip)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    WidgetLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(), Translator{Language::en}, Theme{});
@@ -184,18 +184,18 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_4.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
+RED_AUTO_TEST_CASE(TraceWidgetLoginClip2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
+    // WidgetLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    WidgetLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(), Translator{Language::en}, Theme{});
@@ -217,9 +217,9 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyTrace notifier;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    WidgetLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(), Translator{Language::en}, Theme{});
@@ -228,18 +228,18 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     RED_CHECK(notifier.last_event == 0);
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLogin4)
+RED_AUTO_TEST_CASE(TraceWidgetLogin4)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatLogin is a flat_login widget at position 0,0 in it's parent context
+    // WidgetLogin is a flat_login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
+    WidgetLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
                          "rec", "rec", "rec", "Login", "Password", "Target", "",
                          "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.\n\n"
                              "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
@@ -253,7 +253,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_6.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
+RED_AUTO_TEST_CASE(TraceWidgetLogin_transparent_png_with_theme_color)
 {
     TestGraphic drawable(800, 600);
     WidgetScreen parent(drawable,
@@ -263,13 +263,13 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
                         nullptr,
                         Theme { });
     NotifyApi *notifier = nullptr;
-    WidgetFlatButton *extra_button = nullptr;
+    WidgetButton *extra_button = nullptr;
     Theme colors;
 
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    FlatLogin flat_login(drawable,
+    WidgetLogin flat_login(drawable,
                          0,
                          0,
                          parent.cx(),
@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
 }
 
 
-RED_AUTO_TEST_CASE(TraceFlatLogin_target_field)
+RED_AUTO_TEST_CASE(TraceWidgetLogin_target_field)
 {
     TestGraphic drawable(800, 600);
     WidgetScreen parent(drawable,
@@ -307,13 +307,13 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_target_field)
                         nullptr,
                         Theme { });
     NotifyApi *notifier = nullptr;
-    WidgetFlatButton *extra_button = nullptr;
+    WidgetButton *extra_button = nullptr;
     Theme colors;
 
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    FlatLogin flat_login(drawable,
+    WidgetLogin flat_login(drawable,
                          0,
                          0,
                          parent.cx(),

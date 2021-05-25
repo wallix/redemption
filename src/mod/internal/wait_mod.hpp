@@ -26,7 +26,7 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/notify_api.hpp"
-#include "mod/internal/widget/flat_wait.hpp"
+#include "mod/internal/widget/wait.hpp"
 #include "mod/internal/widget/language_button.hpp"
 #include "core/events.hpp"
 
@@ -72,7 +72,7 @@ public:
 
 private:
     LanguageButton language_button;
-    FlatWait wait_widget;
+    WidgetWait wait_widget;
 
     WaitModVariables vars;
 

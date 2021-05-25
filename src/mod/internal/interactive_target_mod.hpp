@@ -25,7 +25,7 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "mod/internal/widget/flat_interactive_target.hpp"
+#include "mod/internal/widget/interactive_target.hpp"
 
 
 using InteractiveTargetModVariables = vcfg::variables<
@@ -74,7 +74,7 @@ private:
     bool ask_password;
 
     LanguageButton language_button;
-    FlatInteractiveTarget challenge;
+    WidgetInteractiveTarget challenge;
 
     CopyPaste copy_paste;
 

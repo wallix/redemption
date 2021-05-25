@@ -25,21 +25,21 @@
 #include "mod/internal/widget/composite.hpp"
 #include "mod/internal/widget/multiline.hpp"
 #include "mod/internal/widget/group_box.hpp"
-#include "mod/internal/widget/flat_form.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/form.hpp"
+#include "mod/internal/widget/button.hpp"
 
-class FlatWait : public WidgetParent
+class WidgetWait : public WidgetParent
 {
     CompositeArray composite_array;
 
     WidgetGroupBox     groupbox;
     WidgetMultiLine    dialog;
 public:
-    FlatForm           form;
-    WidgetFlatButton   goselector;
+    WidgetForm           form;
+    WidgetButton   goselector;
 private:
-    WidgetFlatButton   exit;
-    WidgetFlatButton * extra_button;
+    WidgetButton   exit;
+    WidgetButton * extra_button;
 
 public:
     bool hasform;
@@ -49,15 +49,15 @@ private:
     bool hide_back_to_selector;
 
 public:
-    FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    WidgetWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
-             WidgetFlatButton * extra_button,
+             WidgetButton * extra_button,
              Font const & font, Theme const & theme, Language lang,
-             bool showform = false, unsigned flags = FlatForm::NONE,
+             bool showform = false, unsigned flags = WidgetForm::NONE,
              std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
-    ~FlatWait();
+    ~WidgetWait();
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 

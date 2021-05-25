@@ -22,7 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/flat_form.hpp"
+#include "mod/internal/widget/form.hpp"
 #include "mod/internal/widget/screen.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
@@ -31,11 +31,11 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/form/"
 
-RED_AUTO_TEST_CASE(TestFlatForm)
+RED_AUTO_TEST_CASE(TestWidgetForm)
 {
     TestGraphic drawable(800, 600);
 
-    // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
+    // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -43,12 +43,12 @@ RED_AUTO_TEST_CASE(TestFlatForm)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
 
-    int flag = FlatForm::COMMENT_DISPLAY | FlatForm::TICKET_DISPLAY |
-        FlatForm::DURATION_DISPLAY;
+    int flag = WidgetForm::COMMENT_DISPLAY | WidgetForm::TICKET_DISPLAY |
+        WidgetForm::DURATION_DISPLAY;
 
-    flag += FlatForm::DURATION_MANDATORY;
+    flag += WidgetForm::DURATION_MANDATORY;
 
-    FlatForm form(drawable, 0, 0, 600, 150, parent, notifier, 0, global_font_lato_light_16(), colors, Language::en, flag);
+    WidgetForm form(drawable, 0, 0, 600, 150, parent, notifier, 0, global_font_lato_light_16(), colors, Language::en, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.get_rect());

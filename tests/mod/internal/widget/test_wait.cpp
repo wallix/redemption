@@ -22,7 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/flat_wait.hpp"
+#include "mod/internal/widget/wait.hpp"
 #include "mod/internal/widget/screen.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
@@ -31,12 +31,12 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wait/"
 
-RED_AUTO_TEST_CASE(TraceFlatWait)
+RED_AUTO_TEST_CASE(TraceWidgetWait)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
+    // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -72,14 +72,14 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
     //     "Otherwise, you can either return to selector or exit.";
 
 
-    WidgetFlatButton * extra_button = nullptr;
-    FlatWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
+    WidgetButton * extra_button = nullptr;
+    WidgetWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
                          text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en);
-    // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
+    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
-    // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
+    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
     //                      text_timeframe, 0, colors);
-    // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Approbation needed",
+    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Approbation needed",
     //                      text_approb, 0, colors, true);
 
     // ask to widget to redraw at it's current position
@@ -88,12 +88,12 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wait_1.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
+RED_AUTO_TEST_CASE(TraceWidgetWaitWithForm)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
+    // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -128,17 +128,17 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
     //     "Please fill following form and enter confirm to ask for an approbation.\n"
     //     "Otherwise, you can either return to selector or exit.";
 
-    WidgetFlatButton * extra_button = nullptr;
-    FlatWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
+    WidgetButton * extra_button = nullptr;
+    WidgetWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
                          text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en, true,
-                         FlatForm::COMMENT_DISPLAY | FlatForm::COMMENT_MANDATORY |
-                            FlatForm::TICKET_DISPLAY | FlatForm::TICKET_MANDATORY |
-                            FlatForm::DURATION_DISPLAY);
-    // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
+                         WidgetForm::COMMENT_DISPLAY | WidgetForm::COMMENT_MANDATORY |
+                            WidgetForm::TICKET_DISPLAY | WidgetForm::TICKET_MANDATORY |
+                            WidgetForm::DURATION_DISPLAY);
+    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
-    // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
+    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
     //                      text_timeframe, 0, colors);
-    // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Approbation needed",
+    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Approbation needed",
     //                      text_approb, 0, colors, true);
 
     // ask to widget to redraw at it's current position

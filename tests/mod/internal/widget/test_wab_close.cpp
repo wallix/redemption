@@ -23,7 +23,7 @@
 #include "test_only/test_framework/check_img.hpp"
 
 
-#include "mod/internal/widget/flat_wab_close.hpp"
+#include "mod/internal/widget/wab_close.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -34,19 +34,19 @@
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wab_close/"
 
 
-RED_AUTO_TEST_CASE(TraceFlatWabClose)
+RED_AUTO_TEST_CASE(TraceWidgetWabClose)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
+    // WidgetWabClose is a flat_wab_close widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
+    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                 "abc\ndef", "rec", "rec",
                                 false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
 
@@ -56,19 +56,19 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_1.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWabClose2)
+RED_AUTO_TEST_CASE(TraceWidgetWabClose2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
+    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
+    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur\n"
         "adipiscing elit. Nam purus lacus, luctus sit\n"
         "amet suscipit vel, posuere quis turpis. Sed\n"
@@ -92,19 +92,19 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_2.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWabClose3)
+RED_AUTO_TEST_CASE(TraceWidgetWabClose3)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
+    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
+    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                     "abc\ndef",
                                     nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
 
@@ -114,19 +114,19 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose3)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_3.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
+RED_AUTO_TEST_CASE(TraceWidgetWabCloseClip)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
+    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                     "abc\ndef",
                                     nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
 
@@ -136,19 +136,19 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_4.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
+RED_AUTO_TEST_CASE(TraceWidgetWabCloseClip2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
+    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
+    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                     "abc\ndef",
                                     nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
 
@@ -161,19 +161,19 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_5.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
+RED_AUTO_TEST_CASE(TraceWidgetWabCloseExit)
 {
     NotifyTrace notifier;
 
     TestGraphic drawable(800, 600);
 
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
+    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, &notifier,
+    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, &notifier,
                                 "abc\ndef", "tartempion", "caufield",
                                 true, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
 
@@ -207,7 +207,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     flat_wab_close.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
 
-RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
+RED_AUTO_TEST_CASE(TraceWidgetWabClose_transparent_png_with_theme_color)
 {
     TestGraphic drawable(800, 600);
     WidgetScreen parent(drawable,
@@ -223,7 +223,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    FlatWabClose flat_wab_close(drawable,
+    WidgetWabClose flat_wab_close(drawable,
                                 0,
                                 0,
                                 800,

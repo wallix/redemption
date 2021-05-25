@@ -22,7 +22,7 @@
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "utils/colors.hpp"
 
 class WidgetEdit;
@@ -80,7 +80,7 @@ public:
     }
 
 private:
-    WidgetFlatButton button;
+    WidgetButton button;
     WidgetEdit * editbox;
     WidgetLabel * label;
 

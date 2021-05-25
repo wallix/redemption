@@ -32,7 +32,7 @@ add_obj src/keyboard/scancode/autogen/all_LCIDs_scancodes.o : $(REDEMPTION_SRC_P
 add_obj src/keyboard/scancode/unicode_to_scancode.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 add_obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
-add_obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
+add_obj src/mod/internal/widget/button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/button.cpp ;
 add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
 add_obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 add_obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
@@ -126,7 +126,7 @@ requirement_list += <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
 requirement_list += <library>src/keyboard/scancode/unicode_to_scancode.o ;
 requirement_list += <library>src/mod/internal/copy_paste.o ;
 requirement_list += <library>src/mod/internal/replay_mod.o ;
-requirement_list += <library>src/mod/internal/widget/flat_button.o ;
+requirement_list += <library>src/mod/internal/widget/button.o ;
 requirement_list += <library>src/mod/internal/widget/label.o ;
 requirement_list += <library>src/mod/metrics.o ;
 requirement_list += <library>src/mod/rdp/channels/cliprdr_channel.o ;

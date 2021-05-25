@@ -50,7 +50,7 @@ exe headlessclient :
   <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -177,23 +177,21 @@ exe rdpproxy :
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/wait_mod.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
+  <library>src/mod/internal/widget/dialog.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
-  <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/form.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/interactive_target.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
   <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/login.o
   <library>src/mod/internal/widget/module_host.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
@@ -203,6 +201,8 @@ exe rdpproxy :
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/vertical_scroll_text.o
+  <library>src/mod/internal/widget/wab_close.o
+  <library>src/mod/internal/widget/wait.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
@@ -381,7 +381,7 @@ exe rdpclient :
   <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
   <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -649,7 +649,7 @@ test-run tests/acl/test_license_api :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -981,7 +981,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -1079,7 +1079,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -1148,7 +1148,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -2468,23 +2468,21 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/wait_mod.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
+  <library>src/mod/internal/widget/dialog.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
-  <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/form.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/interactive_target.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
   <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/login.o
   <library>src/mod/internal/widget/module_host.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
@@ -2494,6 +2492,8 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/vertical_scroll_text.o
+  <library>src/mod/internal/widget/wab_close.o
+  <library>src/mod/internal/widget/wait.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
@@ -2640,23 +2640,21 @@ test-run tests/core/test_session :
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/wait_mod.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
+  <library>src/mod/internal/widget/dialog.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
-  <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/form.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/interactive_target.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
   <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/login.o
   <library>src/mod/internal/widget/module_host.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
@@ -2666,6 +2664,8 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/vertical_scroll_text.o
+  <library>src/mod/internal/widget/wab_close.o
+  <library>src/mod/internal/widget/wait.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
@@ -2783,7 +2783,7 @@ test-run tests/front/test_front :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -3037,14 +3037,14 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/wab_close.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
@@ -3126,10 +3126,10 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/rail_mod_base.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/dialog.o
   <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
@@ -3178,11 +3178,11 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/rail_mod_base.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
+  <library>src/mod/internal/widget/interactive_target.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
   <library>src/mod/internal/widget/multiline.o
@@ -3229,14 +3229,14 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_mod_base.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_login.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/login.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
@@ -3279,8 +3279,8 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_module_host_mod.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/module_host.o
   <library>src/mod/internal/widget/multiline.o
@@ -3365,9 +3365,9 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
   <library>src/mod/internal/selector_mod.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
@@ -3442,17 +3442,17 @@ test-run tests/mod/internal/test_wait_mod :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
   <library>src/mod/internal/wait_mod.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/form.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/wait.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3503,6 +3503,43 @@ test-run tests/mod/internal/test_widget_test_mod :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget_test_mod.cpp
   <covfile>src/mod/internal/widget_test_mod.hpp
+;
+test-run tests/mod/internal/widget/test_button :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_button.cpp
+:
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/button.cpp
+  <covfile>src/mod/internal/widget/button.hpp
 ;
 test-run tests/mod/internal/widget/test_composite :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_composite.cpp
@@ -3567,6 +3604,50 @@ test-run tests/mod/internal/widget/test_delegated_copy :
   <covfile>src/mod/internal/widget/delegated_copy.cpp
   <covfile>src/mod/internal/widget/delegated_copy.hpp
 ;
+test-run tests/mod/internal/widget/test_dialog :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_dialog.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/dialog.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
+  <library>src/mod/internal/widget/widget_rect.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/dialog.cpp
+  <covfile>src/mod/internal/widget/dialog.hpp
+;
 test-run tests/mod/internal/widget/test_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit.cpp
 :
@@ -3618,10 +3699,10 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
@@ -3644,45 +3725,8 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <covfile>src/mod/internal/widget/edit_valid.cpp
   <covfile>src/mod/internal/widget/edit_valid.hpp
 ;
-test-run tests/mod/internal/widget/test_flat_button :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_button.cpp
-:
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/check_img.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_button.cpp
-  <covfile>src/mod/internal/widget/flat_button.hpp
-;
-test-run tests/mod/internal/widget/test_flat_dialog :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_dialog.cpp
+test-run tests/mod/internal/widget/test_form :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_form.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -3696,54 +3740,10 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/vertical_scroll_text.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/check_img.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_dialog.cpp
-  <covfile>src/mod/internal/widget/flat_dialog.hpp
-;
-test-run tests/mod/internal/widget/test_flat_form :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_form.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_form.o
+  <library>src/mod/internal/widget/form.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
@@ -3764,184 +3764,8 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_form.cpp
-  <covfile>src/mod/internal/widget/flat_form.hpp
-;
-test-run tests/mod/internal/widget/test_flat_interactive_target :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_interactive_target.cpp
-:
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/check_img.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_interactive_target.cpp
-  <covfile>src/mod/internal/widget/flat_interactive_target.hpp
-;
-test-run tests/mod/internal/widget/test_flat_login :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_login.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/vertical_scroll_text.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/check_img.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_login.cpp
-  <covfile>src/mod/internal/widget/flat_login.hpp
-;
-test-run tests/mod/internal/widget/test_flat_wab_close :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wab_close.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/check_img.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_wab_close.cpp
-  <covfile>src/mod/internal/widget/flat_wab_close.hpp
-;
-test-run tests/mod/internal/widget/test_flat_wait :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wait.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_wait.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/check_img.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/widget/flat_wait.cpp
-  <covfile>src/mod/internal/widget/flat_wait.hpp
+  <covfile>src/mod/internal/widget/form.cpp
+  <covfile>src/mod/internal/widget/form.hpp
 ;
 test-run tests/mod/internal/widget/test_grid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_grid.cpp
@@ -3957,8 +3781,8 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
@@ -3995,8 +3819,8 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
@@ -4054,6 +3878,48 @@ test-run tests/mod/internal/widget/test_image :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/image.cpp
   <covfile>src/mod/internal/widget/image.hpp
+;
+test-run tests/mod/internal/widget/test_interactive_target :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_interactive_target.cpp
+:
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/interactive_target.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/widget_rect.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/interactive_target.cpp
+  <covfile>src/mod/internal/widget/interactive_target.hpp
 ;
 test-run tests/mod/internal/widget/test_label :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_label.cpp
@@ -4140,7 +4006,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
   <library>src/utils/stacktrace.o
@@ -4149,6 +4015,52 @@ test-run tests/mod/internal/widget/test_language_button :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/language_button.cpp
   <covfile>src/mod/internal/widget/language_button.hpp
+;
+test-run tests/mod/internal/widget/test_login :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_login.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/login.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/login.cpp
+  <covfile>src/mod/internal/widget/login.hpp
 ;
 test-run tests/mod/internal/widget/test_multiline :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_multiline.cpp
@@ -4279,8 +4191,8 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
@@ -4315,7 +4227,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/scroll.o
   <library>src/utils/bitmap.o
@@ -4350,9 +4262,9 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
@@ -4429,7 +4341,7 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/utils/bitmap.o
@@ -4448,6 +4360,94 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/vertical_scroll_text.cpp
   <covfile>src/mod/internal/widget/vertical_scroll_text.hpp
+;
+test-run tests/mod/internal/widget/test_wab_close :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_wab_close.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/wab_close.o
+  <library>src/mod/internal/widget/widget_rect.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/wab_close.cpp
+  <covfile>src/mod/internal/widget/wab_close.hpp
+;
+test-run tests/mod/internal/widget/test_wait :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_wait.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/form.o
+  <library>src/mod/internal/widget/group_box.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/wait.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/wait.cpp
+  <covfile>src/mod/internal/widget/wait.hpp
 ;
 test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
@@ -4607,7 +4607,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -4724,7 +4724,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -6211,23 +6211,21 @@ obj src/mod/internal/selector_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/select
 obj src/mod/internal/test_card_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/test_card_mod.cpp ;
 obj src/mod/internal/transition_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/transition_mod.cpp ;
 obj src/mod/internal/wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/wait_mod.cpp ;
+obj src/mod/internal/widget/button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/button.cpp ;
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
 obj src/mod/internal/widget/delegated_copy.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/delegated_copy.cpp ;
+obj src/mod/internal/widget/dialog.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/dialog.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;
-obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
-obj src/mod/internal/widget/flat_dialog.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_dialog.cpp ;
-obj src/mod/internal/widget/flat_form.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_form.cpp ;
-obj src/mod/internal/widget/flat_interactive_target.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_interactive_target.cpp ;
-obj src/mod/internal/widget/flat_login.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_login.cpp ;
-obj src/mod/internal/widget/flat_wab_close.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wab_close.cpp ;
-obj src/mod/internal/widget/flat_wait.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wait.cpp ;
+obj src/mod/internal/widget/form.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/form.cpp ;
 obj src/mod/internal/widget/grid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/grid.cpp ;
 obj src/mod/internal/widget/group_box.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/group_box.cpp ;
 obj src/mod/internal/widget/image.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/image.cpp ;
+obj src/mod/internal/widget/interactive_target.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/interactive_target.cpp ;
 obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
 obj src/mod/internal/widget/labelgrid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/labelgrid.cpp ;
 obj src/mod/internal/widget/language_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/language_button.cpp ;
+obj src/mod/internal/widget/login.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/login.cpp ;
 obj src/mod/internal/widget/module_host.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/module_host.cpp ;
 obj src/mod/internal/widget/multiline.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/multiline.cpp ;
 obj src/mod/internal/widget/number_edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/number_edit.cpp ;
@@ -6237,6 +6235,8 @@ obj src/mod/internal/widget/scroll.o : $(REDEMPTION_SRC_PATH)/mod/internal/widge
 obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/selector.cpp ;
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/vertical_scroll_text.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/vertical_scroll_text.cpp ;
+obj src/mod/internal/widget/wab_close.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/wab_close.cpp ;
+obj src/mod/internal/widget/wait.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/wait.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
@@ -6490,23 +6490,21 @@ alias test_selector_mod : tests/mod/internal/test_selector_mod ;
 alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
 alias test_wait_mod : tests/mod/internal/test_wait_mod ;
 alias test_widget_test_mod : tests/mod/internal/test_widget_test_mod ;
+alias test_button : tests/mod/internal/widget/test_button ;
 alias test_composite : tests/mod/internal/widget/test_composite ;
 alias test_delegated_copy : tests/mod/internal/widget/test_delegated_copy ;
+alias test_dialog : tests/mod/internal/widget/test_dialog ;
 alias test_edit : tests/mod/internal/widget/test_edit ;
 alias test_edit_valid : tests/mod/internal/widget/test_edit_valid ;
-alias test_flat_button : tests/mod/internal/widget/test_flat_button ;
-alias test_flat_dialog : tests/mod/internal/widget/test_flat_dialog ;
-alias test_flat_form : tests/mod/internal/widget/test_flat_form ;
-alias test_flat_interactive_target : tests/mod/internal/widget/test_flat_interactive_target ;
-alias test_flat_login : tests/mod/internal/widget/test_flat_login ;
-alias test_flat_wab_close : tests/mod/internal/widget/test_flat_wab_close ;
-alias test_flat_wait : tests/mod/internal/widget/test_flat_wait ;
+alias test_form : tests/mod/internal/widget/test_form ;
 alias test_grid : tests/mod/internal/widget/test_grid ;
 alias test_group_box : tests/mod/internal/widget/test_group_box ;
 alias test_image : tests/mod/internal/widget/test_image ;
+alias test_interactive_target : tests/mod/internal/widget/test_interactive_target ;
 alias test_label : tests/mod/internal/widget/test_label ;
 alias test_labelgrid : tests/mod/internal/widget/test_labelgrid ;
 alias test_language_button : tests/mod/internal/widget/test_language_button ;
+alias test_login : tests/mod/internal/widget/test_login ;
 alias test_multiline : tests/mod/internal/widget/test_multiline ;
 alias test_notify_api : tests/mod/internal/widget/test_notify_api ;
 alias test_number_edit : tests/mod/internal/widget/test_number_edit ;
@@ -6516,6 +6514,8 @@ alias test_scroll : tests/mod/internal/widget/test_scroll ;
 alias test_selector : tests/mod/internal/widget/test_selector ;
 alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
 alias test_vertical_scroll_text : tests/mod/internal/widget/test_vertical_scroll_text ;
+alias test_wab_close : tests/mod/internal/widget/test_wab_close ;
+alias test_wait : tests/mod/internal/widget/test_wait ;
 alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
@@ -6830,23 +6830,21 @@ alias test_selector_mod.coverage : tests/mod/internal/test_selector_mod.coverage
 alias test_test_card_mod.coverage : tests/mod/internal/test_test_card_mod.coverage ;
 alias test_wait_mod.coverage : tests/mod/internal/test_wait_mod.coverage ;
 alias test_widget_test_mod.coverage : tests/mod/internal/test_widget_test_mod.coverage ;
+alias test_button.coverage : tests/mod/internal/widget/test_button.coverage ;
 alias test_composite.coverage : tests/mod/internal/widget/test_composite.coverage ;
 alias test_delegated_copy.coverage : tests/mod/internal/widget/test_delegated_copy.coverage ;
+alias test_dialog.coverage : tests/mod/internal/widget/test_dialog.coverage ;
 alias test_edit.coverage : tests/mod/internal/widget/test_edit.coverage ;
 alias test_edit_valid.coverage : tests/mod/internal/widget/test_edit_valid.coverage ;
-alias test_flat_button.coverage : tests/mod/internal/widget/test_flat_button.coverage ;
-alias test_flat_dialog.coverage : tests/mod/internal/widget/test_flat_dialog.coverage ;
-alias test_flat_form.coverage : tests/mod/internal/widget/test_flat_form.coverage ;
-alias test_flat_interactive_target.coverage : tests/mod/internal/widget/test_flat_interactive_target.coverage ;
-alias test_flat_login.coverage : tests/mod/internal/widget/test_flat_login.coverage ;
-alias test_flat_wab_close.coverage : tests/mod/internal/widget/test_flat_wab_close.coverage ;
-alias test_flat_wait.coverage : tests/mod/internal/widget/test_flat_wait.coverage ;
+alias test_form.coverage : tests/mod/internal/widget/test_form.coverage ;
 alias test_grid.coverage : tests/mod/internal/widget/test_grid.coverage ;
 alias test_group_box.coverage : tests/mod/internal/widget/test_group_box.coverage ;
 alias test_image.coverage : tests/mod/internal/widget/test_image.coverage ;
+alias test_interactive_target.coverage : tests/mod/internal/widget/test_interactive_target.coverage ;
 alias test_label.coverage : tests/mod/internal/widget/test_label.coverage ;
 alias test_labelgrid.coverage : tests/mod/internal/widget/test_labelgrid.coverage ;
 alias test_language_button.coverage : tests/mod/internal/widget/test_language_button.coverage ;
+alias test_login.coverage : tests/mod/internal/widget/test_login.coverage ;
 alias test_multiline.coverage : tests/mod/internal/widget/test_multiline.coverage ;
 alias test_notify_api.coverage : tests/mod/internal/widget/test_notify_api.coverage ;
 alias test_number_edit.coverage : tests/mod/internal/widget/test_number_edit.coverage ;
@@ -6856,6 +6854,8 @@ alias test_scroll.coverage : tests/mod/internal/widget/test_scroll.coverage ;
 alias test_selector.coverage : tests/mod/internal/widget/test_selector.coverage ;
 alias test_tooltip.coverage : tests/mod/internal/widget/test_tooltip.coverage ;
 alias test_vertical_scroll_text.coverage : tests/mod/internal/widget/test_vertical_scroll_text.coverage ;
+alias test_wab_close.coverage : tests/mod/internal/widget/test_wab_close.coverage ;
+alias test_wait.coverage : tests/mod/internal/widget/test_wait.coverage ;
 alias test_widget.coverage : tests/mod/internal/widget/test_widget.coverage ;
 alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.coverage ;
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
@@ -7238,23 +7238,21 @@ alias tests/mod/internal.norec :
   tests/mod/internal/test_widget_test_mod
 ;
 alias tests/mod/internal/widget.norec :
+  tests/mod/internal/widget/test_button
   tests/mod/internal/widget/test_composite
   tests/mod/internal/widget/test_delegated_copy
+  tests/mod/internal/widget/test_dialog
   tests/mod/internal/widget/test_edit
   tests/mod/internal/widget/test_edit_valid
-  tests/mod/internal/widget/test_flat_button
-  tests/mod/internal/widget/test_flat_dialog
-  tests/mod/internal/widget/test_flat_form
-  tests/mod/internal/widget/test_flat_interactive_target
-  tests/mod/internal/widget/test_flat_login
-  tests/mod/internal/widget/test_flat_wab_close
-  tests/mod/internal/widget/test_flat_wait
+  tests/mod/internal/widget/test_form
   tests/mod/internal/widget/test_grid
   tests/mod/internal/widget/test_group_box
   tests/mod/internal/widget/test_image
+  tests/mod/internal/widget/test_interactive_target
   tests/mod/internal/widget/test_label
   tests/mod/internal/widget/test_labelgrid
   tests/mod/internal/widget/test_language_button
+  tests/mod/internal/widget/test_login
   tests/mod/internal/widget/test_multiline
   tests/mod/internal/widget/test_notify_api
   tests/mod/internal/widget/test_number_edit
@@ -7264,6 +7262,8 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_selector
   tests/mod/internal/widget/test_tooltip
   tests/mod/internal/widget/test_vertical_scroll_text
+  tests/mod/internal/widget/test_wab_close
+  tests/mod/internal/widget/test_wait
   tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect
 ;

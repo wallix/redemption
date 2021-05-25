@@ -22,13 +22,13 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/internal/widget/scroll.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 
 namespace
 {
     Dimension get_optimal_button_dim(const Font& font, bool is_horizontal)
     {
-        Dimension dim = WidgetFlatButton::get_optimal_dim(1, font, is_horizontal ? "▶" : "▲", 3, 2);
+        Dimension dim = WidgetButton::get_optimal_dim(1, font, is_horizontal ? "▶" : "▲", 3, 2);
 
         dim.w += 1;
         dim.h += 2;
@@ -160,12 +160,12 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
         this->drawable.begin_update();
 
         auto draw_button = [&](Rect const& rect, bool has_focus, char const* button){
-            WidgetFlatButton::draw(rect_intersect, rect, this->drawable,
+            WidgetButton::draw(rect_intersect, rect, this->drawable,
                 false, (this->mouse_down && has_focus), button,
                 this->fg_color, this->bg_color,
                 this->focus_color, gdi::ColorCtx::depth24(),
                 Rect(),
-                WidgetFlatButton::State::Normal,
+                WidgetButton::State::Normal,
                 (this->rail_style ? 0 : 2),
                 this->font,
                 (this->rail_style ? 2 : 0),
@@ -173,12 +173,12 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
         };
 
         auto draw_cursor_button = [&](bool has_focus, char const* button, int xtext, int ytext){
-            WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
+            WidgetButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
                 false, (this->mouse_down && has_focus), button,
                 this->fg_color, this->bg_color,
                 this->focus_color, gdi::ColorCtx::depth24(),
                 Rect(),
-                WidgetFlatButton::State::Normal,
+                WidgetButton::State::Normal,
                 (this->rail_style ? 0 : 1),
                 this->font,
                 xtext,

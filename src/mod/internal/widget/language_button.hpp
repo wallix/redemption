@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 
 #include <vector>
 
 class FrontAPI;
 class Theme;
 
-class LanguageButton : public WidgetFlatButton
+class LanguageButton : public WidgetButton
 {
 public:
     LanguageButton(

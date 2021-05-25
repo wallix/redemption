@@ -46,7 +46,7 @@ WidgetSelector::WidgetSelector(
     Widget & parent, NotifyApi* notifier,
     const char * current_page,
     const char * number_of_page,
-    WidgetFlatButton * extra_button,
+    WidgetButton * extra_button,
     WidgetSelectorParams const & selector_params,
     Font const & font, Theme const & theme, Language lang,
     bool has_target_helpicon /* for unit test only */)
@@ -73,17 +73,17 @@ WidgetSelector::WidgetSelector(
     }
 }
 , column_expansion_buttons{
-    WidgetFlatButton{
+    WidgetButton{
         drawable, *this, this, "", -100,
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 1, font, 6, 2
     },
-    WidgetFlatButton{
+    WidgetButton{
         drawable, *this, this, "", -101,
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 1, font, 6, 2
     },
-    WidgetFlatButton{
+    WidgetButton{
         drawable, *this, this, "", -102,
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 1, font, 6, 2

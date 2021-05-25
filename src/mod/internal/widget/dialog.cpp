@@ -21,7 +21,7 @@
 
 #include "core/font.hpp"
 #include "core/app_path.hpp"
-#include "mod/internal/widget/flat_dialog.hpp"
+#include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "utils/theme.hpp"
@@ -33,11 +33,11 @@ enum {
     WIDGET_MULTILINE_BORDER_Y = 4
 };
 
-FlatDialog::FlatDialog(
+WidgetDialog::WidgetDialog(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text,
-    WidgetFlatButton * extra_button,
+    WidgetButton * extra_button,
     Theme const & theme, Font const & font, const char * ok_text,
     const char * cancel_text, ChallengeOpt has_challenge
 )
@@ -54,11 +54,11 @@ FlatDialog::FlatDialog(
          theme.global.fgcolor, theme.global.bgcolor,
          theme.global.focus_color, 2, font, 6, 2)
     , cancel(cancel_text
-        ? std::make_unique<WidgetFlatButton>(
+        ? std::make_unique<WidgetButton>(
             drawable, *this, this, cancel_text, -11,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2)
-        : std::unique_ptr<WidgetFlatButton>())
+        : std::unique_ptr<WidgetButton>())
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
@@ -117,12 +117,12 @@ FlatDialog::FlatDialog(
     }
 }
 
-FlatDialog::~FlatDialog()
+WidgetDialog::~WidgetDialog()
 {
     this->clear();
 }
 
-void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);
     this->set_wh(width, height);
@@ -200,12 +200,12 @@ void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     }
 }
 
-Widget::Color FlatDialog::get_bg_color() const
+Widget::Color WidgetDialog::get_bg_color() const
 {
     return this->bg_color;
 }
 
-void FlatDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
+void WidgetDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if ((event == NOTIFY_CANCEL) ||
         ((event == NOTIFY_SUBMIT) && (&widget == this->cancel.get()))) {
@@ -223,7 +223,7 @@ void FlatDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
 }
 
-void FlatDialog::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetDialog::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         REDEMPTION_DIAGNOSTIC_PUSH()

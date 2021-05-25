@@ -23,7 +23,7 @@
 #pragma once
 
 #include "mod/internal/rail_mod_base.hpp"
-#include "mod/internal/widget/flat_wab_close.hpp"
+#include "mod/internal/widget/wab_close.hpp"
 #include "configs/config_access.hpp"
 #include "core/events.hpp"
 
@@ -42,7 +42,7 @@ using CloseModVariables = vcfg::variables<
 
 class CloseMod : public RailModBase, public NotifyApi
 {
-    FlatWabClose close_widget;
+    WidgetWabClose close_widget;
     CloseModVariables vars;
 
 public:

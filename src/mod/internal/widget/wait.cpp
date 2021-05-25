@@ -19,7 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#include "mod/internal/widget/flat_wait.hpp"
+#include "mod/internal/widget/wait.hpp"
 
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
@@ -33,11 +33,11 @@ enum {
 
 constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 
-FlatWait::FlatWait(
+WidgetWait::WidgetWait(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text, int group_id,
-    WidgetFlatButton * extra_button,
+    WidgetButton * extra_button,
     Font const & font, Theme const & theme, Language lang,
     bool showform, unsigned flags, std::chrono::minutes duration_max
 )
@@ -82,12 +82,12 @@ FlatWait::FlatWait(
     this->move_size_widget(left, top, width, height);
 }
 
-FlatWait::~FlatWait()
+WidgetWait::~WidgetWait()
 {
     this->clear();
 }
 
-void FlatWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);
     this->set_wh(width, height);
@@ -134,7 +134,7 @@ void FlatWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     }
 }
 
-void FlatWait::notify(Widget& widget, NotifyApi::notify_event_t event)
+void WidgetWait::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if ((event == NOTIFY_CANCEL) ||
         ((event == NOTIFY_SUBMIT) && (&widget == &this->exit))) {
@@ -154,7 +154,7 @@ void FlatWait::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
 }
 
-void FlatWait::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetWait::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         REDEMPTION_DIAGNOSTIC_PUSH()

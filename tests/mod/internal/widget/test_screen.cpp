@@ -22,7 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -48,25 +48,25 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     NotifyTrace notifier3;
     NotifyTrace notifier4;
 
-    WidgetFlatButton wbutton1(drawable, wscreen, &notifier1, "button 1",
+    WidgetButton wbutton1(drawable, wscreen, &notifier1, "button 1",
                               0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
-    WidgetFlatButton wbutton2(drawable, wscreen, &notifier2, "button 2",
+    WidgetButton wbutton2(drawable, wscreen, &notifier2, "button 2",
                               0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 30);
 
-    WidgetFlatButton wbutton3(drawable, wscreen, &notifier3, "button 3",
+    WidgetButton wbutton3(drawable, wscreen, &notifier3, "button 3",
                               0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 0);
 
-    WidgetFlatButton wbutton4(drawable, wscreen, &notifier4, "button 4",
+    WidgetButton wbutton4(drawable, wscreen, &notifier4, "button 4",
                               0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);

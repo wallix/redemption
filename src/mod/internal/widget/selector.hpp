@@ -26,7 +26,7 @@
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/number_edit.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
 #include "utils/translation.hpp"
 
@@ -63,7 +63,7 @@ private:
 
     std::array<WidgetLabel, WidgetSelectorParams::nb_max_columns> header_labels;
 
-    std::array<WidgetFlatButton, WidgetSelectorParams::nb_max_columns> column_expansion_buttons;
+    std::array<WidgetButton, WidgetSelectorParams::nb_max_columns> column_expansion_buttons;
 
     uint16_t current_columns_width[WidgetSelectorParams::nb_max_columns] = { 0 };
 
@@ -74,19 +74,19 @@ public:
 
     WidgetLabelGrid selector_lines;
 
-    WidgetFlatButton first_page;
-    WidgetFlatButton prev_page;
+    WidgetButton first_page;
+    WidgetButton prev_page;
     WidgetNumberEdit current_page;
     WidgetLabel number_page;
-    WidgetFlatButton next_page;
-    WidgetFlatButton last_page;
+    WidgetButton next_page;
+    WidgetButton last_page;
 private:
-    WidgetFlatButton logout;
+    WidgetButton logout;
 public:
-    WidgetFlatButton apply;
-    WidgetFlatButton connect;
+    WidgetButton apply;
+    WidgetButton connect;
 
-    WidgetFlatButton target_helpicon;
+    WidgetButton target_helpicon;
 
     Translator tr;
 
@@ -114,7 +114,7 @@ private:
         NAV_SEPARATOR = 15
     };
 
-    WidgetFlatButton * extra_button;
+    WidgetButton * extra_button;
 
     uint32_t weight[WidgetSelectorParams::nb_max_columns] = {0};
 
@@ -127,7 +127,7 @@ public:
                    Widget & parent, NotifyApi* notifier,
                    const char * current_page,
                    const char * number_of_page,
-                   WidgetFlatButton * extra_button,
+                   WidgetButton * extra_button,
                    WidgetSelectorParams const & selector_params,
                    Font const & font, Theme const & theme, Language lang,
                    bool has_target_helpicon = false);

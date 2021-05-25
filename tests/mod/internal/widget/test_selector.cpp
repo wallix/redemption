@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.label[0] = "Authorization";
@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -167,7 +167,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -196,7 +196,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -229,7 +229,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -261,7 +261,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -372,7 +372,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -520,7 +520,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorTargetHelpIcon)
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
     int16_t h = drawable.height();
-    WidgetFlatButton * extra_button = nullptr;
+    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;

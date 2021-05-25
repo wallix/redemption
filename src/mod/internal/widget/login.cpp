@@ -23,7 +23,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
-#include "mod/internal/widget/flat_login.hpp"
+#include "mod/internal/widget/login.hpp"
 #include "utils/theme.hpp"
 
 
@@ -32,7 +32,7 @@ enum {
     WIDGET_MULTILINE_BORDER_Y = 4
 };
 
-FlatLogin::FlatLogin(
+WidgetLogin::WidgetLogin(
     gdi::GraphicApi & drawable,
     int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
     NotifyApi* notifier, const char* caption,
@@ -42,7 +42,7 @@ FlatLogin::FlatLogin(
     const char * label_text_target,
     const char * label_error_message,
     const char * login_message,
-    WidgetFlatButton * extra_button,
+    WidgetButton * extra_button,
     bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
 )
@@ -121,12 +121,12 @@ FlatLogin::FlatLogin(
     this->move_size_widget(left, top, width, height);
 }
 
-FlatLogin::~FlatLogin()
+WidgetLogin::~WidgetLogin()
 {
     this->clear();
 }
 
-void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);
     this->set_wh(width, height);
@@ -344,12 +344,12 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     }
 }
 
-Widget::Color FlatLogin::get_bg_color() const
+Widget::Color WidgetLogin::get_bg_color() const
 {
     return this->bg_color;
 }
 
-void FlatLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
+void WidgetLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if (event == NOTIFY_SUBMIT &&
       ( &widget == &this->login_edit
@@ -364,7 +364,7 @@ void FlatLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
 }
 
-void FlatLogin::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetLogin::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         REDEMPTION_DIAGNOSTIC_PUSH()
@@ -391,7 +391,7 @@ void FlatLogin::rdp_input_scancode(long int param1, long int param2, long int pa
     }
 }
 
-void FlatLogin::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetLogin::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = this->widget_at_pos(x, y);

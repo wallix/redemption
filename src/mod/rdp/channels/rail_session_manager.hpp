@@ -31,7 +31,7 @@
 #include "gdi/text_metrics.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "RAIL/client_execute.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
@@ -217,8 +217,8 @@ public:
             }
 
             this->waiting_screen_draw(this->disconnect_now_button_clicked
-                ? WidgetFlatButton::State::Pressed
-                : WidgetFlatButton::State::Normal);
+                ? WidgetButton::State::Pressed
+                : WidgetButton::State::Normal);
 
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN)
              && this->disconnect_now_button_rect.contains_pt(x, y)
@@ -468,7 +468,7 @@ public:
                     ) {
                         LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
                         this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
-                        this->waiting_screen_draw(WidgetFlatButton::State::Normal);
+                        this->waiting_screen_draw(WidgetButton::State::Normal);
                     }
                     event.garbage = true;
                 });
@@ -652,7 +652,7 @@ private:
         this->drawable->end_update();
     }
 
-    void waiting_screen_draw(WidgetFlatButton::State state) {
+    void waiting_screen_draw(WidgetButton::State state) {
         if (!this->drawable) return;
 
         this->drawable->begin_update();
@@ -679,7 +679,7 @@ private:
         const int xtext = 6;
         const int ytext = 2;
 
-        const Dimension dim_button = WidgetFlatButton::get_optimal_dim(2, this->font, TR(trkeys::disconnect_now, this->lang), xtext, ytext);
+        const Dimension dim_button = WidgetButton::get_optimal_dim(2, this->font, TR(trkeys::disconnect_now, this->lang), xtext, ytext);
 
         const uint32_t interspace = 60;
 
@@ -705,7 +705,7 @@ private:
         this->disconnect_now_button_rect.cx = dim_button.w;
         this->disconnect_now_button_rect.cy = dim_button.h;
 
-        WidgetFlatButton::draw(this->protected_rect,
+        WidgetButton::draw(this->protected_rect,
                                this->disconnect_now_button_rect,
                                *this->drawable,
                                false,   // logo

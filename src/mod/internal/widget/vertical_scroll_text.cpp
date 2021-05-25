@@ -22,7 +22,7 @@
 #include "core/font.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/internal/widget/vertical_scroll_text.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "utils/utf.hpp"
 #include "keyboard/keymap2.hpp"
 

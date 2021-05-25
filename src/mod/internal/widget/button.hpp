@@ -30,7 +30,7 @@ namespace gdi
     class ColorCtx;
 }
 
-class WidgetFlatButton : public Widget
+class WidgetButton : public Widget
 {
 private:
     static const size_t buffer_size = 256;
@@ -66,13 +66,13 @@ private:
     Rect label_rect;
 
 public:
-    WidgetFlatButton(gdi::GraphicApi & drawable, Widget& parent,
+    WidgetButton(gdi::GraphicApi & drawable, Widget& parent,
                      NotifyApi* notifier, const char * text,
                      int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
                      unsigned border_width, Font const & font, int xtext = 0, int ytext = 0, /*NOLINT*/
                      bool logo = false/*, notify_event_t notify_event = NOTIFY_SUBMIT*/); /*NOLINT*/
 
-    ~WidgetFlatButton();
+    ~WidgetButton();
 
     void set_xy(int16_t x, int16_t y) override;
 

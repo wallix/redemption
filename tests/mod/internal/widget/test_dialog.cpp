@@ -25,29 +25,29 @@
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
 
-#include "mod/internal/widget/flat_dialog.hpp"
+#include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "keyboard/keymap2.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/dialog/"
 
 
-RED_AUTO_TEST_CASE(TraceFlatDialog)
+RED_AUTO_TEST_CASE(TraceWidgetDialog)
 {
     TestGraphic drawable(800, 600);
 
-    // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
+    // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test1",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test1",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -61,20 +61,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialog)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_1.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialog2)
+RED_AUTO_TEST_CASE(TraceWidgetDialog2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test2",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test2",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -91,20 +91,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialog2)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_2.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialog3)
+RED_AUTO_TEST_CASE(TraceWidgetDialog3)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test3",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test3",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -121,20 +121,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialog3)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_3.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialog4)
+RED_AUTO_TEST_CASE(TraceWidgetDialog4)
 {
     TestGraphic drawable(1280, 1024);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 1280, 1024, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test4",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test4",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -151,20 +151,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialog4)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_4.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialog5)
+RED_AUTO_TEST_CASE(TraceWidgetDialog5)
 {
     TestGraphic drawable(640, 480);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 640, 480, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test5",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test5",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -181,20 +181,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialog5)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_5.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialog6)
+RED_AUTO_TEST_CASE(TraceWidgetDialog6)
 {
     TestGraphic drawable(352, 500);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 300, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 350, 500, parent, notifier, "test6",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 350, 500, parent, notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -211,20 +211,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialog6)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_6.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialogClip)
+RED_AUTO_TEST_CASE(TraceWidgetDialogClip)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 300, 600, parent, notifier, "test6",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 300, 600, parent, notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -241,20 +241,20 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_7.png");
 }
 
-RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
+RED_AUTO_TEST_CASE(TraceWidgetDialogClip2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
+    // WidgetDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -281,8 +281,8 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -356,8 +356,8 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    WidgetButton * extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                            "Lorem ipsum dolor sit amet, consectetur\n"
                            "adipiscing elit. Nam purus lacus, luctus sit\n"
                            "amet suscipit vel, posuere quis turpis. Sed\n"
@@ -399,7 +399,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
 
 
 
-RED_AUTO_TEST_CASE(TraceFlatDialog_transparent_png_with_theme_color)
+RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
 {
     TestGraphic drawable(800, 600);
     WidgetScreen parent(drawable,
@@ -417,8 +417,8 @@ RED_AUTO_TEST_CASE(TraceFlatDialog_transparent_png_with_theme_color)
     colors.global.fgcolor = WHITE;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    WidgetFlatButton *extra_button = nullptr;
-    FlatDialog flat_dialog(drawable,
+    WidgetButton *extra_button = nullptr;
+    WidgetDialog flat_dialog(drawable,
                            0,
                            0,
                            800,

@@ -22,7 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -33,11 +33,11 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/button/"
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
+RED_AUTO_TEST_CASE(TraceWidgetButton)
 {
     TestGraphic drawable(800, 600);
 
-    // WidgetFlatButton is a button widget at position 0,0 in it's parent context
+    // WidgetButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test1", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test1", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -62,12 +62,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_1.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
+RED_AUTO_TEST_CASE(TraceWidgetButton2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position 10,100 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -78,7 +78,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test2", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test2", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -94,12 +94,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
 }
 
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
+RED_AUTO_TEST_CASE(TraceWidgetButton3)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position -10,500 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test3", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test3", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -125,12 +125,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_3.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
+RED_AUTO_TEST_CASE(TraceWidgetButton4)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position 770,500 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test4", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test4", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -156,12 +156,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_4.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
+RED_AUTO_TEST_CASE(TraceWidgetButton5)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position -20,-7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test5", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test5", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -187,12 +187,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_5.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
+RED_AUTO_TEST_CASE(TraceWidgetButton6)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -203,7 +203,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test6", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test6", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -218,12 +218,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_6.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
+RED_AUTO_TEST_CASE(TraceWidgetButtonClip)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -234,7 +234,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test6", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test6", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -249,12 +249,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_7.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
+RED_AUTO_TEST_CASE(TraceWidgetButtonClip2)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 100x20 at position 10,7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test6", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test6", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -280,7 +280,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_8.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
+RED_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 {
     TestGraphic drawable(800, 600);
 
@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test6", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test6", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -318,7 +318,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_9.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
+RED_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 {
     TestGraphic drawable(800, 600);
 
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
     int16_t y = 0;
 
 
-    WidgetFlatButton wbutton(drawable, parent, &notifier, "", 0, WHITE,
+    WidgetButton wbutton(drawable, parent, &notifier, "", 0, WHITE,
                              DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -391,12 +391,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
     notifier.last_event = 0;
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
+RED_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget of size 256x125 at position 0,0 in it's parent context
+    // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -405,37 +405,37 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetFlatButton wbutton1(drawable, wcomposite, notifier,
+    WidgetButton wbutton1(drawable, wcomposite, notifier,
                               "abababab", 0, YELLOW, BLACK, WINBLUE, 2, global_font_deja_vu_14());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
-    WidgetFlatButton wbutton2(drawable, wcomposite, notifier,
+    WidgetButton wbutton2(drawable, wcomposite, notifier,
                               "ggghdgh", 0, WHITE, RED, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 100);
 
-    WidgetFlatButton wbutton3(drawable, wcomposite, notifier,
+    WidgetButton wbutton3(drawable, wcomposite, notifier,
                               "lldlslql", 0, BLUE, RED, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 100);
 
-    WidgetFlatButton wbutton4(drawable, wcomposite, notifier,
+    WidgetButton wbutton4(drawable, wcomposite, notifier,
                               "LLLLMLLM", 0, PINK, DARK_GREEN, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);
     wbutton4.set_xy(300, 300);
 
-    WidgetFlatButton wbutton5(drawable, wcomposite, notifier,
+    WidgetButton wbutton5(drawable, wcomposite, notifier,
                               "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton5.get_optimal_dim();
     wbutton5.set_wh(dim);
     wbutton5.set_xy(700, -10);
 
-    WidgetFlatButton wbutton6(drawable, wcomposite, notifier,
+    WidgetButton wbutton6(drawable, wcomposite, notifier,
                               "xxwwp", 0, ANTHRACITE, PALE_GREEN, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton6.get_optimal_dim();
     wbutton6.set_wh(dim);
@@ -461,7 +461,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     wcomposite.clear();
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
+RED_AUTO_TEST_CASE(TraceWidgetButtonFocus)
 {
     TestGraphic drawable(72, 40);
 
@@ -478,7 +478,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test7", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test7", id,
                              fg_color, bg_color, fc_color, 2, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -507,12 +507,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_15.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
+RED_AUTO_TEST_CASE(TraceWidgetButtonLite)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget at position 0,0 in it's parent context
+    // WidgetButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -523,7 +523,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test1", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test1", id,
                              fg_color, bg_color, fc_color, 1, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -541,12 +541,12 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button19.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
+RED_AUTO_TEST_CASE(TraceWidgetButtonStrong)
 {
     TestGraphic drawable(800, 600);
 
 
-    // WidgetFlatButton is a button widget at position 0,0 in it's parent context
+    // WidgetButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
@@ -557,7 +557,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, parent, notifier, "test1", id,
+    WidgetButton wbutton(drawable, parent, notifier, "test1", id,
                              fg_color, bg_color, fc_color, 5, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);

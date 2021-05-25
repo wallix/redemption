@@ -19,14 +19,14 @@
  *              Jennifer Inthavong
  */
 
-#include "mod/internal/widget/flat_interactive_target.hpp"
+#include "mod/internal/widget/interactive_target.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
 
 #include <cstring>
 
 
-FlatInteractiveTarget::FlatInteractiveTarget(
+WidgetInteractiveTarget::WidgetInteractiveTarget(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
     Widget & parent, NotifyApi* notifier,
     bool ask_device, bool ask_login, bool ask_password,
@@ -37,7 +37,7 @@ FlatInteractiveTarget::FlatInteractiveTarget(
     const char * login_str,
     const char * text_password,
     Font const & font,
-    WidgetFlatButton * extra_button
+    WidgetButton * extra_button
 )
     : WidgetParent(drawable, parent, notifier)
     , caption_label(drawable, *this, nullptr, caption, -13,
@@ -116,12 +116,12 @@ FlatInteractiveTarget::FlatInteractiveTarget(
     this->move_size_widget(left, top, width, height);
 }
 
-FlatInteractiveTarget::~FlatInteractiveTarget()
+WidgetInteractiveTarget::~WidgetInteractiveTarget()
 {
         this->clear();
 }
 
-void FlatInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);
     this->set_wh(width, height);
@@ -237,12 +237,12 @@ void FlatInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16_t
     }
 }
 
-Widget::Color FlatInteractiveTarget::get_bg_color() const
+Widget::Color WidgetInteractiveTarget::get_bg_color() const
 {
     return this->bgcolor;
 }
 
-void FlatInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t event)
+void WidgetInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if (&widget == this->last_interactive && event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_SUBMIT);
@@ -255,7 +255,7 @@ void FlatInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t eve
     }
 }
 
-void FlatInteractiveTarget::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetInteractiveTarget::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
         keymap->get_kevent();

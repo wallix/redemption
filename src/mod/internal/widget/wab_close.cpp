@@ -19,7 +19,7 @@
  *              Meng Tan
  */
 
-#include "mod/internal/widget/flat_wab_close.hpp"
+#include "mod/internal/widget/wab_close.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
 #include "utils/strutils.hpp"
@@ -27,7 +27,7 @@
 #include "core/font.hpp"
 #include "gdi/graphic_api.hpp"
 
-FlatWabClose::FlatWabClose(
+WidgetWabClose::WidgetWabClose(
     gdi::GraphicApi & drawable,
     int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
     NotifyApi* notifier, const char * diagnostic_text,
@@ -59,7 +59,7 @@ FlatWabClose::FlatWabClose(
 , cancel(drawable, *this, this, TR(trkeys::close, lang), -14,
          theme.global.fgcolor, theme.global.bgcolor,
          theme.global.focus_color, 2, font, 6, 2)
-, back(back_selector ? new WidgetFlatButton(drawable, *this, this,
+, back(back_selector ? new WidgetButton(drawable, *this, this,
                                             TR(trkeys::back_selector, lang), -14,
                                             theme.global.fgcolor,
                                             theme.global.bgcolor,
@@ -129,13 +129,13 @@ FlatWabClose::FlatWabClose(
     this->set_widget_focus(&this->cancel, focus_reason_tabkey);
 }
 
-FlatWabClose::~FlatWabClose()
+WidgetWabClose::~WidgetWabClose()
 {
     delete this->back;
     this->clear();
 }
 
-void FlatWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_wh(width, height);
     this->set_xy(left, top);
@@ -275,12 +275,12 @@ void FlatWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     }
 }
 
-Widget::Color FlatWabClose::get_bg_color() const
+Widget::Color WidgetWabClose::get_bg_color() const
 {
     return this->bg_color;
 }
 
-std::chrono::seconds FlatWabClose::refresh_timeleft(std::chrono::seconds remaining)
+std::chrono::seconds WidgetWabClose::refresh_timeleft(std::chrono::seconds remaining)
 {
     long tl = remaining.count();
     bool seconds = true;
@@ -318,7 +318,7 @@ std::chrono::seconds FlatWabClose::refresh_timeleft(std::chrono::seconds remaini
     return std::chrono::seconds(seconds ? 1 : 60);
 }
 
-void FlatWabClose::notify(Widget & widget, NotifyApi::notify_event_t event)
+void WidgetWabClose::notify(Widget & widget, NotifyApi::notify_event_t event)
 {
     if (&widget == &this->cancel && event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_CANCEL);
@@ -331,7 +331,7 @@ void FlatWabClose::notify(Widget & widget, NotifyApi::notify_event_t event)
     }
 }
 
-void FlatWabClose::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetWabClose::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         REDEMPTION_DIAGNOSTIC_PUSH()

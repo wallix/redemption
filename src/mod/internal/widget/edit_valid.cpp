@@ -23,7 +23,7 @@
 #include "mod/internal/widget/edit_valid.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/edit.hpp"
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
@@ -200,9 +200,9 @@ void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y, Keymap2* k
     }
     else {
         if ((device_flags == MOUSE_FLAG_BUTTON1)
-          && this->button.state == WidgetFlatButton::State::Pressed
+          && this->button.state == WidgetButton::State::Pressed
         ) {
-            this->button.state = WidgetFlatButton::State::Normal;
+            this->button.state = WidgetButton::State::Normal;
             this->rdp_input_invalidate(this->button.get_rect());
         }
         this->editbox->rdp_input_mouse(device_flags, x, y, keymap);

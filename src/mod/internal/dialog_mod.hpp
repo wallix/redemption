@@ -24,7 +24,7 @@
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
-#include "mod/internal/widget/flat_dialog.hpp"
+#include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/language_button.hpp"
 
 
@@ -70,7 +70,7 @@ private:
     void refused();
 
     LanguageButton language_button;
-    FlatDialog dialog_widget;
+    WidgetDialog dialog_widget;
 
     DialogModVariables vars;
 

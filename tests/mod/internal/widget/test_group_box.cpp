@@ -21,7 +21,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/flat_button.hpp"
+#include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/group_box.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
     BGRColor focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable, wgroupbox, notifier, "Button 1",
+    WidgetButton wbutton(drawable, wgroupbox, notifier, "Button 1",
                              group_id, fg_color, bg_color, focuscolor, 2, global_font_lato_light_16(),
                              xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
@@ -126,7 +126,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     BGRColor focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable, wgroupbox, notifier, "Button 1",
+    WidgetButton wbutton(drawable, wgroupbox, notifier, "Button 1",
                              group_id, fg_color, bg_color, focuscolor, 2, global_font_lato_light_16(),
                              xtext, ytext);
     Dimension dim = wbutton.get_optimal_dim();
