@@ -66,6 +66,17 @@ RED_AUTO_TEST_CASE(TestBasename)
 }
 
 
+RED_AUTO_TEST_CASE(TestIsSpecialDir)
+{
+    RED_CHECK(dirname_is_dot("."));
+    RED_CHECK(dirname_is_dot(".."));
+    RED_CHECK(!dirname_is_dot("a."));
+    RED_CHECK(!dirname_is_dot(".a"));
+    RED_CHECK(!dirname_is_dot("a"));
+    RED_CHECK(!dirname_is_dot("ab"));
+}
+
+
 RED_AUTO_TEST_CASE(CanonicalPath)
 {
     struct Data

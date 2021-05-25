@@ -200,7 +200,7 @@ inline int shutdown()
     DIR * d = opendir(pid_dir);
     if (d){
         for (dirent * entryp = readdir(d) ; entryp ; entryp = readdir(d)) {
-            if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
+            if (dirname_is_dot(entryp->d_name)) {
                 continue;
             }
             const std::string pidpath = str_concat(pid_dir, '/', entryp->d_name);

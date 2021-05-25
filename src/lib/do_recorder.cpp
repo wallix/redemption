@@ -2075,7 +2075,7 @@ extern "C" {
         }
 
         while (struct dirent * result = readdir(d)) {
-            if (is_special_dirname(result->d_name)) {
+            if (dirname_is_dot(result->d_name)) {
                 continue;
             }
 

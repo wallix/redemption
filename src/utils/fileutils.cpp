@@ -305,7 +305,7 @@ static int _internal_make_directory(const char *directory, mode_t mode, int grou
     struct stat st;
     int status = 0;
 
-    if ((directory[0] != 0) && 0 != strcmp(directory, ".") && 0 != strcmp(directory, "..")) {
+    if (directory[0] != 0 && !dirname_is_dot(directory)) {
         if (stat(directory, &st) != 0) {
             /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
@@ -365,7 +365,7 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
     return status;
 }
 
-bool is_special_dirname(not_null_ptr<char const> path) noexcept
+bool dirname_is_dot(not_null_ptr<char const> path) noexcept
 {
     return (path[0] == '.' && path[1] == '\0')
         || (path[0] == '.' && path[1] == '.' && path[2] == '\0')
@@ -388,7 +388,7 @@ int recursive_delete_directory(const char * directory_path_char_ptr)
         while (!return_value && (ent = readdir(dir)))
         {
             /* Skip the names "." and ".." as we don't want to recurse on them. */
-            if (is_special_dirname(ent->d_name)) {
+            if (dirname_is_dot(ent->d_name)) {
                 continue;
             }
 
