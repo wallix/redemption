@@ -69,8 +69,8 @@ public:
     WidgetButton(gdi::GraphicApi & drawable, Widget& parent,
                      NotifyApi* notifier, const char * text,
                      int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
-                     unsigned border_width, Font const & font, int xtext = 0, int ytext = 0, /*NOLINT*/
-                     bool logo = false/*, notify_event_t notify_event = NOTIFY_SUBMIT*/); /*NOLINT*/
+                     unsigned border_width, Font const & font,
+                     int xtext = 0, int ytext = 0, bool logo = false); /*NOLINT*/
 
     ~WidgetButton();
 

@@ -58,34 +58,34 @@ public:
     static constexpr std::array<chars_view, 3> cliprde_list()
     {
         return {{
-            cstr_array_view("cliprdr_up,"),
-            cstr_array_view("cliprdr_down,"),
-            cstr_array_view("cliprdr_file,"),
+            "cliprdr_up,"_av,
+            "cliprdr_down,"_av,
+            "cliprdr_file,"_av,
         }};
     }
 
     static constexpr std::array<chars_view, 5> rdpdr_list()
     {
         return {{
-            cstr_array_view("rdpdr_printer,"),
-            cstr_array_view("rdpdr_port,"),
-            cstr_array_view("rdpdr_drive_read,"),
-            cstr_array_view("rdpdr_drive_write,"),
-            cstr_array_view("rdpdr_smartcard,"),
+            "rdpdr_printer,"_av,
+            "rdpdr_port,"_av,
+            "rdpdr_drive_read,"_av,
+            "rdpdr_drive_write,"_av,
+            "rdpdr_smartcard,"_av,
         }};
     }
 
     static constexpr std::array<chars_view, 1> rdpsnd_list()
     {
         return {{
-            cstr_array_view("rdpsnd_audio_output,"),
+            "rdpsnd_audio_output,"_av,
         }};
     }
 
     static constexpr std::array<chars_view, 1> rdpcap_list()
     {
         return {{
-            cstr_array_view("rdpcap_audio_input,"),
+            "rdpcap_audio_input,"_av,
         }};
     }
 

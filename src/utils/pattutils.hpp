@@ -31,7 +31,7 @@ struct PatternValue
     Cat cat = is_reg;
     bool is_ocr = false;
     bool is_kbd = false;
-    chars_view pattern = cstr_array_view("");
+    chars_view pattern = ""_av;
 };
 
 constexpr char string_pattern_separator = '\x01';

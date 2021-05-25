@@ -1649,7 +1649,7 @@ template<std::size_t N> using sized_u8_array_view = array_view<std::uint8_t, N>;
 template<std::size_t N> using sized_writable_u8_array_view = writable_array_view<std::uint8_t, N>;
 
 
-// TODO array_view<char, len>
+// TODO array_view<char, len> (c++20)
 constexpr chars_view operator "" _av(char const * s, size_t len) noexcept
 {
     return {s, len};

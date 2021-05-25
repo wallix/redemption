@@ -61,7 +61,7 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
     SessionLogApi& session_log,
     bool server_cert_store,
     ServerCertCheck server_cert_check,
-    std::unique_ptr<char[]>&& certif_path,
+    std::string&& certif_path,
     ServerNotification server_access_allowed_message,
     ServerNotification server_cert_create_message,
     ServerNotification server_cert_success_message,
@@ -137,7 +137,7 @@ CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(
         ensure_server_certificate_match,
         ensure_server_certificate_exists,
         *this,
-        certif_path.get(),
+        certif_path.c_str(),
         error_message,
         ip_address,
         port)
@@ -184,10 +184,10 @@ RdpNegociation::RdpNegociation(
     , performanceFlags(
         info.rdp5_performanceflags
         & (~(mod_rdp_params.adjust_performance_flags_for_recording
-            ? static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING)
+            ? uint32_t(PERF_ENABLE_FONT_SMOOTHING)
             : 0)
         )
-        )
+    )
     , client_time_zone(info.client_time_zone)
     , gen(gen)
     , verbose(mod_rdp_params.verbose /*| (RDPVerbose::security|RDPVerbose::basic_trace)*/)
@@ -195,32 +195,22 @@ RdpNegociation::RdpNegociation(
         session_log,
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,
-        [](const char* device_id){
-            // TODO return str_concat(certif_path, '/', device_id)
-            auto certif_path = app_path(AppPath::Certif);
-            size_t lg_certif_path = certif_path.size();
-            size_t lg_dev_id = strlen(device_id);
-            auto buffer = std::make_unique<char[]>(lg_certif_path + lg_dev_id + 2);
-            memcpy(buffer.get(), certif_path.data(), lg_certif_path);
-            buffer[lg_certif_path] = '/';
-            memcpy(buffer.get()+lg_certif_path+1, device_id, lg_dev_id+1);
-            return buffer;
-        }(mod_rdp_params.device_id),
+        str_concat(app_path(AppPath::Certif), '/', mod_rdp_params.device_id),
         mod_rdp_params.server_access_allowed_message,
         mod_rdp_params.server_cert_create_message,
         mod_rdp_params.server_cert_success_message,
         mod_rdp_params.server_cert_failure_message,
         mod_rdp_params.server_cert_error_message,
         mod_rdp_params.verbose
-        )
+    )
     , nego(
         mod_rdp_params.enable_tls, mod_rdp_params.target_user,
         mod_rdp_params.enable_nla, mod_rdp_params.enable_restricted_admin_mode,
         mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, time_base,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         tls_client_params,
-        static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
-        )
+        RdpNego::Verbose(mod_rdp_params.verbose)
+    )
     , desktop_physical_width(info.desktop_physical_width)
     , desktop_physical_height(info.desktop_physical_height)
     , desktop_orientation(info.desktop_orientation)
@@ -241,7 +231,7 @@ RdpNegociation::RdpNegociation(
         && (!mod_rdp_params.application_params.target_application || !(*mod_rdp_params.application_params.target_application))
         && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)
-        )
+    )
 #else
     , session_probe_use_clipboard_based_launcher(false)
 #endif
@@ -1585,9 +1575,9 @@ bool RdpNegociation::get_license(InStream & stream)
     return r;
 }
 
-// TODO same in mod_rdp
 template<class... WriterData>
-void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_data) {
+void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_data)
+{
     LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "send data request");
 
     write_packets(

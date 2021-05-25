@@ -295,13 +295,13 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
     {
         case '/':
             if (filter_slash == FilteringSlash::Yes) {
-                no_printable_fn(cstr_array_view("//"));
+                no_printable_fn("//"_av);
             }
             else {
                 utf32_char_fn(uchar);
             }
             break;
-        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
+        #define Case(i, s) case i: no_printable_fn(s ""_av); break
         Case(0x00000008, "/<backspace>");
         Case(0x00000009, "/<tab>");
         Case(0x0000000D, "/<enter>");
@@ -915,8 +915,8 @@ bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
 } // anonymous namespace
 
 namespace {
-    constexpr chars_view session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
-    constexpr chars_view session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
+    inline constexpr chars_view session_meta_kbd_prefix = "[Kbd]"_av;
+    inline constexpr chars_view session_meta_kbd_suffix = "\n"_av;
 }
 
 /*
@@ -937,7 +937,7 @@ class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureA
     bool keyboard_input_mask_enabled = false;
     uint8_t kbd_buffer[512];
     static const std::size_t kbd_buffer_usable_char =
-        sizeof(kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size();
+        sizeof(kbd_buffer) - session_meta_kbd_prefix.size() - session_meta_kbd_suffix.size();
     uint8_t kbd_chars_size[kbd_buffer_usable_char];
     std::ptrdiff_t kbd_char_pos = 0;
     MonotonicTimeToRealTime monotonic_to_real;
@@ -957,14 +957,14 @@ public:
         Transport& trans,
         bool key_markers_hidden_state,
         MetaParams meta_params)
-    : kbd_stream{{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}}
+    : kbd_stream{{this->kbd_buffer + session_meta_kbd_prefix.size(), kbd_buffer_usable_char}}
     , monotonic_to_real(now, real_now)
     , monotonic_last_time(now)
     , trans(trans)
     , key_markers_hidden_state(key_markers_hidden_state)
     , meta_params(meta_params)
     {
-        memcpy(this->kbd_buffer, session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
+        memcpy(this->kbd_buffer, session_meta_kbd_prefix.data(), session_meta_kbd_prefix.size());
 
         // force file creation even if no text recognized
         this->trans.send("", 0);
@@ -1001,7 +1001,7 @@ public:
     }
 
     void next_video(MonotonicTimePoint now) {
-        this->send_data(now, cstr_array_view("(break)"), '+');
+        this->send_data(now, "(break)"_av, '+');
     }
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
@@ -1071,7 +1071,7 @@ private:
                 }
                 else if (this->key_markers_hidden_state) {
                     if (uchar == '/') {
-                        auto const single_slash = cstr_array_view("/");
+                        auto const single_slash = "/"_av;
                         this->copy_bytes(single_slash);
                         this->kbd_chars_size[this->kbd_char_pos] = single_slash.size();
                         ++this->kbd_char_pos;

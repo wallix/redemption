@@ -205,6 +205,7 @@ inline constexpr bool operator>=(zstring_view const& lhs, char const* rhs) noexc
     return lhs.to_sv() >= std::string_view(rhs);
 }
 
+// TODO sized_zstring_view<N>
 constexpr zstring_view operator "" _zv(char const * s, std::size_t len) noexcept
 {
     return zstring_view::from_null_terminated(s, len);

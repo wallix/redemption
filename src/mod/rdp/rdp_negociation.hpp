@@ -77,7 +77,7 @@ private:
             SessionLogApi& session_log,
             bool server_cert_store,
             ServerCertCheck server_cert_check,
-            std::unique_ptr<char[]>&& certif_path,
+            std::string&& certif_path,
             ServerNotification server_access_allowed_message,
             ServerNotification server_cert_create_message,
             ServerNotification server_cert_success_message,
@@ -95,7 +95,7 @@ private:
         std::function<CertificateResult(X509&)> certificate_callback;
 
         const ServerCertCheck server_cert_check;
-        std::unique_ptr<char[]> certif_path;
+        std::string certif_path;
         const bool server_cert_store;
         const std::array<ServerNotification, 5> server_status_messages;
 
