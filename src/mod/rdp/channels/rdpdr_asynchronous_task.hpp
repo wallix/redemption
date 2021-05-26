@@ -110,7 +110,7 @@ public:
                 }
             },
             [this](Event& event){
-                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
+                LOG(LOG_WARNING, "RdpdrDriveReadTask::configure_event: File (%d) is not ready!", this->file_descriptor);
                 event.alarm.reset_timeout(1s);
             }
         );
@@ -170,7 +170,9 @@ public:
 
             assert(this->length);
 
+LOG(LOG_INFO, "RdpdrDriveReadTask::run: to_server_sender ... out_flags=0x%X", out_flags);
             this->to_server_sender(this->length, out_flags, out_stream.get_produced_bytes());
+LOG(LOG_INFO, "RdpdrDriveReadTask::run: to_server_sender done.");
         }
         catch (const Error & e) {
             LOG_IF(bool(this->verbose & RDPVerbose::asynchronous_task), LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
@@ -224,8 +226,10 @@ public:
     bool run()
     {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask::run: to_server_sender ... out_flags=0x%X (1)", this->flags);
             this->to_server_sender(this->data_length, this->flags,
                 {this->data.get(), this->data_length});
+LOG(LOG_INFO, "RdpdrDriveReadTask::run: to_server_sender done. (1)");
 
             this->remaining_number_of_bytes_to_send = 0;
 
@@ -248,8 +252,10 @@ public:
             out_flags &= ~CHANNELS::CHANNEL_FLAG_LAST;
         }
 
+LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask::run: to_server_sender ... out_flags=0x%X (2)", out_flags);
         this->to_server_sender(this->data_length, out_flags,
             {this->data.get() + number_of_bytes_sent, number_of_bytes_to_send});
+LOG(LOG_INFO, "RdpdrDriveReadTask::run: to_server_sender done. (2)");
 
         this->remaining_number_of_bytes_to_send -= number_of_bytes_to_send;
 
@@ -298,7 +304,9 @@ public:
 
     void run()
     {
+LOG(LOG_INFO, "RdpdrSendClientMessageTask::run: to_server_sender ... out_flags=0x%X", this->flags);
         this->to_server_sender(this->total_length, this->flags,
             {this->chunked_data.get(), this->chunked_data_length});
+LOG(LOG_INFO, "RdpdrSendClientMessageTask::run: to_server_sender done.");
     }
 };
