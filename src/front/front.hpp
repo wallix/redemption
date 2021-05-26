@@ -3144,19 +3144,30 @@ private:
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
-        ::send_server_update( this->trans
-                            , this->server_fastpath_update_support
-                            , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
-                            , this->mppc_enc.get()
-                            , this->share_id
-                            , this->encryptionLevel
-                            , this->encrypt
-                            , this->userid
-                            , SERVER_UPDATE_GRAPHICS_SYNCHRONIZE
-                            , 0
-                            , stream
-                            , underlying_cast(this->verbose)
-                            );
+        bool compression_support = bool(this->ini.get<cfg::client::rdp_compression>())
+            ? this->client_info.rdp_compression
+            : false;
+
+        if (this->server_fastpath_update_support) {
+            ::send_fast_path_data(
+                this->trans, compression_support, this->mppc_enc.get(),
+                this->encryptionLevel, this->encrypt,
+                FastPath::UpdateType::SYNCHRONIZE, stream);
+        }
+        else {
+            StaticOutStream<64> data;
+
+            data.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
+            data.out_clear_bytes(2);
+
+            stream.copy_to_head(data.get_produced_bytes());
+
+            ::send_share_data_ex(
+                this->trans, PDUTYPE2_UPDATE, compression_support,
+                this->mppc_enc.get(), this->share_id, this->encryptionLevel,
+                this->encrypt, this->userid, stream,
+                bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted)));
+        }
     }
 
     /*****************************************************************************/
@@ -3800,7 +3811,6 @@ private:
         stream.get_data_stream().out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
         stream.get_data_stream().out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
 
-        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
                             , false
@@ -3810,8 +3820,7 @@ private:
                             , this->encrypt
                             , this->userid
                             , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
+                            , bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted))
                             );
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_synchronize: done");
@@ -3851,7 +3860,6 @@ private:
         stream.get_data_stream().out_uint16_le(0); // userid
         stream.get_data_stream().out_uint32_le(1002); // control id
 
-        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
                             , false
@@ -3861,8 +3869,7 @@ private:
                             , this->encrypt
                             , this->userid
                             , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
+                            , bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted))
                             );
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
@@ -3903,7 +3910,6 @@ private:
         // Payload
         stream.get_data_stream().out_copy_bytes(g_fontmap, 172);
 
-        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
                             , false
@@ -3913,8 +3919,7 @@ private:
                             , this->encrypt
                             , this->userid
                             , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
+                            , bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted))
                             );
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO, "Front::send_fontmap: done");
@@ -3933,7 +3938,6 @@ public:
         RDP::LogonInfoVersion1_Send sender(
             stream.get_data_stream(), "", ini.get<cfg::globals::auth_user>(), getpid());
 
-        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SAVE_SESSION_INFO
                             , false
@@ -3943,8 +3947,7 @@ public:
                             , this->encrypt
                             , this->userid
                             , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
+                            , bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted))
                             );
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
@@ -3978,7 +3981,6 @@ private:
         // Payload
         monitor_layout_pdu.emit(stream.get_data_stream());
 
-        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_MONITOR_LAYOUT_PDU
                             , false
@@ -3988,8 +3990,7 @@ private:
                             , this->encrypt
                             , this->userid
                             , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
+                            , bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted))
                             );
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
@@ -4269,7 +4270,6 @@ private:
 
                 StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
-                const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::channel);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
                                     , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
@@ -4279,9 +4279,8 @@ private:
                                     , this->encrypt
                                     , this->userid
                                     , stream
-                                    , log_condition
-                                    , underlying_cast(this->verbose)
-                                    );
+                                    , bool(this->verbose & (Verbose::channel | Verbose::sec_decrypted)
+                                    ));
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -5111,19 +5110,20 @@ private:
         GeneratePaletteUpdateData(stream.get_data_stream());
 
         ::send_server_update(
-            this->trans
-          , this->server_fastpath_update_support
-          , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
-          , this->mppc_enc.get()
-          , this->share_id
-          , this->encryptionLevel
-          , this->encrypt
-          , this->userid
-          , SERVER_UPDATE_GRAPHICS_PALETTE
-          , 0
-          , stream
-          , underlying_cast(this->verbose)
-        );
+            FastPath::UpdateType::PALETTE,
+            PDUTYPE2_UPDATE,
+            this->trans,
+            this->fastpath_support,
+            bool(this->ini.get<cfg::client::rdp_compression>())
+                ? this->client_info.rdp_compression
+                : false,
+            this->mppc_enc.get(),
+            this->share_id,
+            this->encryptionLevel,
+            this->encrypt,
+            this->userid,
+            stream,
+            bool(this->verbose & (Verbose::basic_trace3 | Verbose::sec_decrypted)));
 
         this->sync();
 

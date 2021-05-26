@@ -744,6 +744,10 @@ struct OutReservedStreamHelper
     , payload_stream({this->head_ptr, buf_len - reserved_leading_space})
     {}
 
+    OutReservedStreamHelper(writable_buffer_view buffer, std::size_t reserved_leading_space) noexcept
+    : OutReservedStreamHelper(buffer.data(), reserved_leading_space, buffer.size())
+    {}
+
     [[nodiscard]] writable_bytes_view get_packet() const noexcept {
         return writable_bytes_view{this->head_ptr, std::size_t(this->payload_stream.get_current() - this->head_ptr)};
     }

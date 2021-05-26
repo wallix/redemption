@@ -34,5 +34,6 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPSerializerVerbose)
     surface_commands    = 0x0100,
     bmp_cache           = 0x0200,
     internal_buffer     = 0x0400,
+    sec_decrypted       = 0x1000,
     // update Front::Verbose when verbose > 0xffff
 };
