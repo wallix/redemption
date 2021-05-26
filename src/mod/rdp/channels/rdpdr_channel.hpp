@@ -42,6 +42,31 @@
 
 class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
+    bool message_started = false;
+
+    void my_send_message_to_server(uint32_t total_length,
+        uint32_t flags, bytes_view chunk_data)
+    {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
+        {
+            if (this->message_started)
+            {
+                LOG(LOG_ERR,
+                    "FileSystemVirtualChannel::my_send_message_to_server: Error");
+            }
+
+            this->message_started = true;
+        }
+
+        if (flags & CHANNELS::CHANNEL_FLAG_LAST)
+        {
+            this->message_started = false;
+        }
+
+        this->send_message_to_server(total_length,
+            flags, chunk_data);
+    }
+
     SessionLogApi& session_log;
     const RDPVerbose verbose;
 
@@ -1801,7 +1826,7 @@ public:
             out_stream.rewind(chunk_offset);
             this->client_device_io_response.emit(out_stream);
 
-            this->send_message_to_server(total_length, flags, out_chunk.get_produced_bytes());
+            this->my_send_message_to_server(total_length, flags, out_chunk.get_produced_bytes());
 
             send_message_to_server = false;
         }
@@ -1968,7 +1993,7 @@ public:
         REDEMPTION_DIAGNOSTIC_POP()
 
         if (send_message_to_server) {
-            this->send_message_to_server(total_length, flags, chunk_data);
+            this->my_send_message_to_server(total_length, flags, chunk_data);
         }
     }   // process_client_message
 
@@ -2028,7 +2053,7 @@ public:
             }
             client_announce_reply.emit(out_stream);
 
-            this->send_message_to_server(
+            this->my_send_message_to_server(
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
@@ -2052,7 +2077,7 @@ public:
             }
             client_name_request.emit(out_stream);
 
-            this->send_message_to_server(
+            this->my_send_message_to_server(
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
@@ -2159,7 +2184,7 @@ public:
                 );
             out_stream.out_uint32_le(rdpdr::DRIVE_CAPABILITY_VERSION_01);
 
-            this->send_message_to_server(
+            this->my_send_message_to_server(
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
@@ -2241,7 +2266,7 @@ public:
             }
             device_create_response.emit(out_stream);
 
-            this->send_message_to_server(
+            this->my_send_message_to_server(
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
@@ -2863,7 +2888,7 @@ private:
             }
             client_announce_reply.emit(out_stream);
 
-            this->send_message_to_server(
+            this->my_send_message_to_server(
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
@@ -2887,7 +2912,7 @@ private:
             }
             client_name_request.emit(out_stream);
 
-            this->send_message_to_server(
+            this->my_send_message_to_server(
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
