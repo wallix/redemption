@@ -146,6 +146,15 @@ template<class T, std::size_t Extent = dynamic_extent>
 struct writable_array_view;
 
 
+#if REDEMPTION_COMP_GCC_VERSION_LESS(9, 0, 0)
+# define gcc_8_fix_decltemplate template<class = void>
+# define gcc_8_fix_default_impl {}
+#else
+# define gcc_8_fix_decltemplate
+# define gcc_8_fix_default_impl = default;
+#endif
+
+
 template<class T>
 struct array_view<T, dynamic_extent>
 {
@@ -341,7 +350,8 @@ private:
     using disable_if_n = std::enable_if_t<(N != Extent), U>;
 
 public:
-    constexpr array_view() noexcept(enable_if_n<0>::value) = default;
+    gcc_8_fix_decltemplate
+    constexpr array_view() noexcept(enable_if_n<0>::value) gcc_8_fix_default_impl
     constexpr array_view(array_view && other) = default;
     constexpr array_view(array_view const & other) = default;
     constexpr array_view & operator = (array_view && other) = default;
@@ -900,7 +910,8 @@ private:
     using disable_if_n = std::enable_if_t<(N != Extent), U>;
 
 public:
-    constexpr writable_array_view() noexcept(enable_if_n<0>::value) = default;
+    gcc_8_fix_decltemplate
+    constexpr writable_array_view() noexcept(enable_if_n<0>::value) gcc_8_fix_default_impl
     constexpr writable_array_view(writable_array_view && other) = default;
     constexpr writable_array_view(writable_array_view const & other) = default;
     constexpr writable_array_view & operator = (writable_array_view && other) = default;
@@ -1391,6 +1402,9 @@ private:
     pointer p    = nullptr;
     size_type sz = 0;
 };
+
+#undef gcc_8_fix_decltemplate
+#undef gcc_8_fix_decltemplate
 
 
 namespace detail

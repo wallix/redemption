@@ -42,6 +42,9 @@
     RED_PP_STRINGIFY(__clang_minor__) "." \
     RED_PP_STRINGIFY(__clang_patchlevel__)
 # define REDEMPTION_COMP_NAME clang
+
+# define REDEMPTION_COMP_CLANG_VERSION_LESS(major, minor, patch) \
+    REDEMPTION_COMP_CLANG_VERSION < REDEMPTION_COMP_VERSION_NUMBER(major, minor, patch)
 #else
 # define REDEMPTION_COMP_CLANG_VERSION REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 #endif
@@ -73,6 +76,12 @@
       RED_PP_STRINGIFY(__GNUC__) "."      \
       RED_PP_STRINGIFY(__GNUC_MINOR__) ".0"
 #  endif
+
+#  ifndef __clang__
+#   define REDEMPTION_COMP_GCC_VERSION_LESS(major, minor, patch) \
+      REDEMPTION_COMP_GNUC_VERSION < REDEMPTION_COMP_VERSION_NUMBER(major, minor, patch)
+#  endif
+
 # endif
 # ifndef REDEMPTION_COMP_VERSION
 #  define REDEMPTION_COMP_VERSION REDEMPTION_COMP_GNUC_VERSION
@@ -134,3 +143,12 @@
 # define REDEMPTION_COMP_VERSION REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 # define REDEMPTION_COMP_NAME unknown
 #endif
+
+#ifndef REDEMPTION_COMP_GCC_VERSION_LESS
+# define REDEMPTION_COMP_GCC_VERSION_LESS(major, minor, patch) 0
+#endif
+
+#ifndef REDEMPTION_COMP_CLANG_VERSION_LESS
+# define REDEMPTION_COMP_CLANG_VERSION_LESS(major, minor, patch) 0
+#endif
+
