@@ -670,6 +670,7 @@ private:
             void operator()(
                 uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
+LOG(LOG_INFO, "ToServerAsynchronousSender(): Add RdpdrSendClientMessageTask. flags=0x%X", flags);
                 this->asynchronous_tasks.add(
                     std::make_unique<RdpdrSendClientMessageTask>(
                         total_length, flags, chunk_data,
