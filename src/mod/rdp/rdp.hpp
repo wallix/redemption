@@ -576,6 +576,8 @@ private:
         const bool     show_protocol;
         const bool     verbose;
 
+        bool message_started = false;
+
     public:
         explicit ToServerSender(
             ServerTransportContext & stc,
@@ -590,6 +592,22 @@ private:
 
         void operator()(uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
         {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
+            {
+                if (this->message_started)
+                {
+                    LOG(LOG_ERR,
+                        "ToServerSender::operator: Error");
+                }
+
+                this->message_started = true;
+            }
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST)
+            {
+                this->message_started = false;
+            }
+
             if (this->show_protocol) {
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
             }
