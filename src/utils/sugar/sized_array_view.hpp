@@ -73,15 +73,6 @@ namespace detail
 } // namespace detail
 
 
-#if REDEMPTION_COMP_GCC_VERSION_LESS(9, 0, 0)
-# define gcc_8_fix_decltemplate template<class = void>
-# define gcc_8_fix_default_impl {}
-#else
-# define gcc_8_fix_decltemplate
-# define gcc_8_fix_default_impl = default;
-#endif
-
-
 template<class T, std::size_t Size>
 struct sized_array_view
 {
@@ -956,8 +947,6 @@ private:
     size_type sz = 0;
 };
 
-#undef gcc_8_fix_decltemplate
-#undef gcc_8_fix_decltemplate
 
 
 namespace detail
