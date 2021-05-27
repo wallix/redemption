@@ -382,6 +382,12 @@ namespace ut
     RED_TEST_CREATE_DECORATOR(hex_int, detail::hex_int_compare)
 }
 
+// fwd
+//@{
+template<class T, std::size_t N> struct sized_array_view;
+template<class T, std::size_t N> struct writable_sized_array_view;
+//@}
+
 namespace redemption_unit_test__
 {
     struct Put2Mem
@@ -404,13 +410,13 @@ namespace redemption_unit_test__
     boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
 
     template<class T> struct is_array_view : std::false_type {};
-    template<class T, std::size_t Extent> struct is_array_view<array_view<T, Extent>>
-        : std::true_type {};
-    template<class T, std::size_t Extent> struct is_array_view<writable_array_view<T, Extent>>
-        : std::true_type {};
+    template<class T> struct is_array_view<array_view<T>> : std::true_type {};
+    template<class T> struct is_array_view<writable_array_view<T>> : std::true_type {};
     template<> struct is_array_view<::ut::flagged_bytes_view> : std::true_type {};
     template<> struct is_array_view<bytes_view> : std::true_type {};
     template<> struct is_array_view<writable_bytes_view> : std::true_type {};
+    template<class T, std::size_t N> struct is_array_view<sized_array_view<T, N>> : std::true_type {};
+    template<class T, std::size_t N> struct is_array_view<writable_sized_array_view<T, N>> : std::true_type {};
 } // namespace redemption_unit_test__
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
@@ -426,7 +432,7 @@ namespace redemption_unit_test__
             return v.bytes;
         }
         else {
-            return make_dynamic_array_view(v);
+            return array_view{v};
         }
     }
 
@@ -521,12 +527,12 @@ namespace unit_test {
     // disable collection_compare for array_view like type
     // but this disable also test_tools::per_element() and test_tools::lexicographic()
     // BOOST_TEST(a == b, tt::per_element())
-    template<class T, std::size_t Extent> struct is_forward_iterable<array_view<T, Extent>>
-        : mpl::false_ {};
-    template<class T, std::size_t Extent> struct is_forward_iterable<writable_array_view<T, Extent>>
-        : mpl::false_ {};
+    template<class T> struct is_forward_iterable<array_view<T>> : mpl::false_ {};
+    template<class T> struct is_forward_iterable<writable_array_view<T>> : mpl::false_ {};
     template<> struct is_forward_iterable<bytes_view> : mpl::false_ {};
     template<> struct is_forward_iterable<writable_bytes_view> : mpl::false_ {};
+    template<class T, std::size_t N> struct is_forward_iterable<sized_array_view<T, N>> : mpl::false_ {};
+    template<class T, std::size_t N> struct is_forward_iterable<writable_sized_array_view<T, N>> : mpl::false_ {};
 }
 
 namespace test_tools {

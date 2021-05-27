@@ -1592,6 +1592,10 @@ public:
                         this->client_info.screen_info.bpp = BitsPerPixel{8};
                         switch (cs_core.postBeta2ColorDepth) {
                         case GCC::UserData::RNS_UD_COLOR_8BPP:
+                            /*
+                            this->client_info.bpp =
+                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                            */
                             this->client_info.screen_info.bpp = (
                                       (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
                                     ? BitsPerPixel{32}
@@ -2082,8 +2086,8 @@ public:
         // beware order of parameters for key generation (decrypt/encrypt)
         // is inversed between server and client
         SEC::KeyBlock key_block(
-            make_array_view(client_random).first<SEC_RANDOM_SIZE>(),
-            make_array_view(this->server_random));
+            make_sized_array_view(client_random).first<SEC_RANDOM_SIZE>(),
+            make_sized_array_view(this->server_random));
         memcpy(this->encrypt.sign_key, key_block.blob0, 16);
         if (this->encrypt.encryptionMethod == 1) {
             ssllib::sec_make_40bit(this->encrypt.sign_key);

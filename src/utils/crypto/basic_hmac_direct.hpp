@@ -25,6 +25,7 @@
 #include <cassert>
 
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/sized_array_view.hpp"
 
 
 namespace detail_
@@ -51,7 +52,7 @@ public:
         if (key.size() > pad_length) {
             Ssl ssl;
             ssl.update(key);
-            ssl.final(make_writable_array_view(digest));
+            ssl.final(make_writable_sized_array_view(digest));
             key = make_array_view(digest);
         }
 
@@ -105,7 +106,7 @@ public:
         if (key_len > pad_length) {
             Ssl ssl;
             ssl.update({key, key_len});
-            ssl.final(make_writable_array_view(digest));
+            ssl.final(make_writable_sized_array_view(digest));
             key_len = Ssl::DIGEST_LENGTH;
             k = digest;
         }

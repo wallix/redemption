@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestSslMd4)
         SslMd4 md;
 
         md.update(make_array_view(data));
-        md.final(make_writable_array_view(sig));
+        md.final(make_writable_sized_array_view(sig));
         // hexdump96_c(sig, sizeof(sig));
 
         RED_CHECK(make_array_view(sig) ==
@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestSslMd4)
         md.update({data + 128, 128});
         md.update({data + 256, 128});
         md.update({data + 384, 128});
-        md.final(make_writable_array_view(sig));
+        md.final(make_writable_sized_array_view(sig));
         // hexdump96_c(sig, sizeof(sig));
 
         RED_CHECK(make_array_view(sig) ==
@@ -126,7 +126,7 @@ RED_AUTO_TEST_CASE(TestSslHmacMd4)
     hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslMd4::DIGEST_LENGTH];
-    hmac.final(make_writable_array_view(sig));
+    hmac.final(make_writable_sized_array_view(sig));
     // hexdump96_c(sig, sizeof(sig));
     RED_CHECK(make_array_view(sig) ==
         "\x8d\x33\x66\xc4\x40\xa9\xc6\x51\x24\xab\x0b\x5f\x4c\xa2\x73\x38"_av);

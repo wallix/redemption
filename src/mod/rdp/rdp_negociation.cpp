@@ -665,8 +665,8 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         //     static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
                         SEC::KeyBlock key_block(
-                            make_array_view(this->client_random),
-                            make_array_view(serverRandom));
+                            make_sized_array_view(this->client_random),
+                            make_sized_array_view(serverRandom));
                         memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                         if (sc_sec1.encryptionMethod == 1){
                             ssllib::sec_make_40bit(this->encrypt.sign_key);
@@ -1351,9 +1351,9 @@ bool RdpNegociation::get_license(InStream & stream)
                 /* We currently use null client keys. This is a bit naughty but, hey,
                     the security of license negotiation isn't exactly paramount. */
                 SEC::SessionKey keyblock(
-                    make_array_view(null_data),
-                    make_array_view(null_data).first<SEC_RANDOM_SIZE>(),
-                    make_array_view(SvrLicReq.ServerRandom));
+                    make_sized_array_view(null_data),
+                    make_sized_array_view(null_data).first<SEC_RANDOM_SIZE>(),
+                    make_sized_array_view(SvrLicReq.ServerRandom));
 
                 /* Store first 16 bytes of session key as MAC secret */
                 memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
@@ -1408,7 +1408,7 @@ bool RdpNegociation::get_license(InStream & stream)
                         sign.update(make_array_view(hwid));
 
                         static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
-                        sign.final(make_writable_array_view(signature));
+                        sign.final(make_writable_sized_array_view(signature));
 
                         /* Now encrypt the HWID */
 
@@ -1476,7 +1476,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 sign.update(make_array_view(sealed_buffer));
 
                 static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
-                sign.final(make_writable_array_view(out_sig));
+                sign.final(make_writable_sized_array_view(out_sig));
 
                 /* Now encrypt the HWID */
                 memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
@@ -1668,7 +1668,7 @@ void RdpNegociation::send_client_info_pdu()
             uint8_t tmp_client_random[32] = { 0 };
             hmac_md5.update(make_array_view(tmp_client_random));
         }
-        hmac_md5.final(make_writable_array_view(digest));
+        hmac_md5.final(make_writable_sized_array_view(digest));
 
         infoPacket.extendedInfoPacket.cbAutoReconnectLen = 0x1C;
 

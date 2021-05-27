@@ -289,7 +289,7 @@ namespace FastPath {
 
             if (secFlags & FASTPATH_INPUT_ENCRYPTED) {
                 uint8_t signature[8] = {};
-                crypt.sign({data, data_sz}, make_writable_array_view(signature));
+                crypt.sign({data, data_sz}, make_writable_sized_array_view(signature));
                 stream.out_copy_bytes(signature, 8);
                 crypt.decrypt({data, data_sz});
             }
@@ -1181,7 +1181,7 @@ namespace FastPath {
 
             if (secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
                 uint8_t signature[8] = {};
-                crypt.sign({data, data_sz}, make_writable_array_view(signature));
+                crypt.sign({data, data_sz}, make_writable_sized_array_view(signature));
                 stream.out_copy_bytes(signature, 8);
                 crypt.decrypt({data, data_sz});
             }

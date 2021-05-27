@@ -22,6 +22,7 @@
 
 #include "core/error.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/sized_array_view.hpp"
 
 #include <cstdint>
 #include <cstring>

@@ -108,7 +108,7 @@ struct CryptContext
 
             Sign sign({this->update_key, keylen});
             sign.update({this->key, keylen});
-            sign.final(make_writable_array_view(this->key));
+            sign.final(make_writable_sized_array_view(this->key));
 
             this->rc4.set_key({this->key, keylen});
 
@@ -139,6 +139,6 @@ struct CryptContext
         Sign sign({this->sign_key, (this->encryptionMethod==1)?8u:16u});
         sign.update(make_array_view(lenhdr));
         sign.update(data);
-        sign.final(make_writable_array_view(signature));
+        sign.final(make_writable_sized_array_view(signature));
     }
 };
