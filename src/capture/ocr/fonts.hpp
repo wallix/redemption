@@ -22,14 +22,15 @@
 
 #include "mln/image/image2d.hh"
 #include "locale/locale_id.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <type_traits>
-#include <cstring>
+#include <string_view>
 
 
 namespace ocr {
 
-inline const char unknown[2] = "?";
+inline constexpr char unknown[2] = "?";
 
 namespace fonts {
     struct Pixel {
@@ -53,13 +54,13 @@ namespace fonts {
 
     struct Font {
         struct Replacement {
-            const char * pattern;
-            const char * replace;
+            std::string_view pattern;
+            std::string_view replace;
         };
 
-        const char * name;
-        const char * (*const classify)(unsigned ncol, unsigned nrow, unsigned npix, Pixel accessor);
-        const Replacement * replacements;
+        std::string_view name;
+        std::string_view (*const classify)(unsigned ncol, unsigned nrow, unsigned npix, Pixel accessor);
+        array_view<Replacement> replacements;
 
         unsigned min_height_char;
         unsigned max_height_char;
@@ -126,10 +127,10 @@ namespace fonts {
       , internal::max_height(cyrillic_fonts)
     };
 
-    inline unsigned font_id_by_name(LocaleId locale_id, const char * name) noexcept
+    inline unsigned font_id_by_name(LocaleId locale_id, std::string_view name) noexcept
     {
         for (unsigned i = 0; i < nfonts[locale_id]; ++i) {
-            if (!strcmp(name, fonts[locale_id][i].name)) {
+            if (name == fonts[locale_id][i].name) {
                 return i;
             }
         }

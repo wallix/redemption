@@ -11,7 +11,7 @@ for f in "$@" ; do
     bname="$(basename "$f")"
     funcname="${bname%%.hxx}"
     echo 'inline'
-    echo 'const char * '"$funcname"'(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT*/'
+    echo 'std::string_view '"$funcname"'(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT*/'
     echo '{'
     echo '# include "'./ocr1/classifiers/"$bname"'"'
     echo '  return unknown;'
@@ -21,11 +21,10 @@ for f in "$@" ; do
     if [ -f "$repl" ] ; then
         echo 'constexpr Font::Replacement const '"$funcname"'_replacement[] {'
         cat "$repl"
-        echo '{nullptr,nullptr}'
         echo '};'
         echo
     else
-        echo -n 'constexpr Font::Replacement * const '"$funcname"'_replacement = nullptr;'
+        echo -n 'constexpr auto '"$funcname"'_replacement = nullptr;'
         echo
     fi
 done > "$out"
