@@ -653,6 +653,10 @@ private:
                     )
                 );
             }
+
+            VirtualChannelDataSender& SynchronousSender() override {
+                return this->to_server_synchronous_sender;
+            }
         };
 
         const CHANNELS::ChannelDef* channel = this->mod_channel_list.get_by_name(channel_name);
