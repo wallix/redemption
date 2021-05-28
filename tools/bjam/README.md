@@ -18,7 +18,7 @@ bf () {
 
 alias pbf='REDEMPTION_LOG_PRINT=1 bf'
 
-source $REDEMPTION_PATH/tools/bjam/bjam_completion.bash
+source "$REDEMPTION_PATH"/tools/bjam/bjam_completion.bash
 
 # bf/pbf auto-completion
 complete -F _bjam_completion bf pbf
