@@ -28,7 +28,8 @@ constexpr char const* CONFIG_DESC_FRONT = R"(- basic_trace     = 0x0000'0001
 - bitmap_update       = 0x0080'0000
 - surface_commands    = 0x0100'0000
 - bmp_cache           = 0x0200'0000
-- internal_buffer     = 0x0400'0000)";
+- internal_buffer     = 0x0400'0000
+- sec_decrypted       = 0x1000'0000)";
 
 constexpr char const* CONFIG_DESC_RDP = R"(- basic_trace         = 0x0000'0001
 - connection          = 0x0000'0002
@@ -96,7 +97,8 @@ constexpr char const* CONFIG_DESC_CAPTURE = R"(- kbd / ocr when != 0
 - bitmap_update       = 0x0080
 - surface_commands    = 0x0100
 - bmp_cache           = 0x0200
-- internal_buffer     = 0x0400)";
+- internal_buffer     = 0x0400
+- sec_decrypted       = 0x1000)";
 
 constexpr char const* CONFIG_DESC_SESSION = R"(- Event   = 0x02
 - Acl     = 0x04

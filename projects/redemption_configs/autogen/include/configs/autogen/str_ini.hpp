@@ -1313,6 +1313,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # - surface_commands    = 0x0100
 # - bmp_cache           = 0x0200
 # - internal_buffer     = 0x0400
+# - sec_decrypted       = 0x1000
 # min = 0
 #_advanced
 #_hex
@@ -1355,6 +1356,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # - surface_commands    = 0x0100'0000
 # - bmp_cache           = 0x0200'0000
 # - internal_buffer     = 0x0400'0000
+# - sec_decrypted       = 0x1000'0000
 # min = 0
 #_advanced
 #_hex

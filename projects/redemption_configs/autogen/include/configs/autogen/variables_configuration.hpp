@@ -3489,6 +3489,7 @@ namespace cfg
     /// - surface_commands    = 0x0100 <br/>
     /// - bmp_cache           = 0x0200 <br/>
     /// - internal_buffer     = 0x0400 <br/>
+    /// - sec_decrypted       = 0x1000 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::capture {
@@ -3546,6 +3547,7 @@ namespace cfg
     /// - surface_commands    = 0x0100'0000 <br/>
     /// - bmp_cache           = 0x0200'0000 <br/>
     /// - internal_buffer     = 0x0400'0000 <br/>
+    /// - sec_decrypted       = 0x1000'0000 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::front {

@@ -1121,6 +1121,7 @@ fake_target_ip = string(default='')
 # - surface_commands    = 0x0100
 # - bmp_cache           = 0x0200
 # - internal_buffer     = 0x0400
+# - sec_decrypted       = 0x1000
 #_advanced
 #_hex
 capture = integer(min=0, default=0)
@@ -1160,6 +1161,7 @@ session = integer(min=0, default=0)
 # - surface_commands    = 0x0100'0000
 # - bmp_cache           = 0x0200'0000
 # - internal_buffer     = 0x0400'0000
+# - sec_decrypted       = 0x1000'0000
 #_advanced
 #_hex
 front = integer(min=0, default=0)
