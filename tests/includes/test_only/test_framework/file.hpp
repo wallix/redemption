@@ -26,7 +26,7 @@ Author(s): Jonathan Poelen
 #include <cstring>
 
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     struct fsize_impl
     {
@@ -55,7 +55,7 @@ namespace redemption_unit_test__
             return file_exist(s.c_str());
         }
     };
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 namespace tu
 {
@@ -67,14 +67,14 @@ namespace tu
         return append_file_contents(static_cast<char const*>(filename), buffer);
     }
 
-    constexpr auto fsize = redemption_unit_test__::fn_invoker("filesize", /* NOLINT */
-        redemption_unit_test__::fsize_impl{});
+    constexpr auto fsize = redemption_unit_test_::fn_invoker("filesize", /* NOLINT */
+        redemption_unit_test_::fsize_impl{});
 
-    constexpr auto fexists = redemption_unit_test__::fn_invoker("file_exists", /* NOLINT */
-        redemption_unit_test__::fexists_impl{});
+    constexpr auto fexists = redemption_unit_test_::fn_invoker("file_exists", /* NOLINT */
+        redemption_unit_test_::fexists_impl{});
 
     inline int int_(int n) { return n; }
-    inline redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }
+    inline redemption_unit_test_::int_variation int_(redemption_unit_test_::int_variation n) { return n; }
 } // namespace tu
 
 #define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len))
@@ -91,7 +91,7 @@ namespace tu
 # define RED_TEST_LEVEL_FILE_CONTENTS(lvl1, filename, content)                        \
 [&](auto&& filename_, auto&& expected_){                                              \
     std::string file_contents_;                                                       \
-    auto current_count_error = ::redemption_unit_test__::current_count_error();       \
+    auto current_count_error = ::redemption_unit_test_::current_count_error();       \
     [[maybe_unused]] std::string_view strctx = #content;                              \
     RED_TEST_CONTEXT("expr: " << #filename <<                                         \
         "\n    filename: " << filename_ << "\n    content: "                          \
@@ -99,7 +99,7 @@ namespace tu
     << (strctx.size() > 40 ? "[...]" : "")) {                                         \
         RED_##lvl1(::tu::append_file_contents(filename_,                              \
             file_contents_) == FileContentsError::None);                              \
-        if (current_count_error == ::redemption_unit_test__::current_count_error()) { \
+        if (current_count_error == ::redemption_unit_test_::current_count_error()) { \
             RED_##lvl1(file_contents_ == expected_);                                  \
         }                                                                             \
     }                                                                                 \

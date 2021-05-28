@@ -27,9 +27,6 @@ Author(s): Proxies Team
 
 #include <memory>
 
-namespace
-{
-
 template<class ProtocolMetrics>
 struct ModMetrics : Metrics
 {
@@ -83,5 +80,3 @@ private:
     std::chrono::seconds log_interval;
     TimeBase const * time_base = nullptr;
 };
-
-}

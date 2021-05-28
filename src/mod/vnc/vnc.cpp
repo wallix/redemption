@@ -262,7 +262,7 @@ void mod_vnc::initial_clear_screen()
                                );
 
     RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-    RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, server_monitor_ready_pdu.size());
+    RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, server_monitor_ready_pdu.size());
 
     out_s.rewind();
 
@@ -1525,7 +1525,7 @@ void mod_vnc::check_timeout()
         // 04 00 00 00 04 00 00 00 0? 00 00 00
         // 00 00 00 00
         RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
-        RDPECLIP::CliprdrHeader format_data_request_header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, format_data_request_pdu.size());
+        RDPECLIP::CliprdrHeader format_data_request_header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, format_data_request_pdu.size());
         StaticOutStream<256>           out_s;
 
         format_data_request_header.emit(out_s);
@@ -1781,7 +1781,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     // 00 00 00 00
 
                     RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
-                    RDPECLIP::CliprdrHeader format_data_request_header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, format_data_request_pdu.size());
+                    RDPECLIP::CliprdrHeader format_data_request_header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, format_data_request_pdu.size());
                     out_s.rewind();
 
                     format_data_request_header.emit(out_s);
@@ -1812,8 +1812,8 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                             [this](Event&){this->check_timeout();});
                     }
                     else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated)
-                        &&  ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)
-                          == RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)
+                        &&  ((this->clipboard_general_capability_flags & RDPECLIP::CB_MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)
+                          == RDPECLIP::CB_MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)
                     ) {
                         LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO,
                             "mod_vnc::clipboard_send_to_vnc_server: "

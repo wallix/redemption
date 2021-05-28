@@ -151,7 +151,7 @@ struct BOOST_TEST_DECL print_log_value<decltype(nullptr)> {
 #endif
 
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
 
 template<class T, class Fd>
@@ -250,21 +250,21 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
     return {name, f};
 }
 
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
-#define RED_TEST_FUNC_CTX(fname) ::redemption_unit_test__::fn_invoker( \
+#define RED_TEST_FUNC_CTX(fname) ::redemption_unit_test_::fn_invoker( \
     #fname, [](auto&&... args){ return fname(args...); })
 
-#define RED_TEST_INVOKER(fname) ::redemption_unit_test__::fn_invoker( \
+#define RED_TEST_INVOKER(fname) ::redemption_unit_test_::fn_invoker( \
     #fname, [&](auto&&... args){ return fname(args...); })
 
-#define RED_TEST_FUNC(fname, ...) [&]{                             \
-    auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
-    RED_TEST(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
+#define RED_TEST_FUNC(fname, ...) [&]{                            \
+    auto BOOST_PP_CAT(fctx_, __LINE__) = RED_TEST_INVOKER(fname); \
+    RED_TEST(BOOST_PP_CAT(fctx_, __LINE__)__VA_ARGS__); }()
 
-#define RED_REQUIRE_FUNC(fname, ...) [&]{                          \
-    auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
-    RED_REQUIRE(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
+#define RED_REQUIRE_FUNC(fname, ...) [&]{                         \
+    auto BOOST_PP_CAT(fctx_, __LINE__) = RED_TEST_INVOKER(fname); \
+    RED_REQUIRE(BOOST_PP_CAT(fctx_, __LINE__)__VA_ARGS__); }()
 
 
 //
@@ -388,7 +388,7 @@ template<class T, std::size_t N> struct sized_array_view;
 template<class T, std::size_t N> struct writable_sized_array_view;
 //@}
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     struct Put2Mem
     {
@@ -417,10 +417,10 @@ namespace redemption_unit_test__
     template<> struct is_array_view<writable_bytes_view> : std::true_type {};
     template<class T, std::size_t N> struct is_array_view<sized_array_view<T, N>> : std::true_type {};
     template<class T, std::size_t N> struct is_array_view<writable_sized_array_view<T, N>> : std::true_type {};
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     template<class T>
     auto normalize_view(T const& v)
@@ -498,18 +498,18 @@ namespace redemption_unit_test__
             return !av_equal(std::less{}, normalize_view(y), normalize_view(x));
         }
     }
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
-using redemption_unit_test__::ops::operator ==;
-using redemption_unit_test__::ops::operator !=;
-using redemption_unit_test__::ops::operator <;
-using redemption_unit_test__::ops::operator <=;
-using redemption_unit_test__::ops::operator >;
-using redemption_unit_test__::ops::operator >=;
+using redemption_unit_test_::ops::operator ==;
+using redemption_unit_test_::ops::operator !=;
+using redemption_unit_test_::ops::operator <;
+using redemption_unit_test_::ops::operator <=;
+using redemption_unit_test_::ops::operator >;
+using redemption_unit_test_::ops::operator >=;
 
 #else
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     // boost::unit_test::is_forward_iterable<array_view<T>> -> false (see bellow)
     template<class T>
@@ -519,7 +519,7 @@ namespace redemption_unit_test__
 
         View(array_view<T> v) noexcept : array_view<T>(v) {}
     };
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 namespace boost {
 
@@ -547,8 +547,8 @@ namespace op {
 #define DEFINE_COLLECTION_COMPARISON(oper, name, ...)                     \
 template<class T, class U>                                                \
 struct name<T, U, std::enable_if_t<(                                      \
-    ::redemption_unit_test__::is_array_view<T>::value                     \
- || ::redemption_unit_test__::is_array_view<U>::value                     \
+    ::redemption_unit_test_::is_array_view<T>::value                      \
+ || ::redemption_unit_test_::is_array_view<U>::value                      \
 )>>                                                                       \
 {                                                                         \
     using result_type = assertion_result;                                 \
@@ -586,7 +586,7 @@ struct name<T, U, std::enable_if_t<(                                      \
                 b = rhs;                                                  \
             }                                                             \
                                                                           \
-            return ::redemption_unit_test__                               \
+            return ::redemption_unit_test_                                \
                 ::bytes_##name(a, b, flag, min_len);                      \
         }                                                                 \
         else                                                              \
@@ -595,8 +595,8 @@ struct name<T, U, std::enable_if_t<(                                      \
             using R = typename U::value_type;                             \
             using elem_op = op::name<L, R>;                               \
             return boost::test_tools::assertion::op::compare_collections( \
-                ::redemption_unit_test__::View<L>{lhs},                   \
-                ::redemption_unit_test__::View<R>{rhs},                   \
+                ::redemption_unit_test_::View<L>{lhs},                    \
+                ::redemption_unit_test_::View<R>{rhs},                    \
                 static_cast<boost::type<elem_op>*>(nullptr),              \
                 mpl::true_());                                            \
         }                                                                 \

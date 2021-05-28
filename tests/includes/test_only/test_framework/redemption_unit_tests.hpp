@@ -87,7 +87,7 @@ namespace ut
 
 
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     namespace literals
     {
@@ -111,7 +111,7 @@ namespace redemption_unit_test__
             return ut::dump({s, len});
         }
     } // namespace literals
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 
 #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
@@ -119,7 +119,7 @@ namespace redemption_unit_test__
 #endif
 
 #if defined(IN_IDE_PARSER)
-# define REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) ::redemption_unit_test__::Stream{}
+# define REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) ::redemption_unit_test_::Stream{}
 # define REDEMPTION_UT_UNUSED_STREAM [[maybe_unused]]
 #else
 # define REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) out
@@ -128,7 +128,7 @@ namespace redemption_unit_test__
 
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     void X(bool);
 
@@ -159,7 +159,7 @@ namespace redemption_unit_test__
 
     template<class F>
     constexpr fn_caller<F> fn_invoker(char const* /*name*/, F f);
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 template<class T, class U>  bool operator==(array_view<T>, array_view<U>) { return true; }
 template<class T> bool operator==(array_view<T>, bytes_view) { return true; }
@@ -182,15 +182,15 @@ bool operator!=(bytes_view, ut::flagged_bytes_view);
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 
-# define RED_FAIL(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
-# define RED_ERROR(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
-# define RED_TEST_INFO(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
-# define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
-# define RED_TEST_MESSAGE(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_FAIL(ostream_expr) ::redemption_unit_test_::Stream{} << ostream_expr
+# define RED_ERROR(ostream_expr) ::redemption_unit_test_::Stream{} << ostream_expr
+# define RED_TEST_INFO(ostream_expr) ::redemption_unit_test_::Stream{} << ostream_expr
+# define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test_::Stream{} << ostream_expr
+# define RED_TEST_MESSAGE(ostream_expr) ::redemption_unit_test_::Stream{} << ostream_expr
 # define RED_TEST_PASSPOINT() do { } while(0)
 # define RED_TEST_DONT_PRINT_LOG_VALUE(type)
 # define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
-# define RED_TEST_PRINT_TYPE_STRUCT_NAME redemption_unit_test__::red_test_print_type_t
+# define RED_TEST_PRINT_TYPE_STRUCT_NAME redemption_unit_test_::red_test_print_type_t
 
 
 # define RED_AUTO_TEST_CASE(test_name)       \
@@ -205,31 +205,31 @@ bool operator!=(bytes_view, ut::flagged_bytes_view);
 //@{
 # define RED_TEST(expr) RED_TEST_CHECK(expr)
 # define RED_TEST_CHECK(expr) RED_CHECK(expr)
-# define RED_TEST_CONTEXT(ostream_expr) if (::redemption_unit_test__::Stream{} << ostream_expr)
+# define RED_TEST_CONTEXT(ostream_expr) if (::redemption_unit_test_::Stream{} << ostream_expr)
 
 # define RED_TEST_INVOKER(fname) fname
 # define RED_TEST_FUNC_CTX(fname) ([](auto&&... xs) { \
     return fname(static_cast<decltype(xs)&&>(xs)...); })
-# define RED_TEST_FUNC(fname, ...) ::redemption_unit_test__::X(bool(fname __VA_ARGS__))
-# define RED_REQUIRE_FUNC(fname, ...) ::redemption_unit_test__::X(bool(fname __VA_ARGS__))
+# define RED_TEST_FUNC(fname, ...) ::redemption_unit_test_::X(bool(fname __VA_ARGS__))
+# define RED_REQUIRE_FUNC(fname, ...) ::redemption_unit_test_::X(bool(fname __VA_ARGS__))
 
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define RED_CHECK_EXCEPTION(stmt, exception, predicate) do { \
     stmt; [](exception & e) { predicate(e); }; } while (0)
-# define RED_CHECK_EQUAL(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
-# define RED_CHECK_NE(a, b) ::redemption_unit_test__::X(bool((a) != (b)))
-# define RED_CHECK_LT(a, b) ::redemption_unit_test__::X(bool((a) < (b)))
-# define RED_CHECK_LE(a, b) ::redemption_unit_test__::X(bool((a) <= (b)))
-# define RED_CHECK_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
-# define RED_CHECK_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
-# define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
-# define RED_CHECK_MESSAGE(a, ostream_expr) ::redemption_unit_test__::X(bool(a)), \
-    ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_CHECK_EQUAL(a, b) ::redemption_unit_test_::X(bool((a) == (b)))
+# define RED_CHECK_NE(a, b) ::redemption_unit_test_::X(bool((a) != (b)))
+# define RED_CHECK_LT(a, b) ::redemption_unit_test_::X(bool((a) < (b)))
+# define RED_CHECK_LE(a, b) ::redemption_unit_test_::X(bool((a) <= (b)))
+# define RED_CHECK_GT(a, b) ::redemption_unit_test_::X(bool((a) > (b)))
+# define RED_CHECK_GE(a, b) ::redemption_unit_test_::X(bool((a) >= (b)))
+# define RED_CHECK(a) ::redemption_unit_test_::X(bool(a))
+# define RED_CHECK_MESSAGE(a, ostream_expr) ::redemption_unit_test_::X(bool(a)), \
+    ::redemption_unit_test_::Stream{} << ostream_expr
 # define RED_CHECK_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
-    ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
-# define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
+    ::redemption_unit_test_::X(first1 == last1 && first2 == last2)
+# define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test_::X((void(a), void(b), true))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 //@}
 
@@ -241,18 +241,18 @@ bool operator!=(bytes_view, ut::flagged_bytes_view);
 # define RED_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define RED_REQUIRE_EXCEPTION(stmt, exception, predicate) do { \
     stmt; [](exception & e) { predicate(e); }; } while (0)
-# define RED_REQUIRE_EQUAL(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
-# define RED_REQUIRE_NE(a, b) ::redemption_unit_test__::X(bool((a) != (b)))
-# define RED_REQUIRE_LT(a, b) ::redemption_unit_test__::X(bool((a) < (b)))
-# define RED_REQUIRE_LE(a, b) ::redemption_unit_test__::X(bool((a) <= (b)))
-# define RED_REQUIRE_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
-# define RED_REQUIRE_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
-# define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
-# define RED_REQUIRE_MESSAGE(a, ostream_expr) ::redemption_unit_test__::X(bool(a)), \
-    ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_REQUIRE_EQUAL(a, b) ::redemption_unit_test_::X(bool((a) == (b)))
+# define RED_REQUIRE_NE(a, b) ::redemption_unit_test_::X(bool((a) != (b)))
+# define RED_REQUIRE_LT(a, b) ::redemption_unit_test_::X(bool((a) < (b)))
+# define RED_REQUIRE_LE(a, b) ::redemption_unit_test_::X(bool((a) <= (b)))
+# define RED_REQUIRE_GT(a, b) ::redemption_unit_test_::X(bool((a) > (b)))
+# define RED_REQUIRE_GE(a, b) ::redemption_unit_test_::X(bool((a) >= (b)))
+# define RED_REQUIRE(a) ::redemption_unit_test_::X(bool(a))
+# define RED_REQUIRE_MESSAGE(a, ostream_expr) ::redemption_unit_test_::X(bool(a)), \
+    ::redemption_unit_test_::Stream{} << ostream_expr
 # define RED_REQUIRE_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
-    ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
-# define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
+    ::redemption_unit_test_::X(first1 == last1 && first2 == last2)
+# define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test_::X((void(a), void(b), true))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 //@}
 
@@ -291,23 +291,23 @@ bool operator!=(bytes_view, ut::flagged_bytes_view);
 # define RED_TEST_EXCEPTION_ERROR_ID(lvl, stmt, ErrId) \
     RED_##lvl##_EXCEPTION(                             \
         stmt, Error,                                   \
-        [&](Error const & e__) {                       \
-            RED_CHECK_EQUAL(e__.id, ErrId);            \
-            return (e__.id == (ErrId));                \
+        [&](Error const & e_) {                        \
+            RED_CHECK_EQUAL(e_.id, ErrId);             \
+            return (e_.id == (ErrId));                 \
         }                                              \
     )
 
-# define RED_TEST_EQUAL_RANGES(lvl, a, b)     \
-    [](auto const & a__, auto const & b__) {  \
-        using std::begin;                     \
-        using std::end;                       \
-        RED_##lvl##_EQUAL_COLLECTIONS(        \
-            (void(#a), begin(a__)), end(a__), \
-            (void(#b), begin(b__)), end(b__)  \
-        );                                    \
+# define RED_TEST_EQUAL_RANGES(lvl, a, b)   \
+    [](auto const & a_, auto const & b_) {  \
+        using std::begin;                   \
+        using std::end;                     \
+        RED_##lvl##_EQUAL_COLLECTIONS(      \
+            (void(#a), begin(a_)), end(a_), \
+            (void(#b), begin(b_)), end(b_)  \
+        );                                  \
     }(a, b)
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     template<class E, E value>
     struct EnumValue
@@ -367,22 +367,22 @@ namespace redemption_unit_test__
         bytes_view bytes;
     };
 
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 #if ! REDEMPTION_UNIT_TEST_FAST_CHECK
 
 namespace std /*NOLINT*/
 {
     // hack hack hack :D
-    std::ostream& operator<<(std::ostream& out, ::redemption_unit_test__::Enum const& e);
-    std::ostream& operator<<(std::ostream& out, ::redemption_unit_test__::BytesView const& v);
+    std::ostream& operator<<(std::ostream& out, ::redemption_unit_test_::Enum const& e);
+    std::ostream& operator<<(std::ostream& out, ::redemption_unit_test_::BytesView const& v);
 }
 
 #endif
 
 #endif
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     #if REDEMPTION_UNIT_TEST_FAST_CHECK || defined(IN_IDE_PARSER)
     template<class F>
@@ -469,9 +469,9 @@ namespace redemption_unit_test__
     {
         return {fd};
     }
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
-#define RED_TEST_DATAS(datas) ::redemption_unit_test__ \
+#define RED_TEST_DATAS(datas) ::redemption_unit_test_ \
     ::make_datas_ctx([](auto f) { return f datas; })
 
 # define RED_TEST_UNUSED_IDENT2_II(a, b) \
@@ -529,7 +529,7 @@ namespace redemption_unit_test__
 #define RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, ...) \
     if (auto&& cont = __VA_ARGS__; 1)                                    \
         if (::std::size_t i = 0,                                         \
-            n = ::redemption_unit_test__::cont_size(cont, 1); 1          \
+            n = ::redemption_unit_test_::cont_size(cont, 1); 1          \
         )                                                                \
             for (type_value : cont)                                      \
                 if (++i)                                                 \
@@ -540,16 +540,16 @@ namespace redemption_unit_test__
 
 #define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
     RED_TEST_CONTEXT_DATA_I(                              \
-        BOOST_PP_CAT(ctx_cont__, __LINE__),               \
-        BOOST_PP_CAT(ctx_cont_i__, __LINE__),             \
-        BOOST_PP_CAT(ctx_cont_n__, __LINE__),             \
+        BOOST_PP_CAT(ctx_cont_, __LINE__),                \
+        BOOST_PP_CAT(ctx_cont_i_, __LINE__),              \
+        BOOST_PP_CAT(ctx_cont_n_, __LINE__),              \
         type_value, iocontext, __VA_ARGS__)
 #endif
 
 #define RED_AUTO_TEST_CONTEXT_DATA(test_name, type_value, iocontext, ...) \
-    struct test_name##__case : ::redemption_unit_test__::MaxError         \
+    struct test_name##_case : ::redemption_unit_test_::MaxError           \
     { void _exec(type_value); };                                          \
-    RED_FIXTURE_TEST_CASE(test_name, test_name##__case)                   \
+    RED_FIXTURE_TEST_CASE(test_name, test_name##_case)                    \
     {                                                                     \
         auto l = __VA_ARGS__;                                             \
         auto p = l.begin();                                               \
@@ -564,9 +564,9 @@ namespace redemption_unit_test__
             ++p;                                                          \
         }                                                                 \
     }                                                                     \
-    void test_name##__case::_exec(type_value)
+    void test_name##_case::_exec(type_value)
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
 
 struct MaxError
@@ -726,20 +726,20 @@ namespace literals
     inline def_variation1 operator""_v(unsigned long long x) noexcept { return {int(x), false}; }
 }
 
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
-using namespace redemption_unit_test__::literals; // NOLINT
+using namespace redemption_unit_test_::literals; // NOLINT
 REDEMPTION_DIAGNOSTIC_POP()
 
 template<>
-struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
+struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test_::int_variation>
 {
-    void operator()(std::ostream& out, redemption_unit_test__::int_variation const & x) const;
+    void operator()(std::ostream& out, redemption_unit_test_::int_variation const & x) const;
 };
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     template<class T>
     auto to_av(T&& x)
@@ -760,4 +760,4 @@ namespace redemption_unit_test__
 #define RED_REQUIRE_EQ_RANGES RED_REQUIRE_EQUAL_RANGES
 //@}
 
-#define RED_ERROR_COUNT() redemption_unit_test__::current_count_error()
+#define RED_ERROR_COUNT() redemption_unit_test_::current_count_error()

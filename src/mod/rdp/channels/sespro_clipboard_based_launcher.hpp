@@ -241,7 +241,7 @@ public:
 
                     RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
 
-                    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
+                    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE_NONE,
                         clipboard_caps_pdu.size() + general_cap_set.size());
 
                     StaticOutStream<1024> out_s;

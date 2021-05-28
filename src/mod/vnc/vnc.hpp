@@ -1437,7 +1437,7 @@ private:
         if (channel) {
             // Monitor ready PDU send to front
             RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-            RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, server_monitor_ready_pdu.size());
+            RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, server_monitor_ready_pdu.size());
 
             StaticOutStream<64> out_s;
 

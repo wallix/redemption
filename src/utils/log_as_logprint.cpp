@@ -39,7 +39,7 @@ REDEMPTION_DIAGNOSTIC_POP()
 #endif
 
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept /*NOLINT(cert-dcl50-cpp)*/
+void LOG_REDEMPTION_INTERNAL_IMPL(int priority, char const * format, ...) noexcept /*NOLINT(cert-dcl50-cpp)*/
 {
     (void)priority;
     va_list ap;

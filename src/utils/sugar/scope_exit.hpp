@@ -23,8 +23,8 @@ Author(s): Jonathan Poelen
 #include "utils/pp.hpp"
 #include "utils/sugar/finally.hpp"
 
-#define SCOPE_EXIT(...)                \
-    auto RED_PP_CAT(scope_exit__,      \
-        RED_PP_CAT(__COUNTER__,        \
-            RED_PP_CAT(__, __LINE__))) \
+#define SCOPE_EXIT(...)               \
+    auto RED_PP_CAT(scope_exit_,      \
+        RED_PP_CAT(__COUNTER__,       \
+            RED_PP_CAT(_, __LINE__))) \
     = ::finally([&]{ __VA_ARGS__; })

@@ -59,15 +59,15 @@ ExtraSystemProcesses::ExtraSystemProcesses(const char * comme_separated_processe
 // TODO {std:string const&, bool} ?
 bool ExtraSystemProcesses::get(
     size_t index,
-    std::string & out__name
+    std::string & out_name
 ) const {
     if (this->processes.size() <= index) {
-        out__name.clear();
+        out_name.clear();
 
         return false;
     }
 
-    out__name = this->processes[index];
+    out_name = this->processes[index];
 
     return true;
 }
@@ -152,24 +152,24 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
 // TODO {std:string const&, bool} ?
 bool OutboundConnectionMonitorRules::get(
     size_t index,
-    unsigned int & out__type,
-    std::string & out__host_address_or_subnet,
-    std::string & out__port_range,
-    std::string & out__description
+    unsigned int & out_type,
+    std::string & out_host_address_or_subnet,
+    std::string & out_port_range,
+    std::string & out_description
 ) const {
     if (this->rules.size() <= index) {
-        out__type = 0;
-        out__host_address_or_subnet.clear();
-        out__port_range.clear();
-        out__description.clear();
+        out_type = 0;
+        out_host_address_or_subnet.clear();
+        out_port_range.clear();
+        out_description.clear();
 
         return false;
     }
 
-    out__type                   = unsigned(this->rules[index].type);
-    out__host_address_or_subnet = this->rules[index].address;
-    out__port_range             = this->rules[index].port_range;
-    out__description            = this->rules[index].description;
+    out_type                   = unsigned(this->rules[index].type);
+    out_host_address_or_subnet = this->rules[index].address;
+    out_port_range             = this->rules[index].port_range;
+    out_description            = this->rules[index].description;
 
     return true;
 }
@@ -245,21 +245,21 @@ ProcessMonitorRules::ProcessMonitorRules(const char * comme_separated_rules)
 // TODO {std:string const&, bool} ?
 bool ProcessMonitorRules::get(
     size_t index,
-    unsigned int & out__type,
-    std::string & out__pattern,
-    std::string & out__description
+    unsigned int & out_type,
+    std::string & out_pattern,
+    std::string & out_description
 ) const {
     if (this->rules.size() <= index) {
-        out__type = 0;
-        out__pattern.clear();
-        out__description.clear();
+        out_type = 0;
+        out_pattern.clear();
+        out_description.clear();
 
         return false;
     }
 
-    out__type                   = unsigned(this->rules[index].type);
-    out__pattern                = this->rules[index].pattern;
-    out__description            = this->rules[index].description;
+    out_type                   = unsigned(this->rules[index].type);
+    out_pattern                = this->rules[index].pattern;
+    out_description            = this->rules[index].description;
 
     return true;
 }

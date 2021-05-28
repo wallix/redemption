@@ -158,7 +158,7 @@ auto log_value(T const & x) noexcept
     REDEMPTION_DIAGNOSTIC_PUSH()                               \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
     if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
-        ::detail::LOG__REDEMPTION__INTERNAL(                 \
+        ::detail::LOG_REDEMPTION_INTERNAL(                 \
             priority, "%s (%d/%d) -- ◢ In %s:%d",            \
             __FILE__, __LINE__                               \
         );                                                   \
@@ -169,9 +169,9 @@ auto log_value(T const & x) noexcept
 # define LOG(priority, ...) do {                                       \
     using ::log_value;                                                 \
     LOG_REDEMPTION_FILENAME(priority)                                  \
-    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                         \
+    ::detail::LOGCHECK_REDEMPTION_INTERNAL((                         \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                      \
-        ::detail::LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " \
+        ::detail::LOG_REDEMPTION_INTERNAL(priority, "%s (%d/%d) -- " \
             LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),   \
         1                                                              \
     ));                                                                \
@@ -179,7 +179,7 @@ auto log_value(T const & x) noexcept
 
 namespace detail
 {
-    inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/) noexcept
+    inline void LOGCHECK_REDEMPTION_INTERNAL(int /*unused*/) noexcept
     {}
 }
 #endif
@@ -195,7 +195,7 @@ namespace compiler_aux_
 }
 #endif
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept;
+void LOG_REDEMPTION_INTERNAL_IMPL(int priority, char const * format, ...) noexcept;
 
 namespace detail
 {
@@ -221,11 +221,11 @@ namespace detail
     };
 
     template<class... Ts>
-    void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args) noexcept
+    void LOG_REDEMPTION_INTERNAL(int priority, char const * format, Ts const & ... args) noexcept
     {
         using ::log_value;
         int const pid = getpid();
-        LOG__REDEMPTION__INTERNAL__IMPL(
+        LOG_REDEMPTION_INTERNAL_IMPL(
             priority,
             format,
             prioritynames[priority],

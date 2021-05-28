@@ -36,7 +36,7 @@ namespace log_proxy
     {
         utils::strlcpy(g_psid, psid);
         if (0 != strcmp(source_ip, "127.0.0.1")) {
-            LOG__REDEMPTION__INTERNAL__IMPL(
+            LOG_REDEMPTION_INTERNAL_IMPL(
                 LOG_INFO,
                 R"([rdpproxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%s" src_port="%d")",
                 g_psid, source_ip, source_port
@@ -63,14 +63,14 @@ namespace log_proxy
     {
         if (reason && *reason) {
             if (g_username[0]) {
-                LOG__REDEMPTION__INTERNAL__IMPL(
+                LOG_REDEMPTION_INTERNAL_IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT" reason="%s")",
                     g_psid, g_username, reason
                 );
             }
             else {
-                LOG__REDEMPTION__INTERNAL__IMPL(
+                LOG_REDEMPTION_INTERNAL_IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" type="DISCONNECT" reason="%s")",
                     g_psid, reason
@@ -79,14 +79,14 @@ namespace log_proxy
         }
         else {
             if (g_username[0]) {
-                LOG__REDEMPTION__INTERNAL__IMPL(
+                LOG_REDEMPTION_INTERNAL_IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT")",
                     g_psid, g_username
                 );
             }
             else {
-                LOG__REDEMPTION__INTERNAL__IMPL(
+                LOG_REDEMPTION_INTERNAL_IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" type="DISCONNECT")",
                     g_psid

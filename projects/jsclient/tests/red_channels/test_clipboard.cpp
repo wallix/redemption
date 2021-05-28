@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     const bool is_utf8 = false;
     const bool not_utf = false;
 
-    RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
+    RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE_NONE,
         "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x12\x00\x00\x00"_av, Padding(4))
     {
         CHECK_NEXT_DATA(setGeneralCapability{
@@ -161,9 +161,9 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         });
     };
 
-    RECEIVE_DATAS(CB_MONITOR_READY, CB_RESPONSE__NONE_)
+    RECEIVE_DATAS(CB_MONITOR_READY, CB_RESPONSE_NONE)
     {
-        CHECK_NEXT_DATA(data_chan(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
+        CHECK_NEXT_DATA(data_chan(CB_CLIP_CAPS, CB_RESPONSE_NONE,
             "\x01\0\0\0\x01\0\x0C\0\x02\0\0\0\x12\0\0\0"_av));
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_ASCII_NAMES, ""_av));
     };
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     // copy (server -> client)
 
-    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
+    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE_NONE,
         "\x0d\x00\x00\x00\x00\x00"
         "\x10\x00\x00\x00\x00\x00"
         "\x01\x00\x00\x00\x00\x00"
@@ -191,7 +191,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None))
     {
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\0\0\0"_av));
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE_NONE, "\x0d\0\0\0"_av));
     };
 
     auto copy1 = "plop\0"_utf16_le;
@@ -206,14 +206,14 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     CALL_CB(send_format(CF_UNICODETEXT, cbchan::Charset::Utf16, ""_av))
     {
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_RESPONSE__NONE_, "\x0d\0\0\0\0\0"_av));
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_RESPONSE_NONE, "\x0d\0\0\0\0\0"_av));
     };
 
     RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK, ""_av, Padding(4))
     {
     };
 
-    RECEIVE_DATAS(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\x00\x00\x00"_av, Padding(4))
+    RECEIVE_DATAS(CB_FORMAT_DATA_REQUEST, CB_RESPONSE_NONE, "\x0d\x00\x00\x00"_av, Padding(4))
     {
         CHECK_NEXT_DATA(formatDataRequest{CF_UNICODETEXT});
     };
@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     // file copy (server -> client)
 
-    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
+    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE_NONE,
         "\x6e\xc0\x00\x00\x46\x00\x69\x00" //n...F.i. !
         "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
         "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
@@ -249,7 +249,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     CALL_CB(send_request_format(49262, cbchan::CustomFormat::FileGroupDescriptorW))
     {
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_,
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE_NONE,
             "\x6e\xc0\x00\x00"_av));
     };
 
@@ -312,7 +312,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
             "\0\0\0\0\0\0\0\0\x02\0\0\0\0\0\0\0\0\0\0\0\x05\0\0\0\0\0\0\0"_av));
     };
 
-    RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE__NONE_,
+    RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE_NONE,
         "\x12\x34\x56\x78""abcdefghijkl"_av, Padding(4))
     {
         CHECK_NEXT_DATA(fileContentsResponse{"abcdefghijkl"_av, 0x78563412, 0,
@@ -342,7 +342,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     CALL_CB(send_request_format(49262, cbchan::CustomFormat::FileGroupDescriptorW))
     {
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_,
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE_NONE,
             "\x6e\xc0\x00\x00"_av));
     };
 

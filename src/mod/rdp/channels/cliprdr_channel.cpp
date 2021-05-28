@@ -3253,7 +3253,7 @@ void ClipboardVirtualChannel::empty_client_clipboard()
         "ClipboardVirtualChannel::empty_client_clipboard");
 
     RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-        RDPECLIP::CB_RESPONSE__NONE_, 0);
+        RDPECLIP::CB_RESPONSE_NONE, 0);
 
     StaticOutStream<256> out_s;
 

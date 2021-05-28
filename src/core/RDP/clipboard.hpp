@@ -236,7 +236,7 @@ inline static const char * get_msgType_name(uint16_t msgType) {
 // +------------------+--------------------------------------------------------+
 
 enum {
-      CB_RESPONSE__NONE_ = 0x0000
+      CB_RESPONSE_NONE = 0x0000
 
     , CB_RESPONSE_OK     = 0x0001
     , CB_RESPONSE_FAIL   = 0x0002
@@ -246,7 +246,7 @@ enum {
 inline static zstring_view get_msgFlag_name(uint16_t msgFlag)
 {
     switch (msgFlag) {
-        case CB_RESPONSE__NONE_: return "CB_RESPONSE__NONE_"_zv;
+        case CB_RESPONSE_NONE: return "CB_RESPONSE_NONE"_zv;
 
         case CB_RESPONSE_OK:     return "CB_RESPONSE_OK"_zv;
         case CB_RESPONSE_FAIL:   return "CB_RESPONSE_FAIL"_zv;
@@ -633,7 +633,7 @@ enum {
 };
 
 enum {
-    CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_ =
+    CB_MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_ =
         (CB_USE_LONG_FORMAT_NAMES | CB_STREAM_FILECLIP_ENABLED |
          CB_FILECLIP_NO_FILE_PATHS | CB_CAN_LOCK_CLIPDATA)
 };
