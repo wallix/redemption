@@ -42,7 +42,7 @@ public:
         SslHMAC_Sha256 sha256(key_crypt);
         sha256.update(src);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
-        sha256.final(make_writable_array_view(sig));
+        sha256.final(make_writable_sized_array_view(sig));
 
         static_assert(sizeof(sig) * 2 + 1 == sizeof(dest));
 

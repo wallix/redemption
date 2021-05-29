@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestSslMd5)
         SslMd5 md;
 
         md.update(make_array_view(data));
-        md.final(make_writable_array_view(sig));
+        md.final(make_writable_sized_array_view(sig));
         //hexdump96_c(sig, sizeof(sig));
 
         RED_CHECK(make_array_view(sig) ==
@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestSslMd5)
         md.update({data + 128, 128});
         md.update({data + 256, 128});
         md.update({data + 384, 128});
-        md.final(make_writable_array_view(sig));
+        md.final(make_writable_sized_array_view(sig));
         //hexdump96_c(sig, sizeof(sig));
 
         RED_CHECK(make_array_view(sig) ==
@@ -126,7 +126,7 @@ RED_AUTO_TEST_CASE(TestSslHmacMd5)
     hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslMd5::DIGEST_LENGTH];
-    hmac.final(make_writable_array_view(sig));
+    hmac.final(make_writable_sized_array_view(sig));
     // hexdump96_c(sig, sizeof(sig));
 
     RED_CHECK(make_array_view(sig) ==
@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
 
     uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
     md4.update(make_array_view(password));
-    md4.final(make_writable_array_view(md4password));
+    md4.final(make_writable_sized_array_view(md4password));
     // hexdump96_c(md4password, sizeof(md4password));
 
     SslHMAC_Md5 hmac_md5(make_array_view(md4password));
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     // equivalent: hmac_md5.update(useranddomain, sizeof(useranddomain));
 
     uint8_t sig[SslMd5::DIGEST_LENGTH] = {};
-    hmac_md5.final(make_writable_array_view(sig));
+    hmac_md5.final(make_writable_sized_array_view(sig));
     // hexdump96_c(sig, sizeof(sig));
 
 
@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     SslHMAC_Md5 hmac_md5resp(make_array_view(NTOWFv2));
     hmac_md5resp.update(make_array_view(ServerChallenge));
     hmac_md5resp.update(make_array_view(temp));
-    hmac_md5resp.final(make_writable_array_view(computed_NtProofStr));
+    hmac_md5resp.final(make_writable_sized_array_view(computed_NtProofStr));
     // hexdump96_c(computed_NtProofStr, sizeof(computed_NtProofStr));
 
     // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -260,7 +260,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     hmac_md5lmresp.update(make_array_view(ServerChallenge));
     hmac_md5lmresp.update(make_array_view(ClientChallenge));
     uint8_t LmChallengeResponse[SslMd5::DIGEST_LENGTH] = {};
-    hmac_md5lmresp.final(make_writable_array_view(LmChallengeResponse));
+    hmac_md5lmresp.final(make_writable_sized_array_view(LmChallengeResponse));
     // hexdump96_c(LmChallengeResponse, sizeof(LmChallengeResponse));
 
     // LmChallengeResponse.ChallengeFromClient = ClientChallenge
@@ -281,7 +281,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH] = {};
     SslHMAC_Md5 hmac_md5seskey(make_array_view(NTOWFv2));
     hmac_md5seskey.update(make_array_view(NtProofStr));
-    hmac_md5seskey.final(make_writable_array_view(SessionBaseKey));
+    hmac_md5seskey.final(make_writable_sized_array_view(SessionBaseKey));
     // hexdump96_c(SessionBaseKey, sizeof(SessionBaseKey));
 
     // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
@@ -316,7 +316,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     SslMd5 md5clientsign;
     md5clientsign.update(make_array_view(ExportedSessionKey));
     md5clientsign.update(make_array_view(client_sign_magic));
-    md5clientsign.final(make_writable_array_view(ClientSignKey));
+    md5clientsign.final(make_writable_sized_array_view(ClientSignKey));
     // hexdump_d(ClientSignKey, sizeof(ClientSignKey));
     uint8_t ClientSignKeyExpected[16] = {
         0xbf, 0x5e, 0x42, 0x76, 0x55, 0x68, 0x38, 0x97,
@@ -330,7 +330,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     SslMd5 md5serversign;
     md5serversign.update(make_array_view(ExportedSessionKey));
     md5serversign.update(make_array_view(server_sign_magic));
-    md5serversign.final(make_writable_array_view(ServerSignKey));
+    md5serversign.final(make_writable_sized_array_view(ServerSignKey));
     // hexdump_d(ServerSignKey, sizeof(ServerSignKey));
     uint8_t ServerSignKeyExpected[16] = {
         0x9b, 0x3b, 0x64, 0x89, 0xda, 0x84, 0x52, 0x17,
@@ -344,7 +344,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     SslMd5 md5clientseal;
     md5clientseal.update(make_array_view(ExportedSessionKey));
     md5clientseal.update(make_array_view(client_seal_magic));
-    md5clientseal.final(make_writable_array_view(ClientSealKey));
+    md5clientseal.final(make_writable_sized_array_view(ClientSealKey));
     // hexdump_d(ClientSealKey, sizeof(ClientSealKey));
     uint8_t ClientSealKeyExpected[SslMd5::DIGEST_LENGTH] = {
         0xca, 0x41, 0xcd, 0x08, 0x48, 0x07, 0x22, 0x6e,
@@ -358,7 +358,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     SslMd5 md5serverseal;
     md5serverseal.update(make_array_view(ExportedSessionKey));
     md5serverseal.update(make_array_view(server_seal_magic));
-    md5serverseal.final(make_writable_array_view(ServerSealKey));
+    md5serverseal.final(make_writable_sized_array_view(ServerSealKey));
     // hexdump_d(ServerSealKey, sizeof(ServerSealKey));
     uint8_t ServerSealKeyExpected[SslMd5::DIGEST_LENGTH] = {
         0x14, 0xb7, 0x1d, 0x06, 0x2c, 0x68, 0x2e, 0xad,

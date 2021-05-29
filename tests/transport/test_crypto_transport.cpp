@@ -417,7 +417,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     SslHMAC_Sha256_Delayed hmac;
     hmac.init(make_array_view(cctx.get_hmac_key()));
     hmac.update({result, offset});
-    hmac.final(make_writable_array_view(fhash2));
+    hmac.final(make_writable_sized_array_view(fhash2));
 
     InCryptoTransport::HASH fh;
     RED_TEST(InCryptoTransport::read_fhash(wf.c_str(), cctx.get_hmac_key(), fh));
@@ -430,7 +430,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     SslHMAC_Sha256_Delayed hmac2;
     hmac2.init(make_array_view(cctx.get_hmac_key()));
     hmac2.update({result, 4096});
-    hmac2.final(make_writable_array_view(qhash2));
+    hmac2.final(make_writable_sized_array_view(qhash2));
 
     #if SNAPPY_VERSION < (1<<16|1<<8|4)
         auto expected_qhash = cstr_array_view(
@@ -537,12 +537,12 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     hmac.init(make_array_view(cctx.get_hmac_key()));
     hmac.update(make_array_view(randomSample));
     hmac.update(make_array_view(randomSample));
-    hmac.final(make_writable_array_view(fhash2));
+    hmac.final(make_writable_sized_array_view(fhash2));
 
     SslHMAC_Sha256_Delayed quick_hmac;
     quick_hmac.init(make_array_view(cctx.get_hmac_key()));
     quick_hmac.update({randomSample, 4096});
-    quick_hmac.final(make_writable_array_view(qhash2));
+    quick_hmac.final(make_writable_sized_array_view(qhash2));
 
     RED_CHECK(make_array_view(fhash2) == make_array_view(expected_fhash));
     // "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80"
@@ -699,13 +699,13 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     uint8_t data[5] = {1, 2, 3, 4, 5};
     hmac.update(make_array_view(data));
     hmac.update(make_array_view(data));
-    hmac.final(make_writable_array_view(fhash2));
+    hmac.final(make_writable_sized_array_view(fhash2));
 
     SslHMAC_Sha256_Delayed quick_hmac;
     quick_hmac.init(make_array_view(cctx.get_hmac_key()));
     quick_hmac.update(make_array_view(data));
     quick_hmac.update(make_array_view(data));
-    quick_hmac.final(make_writable_array_view(qhash2));
+    quick_hmac.final(make_writable_sized_array_view(qhash2));
 
     RED_CHECK(make_array_view(fhash2) == make_array_view(expected_fhash));
     RED_CHECK(make_array_view(qhash2) == make_array_view(expected_qhash));

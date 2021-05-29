@@ -130,7 +130,7 @@ namespace Cliprdr
 
         OutStream out_stream_header(out_stream.out_skip_bytes(RDPECLIP::CliprdrHeader::size()));
         auto out_stream_start_pos = out_stream.get_offset();
-        auto ascii_flag = RDPECLIP::CB_RESPONSE__NONE_;
+        auto ascii_flag = RDPECLIP::CB_RESPONSE_NONE;
 
         if (bool(is_long_format))
         {

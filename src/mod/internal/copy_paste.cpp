@@ -92,7 +92,7 @@ bool CopyPaste::ready(FrontAPI & front)
     if (this->channel_) {
         send_to_front_channel(
             *this->front_, *this->channel_,
-            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
+            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE_NONE,
             RDPECLIP::ClipboardCapabilitiesPDU(1),
             RDPECLIP::GeneralCapabilitySet(
                 RDPECLIP::CB_CAPS_VERSION_2,
@@ -102,7 +102,7 @@ bool CopyPaste::ready(FrontAPI & front)
 
         send_to_front_channel(
             *this->front_, *this->channel_,
-            RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_,
+            RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE,
             RDPECLIP::ServerMonitorReadyPDU()
         );
 
@@ -127,7 +127,7 @@ void CopyPaste::paste(Widget & widget)
 
         send_to_front_channel(
             *this->front_, *this->channel_,
-            RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_,
+            RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE,
             RDPECLIP::FormatDataRequestPDU(RDPECLIP::CF_UNICODETEXT)
         );
     }

@@ -345,14 +345,14 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
 
     rdp_mppc_60_dec mppc_dec;
 
-    memcpy(mppc_dec.history_buf, __historyBuffer, sizeof(__historyBuffer));
-    memcpy(mppc_dec.offset_cache, __offsetCache, sizeof(__offsetCache));
-    mppc_dec.history_ptr = mppc_dec.history_buf + __historyOffset;
+    memcpy(mppc_dec.history_buf, _historyBuffer, sizeof(_historyBuffer));
+    memcpy(mppc_dec.offset_cache, _offsetCache, sizeof(_offsetCache));
+    mppc_dec.history_ptr = mppc_dec.history_buf + _historyOffset;
 
     uint8_t  compressionFlags = 0x22;
 
-    RED_CHECK(make_array_view(__srcData) ==
-        mppc_dec.decompress(make_array_view(__outputBuffer), compressionFlags));
+    RED_CHECK(make_array_view(_srcData) ==
+        mppc_dec.decompress(make_array_view(_outputBuffer), compressionFlags));
 }
 
 RED_AUTO_TEST_CASE(TestCacheAdd) {

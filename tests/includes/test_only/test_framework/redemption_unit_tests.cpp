@@ -34,7 +34,7 @@ Author(s): Jonathan Poelen
 #include <ostream>
 #include <iomanip>
 
-namespace redemption_unit_test__
+namespace redemption_unit_test_
 {
     unsigned long current_count_error()
     {
@@ -189,11 +189,11 @@ namespace redemption_unit_test__
 
         return s;
     }
-} // namespace redemption_unit_test__
+} // namespace redemption_unit_test_
 
 
-void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::operator()(
-    std::ostream& out, redemption_unit_test__::int_variation const & x) const
+void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test_::int_variation>::operator()(
+    std::ostream& out, redemption_unit_test_::int_variation const & x) const
 {
     if (x.left == x.right) {
         out << x.left;
@@ -204,7 +204,7 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
     }
 }
 
-std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::Enum const& e)
+std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test_::Enum const& e)
 {
     if (e.value_name.empty()) {
         out << e.name << "{";
@@ -222,7 +222,7 @@ std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::Enum 
     return out;
 }
 
-std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::BytesView const& v)
+std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test_::BytesView const& v)
 {
     ut::put_view(v.bytes.size(), out, {v.bytes});
     return out;

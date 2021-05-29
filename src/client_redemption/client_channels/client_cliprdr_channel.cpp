@@ -529,7 +529,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
                     cb_filesList.itemslist.push_back(file);
                 }
 
-                RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
+                RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 28);
 
                 RDPECLIP::FileContentsRequestPDU fileContentsRequest(
                                 cb_filesList.streamIDToRequest+1
@@ -577,7 +577,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
                     cb_filesList.streamIDToRequest = chunk.in_uint32_le();
 
                     StaticOutStream<64> out_streamRequest;
-                    RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
+                    RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 28);
 
                     RDPECLIP::FileContentsRequestPDU fileContentsRequest(
                                     cb_filesList.streamIDToRequest
@@ -692,7 +692,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
 
 void ClientCLIPRDRChannel::send_UnlockPDU(uint32_t streamID) const
 {
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE_NONE, 4);
     RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(streamID);
     StaticOutStream<32> out_stream_unlock;
     header.emit(out_stream_unlock);
@@ -894,7 +894,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
         "CLIENT >> CB Channel: Format List Response PDU");
 
-    RDPECLIP::CliprdrHeader lockClipboardDataHeader(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+    RDPECLIP::CliprdrHeader lockClipboardDataHeader(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE_NONE, 4);
     RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
     StaticOutStream<32> out_stream_lock;
     lockClipboardDataHeader.emit(out_stream_lock);
@@ -909,7 +909,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
         "CLIENT >> CB Channel: Lock Clipboard Data PDU");
 
-    RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+    RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
     RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
     StaticOutStream<256> out_streamRequest;
     formatListRequestPDUHeader.emit(out_streamRequest);

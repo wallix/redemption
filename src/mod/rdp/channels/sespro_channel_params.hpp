@@ -42,7 +42,7 @@ public:
 
     bool get(
         size_t index,
-        std::string & out__name
+        std::string & out_name
     ) const;
 
     [[nodiscard]] std::string to_string() const;
@@ -77,10 +77,10 @@ public:
 
     bool get(
         size_t index,
-        unsigned int & out__type,
-        std::string & out__host_address_or_subnet,
-        std::string & out__port_range,
-        std::string & out__description
+        unsigned int & out_type,
+        std::string & out_host_address_or_subnet,
+        std::string & out_port_range,
+        std::string & out_description
     ) const;
 
     [[nodiscard]] std::string to_string() const;
@@ -111,9 +111,9 @@ public:
 
     bool get(
         size_t index,
-        unsigned int & out__type,
-        std::string & out__pattern,
-        std::string & out__description
+        unsigned int & out_type,
+        std::string & out_pattern,
+        std::string & out_description
     ) const;
 
     [[nodiscard]] std::string to_string() const;

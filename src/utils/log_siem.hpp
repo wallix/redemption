@@ -34,9 +34,9 @@
 #else
 # define LOG_SIEM(...) do {                                          \
     using ::log_value;                                               \
-    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
+    ::detail::LOGCHECK_REDEMPTION_INTERNAL((                         \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
-        ::detail::LOG__SIEM__REDEMPTION__INTERNAL(""                 \
+        ::detail::LOG_SIEM_REDEMPTION_INTERNAL(""                    \
             LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
         1                                                            \
     ));                                                              \
@@ -44,9 +44,9 @@
 
 # define LOG_PROXY_SIEM(type, ...) do {                              \
     using ::log_value;                                               \
-    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
+    ::detail::LOGCHECK_REDEMPTION_INTERNAL((                         \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
-        ::detail::LOG__PROXY__SIEM__REDEMPTION__INTERNAL(            \
+        ::detail::LOG_PROXY_SIEM_REDEMPTION_INTERNAL(                \
             "[rdpproxy] psid=\"%s\" user=\"%s\" type=\"" type "\" "  \
             LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
         1                                                            \
@@ -68,10 +68,10 @@ namespace log_proxy
 namespace detail
 {
     template<class... Ts>
-    void LOG__SIEM__REDEMPTION__INTERNAL(char const * format, Ts const & ... args)
+    void LOG_SIEM_REDEMPTION_INTERNAL(char const * format, Ts const & ... args)
     {
         using ::log_value;
-        LOG__REDEMPTION__INTERNAL__IMPL(
+        LOG_REDEMPTION_INTERNAL_IMPL(
             LOG_INFO,
             format,
             REDEMPTION_LOG_VALUE(args)...
@@ -79,10 +79,10 @@ namespace detail
     }
 
     template<class... Ts>
-    void LOG__PROXY__SIEM__REDEMPTION__INTERNAL(char const * format, Ts const & ... args)
+    void LOG_PROXY_SIEM_REDEMPTION_INTERNAL(char const * format, Ts const & ... args)
     {
         using ::log_value;
-        LOG__REDEMPTION__INTERNAL__IMPL(
+        LOG_REDEMPTION_INTERNAL_IMPL(
             LOG_INFO,
             format,
             log_proxy::get_psid(),

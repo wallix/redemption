@@ -126,7 +126,7 @@ void tu::log_buffered::clear()
 }
 
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept /*NOLINT(cert-dcl50-cpp)*/
+void LOG_REDEMPTION_INTERNAL_IMPL(int priority, char const * format, ...) noexcept /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
         if (log_is_filename(priority)) {

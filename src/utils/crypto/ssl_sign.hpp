@@ -58,7 +58,7 @@ public:
     void final(sized_writable_u8_array_view<OutLen> out)
     {
         uint8_t shasig[SslSha1::DIGEST_LENGTH];
-        this->sha1.final(make_writable_array_view(shasig));
+        this->sha1.final(make_writable_sized_array_view(shasig));
 
         SslMd5 md5;
         md5.update(this->key);
@@ -80,7 +80,7 @@ public:
         }
         else {
             uint8_t tmp[SslMd5::DIGEST_LENGTH];
-            md5.final(make_writable_array_view(tmp));
+            md5.final(make_writable_sized_array_view(tmp));
             memcpy(out.data(), tmp, OutLen);
         }
     }

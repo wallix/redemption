@@ -846,8 +846,9 @@ enum {
             }
             if (flags & SEC_ENCRYPT){
                 size_t const sig_sz = 8;
-                auto signature = writable_array_view<uint8_t, sig_sz>::assumed(stream.get_current());
-                crypt.sign(data, signature);
+                crypt.sign(
+                    data,
+                    make_assumed_writable_sized_array_view<sig_sz>(stream.get_current()));
                 stream.out_skip_bytes(sig_sz);
                 crypt.decrypt(data);
             }
@@ -912,7 +913,7 @@ enum {
             sized_u8_array_view<SEC_RANDOM_SIZE> server_random)
         {
             uint8_t master_secret[SslMd5::DIGEST_LENGTH * 3];
-            auto master_secret_view = make_writable_array_view(master_secret);
+            auto master_secret_view = make_writable_sized_array_view(master_secret);
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
@@ -921,7 +922,7 @@ enum {
                 sha1.update(pre_master_secret);
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(pre_master_secret);
@@ -936,7 +937,7 @@ enum {
                 sha1.update(pre_master_secret);
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(pre_master_secret);
@@ -951,7 +952,7 @@ enum {
                 sha1.update(pre_master_secret);
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(pre_master_secret);
@@ -967,12 +968,12 @@ enum {
                 sha1.update(make_array_view(master_secret));
                 sha1.update(server_random);
                 sha1.update(client_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(master_secret));
                 md5.update(make_array_view(shasig));
-                md5.final(make_writable_array_view(this->blob0));
+                md5.final(make_writable_sized_array_view(this->blob0));
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -982,12 +983,12 @@ enum {
                 sha1.update(make_array_view(master_secret));
                 sha1.update(server_random);
                 sha1.update(client_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(master_secret));
                 md5.update(make_array_view(shasig));
-                md5.final(make_writable_array_view(this->blob1));
+                md5.final(make_writable_sized_array_view(this->blob1));
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -997,12 +998,12 @@ enum {
                 sha1.update(make_array_view(master_secret));
                 sha1.update(server_random);
                 sha1.update(client_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(master_secret));
                 md5.update(make_array_view(shasig));
-                md5.final(make_writable_array_view(this->blob2));
+                md5.final(make_writable_sized_array_view(this->blob2));
             }
 
             {
@@ -1010,7 +1011,7 @@ enum {
                 md5.update(make_array_view(blob1));
                 md5.update(client_random);
                 md5.update(server_random);
-                md5.final(make_writable_array_view(this->licensingEncryptionKey));
+                md5.final(make_writable_sized_array_view(this->licensingEncryptionKey));
             }
         }
 
@@ -1403,7 +1404,7 @@ enum {
             memcpy(pre_master_secret + 24, server_random.data(), 24);
 
             uint8_t master_secret[SslMd5::DIGEST_LENGTH*3];
-            auto master_secret_view = make_writable_array_view(master_secret);
+            auto master_secret_view = make_writable_sized_array_view(master_secret);
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
@@ -1412,7 +1413,7 @@ enum {
                 sha1.update(make_array_view(pre_master_secret));
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(pre_master_secret));
@@ -1427,7 +1428,7 @@ enum {
                 sha1.update(make_array_view(pre_master_secret));
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(pre_master_secret));
@@ -1442,7 +1443,7 @@ enum {
                 sha1.update(make_array_view(pre_master_secret));
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(pre_master_secret));
@@ -1458,12 +1459,12 @@ enum {
                 sha1.update(make_array_view(master_secret));
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(master_secret));
                 md5.update(make_array_view(shasig));
-                md5.final(make_writable_array_view(this->blob0));
+                md5.final(make_writable_sized_array_view(this->blob0));
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1473,12 +1474,12 @@ enum {
                 sha1.update(make_array_view(master_secret));
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(master_secret));
                 md5.update(make_array_view(shasig));
-                md5.final(make_writable_array_view(this->blob1));
+                md5.final(make_writable_sized_array_view(this->blob1));
             }
             {
 
@@ -1489,12 +1490,12 @@ enum {
                 sha1.update(make_array_view(master_secret));
                 sha1.update(client_random);
                 sha1.update(server_random);
-                sha1.final(make_writable_array_view(shasig));
+                sha1.final(make_writable_sized_array_view(shasig));
 
                 SslMd5 md5;
                 md5.update(make_array_view(master_secret));
                 md5.update(make_array_view(shasig));
-                md5.final(make_writable_array_view(this->blob2));
+                md5.final(make_writable_sized_array_view(this->blob2));
             }
 
             {
@@ -1502,14 +1503,14 @@ enum {
                 md5.update(make_array_view(blob1));
                 md5.update(client_random);
                 md5.update(server_random);
-                md5.final(make_writable_array_view(this->key1));
+                md5.final(make_writable_sized_array_view(this->key1));
             }
             {
                 SslMd5 md5;
                 md5.update(make_array_view(this->blob2));
                 md5.update(client_random);
                 md5.update(server_random);
-                md5.final(make_writable_array_view(this->key2));
+                md5.final(make_writable_sized_array_view(this->key2));
             }
         }
     };

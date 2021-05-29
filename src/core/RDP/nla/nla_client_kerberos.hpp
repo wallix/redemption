@@ -459,7 +459,7 @@ private:
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
         sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-        sha256.final(make_writable_array_view(hash));
+        sha256.final(make_writable_sized_array_view(hash));
 
         this->ClientServerHash.assign(hash, hash+sizeof(hash));
     }
@@ -471,7 +471,7 @@ private:
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-        sha256.final(make_writable_array_view(hash));
+        sha256.final(make_writable_sized_array_view(hash));
         this->ServerClientHash.assign(hash, hash + sizeof(hash));
     }
 

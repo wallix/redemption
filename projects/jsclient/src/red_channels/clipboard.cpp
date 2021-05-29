@@ -140,7 +140,7 @@ void ClipboardChannel::send_file_contents_request(
 
     RDPECLIP::CliprdrHeader header(
         RDPECLIP::CB_FILECONTENTS_REQUEST,
-        RDPECLIP::CB_RESPONSE__NONE_,
+        RDPECLIP::CB_RESPONSE_NONE,
         request.size());
 
     header.emit(out_stream);
@@ -153,7 +153,7 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
     LOG_IF(this->verbose, LOG_INFO,
         "Clipboard: Send Request Format id=%d custom=%d", format_id, custom_format_id);
 
-    RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+    RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
     RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(format_id);
     StaticOutStream<256> out_stream;
     formatListRequestPDUHeader.emit(out_stream);
@@ -594,7 +594,7 @@ void ClipboardChannel::process_monitor_ready()
         RDPECLIP::GeneralCapabilitySet general_cap_set(
             RDPECLIP::CB_CAPS_VERSION_2, this->general_flags);
         RDPECLIP::CliprdrHeader header(
-            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
+            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE_NONE,
             clipboard_caps_pdu.size() + general_cap_set.size());
 
         StaticOutStream<128> out_stream;

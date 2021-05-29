@@ -1550,7 +1550,7 @@ public:
                             if (target_iter->for_reading) {
                                 if (target_iter->sequential_access_offset == target_iter->end_of_file) {
                                     uint8_t digest[SslSha256::DIGEST_LENGTH];
-                                    target_iter->sha256.final(make_writable_array_view(digest));
+                                    target_iter->sha256.final(make_writable_sized_array_view(digest));
 
                                     auto const digest_str
                                         = static_array_to_hexadecimal_lower_zchars(digest);
@@ -1587,7 +1587,7 @@ public:
                             else if (target_iter->for_writing) {
                                 if (target_iter->sequential_access_offset >= target_iter->end_of_file) {
                                     uint8_t digest[SslSha256::DIGEST_LENGTH];
-                                    target_iter->sha256.final(make_writable_array_view(digest));
+                                    target_iter->sha256.final(make_writable_sized_array_view(digest));
 
                                     auto const digest_str
                                         = static_array_to_hexadecimal_lower_zchars(digest);

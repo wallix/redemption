@@ -47,7 +47,7 @@ static ut::assertion_result parse_result_eq(
     ::cli::ParseResult const& r1, ::cli::ParseResult const& r2)
 {
     auto put = [&](std::ostream& out, ::cli::ParseResult const& r){
-        redemption_unit_test__::Enum e(r.res);
+        redemption_unit_test_::Enum e(r.res);
         std::string_view value_name = {e.value_name.data(), e.value_name.size()};
         out << "{ .opti=" << r.opti
             << ", .argc=" << r.argc

@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient, wd
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
         RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_METAFILEPICT);
         header.emit(out_stream);
         format.emit(out_stream);
@@ -351,7 +351,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient, wd)
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
         RDPECLIP::FormatDataRequestPDU format(49562);
         header.emit(out_stream);
         format.emit(out_stream);
@@ -371,7 +371,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient, wd)
         real_time += 5s;
         StaticOutStream<1600> out_stream;
 
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 36);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 36);
         RDPECLIP::FileContentsRequestPDU fcrq_size(0, 0, RDPECLIP::FILECONTENTS_SIZE, 0, 42, 0, 42, true);
         header.emit(out_stream);
         fcrq_size.emit(out_stream);
@@ -455,7 +455,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient, wd)
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
         RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_TEXT);
         header.emit(out_stream);
         format.emit(out_stream);
@@ -694,7 +694,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer, wd
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
         RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_METAFILEPICT);
         header.emit(out_stream);
         format.emit(out_stream);
@@ -800,7 +800,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer, wd)
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
         RDPECLIP::FormatDataRequestPDU format(49562);
         header.emit(out_stream);
         format.emit(out_stream);
@@ -819,7 +819,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer, wd)
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 36);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 36);
         RDPECLIP::FileContentsRequestPDU format(0, 0, RDPECLIP::FILECONTENTS_SIZE, 0, 42, 0, 42, true);
         header.emit(out_stream);
         format.emit(out_stream);
@@ -922,7 +922,7 @@ RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer, wd)
         epoch += 5s;
         real_time += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE, 4);
         RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_TEXT);
         header.emit(out_stream);
         format.emit(out_stream);

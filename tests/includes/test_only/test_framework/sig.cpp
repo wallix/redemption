@@ -28,7 +28,7 @@ namespace ut
         Sig sig;
         SslSha1 sha1;
         sha1.update(data);
-        sha1.final(make_writable_array_view(sig.buf));
+        sha1.final(make_writable_sized_array_view(sig.buf));
         return sig;
     }
 }

@@ -86,7 +86,7 @@ public:
 
         for (; first < last; ++first) {
             const ::mln::box2d & bbox = first->bbox;
-            const char* c = font.classify(bbox.ncols(), bbox.nrows(), first->area, fonts::Pixel(input, bbox, bbox.ncols()));
+            std::string_view c = font.classify(bbox.ncols(), bbox.nrows(), first->area, fonts::Pixel(input, bbox, bbox.ncols()));
 
             if (!beginning) {
                 if (first->bbox.pmin()[1] - (first-1)->bbox.pmax()[1] >= int(font.whitespace_width)) {
@@ -95,11 +95,11 @@ public:
                 this->out += c;
                 ++this->character_count;
 
-                if (c == unknown) {
+                if (c.data() == unknown) {
                     ++this->unrecognized_count;
                 }
             }
-            else if (c == unknown) {
+            else if (c.data() == unknown) {
                 ++this->first_unrecognized_index;
             }
             else {
@@ -109,14 +109,14 @@ public:
             }
         }
 
-        if (font.replacements) {
-            for (auto it = font.replacements; it->pattern; ++it) {
+        if (font.replacements.data()) {
+            for (fonts::Font::Replacement const& replacement : font.replacements) {
                 std::string::size_type pos = 0;
                 // TODO free function
                 while (pos != std::string::npos) {
-                    const auto fpos = this->out.find(it->pattern, pos);
+                    const auto fpos = this->out.find(replacement.pattern.data(), pos, replacement.pattern.size());
                     if (fpos != std::string::npos) {
-                        this->out.replace(fpos, strlen(it->pattern), it->replace);
+                        this->out.replace(fpos, replacement.pattern.size(), replacement.replace);
                     }
                     pos = fpos;
                 }

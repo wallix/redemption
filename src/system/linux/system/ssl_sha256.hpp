@@ -22,7 +22,7 @@
 
 #include "core/error.hpp"
 #include "system/basic_hmac.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/sized_array_view.hpp"
 
 #include <cstdint>
 #include <cstring>

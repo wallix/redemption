@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestSslSha256)
         SslSha256 sha256;
 
         sha256.update(make_array_view(data));
-        sha256.final(make_writable_array_view(sig));
+        sha256.final(make_writable_sized_array_view(sig));
         //hexdump96_c(sig, sizeof(sig));
 
         RED_CHECK(
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestSslSha256)
         sha256.update({data + 128, 128});
         sha256.update({data + 256, 128});
         sha256.update({data + 384, 128});
-        sha256.final(make_writable_array_view(sig));
+        sha256.final(make_writable_sized_array_view(sig));
         //hexdump96_c(sig, sizeof(sig));
 
         RED_CHECK(
@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestSslHmacSHA256)
     hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslSha256::DIGEST_LENGTH];
-    hmac.final(make_writable_array_view(sig));
+    hmac.final(make_writable_sized_array_view(sig));
 
     RED_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 
@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
     hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslSha256::DIGEST_LENGTH];
-    hmac.final(make_writable_array_view(sig));
+    hmac.final(make_writable_sized_array_view(sig));
 
     RED_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 

@@ -109,14 +109,14 @@ void ClipboardVirtualChannel::ClipCtx::Sig::update(bytes_view data)
 void ClipboardVirtualChannel::ClipCtx::Sig::final()
 {
     assert(this->status == Status::Update);
-    this->sha256.final(make_writable_array_view(this->array));
+    this->sha256.final(make_writable_sized_array_view(this->array));
     this->status = Status::Final;
 }
 
 void ClipboardVirtualChannel::ClipCtx::Sig::broken()
 {
     assert(this->status == Status::Update);
-    this->sha256.final(make_writable_array_view(this->array));
+    this->sha256.final(make_writable_sized_array_view(this->array));
     this->status = Status::Broken;
 }
 
@@ -3253,7 +3253,7 @@ void ClipboardVirtualChannel::empty_client_clipboard()
         "ClipboardVirtualChannel::empty_client_clipboard");
 
     RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-        RDPECLIP::CB_RESPONSE__NONE_, 0);
+        RDPECLIP::CB_RESPONSE_NONE, 0);
 
     StaticOutStream<256> out_s;
 

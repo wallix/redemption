@@ -188,7 +188,7 @@ struct ServerMonitorReadySendBack
             RDPECLIP::CB_CAPS_VERSION_1, capabilities);
         RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
         RDPECLIP::CliprdrHeader caps_clipboard_header(
-            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
+            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE_NONE,
             clipboard_caps_pdu.size() + general_cap_set.size());
 
         StaticOutStream<128> caps_stream;

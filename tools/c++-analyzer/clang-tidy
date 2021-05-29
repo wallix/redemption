@@ -3,6 +3,7 @@
 # cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
 
 ${CLANG_TIDY:=clang-tidy} -checks='*,
+-altera-id-dependent-backward-branch,
 -altera-struct-pack-align,
 -altera-unroll-loops,
 -android-cloexec-accept,
@@ -34,6 +35,7 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -cppcoreguidelines-pro-type-vararg,
 -cppcoreguidelines-special-member-functions,
 -fuchsia-default-arguments,
+-fuchsia-default-arguments-declarations,
 -fuchsia-default-arguments-calls,
 -fuchsia-multiple-inheritance,
 -fuchsia-overloaded-operator,
