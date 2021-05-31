@@ -2727,7 +2727,7 @@ public:
 
             case FastPath::UpdateType::COLOR:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color (Fast)");
-                this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
+                this->process_new_pointer_pdu(BitsPerPixel{24}, stream);
                 break;
 
             case FastPath::UpdateType::CACHED:
@@ -2740,7 +2740,7 @@ public:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO,
                     "Process pointer new (Fast)");
                 BitsPerPixel data_bpp = checked_int(stream.in_uint16_le()); /* data bpp */
-                this->process_new_pointer_pdu(data_bpp, stream, drawable);
+                this->process_new_pointer_pdu(data_bpp, stream);
             }
             break;
 
@@ -4046,7 +4046,7 @@ public:
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color");
-            this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
+            this->process_new_pointer_pdu(BitsPerPixel{24}, stream);
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
                 LOG_INFO, "Process pointer color done");
             break;
@@ -4055,7 +4055,7 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new");
             if (this->enable_new_pointer) {
                 BitsPerPixel data_bpp = checked_int{stream.in_uint16_le()}; /* data bpp */
-                this->process_new_pointer_pdu(data_bpp, stream, drawable);
+                this->process_new_pointer_pdu(data_bpp, stream);
             }
             else {
                 LOG(LOG_ERR, "mod_rdp::process_pointer_pdu: New Pointer Updated is disabled!");
@@ -5810,7 +5810,7 @@ public:
 
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
-    void process_new_pointer_pdu(BitsPerPixel data_bpp, InStream & stream, gdi::GraphicApi & drawable) {
+    void process_new_pointer_pdu(BitsPerPixel data_bpp, InStream & stream) {
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "mod_rdp::process_new_pointer_pdu");
 
         //::hexdump_d(stream.get_current(), stream.in_remain());
@@ -5821,7 +5821,9 @@ public:
             data_bpp, pointer_idx);
 
         auto cursor = pointer_loader_new(data_bpp, stream);
-        drawable.new_pointer(pointer_idx, cursor);
+
+        // cached cursor ever with graphics_update_disabled == true
+        this->gd.new_pointer(pointer_idx, cursor);
     }   // process_new_pointer_pdu
 
 private:
