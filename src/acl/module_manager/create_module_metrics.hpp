@@ -38,7 +38,7 @@ struct ModMetrics : Metrics
     make_unique(EventContainer& events, Inifile& ini, ScreenInfo const& screen_info)
     {
         chars_view auth_user(ini.get<cfg::globals::auth_user>());
-        chars_view sign_key(ini.get<cfg::globals::target_user>());
+        chars_view sign_key(ini.get<cfg::metrics::sign_key>());
         chars_view target_user(ini.get<cfg::globals::target_user>());
         chars_view target_device(ini.get<cfg::globals::target_device>());
 
