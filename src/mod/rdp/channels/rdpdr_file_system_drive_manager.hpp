@@ -1820,8 +1820,7 @@ private:
 
 public:
     [[nodiscard]] bool is_managed_drive(uint32_t DeviceId) const {
-        return DeviceId >= FIRST_MANAGED_DRIVE_ID
-            && this->find_drive_by_id(DeviceId) != this->managed_drives.cend();
+        return DeviceId >= FIRST_MANAGED_DRIVE_ID;
     }
 
 private:
@@ -1907,9 +1906,18 @@ public:
         auto drive_iter = this->find_drive_by_id(DeviceId);
         if (drive_iter == this->managed_drives.end()) {
             LOG(LOG_WARNING,
-                "FileSystemDriveManager::process_device_IO_request: "
-                    "Unknown device. DeviceId=%u",
-                DeviceId);
+                "Unknown device? Send unsuccessful response. DeviceId=%u "
+                "MajorFunction=%u MinorFunction=%u",
+            DeviceId, device_io_request.MajorFunction(),
+            device_io_request.MinorFunction());
+
+        ManagedFileSystemObject::SendClientDriveIoUnsuccessfulResponse(
+            device_io_request,
+            "FileSystemDriveManager::process_device_IO_request",
+            to_server_sender,
+            out_asynchronous_task,
+            verbose);
+
             return;
         }
 
