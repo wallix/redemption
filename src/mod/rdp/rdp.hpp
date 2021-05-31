@@ -5822,7 +5822,7 @@ public:
 
         auto cursor = pointer_loader_new(data_bpp, stream);
 
-        // cached cursor ever with graphics_update_disabled == true
+        // cached cursor even with graphics_update_disabled == true
         this->gd.new_pointer(pointer_idx, cursor);
     }   // process_new_pointer_pdu
 
