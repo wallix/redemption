@@ -199,7 +199,6 @@ int main(int ac, char ** av)
                 return 0;
             case cli::Res::Help:
                 usage(std::cout);
-                cli::print_help(options, std::cout);
                 return 0;
             case cli::Res::BadFormat:
             case cli::Res::BadOption:
