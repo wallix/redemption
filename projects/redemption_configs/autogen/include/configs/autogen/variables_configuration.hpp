@@ -73,11 +73,11 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// sesman::name: nla_login <br/>
     /// default: {} <br/>
     struct globals::nla_auth_user {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -118,11 +118,11 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// sesman::name: ip_target <br/>
     /// default: {} <br/>
     struct globals::target {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -3811,11 +3811,11 @@ namespace cfg
         type value {  };
     };
     /// type: ColorDepth <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// sesman::name: bpp <br/>
     /// default: ColorDepth::depth24 <br/>
     struct context::opt_bpp {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -3826,11 +3826,11 @@ namespace cfg
         type value { ColorDepth::depth24 };
     };
     /// type: uint16_t <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// sesman::name: height <br/>
     /// default: 600 <br/>
     struct context::opt_height {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -3841,11 +3841,11 @@ namespace cfg
         type value { 600 };
     };
     /// type: uint16_t <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// sesman::name: width <br/>
     /// default: 800 <br/>
     struct context::opt_width {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -3893,10 +3893,10 @@ namespace cfg
         type value { 1 };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::selector_device_filter {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -3907,10 +3907,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::selector_group_filter {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -3921,10 +3921,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::selector_proto_filter {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4019,11 +4019,11 @@ namespace cfg
         type value {  };
     };
     /// type: unsigned <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// default: 3389 <br/>
     struct context::target_port {
         static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 15};
@@ -4076,10 +4076,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::reporting {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4104,10 +4104,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::auth_channel_target {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4146,10 +4146,10 @@ namespace cfg
         type value {  };
     };
     /// type: bool <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::display_message {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4217,10 +4217,10 @@ namespace cfg
         type value { 0 };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::real_target_device {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4245,10 +4245,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::ticket {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4259,10 +4259,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::comment {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4273,10 +4273,10 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::duration {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4301,10 +4301,10 @@ namespace cfg
         type value { 0 };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::waitinforeturn {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -4329,11 +4329,11 @@ namespace cfg
         type value { false };
     };
     /// type: unsigned <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct context::formflag {
         static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 37};

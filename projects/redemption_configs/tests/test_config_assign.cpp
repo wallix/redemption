@@ -119,7 +119,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::duration>(cs);
     ini.set_acl<cfg::context::duration>(s);
     ini.set<cfg::context::end_date_cnx>(std::chrono::seconds{1});
-    ini.set_acl<cfg::context::formflag>(1);
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);
     ini.set<cfg::context::message>(s);
@@ -162,7 +161,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::target_host>(s);
     ini.set_acl<cfg::context::target_password>(cs);
     ini.set_acl<cfg::context::target_password>(s);
-    ini.set_acl<cfg::context::target_port>(1);
     ini.set<cfg::context::target_protocol>(cs);
     ini.set<cfg::context::target_protocol>(s);
     ini.set<cfg::context::target_service>(cs);
