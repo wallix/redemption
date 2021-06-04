@@ -83,7 +83,6 @@
 #include "core/RDP/lic.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/mppc.hpp"
-#include "core/RDP/nego.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/RDP/sec.hpp"
 #include "core/RDP/slowpath.hpp"
@@ -1409,7 +1408,7 @@ public:
                                           , total_length, flags, chunk_data);
     }
 
-    void connection_initiation(bytes_view tpdu, bool bogus_neg_req, bool enable_nla, const Front::Verbose & verbose)
+    void connection_initiation(bytes_view tpdu, bool bogus_neg_req, bool enable_nla)
     {
         // Connection Initiation
         // ---------------------
@@ -1424,7 +1423,7 @@ public:
         //    | <----------X224 Connection Confirm PDU----------------- |
 
         InStream x224_stream(tpdu);
-        if (bool(verbose & Front::Verbose::basic_trace)) {
+        if (bool(this->verbose & Front::Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
             LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU (%lu)", tpdu.size());
         }
@@ -1468,12 +1467,12 @@ public:
             LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
         }
 
-        LOG_IF(bool(verbose & Verbose::basic_trace), LOG_INFO,
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::incoming: sending x224 connection confirm PDU");
 
         {
             uint8_t rdp_neg_type = 0;
-            uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
+            uint8_t rdp_neg_flags = /*0*/X224::CC_TPDU_EXTENDED_CLIENT_DATA_SUPPORTED;
             uint32_t rdp_neg_code = 0;
             if (this->tls_client_active) {
                 LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled nla=%s", enable_nla?"true":"false");
@@ -1513,7 +1512,8 @@ public:
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
                 this->nego_server = std::make_unique<NegoServer>(
-                    this->trans.get_public_key(), this->events_guard.get_time_base(), true);
+                    this->trans.get_public_key(), this->events_guard.get_time_base(),
+                    bool(this->verbose & Verbose::basic_trace));
             }
         }
 
@@ -2906,7 +2906,7 @@ public:
         case CONNECTION_INITIATION:
         {
             bool enable_nla = this->ini.get<cfg::client::enable_nla>();
-            this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>(), enable_nla, this->verbose);
+            this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>(), enable_nla);
             if (enable_nla){
                 this->state = PRIMARY_AUTH_NLA;
             }
