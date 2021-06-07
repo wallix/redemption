@@ -5917,7 +5917,7 @@ test-run tests/utils/test_id_manager :
 test-run tests/utils/test_ip :
   $(REDEMPTION_TEST_PATH)/utils/test_ip.cpp
 :
-  <library>src/utils/ip.o
+  <library>src/utils/strutils.o
   <covfile>src/utils/ip.cpp
   <covfile>src/utils/ip.hpp
 ;

@@ -221,24 +221,17 @@ namespace
 
             const MonotonicTimePoint start_time = MonotonicTimePoint::clock::now();
 
-            char source_ip[256] { };
-            char source_port_buf[8] { };
+            IpPort source_ip_port;
 
-            if (auto error = get_underlying_ip_port(u.s,
-                                                    sizeof(u.ss),
-                                                    source_ip,
-                                                    sizeof(source_ip),
-                                                    source_port_buf,
-                                                    sizeof(source_port_buf)))
-            {
+            if (auto error = source_ip_port.extract_of(u.s, sizeof(u.ss)).error) {
                 LOG(LOG_ERR, "Cannot get ip and port of source : %s", error);
                 _exit(1);
             }
 
-            int source_port = atoi(source_port_buf);
-            const bool source_is_localhost =
-                (strcmp(source_ip, "127.0.0.1") == 0
-                 || strcmp(source_ip, "::1") == 0);
+            const auto source_ip = source_ip_port.ip_address();
+            const auto source_port = source_ip_port.port();
+
+            const bool source_is_localhost = (source_ip == "127.0.0.1" || source_ip == "::1");
             Inifile ini;
 
             configuration_load(ini.configuration_holder(), config_filename.c_str());
@@ -273,37 +266,37 @@ namespace
                 _exit(1);
             }
 
-            char target_ip[256] { };
-            char target_port_buf[8] { };
+            IpPort target_ip_port;
 
-            if (auto error = get_underlying_ip_port(localAddress.s,
-                                                    sizeof(localAddress.ss),
-                                                    target_ip,
-                                                    sizeof(target_ip),
-                                                    target_port_buf,
-                                                    sizeof(target_port_buf)))
-            {
+            if (auto error = target_ip_port.extract_of(
+                localAddress.s, sizeof(localAddress.ss)).error
+            ) {
                 LOG(LOG_ERR, "Cannot get ip and port of target : %s", error);
                 _exit(1);
             }
 
-            int target_port = atoi(target_port_buf);
+            const auto target_port = target_ip_port.port();
+            zstring_view target_ip;
 
-            if (!ini.get<cfg::debug::fake_target_ip>().empty()){
-                utils::strlcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
+            if (!ini.get<cfg::debug::fake_target_ip>().empty()) {
+                target_ip = ini.get<cfg::debug::fake_target_ip>();
                 LOG(LOG_INFO, "fake_target_ip='%s'", target_ip);
             }
+            else {
+                target_ip = target_ip_port.ip_address();
+            }
 
-            if (!source_is_localhost){
+            if (!source_is_localhost) {
                 // do not log early messages for localhost (to avoid tracing in watchdog)
                 LOG(LOG_INFO, "Redemption " VERSION);
-                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d",
+                    source_ip, source_port, target_ip, target_port);
             }
 
             char real_target_ip[256];
 
             if (ini.get<cfg::globals::enable_transparent_mode>() && !source_is_localhost) {
-                int use_conntrack = 0;
+                bool use_conntrack = false;
                 FILE* fs = nullptr;
                 int fd = open("/proc/net/nf_conntrack", O_RDONLY);
                 if (fd < 0) {
@@ -312,13 +305,14 @@ namespace
                     if (fd < 0) {
                         int errno_ip = errno;
                         fs = popen_conntrack(source_ip, source_port, target_port);
+                        int errno_conntrack = errno;
                         if (fs == nullptr) {
                             LOG(LOG_WARNING, "Failed to read conntrack file /proc/net/nf_conntrack: %d", errno_nf);
                             LOG(LOG_WARNING, "Failed to read conntrack file /proc/net/ip_conntrack: %d", errno_ip);
-                            LOG(LOG_WARNING, "Failed to run conntrack: %d", errno);
+                            LOG(LOG_WARNING, "Failed to run conntrack: %d", errno_conntrack);
                         }
                         else {
-                            use_conntrack = 1;
+                            use_conntrack = true;
                             fd = fileno(fs);
                         }
                     }
@@ -329,13 +323,18 @@ namespace
                 else {
                     LOG(LOG_WARNING, "Reading /proc/net/nf_conntrack");
                 }
+
                 uint32_t verbose = ini.get<cfg::debug::auth>();
                 // source and dest are inverted because we get the information we want from reply path rule
-                LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d", source_ip, source_port, target_ip, target_port);
-                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, make_writable_array_view(real_target_ip), verbose);
-                if (res){
+                LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d",
+                    source_ip, source_port, target_ip, target_port);
+
+                if (parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port,
+                                       make_writable_array_view(real_target_ip), verbose)
+                ) {
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }
+
                 if (use_conntrack) {
                     pclose(fs);
                 }
@@ -343,16 +342,18 @@ namespace
                     close(fd);
                 }
 
-                if (setgid(gid) != 0){
+                if (setgid(gid) != 0) {
                     LOG(LOG_ERR, "Changing process group to %u failed with error: %s", gid, strerror(errno));
                     _exit(1);
                 }
-                if (setuid(uid) != 0){
+
+                if (setuid(uid) != 0) {
                     LOG(LOG_ERR, "Changing process user to %u failed with error: %s", uid, strerror(errno));
                     _exit(1);
                 }
 
-                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
+                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d",
+                    source_ip, source_port, real_target_ip, target_port);
             }
             else {
                 ::memset(real_target_ip, 0, sizeof(real_target_ip));

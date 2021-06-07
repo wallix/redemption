@@ -1,19 +1,39 @@
 #pragma once
 
 #include <sys/types.h>
+#include <netinet/in.h>
+#include "utils/sugar/zstring_view.hpp"
 
-struct sockaddr;
+struct IpPort
+{
+    IpPort() noexcept
+    {
+        _ip_address[0] = '\0';
+    }
 
-[[nodiscard]]
-bool is_ipv4_mapped_ipv6(const char *ipv6_address) noexcept;
+    int port() const noexcept
+    {
+        return _port;
+    }
 
-void get_ipv4_address(const char *ipv6_address,
-                      char *dest_ip,
-                      std::size_t dest_ip_size) noexcept;
+    zstring_view ip_address() const noexcept
+    {
+        return zstring_view::from_null_terminated(
+            _ip_address + _ip_address_offset, _ip_address_len
+        );
+    }
 
-const char *get_underlying_ip_port(const sockaddr& sa,
-                                   socklen_t socklen,
-                                   char *dest_ip,
-                                   std::size_t dest_ip_size,
-                                   char *dest_port,
-                                   std::size_t dest_port_size) noexcept;
+    struct [[nodiscard]] ErrorMessage
+    {
+        bool has_errror() const noexcept { return error; }
+        const char * error = nullptr;
+    };
+
+    ErrorMessage extract_of(sockaddr const& sa, socklen_t socklen) noexcept;
+
+private:
+    char _ip_address[INET6_ADDRSTRLEN];
+    uint16_t _ip_address_offset = 0;
+    uint16_t _ip_address_len = 0;
+    uint16_t _port = 0;
+};

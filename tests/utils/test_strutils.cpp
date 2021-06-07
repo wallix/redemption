@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE(TestEndsWith)
 {
     RED_CHECK(!utils::ends_with(""sv, "ini"sv));
     RED_CHECK(!utils::ends_with("ni"sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("init"sv, "ini"sv));
+    RED_CHECK(!utils::ends_with("init"sv, "ini"sv));
     RED_CHECK(!utils::ends_with("rdpproxy.conf"sv, "ini"sv));
     RED_CHECK(!utils::ends_with("Ini"sv, "ini"sv));
     RED_CHECK(!utils::ends_with("RDPPROXY.INI"sv, "ini"sv));
@@ -41,6 +41,20 @@ RED_AUTO_TEST_CASE(TestEndsWith)
 
     RED_CHECK(utils::ends_with("RDPPROXY.INI"sv, ""sv));
     RED_CHECK(utils::ends_with(""sv, ""sv));
+}
+
+RED_AUTO_TEST_CASE(TestStartsWith)
+{
+    RED_CHECK(!utils::starts_with(""sv, "ini"sv));
+    RED_CHECK(!utils::starts_with("ni"sv, "ini"sv));
+    RED_CHECK(!utils::starts_with("rdpproxy.conf"sv, "ini"sv));
+    RED_CHECK(!utils::starts_with("Ini"sv, "ini"sv));
+    RED_CHECK(!utils::starts_with(".ini"sv, "ini"sv));
+
+    RED_CHECK(utils::starts_with("init"sv, "ini"sv));
+    RED_CHECK(utils::starts_with("ini"sv, "ini"sv));
+    RED_CHECK(utils::starts_with("init"sv, "i"sv));
+    RED_CHECK(utils::starts_with(""sv, ""sv));
 }
 
 RED_AUTO_TEST_CASE(TestEndsCaseWith)

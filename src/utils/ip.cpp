@@ -1,67 +1,62 @@
+#include "utils/ip.hpp"
+#include "utils/strutils.hpp"
+
+#include <charconv>
+
 #include <cstring>
-#include <string_view>
+#include <cerrno>
+
 #include <sys/socket.h>
 #include <netdb.h>
-#include <cerrno>
-#include <arpa/inet.h>
 
-#include "ip.hpp"
 
 namespace
 {
-    using namespace std::string_view_literals;
+    constexpr auto IPV4_MAPPED_IPV6_PREFIX = "::ffff:"_av;
 
-    constexpr auto IPV4_MAPPED_IPV6_PREFIX = "::ffff:"sv;
-}
-
-bool is_ipv4_mapped_ipv6(const char *ipv6_address) noexcept
-{
-    unsigned char buf[sizeof(in6_addr)] { };
-
-    if (!ipv6_address || inet_pton(AF_INET6, ipv6_address, buf) != 1)
+    bool is_ipv4_mapped_ipv6(chars_view ip_address) noexcept
     {
+        if (utils::starts_with(ip_address, IPV4_MAPPED_IPV6_PREFIX)) {
+            // differentiated ::ffff:192.0.2.128 of ::ffff:c000:280
+            // note: this case may not be possible
+            for (char c : ip_address.drop_front(IPV4_MAPPED_IPV6_PREFIX.size())) {
+                if (c == '.') {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
-    return std::strncmp(ipv6_address,
-                        IPV4_MAPPED_IPV6_PREFIX.data(),
-                        IPV4_MAPPED_IPV6_PREFIX.size()) == 0;
 }
 
-void get_ipv4_address(const char *ipv6_address,
-                      char *dest_ip,
-                      std::size_t dest_ip_size) noexcept
+IpPort::ErrorMessage IpPort::extract_of(sockaddr const& sa, socklen_t socklen) noexcept
 {
-    const char *ipv4_address = ipv6_address + IPV4_MAPPED_IPV6_PREFIX.size();
+    _ip_address_len = 0;
 
-    std::strncpy(dest_ip, ipv4_address, dest_ip_size);
-}
-
-const char *get_underlying_ip_port(const sockaddr& sa,
-                                   socklen_t socklen,
-                                   char *dest_ip,
-                                   std::size_t dest_ip_size,
-                                   char *dest_port,
-                                   std::size_t dest_port_size) noexcept
-{
-    char ip_address[INET6_ADDRSTRLEN] { };
-
-    if (int res = getnameinfo(&sa,
-                              socklen,
-                              ip_address,
-                              sizeof(ip_address),
-                              dest_port,
-                              dest_port_size,
+    char dest_port[32];
+    if (int res = getnameinfo(&sa, socklen,
+                              _ip_address, sizeof(_ip_address),
+                              dest_port, sizeof(dest_port),
                               NI_NUMERICHOST | NI_NUMERICSERV))
     {
-        return (res == EAI_SYSTEM) ? strerror(errno) : gai_strerror(res);
+        // force zero terminated
+        _ip_address[0] = '\0';
+        return ErrorMessage{(res == EAI_SYSTEM) ? strerror(errno) : gai_strerror(res)};
     }
-    if (is_ipv4_mapped_ipv6(ip_address))
-    {
-        get_ipv4_address(ip_address, dest_ip, dest_ip_size);
+
+    std::size_t ip_len = strlen(_ip_address);
+    _ip_address_len = checked_int{ip_len};
+    _ip_address_offset = 0;
+    if (is_ipv4_mapped_ipv6({_ip_address, ip_len})) {
+        _ip_address_len -= IPV4_MAPPED_IPV6_PREFIX.size();
+        _ip_address_offset += IPV4_MAPPED_IPV6_PREFIX.size();
     }
-    else
-    {
-        std::strncpy(dest_ip, ip_address, dest_ip_size);
-    }
-    return nullptr;
+
+    [[maybe_unused]]
+    auto r = std::from_chars(dest_port, dest_port + strlen(dest_port), _port);
+    // assume that dest_port is still valid
+    assert(!bool(r.ec));
+
+    return ErrorMessage{};
 }

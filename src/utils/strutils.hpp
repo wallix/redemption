@@ -43,6 +43,7 @@ void str_assign(std::string& str, Strings const&... strs);
 namespace utils
 {
 
+bool starts_with(chars_view str, chars_view prefix) noexcept;
 bool ends_with(chars_view str, chars_view suffix) noexcept;
 bool ends_case_with(chars_view str, chars_view suffix) noexcept;
 
