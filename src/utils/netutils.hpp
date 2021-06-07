@@ -36,10 +36,7 @@ class addrinfo;
 
 struct IpAddress
 {
-    char ip_addr[46];
-
-    IpAddress();
-    IpAddress(const char *ip_addr);
+    char ip_addr[46] {};
 };
 
 struct AddrInfoDeleter
@@ -78,6 +75,4 @@ zstring_view parse_ip_conntrack(
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);
 
 [[nodiscard]]
-bool get_local_ip_address(IpAddress& client_address,
-                          int fd,
-                          const char **error_result = nullptr) noexcept;
+bool get_local_ip_address(IpAddress& client_address, int fd) noexcept;

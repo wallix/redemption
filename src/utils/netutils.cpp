@@ -45,14 +45,6 @@
 
 static_assert(sizeof(IpAddress::ip_addr) >= INET6_ADDRSTRLEN);
 
-IpAddress::IpAddress() : ip_addr { }
-{ }
-
-IpAddress::IpAddress(const char *ip_addr)
-{
-    std::strncpy(this->ip_addr, ip_addr, sizeof(this->ip_addr));
-}
-
 void AddrInfoDeleter::operator()(addrinfo *addr_info) noexcept
 {
     freeaddrinfo(addr_info);
@@ -558,7 +550,7 @@ FILE* popen_conntrack(const char* source_ip, int source_port, int target_port)
     return popen(cmd, "r");
 }
 
-bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result) noexcept
+bool get_local_ip_address(IpAddress& client_address, int fd) noexcept
 {
     union
     {
@@ -572,31 +564,21 @@ bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_
     std::memset(&u, 0, namelen);
     if (::getsockname(fd, &u.s, &namelen) == -1)
     {
-        if (error_result)
-        {
-            *error_result = "Cannot get local ip address";
-        }
         LOG(LOG_ERR, "getsockname failed with errno = %d (%s)",
-            errno,
-            strerror(errno));
+            errno, strerror(errno));
         return false;
     }
-    else if (int res = ::getnameinfo(&u.s,
-                                     sizeof(u.ss),
-                                     client_address.ip_addr,
-                                     sizeof(client_address.ip_addr),
-                                     nullptr,
-                                     0,
-                                     NI_NUMERICHOST))
+
+    if (int res = ::getnameinfo(&u.s,
+                                sizeof(u.ss),
+                                client_address.ip_addr,
+                                sizeof(client_address.ip_addr),
+                                nullptr,
+                                0,
+                                NI_NUMERICHOST))
     {
-        if (error_result)
-        {
-            *error_result = "Cannot get local ip address";
-        }
-        LOG(LOG_ERR,
-            "getnameinfo failed : %s",
-            (res == EAI_SYSTEM) ?
-            ::strerror(errno) : ::gai_strerror(res));
+        LOG(LOG_ERR, "getnameinfo failed : %s",
+            (res == EAI_SYSTEM) ? ::strerror(errno) : ::gai_strerror(res));
         return false;
     }
 
