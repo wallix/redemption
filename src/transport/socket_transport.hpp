@@ -39,6 +39,18 @@ class ServerNotifier;
 class SocketTransport
 : public Transport
 {
+public:
+    // string with static lifetime
+    struct Name
+    {
+        friend Name operator ""_sck_name (char const* s, std::size_t /*n*/) noexcept;
+
+    private:
+        char const* name;
+        friend SocketTransport;
+    };
+
+private:
     size_t total_sent = 0;
     size_t total_received = 0;
 
@@ -48,6 +60,7 @@ protected:
     const char * name;
 
 private:
+    // ip or sockfile
     char ip_address[128];
     int  port;
 
@@ -77,7 +90,7 @@ public:
     };
 
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-    SocketTransport( const char * name, unique_fd sck, const char *ip_address, int port
+    SocketTransport( Name name, unique_fd sck, chars_view ip_address, int port
                    , std::chrono::milliseconds recv_timeout
                    , Verbose verbose, std::string * error_message = nullptr);
 
@@ -107,3 +120,11 @@ protected:
 
     void do_send(const uint8_t * const buffer, size_t len) override;
 };
+
+
+inline SocketTransport::Name operator ""_sck_name (char const* s, std::size_t /*n*/) noexcept
+{
+    SocketTransport::Name name;
+    name.name = s;
+    return name;
+}

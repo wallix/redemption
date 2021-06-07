@@ -39,7 +39,7 @@ public:
     };
 
     WsTransport(
-        const char * name, unique_fd sck, const char *ip_address, int port,
+        Name name, unique_fd sck, chars_view ip_address, int port,
         std::chrono::milliseconds recv_timeout, UseTls use_tls, TlsOptions tls_options,
         Verbose verbose, std::string * error_message = nullptr);
 

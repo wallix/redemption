@@ -89,7 +89,7 @@ public:
 
     ModVNCWithSocketAndMetrics(
         gdi::GraphicApi & drawable,
-        Inifile & ini, const char * name, unique_fd sck,
+        Inifile & ini, SocketTransport::Name name, unique_fd sck,
         SocketTransport::Verbose verbose,
         std::string * error_message,
         EventContainer& events,
@@ -114,7 +114,7 @@ public:
         VNCMetrics * metrics
         )
     : socket_transport( name, std::move(sck)
-                      , ini.get<cfg::context::target_host>().c_str()
+                      , ini.get<cfg::context::target_host>()
                       , checked_int(ini.get<cfg::context::target_port>())
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
@@ -244,8 +244,6 @@ ModPack create_mod_vnc(
     unique_fd client_sck =
         connect_to_target_host(ini, session_log, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
 
-    const char * const name = "VNC Target";
-
     bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
@@ -272,7 +270,7 @@ ModPack create_mod_vnc(
     auto new_mod = std::make_unique<ModVNCWithSocketAndMetrics>(
         host_mod ? host_mod->proxy_gd() : drawable,
         ini,
-        name,
+        "VNC Target"_sck_name,
         std::move(client_sck),
         safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
         nullptr,

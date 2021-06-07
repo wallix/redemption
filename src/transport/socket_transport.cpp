@@ -46,12 +46,12 @@ namespace
 }
 
 SocketTransport::SocketTransport(
-    const char * name, unique_fd sck, const char *ip_address, int port,
+    Name name, unique_fd sck, chars_view ip_address, int port,
     std::chrono::milliseconds recv_timeout,
     Verbose verbose, std::string * error_message
 )
     : sck(sck.release())
-    , name(name)
+    , name(name.name)
     , port(port)
     , error_message(error_message)
     , tls(nullptr)
@@ -61,8 +61,9 @@ SocketTransport::SocketTransport(
     LOG_IF(bool(verbose & Verbose::basic), LOG_INFO,
         "SocketTransport: recv_timeout=%zu", size_t(recv_timeout.count()));
 
-    strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
-    this->ip_address[127] = 0;
+    auto minlen = std::min(ip_address.size(), sizeof(this->ip_address) - 1);
+    memcpy(this->ip_address, ip_address.data(), minlen);
+    this->ip_address[minlen] = 0;
 }
 
 SocketTransport::~SocketTransport()
@@ -187,7 +188,7 @@ bool SocketTransport::disconnect()
     this->tls_state = TLSState::Uninit;
     // Disconnect tls if needed
     this->tls.reset();
-    shutdown(this->sck, 2); // 2 = SHUT_RDWR
+    shutdown(this->sck, SHUT_RDWR);
     close(this->sck);
     this->sck = INVALID_SOCKET;
     return true;

@@ -510,9 +510,9 @@ public:
         if (this->client_sck > 0) {
             try {
                 this->socket = std::make_unique<SocketTransport>(
-                    this->config.user_name.c_str(),
+                    "Client"_sck_name,
                     std::move(unique_client_sck),
-                    this->config.target_IP.c_str(),
+                    this->config.target_IP,
                     this->config.port,
                     std::chrono::seconds(1),
                     SocketTransport::Verbose(),

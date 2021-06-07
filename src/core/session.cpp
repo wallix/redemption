@@ -768,8 +768,8 @@ private:
         assert(auth_sck != INVALID_SOCKET);
 
         FinalSocketTransport auth_trans(
-            "Authentifier", unique_fd(auth_sck),
-            ini.get<cfg::globals::authfile>().c_str(), 0,
+            "Authentifier"_sck_name, unique_fd(auth_sck),
+            ini.get<cfg::globals::authfile>(), 0,
             std::chrono::seconds(1), SocketTransport::Verbose::none);
 
         auto& events = event_manager.get_events();
@@ -1469,7 +1469,7 @@ public:
 
 template<class SocketType, class... Args>
 void session_start_sck(
-    char const* name, unique_fd&& sck,
+    SocketTransport::Name name, unique_fd&& sck,
     MonotonicTimePoint sck_start_time, Inifile& ini,
     PidFile& pid_file, Font const& font, Args&&... args)
 {
@@ -1481,7 +1481,7 @@ void session_start_sck(
 
     Session session(
         SocketType(
-            name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
+            name, std::move(sck), ""_av, 0, ini.get<cfg::client::recv_timeout>(),
             static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
         ),
         sck_start_time, ini, pid_file, font
@@ -1493,20 +1493,20 @@ void session_start_sck(
 void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
 {
     session_start_sck<FinalSocketTransport>(
-        "RDP Client", std::move(sck), sck_start_time, ini, pid_file, font);
+        "RDP Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font);
 }
 
 void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
 {
     session_start_sck<WsTransport>(
-        "RDP Ws Client", std::move(sck), sck_start_time, ini, pid_file, font,
+        "RDP Ws Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font,
         WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
 void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
 {
     session_start_sck<WsTransport>(
-        "RDP Wss Client", std::move(sck), sck_start_time, ini, pid_file, font,
+        "RDP Wss Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font,
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),

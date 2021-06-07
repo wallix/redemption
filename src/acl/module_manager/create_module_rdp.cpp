@@ -242,7 +242,7 @@ public:
     ModRDPWithSocketAndMetrics(
         gdi::OsdApi & osd
       , Inifile & ini
-      , const char * name
+      , SocketTransport::Name name
       , unique_fd sck
       , SocketTransport::Verbose verbose
       , std::string * error_message
@@ -260,13 +260,12 @@ public:
       , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
-        )
-    : socket_transport_ptr([](
-            ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport,
-            const char * name, unique_fd sck, const char *ip_address, int port,
-            std::chrono::milliseconds recv_timeout, SocketTransport::Verbose verbose,
-            std::string * error_message
-        ) -> SocketTransport* {
+    )
+    : socket_transport_ptr([&]() -> SocketTransport* {
+            chars_view ip_address = ini.get<cfg::context::target_host>();
+            int port = checked_int(ini.get<cfg::context::target_port>());
+            auto recv_timeout = std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>());
+
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
                 return new FinalSocketTransport( /*NOLINT*/
                     name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message
@@ -282,11 +281,7 @@ public:
                 is_read_error_simulation,
                 name, std::move(sck) , ip_address , port , recv_timeout , verbose , error_message
             );
-        }( use_failure_simulation_socket_transport, name, std::move(sck)
-         , ini.get<cfg::context::target_host>().c_str()
-         , checked_int(ini.get<cfg::context::target_port>())
-         , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
-         , verbose, error_message))
+        }())
     , mod(*this->socket_transport_ptr, gd
         , osd , events, session_log, front, info, redir_info, gen
         , make_channels_authorizations(ini), mod_rdp_params, tls_client_params
@@ -685,8 +680,6 @@ ModPack create_mod_rdp(
         mod_rdp_params.session_probe_params.vc_params.enable_self_cleaner = ini.get<cfg::mod_rdp::session_probe_enable_cleaner>();
     }
 
-    const char * const name = "RDP Target";
-
     Rect const adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
 
     const bool host_mod_in_widget = (client_info.remote_program
@@ -870,8 +863,7 @@ ModPack create_mod_rdp(
             mod_rdp_params.client_address = ini.get<cfg::globals::host>().c_str();
             break;
         case ClientAddressSent::proxy :
-            if (!get_local_ip_address(local_ip_address, client_sck.fd()))
-            {
+            if (!get_local_ip_address(local_ip_address, client_sck.fd())) {
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
             mod_rdp_params.client_address = local_ip_address.ip_addr;
@@ -895,7 +887,7 @@ ModPack create_mod_rdp(
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         osd,
         ini,
-        name,
+        "RDP Target"_sck_name,
         std::move(client_sck),
         safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
