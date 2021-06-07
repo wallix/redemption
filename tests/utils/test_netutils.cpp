@@ -109,17 +109,17 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         int fd = ::open(wf.c_str(), O_RDWR|O_CREAT, 0777);
         RED_CHECK(ssize_t(d.data.size()) == write(fd, d.data.data(), d.data.size()));
         RED_CHECK(0 == lseek(fd, 0, SEEK_SET));
-        char transparent_target[256] = {};
+        char transparent_target[256];
 
-        RED_CHECK(0 == parse_ip_conntrack(
-            fd, "10.10.47.93", "10.10.43.13", 3389, 41971, make_writable_array_view(transparent_target), 0));
-        RED_CHECK(transparent_target == "10.10.46.78"sv);
+        RED_CHECK("10.10.46.78"sv == parse_ip_conntrack(
+            fd, "10.10.47.93", "10.10.43.13", 3389, 41971,
+            make_writable_array_view(transparent_target), 0).to_sv());
 
         RED_CHECK(0 == lseek(fd, 0, SEEK_SET));
         transparent_target[0] = 0;
-        RED_CHECK(-1 == parse_ip_conntrack(
-            fd, "10.10.47.21", "10.10.43.13", 3389, 46392, make_writable_array_view(transparent_target), 0));
-        RED_CHECK(transparent_target == ""sv);
+        RED_CHECK(""sv == parse_ip_conntrack(
+            fd, "10.10.47.21", "10.10.43.13", 3389, 46392,
+            make_writable_array_view(transparent_target), 0).to_sv());
 
         close(fd);
     }

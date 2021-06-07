@@ -293,7 +293,8 @@ namespace
                     source_ip, source_port, target_ip, target_port);
             }
 
-            char real_target_ip[256];
+            char real_target_ip_buff[256];
+            zstring_view real_target_ip;
 
             if (ini.get<cfg::globals::enable_transparent_mode>() && !source_is_localhost) {
                 bool use_conntrack = false;
@@ -329,9 +330,10 @@ namespace
                 LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d",
                     source_ip, source_port, target_ip, target_port);
 
-                if (parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port,
-                                       make_writable_array_view(real_target_ip), verbose)
-                ) {
+                real_target_ip = parse_ip_conntrack(
+                    fd, target_ip, source_ip, target_port, source_port,
+                    make_writable_array_view(real_target_ip_buff), verbose);
+                if (real_target_ip.empty()) {
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }
 
@@ -355,9 +357,6 @@ namespace
                 LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d",
                     source_ip, source_port, real_target_ip, target_port);
             }
-            else {
-                ::memset(real_target_ip, 0, sizeof(real_target_ip));
-            }
 
             int nodelay = 1;
             if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))) {
@@ -373,13 +372,14 @@ namespace
                     // do not log early messages for localhost (to avoid tracing in watchdog)
                     LOG(LOG_INFO,
                         "New session on %d (pid=%d) from %s to %s",
-                        sck, child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
+                        sck, child_pid, source_ip,
+                        real_target_ip.empty() ? target_ip : real_target_ip);
                 }
 
                 ini.set_acl<cfg::globals::host>(source_ip);
                 ini.set_acl<cfg::globals::target>(target_ip);
                 if (ini.get<cfg::globals::enable_transparent_mode>()
-                 && 0 != strncmp(target_ip, real_target_ip, strlen(real_target_ip))
+                 && target_ip != real_target_ip
                 ) {
                     ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                 }

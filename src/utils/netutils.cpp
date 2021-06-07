@@ -471,9 +471,9 @@ struct LineBuffer
     }
 };
 
-// return 0 if found, -1 not found or error
-int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
-                       writable_bytes_view transparent_dest, uint32_t verbose)
+zstring_view parse_ip_conntrack(
+    int fd, const char * source, const char * dest, int sport, int dport,
+    writable_bytes_view transparent_dest, uint32_t verbose)
 {
     LineBuffer line(fd);
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
@@ -528,15 +528,18 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
             const size_t match_size = matches[0].second - matches[0].first;
             if (match_size >= transparent_dest.size()){
                 LOG(LOG_WARNING, "No enough space to store transparent ip target address");
-                return -1;
+                return zstring_view{};
             }
 
             memcpy(transparent_dest.data(), matches[0].first, match_size);
             transparent_dest[match_size] = 0;
 
-            LOG_IF(verbose, LOG_INFO, "Match found: %s", transparent_dest.data());
+            auto ip = zstring_view::from_null_terminated(
+                transparent_dest.as_chars().data(), match_size);
 
-            return 0;
+            LOG_IF(verbose, LOG_INFO, "Match found: %s", ip);
+
+            return ip;
         }
 
         if (contains_endl) {
@@ -544,7 +547,7 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         }
     }
     // transparent ip route not found in ip_conntrack
-    return -1;
+    return zstring_view{};
 }
 
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port)
