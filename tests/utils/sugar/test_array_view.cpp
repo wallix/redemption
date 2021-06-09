@@ -301,3 +301,4 @@ static_assert(not check_array_view_guide(p, 1));
 static_assert(check_array_view_guide(str, 1));
 static_assert(check_array_view_guide(strv, 1));
 static_assert(check_array_view_guide(rng, 1));
+static_assert(check_array_view_guide(ints, 1));

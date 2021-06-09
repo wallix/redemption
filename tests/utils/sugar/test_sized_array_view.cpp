@@ -39,18 +39,22 @@ using voidp = void const*;
 
 } // namespace
 
-RED_AUTO_TEST_CASE(TestArrayView)
+RED_AUTO_TEST_CASE(TestSizedArrayView)
 {
     char a8[3] = {'x', 'y', 'z'};
     int8_t as8[3] = {-1, 0, 3};
     uint8_t au8[3] = {0, 1, 2};
+    std::array<char, 3> stda{{9, 8, 7}};
 
     sized_array_view<char, 3> avc = make_sized_array_view(a8);
 
     array_view<char>{} = make_sized_array_view(a8);
+    avc = make_sized_array_view(stda);
     avc = make_sized_array_view(a8);
+    avc = make_sized_array_view(avc);
     avc = sized_array_view<char, 3>::assumed(a8);
 
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_sized_array_view(stda)), 1);
     RED_CHECK_EQUAL(test_ambiguous(make_writable_sized_array_view(a8)), 1);
     RED_CHECK_EQUAL(test_ambiguous(make_writable_sized_array_view(as8)), 2);
     RED_CHECK_EQUAL(test_ambiguous(make_writable_sized_array_view(au8)), 3);
@@ -94,7 +98,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     RED_CHECK(chars_view{nullptr}.empty());
 }
 
-RED_AUTO_TEST_CASE(TestSubArray)
+RED_AUTO_TEST_CASE(TestSubSizedArray)
 {
     auto a = cstr_sized_array_view("abcd");
     RED_CHECK_EQUAL_RANGES(a.first<1>(), cstr_sized_array_view("a"));
@@ -125,7 +129,7 @@ namespace
     };
 }
 
-RED_AUTO_TEST_CASE(TestArrayView_as)
+RED_AUTO_TEST_CASE(TestSizedArrayView_as)
 {
     auto a = cstr_sized_array_view("abcd");
 
@@ -151,3 +155,80 @@ RED_AUTO_TEST_CASE(TestArrayView_as)
     using array_t = decltype(a.as<std::array>());
     std::array<char, 4>() = array_t(); // std::is_same
 }
+
+
+REDEMPTION_DIAGNOSTIC_PUSH()
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcomma")
+template<class V, class T>
+constexpr auto check_sized_array_view_call(T && a, int /*unused*/)
+  -> decltype(void(sized_array_view<V, 3>(std::forward<T>(a))), true)
+{
+    return true;
+}
+
+template<class T>
+constexpr auto check_sized_array_view_guide(T && a, int /*unused*/)
+  -> decltype(void(sized_array_view{std::forward<T>(a)}), true)
+{
+    return true;
+}
+REDEMPTION_DIAGNOSTIC_POP()
+
+template<class V, class T>
+constexpr bool check_sized_array_view_call(T && /*unused*/, char /*unused*/)
+{
+    return false;
+}
+
+template<class T>
+constexpr bool check_sized_array_view_guide(T && /*unused*/, char /*unused*/)
+{
+    return false;
+}
+
+namespace
+{
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
+    struct Range
+    {
+        char* data() const { return nullptr; } /*NOLINT*/
+        std::size_t size() const { return 0; } /*NOLINT*/
+    };
+    REDEMPTION_DIAGNOSTIC_POP()
+
+    char cstr[3] = {'0', '1', '2'};
+    char const * p = nullptr;
+    std::string str;
+    std::string_view strv;
+    int ints[3]{};
+    Range rng;
+}
+
+static_assert(not check_sized_array_view_call<char>(cstr, 1));
+static_assert(not check_sized_array_view_call<char>(p, 1));
+static_assert(not check_sized_array_view_call<char>(str, 1));
+static_assert(not check_sized_array_view_call<char>(strv, 1));
+static_assert(not check_sized_array_view_call<char>(rng, 1));
+
+static_assert(not check_sized_array_view_call<const char>(cstr, 1));
+static_assert(not check_sized_array_view_call<const char>(p, 1));
+static_assert(not check_sized_array_view_call<const char>(str, 1));
+static_assert(not check_sized_array_view_call<const char>(strv, 1));
+static_assert(not check_sized_array_view_call<const char>(std::string_view{}, 1));
+static_assert(not check_sized_array_view_call<const char>(Range{}, 1));
+static_assert(not check_sized_array_view_call<const char>(rng, 1));
+
+static_assert(not check_sized_array_view_call<int>(cstr, 1));
+static_assert(not check_sized_array_view_call<int>(p, 1));
+static_assert(check_sized_array_view_call<int>(ints, 1));
+static_assert(not check_sized_array_view_call<int>(rng, 1));
+
+// deduction guide
+static_assert(not check_sized_array_view_guide(cstr, 1));
+static_assert(not check_sized_array_view_guide(p, 1));
+static_assert(not check_sized_array_view_guide(str, 1));
+static_assert(not check_sized_array_view_guide(strv, 1));
+static_assert(not check_sized_array_view_guide(rng, 1));
+static_assert(check_sized_array_view_guide(ints, 1));

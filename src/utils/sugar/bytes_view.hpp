@@ -125,14 +125,14 @@ struct bytes_view : array_view<uint8_t>
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<uint8_t>, U&&>::value, bool
     >::type = 1>
-    constexpr bytes_view(U && a) noexcept /*NOLINT*/
+    constexpr bytes_view(U && a) noexcept(noexcept(array_view<uint8_t>(a))) /*NOLINT*/
     : array_view<uint8_t>(a)
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<char>, U&&>::value, bool
     >::type = 1>
-    constexpr bytes_view(U && a) noexcept /*NOLINT*/
+    constexpr bytes_view(U && a) noexcept(noexcept(array_view<char>(a))) /*NOLINT*/
     : bytes_view(array_view<char>(a))
     {}
 

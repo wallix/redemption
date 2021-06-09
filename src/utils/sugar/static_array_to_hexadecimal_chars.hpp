@@ -62,19 +62,19 @@ private:
 };
 
 
-template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_chars_result<N>
 static_array_to_hexadecimal_upper_chars(SizedSeq const& a) noexcept;
 
-template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_chars_result<N>
 static_array_to_hexadecimal_lower_chars(SizedSeq const& a) noexcept;
 
-template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_zchars_result<N>
 static_array_to_hexadecimal_upper_zchars(SizedSeq const& a) noexcept;
 
-template<class SizedSeq, std::size_t N = static_sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
 static_array_to_hexadecimal_zchars_result<N>
 static_array_to_hexadecimal_lower_zchars(SizedSeq const& a) noexcept;
 
@@ -141,3 +141,19 @@ inline static_array_to_hexadecimal_lower_zchars(SizedSeq const& a) noexcept
     *p = '\0';
     return r;
 }
+
+
+namespace detail
+{
+    template<std::size_t N>
+    struct sequence_to_size_bounds_impl<static_array_to_hexadecimal_chars_result<N>>
+    {
+        using type = size_bounds<N, N>;
+    };
+
+    template<std::size_t N>
+    struct sequence_to_size_bounds_impl<static_array_to_hexadecimal_zchars_result<N>>
+    {
+        using type = size_bounds<N, N>;
+    };
+} // namespace detail

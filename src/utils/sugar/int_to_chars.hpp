@@ -21,6 +21,7 @@ Author(s): Proxy Team
 #pragma once
 
 #include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/limited_size_sequence.hpp"
 
 #include <type_traits>
 #include <cstring>
@@ -31,6 +32,7 @@ Author(s): Proxy Team
 namespace detail
 {
     struct int_to_chars_result_access;
+    constexpr std::size_t int_to_chars_buf_size = 20;
 }
 
 struct int_to_chars_result
@@ -38,7 +40,7 @@ struct int_to_chars_result
     int_to_chars_result() = default;
 
     char const* data() const noexcept { return buffer + ibeg; }
-    std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
+    std::size_t size() const noexcept { return std::size_t(detail::int_to_chars_buf_size - ibeg); }
 
     std::string_view sv() const noexcept { return {data(), size()}; }
     operator std::string_view() const noexcept { return sv(); }
@@ -46,19 +48,19 @@ struct int_to_chars_result
 private:
     friend detail::int_to_chars_result_access;
 
-    char buffer[20];
-    unsigned ibeg = 20;
+    char buffer[detail::int_to_chars_buf_size];
+    unsigned ibeg = detail::int_to_chars_buf_size;
 };
 
 struct int_to_zchars_result
 {
     int_to_zchars_result() noexcept
     {
-        buffer[20] = '\0';
+        buffer[detail::int_to_chars_buf_size] = '\0';
     }
 
     char const* data() const noexcept { return buffer + ibeg; }
-    std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
+    std::size_t size() const noexcept { return std::size_t(detail::int_to_chars_buf_size - ibeg); }
 
     char const* c_str() const noexcept { return data(); }
 
@@ -74,8 +76,8 @@ struct int_to_zchars_result
 private:
     friend detail::int_to_chars_result_access;
 
-    char buffer[21];
-    unsigned ibeg = 20;
+    char buffer[detail::int_to_chars_buf_size+1];
+    unsigned ibeg = detail::int_to_chars_buf_size;
 };
 
 
@@ -379,7 +381,7 @@ inline void int_to_decimal_chars(int_to_chars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    char* end = buffer + 20;
+    char* end = buffer + detail::int_to_chars_buf_size;
     access::set_ibeg(out, detail::to_decimal_chars(end, n) - buffer);
 }
 
@@ -388,7 +390,7 @@ inline void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    char* end = buffer + 20;
+    char* end = buffer + detail::int_to_chars_buf_size;
     access::set_ibeg(out, detail::to_decimal_chars(end, n) - buffer);
 }
 
@@ -397,7 +399,7 @@ inline void int_to_hexadecimal_upper_chars(int_to_chars_result& out, T n) noexce
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    char* end = buffer + 20;
+    char* end = buffer + detail::int_to_chars_buf_size;
     char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_upper_table);
     access::set_ibeg(out, begin - buffer);
 }
@@ -407,7 +409,7 @@ inline void int_to_hexadecimal_upper_zchars(int_to_zchars_result& out, T n) noex
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    char* end = buffer + 20;
+    char* end = buffer + detail::int_to_chars_buf_size;
     char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_upper_table);
     access::set_ibeg(out, begin - buffer);
 }
@@ -417,7 +419,7 @@ inline void int_to_hexadecimal_lower_chars(int_to_chars_result& out, T n) noexce
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    char* end = buffer + 20;
+    char* end = buffer + detail::int_to_chars_buf_size;
     char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_lower_table);
     access::set_ibeg(out, begin - buffer);
 }
@@ -427,7 +429,7 @@ inline void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noex
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    char* end = buffer + 20;
+    char* end = buffer + detail::int_to_chars_buf_size;
     char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_lower_table);
     access::set_ibeg(out, begin - buffer);
 }
@@ -437,7 +439,8 @@ inline void int_to_fixed_hexadecimal_upper_chars(int_to_chars_result& out, T n) 
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    constexpr int ibeg = detail::int_to_chars_buf_size
+                       - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
     int_to_fixed_hexadecimal_upper_chars<NbBytes>(buffer + ibeg, n);
     access::set_ibeg(out, ibeg);
 }
@@ -447,7 +450,8 @@ inline void int_to_fixed_hexadecimal_upper_zchars(int_to_zchars_result& out, T n
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    constexpr int ibeg = detail::int_to_chars_buf_size
+                       - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
     int_to_fixed_hexadecimal_upper_chars<NbBytes>(buffer + ibeg, n);
     access::set_ibeg(out, ibeg);
 }
@@ -457,7 +461,8 @@ inline void int_to_fixed_hexadecimal_lower_chars(int_to_chars_result& out, T n) 
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    constexpr int ibeg = detail::int_to_chars_buf_size
+                       - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
     int_to_fixed_hexadecimal_lower_chars<NbBytes>(buffer + ibeg, n);
     access::set_ibeg(out, ibeg);
 }
@@ -467,7 +472,8 @@ inline void int_to_fixed_hexadecimal_lower_zchars(int_to_zchars_result& out, T n
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
-    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    constexpr int ibeg = detail::int_to_chars_buf_size
+                       - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
     int_to_fixed_hexadecimal_lower_chars<NbBytes>(buffer + ibeg, n);
     access::set_ibeg(out, ibeg);
 }
@@ -483,3 +489,19 @@ inline char* int_to_fixed_hexadecimal_lower_chars(char* out, T n) noexcept
 {
     return detail::to_fixed_hexadecimal_chars<NbBytes>(out, n, detail::hex_lower_table);
 }
+
+
+namespace detail
+{
+    template<>
+    struct sequence_to_size_bounds_impl<int_to_chars_result>
+    {
+        using type = size_bounds<0, detail::int_to_chars_buf_size>;
+    };
+
+    template<>
+    struct sequence_to_size_bounds_impl<int_to_zchars_result>
+    {
+        using type = size_bounds<0, detail::int_to_chars_buf_size>;
+    };
+} // namespace detail
