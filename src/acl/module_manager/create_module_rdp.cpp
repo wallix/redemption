@@ -294,7 +294,8 @@ public:
     ~ModRDPWithSocketAndMetrics()
     {
         log_proxy::target_disconnection(
-            this->ini.template get<cfg::context::auth_error_message>().c_str());
+            this->ini.template get<cfg::context::auth_error_message>().c_str(),
+            this->ini.template get<cfg::context::session_id>().c_str());
     }
 
     // from RdpInput
