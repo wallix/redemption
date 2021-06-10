@@ -98,11 +98,11 @@ struct array_view
     using const_pointer = T const*;
     using size_type = std::size_t;
 
-    constexpr array_view() = default;
-    constexpr array_view(array_view && other) = default;
-    constexpr array_view(array_view const & other) = default;
-    array_view & operator = (array_view && other) = default;
-    array_view & operator = (array_view const & other) = default;
+    constexpr array_view() noexcept = default;
+    constexpr array_view(array_view && other) noexcept = default;
+    constexpr array_view(array_view const & other) noexcept = default;
+    array_view & operator = (array_view && other) noexcept = default;
+    array_view & operator = (array_view const & other) noexcept = default;
 
     constexpr array_view(std::nullptr_t /*null*/) noexcept
     : array_view()

@@ -182,7 +182,7 @@ namespace
         T* p;
         std::size_t n;
     };
-}
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestArrayView_as)
 {
@@ -253,52 +253,56 @@ constexpr bool check_array_view_guide(T && /*unused*/, char /*unused*/)
 namespace
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
-    struct Range
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-function")
+    void array_view_assert()
     {
-        char* data() const { return nullptr; } /*NOLINT*/
-        std::size_t size() const { return 0; } /*NOLINT*/
-    };
-    REDEMPTION_DIAGNOSTIC_POP()
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
+        struct Range
+        {
+            char* data() const { return nullptr; } /*NOLINT*/
+            std::size_t size() const { return 0; } /*NOLINT*/
+        };
+        REDEMPTION_DIAGNOSTIC_POP()
 
-    char cstr[5] = {'0', '1', '2', '\0', '5'};
-    char const * p = nullptr;
-    std::string str;
-    std::string_view strv;
-    int ints[3]{};
-    Range rng;
+        char cstr[5] = {'0', '1', '2', '\0', '5'};
+        char const * p = nullptr;
+        std::string str;
+        std::string_view strv;
+        int ints[3]{};
+        Range rng;
+
+        static_assert(not check_cstr_array_view_call(cstr, 1));
+        static_assert(check_cstr_array_view_call("abc", 1));
+        static_assert(not check_cstr_array_view_call(p, 1));
+
+        static_assert(not check_array_view_call<char>(cstr, 1));
+        static_assert(not check_array_view_call<char>("abc", 1));
+        static_assert(not check_array_view_call<char>(p, 1));
+        static_assert(check_array_view_call<char>(str, 1));
+        static_assert(check_array_view_call<char>(strv, 1));
+        static_assert(check_array_view_call<char>(rng, 1));
+
+        static_assert(not check_array_view_call<const char>(cstr, 1));
+        static_assert(not check_array_view_call<const char>("abc", 1));
+        static_assert(not check_array_view_call<const char>(p, 1));
+        static_assert(check_array_view_call<const char>(str, 1));
+        static_assert(check_array_view_call<const char>(strv, 1));
+        static_assert(check_array_view_call<const char>(std::string_view{}, 1));
+        static_assert(check_array_view_call<const char>(Range{}, 1));
+        static_assert(check_array_view_call<const char>(rng, 1));
+
+        static_assert(not check_array_view_call<int>(cstr, 1));
+        static_assert(not check_array_view_call<int>(p, 1));
+        static_assert(check_array_view_call<int>(ints, 1));
+        static_assert(not check_array_view_call<int>(rng, 1));
+
+        // deduction guide
+        static_assert(not check_array_view_guide(cstr, 1));
+        static_assert(not check_array_view_guide("abc", 1));
+        static_assert(not check_array_view_guide(p, 1));
+        static_assert(check_array_view_guide(str, 1));
+        static_assert(check_array_view_guide(strv, 1));
+        static_assert(check_array_view_guide(rng, 1));
+        static_assert(check_array_view_guide(ints, 1));
+    }
 } // anonymous namespace
-
-static_assert(not check_cstr_array_view_call(cstr, 1));
-static_assert(check_cstr_array_view_call("abc", 1));
-static_assert(not check_cstr_array_view_call(p, 1));
-
-static_assert(not check_array_view_call<char>(cstr, 1));
-static_assert(not check_array_view_call<char>("abc", 1));
-static_assert(not check_array_view_call<char>(p, 1));
-static_assert(check_array_view_call<char>(str, 1));
-static_assert(check_array_view_call<char>(strv, 1));
-static_assert(check_array_view_call<char>(rng, 1));
-
-static_assert(not check_array_view_call<const char>(cstr, 1));
-static_assert(not check_array_view_call<const char>("abc", 1));
-static_assert(not check_array_view_call<const char>(p, 1));
-static_assert(check_array_view_call<const char>(str, 1));
-static_assert(check_array_view_call<const char>(strv, 1));
-static_assert(check_array_view_call<const char>(std::string_view{}, 1));
-static_assert(check_array_view_call<const char>(Range{}, 1));
-static_assert(check_array_view_call<const char>(rng, 1));
-
-static_assert(not check_array_view_call<int>(cstr, 1));
-static_assert(not check_array_view_call<int>(p, 1));
-static_assert(check_array_view_call<int>(ints, 1));
-static_assert(not check_array_view_call<int>(rng, 1));
-
-// deduction guide
-static_assert(not check_array_view_guide(cstr, 1));
-static_assert(not check_array_view_guide("abc", 1));
-static_assert(not check_array_view_guide(p, 1));
-static_assert(check_array_view_guide(str, 1));
-static_assert(check_array_view_guide(strv, 1));
-static_assert(check_array_view_guide(rng, 1));
-static_assert(check_array_view_guide(ints, 1));

@@ -47,8 +47,7 @@ namespace detail
     struct size_bounds_to_static_size<size_bounds<N, N>>
     : std::integral_constant<std::size_t, N>
     {};
-}
-
+} // namespace detail
 
 
 template<class Seq, class T>

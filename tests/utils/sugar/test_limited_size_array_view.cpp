@@ -138,7 +138,7 @@ namespace
         T* p;
         std::size_t n;
     };
-}
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestLimitedArrayView_as)
 {
@@ -197,46 +197,50 @@ constexpr bool check_limited_size_array_view_guide(T && /*unused*/, char /*unuse
 namespace
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
-    struct Range
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-function")
+    void limited_size_array_view_assert()
     {
-        char* data() const { return nullptr; } /*NOLINT*/
-        std::size_t size() const { return 0; } /*NOLINT*/
-    };
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
+        struct Range
+        {
+            char* data() const { return nullptr; } /*NOLINT*/
+            std::size_t size() const { return 0; } /*NOLINT*/
+        };
+
+        char cstr[3] = {'0', '1', '2'};
+        char const * p = nullptr;
+        std::string str;
+        std::string_view strv;
+        int ints[3]{};
+        Range rng;
+
+        static_assert(not check_limited_size_array_view_call<char>(cstr, 1));
+        static_assert(not check_limited_size_array_view_call<char>(p, 1));
+        static_assert(not check_limited_size_array_view_call<char>(str, 1));
+        static_assert(not check_limited_size_array_view_call<char>(strv, 1));
+        static_assert(not check_limited_size_array_view_call<char>(rng, 1));
+
+        static_assert(not check_limited_size_array_view_call<const char>(cstr, 1));
+        static_assert(not check_limited_size_array_view_call<const char>(p, 1));
+        static_assert(not check_limited_size_array_view_call<const char>(str, 1));
+        static_assert(not check_limited_size_array_view_call<const char>(strv, 1));
+        static_assert(not check_limited_size_array_view_call<const char>(std::string_view{}, 1));
+        static_assert(not check_limited_size_array_view_call<const char>(Range{}, 1));
+        static_assert(not check_limited_size_array_view_call<const char>(rng, 1));
+
+        static_assert(not check_limited_size_array_view_call<int>(cstr, 1));
+        static_assert(not check_limited_size_array_view_call<int>(p, 1));
+        static_assert(check_limited_size_array_view_call<int>(ints, 1));
+        static_assert(not check_limited_size_array_view_call<int>(rng, 1));
+
+        // deduction guide
+        static_assert(not check_limited_size_array_view_guide(cstr, 1));
+        static_assert(not check_limited_size_array_view_guide(p, 1));
+        static_assert(not check_limited_size_array_view_guide(str, 1));
+        static_assert(not check_limited_size_array_view_guide(strv, 1));
+        static_assert(not check_limited_size_array_view_guide(rng, 1));
+        static_assert(check_limited_size_array_view_guide(ints, 1));
+    }
     REDEMPTION_DIAGNOSTIC_POP()
-
-    char cstr[3] = {'0', '1', '2'};
-    char const * p = nullptr;
-    std::string str;
-    std::string_view strv;
-    int ints[3]{};
-    Range rng;
-}
-
-static_assert(not check_limited_size_array_view_call<char>(cstr, 1));
-static_assert(not check_limited_size_array_view_call<char>(p, 1));
-static_assert(not check_limited_size_array_view_call<char>(str, 1));
-static_assert(not check_limited_size_array_view_call<char>(strv, 1));
-static_assert(not check_limited_size_array_view_call<char>(rng, 1));
-
-static_assert(not check_limited_size_array_view_call<const char>(cstr, 1));
-static_assert(not check_limited_size_array_view_call<const char>(p, 1));
-static_assert(not check_limited_size_array_view_call<const char>(str, 1));
-static_assert(not check_limited_size_array_view_call<const char>(strv, 1));
-static_assert(not check_limited_size_array_view_call<const char>(std::string_view{}, 1));
-static_assert(not check_limited_size_array_view_call<const char>(Range{}, 1));
-static_assert(not check_limited_size_array_view_call<const char>(rng, 1));
-
-static_assert(not check_limited_size_array_view_call<int>(cstr, 1));
-static_assert(not check_limited_size_array_view_call<int>(p, 1));
-static_assert(check_limited_size_array_view_call<int>(ints, 1));
-static_assert(not check_limited_size_array_view_call<int>(rng, 1));
-
-// deduction guide
-static_assert(not check_limited_size_array_view_guide(cstr, 1));
-static_assert(not check_limited_size_array_view_guide(p, 1));
-static_assert(not check_limited_size_array_view_guide(str, 1));
-static_assert(not check_limited_size_array_view_guide(strv, 1));
-static_assert(not check_limited_size_array_view_guide(rng, 1));
-static_assert(check_limited_size_array_view_guide(ints, 1));
+} // anonymous namespace

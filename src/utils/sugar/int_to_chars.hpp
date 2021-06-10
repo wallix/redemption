@@ -40,7 +40,7 @@ struct int_to_chars_result
     int_to_chars_result() = default;
 
     char const* data() const noexcept { return buffer + ibeg; }
-    std::size_t size() const noexcept { return std::size_t(detail::int_to_chars_buf_size - ibeg); }
+    std::size_t size() const noexcept { return detail::int_to_chars_buf_size - ibeg; }
 
     std::string_view sv() const noexcept { return {data(), size()}; }
     operator std::string_view() const noexcept { return sv(); }
@@ -60,7 +60,7 @@ struct int_to_zchars_result
     }
 
     char const* data() const noexcept { return buffer + ibeg; }
-    std::size_t size() const noexcept { return std::size_t(detail::int_to_chars_buf_size - ibeg); }
+    std::size_t size() const noexcept { return detail::int_to_chars_buf_size - ibeg; }
 
     char const* c_str() const noexcept { return data(); }
 

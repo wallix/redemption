@@ -1,5 +1,5 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "utils/ip.cpp" // for is_ipv4_mapped_ipv6
+#include "utils/ip.cpp" // NOLINT for is_ipv4_mapped_ipv6
 
 #include <cstring>
 
@@ -41,7 +41,7 @@ namespace
 
         return ip_port.extract_of(u.sa, sizeof(u.sin6));
     }
-}
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(Test_is_ipv4_mapped_ipv6)
 {

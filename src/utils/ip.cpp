@@ -28,7 +28,8 @@ namespace
 
         return false;
     }
-}
+} // anonymous namespace
+
 
 IpPort::ErrorMessage IpPort::extract_of(sockaddr const& sa, socklen_t socklen) noexcept
 {

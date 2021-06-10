@@ -42,7 +42,7 @@ struct sized_array_view : limited_size_array_view<T, Size, Size>
     template<class C, class = decltype(void(
         limited_size_array_view<T, Size, Size>(std::declval<C&&>())
     ))>
-    constexpr sized_array_view(C&& a)
+    constexpr sized_array_view(C&& a) /* NOLINT(bugprone-forwarding-reference-overload) */
         noexcept(noexcept(array_view<T>(static_cast<C&&>(a))))
     : limited_size_array_view<T, Size, Size>(static_cast<C&&>(a))
     {}
@@ -74,7 +74,7 @@ struct writable_sized_array_view : writable_limited_size_array_view<T, Size, Siz
     template<class C, class = decltype(void(
         writable_limited_size_array_view<T, Size, Size>(std::declval<C&&>())
     ))>
-    explicit constexpr writable_sized_array_view(C&& a)
+    explicit constexpr writable_sized_array_view(C&& a) /* NOLINT(bugprone-forwarding-reference-overload) */
         noexcept(noexcept(writable_array_view<T>(static_cast<C&&>(a))))
     : writable_limited_size_array_view<T, Size, Size>(static_cast<C&&>(a))
     {}

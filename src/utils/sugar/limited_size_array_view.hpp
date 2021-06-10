@@ -102,7 +102,7 @@ namespace detail
     template<class T, std::size_t N>
     struct fixed_array_view_storage
     {
-        constexpr fixed_array_view_storage(T* p, std::size_t n) noexcept
+        constexpr fixed_array_view_storage(T* p, [[maybe_unused]] std::size_t n) noexcept
         : p(p)
         {
             assert(n == N);
@@ -179,10 +179,10 @@ struct limited_size_array_view
 public:
     // C++20: enable when AtLeast == AtMost == 0
     constexpr limited_size_array_view() = delete;
-    constexpr limited_size_array_view(limited_size_array_view && other) = default;
-    constexpr limited_size_array_view(limited_size_array_view const & other) = default;
-    constexpr limited_size_array_view & operator = (limited_size_array_view && other) = default;
-    constexpr limited_size_array_view & operator = (limited_size_array_view const & other) = default;
+    constexpr limited_size_array_view(limited_size_array_view && other) noexcept = default;
+    constexpr limited_size_array_view(limited_size_array_view const & other) noexcept = default;
+    constexpr limited_size_array_view & operator = (limited_size_array_view && other) noexcept = default;
+    constexpr limited_size_array_view & operator = (limited_size_array_view const & other) noexcept = default;
 
     // C++20: enable when AtLeast == AtMost == 0
     constexpr limited_size_array_view(std::nullptr_t /*null*/) = delete;
@@ -512,10 +512,10 @@ struct writable_limited_size_array_view
 public:
     // C++20: enable when AtLeast == AtMost == 0
     constexpr writable_limited_size_array_view() = delete;
-    constexpr writable_limited_size_array_view(writable_limited_size_array_view && other) = default;
-    constexpr writable_limited_size_array_view(writable_limited_size_array_view const & other) = default;
-    constexpr writable_limited_size_array_view & operator = (writable_limited_size_array_view && other) = default;
-    constexpr writable_limited_size_array_view & operator = (writable_limited_size_array_view const & other) = default;
+    constexpr writable_limited_size_array_view(writable_limited_size_array_view && other) noexcept = default;
+    constexpr writable_limited_size_array_view(writable_limited_size_array_view const & other) noexcept = default;
+    constexpr writable_limited_size_array_view & operator = (writable_limited_size_array_view && other) noexcept = default;
+    constexpr writable_limited_size_array_view & operator = (writable_limited_size_array_view const & other) noexcept = default;
 
     // C++20: enable when AtLeast == AtMost == 0
     constexpr writable_limited_size_array_view(std::nullptr_t /*null*/) = delete;
