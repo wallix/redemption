@@ -553,7 +553,8 @@ public:
         {
             this->mm.socket_transport = nullptr;
             log_proxy::target_disconnection(
-                this->mm.ini.template get<cfg::context::auth_error_message>().c_str());
+                this->mm.ini.template get<cfg::context::auth_error_message>().c_str(),
+                this->mm.ini.template get<cfg::context::session_id>().c_str());
         }
 
         void display_osd_message(std::string const & message) override {
@@ -1063,8 +1064,9 @@ private:
     {
         auto throw_error = [this, &report_message](char const* error_message, int id) {
             LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
-                R"(target="%s" host="%s" port="%u" reason="%s")",
+                R"(target="%s" session_id="%s" host="%s" port="%u" reason="%s")",
                 this->ini.get<cfg::globals::target_user>(),
+                this->ini.get<cfg::context::session_id>(),
                 this->ini.get<cfg::context::target_host>(),
                 this->ini.get<cfg::context::target_port>(),
                 error_message);
@@ -1080,8 +1082,9 @@ private:
         };
 
         LOG_PROXY_SIEM("TARGET_CONNECTION",
-            R"(target="%s" host="%s" port="%u")",
+            R"(target="%s" session_id="%s" host="%s" port="%u")",
             this->ini.get<cfg::globals::target_user>(),
+            this->ini.get<cfg::context::session_id>(),
             this->ini.get<cfg::context::target_host>(),
             this->ini.get<cfg::context::target_port>());
 
