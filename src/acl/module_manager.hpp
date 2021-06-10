@@ -1027,8 +1027,9 @@ private:
     {
         auto throw_error = [&](char const* error_message, int id){
             LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
-                R"(target="%s" host="%s" port="%u" reason="%s")",
+                R"(target="%s" session_id="%s" host="%s" port="%u" reason="%s")",
                 this->ini.get<cfg::globals::target_user>(),
+                this->ini.get<cfg::context::session_id>(),
                 this->ini.get<cfg::context::target_host>(),
                 this->ini.get<cfg::context::target_port>(),
                 error_message);
@@ -1045,6 +1046,14 @@ private:
             LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
             throw Error(ERR_SOCKET_CONNECT_FAILED);
         };
+
+        LOG_PROXY_SIEM("TARGET_CONNECTION",
+            R"(target="%s" session_id="%s" host="%s" port="%u")",
+            this->ini.get<cfg::globals::target_user>(),
+            this->ini.get<cfg::context::session_id>(),
+            this->ini.get<cfg::context::target_host>(),
+            this->ini.get<cfg::context::target_port>());
+
         const char * ip = this->ini.get<cfg::context::target_host>().c_str();
         char ip_addr[256] {};
         in_addr s4_sin_addr;

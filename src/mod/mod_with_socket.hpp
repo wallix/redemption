@@ -25,7 +25,8 @@
         {
             this->mm.socket_transport = nullptr;
             log_proxy::target_disconnection(
-                this->mm.ini.template get<cfg::context::auth_error_message>().c_str());
+                this->mm.ini.template get<cfg::context::auth_error_message>().c_str(),
+                this->mm.ini.template get<cfg::context::session_id>().c_str());
         }
 
         void display_osd_message(std::string const & message) override {
@@ -107,4 +108,3 @@
             Mod::rdp_input_invalidate2(vr);
         }
     };
-
