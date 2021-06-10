@@ -45,15 +45,16 @@ inline unique_fd connect_to_target_host(
 {
     auto throw_error = [&ini, &session_log](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
-            R"(target="%s" host="%s" port="%u" reason="%s")",
+            R"(target="%s" session_id="%s" host="%s" port="%u" reason="%s")",
             ini.get<cfg::globals::target_user>(),
+            ini.get<cfg::context::session_id>(),
             ini.get<cfg::context::target_host>(),
             ini.get<cfg::context::target_port>(),
             error_message);
 
         session_log.log6(LogId::CONNECTION_FAILED, {});
 
-       ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(ini)));
+        ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(ini)));
 
         LOG(LOG_ERR, "%s", (id == 1)
             ? "Failed to connect to remote TCP host (1)"
@@ -62,8 +63,9 @@ inline unique_fd connect_to_target_host(
     };
 
     LOG_PROXY_SIEM("TARGET_CONNECTION",
-        R"(target="%s" host="%s" port="%u")",
+        R"(target="%s" session_id="%s" host="%s" port="%u")",
         ini.get<cfg::globals::target_user>(),
+        ini.get<cfg::context::session_id>(),
         ini.get<cfg::context::target_host>(),
         ini.get<cfg::context::target_port>());
 
@@ -125,4 +127,3 @@ inline unique_fd connect_to_target_host(
     ini.set<cfg::context::ip_target>(resolved_ip_addr);
     return client_sck;
 }
-

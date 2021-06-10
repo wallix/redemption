@@ -49,13 +49,18 @@ namespace log_proxy
         utils::strlcpy(g_username, username);
     }
 
-    void target_disconnection(char const* reason) noexcept
+    void target_disconnection(char const* reason, char const* session_id) noexcept
     {
         if (reason && *reason) {
-            LOG_PROXY_SIEM("TARGET_DISCONNECTION", R"(reason="%s")", reason);
+            LOG_PROXY_SIEM("TARGET_DISCONNECTION",
+                           R"(session_id="%s" reason="%s")",
+                           session_id,
+                           reason);
         }
         else {
-            LOG_PROXY_SIEM("TARGET_DISCONNECTION", "%s", "");
+            LOG_PROXY_SIEM("TARGET_DISCONNECTION",
+                           R"(session_id="%s")",
+                           session_id);
         }
     }
 
