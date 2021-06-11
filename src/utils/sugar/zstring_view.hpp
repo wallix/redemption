@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/traits/is_null_terminated.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 #include <cstddef>
 #include <string>
@@ -113,6 +114,13 @@ private:
     char const* s = "";
     std::size_t len = 0;
 };
+
+
+template<>
+struct is_null_terminated<zstring_view>
+: std::true_type
+{};
+
 
 inline constexpr bool operator==(zstring_view const& lhs, zstring_view const& rhs) noexcept
 {

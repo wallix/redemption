@@ -22,6 +22,7 @@
 
 #include "utils/sugar/bounded_array_view.hpp"
 #include "utils/sugar/sized_sequence.hpp"
+#include "cxx/diagnostic.hpp"
 
 
 template<class T, std::size_t Size>
@@ -215,3 +216,25 @@ make_assumed_writable_sized_array_view(T* x) noexcept
 template<std::size_t N> using sized_chars_view = sized_array_view<char, N>;
 template<std::size_t N> using sized_u8_array_view = sized_array_view<std::uint8_t, N>;
 template<std::size_t N> using sized_writable_u8_array_view = writable_sized_array_view<std::uint8_t, N>;
+
+namespace detail
+{
+    template<char... cs>
+    struct static_constexpr_array
+    {
+        static constexpr char data[sizeof...(cs)+1] {cs..., char(0)};
+    };
+}
+
+REDEMPTION_DIAGNOSTIC_PUSH()
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
+template<class C, C... cs>
+constexpr sized_array_view<char, sizeof...(cs)> operator "" _sized_av() noexcept
+{
+    static_assert(std::is_same_v<C, char>);
+
+    return sized_array_view<char, sizeof...(cs)>
+        ::assumed(detail::static_constexpr_array<cs...>::data);
+}
+REDEMPTION_DIAGNOSTIC_POP()

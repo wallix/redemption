@@ -22,6 +22,7 @@ Author(s): Proxy Team
 
 #include "utils/sugar/zstring_view.hpp"
 #include "utils/sugar/bounded_sequence.hpp"
+#include "utils/traits/is_null_terminated.hpp"
 
 #include <type_traits>
 #include <cstring>
@@ -490,6 +491,11 @@ inline char* int_to_fixed_hexadecimal_lower_chars(char* out, T n) noexcept
     return detail::to_fixed_hexadecimal_chars<NbBytes>(out, n, detail::hex_lower_table);
 }
 
+
+template<>
+struct is_null_terminated<int_to_zchars_result>
+: std::true_type
+{};
 
 namespace detail
 {

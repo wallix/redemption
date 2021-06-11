@@ -6061,6 +6061,11 @@ test-run tests/utils/test_scaled_image24 :
   <covfile>src/utils/scaled_image24.cpp
   <covfile>src/utils/scaled_image24.hpp
 ;
+test-run tests/utils/test_static_string :
+  $(REDEMPTION_TEST_PATH)/utils/test_static_string.cpp
+:
+  <covfile>src/utils/static_string.hpp
+;
 test-run tests/utils/test_stream :
   $(REDEMPTION_TEST_PATH)/utils/test_stream.cpp
 :
@@ -6664,6 +6669,7 @@ alias test_redirection_info : tests/utils/test_redirection_info ;
 alias test_region : tests/utils/test_region ;
 alias test_rle : tests/utils/test_rle ;
 alias test_scaled_image24 : tests/utils/test_scaled_image24 ;
+alias test_static_string : tests/utils/test_static_string ;
 alias test_stream : tests/utils/test_stream ;
 alias test_string_c : tests/utils/test_string_c ;
 alias test_strutils : tests/utils/test_strutils ;
@@ -7000,6 +7006,7 @@ alias test_redirection_info.coverage : tests/utils/test_redirection_info.coverag
 alias test_region.coverage : tests/utils/test_region.coverage ;
 alias test_rle.coverage : tests/utils/test_rle.coverage ;
 alias test_scaled_image24.coverage : tests/utils/test_scaled_image24.coverage ;
+alias test_static_string.coverage : tests/utils/test_static_string.coverage ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
 alias test_string_c.coverage : tests/utils/test_string_c.coverage ;
 alias test_strutils.coverage : tests/utils/test_strutils.coverage ;
@@ -7450,6 +7457,7 @@ alias tests/utils.norec :
   tests/utils/test_region
   tests/utils/test_rle
   tests/utils/test_scaled_image24
+  tests/utils/test_static_string
   tests/utils/test_stream
   tests/utils/test_string_c
   tests/utils/test_strutils

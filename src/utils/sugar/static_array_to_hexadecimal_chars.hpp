@@ -143,6 +143,11 @@ inline static_array_to_hexadecimal_lower_zchars(SizedSeq const& a) noexcept
 }
 
 
+template<std::size_t N>
+struct is_null_terminated<static_array_to_hexadecimal_zchars_result<N>>
+: std::true_type
+{};
+
 namespace detail
 {
     template<std::size_t N>

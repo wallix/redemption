@@ -96,6 +96,8 @@ RED_AUTO_TEST_CASE(TestSizedArrayView)
     RED_CHECK_EQUAL((av.subarray<0, 1>().size()), 1u);
 
     RED_CHECK(chars_view{nullptr}.empty());
+
+    RED_CHECK("abc"_av == "abc"_sized_av);
 }
 
 RED_AUTO_TEST_CASE(TestSubSizedArray)
