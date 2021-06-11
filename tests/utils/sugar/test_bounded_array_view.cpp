@@ -21,7 +21,7 @@ Author(s): Proxies Team
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "cxx/diagnostic.hpp"
-#include "utils/sugar/limited_size_array_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 
 #include <array>
 #include <vector>
@@ -45,38 +45,38 @@ RED_AUTO_TEST_CASE(TestLimitedArrayView)
     uint8_t au8[3] = {0, 1, 2};
     std::array<char, 3> stda{{9, 8, 7}};
 
-    limited_size_array_view<char, 2, 4> avc = make_limited_size_array_view(a8);
-    limited_size_array_view<char, 2, 4> cp = avc;
-    limited_size_array_view<char, 2, 4>{cp};
+    bounded_array_view<char, 2, 4> avc = make_bounded_array_view(a8);
+    bounded_array_view<char, 2, 4> cp = avc;
+    bounded_array_view<char, 2, 4>{cp};
     array_view<char>{cp};
 
-    auto aw = make_writable_limited_size_array_view(a8);
+    auto aw = make_writable_bounded_array_view(a8);
     writable_array_view<char>{aw};
     array_view<char>{aw};
 
-    writable_limited_size_array_view<char, 2, 4> aw2 = make_writable_limited_size_array_view(a8);
+    writable_bounded_array_view<char, 2, 4> aw2 = make_writable_bounded_array_view(a8);
     writable_array_view<char>{aw2};
     array_view<char>{aw2};
 
-    array_view<char>{} = make_limited_size_array_view(a8);
-    avc = make_limited_size_array_view(stda);
-    avc = make_limited_size_array_view(a8);
-    avc = make_limited_size_array_view(avc);
-    avc = limited_size_array_view<char, 2, 4>::assumed(a8);
+    array_view<char>{} = make_bounded_array_view(a8);
+    avc = make_bounded_array_view(stda);
+    avc = make_bounded_array_view(a8);
+    avc = make_bounded_array_view(avc);
+    avc = bounded_array_view<char, 2, 4>::assumed(a8);
 
-    RED_CHECK_EQUAL(test_ambiguous(make_writable_limited_size_array_view(stda)), 1);
-    RED_CHECK_EQUAL(test_ambiguous(make_writable_limited_size_array_view(a8)), 1);
-    RED_CHECK_EQUAL(test_ambiguous(make_writable_limited_size_array_view(as8)), 2);
-    RED_CHECK_EQUAL(test_ambiguous(make_writable_limited_size_array_view(au8)), 3);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_bounded_array_view(stda)), 1);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_bounded_array_view(a8)), 1);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_bounded_array_view(as8)), 2);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_bounded_array_view(au8)), 3);
 
-    RED_CHECK_EQUAL(make_writable_limited_size_array_view(a8).size(), 3u);
+    RED_CHECK_EQUAL(make_writable_bounded_array_view(a8).size(), 3u);
 
     // same size (as std::string)
     RED_CHECK_EQUAL(avc.size(), 3);
     // same data (same memory address)
     RED_CHECK_EQUAL(voidp(avc.data()), voidp(a8));
 
-    auto av = make_writable_limited_size_array_view(a8);
+    auto av = make_writable_bounded_array_view(a8);
     // same type as s
     RED_CHECK_EQUAL(test_ambiguous(av), 1);
     // same size (as std::string)
@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestLimitedArrayView)
     // begin is an iterator to first char
     RED_CHECK_EQUAL(voidp(av_p.begin()), voidp(a8));
 
-    RED_CHECK_EQUAL(make_writable_limited_size_array_view("abc").size(), 4u);
+    RED_CHECK_EQUAL(make_writable_bounded_array_view("abc").size(), 4u);
     RED_CHECK_EQUAL((av.subarray<0, 1>().size()), 1u);
 
     RED_CHECK(chars_view{nullptr}.empty());
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestLimitedArrayView)
 RED_AUTO_TEST_CASE(TestSubSizedArray)
 {
     char s[]{'a', 'b', 'c', 'd'};
-    auto a = make_limited_size_array_view<2, 5>(s);
+    auto a = make_bounded_array_view<2, 5>(s);
     RED_CHECK_EQUAL_RANGES(a.first<1>(), "a"_av);
     RED_CHECK_EQUAL_RANGES(a.first(3), "abc"_av);
     RED_CHECK_EQUAL_RANGES(a.last<1>(), "d"_av);
@@ -142,7 +142,7 @@ namespace
 
 RED_AUTO_TEST_CASE(TestLimitedArrayView_as)
 {
-    auto a = make_limited_size_array_view<2, 5>("abcd");
+    auto a = make_bounded_array_view<2, 5>("abcd");
 
     auto x1 = a.as<ptr_ptr<char const>>();
     RED_CHECK(voidp(x1.p1) == voidp(a.begin()));
@@ -168,28 +168,28 @@ RED_AUTO_TEST_CASE(TestLimitedArrayView_as)
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcomma")
 template<class V, class T>
-constexpr auto check_limited_size_array_view_call(T && a, int /*unused*/)
-  -> decltype(void(limited_size_array_view<V, 2, 4>(std::forward<T>(a))), true)
+constexpr auto check_bounded_array_view_call(T && a, int /*unused*/)
+  -> decltype(void(bounded_array_view<V, 2, 4>(std::forward<T>(a))), true)
 {
     return true;
 }
 
 template<class T>
-constexpr auto check_limited_size_array_view_guide(T && a, int /*unused*/)
-  -> decltype(void(limited_size_array_view{std::forward<T>(a)}), true)
+constexpr auto check_bounded_array_view_guide(T && a, int /*unused*/)
+  -> decltype(void(bounded_array_view{std::forward<T>(a)}), true)
 {
     return true;
 }
 REDEMPTION_DIAGNOSTIC_POP()
 
 template<class V, class T>
-constexpr bool check_limited_size_array_view_call(T && /*unused*/, char /*unused*/)
+constexpr bool check_bounded_array_view_call(T && /*unused*/, char /*unused*/)
 {
     return false;
 }
 
 template<class T>
-constexpr bool check_limited_size_array_view_guide(T && /*unused*/, char /*unused*/)
+constexpr bool check_bounded_array_view_guide(T && /*unused*/, char /*unused*/)
 {
     return false;
 }
@@ -198,7 +198,7 @@ namespace
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-function")
-    void limited_size_array_view_assert()
+    void bounded_array_view_assert()
     {
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
@@ -215,32 +215,32 @@ namespace
         int ints[3]{};
         Range rng;
 
-        static_assert(not check_limited_size_array_view_call<char>(cstr, 1));
-        static_assert(not check_limited_size_array_view_call<char>(p, 1));
-        static_assert(not check_limited_size_array_view_call<char>(str, 1));
-        static_assert(not check_limited_size_array_view_call<char>(strv, 1));
-        static_assert(not check_limited_size_array_view_call<char>(rng, 1));
+        static_assert(not check_bounded_array_view_call<char>(cstr, 1));
+        static_assert(not check_bounded_array_view_call<char>(p, 1));
+        static_assert(not check_bounded_array_view_call<char>(str, 1));
+        static_assert(not check_bounded_array_view_call<char>(strv, 1));
+        static_assert(not check_bounded_array_view_call<char>(rng, 1));
 
-        static_assert(not check_limited_size_array_view_call<const char>(cstr, 1));
-        static_assert(not check_limited_size_array_view_call<const char>(p, 1));
-        static_assert(not check_limited_size_array_view_call<const char>(str, 1));
-        static_assert(not check_limited_size_array_view_call<const char>(strv, 1));
-        static_assert(not check_limited_size_array_view_call<const char>(std::string_view{}, 1));
-        static_assert(not check_limited_size_array_view_call<const char>(Range{}, 1));
-        static_assert(not check_limited_size_array_view_call<const char>(rng, 1));
+        static_assert(not check_bounded_array_view_call<const char>(cstr, 1));
+        static_assert(not check_bounded_array_view_call<const char>(p, 1));
+        static_assert(not check_bounded_array_view_call<const char>(str, 1));
+        static_assert(not check_bounded_array_view_call<const char>(strv, 1));
+        static_assert(not check_bounded_array_view_call<const char>(std::string_view{}, 1));
+        static_assert(not check_bounded_array_view_call<const char>(Range{}, 1));
+        static_assert(not check_bounded_array_view_call<const char>(rng, 1));
 
-        static_assert(not check_limited_size_array_view_call<int>(cstr, 1));
-        static_assert(not check_limited_size_array_view_call<int>(p, 1));
-        static_assert(check_limited_size_array_view_call<int>(ints, 1));
-        static_assert(not check_limited_size_array_view_call<int>(rng, 1));
+        static_assert(not check_bounded_array_view_call<int>(cstr, 1));
+        static_assert(not check_bounded_array_view_call<int>(p, 1));
+        static_assert(check_bounded_array_view_call<int>(ints, 1));
+        static_assert(not check_bounded_array_view_call<int>(rng, 1));
 
         // deduction guide
-        static_assert(not check_limited_size_array_view_guide(cstr, 1));
-        static_assert(not check_limited_size_array_view_guide(p, 1));
-        static_assert(not check_limited_size_array_view_guide(str, 1));
-        static_assert(not check_limited_size_array_view_guide(strv, 1));
-        static_assert(not check_limited_size_array_view_guide(rng, 1));
-        static_assert(check_limited_size_array_view_guide(ints, 1));
+        static_assert(not check_bounded_array_view_guide(cstr, 1));
+        static_assert(not check_bounded_array_view_guide(p, 1));
+        static_assert(not check_bounded_array_view_guide(str, 1));
+        static_assert(not check_bounded_array_view_guide(strv, 1));
+        static_assert(not check_bounded_array_view_guide(rng, 1));
+        static_assert(check_bounded_array_view_guide(ints, 1));
     }
     REDEMPTION_DIAGNOSTIC_POP()
 } // anonymous namespace

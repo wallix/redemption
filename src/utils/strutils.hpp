@@ -133,13 +133,13 @@ namespace detail
     }
 
 
-    inline char* append_from_av_or_char(char* s, chars_view av)
+    inline char* append_from_av_or_char(char* s, chars_view av) noexcept
     {
         memcpy(s, av.data(), av.size());
         return s + av.size();
     }
 
-    inline char* append_from_av_or_char(char* s, char c)
+    inline char* append_from_av_or_char(char* s, char c) noexcept
     {
         *s = c;
         return s + 1;
@@ -147,7 +147,7 @@ namespace detail
 
 
     template<class... StringsOrChars>
-    void str_concat_view(std::string& str, StringsOrChars&&... strs)
+    void str_concat_view(std::string& str, StringsOrChars&&... strs) noexcept
     {
         auto ipos = str.size();
         str.resize(str.size() + (... + len_from_av_or_char(strs)));

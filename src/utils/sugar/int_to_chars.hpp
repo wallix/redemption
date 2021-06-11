@@ -21,7 +21,7 @@ Author(s): Proxy Team
 #pragma once
 
 #include "utils/sugar/zstring_view.hpp"
-#include "utils/sugar/limited_size_sequence.hpp"
+#include "utils/sugar/bounded_sequence.hpp"
 
 #include <type_traits>
 #include <cstring>

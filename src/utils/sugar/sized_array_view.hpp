@@ -20,12 +20,12 @@
 
 #pragma once
 
-#include "utils/sugar/limited_size_array_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 #include "utils/sugar/sized_sequence.hpp"
 
 
 template<class T, std::size_t Size>
-struct sized_array_view : limited_size_array_view<T, Size, Size>
+struct sized_array_view : bounded_array_view<T, Size, Size>
 {
     using element_type = T const;
     using value_type = std::remove_cv_t<T>;
@@ -40,11 +40,11 @@ struct sized_array_view : limited_size_array_view<T, Size, Size>
     static constexpr std::size_t extent = Size;
 
     template<class C, class = decltype(void(
-        limited_size_array_view<T, Size, Size>(std::declval<C&&>())
+        bounded_array_view<T, Size, Size>(std::declval<C&&>())
     ))>
     constexpr sized_array_view(C&& a) /* NOLINT(bugprone-forwarding-reference-overload) */
         noexcept(noexcept(array_view<T>(static_cast<C&&>(a))))
-    : limited_size_array_view<T, Size, Size>(static_cast<C&&>(a))
+    : bounded_array_view<T, Size, Size>(static_cast<C&&>(a))
     {}
 };
 
@@ -57,7 +57,7 @@ sized_array_view(T&&) -> sized_array_view<
 
 
 template<class T, std::size_t Size>
-struct writable_sized_array_view : writable_limited_size_array_view<T, Size, Size>
+struct writable_sized_array_view : writable_bounded_array_view<T, Size, Size>
 {
     using element_type = T;
     using value_type = std::remove_cv_t<T>;
@@ -72,11 +72,11 @@ struct writable_sized_array_view : writable_limited_size_array_view<T, Size, Siz
     static constexpr std::size_t extent = Size;
 
     template<class C, class = decltype(void(
-        writable_limited_size_array_view<T, Size, Size>(std::declval<C&&>())
+        writable_bounded_array_view<T, Size, Size>(std::declval<C&&>())
     ))>
     explicit constexpr writable_sized_array_view(C&& a) /* NOLINT(bugprone-forwarding-reference-overload) */
         noexcept(noexcept(writable_array_view<T>(static_cast<C&&>(a))))
-    : writable_limited_size_array_view<T, Size, Size>(static_cast<C&&>(a))
+    : writable_bounded_array_view<T, Size, Size>(static_cast<C&&>(a))
     {}
 
     template<class U, std::size_t AtLeast, std::size_t AtMost, class = std::enable_if_t<
@@ -85,9 +85,9 @@ struct writable_sized_array_view : writable_limited_size_array_view<T, Size, Siz
         ))
     >>
     constexpr writable_sized_array_view(
-        writable_limited_size_array_view<U, AtLeast, AtMost> a
+        writable_bounded_array_view<U, AtLeast, AtMost> a
     ) noexcept
-    : writable_limited_size_array_view<T, Size, Size>(a)
+    : writable_bounded_array_view<T, Size, Size>(a)
     {}
 };
 

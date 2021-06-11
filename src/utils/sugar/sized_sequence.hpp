@@ -24,7 +24,7 @@ Author(s): Proxies Team
 #include <array>
 
 #include "utils/sugar/array.hpp"
-#include "utils/sugar/limited_size_sequence.hpp"
+#include "utils/sugar/bounded_sequence.hpp"
 
 
 namespace detail

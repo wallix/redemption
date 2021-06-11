@@ -5609,6 +5609,11 @@ test-run tests/utils/sugar/test_array_view :
 :
   <covfile>src/utils/sugar/array_view.hpp
 ;
+test-run tests/utils/sugar/test_bounded_array_view :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_bounded_array_view.cpp
+:
+  <covfile>src/utils/sugar/bounded_array_view.hpp
+;
 test-run tests/utils/sugar/test_buf_maker :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_buf_maker.cpp
 :
@@ -5643,11 +5648,6 @@ test-run tests/utils/sugar/test_int_to_chars :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_int_to_chars.cpp
 :
   <covfile>src/utils/sugar/int_to_chars.hpp
-;
-test-run tests/utils/sugar/test_limited_size_array_view :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_limited_size_array_view.cpp
-:
-  <covfile>src/utils/sugar/limited_size_array_view.hpp
 ;
 test-run tests/utils/sugar/test_movable_noncopyable :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_movable_noncopyable.cpp
@@ -6604,6 +6604,7 @@ alias test_utf16 : tests/utils/literals/test_utf16 ;
 alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
 alias test_algostring : tests/utils/sugar/test_algostring ;
 alias test_array_view : tests/utils/sugar/test_array_view ;
+alias test_bounded_array_view : tests/utils/sugar/test_bounded_array_view ;
 alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
 alias test_buffer_view : tests/utils/sugar/test_buffer_view ;
 alias test_bytes_view : tests/utils/sugar/test_bytes_view ;
@@ -6611,7 +6612,6 @@ alias test_cast : tests/utils/sugar/test_cast ;
 alias test_checked_iterator : tests/utils/sugar/test_checked_iterator ;
 alias test_finally : tests/utils/sugar/test_finally ;
 alias test_int_to_chars : tests/utils/sugar/test_int_to_chars ;
-alias test_limited_size_array_view : tests/utils/sugar/test_limited_size_array_view ;
 alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_multisz : tests/utils/sugar/test_multisz ;
 alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
@@ -6942,6 +6942,7 @@ alias test_utf16.coverage : tests/utils/literals/test_utf16.coverage ;
 alias test_safe_conversions.coverage : tests/utils/sugar/numerics/test_safe_conversions.coverage ;
 alias test_algostring.coverage : tests/utils/sugar/test_algostring.coverage ;
 alias test_array_view.coverage : tests/utils/sugar/test_array_view.coverage ;
+alias test_bounded_array_view.coverage : tests/utils/sugar/test_bounded_array_view.coverage ;
 alias test_buf_maker.coverage : tests/utils/sugar/test_buf_maker.coverage ;
 alias test_buffer_view.coverage : tests/utils/sugar/test_buffer_view.coverage ;
 alias test_bytes_view.coverage : tests/utils/sugar/test_bytes_view.coverage ;
@@ -6949,7 +6950,6 @@ alias test_cast.coverage : tests/utils/sugar/test_cast.coverage ;
 alias test_checked_iterator.coverage : tests/utils/sugar/test_checked_iterator.coverage ;
 alias test_finally.coverage : tests/utils/sugar/test_finally.coverage ;
 alias test_int_to_chars.coverage : tests/utils/sugar/test_int_to_chars.coverage ;
-alias test_limited_size_array_view.coverage : tests/utils/sugar/test_limited_size_array_view.coverage ;
 alias test_movable_noncopyable.coverage : tests/utils/sugar/test_movable_noncopyable.coverage ;
 alias test_multisz.coverage : tests/utils/sugar/test_multisz.coverage ;
 alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
@@ -7388,6 +7388,7 @@ alias tests/utils/sugar/numerics.norec :
 alias tests/utils/sugar.norec :
   tests/utils/sugar/test_algostring
   tests/utils/sugar/test_array_view
+  tests/utils/sugar/test_bounded_array_view
   tests/utils/sugar/test_buf_maker
   tests/utils/sugar/test_buffer_view
   tests/utils/sugar/test_bytes_view
@@ -7395,7 +7396,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_checked_iterator
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_int_to_chars
-  tests/utils/sugar/test_limited_size_array_view
   tests/utils/sugar/test_movable_noncopyable
   tests/utils/sugar/test_multisz
   tests/utils/sugar/test_noncopyable
