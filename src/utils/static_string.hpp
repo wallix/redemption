@@ -257,7 +257,8 @@ namespace detail
     }
 } // namespace detail
 
-template<std::size_t MaxSize = 4096, class... Strings>
+// test_static_string.cpp fails to compile with gcc-8 and a default value for MaxSize
+template<std::size_t MaxSize, class... Strings>
 [[nodiscard]] inline auto static_str_concat(Strings const&... strs)
 {
     constexpr auto max_size = (std::size_t() + ... + detail::static_str_len<Strings>::value);
@@ -267,6 +268,13 @@ template<std::size_t MaxSize = 4096, class... Strings>
     auto len = detail::static_str_concat_impl(p, detail::to_static_string_view_or_char(strs)...);
     detail::static_string_set_size::set_size(str, len);
     return str;
+}
+
+// workaround for gcc-8
+template<class... Strings>
+[[nodiscard]] inline auto static_str_concat(Strings const&... strs)
+{
+    return static_str_concat<4096>(strs...);
 }
 
 template<std::size_t N, class... Strings>

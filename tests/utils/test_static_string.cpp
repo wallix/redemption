@@ -49,8 +49,8 @@ RED_AUTO_TEST_CASE(TestStaticString)
     RED_CHECK_EQUAL(chars_view{s1}, "abcd"_av);
 
     auto s3 = static_str_concat(s1, s2, 'e', "fg"_sized_av);
+    s3 = static_str_concat<sizeof(s3)>(s1, s2, 'e', "fg"_sized_av);
     uint_c<26>() = uint_c<sizeof(s3)>();
-
     RED_CHECK_EQUAL(s3, "abcdefg"_av);
 
     static_str_assign(s2, s1, std::array<char, 1>{{'x'}});
