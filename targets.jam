@@ -5671,11 +5671,6 @@ test-run tests/utils/sugar/test_range :
 :
   <covfile>src/utils/sugar/range.hpp
 ;
-test-run tests/utils/sugar/test_sized_array_view :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_sized_array_view.cpp
-:
-  <covfile>src/utils/sugar/sized_array_view.hpp
-;
 test-run tests/utils/sugar/test_splitter :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_splitter.cpp
 :
@@ -6621,7 +6616,6 @@ alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_multisz : tests/utils/sugar/test_multisz ;
 alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_range : tests/utils/sugar/test_range ;
-alias test_sized_array_view : tests/utils/sugar/test_sized_array_view ;
 alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_static_array_to_hexadecimal_chars : tests/utils/sugar/test_static_array_to_hexadecimal_chars ;
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
@@ -6960,7 +6954,6 @@ alias test_movable_noncopyable.coverage : tests/utils/sugar/test_movable_noncopy
 alias test_multisz.coverage : tests/utils/sugar/test_multisz.coverage ;
 alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
 alias test_range.coverage : tests/utils/sugar/test_range.coverage ;
-alias test_sized_array_view.coverage : tests/utils/sugar/test_sized_array_view.coverage ;
 alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_static_array_to_hexadecimal_chars.coverage : tests/utils/sugar/test_static_array_to_hexadecimal_chars.coverage ;
 alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
@@ -7407,7 +7400,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_multisz
   tests/utils/sugar/test_noncopyable
   tests/utils/sugar/test_range
-  tests/utils/sugar/test_sized_array_view
   tests/utils/sugar/test_splitter
   tests/utils/sugar/test_static_array_to_hexadecimal_chars
   tests/utils/sugar/test_static_vector

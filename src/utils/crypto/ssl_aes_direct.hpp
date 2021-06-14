@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "utils/sugar/sized_array_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 
 #include <cstdint>
 #include <cstring>

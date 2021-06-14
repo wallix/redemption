@@ -205,12 +205,16 @@ public:
         return bounded_array_view(p, AtLeast);
     }
 
-    template<class C, class Bounds = sequence_to_size_bounds_t<C>>
+    template<class C>
     static constexpr bounded_array_view assumed(C&& a)
         noexcept(detail::is_noexcept_array_view_data_size_v<C&&>)
     {
-        static_assert(AtLeast <= Bounds::at_least);
-        static_assert(Bounds::at_most <= AtMost);
+        using Seq = std::remove_cv_t<std::remove_reference_t<C>>;
+        if constexpr (detail::is_bounded_sequence_impl<Seq>::value) {
+            using Bounds = typename detail::sequence_to_size_bounds_impl<Seq>::type;
+            static_assert(AtLeast <= Bounds::at_least);
+            static_assert(Bounds::at_most <= AtMost);
+        }
         auto av = make_array_view(static_cast<C&&>(a));
         return bounded_array_view(av.data(), av.size());
     }
@@ -537,12 +541,16 @@ public:
         return writable_bounded_array_view(p, AtLeast);
     }
 
-    template<class C, class Bounds = sequence_to_size_bounds_t<C>>
+    template<class C>
     static constexpr writable_bounded_array_view assumed(C&& a)
         noexcept(detail::is_noexcept_array_view_data_size_v<C&&>)
     {
-        static_assert(AtLeast <= Bounds::at_least);
-        static_assert(Bounds::at_most <= AtMost);
+        using Seq = std::remove_cv_t<std::remove_reference_t<C>>;
+        if constexpr (detail::is_bounded_sequence_impl<Seq>::value) {
+            using Bounds = typename detail::sequence_to_size_bounds_impl<Seq>::type;
+            static_assert(AtLeast <= Bounds::at_least);
+            static_assert(Bounds::at_most <= AtMost);
+        }
         auto av = make_writable_array_view(static_cast<C&&>(a));
         return writable_bounded_array_view(av.data(), av.size());
     }
@@ -1116,17 +1124,16 @@ constexpr auto make_bounded_array_view(Cont const& cont)
     return {cont};
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class Cont>
-constexpr bounded_array_view<
-    detail::value_type_array_view_from_t<Cont const&>,
-    AtLeast, AtMost
-> make_bounded_array_view(Cont const& cont)
-    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
-{
-    return bounded_array_view<
+template<std::size_t AtLeast, std::size_t AtMost, class Cont,
+    class AV = bounded_array_view<
         detail::value_type_array_view_from_t<Cont const&>,
         AtLeast, AtMost
-    >::assumed(cont);
+    >
+>
+constexpr AV make_bounded_array_view(Cont const& cont)
+    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
+{
+    return AV::assumed(cont);
 }
 
 template<std::size_t AtLeast, std::size_t AtMost, class T, std::size_t N>
@@ -1161,17 +1168,16 @@ constexpr auto make_writable_bounded_array_view(Cont& cont)
     return writable_bounded_array_view{cont};
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class Cont>
-constexpr writable_bounded_array_view<
-    detail::value_type_array_view_from_t<Cont const&>,
-    AtLeast, AtMost
-> make_writable_bounded_array_view(Cont const& cont)
-    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
-{
-    return writable_bounded_array_view<
+template<std::size_t AtLeast, std::size_t AtMost, class Cont,
+    class AV = bounded_array_view<
         detail::value_type_array_view_from_t<Cont const&>,
         AtLeast, AtMost
-    >::assumed(cont);
+    >
+>
+constexpr AV make_writable_bounded_array_view(Cont const& cont)
+    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
+{
+    return AV::assumed(cont);
 }
 
 template<std::size_t AtLeast, std::size_t AtMost, class T, std::size_t N>
@@ -1191,59 +1197,159 @@ make_writable_bounded_array_view(T (&arr)[N]) noexcept
 }
 
 
-template<std::size_t AtLeast, std::size_t AtMost, class T, class AV
-    = bounded_array_view<detail::value_type_array_view_from_t<T&&>, AtLeast, AtMost>>
-constexpr AV make_assumed_bounded_array_view(T&& x)
+template<class T, std::size_t N>
+using sized_array_view = bounded_array_view<T, N, N>;
+
+template<class T, std::size_t N>
+using writable_sized_array_view = writable_bounded_array_view<T, N, N>;
+
+template<std::size_t N> using sized_chars_view = sized_array_view<char, N>;
+template<std::size_t N> using sized_u8_array_view = sized_array_view<std::uint8_t, N>;
+
+
+template<class T, std::size_t Size>
+constexpr sized_array_view<T, Size>
+make_sized_array_view(sized_array_view<T, Size> av) noexcept
+{
+    return av;
+}
+
+template<class T, std::size_t Size>
+constexpr sized_array_view<T, Size>
+make_sized_array_view(writable_sized_array_view<T, Size> av) noexcept
+{
+    return av;
+}
+
+template<class Cont, class AV = sized_array_view<
+    detail::value_type_array_view_from_t<Cont const&>,
+    detail::size_bounds_to_static_size<sequence_to_size_bounds_t<Cont>>::value
+>>
+constexpr AV make_sized_array_view(Cont const& cont)
+    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
+{
+    return AV::assumed(cont);
+}
+
+template<class T, std::size_t N>
+constexpr sized_array_view<T, N>
+make_sized_array_view(T const (&arr)[N]) noexcept
+{
+    return sized_array_view<T, N>::assumed(&arr[0]);
+}
+
+template<std::size_t N, class T, class AV
+    = sized_array_view<detail::value_type_array_view_from_t<T&&>, N>>
+constexpr AV make_sized_array_view(T&& x)
     noexcept(noexcept(AV::assumed(static_cast<T&&>(x))))
 {
     return AV::assumed(static_cast<T&&>(x));
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class T>
-constexpr bounded_array_view<T, AtLeast, AtMost>
-make_assumed_bounded_array_view(T const* p, T const* e) noexcept
+template<std::size_t N, class T>
+constexpr sized_array_view<T, N> make_sized_array_view(T const* x) noexcept
 {
-    return bounded_array_view<T, AtLeast, AtMost>::assumed(p, e);
+    return sized_array_view<T, N>::assumed(x);
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class T>
-constexpr bounded_array_view<T, AtLeast, AtMost>
-make_assumed_bounded_array_view(T const* p, std::size_t n) noexcept
+
+// TODO renamed to zstring_array
+template<std::size_t N>
+constexpr sized_array_view<char, N-1>
+cstr_sized_array_view(char const (&str)[N]) noexcept
 {
-    return bounded_array_view<T, AtLeast, AtMost>::assumed(p, n);
+    return sized_array_view<char, N-1>::assumed(str);
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class T, class AV
-    = writable_bounded_array_view<detail::value_type_array_view_from_t<T&&>, AtLeast, AtMost>>
-constexpr AV make_assumed_writable_bounded_array_view(T&& x)
+// TODO renamed to zstring_array
+// forbidden: sized_array_view is for litterals
+template<std::size_t N>
+sized_array_view<char, N-1> cstr_sized_array_view(char (&str)[N]) = delete;
+
+
+template<class T, std::size_t Size>
+constexpr writable_sized_array_view<T, Size>
+make_writable_sized_array_view(writable_sized_array_view<T, Size> av) noexcept
+{
+    return av;
+}
+
+template<class Cont, class AV = writable_sized_array_view<
+    detail::value_type_array_view_from_t<Cont const&>,
+    detail::size_bounds_to_static_size<sequence_to_size_bounds_t<Cont>>::value
+>>
+constexpr AV make_writable_sized_array_view(Cont& cont)
+    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
+{
+    return AV::assumed(cont);
+}
+
+template<class T, std::size_t N>
+constexpr writable_sized_array_view<T, N>
+make_writable_sized_array_view(T (&arr)[N]) noexcept
+{
+    return writable_sized_array_view<T, N>::assumed(&arr[0]);
+}
+
+
+template<std::size_t N, class T, class AV
+    = writable_sized_array_view<detail::value_type_array_view_from_t<T&&>, N>>
+constexpr AV make_writable_sized_array_view(T&& x)
     noexcept(noexcept(AV::assumed(static_cast<T&&>(x))))
 {
     return AV::assumed(static_cast<T&&>(x));
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class T>
-constexpr writable_bounded_array_view<T, AtLeast, AtMost>
-make_assumed_writable_bounded_array_view(T* p, T const* e) noexcept
+template<std::size_t N, class T>
+constexpr writable_sized_array_view<T, N>
+make_writable_sized_array_view(T* x) noexcept
 {
-    return writable_bounded_array_view<T, AtLeast, AtMost>::assumed(p, e);
-}
-
-template<std::size_t AtLeast, std::size_t AtMost, class T>
-constexpr writable_bounded_array_view<T, AtLeast, AtMost>
-make_assumed_writable_bounded_array_view(T* p, std::size_t n) noexcept
-{
-    return writable_bounded_array_view<T, AtLeast, AtMost>::assumed(p, n);
+    return writable_sized_array_view<T, N>::assumed(x);
 }
 
 
-template<std::size_t AtLeast, std::size_t AtMost>
-using limited_chars_view = bounded_array_view<char, AtLeast, AtMost>;
+namespace detail
+{
+    template<char... cs>
+    struct static_constexpr_array
+    {
+        static constexpr char data[sizeof...(cs)+1] {cs..., char(0)};
+    };
+}
+
+REDEMPTION_DIAGNOSTIC_PUSH()
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
+template<class C, C... cs>
+constexpr sized_array_view<char, sizeof...(cs)> operator "" _sized_av() noexcept
+{
+    static_assert(std::is_same_v<C, char>);
+
+    return sized_array_view<char, sizeof...(cs)>
+        ::assumed(detail::static_constexpr_array<cs...>::data);
+}
+REDEMPTION_DIAGNOSTIC_POP()
+
+
+template<std::size_t N>
+using sized_chars_view = bounded_array_view<char, N, N>;
+
+template<std::size_t N>
+using sized_u8_array_view = bounded_array_view<std::uint8_t, N, N>;
+
+template<std::size_t N>
+using sized_writable_u8_array_view = writable_bounded_array_view<std::uint8_t, N, N>;
+
 
 template<std::size_t AtLeast, std::size_t AtMost>
-using limited_u8_array_view = bounded_array_view<std::uint8_t, AtLeast, AtMost>;
+using bounded_chars_view = bounded_array_view<char, AtLeast, AtMost>;
 
 template<std::size_t AtLeast, std::size_t AtMost>
-using limited_writable_u8_array_view = writable_bounded_array_view<std::uint8_t, AtLeast, AtMost>;
+using bounded_u8_array_view = bounded_array_view<std::uint8_t, AtLeast, AtMost>;
+
+template<std::size_t AtLeast, std::size_t AtMost>
+using bounded_writable_u8_array_view = writable_bounded_array_view<std::uint8_t, AtLeast, AtMost>;
+
 
 template<class T, class Bounds>
 using bounded_array_view_with
@@ -1252,3 +1358,4 @@ using bounded_array_view_with
 template<class T, class Bounds>
 using writable_bounded_array_view_with
   = writable_bounded_array_view<T, Bounds::at_least, Bounds::at_most>;
+

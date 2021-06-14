@@ -25,7 +25,7 @@
 #include <cassert>
 
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/sugar/sized_array_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 
 
 namespace detail_

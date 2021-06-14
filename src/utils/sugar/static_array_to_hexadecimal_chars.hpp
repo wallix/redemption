@@ -24,7 +24,7 @@ Author(s): Proxies Team
 #include <cstdint>
 
 #include "utils/sugar/int_to_chars.hpp"
-#include "utils/sugar/sized_sequence.hpp"
+#include "utils/sugar/bounded_sequence.hpp"
 
 namespace detail
 {
@@ -62,19 +62,19 @@ private:
 };
 
 
-template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::value>
 static_array_to_hexadecimal_chars_result<N>
 static_array_to_hexadecimal_upper_chars(SizedSeq const& a) noexcept;
 
-template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::value>
 static_array_to_hexadecimal_chars_result<N>
 static_array_to_hexadecimal_lower_chars(SizedSeq const& a) noexcept;
 
-template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::value>
 static_array_to_hexadecimal_zchars_result<N>
 static_array_to_hexadecimal_upper_zchars(SizedSeq const& a) noexcept;
 
-template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::size>
+template<class SizedSeq, std::size_t N = sized_sequence_of<SizedSeq, uint8_t>::value>
 static_array_to_hexadecimal_zchars_result<N>
 static_array_to_hexadecimal_lower_zchars(SizedSeq const& a) noexcept;
 

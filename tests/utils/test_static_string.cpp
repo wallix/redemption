@@ -21,7 +21,7 @@ Author(s): Proxies Team
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/static_string.hpp"
-#include "utils/sugar/sized_array_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 
 #include <array>
 

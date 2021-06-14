@@ -848,7 +848,7 @@ enum {
                 size_t const sig_sz = 8;
                 crypt.sign(
                     data,
-                    make_assumed_writable_sized_array_view<sig_sz>(stream.get_current()));
+                    make_writable_sized_array_view<sig_sz>(stream.get_current()));
                 stream.out_skip_bytes(sig_sz);
                 crypt.decrypt(data);
             }

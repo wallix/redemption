@@ -38,6 +38,15 @@ namespace detail
     template<class T>
     struct sequence_to_size_bounds_impl
     {};
+
+    template<class Seq, class T, class = void, class = std::true_type>
+    struct sized_sequence_of_impl
+    {};
+
+    template<class Seq, class = void>
+    struct is_bounded_sequence_impl
+    : std::false_type
+    {};
 } // namespace detail
 
 
@@ -45,6 +54,17 @@ namespace detail
 template<class T>
 using sequence_to_size_bounds_t = typename detail::sequence_to_size_bounds_impl<
     std::remove_cv_t<std::remove_reference_t<T>>
+>::type;
+
+// has value member when Seq is a sized_sequence of type T
+template<class Seq, class T>
+using sized_sequence_of = detail::sized_sequence_of_impl<
+    std::remove_cv_t<std::remove_reference_t<Seq>>, T
+>;
+
+template<class Seq>
+using is_bounded_sequence = typename detail::is_bounded_sequence_impl<
+    std::remove_cv_t<std::remove_reference_t<Seq>>
 >::type;
 
 
@@ -61,4 +81,56 @@ namespace detail
     {
         using type = size_bounds<N, N>;
     };
+
+
+    template<class Seq>
+    struct is_bounded_sequence_impl<Seq,
+        std::void_t<typename sequence_to_size_bounds_impl<Seq>::type>
+    >
+    : std::true_type
+    {};
+
+
+    template<class T>
+    struct size_bounds_to_static_size
+    {};
+
+    template<std::size_t N>
+    struct size_bounds_to_static_size<size_bounds<N, N>>
+    : std::integral_constant<std::size_t, N>
+    {};
+
+    template<class T>
+    using size_bounds_to_static_size_t = typename size_bounds_to_static_size<T>::type;
+
+    template<class Seq, class T>
+    struct sized_sequence_of_impl<Seq, T,
+        std::void_t<size_bounds_to_static_size_t<
+            typename detail::sequence_to_size_bounds_impl<Seq>::type>>,
+        typename std::is_same<std::remove_cv_t<std::remove_reference_t<
+            decltype(*utils::begin(std::declval<Seq&>()))>>, T>::type
+    >
+    : size_bounds_to_static_size_t<
+        typename detail::sequence_to_size_bounds_impl<Seq>::type>
+    {};
+
+    template<class Seq, class T>
+    struct sized_sequence_of_impl<Seq, T&,
+        std::void_t<size_bounds_to_static_size_t<
+            typename detail::sequence_to_size_bounds_impl<Seq>::type>>,
+        typename std::is_same<decltype(*utils::begin(std::declval<Seq&>())), T&>::type
+    >
+    : size_bounds_to_static_size_t<
+        typename detail::sequence_to_size_bounds_impl<Seq>::type>
+    {};
+
+    template<class Seq, class T>
+    struct sized_sequence_of_impl<Seq, T&&,
+        std::void_t<size_bounds_to_static_size_t<
+            typename detail::sequence_to_size_bounds_impl<Seq>::type>>,
+        typename std::is_same<decltype(*utils::begin(std::declval<Seq&>())), T&&>::type
+    >
+    : size_bounds_to_static_size_t<
+        typename detail::sequence_to_size_bounds_impl<Seq>::type>
+    {};
 } // namespace detail
