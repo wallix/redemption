@@ -20,7 +20,6 @@ Author(s): Proxies Team
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 
 #include "utils/sugar/int_to_chars.hpp"
