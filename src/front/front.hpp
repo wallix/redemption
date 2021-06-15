@@ -2359,8 +2359,6 @@ public:
                     LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                         se.eventFlags);
-                    LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
-                        static_cast<unsigned int>(se.eventFlags));
 
                     this->keymap.synchronize(se.eventFlags);
                     if (this->state == UP_AND_RUNNING) {
