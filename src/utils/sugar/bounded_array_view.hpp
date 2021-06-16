@@ -20,6 +20,7 @@ Author(s): Proxies Team
 
 #pragma once
 
+#include "cxx/cxx.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/bounded_sequence.hpp"
 
@@ -161,6 +162,45 @@ namespace detail
 } // namespace detail
 
 
+template<class BoundedArrayView, class Policy>
+struct recomputable_bounded_array_view : Policy
+{
+    BoundedArrayView bounded_av;
+
+    template<class ExpectedBoundedArrayView>
+    auto to_bounded_array_view()
+        REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
+            Policy::template convert<ExpectedBoundedArrayView>(bounded_av)
+        )
+
+    template<class ExpectedBoundedArrayView>
+    auto to_bounded_array_view() const
+        REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
+            Policy::template convert<ExpectedBoundedArrayView>(bounded_av)
+        )
+};
+
+namespace detail
+{
+    template<class>
+    struct sequence_to_size_bounds_for_norecomputable_impl
+    {
+        template<class C>
+        using f = sequence_to_size_bounds_t<C>;
+    };
+
+    template<class BoundedArrayView, class Policy>
+    struct sequence_to_size_bounds_for_norecomputable_impl<
+        recomputable_bounded_array_view<BoundedArrayView, Policy>>
+    {};
+
+    template<class C>
+    using sequence_to_size_bounds_for_norecomputable_t
+      = typename sequence_to_size_bounds_for_norecomputable_impl<C>
+      ::template f<C>;
+} // namespace detail
+
+
 template<class T, std::size_t AtLeast, std::size_t AtMost>
 struct bounded_array_view
 {
@@ -175,6 +215,9 @@ struct bounded_array_view
     using const_iterator = T const*;
     using const_pointer = T const*;
     using size_type = std::size_t;
+
+    static constexpr std::size_t at_least = AtLeast;
+    static constexpr std::size_t at_most = AtMost;
 
 public:
     // C++20: enable when AtLeast == AtMost == 0
@@ -220,14 +263,30 @@ public:
     }
 
 
-    template<class C, class Bounds = sequence_to_size_bounds_t<C>, class = std::enable_if_t<
-        (AtLeast <= Bounds::at_least && Bounds::at_most <= AtMost), decltype(void(
-            array_view<T>(std::declval<C&&>())
-        ))
-    >>
+    template<
+        class C,
+        class Bounds = detail::sequence_to_size_bounds_for_norecomputable_t<C>,
+        class = std::enable_if_t<
+            (AtLeast <= Bounds::at_least && Bounds::at_most <= AtMost), decltype(void(
+                array_view<T>(std::declval<C&&>())
+            ))
+        >
+    >
     constexpr bounded_array_view(C&& a)
         noexcept(noexcept(array_view<T>(static_cast<C&&>(a))))
     : _array(utils::data(static_cast<C&&>(a)), utils::size(static_cast<C&&>(a)))
+    {}
+
+    template<
+        class RecomputableBoundedArrayView,
+        bool IsNoexcept = noexcept(
+            std::declval<RecomputableBoundedArrayView&&>()
+            .template to_bounded_array_view<bounded_array_view>()
+        )
+    >
+    constexpr bounded_array_view(RecomputableBoundedArrayView&& a)
+        noexcept(IsNoexcept)
+    : bounded_array_view(a.template to_bounded_array_view<bounded_array_view>())
     {}
 
 
@@ -556,16 +615,21 @@ public:
     }
 
 
-    template<class C, class Bounds = sequence_to_size_bounds_t<C>, class = std::enable_if_t<
-        (AtLeast <= Bounds::at_least && Bounds::at_most <= AtMost), decltype(void(
-            writable_array_view<T>(std::declval<C&&>())
-        ))
-    >>
+    template<
+        class C,
+        class Bounds = detail::sequence_to_size_bounds_for_norecomputable_t<C>,
+        class = std::enable_if_t<
+            (AtLeast <= Bounds::at_least && Bounds::at_most <= AtMost), decltype(void(
+                writable_array_view<T>(std::declval<C&&>())
+            ))
+        >
+    >
     explicit constexpr writable_bounded_array_view(C&& a)
         noexcept(noexcept(writable_array_view<T>(static_cast<C&&>(a))))
     : _array(utils::data(static_cast<C&&>(a)), utils::size(static_cast<C&&>(a)))
     {}
 
+    // implicit ctor for writable_bounded_array_view to writable_bounded_array_view
     template<class U, std::size_t AtLeast2, std::size_t AtMost2, class = std::enable_if_t<
         (AtLeast <= AtLeast2 && AtMost2 <= AtMost), decltype(void(
             *static_cast<pointer*>(nullptr) = static_cast<U*>(nullptr)
@@ -575,6 +639,18 @@ public:
         writable_bounded_array_view<U, AtLeast2, AtMost2> a
     ) noexcept
     : _array(a.data(), a.size())
+    {}
+
+    template<
+        class RecomputableBoundedArrayView,
+        bool IsNoexcept = noexcept(
+            std::declval<RecomputableBoundedArrayView&&>()
+            .template to_bounded_array_view<writable_bounded_array_view>()
+        )
+    >
+    constexpr writable_bounded_array_view(RecomputableBoundedArrayView&& a)
+        noexcept(IsNoexcept)
+    : writable_bounded_array_view(a.template to_bounded_array_view<writable_bounded_array_view>())
     {}
 
 
@@ -1098,6 +1174,20 @@ namespace detail
     {
         using type = size_bounds<AtLeast, AtMost>;
     };
+
+    template<class T, std::size_t AtLeast, std::size_t AtMost, class Policy>
+    struct sequence_to_size_bounds_impl<recomputable_bounded_array_view<
+        bounded_array_view<T, AtLeast, AtMost>, Policy>>
+    {
+        using type = size_bounds<AtLeast, AtMost>;
+    };
+
+    template<class T, std::size_t AtLeast, std::size_t AtMost, class Policy>
+    struct sequence_to_size_bounds_impl<recomputable_bounded_array_view<
+        writable_bounded_array_view<T, AtLeast, AtMost>, Policy>>
+    {
+        using type = size_bounds<AtLeast, AtMost>;
+    };
 } // namespace detail
 
 
@@ -1305,6 +1395,36 @@ constexpr writable_sized_array_view<T, N>
 make_writable_sized_array_view(T* x) noexcept
 {
     return writable_sized_array_view<T, N>::assumed(x);
+}
+
+
+namespace detail
+{
+    struct truncated_bounded_array_view_policy
+    {
+        template<class ToBoundedArrayView, class BoundedArrayView>
+        static constexpr ToBoundedArrayView convert(BoundedArrayView av) noexcept
+        {
+            if constexpr (BoundedArrayView::at_most > ToBoundedArrayView::at_most) {
+                auto n = std::min(av.size(), ToBoundedArrayView::at_most);
+                return ToBoundedArrayView::assumed(av.data(), n);
+            }
+            else {
+                return av;
+            }
+        }
+    };
+} // namespace detail
+
+template<class Cont>
+constexpr auto truncated_bounded_array_view(Cont const& cont)
+    noexcept(noexcept(bounded_array_view{cont}))
+-> recomputable_bounded_array_view<
+    decltype(bounded_array_view{cont}),
+    detail::truncated_bounded_array_view_policy
+>
+{
+    return {{detail::truncated_bounded_array_view_policy{}}, bounded_array_view{cont}};
 }
 
 

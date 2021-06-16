@@ -149,3 +149,25 @@
 # define REDEMPTION_UNREACHABLE() do { } while (0)
 #endif
 //@}
+
+#define REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(...) \
+  REDEMPTION_DEDUCE_NOEXCEPT(__VA_ARGS__) \
+  -> decltype(__VA_ARGS__) \
+  { return __VA_ARGS__; }
+
+#define REDEMPTION_AUTO_RETURN_NOEXCEPT(...) \
+  REDEMPTION_DEDUCE_NOEXCEPT(__VA_ARGS__) \
+  { return __VA_ARGS__; }
+
+#define REDEMPTION_DECLTYPE_AUTO_RETURN(...) \
+  -> decltype(__VA_ARGS__) \
+  { return __VA_ARGS__; }
+
+#define REDEMPTION_DECLTYPE_NOEXCEPT(...) \
+  REDEMPTION_DEDUCE_NOEXCEPT(__VA_ARGS__) \
+  -> decltype(__VA_ARGS__) \
+
+# define REDEMPTION_LIFT(F) [&](auto&&... args) \
+  REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(F(static_cast<decltype(args)&&>(args)...))
+
+#define REDEMPTION_DEDUCE_NOEXCEPT(...) noexcept(noexcept(__VA_ARGS__))

@@ -38,7 +38,7 @@ using voidp = void const*;
 
 } // namespace
 
-RED_AUTO_TEST_CASE(TestLimitedArrayView)
+RED_AUTO_TEST_CASE(TestBoundedArrayView)
 {
     char a8[3] = {'x', 'y', 'z'};
     int8_t as8[3] = {-1, 0, 3};
@@ -213,7 +213,15 @@ namespace
     };
 } // anonymous namespace
 
-RED_AUTO_TEST_CASE(TestLimitedArrayView_as)
+RED_AUTO_TEST_CASE(TestBoundedAV_truncated)
+{
+    int a[]{1, 2, 3, 4, 5};
+    auto tav = truncated_bounded_array_view(a);
+    RED_CHECK((bounded_array_view<int, 0, 3>(tav)).size() == 3);
+    RED_CHECK((bounded_array_view<int, 0, 6>(tav)).size() == 5);
+}
+
+RED_AUTO_TEST_CASE(TestBoundedArrayView_as)
 {
     auto a = make_bounded_array_view<2, 5>("abcd");
 
