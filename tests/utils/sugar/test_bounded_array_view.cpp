@@ -36,6 +36,14 @@ int test_ambiguous(u8_array_view /*unused*/) { return 3; }
 
 using voidp = void const*;
 
+template<class I>
+struct type_ {};
+
+template<std::size_t AtMost>
+using to_msize_type = type_<decltype(
+    bounded_array_view<char, 10, AtMost>::assumed("", 1).msize()
+)>;
+
 } // namespace
 
 RED_AUTO_TEST_CASE(TestBoundedArrayView)
@@ -105,6 +113,13 @@ RED_AUTO_TEST_CASE(TestBoundedArrayView)
     RED_CHECK_EQUAL((av.subarray<0, 1>().size()), 1u);
 
     RED_CHECK(chars_view{nullptr}.empty());
+
+    to_msize_type<20>() = type_<uint8_t>();
+    to_msize_type<255>() = type_<uint8_t>();
+    to_msize_type<256>() = type_<uint16_t>();
+    to_msize_type<300>() = type_<uint16_t>();
+    to_msize_type<256*256-1>() = type_<uint16_t>();
+    to_msize_type<256*256+1>() = type_<uint32_t>();
 }
 
 RED_AUTO_TEST_CASE(TestSizedArrayView)
@@ -193,6 +208,7 @@ RED_AUTO_TEST_CASE(TestSubSizedArray)
     RED_CHECK_EQUAL_RANGES(a.from_offset<1>(), cstr_sized_array_view("bcd"));
     RED_CHECK_EQUAL_RANGES((a.subarray<1, 2>()), cstr_sized_array_view("bc"));
 }
+
 
 namespace
 {

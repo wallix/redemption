@@ -31,26 +31,6 @@ Author(s): Proxies Team
 
 namespace detail
 {
-    template<std::size_t n>
-    auto select_minimal_size_type_impl()
-    {
-        if constexpr (n < 256) {
-            return uint8_t();
-        }
-        else if constexpr (n < 256*256) {
-            return uint16_t();
-        }
-        else if constexpr (n < 256*256*256*256) {
-            return uint32_t();
-        }
-        else {
-            return uint64_t();
-        }
-    }
-
-    template<std::size_t n>
-    using select_minimal_size_t = decltype(select_minimal_size_type_impl<n>());
-
     struct static_string_set_size;
 
     template<class StaticBufferDesc, std::size_t overflow_copy = 0>

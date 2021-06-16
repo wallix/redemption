@@ -159,6 +159,27 @@ namespace detail
         template<template<class, std::size_t> class C, class T, std::size_t N>
         using type = C<T, N>;
     };
+
+
+    template<std::size_t n>
+    auto select_minimal_size_type_impl()
+    {
+        if constexpr (n < 256) {
+            return uint8_t();
+        }
+        else if constexpr (n < 256*256) {
+            return uint16_t();
+        }
+        else if constexpr (n < 256ull*256*256*256) {
+            return uint32_t();
+        }
+        else {
+            return uint64_t();
+        }
+    }
+
+    template<std::size_t n>
+    using select_minimal_size_t = decltype(select_minimal_size_type_impl<n>());
 } // namespace detail
 
 
@@ -294,6 +315,12 @@ public:
     constexpr size_type size() const noexcept
     {
         return _array.size();
+    }
+
+    [[nodiscard]]
+    constexpr detail::select_minimal_size_t<AtMost> msize() const noexcept
+    {
+        return detail::select_minimal_size_t<AtMost>(_array.size());
     }
 
     [[nodiscard]]
@@ -658,6 +685,12 @@ public:
     constexpr size_type size() const noexcept
     {
         return _array.size();
+    }
+
+    [[nodiscard]]
+    constexpr detail::select_minimal_size_t<AtMost> msize() const noexcept
+    {
+        return detail::select_minimal_size_t<AtMost>(_array.size());
     }
 
     [[nodiscard]]
