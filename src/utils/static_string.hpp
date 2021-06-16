@@ -60,26 +60,28 @@ struct static_string
     }
 
     // C++20: default version when N < 128|256
-    template<class C, class Bounds = sequence_to_size_bounds_t<C>>
+    template<class C>
     static_string(C const& cont) /* NOLINT(bugprone-forwarding-reference-overload) */
-        noexcept(detail::is_noexcept_array_view_data_size_v<C const&>)
+        noexcept(noexcept(make_bounded_array_view<0, N>(cont)))
     {
         operator=(cont);
     }
 
-    template<class C, class Bounds = sequence_to_size_bounds_t<C>>
+    template<class C>
     static_string& operator=(C const& cont) /* NOLINT(bugprone-forwarding-reference-overload) */
-        noexcept(detail::is_noexcept_array_view_data_size_v<C const&>)
+        noexcept(noexcept(make_bounded_array_view<0, N>(cont)))
     {
-        static_assert(Bounds::at_most <= N);
+        auto av = make_bounded_array_view<0, N>(cont);
+
+        using AV = decltype(av);
+        static_assert(AV::at_most <= N);
 
         constexpr bool is_zstr = is_null_terminated<C>::value;
 
-        auto av = bounded_array_view_with<char, Bounds>(cont);
         m_len = checked_int(av.size());
 
         detail::memcpy_possibly_more<
-            bounds_to_static_array_desc<Bounds>,
+            bounds_to_static_array_desc<AV>,
             is_zstr
         >(m_str.data(), av.data(), av.size());
 
