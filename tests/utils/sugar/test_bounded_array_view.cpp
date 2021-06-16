@@ -235,6 +235,8 @@ RED_AUTO_TEST_CASE(TestBoundedAV_truncated)
     auto tav = truncated_bounded_array_view(a);
     RED_CHECK((bounded_array_view<int, 0, 3>(tav)).size() == 3);
     RED_CHECK((bounded_array_view<int, 0, 6>(tav)).size() == 5);
+    RED_CHECK((make_bounded_array_view<0, 3>(tav)).size() == 3);
+    RED_CHECK((make_bounded_array_view<0, 6>(tav)).size() == 5);
 }
 
 RED_AUTO_TEST_CASE(TestBoundedArrayView_as)

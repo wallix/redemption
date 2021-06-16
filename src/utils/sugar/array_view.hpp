@@ -55,7 +55,7 @@ namespace detail
     struct filter_dangerous_implicit_array_view<T&, R> : filter_dangerous_implicit_array_view<T, R> {};
 
     template<class T>
-    using value_type_array_view_from_t
+    using value_type_from_seq_t
         = std::remove_cv_t<std::remove_pointer_t<decltype(utils::data(std::declval<T>()))>>;
 
     template<class U>
@@ -220,7 +220,7 @@ private:
 };
 
 template<class T>
-array_view(T&&) -> array_view<detail::value_type_array_view_from_t<T&&>>;
+array_view(T&&) -> array_view<detail::value_type_from_seq_t<T&&>>;
 
 
 template<class T>
@@ -398,7 +398,7 @@ private:
 };
 
 template<class T>
-writable_array_view(T&&) -> writable_array_view<detail::value_type_array_view_from_t<T&&>>;
+writable_array_view(T&&) -> writable_array_view<detail::value_type_from_seq_t<T&&>>;
 
 
 template<class T>
@@ -419,8 +419,8 @@ constexpr array_view<T> make_array_view(T const* first, T const* last) noexcept
 
 template<class Cont>
 constexpr auto make_array_view(Cont const& cont)
-noexcept(noexcept(array_view<detail::value_type_array_view_from_t<Cont const&>>{cont}))
--> decltype(array_view<detail::value_type_array_view_from_t<Cont const&>>{cont})
+noexcept(noexcept(array_view<detail::value_type_from_seq_t<Cont const&>>{cont}))
+-> decltype(array_view<detail::value_type_from_seq_t<Cont const&>>{cont})
 { return {cont}; }
 
 template<class T, std::size_t N>
@@ -453,9 +453,9 @@ constexpr writable_array_view<T> make_writable_array_view(T* first, T* last) noe
 
 template<class Cont>
 constexpr auto make_writable_array_view(Cont& cont)
-noexcept(noexcept(writable_array_view<detail::value_type_array_view_from_t<Cont&>>{cont}))
--> decltype(writable_array_view<detail::value_type_array_view_from_t<Cont&>>{cont})
-{ return writable_array_view<detail::value_type_array_view_from_t<Cont&>>{cont}; }
+noexcept(noexcept(writable_array_view<detail::value_type_from_seq_t<Cont&>>{cont}))
+-> decltype(writable_array_view<detail::value_type_from_seq_t<Cont&>>{cont})
+{ return writable_array_view<detail::value_type_from_seq_t<Cont&>>{cont}; }
 
 template<class T, std::size_t N>
 constexpr writable_array_view<T> make_writable_array_view(T (&arr)[N]) noexcept

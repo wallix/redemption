@@ -188,14 +188,16 @@ struct recomputable_bounded_array_view : Policy
 {
     BoundedArrayView bounded_av;
 
+    using element_type = typename BoundedArrayView::element_type;
+
     template<class ExpectedBoundedArrayView>
-    auto to_bounded_array_view()
+    constexpr auto to_bounded_array_view()
         REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
             Policy::template convert<ExpectedBoundedArrayView>(bounded_av)
         )
 
     template<class ExpectedBoundedArrayView>
-    auto to_bounded_array_view() const
+    constexpr auto to_bounded_array_view() const
         REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
             Policy::template convert<ExpectedBoundedArrayView>(bounded_av)
         )
@@ -203,6 +205,17 @@ struct recomputable_bounded_array_view : Policy
 
 namespace detail
 {
+    template<class>
+    struct is_recomputable_bounded_array_view_impl
+    : std::false_type
+    {};
+
+    template<class BoundedArrayView, class Policy>
+    struct is_recomputable_bounded_array_view_impl<
+        recomputable_bounded_array_view<BoundedArrayView, Policy>>
+    : std::true_type
+    {};
+
     template<class>
     struct sequence_to_size_bounds_for_norecomputable_impl
     {
@@ -274,7 +287,10 @@ public:
         noexcept(detail::is_noexcept_array_view_data_size_v<C&&>)
     {
         using Seq = std::remove_cv_t<std::remove_reference_t<C>>;
-        if constexpr (detail::is_bounded_sequence_impl<Seq>::value) {
+        if constexpr (detail::is_recomputable_bounded_array_view_impl<Seq>::value) {
+            return bounded_array_view(a);
+        }
+        else if constexpr (detail::is_bounded_sequence_impl<Seq>::value) {
             using Bounds = typename detail::sequence_to_size_bounds_impl<Seq>::type;
             static_assert(AtLeast <= Bounds::at_least);
             static_assert(Bounds::at_most <= AtMost);
@@ -578,7 +594,7 @@ private:
 
 template<class T, class Bounds = sequence_to_size_bounds_t<T>>
 bounded_array_view(T&&) -> bounded_array_view<
-    detail::value_type_array_view_from_t<T&&>,
+    detail::value_type_from_seq_t<T&&>,
     Bounds::at_least, Bounds::at_most
 >;
 
@@ -632,6 +648,9 @@ public:
         noexcept(detail::is_noexcept_array_view_data_size_v<C&&>)
     {
         using Seq = std::remove_cv_t<std::remove_reference_t<C>>;
+        if constexpr (detail::is_recomputable_bounded_array_view_impl<Seq>::value) {
+            return writable_bounded_array_view(a);
+        }
         if constexpr (detail::is_bounded_sequence_impl<Seq>::value) {
             using Bounds = typename detail::sequence_to_size_bounds_impl<Seq>::type;
             static_assert(AtLeast <= Bounds::at_least);
@@ -1189,7 +1208,7 @@ private:
 
 template<class T, class Bounds = sequence_to_size_bounds_t<T>>
 writable_bounded_array_view(T&&) -> writable_bounded_array_view<
-    detail::value_type_array_view_from_t<T&&>,
+    detail::value_type_from_seq_t<T&&>,
     Bounds::at_least, Bounds::at_most
 >;
 
@@ -1208,19 +1227,20 @@ namespace detail
         using type = size_bounds<AtLeast, AtMost>;
     };
 
-    template<class T, std::size_t AtLeast, std::size_t AtMost, class Policy>
-    struct sequence_to_size_bounds_impl<recomputable_bounded_array_view<
-        bounded_array_view<T, AtLeast, AtMost>, Policy>>
+    template<class>
+    struct value_type_from_recomputable_view
+    {};
+
+    template<class BoundedArrayView, class Policy>
+    struct value_type_from_recomputable_view<
+        recomputable_bounded_array_view<BoundedArrayView, Policy>>
     {
-        using type = size_bounds<AtLeast, AtMost>;
+        using type = typename BoundedArrayView::element_type;
     };
 
-    template<class T, std::size_t AtLeast, std::size_t AtMost, class Policy>
-    struct sequence_to_size_bounds_impl<recomputable_bounded_array_view<
-        writable_bounded_array_view<T, AtLeast, AtMost>, Policy>>
-    {
-        using type = size_bounds<AtLeast, AtMost>;
-    };
+    template<class T>
+    using value_type_from_recomputable_view_t
+        = typename value_type_from_recomputable_view<T>::type;
 } // namespace detail
 
 
@@ -1247,18 +1267,6 @@ constexpr auto make_bounded_array_view(Cont const& cont)
     return {cont};
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class Cont,
-    class AV = bounded_array_view<
-        detail::value_type_array_view_from_t<Cont const&>,
-        AtLeast, AtMost
-    >
->
-constexpr AV make_bounded_array_view(Cont const& cont)
-    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
-{
-    return AV::assumed(cont);
-}
-
 template<std::size_t AtLeast, std::size_t AtMost, class T, std::size_t N>
 constexpr bounded_array_view<T, AtLeast, AtMost>
 make_bounded_array_view(T const (&arr)[N]) noexcept
@@ -1274,6 +1282,52 @@ make_bounded_array_view(T const (&arr)[N]) noexcept
 {
     return bounded_array_view<T, N, N>::assumed(arr, N);
 }
+
+namespace detail
+{
+    template<bool>
+    struct mk_bav_from_seq;
+
+    template<>
+    struct mk_bav_from_seq<false>
+    {
+        template<std::size_t AtLeast, std::size_t AtMost, class Cont,
+            class AV = bounded_array_view<
+                detail::value_type_from_seq_t<Cont const&>,
+                AtLeast, AtMost
+            >
+        >
+        static constexpr AV make(Cont const& cont)
+            noexcept(noexcept(AV(make_bounded_array_view(cont))))
+        {
+            return make_bounded_array_view(cont);
+        }
+    };
+
+    template<>
+    struct mk_bav_from_seq<true>
+    {
+        template<std::size_t AtLeast, std::size_t AtMost, class RecomputableBoundedArrayView,
+            class AV = bounded_array_view<
+                typename RecomputableBoundedArrayView::element_type,
+                AtLeast, AtMost
+            >
+        >
+        static constexpr AV make(RecomputableBoundedArrayView const& cont)
+            noexcept(noexcept(AV(cont)))
+        {
+            return AV(cont);
+        }
+    };
+} // namespace detail
+
+template<std::size_t AtLeast, std::size_t AtMost, class Cont,
+    class Mk = detail::mk_bav_from_seq<
+        detail::is_recomputable_bounded_array_view_impl<Cont>::value
+    >
+>
+constexpr auto make_bounded_array_view(Cont const& cont)
+    REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(Mk::template make<AtLeast, AtMost>(cont))
 
 
 template<class T, std::size_t AtLeast, std::size_t AtMost>
@@ -1291,18 +1345,6 @@ constexpr auto make_writable_bounded_array_view(Cont& cont)
     return writable_bounded_array_view{cont};
 }
 
-template<std::size_t AtLeast, std::size_t AtMost, class Cont,
-    class AV = bounded_array_view<
-        detail::value_type_array_view_from_t<Cont const&>,
-        AtLeast, AtMost
-    >
->
-constexpr AV make_writable_bounded_array_view(Cont const& cont)
-    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
-{
-    return AV::assumed(cont);
-}
-
 template<std::size_t AtLeast, std::size_t AtMost, class T, std::size_t N>
 constexpr writable_bounded_array_view<T, AtLeast, AtMost>
 make_writable_bounded_array_view(T const (&arr)[N]) noexcept
@@ -1318,6 +1360,52 @@ make_writable_bounded_array_view(T (&arr)[N]) noexcept
 {
     return writable_bounded_array_view<T, N, N>::assumed(arr, N);
 }
+
+namespace detail
+{
+    template<bool>
+    struct mk_wbav_from_seq;
+
+    template<>
+    struct mk_wbav_from_seq<false>
+    {
+        template<std::size_t AtLeast, std::size_t AtMost, class Cont,
+            class AV = writable_bounded_array_view<
+                detail::value_type_from_seq_t<Cont&>,
+                AtLeast, AtMost
+            >
+        >
+        static constexpr AV make(Cont& cont)
+            noexcept(noexcept(AV(make_writable_bounded_array_view(cont))))
+        {
+            return make_writable_bounded_array_view(cont);
+        }
+    };
+
+    template<>
+    struct mk_wbav_from_seq<true>
+    {
+        template<std::size_t AtLeast, std::size_t AtMost, class RecomputableBoundedArrayView,
+            class AV = writable_bounded_array_view<
+                typename RecomputableBoundedArrayView::element_type,
+                AtLeast, AtMost
+            >
+        >
+        static constexpr AV make(RecomputableBoundedArrayView const& cont)
+            noexcept(noexcept(AV(cont)))
+        {
+            return AV(cont);
+        }
+    };
+} // namespace detail
+
+template<std::size_t AtLeast, std::size_t AtMost, class Cont,
+    class Mk = detail::mk_wbav_from_seq<
+        detail::is_recomputable_bounded_array_view_impl<std::remove_const_t<Cont>>::value
+    >
+>
+constexpr auto make_writable_bounded_array_view(Cont& cont)
+    REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(Mk::template make<AtLeast, AtMost>(cont))
 
 
 template<class T, std::size_t N>
@@ -1344,14 +1432,14 @@ make_sized_array_view(writable_sized_array_view<T, Size> av) noexcept
     return av;
 }
 
-template<class Cont, class AV = sized_array_view<
-    detail::value_type_array_view_from_t<Cont const&>,
-    detail::size_bounds_to_static_size<sequence_to_size_bounds_t<Cont>>::value
->>
-constexpr AV make_sized_array_view(Cont const& cont)
-    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
+template<class Cont,
+    class AV = decltype(writable_bounded_array_view{std::declval<Cont&>()}),
+    class = std::enable_if_t<AV::at_least == AV::at_most>
+>
+constexpr AV make_sized_array_view(Cont& cont)
+    noexcept(noexcept(AV(cont)))
 {
-    return AV::assumed(cont);
+    return AV(cont);
 }
 
 template<class T, std::size_t N>
@@ -1361,18 +1449,18 @@ make_sized_array_view(T const (&arr)[N]) noexcept
     return sized_array_view<T, N>::assumed(&arr[0]);
 }
 
-template<std::size_t N, class T, class AV
-    = sized_array_view<detail::value_type_array_view_from_t<T&&>, N>>
-constexpr AV make_sized_array_view(T&& x)
-    noexcept(noexcept(AV::assumed(static_cast<T&&>(x))))
-{
-    return AV::assumed(static_cast<T&&>(x));
-}
+template<std::size_t N, class Cont,
+    class Mk = detail::mk_bav_from_seq<
+        detail::is_recomputable_bounded_array_view_impl<Cont>::value
+    >
+>
+constexpr auto make_sized_array_view(Cont const& cont)
+    REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(Mk::template make<N, N>(cont))
 
 template<std::size_t N, class T>
-constexpr sized_array_view<T, N> make_sized_array_view(T const* x) noexcept
+constexpr sized_array_view<T, N> make_sized_array_view(T const* ptr) noexcept
 {
-    return sized_array_view<T, N>::assumed(x);
+    return sized_array_view<T, N>::assumed(ptr);
 }
 
 
@@ -1397,14 +1485,14 @@ make_writable_sized_array_view(writable_sized_array_view<T, Size> av) noexcept
     return av;
 }
 
-template<class Cont, class AV = writable_sized_array_view<
-    detail::value_type_array_view_from_t<Cont const&>,
-    detail::size_bounds_to_static_size<sequence_to_size_bounds_t<Cont>>::value
->>
+template<class Cont,
+    class AV = decltype(writable_bounded_array_view{std::declval<Cont&>()}),
+    class = std::enable_if_t<AV::at_least == AV::at_most>
+>
 constexpr AV make_writable_sized_array_view(Cont& cont)
-    noexcept(detail::is_noexcept_array_view_data_size_v<Cont const&>)
+    noexcept(noexcept(AV(cont)))
 {
-    return AV::assumed(cont);
+    return AV(cont);
 }
 
 template<class T, std::size_t N>
@@ -1414,20 +1502,19 @@ make_writable_sized_array_view(T (&arr)[N]) noexcept
     return writable_sized_array_view<T, N>::assumed(&arr[0]);
 }
 
-
-template<std::size_t N, class T, class AV
-    = writable_sized_array_view<detail::value_type_array_view_from_t<T&&>, N>>
-constexpr AV make_writable_sized_array_view(T&& x)
-    noexcept(noexcept(AV::assumed(static_cast<T&&>(x))))
-{
-    return AV::assumed(static_cast<T&&>(x));
-}
+template<std::size_t N, class Cont,
+    class Mk = detail::mk_wbav_from_seq<
+        detail::is_recomputable_bounded_array_view_impl<Cont>::value
+    >
+>
+constexpr auto make_writable_sized_array_view(Cont const& cont)
+    REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(Mk::template make<N, N>(cont))
 
 template<std::size_t N, class T>
 constexpr writable_sized_array_view<T, N>
-make_writable_sized_array_view(T* x) noexcept
+make_writable_sized_array_view(T* ptr) noexcept
 {
-    return writable_sized_array_view<T, N>::assumed(x);
+    return writable_sized_array_view<T, N>::assumed(ptr);
 }
 
 
