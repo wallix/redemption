@@ -338,7 +338,7 @@ namespace ut
           , lazy_ostream_create_decorator_result_59
           , lazy_ostream_create_decorator_result_73
         >;
-    }
+    } // namespace detail
 
 #define RED_TEST_CREATE_DECORATOR(name, f)                                         \
     template<class T, class U, typename OP>                                        \
@@ -378,7 +378,7 @@ namespace ut
 
             return ar;
         }
-    }
+    } // namespace detail
     RED_TEST_CREATE_DECORATOR(hex_int, detail::hex_int_compare)
 }
 

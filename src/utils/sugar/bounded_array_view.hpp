@@ -63,7 +63,7 @@ namespace detail
     {};
 
     template<class F, std::size_t... Ints>
-    constexpr auto unroll_indexes(std::index_sequence<Ints...>, F&& f)
+    constexpr auto unroll_indexes(std::index_sequence<Ints...> /*ints*/, F&& f)
     {
         return f(std::integral_constant<std::size_t, Ints>()...);
     }
@@ -321,7 +321,7 @@ public:
             .template to_bounded_array_view<bounded_array_view>()
         )
     >
-    constexpr bounded_array_view(RecomputableBoundedArrayView&& a)
+    constexpr bounded_array_view(RecomputableBoundedArrayView&& a) /*NOLINT(bugprone-forwarding-reference-overload)*/
         noexcept(IsNoexcept)
     : bounded_array_view(a.template to_bounded_array_view<bounded_array_view>())
     {}
@@ -694,7 +694,7 @@ public:
             .template to_bounded_array_view<writable_bounded_array_view>()
         )
     >
-    constexpr writable_bounded_array_view(RecomputableBoundedArrayView&& a)
+    constexpr writable_bounded_array_view(RecomputableBoundedArrayView&& a) /*NOLINT(bugprone-forwarding-reference-overload)*/
         noexcept(IsNoexcept)
     : writable_bounded_array_view(a.template to_bounded_array_view<writable_bounded_array_view>())
     {}
