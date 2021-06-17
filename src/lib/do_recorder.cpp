@@ -547,7 +547,7 @@ static inline int check_encrypted_or_checksumed(
 
 static void raise_error(
     std::string const& output_filename,
-    int code, const char * message)
+    int code, chars_view message)
 {
     if (output_filename.empty()) {
         return;
@@ -563,7 +563,7 @@ static void raise_error(
     UpdateProgressData update_progress_data(
         progress_filename, MonotonicTimePoint(), MonotonicTimePoint());
 
-    update_progress_data.raise_error(code, message);
+    update_progress_data.raise_error(code, truncated_bounded_array_view(message));
 }
 
 static int raise_error_and_log(
@@ -571,7 +571,7 @@ static int raise_error_and_log(
     int code, zstring_view message)
 {
     std::cerr << message << std::endl;
-    raise_error(output_filename, -1, message.c_str());
+    raise_error(output_filename, -1, message);
     return code;
 }
 
@@ -1251,17 +1251,26 @@ static inline int replay(
                                 player.play(std::ref(update_progress_data), program_requested_to_shutdown);
 
                                 if (program_requested_to_shutdown) {
-                                    update_progress_data.raise_error(65537, "Program requested to shutdown");
+                                    update_progress_data.raise_error(
+                                        65537, "Program requested to shutdown"_sized_av
+                                    );
                                 }
                             }
                             catch (Error const & e) {
                                 const bool msg_with_error_id = false;
-                                update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
+                                update_progress_data.raise_error(
+                                    e.id,
+                                    truncated_bounded_array_view(
+                                        e.errmsg(msg_with_error_id)
+                                    )
+                                );
 
                                 return_code = -1;
                             }
                             catch (...) {
-                                update_progress_data.raise_error(65536, "Unknown error");
+                                update_progress_data.raise_error(
+                                    65536, "Unknown error"_sized_av
+                                );
 
                                 return_code = -1;
                             }
@@ -1530,8 +1539,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::on_off([&](bool x){ bogus_vlc = !x; }))
     );
 
-    auto cl_error = [&recorder](char const* mes, int const errnum = 1) /*NOLINT*/ {
-        std::cerr << mes << "\n";
+    auto cl_error = [&recorder](chars_view mes, int const errnum = 1) /*NOLINT*/ {
+        std::cerr << mes.as<std::string_view>() << "\n";
         raise_error(recorder.output_filename, errnum, mes);
         return ClRes::Err;
     };
@@ -1556,7 +1565,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             }
             if (msg_error.data()) {
                 std::cerr << "\n" << msg_error;
-                cl_error(msg_error.data());
+                cl_error(msg_error);
             }
             std::cerr << "\n";
             return ClRes::Err;
@@ -1671,7 +1680,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (recorder.input_filename.empty()) {
-        return cl_error("Missing input mwrm file name: use -i filename");
+        return cl_error("Missing input mwrm file name: use -i filename"_av);
     }
 
     // Input path rule is as follow:
@@ -1721,7 +1730,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         case IsEncryptedResult::Error: {
             int const errnum = errno;
             auto const mes = str_concat("Input file error: ", strerror(errnum));
-            return cl_error(mes.c_str(), -errnum);
+            return cl_error(mes, -errnum);
         }
 
         case IsEncryptedResult::IsEncrypted:

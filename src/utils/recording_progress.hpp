@@ -24,6 +24,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/static_fmt.hpp"
 #include "utils/monotonic_clock.hpp"
 
 #include <cassert>
@@ -129,41 +130,34 @@ public:
         }
     }
 
-    void raise_error(int code, const char * message)
+    void raise_error(int code, bounded_chars_view<0, 1024> message)
     {
-        char str_error_message[1024];
-
-        int const len = std::snprintf(
-            str_error_message, sizeof(str_error_message),
-            R"({"percentage":%u,"eta":%d,"videos":%u,"error":{"code":%d,"message":"%s"}})" ,
-            this->time_percentage, this->time_remaining, this->nb_videos, code, (message ? message : "")
-        );
-
         this->error_raised = true;
-        this->write_buf(str_error_message, len);
+
+        auto json =
+            R"({"percentage":%u,"eta":%d,"videos":%u,"error":{"code":%d,"message":"%s"}})"
+            ""_static_fmt(this->time_percentage, this->time_remaining, this->nb_videos, code, message);
+
+        this->write_json(json);
     }
 
 private:
     void write_datas()
     {
-        char str_json[64];
+        auto json =
+            R"({"percentage":%u,"eta":%d,"videos":%u})"
+            ""_static_fmt(this->time_percentage, this->time_remaining, this->nb_videos);
 
-        int const len = std::snprintf(
-            str_json, sizeof(str_json),
-            R"({"percentage":%u,"eta":%d,"videos":%u})",
-            this->time_percentage, this->time_remaining, this->nb_videos
-        );
-
-        this->write_buf(str_json, len);
+        this->write_json(json);
     }
 
-    void write_buf(char const * buf, std::size_t len)
+    void write_json(chars_view json)
     {
         bool has_error = true;
 
         off_t const seek_result = ::lseek(this->fd.fd(), 0, SEEK_SET);
         if (seek_result != -1) {
-            ssize_t const write_result = ::write(this->fd.fd(), buf, len);
+            ssize_t const write_result = ::write(this->fd.fd(), json.data(), json.size());
             if (write_result != -1) {
                 int const truncate_result = ::ftruncate(this->fd.fd(), write_result);
                 if (truncate_result !=  1) {

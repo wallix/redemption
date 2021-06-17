@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
         p.next_video(start_time + 90s);
         RED_CHECK_EQUAL(read_file(), R"({"percentage":90,"eta":0,"videos":1})");
 
-        p.raise_error(2, "plouf");
+        p.raise_error(2, "plouf"_sized_av);
         RED_CHECK_EQUAL(read_file(),
             R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
     }
