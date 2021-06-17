@@ -1291,7 +1291,7 @@ public:
                 uint8_t sig[SslSha1::DIGEST_LENGTH];
                 sha1.final(make_writable_sized_array_view(sig));
 
-                return str_concat("/#"_av, static_array_to_hexadecimal_upper_chars(sig), ' ');
+                return str_concat("/#"_av, static_array_to_hexadecimal_upper_chars(make_bounded_array_view(sig).first<10>()), ' ');
             }
 
             return str_concat("/#", this->session_probe.target_informations, ' ');
