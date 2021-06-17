@@ -206,10 +206,15 @@ namespace detail
     template<std::size_t AtLeast, std::size_t AtMost>
     inline char* append_from_bounded_av_or_char(char* s, bounded_array_view<char, AtLeast, AtMost> av) noexcept
     {
-        detail::memcpy_possibly_more<
-            static_array_desc<AtLeast == AtMost, AtMost>
-        >(s, av.data(), av.size());
-        return s + av.size();
+        if constexpr (AtMost != 0) {
+            detail::memcpy_possibly_more<
+                static_array_desc<AtLeast == AtMost, AtMost>
+            >(s, av.data(), av.size());
+            return s + av.size();
+        }
+        else {
+            return s;
+        }
     }
 
     inline char* append_from_bounded_av_or_char(char* s, char c) noexcept
@@ -230,7 +235,7 @@ namespace detail
 
 
     template<class... AvOrChar>
-    inline std::size_t static_str_concat_impl(char* p, AvOrChar&&... strs) noexcept
+    inline std::size_t static_str_concat_impl(char* p, AvOrChar const&... strs) noexcept
     {
         char* e = p;
         (..., void(e = detail::append_from_bounded_av_or_char(e, strs)));
