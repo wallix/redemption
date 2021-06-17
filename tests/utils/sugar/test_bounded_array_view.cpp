@@ -233,6 +233,24 @@ RED_AUTO_TEST_CASE(TestBoundedAV_truncated)
 {
     int a[]{1, 2, 3, 4, 5};
     auto tav = truncated_bounded_array_view(a);
+    type_<recomputable_bounded_array_view<
+        bounded_array_view<int, 5, 5>,
+        detail::truncated_bounded_array_view_policy
+    >>() = type_<decltype(tav)>();
+    RED_CHECK((bounded_array_view<int, 0, 3>(tav)).size() == 3);
+    RED_CHECK((bounded_array_view<int, 0, 6>(tav)).size() == 5);
+    RED_CHECK((make_bounded_array_view<0, 3>(tav)).size() == 3);
+    RED_CHECK((make_bounded_array_view<0, 6>(tav)).size() == 5);
+}
+
+RED_AUTO_TEST_CASE(TestBoundedAV_truncated2)
+{
+    int a[]{1, 2, 3, 4, 5};
+    auto tav = truncated_bounded_array_view(array_view{a});
+    type_<recomputable_bounded_array_view<
+        array_view<int>,
+        detail::truncated_array_view_policy
+    >>() = type_<decltype(tav)>();
     RED_CHECK((bounded_array_view<int, 0, 3>(tav)).size() == 3);
     RED_CHECK((bounded_array_view<int, 0, 6>(tav)).size() == 5);
     RED_CHECK((make_bounded_array_view<0, 3>(tav)).size() == 3);

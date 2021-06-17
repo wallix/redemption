@@ -183,23 +183,23 @@ namespace detail
 } // namespace detail
 
 
-template<class BoundedArrayView, class Policy>
+template<class ArrayView, class Policy>
 struct recomputable_bounded_array_view : Policy
 {
-    BoundedArrayView bounded_av;
+    ArrayView av;
 
-    using element_type = typename BoundedArrayView::element_type;
+    using element_type = typename ArrayView::element_type;
 
     template<class ExpectedBoundedArrayView>
     constexpr auto to_bounded_array_view()
         REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
-            Policy::template convert<ExpectedBoundedArrayView>(bounded_av)
+            Policy::template convert<ExpectedBoundedArrayView>(av)
         )
 
     template<class ExpectedBoundedArrayView>
     constexpr auto to_bounded_array_view() const
         REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
-            Policy::template convert<ExpectedBoundedArrayView>(bounded_av)
+            Policy::template convert<ExpectedBoundedArrayView>(av)
         )
 };
 
@@ -1534,17 +1534,43 @@ namespace detail
             }
         }
     };
+
+    struct truncated_array_view_policy
+    {
+        template<class ToBoundedArrayView, class ArrayView>
+        static constexpr ToBoundedArrayView convert(ArrayView av) noexcept
+        {
+            auto n = std::min(av.size(), ToBoundedArrayView::at_most);
+            return ToBoundedArrayView::assumed(av.data(), n);
+        }
+    };
+
+    template<class Cont, class = void>
+    struct truncated_bounded_array_view_selector
+    {
+        using av_type = decltype(array_view{std::declval<Cont const&>()});
+        using policy_type = truncated_array_view_policy;
+    };
+
+    template<class Cont>
+    struct truncated_bounded_array_view_selector<Cont, std::void_t<
+        decltype(bounded_array_view{std::declval<Cont const&>()})
+    >>
+    {
+        using av_type = decltype(bounded_array_view{std::declval<Cont const&>()});
+        using policy_type = truncated_bounded_array_view_policy;
+    };
 } // namespace detail
 
-template<class Cont>
+template<class Cont, class S = detail::truncated_bounded_array_view_selector<Cont>>
 constexpr auto truncated_bounded_array_view(Cont const& cont)
-    noexcept(noexcept(bounded_array_view{cont}))
+    noexcept(noexcept(typename S::av_type{cont}))
 -> recomputable_bounded_array_view<
-    decltype(bounded_array_view{cont}),
-    detail::truncated_bounded_array_view_policy
+    typename S::av_type,
+    typename S::policy_type
 >
 {
-    return {{detail::truncated_bounded_array_view_policy{}}, bounded_array_view{cont}};
+    return {{typename S::policy_type{}}, typename S::av_type{cont}};
 }
 
 
