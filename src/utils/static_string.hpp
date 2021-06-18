@@ -213,6 +213,7 @@ namespace detail
             return s + av.size();
         }
         else {
+            (void)av;
             return s;
         }
     }
