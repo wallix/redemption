@@ -311,9 +311,8 @@ constexpr auto operator "" _static_fmt() noexcept
         auto to_static_str = [&](auto... ints) {
             return detail::static_constexpr_array<fmt.string[ints]...>();
         };
-        using static_str = decltype(detail::unroll_indexes(
-            std::make_index_sequence<fmt.string_len>(),
-            to_static_str));
+        using ints = std::make_index_sequence<fmt.string_len>;
+        using static_str = decltype(detail::unroll_indexes(ints(), to_static_str));
 
         auto to_static_fmt = [&](auto... ints) {
             return detail::static_fmt_t<
