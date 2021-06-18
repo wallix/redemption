@@ -35,7 +35,13 @@ namespace detail
 
     struct static_fmt_init_t
     {
-        static_fmt_part* part;
+        // don't use static_fmt_part, internal error in to_static_fmt with gcc <= 9
+        // @{
+        uint16_t* offset;
+        uint16_t* length;
+        char* fmt;
+        // @}
+
         char* string;
         char* s1 = string;
         char* s2 = string;
@@ -48,7 +54,9 @@ namespace detail
         {
             if (is_fmt) {
                 if (c == 's' || c == 'd' || c == 'u' || c == 'x' || c == 'X') {
-                    *part++ = {uint16_t(s1-string), uint16_t(s2-s1), c};
+                    *offset++ = uint16_t(s1-string);
+                    *length++ = uint16_t(s2-s1);
+                    *fmt++ = c;
                     s1 = s2;
                 }
                 else if (c == '%') {
@@ -94,7 +102,9 @@ namespace detail
     {
         struct fmt_t
         {
-            detail::static_fmt_part parts[(... + (cs == '%'))];
+            uint16_t offsets[(... + (cs == '%'))];
+            uint16_t lengths[(... + (cs == '%'))];
+            char fmts[(... + (cs == '%'))];
             detail::static_fmt_part last;
             char string[sizeof...(cs)];
             char fmt_err;
@@ -106,14 +116,14 @@ namespace detail
 
         fmt_t fmt {};
 
-        detail::static_fmt_init_t fmt_init{fmt.parts, fmt.string};
+        detail::static_fmt_init_t fmt_init{fmt.offsets, fmt.lengths, fmt.fmts, fmt.string};
         fmt.has_error = (... && fmt_init.next(cs));
         fmt.has_error = fmt_init.post_error(fmt.has_error);
         fmt.last = fmt_init.post();
         fmt.fmt_err = fmt_init.fmt_err;
         fmt.idx_err = fmt_init.idx_err;
         fmt.string_len = std::size_t(fmt_init.s2 - fmt.string);
-        fmt.part_count = std::size_t(fmt_init.part - fmt.parts);
+        fmt.part_count = std::size_t(fmt_init.offset - fmt.offsets);
 
         return fmt;
     }
@@ -315,9 +325,9 @@ constexpr auto operator "" _static_fmt() noexcept
                     fmt.last.fmt
                 >,
                 detail::static_fmt_part_t<
-                    fmt.parts[ints].offset,
-                    fmt.parts[ints].length,
-                    fmt.parts[ints].fmt
+                    fmt.offsets[ints],
+                    fmt.lengths[ints],
+                    fmt.fmts[ints]
                 >...
             >();
         };
