@@ -280,8 +280,8 @@ static std::string generic_flags_to_string(FlagType flags, ToName to_name, Flag.
                 FlagType(flag), 16);
             *views_it++ = has_value ? " | "_av : ""_av;
             *views_it++ = to_name(flag);
-            *views_it++ = {buffer_it->data(), r.ptr};
             *views_it++ = "(0x"_av;
+            *views_it++ = {buffer_it->data(), r.ptr};
             *views_it++ = ")"_av;
             has_value = true;
         }

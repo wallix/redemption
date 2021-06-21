@@ -33,13 +33,13 @@ inline void msgdump_impl(
                             : 1  // Server
                             );
     LOG(LOG_INFO, "\\x00\\x00\\x00\\x0%u", dest);
-    LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
+    LOG(LOG_INFO, "\\x%02x\\x%02x\\x%02x\\x%02x",
         (total_length >> 24), (total_length >> 16) & 0xffu,
         (total_length >> 8) & 0xffu, (total_length & 0xffu));
-    LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
+    LOG(LOG_INFO, "\\x%02x\\x%02x\\x%02x\\x%02x",
         (flags >> 24), (flags >> 16) & 0xff,
         (flags >> 8) & 0xff, (flags & 0xff));
-    LOG(LOG_INFO, "\\x%lx\\x%lx\\x%lx\\x%lx",
+    LOG(LOG_INFO, "\\x%02lx\\x%02lx\\x%02lx\\x%02lx",
         (chunk_data.size() >> 24), (chunk_data.size() >> 16) & 0xffu,
         (chunk_data.size() >> 8) & 0xffu, (chunk_data.size() & 0xffu));
     hexdump_c(chunk_data);
