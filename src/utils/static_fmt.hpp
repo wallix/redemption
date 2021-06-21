@@ -311,8 +311,16 @@ constexpr auto operator "" _static_fmt() noexcept
         auto to_static_str = [&](auto... ints) {
             return detail::static_constexpr_array<fmt.string[ints]...>();
         };
-        using ints = std::make_index_sequence<fmt.string_len>;
-        using static_str = decltype(detail::unroll_indexes(ints(), to_static_str));
+        auto ints = std::make_index_sequence<fmt.string_len>();
+        using static_str = decltype(detail::unroll_indexes(ints, to_static_str));
+
+        auto gcc8_fix = [&](auto ints) {
+            return detail::static_fmt_part_t<
+                fmt.offsets[decltype(ints)::value],
+                fmt.lengths[decltype(ints)::value],
+                fmt.fmts[decltype(ints)::value]
+            >();
+        };
 
         auto to_static_fmt = [&](auto... ints) {
             return detail::static_fmt_t<
@@ -323,11 +331,7 @@ constexpr auto operator "" _static_fmt() noexcept
                     fmt.last.length,
                     fmt.last.fmt
                 >,
-                detail::static_fmt_part_t<
-                    fmt.offsets[ints],
-                    fmt.lengths[ints],
-                    fmt.fmts[ints]
-                >...
+                decltype(gcc8_fix(ints))...
             >();
         };
 
