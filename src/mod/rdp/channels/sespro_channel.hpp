@@ -1150,14 +1150,14 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "STARTUP_APPLICATION_FAIL_TO_RUN")) {
                     if (parameters_.size() == 2) {
                         this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
-                            KVLog("application_name"_av, parameters_[0]),
+                            //KVLog("application_name"_av, parameters_[0]),
                             KVLog("raw_result"_av,       parameters_[1]),
                         });
 
                         LOG(LOG_ERR,
                             "Session Probe failed to run startup application: "
-                            "app_name=%s  raw_result=%s",
-                            parameters_[0], parameters_[1]);
+                            "raw_result=%s",
+                            parameters_[1]);
 
                         this->session_log.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
@@ -1170,15 +1170,15 @@ public:
                     if (parameters_.size() == 3) {
                         this->log6(
                             LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {
-                            KVLog("application_name"_av,   parameters_[0]),
+                            //KVLog("application_name"_av,   parameters_[0]),
                             KVLog("raw_result"_av,         parameters_[1]),
                             KVLog("raw_result_message"_av, parameters_[2]),
                         });
 
                         LOG(LOG_ERR,
                             "Session Probe failed to run startup application: "
-                            "app_name=%s  raw_result=%s  raw_result_message=%s",
-                            parameters_[0], parameters_[1], parameters_[2]);
+                            "raw_result=%s  raw_result_message=%s",
+                            parameters_[1], parameters_[2]);
 
                         this->session_log.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
