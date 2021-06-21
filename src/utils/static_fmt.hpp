@@ -316,9 +316,9 @@ constexpr auto operator "" _static_fmt() noexcept
 
         auto gcc8_fix = [&](auto ints) {
             return detail::static_fmt_part_t<
-                fmt.offsets[decltype(ints)::value],
-                fmt.lengths[decltype(ints)::value],
-                fmt.fmts[decltype(ints)::value]
+                fmt.offsets[ints],
+                fmt.lengths[ints],
+                fmt.fmts[ints]
             >();
         };
 
