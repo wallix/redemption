@@ -394,6 +394,8 @@ socket_path = '/tmp/redemption-sesman-sock'
 def standalone():
     print('open socket at', socket_path)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    if os.path.exists(socket_path):
+        os.unlink(socket_path)
     # create socket from bounded port
     s1 = socket.socket(AF_UNIX, SOCK_STREAM)
     s1.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
