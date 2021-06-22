@@ -3526,28 +3526,28 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// - basic_trace     = 0x0000'0001 <br/>
-    /// - basic_trace2    = 0x0000'0002 <br/>
-    /// - basic_trace3    = 0x0000'0004 <br/>
-    /// - basic_trace4    = 0x0000'0008 <br/>
-    /// - basic_trace5    = 0x0000'0020 <br/>
-    /// - graphic         = 0x0000'0040 <br/>
-    /// - channel         = 0x0000'0080 <br/>
-    /// - cache_from_disk = 0x0000'0400 <br/>
-    /// - bmp_info        = 0x0000'0800 <br/>
-    /// - global_channel  = 0x0000'2000 <br/>
-    /// - sec_decrypted   = 0x0000'4000 <br/>
-    /// - keymap          = 0x0000'8000 <br/>
+    /// - basic_trace     = 0x00000001 <br/>
+    /// - basic_trace2    = 0x00000002 <br/>
+    /// - basic_trace3    = 0x00000004 <br/>
+    /// - basic_trace4    = 0x00000008 <br/>
+    /// - basic_trace5    = 0x00000020 <br/>
+    /// - graphic         = 0x00000040 <br/>
+    /// - channel         = 0x00000080 <br/>
+    /// - cache_from_disk = 0x00000400 <br/>
+    /// - bmp_info        = 0x00000800 <br/>
+    /// - global_channel  = 0x00002000 <br/>
+    /// - sec_decrypted   = 0x00004000 <br/>
+    /// - keymap          = 0x00008000 <br/>
     ///  <br/>
     /// (Serializer) <br/>
-    /// - pointer             = 0x0004'0000 <br/>
-    /// - primary_orders      = 0x0020'0000 <br/>
-    /// - secondary_orders    = 0x0040'0000 <br/>
-    /// - bitmap_update       = 0x0080'0000 <br/>
-    /// - surface_commands    = 0x0100'0000 <br/>
-    /// - bmp_cache           = 0x0200'0000 <br/>
-    /// - internal_buffer     = 0x0400'0000 <br/>
-    /// - sec_decrypted       = 0x1000'0000 <br/>
+    /// - pointer             = 0x00040000 <br/>
+    /// - primary_orders      = 0x00200000 <br/>
+    /// - secondary_orders    = 0x00400000 <br/>
+    /// - bitmap_update       = 0x00800000 <br/>
+    /// - surface_commands    = 0x01000000 <br/>
+    /// - bmp_cache           = 0x02000000 <br/>
+    /// - internal_buffer     = 0x04000000 <br/>
+    /// - sec_decrypted       = 0x10000000 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::front {
@@ -3558,38 +3558,38 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// - basic_trace         = 0x0000'0001 <br/>
-    /// - connection          = 0x0000'0002 <br/>
-    /// - security            = 0x0000'0004 <br/>
-    /// - capabilities        = 0x0000'0008 <br/>
-    /// - license             = 0x0000'0010 <br/>
-    /// - asynchronous_task   = 0x0000'0020 <br/>
-    /// - graphics_pointer    = 0x0000'0040 <br/>
-    /// - graphics            = 0x0000'0080 <br/>
-    /// - input               = 0x0000'0100 <br/>
-    /// - rail_order          = 0x0000'0200 <br/>
-    /// - credssp             = 0x0000'0400 <br/>
-    /// - negotiation         = 0x0000'0800 <br/>
-    /// - cache_persister     = 0x0000'1000 <br/>
-    /// - fsdrvmgr            = 0x0000'2000 <br/>
-    /// - sesprobe_launcher   = 0x0000'4000 <br/>
-    /// - sesprobe_repetitive = 0x0000'8000 <br/>
-    /// - drdynvc             = 0x0001'0000 <br/>
-    /// - surfaceCmd          = 0x0002'0000 <br/>
-    /// - cache_from_disk     = 0x0004'0000 <br/>
-    /// - bmp_info            = 0x0008'0000 <br/>
-    /// - drdynvc_dump        = 0x0010'0000 <br/>
-    /// - printer             = 0x0020'0000 <br/>
-    /// - rdpsnd              = 0x0040'0000 <br/>
-    /// - channels            = 0x0080'0000 <br/>
-    /// - rail                = 0x0100'0000 <br/>
-    /// - sesprobe            = 0x0200'0000 <br/>
-    /// - cliprdr             = 0x0400'0000 <br/>
-    /// - rdpdr               = 0x0800'0000 <br/>
-    /// - rail_dump           = 0x1000'0000 <br/>
-    /// - sesprobe_dump       = 0x2000'0000 <br/>
-    /// - cliprdr_dump        = 0x4000'0000 <br/>
-    /// - rdpdr_dump          = 0x8000'0000 <br/>
+    /// - basic_trace         = 0x00000001 <br/>
+    /// - connection          = 0x00000002 <br/>
+    /// - security            = 0x00000004 <br/>
+    /// - capabilities        = 0x00000008 <br/>
+    /// - license             = 0x00000010 <br/>
+    /// - asynchronous_task   = 0x00000020 <br/>
+    /// - graphics_pointer    = 0x00000040 <br/>
+    /// - graphics            = 0x00000080 <br/>
+    /// - input               = 0x00000100 <br/>
+    /// - rail_order          = 0x00000200 <br/>
+    /// - credssp             = 0x00000400 <br/>
+    /// - negotiation         = 0x00000800 <br/>
+    /// - cache_persister     = 0x00001000 <br/>
+    /// - fsdrvmgr            = 0x00002000 <br/>
+    /// - sesprobe_launcher   = 0x00004000 <br/>
+    /// - sesprobe_repetitive = 0x00008000 <br/>
+    /// - drdynvc             = 0x00010000 <br/>
+    /// - surfaceCmd          = 0x00020000 <br/>
+    /// - cache_from_disk     = 0x00040000 <br/>
+    /// - bmp_info            = 0x00080000 <br/>
+    /// - drdynvc_dump        = 0x00100000 <br/>
+    /// - printer             = 0x00200000 <br/>
+    /// - rdpsnd              = 0x00400000 <br/>
+    /// - channels            = 0x00800000 <br/>
+    /// - rail                = 0x01000000 <br/>
+    /// - sesprobe            = 0x02000000 <br/>
+    /// - cliprdr             = 0x04000000 <br/>
+    /// - rdpdr               = 0x08000000 <br/>
+    /// - rail_dump           = 0x10000000 <br/>
+    /// - sesprobe_dump       = 0x20000000 <br/>
+    /// - cliprdr_dump        = 0x40000000 <br/>
+    /// - rdpdr_dump          = 0x80000000 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::mod_rdp {
@@ -3600,25 +3600,25 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// - basic_trace     = 0x0000'0001 <br/>
-    /// - keymap_stack    = 0x0000'0002 <br/>
-    /// - draw_event      = 0x0000'0004 <br/>
-    /// - input           = 0x0000'0008 <br/>
-    /// - connection      = 0x0000'0010 <br/>
-    /// - hextile_encoder = 0x0000'0020 <br/>
-    /// - cursor_encoder  = 0x0000'0040 <br/>
-    /// - clipboard       = 0x0000'0080 <br/>
-    /// - zrle_encoder    = 0x0000'0100 <br/>
-    /// - zrle_trace      = 0x0000'0200 <br/>
-    /// - hextile_trace   = 0x0000'0400 <br/>
-    /// - cursor_trace    = 0x0000'1000 <br/>
-    /// - rre_encoder     = 0x0000'2000 <br/>
-    /// - rre_trace       = 0x0000'4000 <br/>
-    /// - raw_encoder     = 0x0000'8000 <br/>
-    /// - raw_trace       = 0x0001'0000 <br/>
-    /// - copyrect_encoder= 0x0002'0000 <br/>
-    /// - copyrect_trace  = 0x0004'0000 <br/>
-    /// - keymap          = 0x0008'0000 <br/>
+    /// - basic_trace     = 0x00000001 <br/>
+    /// - keymap_stack    = 0x00000002 <br/>
+    /// - draw_event      = 0x00000004 <br/>
+    /// - input           = 0x00000008 <br/>
+    /// - connection      = 0x00000010 <br/>
+    /// - hextile_encoder = 0x00000020 <br/>
+    /// - cursor_encoder  = 0x00000040 <br/>
+    /// - clipboard       = 0x00000080 <br/>
+    /// - zrle_encoder    = 0x00000100 <br/>
+    /// - zrle_trace      = 0x00000200 <br/>
+    /// - hextile_trace   = 0x00000400 <br/>
+    /// - cursor_trace    = 0x00001000 <br/>
+    /// - rre_encoder     = 0x00002000 <br/>
+    /// - rre_trace       = 0x00004000 <br/>
+    /// - raw_encoder     = 0x00008000 <br/>
+    /// - raw_trace       = 0x00010000 <br/>
+    /// - copyrect_encoder= 0x00020000 <br/>
+    /// - copyrect_trace  = 0x00040000 <br/>
+    /// - keymap          = 0x00080000 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::mod_vnc {

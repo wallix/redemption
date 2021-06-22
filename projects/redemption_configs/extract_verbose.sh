@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")/../.."
 extract() {
-    sed -E '/REDEMPTION_VERBOSE_FLAGS/,/};/!d;/=/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/' "$@"
+    sed -E '/REDEMPTION_VERBOSE_FLAGS/,/};/!d;/=/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/;s/'\'// "$@"
 }
 
 rdp_serializer=$(extract src/core/RDP/RDPSerializerVerbose.hpp)
@@ -18,7 +18,7 @@ constexpr char const* CONFIG_DESC_AUTH = R\"($(extract src/acl/acl_serializer.hp
 constexpr char const* CONFIG_DESC_FRONT = R\"($(extract src/front/front.hpp)
 
 (Serializer)
-$(echo "$rdp_serializer" | sed -E 's/0x[0-9]+/&'\''0000/'))\";
+$(echo "$rdp_serializer" | sed -E 's/0x[0-9]+/&0000/'))\";
 
 constexpr char const* CONFIG_DESC_RDP = R\"($(extract src/mod/rdp/rdp_verbose.hpp))\";
 

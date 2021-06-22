@@ -1140,87 +1140,87 @@ auth = integer(min=0, default=0)
 #_hex
 session = integer(min=0, default=0)
 
-# - basic_trace     = 0x0000'0001
-# - basic_trace2    = 0x0000'0002
-# - basic_trace3    = 0x0000'0004
-# - basic_trace4    = 0x0000'0008
-# - basic_trace5    = 0x0000'0020
-# - graphic         = 0x0000'0040
-# - channel         = 0x0000'0080
-# - cache_from_disk = 0x0000'0400
-# - bmp_info        = 0x0000'0800
-# - global_channel  = 0x0000'2000
-# - sec_decrypted   = 0x0000'4000
-# - keymap          = 0x0000'8000
+# - basic_trace     = 0x00000001
+# - basic_trace2    = 0x00000002
+# - basic_trace3    = 0x00000004
+# - basic_trace4    = 0x00000008
+# - basic_trace5    = 0x00000020
+# - graphic         = 0x00000040
+# - channel         = 0x00000080
+# - cache_from_disk = 0x00000400
+# - bmp_info        = 0x00000800
+# - global_channel  = 0x00002000
+# - sec_decrypted   = 0x00004000
+# - keymap          = 0x00008000
 # 
 # (Serializer)
-# - pointer             = 0x0004'0000
-# - primary_orders      = 0x0020'0000
-# - secondary_orders    = 0x0040'0000
-# - bitmap_update       = 0x0080'0000
-# - surface_commands    = 0x0100'0000
-# - bmp_cache           = 0x0200'0000
-# - internal_buffer     = 0x0400'0000
-# - sec_decrypted       = 0x1000'0000
+# - pointer             = 0x00040000
+# - primary_orders      = 0x00200000
+# - secondary_orders    = 0x00400000
+# - bitmap_update       = 0x00800000
+# - surface_commands    = 0x01000000
+# - bmp_cache           = 0x02000000
+# - internal_buffer     = 0x04000000
+# - sec_decrypted       = 0x10000000
 #_advanced
 #_hex
 front = integer(min=0, default=0)
 
-# - basic_trace         = 0x0000'0001
-# - connection          = 0x0000'0002
-# - security            = 0x0000'0004
-# - capabilities        = 0x0000'0008
-# - license             = 0x0000'0010
-# - asynchronous_task   = 0x0000'0020
-# - graphics_pointer    = 0x0000'0040
-# - graphics            = 0x0000'0080
-# - input               = 0x0000'0100
-# - rail_order          = 0x0000'0200
-# - credssp             = 0x0000'0400
-# - negotiation         = 0x0000'0800
-# - cache_persister     = 0x0000'1000
-# - fsdrvmgr            = 0x0000'2000
-# - sesprobe_launcher   = 0x0000'4000
-# - sesprobe_repetitive = 0x0000'8000
-# - drdynvc             = 0x0001'0000
-# - surfaceCmd          = 0x0002'0000
-# - cache_from_disk     = 0x0004'0000
-# - bmp_info            = 0x0008'0000
-# - drdynvc_dump        = 0x0010'0000
-# - printer             = 0x0020'0000
-# - rdpsnd              = 0x0040'0000
-# - channels            = 0x0080'0000
-# - rail                = 0x0100'0000
-# - sesprobe            = 0x0200'0000
-# - cliprdr             = 0x0400'0000
-# - rdpdr               = 0x0800'0000
-# - rail_dump           = 0x1000'0000
-# - sesprobe_dump       = 0x2000'0000
-# - cliprdr_dump        = 0x4000'0000
-# - rdpdr_dump          = 0x8000'0000
+# - basic_trace         = 0x00000001
+# - connection          = 0x00000002
+# - security            = 0x00000004
+# - capabilities        = 0x00000008
+# - license             = 0x00000010
+# - asynchronous_task   = 0x00000020
+# - graphics_pointer    = 0x00000040
+# - graphics            = 0x00000080
+# - input               = 0x00000100
+# - rail_order          = 0x00000200
+# - credssp             = 0x00000400
+# - negotiation         = 0x00000800
+# - cache_persister     = 0x00001000
+# - fsdrvmgr            = 0x00002000
+# - sesprobe_launcher   = 0x00004000
+# - sesprobe_repetitive = 0x00008000
+# - drdynvc             = 0x00010000
+# - surfaceCmd          = 0x00020000
+# - cache_from_disk     = 0x00040000
+# - bmp_info            = 0x00080000
+# - drdynvc_dump        = 0x00100000
+# - printer             = 0x00200000
+# - rdpsnd              = 0x00400000
+# - channels            = 0x00800000
+# - rail                = 0x01000000
+# - sesprobe            = 0x02000000
+# - cliprdr             = 0x04000000
+# - rdpdr               = 0x08000000
+# - rail_dump           = 0x10000000
+# - sesprobe_dump       = 0x20000000
+# - cliprdr_dump        = 0x40000000
+# - rdpdr_dump          = 0x80000000
 #_advanced
 #_hex
 mod_rdp = integer(min=0, default=0)
 
-# - basic_trace     = 0x0000'0001
-# - keymap_stack    = 0x0000'0002
-# - draw_event      = 0x0000'0004
-# - input           = 0x0000'0008
-# - connection      = 0x0000'0010
-# - hextile_encoder = 0x0000'0020
-# - cursor_encoder  = 0x0000'0040
-# - clipboard       = 0x0000'0080
-# - zrle_encoder    = 0x0000'0100
-# - zrle_trace      = 0x0000'0200
-# - hextile_trace   = 0x0000'0400
-# - cursor_trace    = 0x0000'1000
-# - rre_encoder     = 0x0000'2000
-# - rre_trace       = 0x0000'4000
-# - raw_encoder     = 0x0000'8000
-# - raw_trace       = 0x0001'0000
-# - copyrect_encoder= 0x0002'0000
-# - copyrect_trace  = 0x0004'0000
-# - keymap          = 0x0008'0000
+# - basic_trace     = 0x00000001
+# - keymap_stack    = 0x00000002
+# - draw_event      = 0x00000004
+# - input           = 0x00000008
+# - connection      = 0x00000010
+# - hextile_encoder = 0x00000020
+# - cursor_encoder  = 0x00000040
+# - clipboard       = 0x00000080
+# - zrle_encoder    = 0x00000100
+# - zrle_trace      = 0x00000200
+# - hextile_trace   = 0x00000400
+# - cursor_trace    = 0x00001000
+# - rre_encoder     = 0x00002000
+# - rre_trace       = 0x00004000
+# - raw_encoder     = 0x00008000
+# - raw_trace       = 0x00010000
+# - copyrect_encoder= 0x00020000
+# - copyrect_trace  = 0x00040000
+# - keymap          = 0x00080000
 #_advanced
 #_hex
 mod_vnc = integer(min=0, default=0)
