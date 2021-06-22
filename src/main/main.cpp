@@ -42,8 +42,10 @@
 #include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/cli.hpp"
+#include "utils/static_fmt.hpp"
 
 #include <iostream>
+#include <charconv>
 
 #include <cerrno>
 #include <cstddef>
@@ -53,6 +55,8 @@
 
 #include <sys/types.h>
 #include <dirent.h>
+#include <unistd.h> // sleep
+
 
 static bool write_pid_file(int pid)
 {
@@ -111,14 +115,13 @@ static void daemonize()
 }
 
 
-inline int shutdown()
+static int shutdown()
 {
-    const char * const pid_file = app_path(AppPath::LockFile);
-    const char * const pid_dir = app_path(AppPath::LockDir);
+    auto const pid_file = app_path(AppPath::LockFile);
 
     std::cout <<
       "Stopping rdpproxy\n"
-      "Looking if pid_file " << pid_file << " exists\n"
+      "Looking if pid_file " << pid_file.to_sv() << " exists\n"
     ;
 
     /* read the rdpproxy.pid file */
@@ -130,80 +133,82 @@ inline int shutdown()
             fd = unique_fd(open(pid_file, O_RDONLY));
         }
     }
+
     if (!fd) {
-        std::cerr << "Failed to read pid file. " << strerror(errno) << ".\n";
+        int err = errno;
+        std::cerr << "Failed to read pid file. " << strerror(err) << ".\n";
         return 1; // file does not exist.
     }
 
-    try {
-        std::cout << "Reading pid_file " << pid_file << "\n";
-        char text[256];
+    // kill rdpproxy process
+    [&] {
+        char buffer[256];
+        ssize_t n = read(fd.fd(), buffer, sizeof(buffer));
 
-        text[InFileTransport(std::move(fd)).partial_read(text, sizeof(text)-1)] = 0;
-
-        int pid = atoi(text); /*NOLINT*/
-        std::cout << "Stopping process id " << pid << "\n";
+        if (n < 0) {
+            int err = errno;
+            std::cerr << "Failed to read pid file. " << strerror(err) << "\n";
+            return ;
+        }
 
         // check name of pid
-        if (pid > 0)
-        {
-            char path[64];
-            std::sprintf(path, "/proc/%d/cmdline", pid);
-            unique_fd fd(open(path, O_RDONLY));
-            if (!fd.is_open()) {
-                std::cerr << path << ": " << strerror(errno) << "\n";
-                pid = 0;
-            }
-            else {
-                bool is_proxy = true;
-                try {
-                    text[InFileTransport(std::move(fd)).partial_read(text, sizeof(text)-1)] = 0;
-                    if (!strstr(text, "/rdpproxy")) {
-                        is_proxy = false;
-                    }
-                }
-                catch (...) {
-                    is_proxy = false;
-                }
-
-                if (!is_proxy) {
-                    std::cerr << "Error process id " << pid << " is not a rdpproxy\n";
-                    pid = 0;
-                }
-            }
+        int pid;
+        const auto r = std::from_chars(buffer, buffer+n, pid);
+        if (r.ec != std::errc() || pid < 0) {
+            return ;
         }
 
-        if (pid > 0) {
-            int res = kill(pid, SIGTERM);
+        auto path = "/proc/%d/cmdline"_static_fmt(pid);
+        fd = unique_fd(open(path.c_str(), O_RDONLY));
+        if (!fd.is_open()) {
+            int err = errno;
+            std::cerr << std::string_view(path.data(), path.size())
+                << ": " << strerror(err) << "\n";
+            return ;
+        }
+
+        n = read(fd.fd(), buffer, sizeof(buffer)-1);
+        if (n <= 0) {
+            return ;
+        }
+
+        buffer[n] = 0;
+        if (!strstr(buffer, "/rdpproxy")) {
+            std::cerr << "Error process id " << pid << " is not a rdpproxy\n";
+            return ;
+        }
+
+        int res = kill(pid, SIGTERM);
+        if (res != 0) {
+            if (errno == ESRCH) {
+                // pid is still running
+                std::cout << "Process " << pid << " is still running, let's send a KILL signal\n";
+                res = kill(pid, SIGKILL);
+            }
+
             if (res != 0) {
-                if (errno != ESRCH) {
-                    int err = errno;
-                    std::cerr << "Error stopping process id " << pid << ": " << strerror(err) << "\n";
-                }
-                else {
-                    // errno != ESRCH, pid is still running
-                    std::cout << "Process " << pid << " is still running, let's send a KILL signal\n";
-                    res = kill(pid, SIGKILL);
-                    if (res != 0){
-                        std::cerr << "Error stopping process id " << pid << "\n";
-                    }
-                }
+                int err = errno;
+                std::cerr << "Error stopping process id " << pid << ": " << strerror(err) << "\n";
+                return ;
             }
         }
-    }
-    catch (Error const&) {
-        std::cerr << "Failed to read pid file. " << strerror(errno) << "\n";
-    }
+
+        // process is killed, wait a bit for the sockets to close
+        sleep(1);
+    }();
+
     unlink(pid_file);
 
     // remove all other pid files
+    auto const pid_dir = app_path(AppPath::LockDir);
     DIR * d = opendir(pid_dir);
     if (d){
+        std::string pidpath;
         for (dirent * entryp = readdir(d) ; entryp ; entryp = readdir(d)) {
             if (dirname_is_dot(entryp->d_name)) {
                 continue;
             }
-            const std::string pidpath = str_concat(pid_dir, '/', entryp->d_name);
+            str_assign(pidpath, pid_dir, '/', entryp->d_name);
             LOG(LOG_INFO, "removing old pid file %s", pidpath);
             if (unlink(pidpath.c_str()) < 0){
                 LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
