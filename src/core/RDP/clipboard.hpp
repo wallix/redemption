@@ -641,10 +641,11 @@ enum {
 inline static zstring_view get_generalFlag_name(uint16_t msgFlag)
 {
     switch (msgFlag) {
-        case CB_USE_LONG_FORMAT_NAMES:   return "CB_USE_LONG_FORMAT_NAMES"_zv;
-        case CB_STREAM_FILECLIP_ENABLED: return "CB_STREAM_FILECLIP_ENABLED"_zv;
-        case CB_FILECLIP_NO_FILE_PATHS:  return "CB_FILECLIP_NO_FILE_PATHS"_zv;
-        case CB_CAN_LOCK_CLIPDATA:       return "CB_CAN_LOCK_CLIPDATA"_zv;
+        case CB_USE_LONG_FORMAT_NAMES:     return "CB_USE_LONG_FORMAT_NAMES"_zv;
+        case CB_STREAM_FILECLIP_ENABLED:   return "CB_STREAM_FILECLIP_ENABLED"_zv;
+        case CB_FILECLIP_NO_FILE_PATHS:    return "CB_FILECLIP_NO_FILE_PATHS"_zv;
+        case CB_CAN_LOCK_CLIPDATA:         return "CB_CAN_LOCK_CLIPDATA"_zv;
+        case CB_HUGE_FILE_SUPPORT_ENABLED: return "CB_HUGE_FILE_SUPPORT_ENABLED"_zv;
     }
 
     return "<unknown>"_zv;
