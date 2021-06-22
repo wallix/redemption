@@ -20,6 +20,9 @@ Author(s): Proxies Team
 
 #pragma once
 
+#include <limits>
+#include <charconv>
+
 #include "utils/static_string.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 
@@ -53,19 +56,28 @@ namespace detail
         constexpr bool next(char c)
         {
             if (is_fmt) {
-                if (c == 's' || c == 'd' || c == 'u' || c == 'x' || c == 'X') {
-                    *offset++ = uint16_t(s1-string);
-                    *length++ = uint16_t(s2-s1);
-                    *fmt++ = c;
-                    s1 = s2;
-                }
-                else if (c == '%') {
-                    *s2++ = '%';
-                }
-                else {
-                    fmt_err = c;
-                    idx_err = i;
-                    return false;
+                switch (c) {
+                    case 's':
+                    case 'd':
+                    case 'u':
+                    case 'x':
+                    case 'X':
+                    case 'c':
+                    case 'h':
+                    case 'H':
+                        *offset++ = uint16_t(s1-string);
+                        *length++ = uint16_t(s2-s1);
+                        *fmt++ = c;
+                        s1 = s2;
+                        break;
+
+                    case '%':
+                        *s2++ = '%';
+                        break;
+                    default:
+                        fmt_err = c;
+                        idx_err = i;
+                        return false;
                 }
                 is_fmt = false;
             }
@@ -128,6 +140,18 @@ namespace detail
         return fmt;
     }
 
+    template<class C, C... cs>
+    struct static_fmt_constant_data
+    {
+        static constexpr decltype(detail::make_static_fmt<cs...>()) value
+            = detail::make_static_fmt<cs...>();
+    };
+    template<class C, C... cs>
+    constexpr decltype(detail::make_static_fmt<cs...>())
+    static_fmt_constant_data<C, cs...>::value;
+
+
+
     struct static_fmt_no_error {};
 
     template<std::size_t Offset, std::size_t FmtCount, char Fmt>
@@ -141,64 +165,206 @@ namespace detail
         static constexpr char fmt = Fmt;
     };
 
-    template<char fmt>
-    struct static_fmt_x_convertor
-    {};
 
-    template<>
-    struct static_fmt_x_convertor<'s'>
+    template<char fmt>
+    struct static_fmt_writer_for
     {
-        template<class T>
-        static auto convert(T const& x)
+        static_assert(fmt != fmt, "Unknown format");
+    };
+
+    template<class BoundedArrayView>
+    struct static_fmt_bav_writer
+    {
+        static constexpr std::size_t at_most = sequence_to_size_bounds_t<BoundedArrayView>::at_most;
+
+        BoundedArrayView bav;
+
+        char* write(char* out) noexcept
         {
-            if constexpr (std::is_integral_v<T>) {
-                return int_to_decimal_chars(x);
+            return append_from_bounded_av_or_char(out, bav);
+        }
+    };
+
+    template<class T>
+    struct static_fmt_decimal_int_writer
+    {
+        static constexpr std::size_t at_most
+            = std::numeric_limits<T>::digits10 + 1 + std::is_signed_v<T>;
+
+        T n;
+
+        char* write(char* out) noexcept
+        {
+            auto r = std::to_chars(out, out + at_most, n);
+            assert(r.ec == std::errc());
+            return r.ptr;
+        }
+    };
+
+    template<class T, bool lower>
+    struct static_fmt_hex_writer
+    {
+        static constexpr std::size_t at_most = sizeof(T) * 2;
+
+        T n_;
+
+        char* write(char* out) noexcept
+        {
+            constexpr char const* hex_table = lower
+                ? hex_lower_table
+                : hex_upper_table;
+
+            // C++20: use std::countl_zero
+            if (n_) {
+                auto n = n_ + 0u; // promote to unsigned
+                auto i = at_most;
+                while (i) {
+                    --i;
+                    auto x = (n >> (i*4)) & 0xf;
+                    if (x) {
+                        *out++ = hex_table[x];
+                        while (i) {
+                            --i;
+                            *out++ = hex_table[(n >> (i*4)) & 0xf];
+                        }
+                        return out;
+                    }
+                }
             }
             else {
-                return to_static_string_view_or_char(x);
+                *out++ = '0';
+            }
+
+            return out;
+        }
+    };
+
+    template<class T, bool lower>
+    struct static_fmt_fixed_hex_writer
+    {
+        static constexpr std::size_t at_most = sizeof(T) * 2;
+
+        T n;
+
+        char* write(char* out) noexcept
+        {
+            return to_fixed_hexadecimal_chars<-1>(
+                out, n, lower ? hex_lower_table : hex_upper_table
+            );
+        }
+    };
+
+    struct static_fmt_char_writer
+    {
+        static constexpr std::size_t at_most = 1;
+
+        char c;
+
+        char* write(char* out) noexcept
+        {
+            *out = c;
+            return out+1;
+        }
+    };
+
+    template<>
+    struct static_fmt_writer_for<'s'>
+    {
+        template<class T>
+        static auto to_writer(T const& x)
+        {
+            if constexpr (std::is_integral_v<T>) {
+                if constexpr (std::is_same_v<T, bool>) {
+                    return static_fmt_char_writer{x ? '1' : '0'};
+                }
+                else if constexpr (std::is_same_v<T, char>) {
+                    return static_fmt_char_writer{x};
+                }
+                else {
+                    return static_fmt_decimal_int_writer<T>{x};
+                }
+            }
+            else {
+                using BAV = bounded_array_view_with<char, sequence_to_size_bounds_t<T>>;
+                return static_fmt_bav_writer<BAV>{BAV(x)};
             }
         }
     };
 
     template<>
-    struct static_fmt_x_convertor<'d'>
+    struct static_fmt_writer_for<'c'>
     {
         template<class T>
-        static int_to_chars_result convert(T x) noexcept
+        static static_fmt_char_writer to_writer(T x) noexcept
+        {
+            static_assert(std::is_same_v<T, char>);
+            return {x};
+        }
+    };
+
+    template<>
+    struct static_fmt_writer_for<'d'>
+    {
+        template<class T>
+        static static_fmt_decimal_int_writer<T> to_writer(T x) noexcept
         {
             static_assert(std::is_signed_v<T>);
-            return int_to_decimal_chars(x);
+            return {x};
         }
     };
 
     template<>
-    struct static_fmt_x_convertor<'u'>
+    struct static_fmt_writer_for<'u'>
     {
         template<class T>
-        static int_to_chars_result convert(T x) noexcept
+        static static_fmt_decimal_int_writer<T> to_writer(T x) noexcept
         {
             static_assert(std::is_unsigned_v<T>);
-            return int_to_decimal_chars(x);
+            return {x};
         }
     };
 
     template<>
-    struct static_fmt_x_convertor<'x'>
+    struct static_fmt_writer_for<'x'>
     {
         template<class T>
-        static int_to_chars_result convert(T x) noexcept
+        static static_fmt_hex_writer<T, true> to_writer(T n) noexcept
         {
-            return int_to_hexadecimal_lower_chars(x);
+            static_assert(std::is_unsigned_v<T>);
+            return {n};
         }
     };
 
     template<>
-    struct static_fmt_x_convertor<'X'>
+    struct static_fmt_writer_for<'X'>
     {
         template<class T>
-        static int_to_chars_result convert(T x) noexcept
+        static static_fmt_hex_writer<T, false> to_writer(T n) noexcept
         {
-            return int_to_hexadecimal_upper_chars(x);
+            static_assert(std::is_unsigned_v<T>);
+            return {n};
+        }
+    };
+
+    template<>
+    struct static_fmt_writer_for<'h'>
+    {
+        template<class T>
+        static static_fmt_fixed_hex_writer<T, true> to_writer(T n) noexcept
+        {
+            static_assert(std::is_unsigned_v<T>);
+            return {n};
+        }
+    };
+
+    template<>
+    struct static_fmt_writer_for<'H'>
+    {
+        template<class T>
+        static static_fmt_fixed_hex_writer<T, false> to_writer(T n) noexcept
+        {
+            static_assert(std::is_unsigned_v<T>);
+            return {n};
         }
     };
 
@@ -209,21 +375,14 @@ namespace detail
         auto operator()(Ts const&... xs) const
         {
             static_assert(sizeof...(Parts) == sizeof...(Ts));
-            return format_impl(to_static_string_view_or_char(
-                static_fmt_x_convertor<Parts::fmt>::convert(xs)
-            )...);
+            return format_impl(static_fmt_writer_for<Parts::fmt>::to_writer(xs)...);
         }
 
         template<std::size_t n, class... Ts>
         void write_to(static_string<n>& str, Ts const&... xs) const
         {
             static_assert(sizeof...(Parts) == sizeof...(Ts));
-            write_to_impl(
-                str,
-                to_static_string_view_or_char(
-                    static_fmt_x_convertor<Parts::fmt>::convert(xs)
-                )...
-            );
+            write_to_impl(str, static_fmt_writer_for<Parts::fmt>::to_writer(xs)...);
         }
 
         template<std::size_t NewMaxSize>
@@ -234,51 +393,53 @@ namespace detail
         }
 
     private:
-        template<class... Strs>
-        static auto format_impl(Strs const&... strs)
+        static constexpr std::size_t all_part_size
+            = (std::size_t() + ... + Parts::length)
+            + LastPart::length;
+
+        template<class... Writers>
+        static auto format_impl(Writers... writers)
         {
             constexpr auto max_size
-                = (std::size_t() + ... + Parts::length)
-                + (std::size_t() + ... + static_str_len<Strs>::value)
-                + LastPart::length;
+                = all_part_size
+                + (std::size_t() + ... + Writers::at_most);
 
             static_assert(max_size <= MaxSize);
 
             static_string<max_size> str;
-            impl(str, strs...);
+            impl(str, writers...);
             return str;
         }
 
-        template<std::size_t n, class... Strs>
-        static void write_to_impl(static_string<n>& str, Strs const&... strs)
+        template<std::size_t n, class... Writers>
+        static void write_to_impl(static_string<n>& str, Writers... writers)
         {
             constexpr auto max_size
-                = (std::size_t() + ... + Parts::length)
-                + (std::size_t() + ... + static_str_len<Strs>::value)
-                + LastPart::length;
+                = all_part_size
+                + (std::size_t() + ... + Writers::at_most);
 
             static_assert(max_size <= n);
-            impl(str, strs...);
+            impl(str, writers...);
         }
 
-        template<std::size_t n, class... Strs>
-        static void impl(static_string<n>& str, Strs const&... strs)
+        template<std::size_t n, class... Writers>
+        static void impl(static_string<n>& str, Writers... writers)
         {
             char* p = str.data();
             char* e = p;
 
-            (..., void(e = append_from_bounded_av_or_char(
-                append_from_bounded_av_or_char(e,
-                    sized_chars_view<Parts::length>
-                    ::assumed(BufFormat::data + Parts::offset)
-                ),
-                to_static_string_view_or_char(strs)
+            auto copy_then = [](char* dst, char const* src, std::size_t size){
+                memcpy(dst, src, size);
+                return dst + size;
+            };
+
+            (..., void(e = writers.write(
+                copy_then(e, BufFormat::data + Parts::offset, Parts::length)
             )));
 
-            e = append_from_bounded_av_or_char(e,
-                sized_chars_view<LastPart::length>
-                    ::assumed(BufFormat::data + LastPart::offset)
-                );
+            if constexpr (0 != LastPart::length) {
+                e = copy_then(e, BufFormat::data + LastPart::offset, LastPart::length);
+            }
 
             *e = '\0';
 
@@ -298,27 +459,27 @@ constexpr auto operator "" _static_fmt() noexcept
     static_assert(sizeof...(cs) >= 2);
     static_assert(sizeof...(cs) < unsigned(~uint16_t()));
 
-    constexpr auto fmt = detail::make_static_fmt<cs...>();
+    using fmt = detail::static_fmt_constant_data<C, cs...>;
 
-    if constexpr (fmt.has_error) {
+    if constexpr (fmt::value.has_error) {
         // readable compiler error
         detail::static_fmt_no_error() = detail::static_fmt_error<
-            fmt.idx_err, fmt.part_count+1, fmt.fmt_err
+            fmt::value.idx_err, fmt::value.part_count+1, fmt::value.fmt_err
         >();
         return []([[maybe_unused]] auto... xs) { return static_string<0>(); };
     }
     else {
         auto to_static_str = [&](auto... ints) {
-            return detail::static_constexpr_array<fmt.string[ints]...>();
+            return detail::static_constexpr_array<fmt::value.string[ints]...>();
         };
-        auto ints = std::make_index_sequence<fmt.string_len>();
+        auto ints = std::make_index_sequence<fmt::value.string_len>();
         using static_str = decltype(detail::unroll_indexes(ints, to_static_str));
 
         auto gcc8_fix = [&](auto ints) {
             return detail::static_fmt_part_t<
-                fmt.offsets[ints],
-                fmt.lengths[ints],
-                fmt.fmts[ints]
+                fmt::value.offsets[ints],
+                fmt::value.lengths[ints],
+                fmt::value.fmts[ints]
             >();
         };
 
@@ -327,16 +488,16 @@ constexpr auto operator "" _static_fmt() noexcept
                 4096,
                 static_str,
                 detail::static_fmt_part_t<
-                    fmt.last.offset,
-                    fmt.last.length,
-                    fmt.last.fmt
+                    fmt::value.last.offset,
+                    fmt::value.last.length,
+                    fmt::value.last.fmt
                 >,
                 decltype(gcc8_fix(ints))...
             >();
         };
 
         return detail::unroll_indexes(
-            std::make_index_sequence<fmt.part_count>(),
+            std::make_index_sequence<fmt::value.part_count>(),
             to_static_fmt);
     }
 }

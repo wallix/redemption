@@ -27,6 +27,10 @@ RED_AUTO_TEST_CASE(TestStaticFmt)
     RED_CHECK("%u-%s"_static_fmt(1u, 3) == "1-3"_av);
     RED_CHECK("%u-%s"_static_fmt.set_max_size<50>()(1u, 3) == "1-3"_av);
     RED_CHECK("%u-%s-%s"_static_fmt(1u, "plop"_sized_av, 3) == "1-plop-3"_av);
+    RED_CHECK("%x-%X-%x-%X-%X-%c"_static_fmt(
+        uint16_t(0xfedc), uint16_t(0xfedc), uint16_t(0xa), uint16_t(0), uint16_t(0x123), 'n'
+    ) == "fedc-FEDC-a-0-123-n"_av);
+    RED_CHECK("%h-%H"_static_fmt(uint16_t(0xfed), uint16_t(0xfed)) == "0fed-0FED"_av);
 
     static_string<100> s;
     "%u-%s-%s"_static_fmt.write_to(s, 1u, "plop"_sized_av, 3);
