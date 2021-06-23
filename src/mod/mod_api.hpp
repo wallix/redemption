@@ -45,7 +45,7 @@ public:
     // support auto-reconnection
     virtual bool is_auto_reconnectable() const { return false; }
 
-    virtual bool server_error_encountered() const { return false; };
+    virtual bool server_error_encountered() const { return false; }
 
     virtual void disconnect() {}
 

@@ -27,6 +27,8 @@
 #include "utils/log.hpp"
 #include "utils/select.hpp"
 
+#include <limits>
+
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
