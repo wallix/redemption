@@ -379,16 +379,18 @@ namespace detail
             return format_impl(static_fmt_writer_for<Parts::fmt>::to_writer(xs)...);
         }
 
+        // gcc-8: do not make it a static function
         template<std::size_t n, class... Ts>
-        static void write_to(static_string<n>& str, Ts const&... xs)
+        void write_to(static_string<n>& str, Ts const&... xs) const
         {
             static_assert(sizeof...(Parts) == sizeof...(Ts));
             write_to_impl(str, static_fmt_writer_for<Parts::fmt>::to_writer(xs)...);
         }
 
+        // gcc-8: do not make it a static function
         template<std::size_t NewMaxSize>
-        static constexpr static_fmt_t<Fmt, NewMaxSize, BufFormat, LastPart, Parts...>
-        set_max_size() noexcept
+        constexpr static_fmt_t<Fmt, NewMaxSize, BufFormat, LastPart, Parts...>
+        set_max_size() const noexcept
         {
             return {};
         }
@@ -412,8 +414,9 @@ namespace detail
             return str;
         }
 
+        // gcc-8: do not make it a static function
         template<std::size_t n, class... Writers>
-        static void write_to_impl(static_string<n>& str, Writers... writers)
+        void write_to_impl(static_string<n>& str, Writers... writers) const
         {
             constexpr auto max_size
                 = all_part_size
