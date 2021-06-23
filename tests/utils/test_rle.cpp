@@ -25,7 +25,7 @@
 
 #include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 
-#include "utils/rle.cpp" // Yolo :O
+#include "utils/rle.cpp" /* NOLINT(bugprone-suspicious-include) */
 #include "utils/stream.hpp"
 
 

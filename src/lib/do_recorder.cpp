@@ -594,7 +594,7 @@ static inline int update_filename_and_check_size(
             if (errno == ENOENT && !other_wrm_directory.empty()) {
                 size_t len = 0;
                 char const* basename = basename_len(wrm.filename, len);
-                filenames.push_back(str_concat(prefix, std::string_view{basename, len}));
+                filenames.emplace_back(str_concat(prefix, std::string_view{basename, len}));
                 has_error = ::stat(filenames.back().c_str(), &st);
             }
 
@@ -604,7 +604,7 @@ static inline int update_filename_and_check_size(
             }
         }
         else {
-            filenames.push_back(wrm.filename);
+            filenames.emplace_back(wrm.filename);
         }
 
         if (!ignore_file_size && wrm.size != st.st_size) {
@@ -1777,7 +1777,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 extern "C" {
     REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
-            uint8_t * hmac_key,
+            uint8_t const * hmac_key,
             get_trace_key_prototype * trace_fn)
     {
         ScopedCryptoInit scoped_crypto;

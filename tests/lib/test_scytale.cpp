@@ -39,7 +39,7 @@ using namespace std::string_view_literals;
 namespace
 {
     // 86410558C495CC4E492157874774088A33B02AB865CC384120FEC2C9B872C82C
-    uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
+    const uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
         0x86, 0x41, 0x05, 0x58, 0xc4, 0x95, 0xcc, 0x4e,
         0x49, 0x21, 0x57, 0x87, 0x47, 0x74, 0x08, 0x8a,
         0x33, 0xb0, 0x2a, 0xb8, 0x65, 0xcc, 0x38, 0x41,
@@ -67,7 +67,7 @@ namespace
     {
         return byte_ptr_cast(p);
     }
-}
+} // namespace anonymous
 
 RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 {

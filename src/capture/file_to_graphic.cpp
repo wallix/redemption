@@ -55,7 +55,7 @@ namespace
     {
         return RealTimePoint(std::chrono::microseconds(in_stream.in_uint64_le()));
     }
-}
+} // namespace anonymous
 
 FileToGraphic::FileToGraphic(
     Transport & trans,

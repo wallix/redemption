@@ -23,7 +23,7 @@
 
 #include "test_only/gdi/test_graphic.hpp"
 
-#include "mod/vnc/encoder/zrle.cpp"
+#include "mod/vnc/encoder/zrle.cpp" /* NOLINT(bugprone-suspicious-include) */
 
 RED_TEST_DELEGATE_PRINT_ENUM(VNC::Encoder::EncoderState);
 

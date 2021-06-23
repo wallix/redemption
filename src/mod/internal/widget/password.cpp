@@ -138,6 +138,9 @@ Rect WidgetPassword::get_cursor_rect() const
 
 void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
+    (void)y;
+    (void)keymap;
+
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
         Rect old_cursor_rect = this->get_cursor_rect();
         size_t e = this->edit_pos;
@@ -174,8 +177,6 @@ void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y, Keymap2* ke
         if (e != this->edit_pos) {
             this->update_draw_cursor(old_cursor_rect);
         }
-    } else {
-        Widget::rdp_input_mouse(device_flags, x, y, keymap);
     }
 }
 

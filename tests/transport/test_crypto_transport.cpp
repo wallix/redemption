@@ -329,7 +329,7 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
 }
 
 // This sample was generated using udevrandom on Linux
-static uint8_t randomSample[8192] = {
+static const uint8_t randomSample[8192] = {
 #include "fixtures/randomdata.hpp"
 };
 
@@ -1079,7 +1079,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     RED_CHECK_WORKSPACE(wd);
 }
 
-static char clearSample[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas posuere, libero nec auctor auctor, leo sapien consequat nulla, non condimentum diam mauris eget ante. Nam in commodo elit, vel pulvinar risus. Sed commodo nisl aliquet nisl varius, non mollis ex sodales. Duis eu pellentesque odio, ac tincidunt libero. Aenean quam risus, lacinia non interdum ac, interdum ut neque. Morbi eget justo posuere, commodo erat et, elementum nisl. Nunc in tincidunt libero. Sed gravida purus in dolor iaculis dictum. Vivamus vel dolor eu purus scelerisque convallis lacinia vitae lacus. Nulla facilisi. Aliquam urna leo, facilisis id ipsum ac, rhoncus vulputate nibh. Nulla vitae aliquet lectus, ac finibus nulla. Suspendisse ut risus porttitor, rhoncus massa id, feugiat felis.\n\n"
+static const char clearSample[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas posuere, libero nec auctor auctor, leo sapien consequat nulla, non condimentum diam mauris eget ante. Nam in commodo elit, vel pulvinar risus. Sed commodo nisl aliquet nisl varius, non mollis ex sodales. Duis eu pellentesque odio, ac tincidunt libero. Aenean quam risus, lacinia non interdum ac, interdum ut neque. Morbi eget justo posuere, commodo erat et, elementum nisl. Nunc in tincidunt libero. Sed gravida purus in dolor iaculis dictum. Vivamus vel dolor eu purus scelerisque convallis lacinia vitae lacus. Nulla facilisi. Aliquam urna leo, facilisis id ipsum ac, rhoncus vulputate nibh. Nulla vitae aliquet lectus, ac finibus nulla. Suspendisse ut risus porttitor, rhoncus massa id, feugiat felis.\n\n"
 
 "Suspendisse molestie erat et nibh efficitur varius. Nulla nec eros pulvinar, condimentum odio a, fermentum lorem. Vivamus sit amet sapien pulvinar, vehicula purus pellentesque, lobortis nisl. Curabitur orci metus, ornare a lobortis vitae, aliquam at risus. Phasellus tristique lacus quis vestibulum lacinia. Aenean interdum erat non odio semper, vitae ultricies ipsum mollis. Integer dapibus ultrices eros, elementum posuere massa sollicitudin sit amet. Phasellus quis diam imperdiet, tempor tortor eget, ultrices purus. Suspendisse semper at justo nec pharetra. Sed est velit, egestas at justo vitae, varius mattis massa. Donec efficitur orci et elementum consectetur. In malesuada molestie quam mattis egestas. Nulla dictum massa a metus feugiat, sed maximus metus aliquam. Phasellus sem lacus, dictum vel vestibulum cursus, elementum id dui.\n\n"
 

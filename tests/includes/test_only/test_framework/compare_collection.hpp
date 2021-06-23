@@ -140,7 +140,7 @@ namespace ut
             boost_test_print_type(out, x);
         }
     };
-}
+} // namespace ut
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
 namespace ut
@@ -203,7 +203,7 @@ namespace ut::detail
             !data.cmp(data.x, y),
             data.x, " == ", y, data.f, data.nocolor);
     }
-}
+} // namespace ut::detail
 
 RED_TEST_DISPATCH_COMPARISON_EQ((class Cmp, class T, class U), (ut::comparator_with<Cmp, T>), (U), ::ut::detail::comparator_with_EQ)
 RED_TEST_DISPATCH_COMPARISON_NE((class Cmp, class T, class U), (ut::comparator_with<Cmp, T>), (U), ::ut::detail::comparator_with_NE)
@@ -355,4 +355,4 @@ namespace ut::ops
 
         return ar;
     }
-}
+} // namespace ut::ops

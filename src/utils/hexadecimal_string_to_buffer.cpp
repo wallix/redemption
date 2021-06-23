@@ -40,7 +40,7 @@ namespace
             a[i] = u8(i - 'A' + 10);
         return a;
     }();
-}
+} // namespace anonymous
 
 bool hexadecimal_string_to_buffer(chars_view in, writable_bytes_view out)
 {

@@ -247,7 +247,7 @@ private:
     template<class BGRValue, std::size_t... ints>
     explicit BGRPalette(
         BGRValue const (&a)[256],
-        std::integer_sequence<std::size_t, ints...>
+        std::integer_sequence<std::size_t, ints...> /*ints*/
     ) noexcept
     : palette{BGRColor(a[ints])...}
     {}

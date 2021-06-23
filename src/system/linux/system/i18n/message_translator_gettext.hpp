@@ -38,4 +38,4 @@ namespace i18n
     private :
         bool _clearable_context;
     };
-}
+} // namespace i18n

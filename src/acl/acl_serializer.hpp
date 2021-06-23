@@ -42,7 +42,6 @@ public:
     };
 
     AclSerializer(Inifile & ini, Transport & auth_trans);
-    ~AclSerializer();
 
     AclFieldMask incoming();
     std::size_t send_acl_data();

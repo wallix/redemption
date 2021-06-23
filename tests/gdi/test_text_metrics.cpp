@@ -68,7 +68,8 @@ static ut::assertion_result test_comp_lines(
     array_view<LineForTest> const& a,
     array_view<LineForTest> const& b)
 {
-    return ut::ops::compare_collection_EQ(a, b, [&](std::ostream& out, size_t pos, ...){
+    return ut::ops::compare_collection_EQ(a, b, [&](std::ostream& out, size_t pos, ...) /*NOLINT*/
+    {
         auto put_view = [&](std::ostream& oss, auto av){
             if (pos != 0) {
                 oss << "..., ";

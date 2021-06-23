@@ -193,7 +193,7 @@ namespace
 
         constexpr inline auto arcsight_table = arcsight();
         constexpr inline auto& siem_table = qvalue_table_formats::log_table;
-    }
+    } // namespace table_formats
 
     inline void log_format_set_siem(
         std::string& buffer,
@@ -273,7 +273,7 @@ namespace
         );
         kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
     }
-}
+} // namespace anonymous
 
 SiemLogger::SiemLogger()
 {

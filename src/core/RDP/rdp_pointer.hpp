@@ -193,7 +193,7 @@ public:
     struct constexpr_t {};
 
     template<class Builder>
-    constexpr explicit RdpPointer(constexpr_t, CursorSize d, Hotspot hs, BitsPerPixel bits_per_pixel, Builder&& builder) noexcept
+    constexpr explicit RdpPointer(constexpr_t /*dummy*/, CursorSize d, Hotspot hs, BitsPerPixel bits_per_pixel, Builder&& builder) noexcept
     : dimensions(d)
     , hotspot(hs)
     , native_xor_bpp(bits_per_pixel)

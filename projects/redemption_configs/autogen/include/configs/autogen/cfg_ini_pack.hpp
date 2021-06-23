@@ -559,4 +559,4 @@ constexpr SectionAndName const ini_names[] = {
 {"theme"_zv, "selector_label_bgcolor"_zv},
 {"theme"_zv, "selector_label_fgcolor"_zv},
 };
-}
+} // namespace configs::cfg_ini_infos

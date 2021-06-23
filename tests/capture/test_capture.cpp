@@ -28,7 +28,7 @@
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
-#include "capture/capture.cpp" // Yeaaahh...
+#include "capture/capture.cpp" /* NOLINT(bugprone-suspicious-include) */
 REDEMPTION_DIAGNOSTIC_POP()
 
 #include "capture/capture.hpp"

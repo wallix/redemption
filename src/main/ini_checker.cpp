@@ -164,7 +164,7 @@ namespace
             (..., printer.print<Cfg>(ini));
         }
     };
-}
+} // namespace anonymous
 
 int main(int ac, char ** av)
 {

@@ -48,9 +48,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
             if (excep) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED);
             }
-            else {
-                trans.send(buffer, len);
-            }
+
+            trans.send(buffer, len);
         }
     };
     TestTransport trans;

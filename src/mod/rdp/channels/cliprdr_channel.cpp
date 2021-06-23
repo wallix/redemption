@@ -468,7 +468,7 @@ namespace
             throw Error(ERR_UNEXPECTED, errnum);
         }
     }
-}
+} // namespace anonymous
 
 void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
 ::set_offset(uint64_t offset)
@@ -863,7 +863,7 @@ namespace
         }
         sender(response_size, send_last_flags, bytes_view(zeros_buf, remaining));
     }
-}
+} // namespace anonymous
 
 struct ClipboardVirtualChannel::ClipCtx::D
 {

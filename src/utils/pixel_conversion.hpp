@@ -40,4 +40,4 @@ namespace pixel_conversion_fns
       = [](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); };
     constexpr auto col2buf_4B
       = [](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); p[3] = 0xff; };
-}
+} // namespace pixel_conversion_fns

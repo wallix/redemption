@@ -81,10 +81,7 @@ struct CryptoContextWrapper
 
 struct ScytaleErrorContext
 {
-    ScytaleErrorContext() noexcept
-    : error(NO_ERROR)
-    , msg{}
-    {}
+    ScytaleErrorContext() noexcept = default;
 
     char const * message() noexcept
     {
@@ -109,7 +106,7 @@ struct ScytaleErrorContext
     }
 
 private:
-    Error error;
+    Error error {NO_ERROR};
     char msg[256];
 };
 
@@ -436,7 +433,7 @@ namespace
         hash_to_hashhex(hash.hash, hash_hex.data());
         return 0;
     }
-}
+} // namespace anonymous
 
 int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * filename)
 {

@@ -244,7 +244,6 @@ static bool haveSSSE3() {
 
 
 Primitives Primitives::s_instance;
-Primitives Primitives::s_genericInstance;
 
 Primitives::Primitives() noexcept
     : lShiftC_16s(general_lShiftC_16s)

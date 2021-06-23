@@ -85,7 +85,7 @@ namespace detail
             static_assert((Mode & Mode2) == Mode, "incompatible restriction");
         }
     };
-}
+} // namespace detail
 
 // fix for gcc-7
 template<class...> using LazyInifile = Inifile;

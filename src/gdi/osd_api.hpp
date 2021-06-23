@@ -41,4 +41,4 @@ namespace gdi
             (void)message;
         }
     };
-}
+} // namespace gdi

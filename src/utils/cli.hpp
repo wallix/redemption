@@ -86,7 +86,7 @@ namespace parsers
     struct argname_parser_traits
     : argname_value_traits<void>
     {};
-}
+} // namespace parsers
 
 namespace detail
 {
@@ -877,7 +877,7 @@ namespace detail
     {
         using type = void;
     };
-}
+} // namespace detail
 
 template<class Act>
 auto arg(Act act)
@@ -943,7 +943,7 @@ namespace detail
 
         return out;
     }
-}
+} // namespace cli::detail
 
 template<class Opt>
 void print_help(std::ostream& out, Opt const& opt, int pad)

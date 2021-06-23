@@ -59,13 +59,13 @@ namespace detail
         = std::remove_cv_t<std::remove_pointer_t<decltype(utils::data(std::declval<T>()))>>;
 
     template<class U>
-    constexpr bool is_convertible_with_two_ptr(...)
+    constexpr bool is_convertible_with_two_ptr(...) /*NOLINT*/
     {
         return false;
     }
 
     template<class U, class P>
-    constexpr auto is_convertible_with_two_ptr(P)
+    constexpr auto is_convertible_with_two_ptr(P /*p*/)
     -> decltype(bool(((void)U(P(), P()), true)))
     {
         return true;
@@ -78,7 +78,7 @@ namespace detail
     }
 
     template<template<class...> class U, class P>
-    constexpr auto is_convertible_with_two_ptr(P)
+    constexpr auto is_convertible_with_two_ptr(P /*p*/)
     -> decltype(bool(((void)U(P(), P()), true)))
     {
         return true;
@@ -236,11 +236,11 @@ struct writable_array_view
     using const_pointer = T const*;
     using size_type = std::size_t;
 
-    constexpr writable_array_view() = default;
-    constexpr writable_array_view(writable_array_view && other) = default;
-    constexpr writable_array_view(writable_array_view const & other) = default;
-    writable_array_view & operator = (writable_array_view && other) = default;
-    writable_array_view & operator = (writable_array_view const & other) = default;
+    constexpr writable_array_view() noexcept = default;
+    constexpr writable_array_view(writable_array_view && other) noexcept = default;
+    constexpr writable_array_view(writable_array_view const & other) noexcept = default;
+    writable_array_view & operator = (writable_array_view && other) noexcept = default;
+    writable_array_view & operator = (writable_array_view const & other) noexcept = default;
 
     constexpr writable_array_view(std::nullptr_t /*null*/) noexcept
     : writable_array_view()

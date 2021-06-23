@@ -392,7 +392,7 @@ namespace
 
         return false;
     }
-}
+} // namespace anonymous
 
 
 int main(int ac, char **av)

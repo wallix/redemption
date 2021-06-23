@@ -103,7 +103,7 @@ namespace
             PointerCache::SourcePointersView{pointers})
         {}
     };
-}
+} // namespace anonymous
 
 static void gen_wrm1(
     TraceType trace_type,

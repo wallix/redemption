@@ -374,8 +374,8 @@ namespace
         Msg(ToMod to_mod) : type(1), to_mod(to_mod) {}
         Msg(ToFront to_front) : type(2), to_front(to_front) {}
         Msg(ToValidator to_validator) : type(3), to_validator(to_validator) {}
-        Msg(Nothing) : type(4) {}
-        Msg(Missing) : type(5) {}
+        Msg(Nothing /*dummy*/) : type(4) {}
+        Msg(Missing /*dummy*/) : type(5) {}
 
         bool operator == (Msg const& other) const
         {
@@ -490,7 +490,7 @@ namespace
 #endif
     };
 
-    inline auto ininit_msg_comparator_compare = +[](void*, Msg const&)
+    const auto ininit_msg_comparator_compare = +[](void*, Msg const&)
     {
         // maybe used with dtor of ClipboardVirtualChannel
         RED_REQUIRE(false);
@@ -1594,7 +1594,7 @@ namespace
 
     constexpr chars_view zeros
         = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"_av;
-}
+} // namespace anonymous
 
 RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d, d, {
     //                       always

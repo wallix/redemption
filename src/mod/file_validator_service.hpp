@@ -520,12 +520,11 @@ private:
             this->content.clear();
             return read_content();
         }
-        else {
-            LOG(LOG_ERR, "FileValidatorService::receive_response: Unknown packet: msg_type=%d",
-                int(header.msg_type));
-            in_stream.in_skip_bytes(std::min<std::size_t>(header.msg_len, in_stream.in_remain()));
-            return shift_data(State::Error);
-        }
+
+        LOG(LOG_ERR, "FileValidatorService::receive_response: Unknown packet: msg_type=%d",
+            int(header.msg_type));
+        in_stream.in_skip_bytes(std::min<std::size_t>(header.msg_len, in_stream.in_remain()));
+        return shift_data(State::Error);
     }
 
     FileValidatorId generate_id() noexcept

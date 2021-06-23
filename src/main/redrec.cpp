@@ -21,7 +21,7 @@ namespace
     {
         std::cerr << "Usage [{rec|ver|dec}] [hex-hmac_key hex-key] lib-args..." << std::endl;
     }
-}
+} // namespace anonymous
 
 
 int main(int argc, const char** argv)

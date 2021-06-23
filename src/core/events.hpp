@@ -415,7 +415,7 @@ namespace detail
             return event_container.creator.time_base;
         }
     };
-}
+} // namespace detail
 
 class EventManager
 {

@@ -50,8 +50,6 @@ AclSerializer::AclSerializer(Inifile & ini, Transport & trans)
 , auth_trans(trans)
 {}
 
-AclSerializer::~AclSerializer() = default;
-
 namespace
 {
     class Reader
@@ -117,30 +115,31 @@ namespace
             if (this->in_stream.in_check_rem(value_len)) {
                 return this->in_stream.in_skip_bytes(value_len);
             }
-            else if (value_len < 256u) {
+
+            if (value_len < 256u) {
                 this->read(value_len);
                 return this->in_stream.in_skip_bytes(value_len);
             }
-            else if (value_len > 1024u*1024u) {
+
+            if (value_len > 1024u*1024u) {
                 LOG(LOG_ERR, "Error: ACL data too big (got %u max 1MiB) with %s", value_len, key);
                 throw Error(ERR_ACL_MESSAGE_TOO_BIG);
             }
-            else {
-                this->dynamicbuf.reset(new uint8_t[value_len]); /* NOLINT C++20 */
-                auto* p = this->dynamicbuf.get();
-                auto remaining = this->in_stream.in_remain();
-                this->in_stream.in_copy_bytes(p, remaining);
-                p += remaining;
-                remaining = value_len - remaining;
 
-                do {
-                    const std::size_t n = this->read_to({p, remaining});
-                    p += n;
-                    remaining -= n;
-                } while (remaining);
+            this->dynamicbuf.reset(new uint8_t[value_len]); /* NOLINT C++20 */
+            auto* p = this->dynamicbuf.get();
+            auto remaining = this->in_stream.in_remain();
+            this->in_stream.in_copy_bytes(p, remaining);
+            p += remaining;
+            remaining = value_len - remaining;
 
-                return {this->dynamicbuf.get(), p};
-            }
+            do {
+                const std::size_t n = this->read_to({p, remaining});
+                p += n;
+                remaining -= n;
+            } while (remaining);
+
+            return {this->dynamicbuf.get(), p};
         }
 
     private:

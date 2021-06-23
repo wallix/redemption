@@ -35,13 +35,11 @@ namespace
 struct SectionOrKeyValue
 {
     enum Type { Section, KeyValue, Unknown, };
-    Type type;
+    Type type = Unknown;
     zstring_view str1;
     zstring_view str2;
 
-    SectionOrKeyValue()
-    : type(Unknown)
-    {}
+    SectionOrKeyValue() = default;
 
     SectionOrKeyValue(zstring_view section_name)
     : type(Section)
@@ -119,7 +117,7 @@ struct Cfg : ConfigurationHolder
     func_t funknown;
 };
 
-}
+} // namespace anonymous
 
 RED_AUTO_TEST_CASE_WF(TestCfgloader, wf)
 {

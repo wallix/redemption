@@ -8,7 +8,7 @@
 namespace scancode
 {
     using Scancode8bits = std::uint8_t;
-    
+
     // scancode in 16 bits because of extended scancode like ALTGR scancode...
     using Scancode16bits = std::uint16_t;
 
@@ -25,7 +25,7 @@ namespace scancode
         std::uint8_t idx_ = 0;
     };
 
-    
+
     [[nodiscard]]
     ScancodeSeq unicode_to_scancode(int LCID, std::uint16_t unicode);
-}
+} // namespace scancode

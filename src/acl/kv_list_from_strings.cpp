@@ -49,7 +49,6 @@ KVListFromStrings::Next KVListFromStrings::next() noexcept
             data_len += int(pkv->key.size() + pkv->value.size()) + 3;
             // maximal size of WrmChunkType::SESSION_UPDATE
             if (data_len > 1024 * 16 - 10) {
-                n = i + 1u;
                 break;
             }
             ++pkv;

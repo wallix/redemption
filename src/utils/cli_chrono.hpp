@@ -59,7 +59,7 @@ namespace cli::detail
     {
         static constexpr std::string_view default_argname = "<hours>";
     };
-}
+} // namespace cli::detail
 
 namespace cli::parsers
 {
@@ -86,4 +86,4 @@ namespace cli::arg_parsers
             return r;
         }
     };
-}
+} // namespace cli::arg_parsers

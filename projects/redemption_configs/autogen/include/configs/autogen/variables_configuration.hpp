@@ -37,8 +37,8 @@ namespace configs
         // inline constexpr int section19 = 127; /* internal_mod */
         inline constexpr int section20 = 127; /* context */
         // inline constexpr int section21 = 207; /* theme */
-    }
-}
+    } // namespace cfg_indexes
+} // namespace configs
 
 namespace cfg
 {

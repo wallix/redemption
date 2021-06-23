@@ -38,7 +38,7 @@ namespace
         auto const& glyph = font.glyph_or_unknown(*unicode_iter);
         return Dimension(glyph.width + 8, glyph.height + 12);
     }
-}
+} // namespace anonymous
 
 WidgetVerticalScrollText::WidgetVerticalScrollText(
     gdi::GraphicApi& drawable, Widget& parent,

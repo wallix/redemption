@@ -480,7 +480,7 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
     return ap;
 }
 
-}
+} // anonymous namespace
 
 ModPack create_mod_rdp(
     gdi::GraphicApi & drawable,

@@ -28,7 +28,7 @@
 #include <limits>
 #include <cinttypes>
 
-static uint8_t HuffLenLEC[] = {
+constexpr uint8_t HuffLenLEC[] = {
     0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, // 0
     0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, // 16
     0x8, 0x9, 0x9, 0xa, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, // 32
@@ -54,7 +54,7 @@ static uint8_t HuffLenLEC[] = {
     0x8, 0x5, 0x6, 0x7, 0x7, 0xd                                                    // 288
 };
 
-static uint16_t HuffCodeLEC[] =
+constexpr uint16_t HuffCodeLEC[] =
 {
     0x0004, 0x0024, 0x0014, 0x0011, 0x0051, 0x0031, 0x0071, 0x0009, // 0
     0x0049, 0x0029, 0x0069, 0x0015, 0x0095, 0x0055, 0x00d5, 0x0035,
@@ -99,7 +99,7 @@ static uint16_t HuffCodeLEC[] =
     0x00ed, 0x0018, 0x0021, 0x0025, 0x0065, 0x1fff
 };
 
-static uint16_t HuffIndexLEC[512] = {
+constexpr uint16_t HuffIndexLEC[512] = {
     0x007b, 0xff1f, 0xff0d, 0xfe27, 0xfe00, 0xff05, 0xff17, 0xfe68, 0x00c5, 0xfe07,
     0xff13, 0xfec0, 0xff08, 0xfe18, 0xff1b, 0xfeb3, 0xfe03, 0x00a2, 0xfe42, 0xff10,
     0xfe0b, 0xfe02, 0xfe91, 0xff19, 0xfe80, 0x00e9, 0xfe3a, 0xff15, 0xfe12, 0x0057,
@@ -154,52 +154,52 @@ static uint16_t HuffIndexLEC[512] = {
     0xfe41, 0x010b
 };
 
-static uint16_t LECHTab[] = { 511, 0, 508, 448, 494, 347, 486, 482 };
+constexpr uint16_t LECHTab[] = { 511, 0, 508, 448, 494, 347, 486, 482 };
 
-static uint8_t HuffLenLOM[] = {
+constexpr uint8_t HuffLenLOM[] = {
     0x4, 0x2, 0x3, 0x4, 0x3, 0x4, 0x4, 0x5, 0x4, 0x5, 0x5, 0x6, 0x6, 0x7, 0x7, 0x8,
     0x7, 0x8, 0x8, 0x9, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9
 };
 
-static uint16_t HuffCodeLOM[] = {
+constexpr uint16_t HuffCodeLOM[] = {
     0x0001, 0x0000, 0x0002, 0x0009, 0x0006, 0x0005, 0x000d, 0x000b,
     0x0003, 0x001b, 0x0007, 0x0017, 0x0037, 0x000f, 0x004f, 0x006f,
     0x002f, 0x00ef, 0x001f, 0x005f, 0x015f, 0x009f, 0x00df, 0x01df,
     0x003f, 0x013f, 0x00bf, 0x01bf, 0x007f, 0x017f, 0x00ff, 0x01ff
 };
 
-static uint16_t HuffIndexLOM[] = {
+constexpr uint16_t HuffIndexLOM[] = {
     0xfe1, 0xfe0, 0xfe2, 0xfe8, 0xe, 0xfe5, 0xfe4, 0xfea, 0xff1, 0xfe3, 0x15, 0xfe7,
     0xfef, 0x46, 0xff0, 0xfed, 0xfff, 0xff7, 0xffb, 0x19, 0xffd, 0xff4, 0x12c, 0xfeb,
     0xffe, 0xff6, 0xffa, 0x89, 0xffc, 0xff3, 0xff8, 0xff2
 };
 
-static uint8_t LOMHTab[] = { 0, 4, 10, 19 };
+constexpr uint8_t LOMHTab[] = { 0, 4, 10, 19 };
 
-static uint8_t CopyOffsetBitsLUT[] = {
+constexpr uint8_t CopyOffsetBitsLUT[] = {
     0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11,
     11, 12, 12, 13, 13, 14, 14, 15
 };
 
-static uint32_t CopyOffsetBaseLUT[] = {
+constexpr uint32_t CopyOffsetBaseLUT[] = {
     1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769,
     1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577, 32769, 49153,
     65537
 };
 
-static uint8_t LOMBitsLUT[] = {
+constexpr uint8_t LOMBitsLUT[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 6, 6,
     8, 8, 14, 14
 };
 
-static uint16_t LOMBaseLUT[] = {
+constexpr uint16_t LOMBaseLUT[] = {
     2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 22, 26, 30, 34, 42, 50, 58, 66,
     82, 98, 114, 130, 194, 258, 514, 2, 2
 };
 
-static const size_t RDP_60_HIST_BUF_LEN      = 65536;
-static const size_t RDP_60_HIST_BUF_MIDDLE   = RDP_60_HIST_BUF_LEN / 2;
-static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
+constexpr size_t RDP_60_HIST_BUF_LEN      = 65536;
+constexpr size_t RDP_60_HIST_BUF_MIDDLE   = RDP_60_HIST_BUF_LEN / 2;
+constexpr size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset)
 {
@@ -706,7 +706,8 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         return -1;
     }
 
-    template <typename T> size_t indexOfEqualOrSmallerEntry(T data, T * table)
+    template <typename T>
+    size_t indexOfEqualOrSmallerEntry(T data, T const * table)
     {
         size_t index;
         for (index = 0; *(table + index) < data; index++);

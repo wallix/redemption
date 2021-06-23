@@ -52,7 +52,7 @@ namespace detail
 
     template class BitsetStreamIterator<unsigned long long>;
     template class BitsetStreamIterator<unsigned long long const>;
-}
+} // namespace detail
 
 struct BitsetOutStream
 {

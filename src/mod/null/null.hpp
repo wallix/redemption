@@ -35,8 +35,8 @@ struct null_mod : public mod_api
     void rdp_input_mouse(int,int,int,Keymap2 *) override {}
     void rdp_input_scancode(long,long,long,long,Keymap2 *) override {}
     void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
-    void rdp_input_invalidate(const Rect) override {}
-    void refresh(const Rect) override {}
+    void rdp_input_invalidate(const Rect rect) override { (void)rect; }
+    void refresh(const Rect rect) override { (void)rect; }
     bool is_up_and_running() const override { return true; }
 
     bool is_auto_reconnectable() const override { return false; }

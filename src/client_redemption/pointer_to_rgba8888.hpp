@@ -37,4 +37,4 @@ namespace redclient
     };
 
     RGBA8888Image pointer_to_rgba8888(RdpPointerView const& pointer);
-}
+} // namespace redclient

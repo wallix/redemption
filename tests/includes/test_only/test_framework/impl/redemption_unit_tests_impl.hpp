@@ -306,7 +306,7 @@ namespace ut
         DEC_OP_PREDICATE(GT, >);
         DEC_OP_PREDICATE(GE, >=);
         #undef DEC_OP_PREDICATE
-    }
+    } // namespace op
 
     namespace detail
     {
@@ -367,7 +367,7 @@ namespace ut
     {
         template<class OP>
         inline assertion_result
-        hex_int_compare(uint64_t x, uint64_t y, hex_int h, OP const*)
+        hex_int_compare(uint64_t x, uint64_t y, hex_int h, OP const* /*op*/)
         {
             bool const r = op::op_to_predicate<OP>::compute(x, y);
             assertion_result ar(r);
@@ -537,7 +537,7 @@ namespace unit_test {
     struct is_forward_iterable<bounded_array_view<T, AtLeast, AtMost>> : mpl::false_ {};
     template<class T, std::size_t AtLeast, std::size_t AtMost>
     struct is_forward_iterable<writable_bounded_array_view<T, AtLeast, AtMost>> : mpl::false_ {};
-}
+} // namespace unit_test
 
 namespace test_tools {
 namespace assertion {

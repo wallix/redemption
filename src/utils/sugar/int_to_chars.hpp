@@ -221,7 +221,7 @@ namespace detail
 
         if constexpr (std::is_signed_v<Int>) {
             using UInt = std::conditional_t<(sizeof(Int) < sizeof(int)), unsigned, std::make_unsigned_t<Int>>;
-            auto abs_value = static_cast<UInt>(value);
+            auto abs_value = static_cast<UInt>(value); /* NOLINT(bugprone-signed-char-misuse) */
             bool negative = (value < 0);
             if (negative) abs_value = 0 - abs_value;
             char* begin = to_decimal_chars_impl(end, abs_value);
@@ -294,7 +294,7 @@ namespace detail
             r.ibeg = unsigned(n);
         }
     };
-}
+} // namespace detail
 
 template<class T>
 inline int_to_chars_result int_to_decimal_chars(T n) noexcept

@@ -110,7 +110,7 @@ namespace
         }
         return s;
     }
-}
+} // namespace anonymous
 
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,

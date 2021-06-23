@@ -52,4 +52,4 @@ struct U64BitFlags
     }
 };
 
-} // namespace anonymous
+} // namespace configs

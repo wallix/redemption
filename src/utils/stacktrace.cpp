@@ -31,7 +31,7 @@
 
 namespace
 {
-    struct SEGV_Handler
+    const struct SEGV_Handler
     {
         SEGV_Handler() noexcept
         {

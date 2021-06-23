@@ -45,10 +45,10 @@ RED_AUTO_TEST_CASE(TestIntToDecimalChars)
     RED_CHECK(int_to_decimal_chars(-2147483647 - 1) == "-2147483648"_av);
     RED_CHECK(int_to_decimal_chars(9223372036854775807) == "9223372036854775807"_av);
     RED_CHECK(int_to_decimal_chars(-9223372036854775807) == "-9223372036854775807"_av);
-    RED_CHECK(int_to_decimal_chars(-9223372036854775807ll - 1) == "-9223372036854775808"_av);
-    RED_CHECK(int_to_decimal_chars(18446744073709551615ull) == "18446744073709551615"_av);
+    RED_CHECK(int_to_decimal_chars(-9223372036854775807LL - 1) == "-9223372036854775808"_av);
+    RED_CHECK(int_to_decimal_chars(18446744073709551615ULL) == "18446744073709551615"_av);
 
-    RED_CHECK(int_to_decimal_chars(18446744073709551615ull).size() == 20);
+    RED_CHECK(int_to_decimal_chars(18446744073709551615ULL).size() == 20);
 
     auto str = int_to_decimal_chars(596u);
     auto av = chars_view(str);

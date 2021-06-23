@@ -314,7 +314,7 @@ namespace
             using fromColor32 = typename traits::fromColor32;
 
             template <typename Op, typename... Col>
-            uint8_t *operator()(P dest, cP src, Op, fromColor32 to_color, Col...) const
+            uint8_t *operator()(P dest, cP src, Op, fromColor32 to_color, Col... /*color*/) const
             {
                 uint8_t src_alpha = src[3];
                 auto alpha_blending = [src_alpha](uint8_t src_color,

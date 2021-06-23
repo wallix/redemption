@@ -44,7 +44,7 @@ constexpr auto IsDirectory = CheckFileData::FileType::Directory;
 
 namespace
 {
-    CheckFileData user_check_file_list[] =
+    const CheckFileData user_check_file_list[] =
     {
         // Directories.
         { IsDirectory, Writable, app_path(AppPath::Certif)           },

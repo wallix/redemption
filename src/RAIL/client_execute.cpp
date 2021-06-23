@@ -288,10 +288,6 @@ namespace
 
         return {Rect(), WindowArea::NUMBER_OF_AREAS_OR_INVALID};
     }
-}
-
-namespace
-{
 
 DECLARE_ENUM_MAP(area_to_rail_wmsz, uint16_t,
     (WindowArea::N, RAIL_WMSZ_TOP)

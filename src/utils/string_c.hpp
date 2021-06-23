@@ -177,7 +177,7 @@ namespace jln
             template<unsigned long long x>
             using f = ull_to_string_c_t<x>;
         };
-    }
+    } // namespace detail
 
     template<class T, T x>
     using integer_to_string_c_t = typename detail::integer_to_string_c_t_impl<(x < 0)>

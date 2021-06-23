@@ -36,7 +36,7 @@ namespace
         return s;
     }
 
-    auto mk_array = [](auto... strs){
+    const auto mk_array = [](auto... strs){
         return [](auto... strs2){
             return std::array<std::string, sizeof...(strs2)>{strs2...};
         }(
@@ -45,7 +45,7 @@ namespace
             strs...
         );
     };
-}
+} // namespace anonymous
 
 RED_AUTO_TEST_CASE(TestKVListFromStrings)
 {

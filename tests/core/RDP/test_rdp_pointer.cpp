@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestDataSize)
 
 RED_AUTO_TEST_CASE(TestPointerNormal)
 {
-    RdpPointer p = normal_pointer();
+    RdpPointer const& p = normal_pointer();
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
     uint8_t expected[] = {
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
 
 RED_AUTO_TEST_CASE(TestPointerEdit)
 {
-    RdpPointer p = edit_pointer();
+    RdpPointer const& p = edit_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNS)
 {
-    RdpPointer p = size_NS_pointer();
+    RdpPointer const& p = size_NS_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 {
-    RdpPointer p = size_NESW_pointer();
+    RdpPointer const& p = size_NESW_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 {
-    RdpPointer p = size_NWSE_pointer();
+    RdpPointer const& p = size_NWSE_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -268,7 +268,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 
 RED_AUTO_TEST_CASE(TestPointerSizeWE)
 {
-    RdpPointer p = size_WE_pointer();
+    RdpPointer const& p = size_WE_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 

@@ -415,7 +415,7 @@ namespace redemption_unit_test_
     struct DatasFuncCounter
     {
         template<class... Xs>
-        DatasFuncCounter<N+1> operator()(Xs const&...)
+        DatasFuncCounter<N+1> operator()(Xs const&... /*xs*/)
         {
             return {};
         }

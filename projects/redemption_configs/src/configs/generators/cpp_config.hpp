@@ -810,8 +810,8 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
     }
 
     out_varconf <<
-        "    }\n"
-        "}\n"
+        "    } // namespace cfg_indexes\n"
+        "} // namespace configs\n"
         "\n"
         "namespace cfg\n"
         "{\n"
@@ -953,7 +953,7 @@ inline void write_ini_values(std::ostream& out, CppConfigWriterBase& writer)
         "constexpr SectionAndName const ini_names[] = {\n"
         << writer.cfg_str_values <<
         "};\n"
-        "}\n"
+        "} // namespace configs::cfg_ini_infos\n"
     ;
 }
 

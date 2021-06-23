@@ -33,4 +33,4 @@ namespace i18n
         [[nodiscard]]
         zstring_view get_translated_text(zstring_view text) const noexcept { return text; }
     };
-}
+} // namespace i18n

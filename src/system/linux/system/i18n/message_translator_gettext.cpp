@@ -77,7 +77,7 @@ namespace
         }
         return true;
     }
-}
+} // namespace anonymous
 
 namespace i18n
 {
@@ -225,4 +225,4 @@ namespace i18n
     {
         return zstring_view::from_null_terminated(gettext(text));
     }
-}
+} // namespace i18n

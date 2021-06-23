@@ -510,7 +510,7 @@ inline parse_error parse_from_cfg(
 }
 
 template<class... Str>
-constexpr auto str_flat_lower_strings(int, Str const&... strings)
+constexpr auto str_flat_lower_strings(int /*dummy*/, Str const&... strings)
 {
     constexpr auto n = (... + std::extent_v<Str>)
                      - sizeof...(strings) /* zero-terminal with char[N] */;

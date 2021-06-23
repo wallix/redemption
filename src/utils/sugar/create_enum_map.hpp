@@ -85,11 +85,11 @@ Author(s): Proxies Team
 #define CREATE_ENUM_MAP_CLASS_UNROLL_I(suffix, ...) \
     __VA_ARGS__ ## suffix
 
-#define CREATE_ENUM_MAP_CLASS_CASE_NEXT1(e, v) \
-    case e: map[i] = v; continue;              \
+#define CREATE_ENUM_MAP_CLASS_CASE_NEXT1(e, v)                       \
+    case e: map[i] = v; continue; /* NOLINT(bugprone-branch-clone)*/ \
     CREATE_ENUM_MAP_CLASS_CASE_NEXT2
-#define CREATE_ENUM_MAP_CLASS_CASE_NEXT2(e, v) \
-    case e: map[i] = v; continue;              \
+#define CREATE_ENUM_MAP_CLASS_CASE_NEXT2(e, v)                       \
+    case e: map[i] = v; continue; /* NOLINT(bugprone-branch-clone)*/ \
     CREATE_ENUM_MAP_CLASS_CASE_NEXT1
 
 #define CREATE_ENUM_MAP_CLASS_CASE_NEXT1FINAL()

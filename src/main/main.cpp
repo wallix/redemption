@@ -80,13 +80,11 @@ static bool write_pid_file(int pid)
 
 static void daemonize()
 {
-    int pid;
-
     close(0);
     close(1);
     close(2);
 
-    switch (pid = fork()){
+    switch (fork()){
     case -1:
         std::clog << "problem forking "
         << errno << ":'" << strerror(errno) << "'\n";
@@ -94,7 +92,7 @@ static void daemonize()
     default: /* exit, this is the main process (daemonizer) */
         _exit(0);
     case 0: /* child daemon process */
-        pid = getpid();
+        int pid = getpid();
 
         if (!write_pid_file(pid)) {
             _exit(1);

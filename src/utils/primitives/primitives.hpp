@@ -78,5 +78,4 @@ public:
 
 private:
     static Primitives s_instance;
-    static Primitives s_genericInstance;
 };

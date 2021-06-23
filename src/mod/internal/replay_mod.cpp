@@ -62,10 +62,10 @@ struct ReplayMod::Reader
             filenames.reserve(mwrm_data.wrms.size());
             for (auto const& wrm : mwrm_data.wrms) {
                 if (file_exist(wrm.filename)) {
-                    filenames.push_back(wrm.filename);
+                    filenames.emplace_back(wrm.filename);
                 }
                 else {
-                    filenames.push_back(str_concat(
+                    filenames.emplace_back(str_concat(
                         chars_view(mwrm_filename.data(), pos),
                         wrm.filename));
                 }

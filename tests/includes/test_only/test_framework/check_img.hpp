@@ -43,4 +43,4 @@ namespace ut
         bool operator()(ImageView const& img_path, char const* filedata_path);
         bool operator()(char const* img, char const* filedata_path);
     };
-}
+} // namespace ut

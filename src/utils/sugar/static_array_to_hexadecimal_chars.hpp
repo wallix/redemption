@@ -88,7 +88,7 @@ namespace detail
             return r.buffer;
         }
     };
-}
+} // namespace detail
 
 
 template<class SizedSeq, std::size_t N>

@@ -245,7 +245,7 @@ namespace
         apply_color(dest, y, n, y, n);
         dest += 4;
     }
-}
+} // anonymous namespace
 
 redclient::RGBA8888Image redclient::pointer_to_rgba8888(RdpPointerView const& pointer)
 {

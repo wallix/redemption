@@ -97,7 +97,6 @@ namespace detail
         constexpr bool post_error(bool has_error)
         {
             if (!has_error && is_fmt) {
-                has_error = true;
                 idx_err = i;
                 fmt_err = 0;
                 return true;

@@ -2007,9 +2007,6 @@ public:
             switch (type) {
 
                 case MFF::META_SETWINDOWEXT:
-                    chunk.in_skip_bytes(4);
-                break;
-
                 case MFF::META_SETWINDOWORG:
                     chunk.in_skip_bytes(4);
                 break;

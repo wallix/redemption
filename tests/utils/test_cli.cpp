@@ -40,7 +40,7 @@ namespace cli
             // && r1.str == r2.str
             ;
     }
-}
+} // namespace cli
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 static ut::assertion_result parse_result_eq(

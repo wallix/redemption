@@ -82,7 +82,7 @@ namespace
         using A = std::array<uint8_t, sizeof...(xs)>;
         return ArrayW<A>{A{{uint8_t(xs)...}}};
     }
-}
+} // namespace anonymous
 
 RED_AUTO_TEST_CASE(TestWsParseClient)
 {

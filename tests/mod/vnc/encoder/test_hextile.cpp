@@ -20,7 +20,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "mod/vnc/encoder/hextile.cpp"
+#include "mod/vnc/encoder/hextile.cpp" /* NOLINT(bugprone-suspicious-include) */
 
 
 class BlockWrap
