@@ -288,12 +288,6 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_pointer_xormask_padding", set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disabled_orders_desc}, set("25"));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
-                 "force_bitmap_cache_v2_with_am",
-                 desc{"Force usage of bitmap cache V2 for compatibility "
-                         "with WALLIX Access Manager."},
-                 set(true));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
