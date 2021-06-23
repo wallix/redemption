@@ -289,10 +289,6 @@ enable_remotefx = boolean(default=True)
 #_advanced
 disabled_orders = string(default='25')
 
-# Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
-#_advanced
-force_bitmap_cache_v2_with_am = boolean(default=True)
-
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side

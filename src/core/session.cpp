@@ -936,13 +936,6 @@ private:
                         }
                     }
 
-                    if (has_field(cfg::context::is_wabam())
-                        && ini.get<cfg::context::is_wabam>()) {
-                        if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>()) {
-                            front.force_using_cache_bitmap_r2();
-                        }
-                    }
-
                     if (has_field(cfg::context::keepalive())) {
                         keepalive.keep_alive();
                     }

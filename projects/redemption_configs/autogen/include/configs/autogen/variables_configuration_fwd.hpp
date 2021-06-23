@@ -94,7 +94,6 @@ namespace cfg
         struct enable_osd_4_eyes;
         struct enable_remotefx;
         struct disabled_orders;
-        struct force_bitmap_cache_v2_with_am;
     };
 
     struct mod_rdp {

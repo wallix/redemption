@@ -1257,11 +1257,6 @@ public:
             : Capture::RTDisplayResult::Unchanged;
     }
 
-    void force_using_cache_bitmap_r2()
-    {
-        this->orders.graphics_update_pdu().force_using_cache_bitmap_r2();
-    }
-
     static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)
     {
         if (((client_supported_type < PACKET_COMPR_TYPE_8K) || (client_supported_type > PACKET_COMPR_TYPE_RDP61)) ||
@@ -4364,13 +4359,6 @@ private:
                 this->state = FRONT_UP_AND_RUNNING;
                 this->handshake_timeout.garbage();
 
-                // TODO: see if we should not rather use a specific callback API for ACL
-                // this is mixed up with RDP input API
-                LOG(LOG_INFO, "RDP INPUT UP AND RUNNING ==================");
-                if (this->ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
-                    this->ini.get<cfg::context::is_wabam>()) {
-                    this->force_using_cache_bitmap_r2();
-                }
                 cb.rdp_gdi_up_and_running();
 
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);

@@ -268,12 +268,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, names{"enable_remotefx"}, desc{"Enable front remoteFx"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc}, set("25"));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
-                 names{"force_bitmap_cache_v2_with_am"},
-                 desc{"Force usage of bitmap cache V2 for compatibility "
-                         "with WALLIX Access Manager."},
-                 set(true));
     });
 
     W.section(names{.cpp="mod_rdp", .connpolicy="rdp"}, [&]

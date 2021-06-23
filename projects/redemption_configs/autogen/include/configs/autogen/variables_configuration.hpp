@@ -1016,17 +1016,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { "25" };
     };
-    /// Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct client::force_bitmap_cache_v2_with_am {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
-    };
 
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
@@ -5299,7 +5288,6 @@ struct client
 , cfg::client::enable_osd_4_eyes
 , cfg::client::enable_remotefx
 , cfg::client::disabled_orders
-, cfg::client::force_bitmap_cache_v2_with_am
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

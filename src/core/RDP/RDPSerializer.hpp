@@ -195,13 +195,6 @@ public:
         return (this->max_data_block_size - SERIALIZER_HEADER_SIZE);
     }
 
-    void force_using_cache_bitmap_r2() {
-        if (this->bitmap_cache_version != 2) {
-            LOG(LOG_INFO, "RDPSerializer::force_using_cache_bitmap_r2");
-            this->bitmap_cache_version = 2;
-        }
-    }
-
 protected:
     virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
