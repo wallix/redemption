@@ -228,8 +228,8 @@ namespace
 
             Inifile ini;
 
-            configuration_load(ini.configuration_holder(), config_filename);
             ini.set<cfg::debug::config>(debug_config);
+            configuration_load(ini.configuration_holder(), config_filename);
 
             if (ini.get<cfg::debug::session>()){
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
