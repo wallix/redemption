@@ -18,6 +18,8 @@ Copyright (C) Wallix 2021
 Author(s): Proxies Team
 */
 
+#error Please do not use before gcc-10 (do not forget to reactivate the tests)
+
 #pragma once
 
 #include <limits>
@@ -368,8 +370,7 @@ namespace detail
         }
     };
 
-    // Fmt is useless, but necessary to not have a runtime error with gcc-8
-    template<class Fmt, std::size_t MaxSize, class BufFormat, class LastPart, class... Parts>
+    template<std::size_t MaxSize, class BufFormat, class LastPart, class... Parts>
     struct static_fmt_t
     {
         template<class... Ts>
@@ -381,7 +382,7 @@ namespace detail
 
         // gcc-8: do not make it a static function
         template<std::size_t n, class... Ts>
-        void write_to(static_string<n>& str, Ts const&... xs) const
+        static void write_to(static_string<n>& str, Ts const&... xs)
         {
             static_assert(sizeof...(Parts) == sizeof...(Ts));
             write_to_impl(str, static_fmt_writer_for<Parts::fmt>::to_writer(xs)...);
@@ -389,8 +390,8 @@ namespace detail
 
         // gcc-8: do not make it a static function
         template<std::size_t NewMaxSize>
-        constexpr static_fmt_t<Fmt, NewMaxSize, BufFormat, LastPart, Parts...>
-        set_max_size() const noexcept
+        static constexpr static_fmt_t<NewMaxSize, BufFormat, LastPart, Parts...>
+        set_max_size() noexcept
         {
             return {};
         }
@@ -416,7 +417,7 @@ namespace detail
 
         // gcc-8: do not make it a static function
         template<std::size_t n, class... Writers>
-        void write_to_impl(static_string<n>& str, Writers... writers) const
+        static void write_to_impl(static_string<n>& str, Writers... writers)
         {
             constexpr auto max_size
                 = all_part_size
@@ -479,17 +480,8 @@ constexpr auto operator "" _static_fmt() noexcept
         auto ints = std::make_index_sequence<fmt::value.string_len>();
         using static_str = decltype(detail::unroll_indexes(ints, to_static_str));
 
-        auto gcc8_fix = [&](auto ints) {
-            return detail::static_fmt_part_t<
-                fmt::value.offsets[ints],
-                fmt::value.lengths[ints],
-                fmt::value.fmts[ints]
-            >();
-        };
-
         auto to_static_fmt = [&](auto... ints) {
             return detail::static_fmt_t<
-                decltype(fmt::value),
                 4096,
                 static_str,
                 detail::static_fmt_part_t<
@@ -497,7 +489,11 @@ constexpr auto operator "" _static_fmt() noexcept
                     fmt::value.last.length,
                     fmt::value.last.fmt
                 >,
-                decltype(gcc8_fix(ints))...
+                detail::static_fmt_part_t<
+                    fmt::value.offsets[ints],
+                    fmt::value.lengths[ints],
+                    fmt::value.fmts[ints]
+                >...
             >();
         };
 

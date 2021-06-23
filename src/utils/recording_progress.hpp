@@ -24,7 +24,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/static_fmt.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 #include "utils/monotonic_clock.hpp"
 
 #include <cassert>
@@ -134,21 +134,32 @@ public:
     {
         this->error_raised = true;
 
-        auto json =
-            R"({"percentage":%u,"eta":%d,"videos":%u,"error":{"code":%d,"message":"%s"}})"
-            ""_static_fmt(this->time_percentage, this->time_remaining, this->nb_videos, code, message);
+        char json[1024+256];
+        int len = std::snprintf(json, sizeof(json),
+            R"({"percentage":%u,"eta":%d,"videos":%u,"error":{"code":%d,"message":"%.*s"}})",
+            this->time_percentage, this->time_remaining, this->nb_videos, code,
+            int(message.size()), message.data());
+        this->write_json({json, size_t(len)});
 
-        this->write_json(json);
+        // auto json =
+        //     R"({"percentage":%u,"eta":%d,"videos":%u,"error":{"code":%d,"message":"%s"}})"
+        //     ""_static_fmt(this->time_percentage, this->time_remaining, this->nb_videos, code, message);
+        // this->write_json(json);
     }
 
 private:
     void write_datas()
     {
-        auto json =
-            R"({"percentage":%u,"eta":%d,"videos":%u})"
-            ""_static_fmt(this->time_percentage, this->time_remaining, this->nb_videos);
+        char json[256];
+        int len = std::snprintf(json, sizeof(json),
+            R"({"percentage":%u,"eta":%d,"videos":%u})",
+            this->time_percentage, this->time_remaining, this->nb_videos);
+        this->write_json({json, size_t(len)});
 
-        this->write_json(json);
+        // auto json =
+        //     R"({"percentage":%u,"eta":%d,"videos":%u})"
+        //     ""_static_fmt(this->time_percentage, this->time_remaining, this->nb_videos);
+        // this->write_json(json);
     }
 
     void write_json(chars_view json)

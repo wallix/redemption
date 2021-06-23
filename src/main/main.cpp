@@ -42,7 +42,6 @@
 #include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/cli.hpp"
-#include "utils/static_fmt.hpp"
 
 #include <iostream>
 #include <charconv>
@@ -158,12 +157,13 @@ static int shutdown()
             return ;
         }
 
-        auto path = "/proc/%d/cmdline"_static_fmt(pid);
-        fd = unique_fd(open(path.c_str(), O_RDONLY));
+        // auto path = "/proc/%d/cmdline"_static_fmt(pid);
+        char path[256];
+        std::sprintf(path, "/proc/%d/cmdline", pid);
+        fd = unique_fd(open(path, O_RDONLY));
         if (!fd.is_open()) {
             int err = errno;
-            std::cerr << std::string_view(path.data(), path.size())
-                << ": " << strerror(err) << "\n";
+            std::cerr << path << ": " << strerror(err) << "\n";
             return ;
         }
 
