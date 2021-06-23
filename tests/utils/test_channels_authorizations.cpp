@@ -452,7 +452,7 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels2)
 {
     std::string allow = "*";
-    std::string deny = "";
+    std::string deny;
     auto result = compute_authorized_channels(allow, deny, "RDP_SMARTCARD,RDP_CLIPBOARD_UP");
     allow = result.first;
     deny = result.second;

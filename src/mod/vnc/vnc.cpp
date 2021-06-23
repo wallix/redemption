@@ -707,9 +707,8 @@ bool mod_vnc::treatVeNCrypt() {
             return false;
         }
 
-        uint8_t major, minor;
-        major = s.in_uint8();
-        minor = s.in_uint8();
+        uint8_t major = s.in_uint8();
+        uint8_t minor = s.in_uint8();
 
         if (major != 0 && minor != 2) {
             LOG(LOG_ERR, "unsupported VeNCrypt version %d.%d", major, minor);
@@ -898,7 +897,8 @@ bool mod_vnc::draw_event_impl()
                 return true;
             };
 
-            int major, minor;
+            int major;
+            int minor;
             if (!versionParser(&rfbString[4], major) || !versionParser(&rfbString[8], minor)) {
                 LOG(LOG_INFO, "Invalid server handshake");
                 throw Error(ERR_VNC_CONNECTION_ERROR);

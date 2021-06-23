@@ -598,7 +598,7 @@ struct ReparseGUIDDataBuffer {
         std::memcpy(this->DataBuffer, DataBuffer, ReparseDataLength);
     }
 
-    inline size_t size() {
+    inline size_t size() const {
         return 22 + this->ReparseDataLength;   /* ReparseTag(4) + ReparseDataLength(2) + */
     }                /* ReparseGuid(16)*/
 
@@ -1254,7 +1254,8 @@ public:
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    [[nodiscard]] size_t size() const {
+    [[nodiscard]] size_t size() const
+    {
         const size_t size = 93; // NextEntryOffset(4) + FileIndex(4) +
                                 //     CreationTime(8) + LastAccessTime(8) +
                                 //     LastWriteTime(8) + ChangeTime(8) +
@@ -1518,7 +1519,8 @@ public:
 
     [[nodiscard]] uint64_t LastWriteTime() const { return this->LastWriteTime_; }
 
-    uint32_t size() {
+    uint32_t size() const
+    {
         const uint32_t size = 64;   // NextEntryOffset(4) + FileIndex(4) +
                                     //     CreationTime(8) + LastAccessTime(8) +
                                     //     LastWriteTime(8) + ChangeTime(8) +

@@ -420,7 +420,7 @@ public:
         this->Flags_ = Flags_;
     }
 
-    auto get_flags() {
+    auto get_flags() const {
         return this->Flags_;
     }
 

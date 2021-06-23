@@ -831,7 +831,7 @@ namespace
             ChannelCtx(
                 MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
-                ClipboardVirtualChannelParams clipboard_virtual_channel_params,
+                ClipboardVirtualChannelParams const& clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
             : report_message(msg_comparator)
             , validator_transport(msg_comparator)
@@ -2098,7 +2098,7 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrValidationBeforeTransfer, ClipDataTest con
     msg_comparator.run(
         TEST_PROCESS {
             channel_ctx->process_server_message(
-                requested.file_contents.first(6), 20, /*flag=*/0);
+                requested.file_contents.first(6), 20, /*flags=*/0);
         },
         TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x06"_av}),
         TEST_BUF(Msg::ToValidator{requested.file_contents.first(6)})

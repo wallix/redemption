@@ -82,7 +82,7 @@ namespace
         }
 
     private:
-        void draw_tile(Rect rect, const uint8_t* raw, gdi::GraphicApi& drawable)
+        void draw_tile(Rect rect, const uint8_t* raw, gdi::GraphicApi& drawable) const
         {
             const uint16_t TILE_CX = 32;
             const uint16_t TILE_CY = 32;

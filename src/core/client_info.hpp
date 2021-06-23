@@ -147,7 +147,10 @@ struct ClientInfo
 
     ClientInfo() = default;
 
-    void set_nla_ntlm_username_info(const std::string nla_ntlm_domain, const std::string nla_ntlm_username, const std::string md4_nla_ntlm_password)
+    void set_nla_ntlm_username_info(
+        std::string_view nla_ntlm_domain,
+        std::string_view nla_ntlm_username,
+        std::string_view md4_nla_ntlm_password)
     {
         this->nla_ntlm_username     = nla_ntlm_domain;
         this->nla_ntlm_domain       = nla_ntlm_username;

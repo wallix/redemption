@@ -40,13 +40,13 @@ namespace
 WidgetScrollBar::WidgetScrollBar(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, bool horizontal,
-    int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
+    int group_id, Color fg_color, Color bg_color, Color focus_color,
     Font const & font, bool rail_style, int maxvalue)
 : Widget(drawable, parent, notifier, group_id)
 , horizontal(horizontal)
-, fg_color(fgcolor)
-, bg_color(bgcolor)
-, focus_color(focuscolor)
+, fg_color(fg_color)
+, bg_color(bg_color)
+, focus_color(focus_color)
 , font(font)
 , max_value(maxvalue)
 , event(horizontal ? NOTIFY_HSCROLL : NOTIFY_VSCROLL)

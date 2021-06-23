@@ -327,7 +327,7 @@ void InCryptoTransport::close()
     this->eof = true;
 }
 
-bool InCryptoTransport::is_eof() noexcept
+bool InCryptoTransport::is_eof() const noexcept
 {
     return this->eof;
 }

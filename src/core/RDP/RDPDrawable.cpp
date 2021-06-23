@@ -191,7 +191,7 @@ void RDPDrawable::draw(const RDPMultiDstBlt & cmd, Rect clip)
 
 void RDPDrawable::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    const Color color = u32rgb_to_color(this->drawable, color_ctx, cmd._Color);
+    const Color color = u32rgb_to_color(this->drawable, color_ctx, cmd.color);
     draw_multi(this->drawable, cmd, clip, [color, this](const Rect & trect) {
         this->drawable.opaquerect(trect, color);
     });

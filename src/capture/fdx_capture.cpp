@@ -124,7 +124,7 @@ FdxCapture::FdxCapture(
     sid)
 , cctx(cctx)
 , rnd(rnd)
-, notify_error(notify_error)
+, notify_error(std::move(notify_error))
 , groupid(groupid)
 , file_permissions(file_permissions)
 , out_crypto_transport(this->cctx, this->rnd, this->notify_error)

@@ -205,7 +205,7 @@ private:
 public:
     SocketTransport& get_transport() const
     {
-        return *this->socket_transport_ptr.get();
+        return *this->socket_transport_ptr;
     }
 
     FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
@@ -469,8 +469,8 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
 inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 {
     ApplicationParams ap;
-    ap.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-    ap.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
+    ap.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>();
+    ap.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>();
     ap.shell_working_dir = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
     ap.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
     ap.target_application_account = ini.get<cfg::globals::target_application_account>().c_str();

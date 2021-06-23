@@ -4998,23 +4998,23 @@ struct RdpDrStatus
 
         explicit DeviceIORequestData() = default;
 
-        uint32_t DeviceId() {
+        uint32_t DeviceId() const {
             return this->request.DeviceId();
         }
 
-        uint32_t CompletionId() {
+        uint32_t CompletionId() const {
             return this->request.CompletionId();
         }
 
-        uint32_t MajorFunction() {
+        uint32_t MajorFunction() const {
             return this->request.MajorFunction();
         }
 
-        uint32_t MinorFunction() {
+        uint32_t MinorFunction() const {
             return this->request.MinorFunction();
         }
 
-        uint32_t FileId() {
+        uint32_t FileId() const {
             return this->request.FileId();
         }
     };

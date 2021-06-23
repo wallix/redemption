@@ -192,7 +192,7 @@ struct FileValidatorResultHeader
         return ReceiveStatus::Ok;
     }
 
-    void emit(OutStream& stream) noexcept
+    void emit(OutStream& stream) const noexcept
     {
         stream.out_uint8(safe_int(this->result));
         stream.out_uint32_be(safe_int(this->file_id));

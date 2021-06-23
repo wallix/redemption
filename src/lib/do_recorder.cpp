@@ -1704,9 +1704,9 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         }
         else {
             recorder.input_basename = input.basename;
-            recorder.infile_extension = (input.extension.size() > 0)
-                ? input.extension.c_str()
-                : ".mwrm";
+            recorder.infile_extension = input.extension.empty()
+                ? ".mwrm"
+                : input.extension.c_str();
             str_assign(recorder.input_filename, input.basename, recorder.infile_extension);
         }
 

@@ -104,7 +104,7 @@ using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnap
 // VideoCaptureCtx
 //@{
 VideoCaptureCtx::VideoCaptureCtx(
-    MonotonicTimePoint now,
+    MonotonicTimePoint monotonic_now,
     RealTimePoint real_now,
     ImageByInterval image_by_interval,
     unsigned frame_rate,
@@ -115,10 +115,10 @@ VideoCaptureCtx::VideoCaptureCtx(
 )
 : drawable(drawable)
 , drawable_pointer(drawable_pointer)
-, monotonic_last_time_capture(now)
-, monotonic_to_real(now, real_now)
+, monotonic_last_time_capture(monotonic_now)
+, monotonic_to_real(monotonic_now, real_now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
-, next_trace_time(now)
+, next_trace_time(monotonic_now)
 , image_by_interval(image_by_interval)
 , has_timestamp(
     image_by_interval == ImageByInterval::OneWithTimestamp

@@ -70,7 +70,7 @@ OutFilenameSequenceTransport::OutFilenameSequenceTransport(
     const int groupid,
     std::function<void(const Error & error)> notify_error)
 : filegen_(prefix, filename, extension)
-, buf_(invalid_fd(), notify_error)
+, buf_(invalid_fd(), std::move(notify_error))
 , groupid_(groupid)
 {
     this->current_filename_[0] = 0;

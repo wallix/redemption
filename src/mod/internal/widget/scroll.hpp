@@ -68,7 +68,7 @@ class WidgetScrollBar : public Widget
 public:
     WidgetScrollBar(gdi::GraphicApi & drawable, Widget& parent,
                     NotifyApi* notifier, bool horizontal,
-                    int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
+                    int group_id, Color fg_color, Color bg_color, Color focus_color,
                     Font const & font, bool rail_style, int maxvalue = 100); /*NOLINT*/
 
     [[nodiscard]] unsigned int get_current_value() const;

@@ -40,7 +40,7 @@ public:
         this->mod_signal = signal;
     }
 
-    BackEvent_t get_mod_signal()
+    BackEvent_t get_mod_signal() const
     {
         return this->mod_signal;
     }

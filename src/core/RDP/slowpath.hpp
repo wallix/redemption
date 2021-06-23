@@ -420,7 +420,7 @@ namespace SlowPath {
           PTRFLAGS_WHEEL                = 0x0200
         , PTRFLAGS_WHEEL_NEGATIVE       = 0x0100
 
-        , _PTRFLAGS_WHEEL_ROTATION_MASK = 0x01FF
+        , PTRFLAGS_WHEEL_ROTATION_MASK  = 0x01FF
     };
 
 // Mouse movement event:

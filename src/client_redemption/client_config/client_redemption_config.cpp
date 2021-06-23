@@ -223,7 +223,7 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
 
         cli::option("remote-exe").help("Connection as remote application and set the line command.")
         .argname("command")
-        .parser(cli::arg([&config](std::string line) {
+        .parser(cli::arg([&config](std::string_view line) {
             config.mod_state = ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
             config.modRDPParamsData.enable_shared_remoteapp = true;
             auto pos(line.find(' '));

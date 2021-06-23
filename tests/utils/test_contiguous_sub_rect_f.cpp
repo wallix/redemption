@@ -37,7 +37,10 @@ struct AccuRect
     void operator()(Rect r)
     {
         RED_REQUIRE_NE(this->i, N);
-        this->computed[this->i++] = r;
+        // fix -Wnull-dereference
+        if constexpr (N > 0) {
+            this->computed[this->i++] = r;
+        }
     }
 };
 

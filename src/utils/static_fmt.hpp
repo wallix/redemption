@@ -105,7 +105,7 @@ namespace detail
             return false;
         }
 
-        constexpr static_fmt_part post()
+        constexpr static_fmt_part post() const
         {
             return {uint16_t(s1-string), uint16_t(s2-s1), '\0'};
         }

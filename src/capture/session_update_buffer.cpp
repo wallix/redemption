@@ -151,5 +151,5 @@ bool SessionUpdateBuffer::DataIterator::operator!=(const SessionUpdateBuffer::Da
 
 SessionUpdateBuffer::Data const& SessionUpdateBuffer::DataIterator::operator*() noexcept
 {
-    return *iterator_->get();
+    return **iterator_;
 }

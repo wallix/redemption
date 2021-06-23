@@ -481,9 +481,9 @@ namespace redemption_unit_test_
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
 # define RED_TEST_DELEGATE_PRINT(type, stream_expr) \
-    RED_TEST_UNUSED_IDENT2_II(TU_delegate_print_unused_, __LINE__)
+    RED_TEST_UNUSED_IDENT2_I(TU_delegate_print_unused_, __LINE__)
 # define RED_TEST_DELEGATE_OSTREAM(type, stream_expr) \
-    RED_TEST_UNUSED_IDENT2_II(TU_delegate_stream_unused_, __LINE__)
+    RED_TEST_UNUSED_IDENT2_I(TU_delegate_stream_unused_, __LINE__)
 #else
 #define RED_TEST_DELEGATE_PRINT(type, stream_expr)         \
     template<>                                             \
@@ -513,7 +513,7 @@ namespace redemption_unit_test_
         return out;                                    \
     }                                                  \
     /* for ; */                                        \
-    RED_TEST_UNUSED_IDENT2_II(TU_delegate_stream_unused_, __LINE__)
+    RED_TEST_UNUSED_IDENT2_I(TU_delegate_stream_unused_, __LINE__)
 #endif
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \

@@ -70,7 +70,7 @@ public:
 
     void close();
 
-    bool is_eof() noexcept;
+    bool is_eof() const noexcept;
 
     void disable_log_decrypt(bool disable = true) noexcept; /*NOLINT*/
 

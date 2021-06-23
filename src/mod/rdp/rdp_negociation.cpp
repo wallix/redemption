@@ -146,7 +146,7 @@ CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(
 }
 
 RdpNegociation::RdpNegociation(
-    const ChannelsAuthorizations channels_authorizations,
+    const ChannelsAuthorizations& channels_authorizations,
     CHANNELS::ChannelDefArray& mod_channel_list,
     const CHANNELS::ChannelNameId auth_channel,
     const CHANNELS::ChannelNameId checkout_channel,
@@ -605,7 +605,8 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                             }
 
-                            BIGNUM const *e, *n;
+                            BIGNUM const * e;
+                            BIGNUM const * n;
                             #if OPENSSL_VERSION_NUMBER < 0x10100000L
                             e = server_public_key->e;
                             n = server_public_key->n;

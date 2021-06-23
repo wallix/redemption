@@ -340,7 +340,7 @@ public:
     }
 
 private:
-    void log_duration(char const* msg_prefix, MonotonicTimePoint::duration duration) const
+    static void log_duration(char const* msg_prefix, MonotonicTimePoint::duration duration)
     {
         time_t now = time(nullptr);
         struct tm * timeinfo;

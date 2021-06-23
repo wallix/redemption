@@ -24,12 +24,7 @@
 
 using namespace std::literals::chrono_literals;
 
-template<class Ch, class Tr>
-static inline std::basic_ostream<Ch, Tr>&
-operator<<(std::basic_ostream<Ch, Tr>& out, timeval const& tv)
-{
-    return out << "{" << tv.tv_sec << ", " << tv.tv_usec << "}";
-}
+RED_TEST_DELEGATE_PRINT(::timeval, "{" << _.tv_sec << ", " << _.tv_usec << "}");
 
 static inline bool operator==(timeval const& a, timeval const& b) noexcept
 {

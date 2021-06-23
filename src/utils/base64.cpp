@@ -33,7 +33,8 @@ writable_bytes_view base64_encode(bytes_view data, writable_bytes_view output) n
         return {};
     }
 
-    size_t i, j;
+    size_t i;
+    size_t j;
 
     for (i = 0, j = 0; i < data.size() - remain;)
     {

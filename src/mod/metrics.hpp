@@ -42,7 +42,7 @@ public:
            , chars_view target_service_sig   // hashed (target service name + device name)
            , chars_view session_info_sig     // hashed (source_host + client info)
            , MonotonicTimePoint now                     // time at beginning of metrics
-           , RealTimePoint real_now
+           , RealTimePoint real_time
            , std::chrono::hours file_interval           // daily rotation of filename
            , std::chrono::seconds log_delay             // delay between 2 logs flush
            );

@@ -1470,6 +1470,7 @@ Capture::Capture(
         }
 #else
         if (capture_video || capture_video_full) {
+            (void)sequenced_video_params
             (void)full_video_params;
             (void)video_params;
             LOG(LOG_WARNING, "VideoCapture is disabled (-DREDEMPTION_NO_FFMPEG)");

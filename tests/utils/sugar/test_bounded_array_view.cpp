@@ -354,7 +354,7 @@ constexpr bool check_sized_array_view_call(T && /*unused*/, char /*unused*/)
 namespace
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-function")
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
     void bounded_array_view_assert()
     {
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")

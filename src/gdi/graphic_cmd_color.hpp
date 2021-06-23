@@ -70,7 +70,7 @@ private:
         [[nodiscard]] color2_val to_colors() const { return {color1, color2}; }
     };
 
-    static color1_ref cmd_color(RDPMultiOpaqueRect & cmd) { return {cmd._Color}; }
+    static color1_ref cmd_color(RDPMultiOpaqueRect & cmd) { return {cmd.color}; }
 
     static color2_ref cmd_color(RDP::RDPMultiPatBlt & cmd) { return {cmd.BackColor, cmd.ForeColor}; }
 

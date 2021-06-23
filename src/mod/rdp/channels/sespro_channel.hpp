@@ -294,7 +294,7 @@ public:
         }
     }
 
-    bool is_disconnection_reconnection_required() {
+    bool is_disconnection_reconnection_required() const {
         return this->disconnection_reconnection_required;
     }
 

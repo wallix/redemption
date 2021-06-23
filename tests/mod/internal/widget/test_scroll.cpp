@@ -51,7 +51,7 @@ struct TestScrollCtx
     TestScrollCtx(bool is_horizontal, bool rail_style = false, int16_t x =  0, int16_t y = 0)
     : drawable(1, 1)
     , scroll(
-        this->drawable, this->scroll, &this->notifier, is_horizontal, /*id=*/0,
+        this->drawable, this->scroll, &this->notifier, is_horizontal, /*group_id=*/0,
         /*fg_color=*/RED, /*bg_color=*/YELLOW, /*focus_color=*/WINBLUE,
         global_font_deja_vu_14(), rail_style, 50)
     {

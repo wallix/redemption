@@ -323,7 +323,8 @@ public:
         uint8_t    cur_uint8_t  = 0;                    /* last uint8_t fetched from cbuf             */
         int        bits_left    = 0;                    /* bits left in d32 for processing            */
         int        cur_bits_left;                       /* bits left in cur_uint8_t for processing    */
-        int        tmp, i;
+        int        tmp;
+        int        i;
 
         *rlen = 0;
 

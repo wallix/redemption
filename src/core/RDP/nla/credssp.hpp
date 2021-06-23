@@ -637,7 +637,7 @@ struct ClientNonce {
     ClientNonce() : clientNonce{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
         {}
 
-    bool isset() {
+    bool isset() const {
         return this->initialized;
     }
 

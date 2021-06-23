@@ -277,7 +277,7 @@ private:
                 LockId lock_id;
                 FileContentsRequestedRange file_contents_requested_range;
 
-                bool is_stream_id(StreamId id)
+                bool is_stream_id(StreamId id) const
                 {
                     return file_contents_requested_range.stream_id == id
                     && not file_contents_requested_range.file_name.empty();

@@ -418,7 +418,7 @@ struct ServerRedirectionPDU {
     bool Noredirect() const {
         return (this->RedirFlags & LB_NOREDIRECT);
     }
-    bool UseLoadBalanceInfo() {
+    bool UseLoadBalanceInfo() const {
         return (!(this->RedirFlags & LB_TARGET_NET_ADDRESS) &&
                 (this->RedirFlags & LB_LOAD_BALANCE_INFO) &&
                 (!this->Noredirect()));

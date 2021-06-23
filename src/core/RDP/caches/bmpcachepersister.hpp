@@ -449,7 +449,7 @@ inline void save_persistent_disk_bitmap_cache(
     try
     {
         {
-            OutFileTransport oft(unique_fd{fd}, notify_error);
+            OutFileTransport oft(unique_fd{fd}, std::move(notify_error));
             BmpCachePersister::save_all_to_disk(bmp_cache, oft, verbose);
         }
 

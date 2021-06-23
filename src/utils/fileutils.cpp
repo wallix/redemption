@@ -300,7 +300,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
 }
 
 
-static int _internal_make_directory(const char *directory, mode_t mode, int groupid)
+static int internal_make_directory(const char *directory, mode_t mode, int groupid)
 {
     struct stat st;
     int status = 0;
@@ -353,13 +353,13 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
         }
 
         pSearch[0] = 0;
-        status = _internal_make_directory(copy_directory.data(), mode, groupid);
+        status = internal_make_directory(copy_directory.data(), mode, groupid);
         *pSearch = '/';
     }
 
     // creation of last directory in chain or nothing if path ending with slash
     if (status == 0 && *directory != 0) {
-        status = _internal_make_directory(directory, mode, groupid);
+        status = internal_make_directory(directory, mode, groupid);
     }
 
     return status;

@@ -233,7 +233,7 @@ private:
             io_sint16_le(stream, sc.multiopaquerect.nTopRect);
             io_sint16_le(stream, sc.multiopaquerect.nWidth);
             io_sint16_le(stream, sc.multiopaquerect.nHeight);
-            io_color(stream, sc.multiopaquerect._Color);
+            io_color(stream, sc.multiopaquerect.color);
             io_uint8(stream, sc.multiopaquerect.nDeltaEntries);
             io_delta_encoded_rects(stream, make_writable_array_view(
                 sc.multiopaquerect.deltaEncodedRectangles,
