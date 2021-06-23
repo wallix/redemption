@@ -368,7 +368,8 @@ namespace detail
         }
     };
 
-    template<std::size_t MaxSize, class BufFormat, class LastPart, class... Parts>
+    // Fmt is useless, but necessary to not have a runtime error with gcc-8
+    template<class Fmt, std::size_t MaxSize, class BufFormat, class LastPart, class... Parts>
     struct static_fmt_t
     {
         template<class... Ts>
@@ -379,14 +380,14 @@ namespace detail
         }
 
         template<std::size_t n, class... Ts>
-        void write_to(static_string<n>& str, Ts const&... xs) const
+        static void write_to(static_string<n>& str, Ts const&... xs)
         {
             static_assert(sizeof...(Parts) == sizeof...(Ts));
             write_to_impl(str, static_fmt_writer_for<Parts::fmt>::to_writer(xs)...);
         }
 
         template<std::size_t NewMaxSize>
-        constexpr static_fmt_t<NewMaxSize, BufFormat, LastPart, Parts...>
+        static constexpr static_fmt_t<Fmt, NewMaxSize, BufFormat, LastPart, Parts...>
         set_max_size() noexcept
         {
             return {};
@@ -485,6 +486,7 @@ constexpr auto operator "" _static_fmt() noexcept
 
         auto to_static_fmt = [&](auto... ints) {
             return detail::static_fmt_t<
+                decltype(fmt::value),
                 4096,
                 static_str,
                 detail::static_fmt_part_t<
