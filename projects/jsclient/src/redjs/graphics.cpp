@@ -225,7 +225,7 @@ void Graphics::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx col
 {
     // LOG(LOG_INFO, "Graphics::RDPMultiOpaqueRect");
 
-    const auto color = color_decode(cmd._Color, color_ctx);
+    const auto color = color_decode(cmd.color, color_ctx);
     draw_multi(this->width, this->height, cmd, clip, [color, this](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_rect,
             trect.x,
