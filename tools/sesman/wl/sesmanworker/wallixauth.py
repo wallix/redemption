@@ -194,7 +194,7 @@ class Authenticator(object):
                 ip_source=ip_source,
                 server_ip=server_ip,
                 client=client_name,
-                no_delay=True,
+                no_delay=(AuthState.PASSWORD != self.auth_state),
             )
             # Logger().debug("Call END identify %s" % self.auth_key)
             Logger().debug("Call END identify")
@@ -205,7 +205,7 @@ class Authenticator(object):
                 key=self.auth_key,
                 compatibility=compatibility,
                 priority=get_auth_priority(auth_state),
-                no_delay=True,
+                no_delay=(AuthState.PASSWORD != self.auth_state),
             )
             Logger().debug("Call END compatibility %s" %
                            self.auth_challenge)
