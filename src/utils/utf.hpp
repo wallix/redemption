@@ -40,6 +40,7 @@ enum {
 std::size_t UTF8Len(byte_ptr source) noexcept;
 std::size_t UTF16ByteLen(bytes_view source) noexcept;
 
+void UTF16Lower(uint8_t * source, std::size_t max_len) noexcept;
 void UTF16Upper(uint8_t * source, std::size_t max_len) noexcept;
 
 

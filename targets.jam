@@ -648,6 +648,8 @@ test-run tests/acl/test_license_api :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -980,6 +982,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -1078,6 +1082,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -1147,6 +1153,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -2782,6 +2790,8 @@ test-run tests/front/test_front :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -4723,6 +4733,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -5927,6 +5939,17 @@ test-run tests/utils/test_key_qvalue_pairs :
   <library>src/utils/strutils.o
   <covfile>src/utils/key_qvalue_pairs.hpp
 ;
+test-run tests/utils/test_keyboard_shortcut_blocker :
+  $(REDEMPTION_TEST_PATH)/utils/test_keyboard_shortcut_blocker.cpp
+:
+  <library>src/core/error.o
+  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
+  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/utils/keyboard_shortcut_blocker.hpp
+;
 test-run tests/utils/test_line_equation :
   $(REDEMPTION_TEST_PATH)/utils/test_line_equation.cpp
 :
@@ -6653,6 +6676,7 @@ alias test_hexadecimal_string_to_buffer : tests/utils/test_hexadecimal_string_to
 alias test_id_manager : tests/utils/test_id_manager ;
 alias test_ip : tests/utils/test_ip ;
 alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
+alias test_keyboard_shortcut_blocker : tests/utils/test_keyboard_shortcut_blocker ;
 alias test_line_equation : tests/utils/test_line_equation ;
 alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
@@ -6990,6 +7014,7 @@ alias test_hexadecimal_string_to_buffer.coverage : tests/utils/test_hexadecimal_
 alias test_id_manager.coverage : tests/utils/test_id_manager.coverage ;
 alias test_ip.coverage : tests/utils/test_ip.coverage ;
 alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverage ;
+alias test_keyboard_shortcut_blocker.coverage : tests/utils/test_keyboard_shortcut_blocker.coverage ;
 alias test_line_equation.coverage : tests/utils/test_line_equation.coverage ;
 alias test_load_theme.coverage : tests/utils/test_load_theme.coverage ;
 alias test_log.coverage : tests/utils/test_log.coverage ;
@@ -7441,6 +7466,7 @@ alias tests/utils.norec :
   tests/utils/test_id_manager
   tests/utils/test_ip
   tests/utils/test_key_qvalue_pairs
+  tests/utils/test_keyboard_shortcut_blocker
   tests/utils/test_line_equation
   tests/utils/test_load_theme
   tests/utils/test_log

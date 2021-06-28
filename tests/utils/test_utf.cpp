@@ -309,6 +309,44 @@ RED_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 0), 0u);
 }
 
+RED_AUTO_TEST_CASE(TestUtf16LowerCase)
+{
+    uint8_t test[] =  "\xb7\x01\x8A\x03\xda\x03\x01\x04"  /* Ʒ Ί Ϛ Ё */
+                      "\x25\x04\x34\x05\x10\x1e\x09\x1f"  /* Х Դ Ḑ Ἁ */
+                      "\x49\x1f\x25\xff\x52\x00\x74\x00"  /* Ὁ Ｅ R t */
+                      "\x66\x2c\xc3\x1f\x3a\xff";      /* Ⱦ ΗΙ Ｚ  */
+    /*
+    Upper    Lower case
+    0x01B7 ; 0x0292     # LATIN SMALL LETTER EZH
+    0x038A ; 0x03AF     # GREEK SMALL LETTER IOTA WITH TONOS
+    0x03DA ; 0x03DB     # GREEK LETTER STIGMA
+    0x0401 ; 0x0451     # CYRILLIC SMALL LETTER IO
+
+    0x0425 ; 0x0445     # CYRILLIC SMALL LETTER HA
+    0x0534 ; 0x0564     # ARMENIAN SMALL LETTER DA
+    0x1E10 ; 0x1E11     # LATIN SMALL LETTER D WITH CEDILLA
+    0x1F09 ; 0x1F01     # GREEK SMALL LETTER ALPHA WITH DASIA
+
+    0x1F49 ; 0x1F41     # GREEK SMALL LETTER OMICRON WITH DASIA
+    0xFF25 ; 0xFF45     # FULLWIDTH LATIN SMALL LETTER E
+    0x0052 ; 0x0072     # LATIN SMALL LETTER R
+    0x0054 ; 0x0074     # LATIN SMALL LETTER T
+
+    0x2C66 ; 0x023E     # LATIN SMALL LETTER T WITH DIAGONAL STROKE
+    0x1FC3 ; 0x1FCC     # GREEK SMALL LETTER ETA WITH PROSGEGRAMMENI
+    0xFF3A ; 0xFF5A     # FULLWIDTH LATIN SMALL LETTER Z
+    */
+    int number_of_elements = sizeof(test)/sizeof(test[0])-2;
+    auto expected = "\x92\x02\xaf\x03\xdb\x03\x51\x04"  /* ʒ ί ϛ ё */
+                    "\x45\x04\x64\x05\x11\x1e\x01\x1f"  /* х դ ḑ ἁ */
+                    "\x41\x1f\x45\xff\x72\x00\x74\x00"  /* ὁ ｅ r t */
+                    "\x3e\x02\xcc\x1f\x5a\xff\x00"      /* ⱦ ῃ ｚ  */
+                      ""_av;
+    UTF16Lower(test, number_of_elements);
+
+    RED_CHECK(make_array_view(test) == expected);
+}
+
 RED_AUTO_TEST_CASE(TestUtf16UpperCase)
 {
     uint8_t test[] =  "\x92\x02\xaf\x03\xdb\x03\x51\x04"  /* ʒ ί ϛ ё */

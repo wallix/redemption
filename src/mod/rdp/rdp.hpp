@@ -135,6 +135,7 @@ struct FileValidatorService;
 
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/keyboard_shortcut_blocker.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
@@ -375,6 +376,10 @@ private:
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
 
+    const uint32_t keylayout;
+
+    std::unique_ptr<KeyboardShortcutBlocker> keyboard_shortcut_blocker_sp;
+
 public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
@@ -385,7 +390,7 @@ public:
         SessionLogApi& session_log,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
-        SessionProbeVirtualChannel::Callbacks & callbacks)
+        SessionProbeVirtualChannel::Callbacks & callbacks, uint32_t keylayout)
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -408,7 +413,20 @@ public:
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
+    , keylayout(keylayout)
     {}
+
+    bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
+    {
+        LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::rdp_input_scancode: device_flags=0x%04X keyCode=0x%X", keyboardFlags, keyCode);
+
+        if (this->keyboard_shortcut_blocker_sp)
+        {
+            return this->keyboard_shortcut_blocker_sp->scancode_mast_be_blocked(keyboardFlags, keyCode);
+        }
+
+        return false;
+    }
 
 #ifndef __EMSCRIPTEN__
     void DLP_antivirus_check_channels_files()
@@ -917,6 +935,12 @@ public:
             }
             this->callbacks.enable_graphics_update();
         }
+        else if (!::strcasecmp(order.c_str(), "DisableNavigatorShortcuts") && !parameters.empty() &&
+                 !this->keyboard_shortcut_blocker_sp)
+        {
+            this->keyboard_shortcut_blocker_sp = std::make_unique<KeyboardShortcutBlocker>(
+                this->keylayout, parameters[0], bool(this->verbose & RDPVerbose::basic_trace));
+        }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
         }
@@ -935,6 +959,8 @@ public:
             vars.set_acl<cfg::context::auth_channel_target>(auth_channel_message);
         }
     }
+
+
 
     void process_checkout_event(
         ModRdpVariables vars, const CHANNELS::ChannelDef & checkout_channel,
@@ -1919,7 +1945,8 @@ public:
             gen, metrics, osd, events, session_log,
             file_validator_service,
             mod_rdp_factory,
-            spvc_callbacks
+            spvc_callbacks,
+            info.keylayout
         )
 #else
         : channels(channels_authorizations)
@@ -2410,7 +2437,10 @@ public:
                 }
             }
 
-            this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+            if (!this->channels.scancode_mast_be_blocked(device_flags, param1))
+            {
+                this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+            }
 
 #ifndef __EMSCRIPTEN__
             IF_ENABLE_METRICS(key_pressed());
