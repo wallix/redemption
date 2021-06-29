@@ -2437,17 +2437,19 @@ public:
                 }
             }
 
+#ifndef __EMSCRIPTEN__
             if (!this->channels.scancode_mast_be_blocked(device_flags, param1))
             {
                 this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
             }
 
-#ifndef __EMSCRIPTEN__
             IF_ENABLE_METRICS(key_pressed());
 
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_scancode(param1, param2, device_flags);
             }
+#else
+            this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 #endif
         }
     }
