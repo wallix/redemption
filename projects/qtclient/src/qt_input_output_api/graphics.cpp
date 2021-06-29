@@ -497,7 +497,7 @@ void Graphics::draw(const RDPMultiDstBlt & cmd, Rect clip)
 void Graphics::draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     drawMulti(cmd, intersect(clip, this->cache), [&](QRect const* rects, int count_rect){
-        this->painter.setBrush(qcolor(cmd._Color, color_ctx));
+        this->painter.setBrush(qcolor(cmd.color, color_ctx));
         this->painter.drawRects(rects, count_rect);
     });
 }

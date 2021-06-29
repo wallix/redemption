@@ -456,20 +456,9 @@ namespace FastPath {
 
             this->eventFlags = eventHeader & 0x1F;
 
-            if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
-                this->spKeyboardFlags |= SlowPath::KBDFLAGS_RELEASE;
-            }
-            // else{
-            //     this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN;
-            // }
-
-            if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
-                this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED;
-            }
-
-            if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED1){
-                this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED1;
-            }
+            this->spKeyboardFlags |= (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE) ? SlowPath::KBDFLAGS_RELEASE : 0;
+            this->spKeyboardFlags |= (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED) ? SlowPath::KBDFLAGS_EXTENDED : 0;
+            this->spKeyboardFlags |= (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED1) ? SlowPath::KBDFLAGS_EXTENDED1 : 0;
 
             if (!stream.in_check_rem(1)) {
                 LOG(LOG_ERR, "FastPath::KeyboardEvent_Recv: data truncated, expected=1 remains=%zu",
@@ -494,17 +483,9 @@ namespace FastPath {
         KeyboardEvent_Send(OutStream & stream, uint16_t spKeyboardFlags, uint8_t keyCode) {
             uint8_t eventFlags = 0;
 
-            if (spKeyboardFlags & SlowPath::KBDFLAGS_RELEASE) {
-                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_RELEASE;
-            }
-
-            if (spKeyboardFlags & SlowPath::KBDFLAGS_EXTENDED) {
-                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_EXTENDED;
-            }
-
-            if (spKeyboardFlags & SlowPath::KBDFLAGS_EXTENDED1) {
-                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_EXTENDED1;
-            }
+            eventFlags |= (spKeyboardFlags & SlowPath::KBDFLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
+            eventFlags |= (spKeyboardFlags & SlowPath::KBDFLAGS_EXTENDED) ? FASTPATH_INPUT_KBDFLAGS_EXTENDED : 0;
+            eventFlags |= (spKeyboardFlags & SlowPath::KBDFLAGS_EXTENDED1) ? FASTPATH_INPUT_KBDFLAGS_EXTENDED1 : 0;
 
             stream.out_uint8(                          // eventHeader
                   (FASTPATH_INPUT_EVENT_SCANCODE << 5)
@@ -587,9 +568,7 @@ namespace FastPath {
         UniCodeKeyboardEvent_Send(OutStream & stream, uint16_t spKeyboardFlags, uint16_t uniCode) {
             uint8_t eventFlags = 0;
 
-            if (spKeyboardFlags & SlowPath::KBDFLAGS_RELEASE) {
-                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_RELEASE;
-            }
+            eventFlags |= (spKeyboardFlags & SlowPath::KBDFLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
 
             stream.out_uint8(                          // eventHeader
                   (FASTPATH_INPUT_EVENT_UNICODE  << 5)

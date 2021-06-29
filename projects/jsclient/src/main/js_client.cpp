@@ -364,7 +364,7 @@ public:
             password.c_str(),
             "0.0.0.0",
             client_addr.c_str(),
-            get_or(config, "keyFlags", 0),
+            get_or(config, "keyLocks", kbdtypes::KeyLocks::NoLocks),
             font,
             theme,
             server_auto_reconnect_packet,
@@ -495,25 +495,22 @@ public:
         this->trans.clear_output_buffer();
     }
 
-    void write_scancode_event(uint16_t scancode)
+    void write_scancode_event(uint16_t scancode_and_flags)
     {
-        uint16_t key = scancode & 0xFF;
-        uint16_t flag = scancode & 0xFF00;
-        this->mod->rdp_input_scancode(
-            key, 0, flag,
-            std::chrono::duration_cast<std::chrono::seconds>(
-                this->event_manager.get_monotonic_time().time_since_epoch()).count(),
-            nullptr);
+        auto key = kbdtypes::Scancode(scancode_and_flags);
+        auto flags = kbdtypes::KbdFlags(scancode_and_flags);
+        Keymap* keymap = nullptr;
+        this->mod->rdp_input_scancode(flags, key, 0, *keymap);
     }
 
-    void write_unicode_event(uint16_t unicode, uint16_t flag)
+    void write_unicode_event(kbdtypes::KbdFlags flag, uint16_t unicode)
     {
-        this->mod->rdp_input_unicode(unicode, flag);
+        this->mod->rdp_input_unicode(flag, unicode);
     }
 
     void write_mouse_event(int x, int y, int device_flags)
     {
-        this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
+        this->mod->rdp_input_mouse(device_flags, x, y);
     }
 
     void add_channel_receiver(redjs::ChannelReceiver receiver)

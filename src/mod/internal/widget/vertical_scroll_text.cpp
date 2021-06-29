@@ -24,7 +24,7 @@
 #include "mod/internal/widget/vertical_scroll_text.hpp"
 #include "mod/internal/widget/button.hpp"
 #include "utils/utf.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 
 namespace
 {
@@ -157,10 +157,10 @@ void WidgetVerticalScrollText::_scroll_up()
     }
 }
 
-void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (!this->has_scroll) {
-        this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        this->Widget::rdp_input_mouse(device_flags, x, y);
         return;
     }
 
@@ -243,41 +243,37 @@ void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y, K
         }
     }
     else {
-        this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        this->Widget::rdp_input_mouse(device_flags, x, y);
     }
 }
 
-void WidgetVerticalScrollText::rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2* keymap)
+void WidgetVerticalScrollText::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     if (!this->has_scroll) {
-        Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
+        Widget::rdp_input_scancode(flags, scancode, event_time, keymap);
         return ;
     }
 
-    if (keymap->nb_kevent_available() > 0) {
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
-            case Keymap2::KEVENT_LEFT_ARROW:
-            case Keymap2::KEVENT_UP_ARROW:
-            case Keymap2::KEVENT_PGUP:
-                keymap->get_kevent();
-                this->_scroll_up();
-                break;
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::LeftArrow:
+        case Keymap::KEvent::UpArrow:
+        case Keymap::KEvent::PgUp:
+            this->_scroll_up();
+            break;
 
-            case Keymap2::KEVENT_RIGHT_ARROW:
-            case Keymap2::KEVENT_DOWN_ARROW:
-            case Keymap2::KEVENT_PGDOWN:
-                keymap->get_kevent();
-                this->_scroll_down();
-                break;
+        case Keymap::KEvent::RightArrow:
+        case Keymap::KEvent::DownArrow:
+        case Keymap::KEvent::PgDown:
+            this->_scroll_down();
+            break;
 
-            default:
-                Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
-                break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
+        default:
+            Widget::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)

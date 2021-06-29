@@ -155,7 +155,7 @@ void WidgetLabel::set_color(Color bg_color, Color fg_color)
     this->fg_color = fg_color;
 }
 
-void WidgetLabel::rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/)
+void WidgetLabel::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (this->tool) {
         if (device_flags == MOUSE_FLAG_MOVE) {

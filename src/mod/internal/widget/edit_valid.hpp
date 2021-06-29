@@ -65,12 +65,11 @@ public:
 
     Widget * widget_at_pos(int16_t x, int16_t y) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 
-    void rdp_input_scancode(long int param1, long int param2, long int param3,
-                                    long int param4, Keymap2* keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 

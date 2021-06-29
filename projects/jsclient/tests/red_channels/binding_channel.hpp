@@ -395,14 +395,11 @@ template<class ChannelData, class Datas>
 struct TestBindingCallback : Callback
 {
     void rdp_input_invalidate(Rect /*unused*/) override {}
-    void rdp_input_mouse(
-        int /*unused*/, int /*unused*/, int /*unused*/, Keymap2* /*unused*/) override {}
+    void rdp_input_mouse(int /*unused*/, int /*unused*/, int /*unused*/) override {}
     void rdp_input_scancode(
-        long /*unused*/, long /*unused*/, long /*unused*/, long /*unused*/, Keymap2* /*unused*/)
-        override {}
-    void rdp_input_synchronize(
-        uint32_t /*unused*/, uint16_t /*unused*/, int16_t /*unused*/, int16_t /*unused*/)
-        override {}
+        KbdFlags /*flags*/, Scancode /*scancode*/,
+        uint32_t /*event_time*/, Keymap const& /*keymap*/) override {}
+    void rdp_input_synchronize(KeyLocks /*locks*/) override {}
     void refresh(Rect /*unused*/) override {}
     void rdp_gdi_down() override {}
     void rdp_gdi_up_and_running() override {}

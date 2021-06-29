@@ -72,9 +72,9 @@ void FrontWrapper::update_pointer_position(uint16_t x, uint16_t y)
     d->front.update_pointer_position(x, y);
 }
 
-void FrontWrapper::set_keyboard_indicators(uint16_t LedFlags)
+void FrontWrapper::set_keyboard_indicators(kbdtypes::KeyLocks key_locks)
 {
-    d->front.set_keyboard_indicators(LedFlags);
+    d->front.set_keyboard_indicators(key_locks);
 }
 
 void FrontWrapper::session_probe_started(bool enable)
@@ -82,9 +82,9 @@ void FrontWrapper::session_probe_started(bool enable)
     d->front.session_probe_started(enable);
 }
 
-void FrontWrapper::set_keylayout(int LCID)
+void FrontWrapper::set_keylayout(KeyLayout const& keylayout)
 {
-    d->front.set_keylayout(LCID);
+    d->front.set_keylayout(keylayout);
 }
 
 void FrontWrapper::set_focus_on_password_textbox(bool set)
@@ -117,7 +117,7 @@ void FrontWrapper::send_savesessioninfo()
     d->front.send_savesessioninfo();
 }
 
-int FrontWrapper::get_keylayout() const
+KeyLayout const& FrontWrapper::get_keylayout() const
 {
     return d->front.get_keylayout();
 }

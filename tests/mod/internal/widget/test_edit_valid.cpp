@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/edit_valid.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -104,9 +105,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_2.png");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.x() + 2, wedit.y() + 2, nullptr);
+                           wedit.x() + 2, wedit.y() + 2);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.x() + 2, wedit.y() + 2, nullptr);
+                           wedit.x() + 2, wedit.y() + 2);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
@@ -170,33 +171,33 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_6.png");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.x() + 50, wedit1.y() + 3, nullptr);
+                           wedit1.x() + 50, wedit1.y() + 3);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.x() + 50, wedit1.y() + 3, nullptr);
+                           wedit1.x() + 50, wedit1.y() + 3);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_7.png");
 
-    Keymap2 keymap;
-    const int layout = 0x040C;
-    keymap.init_layout(layout);
-    bool    ctrl_alt_del;
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 0;
-    keyboardFlags = 0 ;
-    keyCode = 16 ; // key is 'a'
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
+        using KFlags = Keymap::KbdFlags;
+        using Scancode = Keymap::Scancode;
+        auto scancode = Scancode(scancode_and_flags);
+        auto flags = KFlags(scancode_and_flags & 0xff00u);
+        keymap.event(flags, scancode);
+        parent.rdp_input_scancode(flags, scancode, 0, keymap);
+        keymap.event(flags | KFlags::Release, scancode);
+        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+    };
 
+    rdp_input_scancode(0x0F); // tab
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_8.png");
 
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x10); // 'a'
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_9.png");
@@ -236,55 +237,44 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_10.png");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
+                           wedit1.x() + 50, wedit1.y() + 2);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
+                           wedit1.x() + 50, wedit1.y() + 2);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_11.png");
 
-    Keymap2 keymap;
-    const int layout = 0x040C;
-    keymap.init_layout(layout);
-    bool    ctrl_alt_del;
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 0;
-    keyboardFlags = 0 ;
-    keyCode = 16 ; // key is 'a'
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
+        using KFlags = Keymap::KbdFlags;
+        using Scancode = Keymap::Scancode;
+        auto scancode = Scancode(scancode_and_flags);
+        auto flags = KFlags(scancode_and_flags & 0xff00u);
+        keymap.event(flags, scancode);
+        parent.rdp_input_scancode(flags, scancode, 0, keymap);
+        keymap.event(flags | KFlags::Release, scancode);
+        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+    };
 
+    rdp_input_scancode(0x0F); // tab
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_12.png");
 
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x10); // 'a'
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_9.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0F); // tab
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_14.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0F); // tab
+    rdp_input_scancode(0x0E); // backspace
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_15.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0F); // tab
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_11.png");
 }
 
@@ -321,55 +311,44 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_17.png");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
+                           wedit1.x() + 50, wedit1.y() + 2);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
+                           wedit1.x() + 50, wedit1.y() + 2);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_18.png");
 
-    Keymap2 keymap;
-    const int layout = 0x040C;
-    keymap.init_layout(layout);
-    bool    ctrl_alt_del;
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 0;
-    keyboardFlags = 0 ;
-    keyCode = 16 ; // key is 'a'
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
+        using KFlags = Keymap::KbdFlags;
+        using Scancode = Keymap::Scancode;
+        auto scancode = Scancode(scancode_and_flags);
+        auto flags = KFlags(scancode_and_flags & 0xff00u);
+        keymap.event(flags, scancode);
+        parent.rdp_input_scancode(flags, scancode, 0, keymap);
+        keymap.event(flags | KFlags::Release, scancode);
+        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+    };
 
+    rdp_input_scancode(0x0F); // tab
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_19.png");
 
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x10); // 'a'
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_20.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0F); // tab
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_21.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0F); // tab
+    rdp_input_scancode(0x0E); // backspace
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_22.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0F); // tab
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_18.png");
 }
 
@@ -396,13 +375,13 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     parent.set_widget_focus(&wedit, Widget::focus_reason_tabkey);
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.eright() - 5, wedit.y() + 2, nullptr);
+                           wedit.eright() - 5, wedit.y() + 2);
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_24.png");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.eright() - 5, wedit.y() + 2, nullptr);
+                           wedit.eright() - 5, wedit.y() + 2);
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
@@ -413,13 +392,13 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.last_widget = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.eright() - 5, wedit.y() + 2, nullptr);
+                           wedit.eright() - 5, wedit.y() + 2);
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_24.png");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.x() + 2, wedit.y() + 2, nullptr);
+                           wedit.x() + 2, wedit.y() + 2);
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
@@ -430,13 +409,12 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.last_widget = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.eright() - 5, wedit.y() + 2, nullptr);
+                           wedit.eright() - 5, wedit.y() + 2);
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_24.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          0, 0, nullptr);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0);
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
@@ -446,15 +424,21 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
+        using KFlags = Keymap::KbdFlags;
+        using Scancode = Keymap::Scancode;
+        auto scancode = Scancode(scancode_and_flags);
+        auto flags = KFlags(scancode_and_flags & 0xff00u);
+        keymap.event(flags, scancode);
+        parent.rdp_input_scancode(flags, scancode, 0, keymap);
+        keymap.event(flags | KFlags::Release, scancode);
+        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+    };
 
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x1C); // enter
     parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     RED_CHECK(notifier.last_widget == &wedit);

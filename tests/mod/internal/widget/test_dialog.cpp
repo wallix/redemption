@@ -29,7 +29,8 @@
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/button.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/dialog/"
@@ -295,7 +296,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     int x = flat_dialog.ok.x() + flat_dialog.ok.cx() / 2 ;
     int y = flat_dialog.ok.y() + flat_dialog.ok.cy() / 2 ;
-    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
+    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == 0);
@@ -304,7 +305,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_9.png");
 
 
-    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
+    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
     //                                  flat_dialog.ok.x(), flat_dialog.ok.y(), nullptr);
     RED_CHECK(notifier.last_widget == &flat_dialog);
@@ -319,7 +320,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     x = flat_dialog.cancel->x() + flat_dialog.cancel->cx() / 2 ;
     y = flat_dialog.cancel->y() + flat_dialog.cancel->cy() / 2 ;
-    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
+    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == 0);
@@ -330,17 +331,16 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_11.png");
 
 
-    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
+    flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
-    flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
+    flat_dialog.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 }
@@ -386,15 +386,11 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_12.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c)); // enter
+    flat_dialog.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
 }
 
 
@@ -415,7 +411,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
     colors.global.enable_theme = true;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
+    colors.global.logo_path = FIXTURES_PATH "/wablogoblue-transparent.png";
 
     WidgetButton *extra_button = nullptr;
     WidgetDialog flat_dialog(drawable,

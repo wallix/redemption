@@ -29,7 +29,8 @@
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/close_mod.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "configs/config.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 
@@ -49,9 +50,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 
     Theme theme;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
     Inifile ini;
 
@@ -60,7 +59,9 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         CloseMod d("message", ini, events, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
                    client_execute, global_font_deja_vu_14(), theme, false);
         d.init();
-        d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+        keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
+        d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
 
         RED_CHECK(event_cont.size() == 2);
         event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{62s};
@@ -80,6 +81,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_3.png");
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
     }
+
     // When Close mod goes out of scope remaining events should be garbaged
     RED_CHECK(event_cont.size() == 1);
     event_manager.execute_events([](int){return false;}, false);
@@ -96,16 +98,16 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
     Theme theme;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
     Inifile ini;
     CloseMod d("message", ini, events, front.gd(), front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         global_font_deja_vu_14(), theme, true);
     d.init();
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
+    d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
 
     event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     event_manager.execute_events([](int){return false;}, false);
@@ -143,9 +145,7 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
 
     Theme theme;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
     front.add_channel(channel_names::rail, 0, 0);
     client_execute.enable_remote_program(true);
@@ -158,7 +158,9 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
         screen_info.width, screen_info.height, widget_rect, client_execute,
         global_font_deja_vu_14(), theme, true);
     d.init();
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
+    d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
 
     d.rdp_input_invalidate(Rect{ 0, 0, screen_info.width, screen_info.height });
 
@@ -171,10 +173,10 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     gd.last_cursor = gdi::CachePointerIndex(PredefinedPointer::Normal).cache_index();
 
     // move to top border
-    d.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 59, nullptr);
+    d.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 59);
     RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::NS).cache_index());
 
     // move to widget
-    d.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 100, nullptr);
+    d.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 100);
     RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::Normal).cache_index());
 }

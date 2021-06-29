@@ -20,7 +20,6 @@
  */
 
 #include "mod/internal/widget/wab_close.hpp"
-#include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
 #include "utils/strutils.hpp"
 #include "core/app_path.hpp"
@@ -331,20 +330,12 @@ void WidgetWabClose::notify(Widget & widget, NotifyApi::notify_event_t event)
     }
 }
 
-void WidgetWabClose::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetWabClose::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0){
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
-        case Keymap2::KEVENT_ESC:
-            keymap->get_kevent();
-            this->send_notify(NOTIFY_CANCEL);
-            break;
-        default:
-            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
-            break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
+    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
+        this->send_notify(NOTIFY_CANCEL);
+    }
+    else {
+        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }

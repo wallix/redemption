@@ -24,6 +24,8 @@
 
 #include <cstdint>
 
+#include "keyboard/kbdtypes.hpp"
+
 enum KS_Symbols {
 
     XK_EuroSign                         =     0x20AC,
@@ -1102,9 +1104,9 @@ private:
     KeyLayout_t keylayout_WORK_shiftcapslock_sym;
 
 public:
-    explicit KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, int verbose);
+    explicit KeymapSym(int keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, int verbose);
 
-    void synchronize(uint16_t param1);
+    void synchronize(kbdtypes::KeyLocks locks);
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
 // 8.18.2). RDP keyboard input is restricted to keyboard scancodes, unlike the code-point or virtual
@@ -1136,13 +1138,13 @@ public:
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
 
-    void event(int device_flags, long keycode);
+    void event(kbdtypes::KbdFlags flags, uint16_t keycode);
 
     void remove_modifiers();
     void putback_modifiers();
-    void key_event(int device_flags, long keycode);
-    void apple_keyboard_translation(int device_flags, long keycode);
-    KeySym get_key(const uint16_t keyboardFlags, const uint16_t keyCode);
+    void key_event(kbdtypes::KbdFlags flags, uint16_t keycode);
+    void apple_keyboard_translation(kbdtypes::KbdFlags flags, uint16_t keycode);
+    KeySym get_key(kbdtypes::KbdFlags flags, uint16_t keycode);
 
     // Push only sym
     void push_sym(KeySym sym);

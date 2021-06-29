@@ -20,7 +20,7 @@
  */
 
 #include "mod/internal/widget/password.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
 #include "utils/utf.hpp"
@@ -136,10 +136,9 @@ Rect WidgetPassword::get_cursor_rect() const
                 this->h_char);
 }
 
-void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y)
 {
     (void)y;
-    (void)keymap;
 
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
         Rect old_cursor_rect = this->get_cursor_rect();
@@ -181,36 +180,40 @@ void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y, Keymap2* ke
 }
 
 void WidgetPassword::rdp_input_scancode(
-    long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0){
-        uint32_t kevent = keymap->top_kevent();
-        WidgetEdit::rdp_input_scancode(param1, param2, param3, param4, keymap);
-        switch (kevent) {
-        case Keymap2::KEVENT_BACKSPACE:
-        case Keymap2::KEVENT_DELETE:
-        case Keymap2::KEVENT_KEY:
+    WidgetEdit::rdp_input_scancode(flags, scancode, event_time, keymap);
+
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::Backspace:
+        case Keymap::KEvent::Delete:
+        case Keymap::KEvent::KeyDown:
+        case Keymap::KEvent::Paste:
+        case Keymap::KEvent::Cut:
             this->set_masked_text();
             [[fallthrough]];
-        case Keymap2::KEVENT_LEFT_ARROW:
-        case Keymap2::KEVENT_UP_ARROW:
-        case Keymap2::KEVENT_RIGHT_ARROW:
-        case Keymap2::KEVENT_DOWN_ARROW:
-        case Keymap2::KEVENT_END:
-        case Keymap2::KEVENT_HOME:
-            this->masked_text.shift_text(this->edit_pos * this->w_char);
 
+        case Keymap::KEvent::LeftArrow:
+        case Keymap::KEvent::UpArrow:
+        case Keymap::KEvent::RightArrow:
+        case Keymap::KEvent::DownArrow:
+        case Keymap::KEvent::End:
+        case Keymap::KEvent::Home:
+            this->masked_text.shift_text(this->edit_pos * this->w_char);
             this->rdp_input_invalidate(this->get_rect());
             break;
+
         default:
             break;
-        }
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetPassword::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetPassword::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
-    WidgetEdit::rdp_input_unicode(unicode, flag);
+    WidgetEdit::rdp_input_unicode(flag, unicode);
     this->set_masked_text();
 
     this->masked_text.shift_text(this->edit_pos * this->w_char);

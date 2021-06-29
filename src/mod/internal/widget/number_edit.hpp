@@ -36,7 +36,7 @@ public:
 
     void insert_text(const char* text) override;
 
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
 private:
     int initial_x_text;

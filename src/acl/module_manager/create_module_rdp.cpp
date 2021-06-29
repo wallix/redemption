@@ -307,20 +307,20 @@ public:
 
     void rdp_gdi_down() override {}
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
-        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->mod.rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 
     // from RdpInput
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    void rdp_input_mouse(int device_flags, int x, int y) override
     {
-        this->mod.rdp_input_mouse(device_flags, x, y, keymap);
+        this->mod.rdp_input_mouse(device_flags, x, y);
     }
 
     // from RdpInput
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-        this->mod.rdp_input_unicode(unicode, flag);
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override {
+        this->mod.rdp_input_unicode(flag, unicode);
     }
 
     // from RdpInput
@@ -330,9 +330,9 @@ public:
     }
 
     // from RdpInput
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    void rdp_input_synchronize(KeyLocks locks) override
     {
-        return this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
+        return this->mod.rdp_input_synchronize(locks);
     }
 
     void refresh(Rect clip) override
@@ -490,7 +490,7 @@ ModPack create_mod_rdp(
     FrontAPI& front,
     ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute,
-    Keymap2::KeyFlags key_flags,
+    kbdtypes::KeyLocks key_locks,
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
@@ -523,7 +523,7 @@ ModPack create_mod_rdp(
       , (smartcard_passthrough ? "" : ini.get<cfg::context::target_password>().c_str())
       , ini.get<cfg::context::target_host>().c_str()
       , "0.0.0.0"   // client ip is silenced
-      , key_flags
+      , key_locks
       , glyphs
       , theme
       , server_auto_reconnect_packet

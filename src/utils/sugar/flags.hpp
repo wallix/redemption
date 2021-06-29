@@ -82,6 +82,7 @@ public:
     constexpr void clear(E idx) noexcept { this->value &= ~bit(idx); }
 
     constexpr void normalize() noexcept { this->value &= mask; }
+    [[nodiscard]] constexpr flags_t normalized() const noexcept { return flags_t(this->value & mask); }
 
     [[nodiscard]] constexpr bitfield as_uint() const noexcept { return this->value & mask; }
 

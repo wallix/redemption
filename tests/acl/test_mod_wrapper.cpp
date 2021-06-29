@@ -8,7 +8,6 @@
 #include "gdi/screen_info.hpp"
 #include "utils/timebase.hpp"
 #include "utils/colors.hpp"
-#include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
 #include "RAIL/client_execute.hpp"
 
@@ -47,7 +46,7 @@ namespace
         ClientInfo client_info_;
         const BGRPalette& palette_;
         const Font& font_;
-        Keymap2 keymap_;
+        Keymap keymap_{KeyLayout::null_layout()};
         Inifile ini_;
 
     protected :

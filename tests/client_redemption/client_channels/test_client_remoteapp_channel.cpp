@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     FakeRDPChannelsMod mod;
     ClientChannelMod mod_channel;
     mod_channel.set_mod(&mod);
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, default_layout());
     callback.set_mod(&mod);
     ClientRemoteAppGraphicAPI client_remote(nullptr, nullptr, 0, 0);
 

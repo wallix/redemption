@@ -159,8 +159,9 @@ static int run_mod(
                     MonotonicTimePoint::clock::now() - start_win_session_time);
 
                 if (duration.count() % config.keep_alive_freq == 0) {
-                    callback.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
-                    callback.send_rdp_scanCode(0x1e, 0);
+                    auto scancode = kbdtypes::Scancode(0x1e);
+                    callback.send_rdp_scanCode(kbdtypes::KbdFlags::Release, scancode);
+                    callback.send_rdp_scanCode(kbdtypes::KbdFlags::NoFlags, scancode);
                 }
             }
         }

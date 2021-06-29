@@ -22,7 +22,6 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
-#include "keyboard/keymap2.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "core/app_path.hpp"
 #include "core/RDP/bitmapupdate.hpp"
@@ -62,13 +61,14 @@ Dimension TestCardMod::get_dim() const
 }
 
 void TestCardMod::rdp_input_scancode(
-    long /*param1*/, long /*param2*/, long /*param3*/,
-    long /*param4*/, Keymap2 * keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0
-        && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
+    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
         this->set_mod_signal(BACK_EVENT_STOP);
     }
+    (void)flags;
+    (void)event_time;
+    (void)keymap;
 }
 
 void TestCardMod::draw_event()

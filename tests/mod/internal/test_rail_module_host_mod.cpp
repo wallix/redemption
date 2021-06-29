@@ -131,10 +131,10 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     mod_ref.gd->cached_pointer(PredefinedPointer::Normal);
 
     // move to top border
-    host_mod.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 19, nullptr);
+    host_mod.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 19);
     RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::NS).cache_index());
 
     // move to widget
-    host_mod.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 100, nullptr);
+    host_mod.rdp_input_mouse(MOUSE_FLAG_MOVE, 200, 100);
     RED_TEST(gd.last_cursor == gdi::CachePointerIndex(PredefinedPointer::Normal).cache_index());
 }

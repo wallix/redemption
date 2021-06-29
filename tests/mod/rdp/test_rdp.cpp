@@ -126,7 +126,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , "S3cur3!1nux$H2"
                                , "10.10.44.101"
                                , "10.10.43.33"
-                               , 2
+                               , kbdtypes::KeyLocks::NumLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet

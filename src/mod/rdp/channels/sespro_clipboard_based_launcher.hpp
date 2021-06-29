@@ -882,8 +882,10 @@ private:
         }
     }
 
-    void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*unused*/) {
-        this->mod.send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+    void rdp_send_scancode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode, uint32_t event_time, Keymap const& keymap)
+    {
+        (void)keymap;
+        this->mod.send_input(event_time, RDP_INPUT_SCANCODE, underlying_cast(flags), underlying_cast(scancode), 0);
     }
 
 public:

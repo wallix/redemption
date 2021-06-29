@@ -25,7 +25,6 @@
 
 #include "mod/internal/widget/wab_close.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -191,20 +190,15 @@ RED_AUTO_TEST_CASE(TraceWidgetWabCloseExit)
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                    flat_wab_close.cancel.x() + 2,
-                                   flat_wab_close.cancel.y() + 2, nullptr);
+                                   flat_wab_close.cancel.y() + 2);
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                                    flat_wab_close.cancel.x() + 2,
-                                   flat_wab_close.cancel.y() + 2, nullptr);
+                                   flat_wab_close.cancel.y() + 2);
 
     RED_CHECK(notifier.last_widget == &flat_wab_close);
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
-
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
-    flat_wab_close.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabClose_transparent_png_with_theme_color)

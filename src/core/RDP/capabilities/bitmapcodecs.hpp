@@ -574,11 +574,6 @@ struct Emit_CS_BitmapCodecCaps : public Capability {
     }
 
     void emit(OutStream & out) {
-        size_t codecsLen = 0;
-        for (int i = 0; i < this->bitmapCodecCount; i++) {
-            codecsLen += this->bitmapCodecArray[i].computeSize();
-        }
-
         out.out_uint16_le(this->capabilityType);
         out.out_uint16_le(this->len);
 
@@ -1024,11 +1019,6 @@ struct Emit_SC_BitmapCodecCaps : public Capability {
     {
         for (auto codec: supported_codecs){
             this->addCodec(codec);
-        }
-
-        size_t codecsLen = 0;
-        for (int i = 0; i < this->bitmapCodecCount; i++) {
-            codecsLen += this->bitmapCodecArray[i].computeSize();
         }
 
         out.out_uint16_le(this->capabilityType);

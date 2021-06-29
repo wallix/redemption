@@ -22,7 +22,8 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/screen.hpp"
 
@@ -290,18 +291,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     wlabel.set_wh(dim);
     wlabel.set_xy(x, y);
 
-    wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, nullptr);
+    wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
-    wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, nullptr);
+    wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_char('a');
-
-    wlabel.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x10)); // 'a'
+    wlabel.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x10), 0, keymap);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
 }
@@ -364,7 +363,6 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
     //ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
-//    wcomposite.rdp_input_invalidate(Rect(0, 0, 800, 600));
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_9.png");
 

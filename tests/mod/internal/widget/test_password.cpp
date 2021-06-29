@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -296,14 +297,18 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_9.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    bool    ctrl_alt_delete;
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
+        wpassword.rdp_input_invalidate(wpassword.get_rect());
+    };
 
-    keymap.event(0, 16, ctrl_alt_delete); // 'a'
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, ctrl_alt_delete);
+    rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
     wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
     RED_CHECK(notifier.last_widget == &wpassword);
@@ -311,73 +316,46 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    keymap.event(0, 17, ctrl_alt_delete); // 'z'
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_11.png");
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::UpArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_12.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::RightArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_11.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::Backspace);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_DELETE);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Delete);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_17.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_END);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::End);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_9.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_HOME);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Home);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_19.png");
 
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Enter);
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
     notifier.last_widget = nullptr;
@@ -385,7 +363,7 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
 
     WidgetReceiveEvent widget_for_receive_event(drawable);
 
-    wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3, nullptr);
+    wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
     RED_CHECK(notifier.last_widget == nullptr);
@@ -497,36 +475,33 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
 
     RED_CHECK("aurélie"sv == wpassword.get_text());
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
+        wpassword.rdp_input_invalidate(wpassword.get_rect());
+    };
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-
-    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::Backspace);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
 
     RED_CHECK("aurlie"sv == wpassword.get_text());
@@ -560,43 +535,38 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
 
     RED_CHECK("aurélie"sv == wpassword.get_text());
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
+        wpassword.rdp_input_invalidate(wpassword.get_rect());
+    };
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_32.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-
-    keymap.push_kevent(Keymap2::KEVENT_DELETE);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::Delete);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
 
     RED_CHECK("aurlie"sv == wpassword.get_text());
@@ -633,53 +603,43 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
 
     RED_CHECK("aurélie"sv == wpassword.get_text());
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
+        wpassword.rdp_input_invalidate(wpassword.get_rect());
+    };
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_32.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-
-    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode::RightArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-
-    bool    ctrl_alt_delete;
-
-    keymap.event(0, 17, ctrl_alt_delete); // 'z'
-    wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
+    rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_40.png");
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
@@ -691,11 +651,9 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     // cursor overflow
 
     for (int i = 0; i < 10; i++) {
-        keymap.event(0, 17, ctrl_alt_delete); // 'z'
-        wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
+        rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     }
     wpassword.rdp_input_invalidate(wpassword.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_41.png");
-
 }

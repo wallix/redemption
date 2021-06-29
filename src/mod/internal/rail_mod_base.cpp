@@ -22,7 +22,7 @@ Author(s): Proxy Team
 #include "RAIL/client_execute.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/slowpath.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 
 
 RailModBase::RailModBase(
@@ -79,7 +79,7 @@ void RailModBase::refresh(Rect r)
     }
 }
 
-void RailModBase::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+void RailModBase::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
@@ -91,7 +91,7 @@ void RailModBase::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keym
     }
 
     if (!this->rail_enabled) {
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+        this->screen.rdp_input_mouse(device_flags, x, y);
         return;
     }
 
@@ -110,7 +110,7 @@ void RailModBase::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keym
         this->current_mouse_owner = MouseOwner::WidgetModule;
     }
 
-    this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+    this->screen.rdp_input_mouse(device_flags, x, y);
 
     if (mouse_is_captured) {
         this->screen.allow_mouse_pointer_change(true);
@@ -118,30 +118,20 @@ void RailModBase::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keym
 }
 
 void RailModBase::rdp_input_scancode(
-    long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    this->check_alt_f4(param1, param3);
-    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->check_alt_f4(keymap);
+    this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
-void RailModBase::check_alt_f4(long key, long key_flag)
+void RailModBase::check_alt_f4(Keymap const& keymap)
 {
-    if (this->rail_enabled) {
-        if (!this->alt_key_pressed) {
-            if ((key == Keymap2::LEFT_ALT) && !(key_flag & SlowPath::KBDFLAGS_RELEASE)) {
-                this->alt_key_pressed = true;
-            }
-        }
-        else {
-            // if ((param1 == Keymap2::LEFT_ALT) && (key_flag == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
-            if ((key == Keymap2::LEFT_ALT) && (key_flag & SlowPath::KBDFLAGS_RELEASE)) {
-                this->alt_key_pressed = false;
-            }
-            else if ((key == 62) && !key_flag) {
-                LOG(LOG_INFO, "RailModBase::rdp_input_scancode: Close by user (Alt+F4)");
-                throw Error(ERR_WIDGET);    // F4 key pressed
-            }
-        }
+    if (this->rail_enabled
+     && keymap.last_kevent() == Keymap::KEvent::F4
+     && keymap.is_alt_pressed()
+    ) {
+        LOG(LOG_INFO, "RailModBase::rdp_input_scancode: Close by user (Alt+F4)");
+        throw Error(ERR_WIDGET);
     }
 }
 

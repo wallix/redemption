@@ -25,7 +25,7 @@
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "acl/time_before_closing.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "configs/config.hpp"
 #include "gdi/osd_api.hpp"
 #include "gdi/protected_graphics.hpp"
@@ -81,7 +81,7 @@ private:
     bool is_disable_by_input = false;
     bool bogus_refresh_rect_ex;
     const Font & glyphs;
-    Keymap2 & keymap;
+    Keymap & keymap;
 
     SocketTransport * psocket_transport = nullptr;
     null_mod no_mod;
@@ -95,7 +95,7 @@ private:
 public:
    explicit ModWrapper(
         CRef<TimeBase> time_base, BGRPalette const & palette, gdi::GraphicApi& graphics,
-        Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs,
+        Keymap & keymap, ClientInfo const & client_info, const Font & glyphs,
         ClientExecute & rail_client_execute, Inifile & ini)
     : gfilter(graphics, static_cast<RdpInput&>(*this), Rect{})
     , client_info(client_info)
@@ -201,17 +201,8 @@ public:
 
     void set_mod(ModuleName next_state, ModPack mod_pack)
     {
-       // LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
-       //     get_module_name(next_state),
-       //     get_module_name(this->current_mod),
-       //     mod_pack.psocket_transport);
-
-        while (this->keymap.nb_char_available()) {
-            this->keymap.get_char();
-        }
-        while (this->keymap.nb_kevent_available()) {
-            this->keymap.get_kevent();
-        }
+        // LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
+        this->keymap.reset_decoded_keys();
 
         this->clear_osd_message();
 
@@ -243,23 +234,20 @@ public:
     }
 
 private:
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
-        if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
-            && keymap->top_kevent() == Keymap2::KEVENT_INSERT
-        ) {
-            keymap->get_kevent();
+        if (this->is_disable_by_input && keymap.last_kevent() == Keymap::KEvent::Insert) {
             this->disable_osd();
             return;
         }
 
-        this->get_mod().rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->get_mod().rdp_input_scancode(flags, scancode, event_time, keymap);
 
         if (this->enable_osd) {
             Inifile const& ini = this->ini;
 
-            if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-                bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
+            if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (scancode == Scancode::F12)) {
+                bool const f12_released = bool(flags & KbdFlags::Release);
                 if (this->target_info_is_shown && f12_released) {
                     LOG(LOG_INFO, "Hide info");
                     this->clear_osd_message();
@@ -304,21 +292,21 @@ private:
         }
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
     {
-        this->get_mod().rdp_input_unicode(unicode, flag);
+        this->get_mod().rdp_input_unicode(flag, unicode);
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    void rdp_input_mouse(int device_flags, int x, int y) override
     {
-        if (!this->try_input_mouse(device_flags, x, y, keymap)) {
+        if (!this->try_input_mouse(device_flags, x, y)) {
             if (this->enable_osd) {
-                if (this->try_input_mouse(device_flags, x, y, keymap)) {
+                if (this->try_input_mouse(device_flags, x, y)) {
                     this->target_info_is_shown = false;
                     return ;
                 }
             }
-            this->get_mod().rdp_input_mouse(device_flags, x, y, keymap);
+            this->get_mod().rdp_input_mouse(device_flags, x, y);
         }
     }
 
@@ -332,9 +320,9 @@ private:
         this->get_mod().rdp_input_invalidate2(gdi::subrect4(r, this->get_protected_rect()));
     }
 
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    void rdp_input_synchronize(KeyLocks locks) override
     {
-        this->get_mod().rdp_input_synchronize(time, device_flags, param1, param2);
+        this->get_mod().rdp_input_synchronize(locks);
     }
 
     void rdp_gdi_up_and_running() override
@@ -571,7 +559,7 @@ private:
         }
     }
 
-    bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
+    bool try_input_mouse(int device_flags, int x, int y)
     {
         if (this->is_disable_by_input
          && this->get_protected_rect().contains_pt(x, y)

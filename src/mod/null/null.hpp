@@ -32,9 +32,9 @@ struct null_mod : public mod_api
         this->set_mod_signal(BACK_EVENT_NEXT);
         // throw Error(ERR_BACK_EVENT_NEXT);
     }
-    void rdp_input_mouse(int,int,int,Keymap2 *) override {}
-    void rdp_input_scancode(long,long,long,long,Keymap2 *) override {}
-    void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
+    void rdp_input_mouse(int,int,int) override {}
+    void rdp_input_scancode(KbdFlags, Scancode, uint32_t, Keymap const&) override {}
+    void rdp_input_synchronize(KeyLocks) override {}
     void rdp_input_invalidate(const Rect rect) override { (void)rect; }
     void refresh(const Rect rect) override { (void)rect; }
     bool is_up_and_running() const override { return true; }

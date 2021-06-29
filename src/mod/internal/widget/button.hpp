@@ -89,11 +89,11 @@ public:
                      Color fg_color, Color bg_color, Color focuscolor, gdi::ColorCtx color_ctx,
                      Rect label_rect, State state, unsigned border_width, Font const& font, int xtext, int ytext);
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
     Dimension get_optimal_dim() const override;
 

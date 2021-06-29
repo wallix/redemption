@@ -50,7 +50,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     uint16_t front_width,
     uint16_t front_height,
     int keylayout,
-    int key_flags,
+    kbdtypes::KeyLocks key_flags,
     bool clipboard_up,
     bool clipboard_down,
     const char * encodings,

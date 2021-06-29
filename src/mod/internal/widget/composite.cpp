@@ -20,7 +20,7 @@
  */
 
 #include "mod/internal/widget/composite.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "utils/region.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
@@ -457,51 +457,36 @@ void WidgetParent::refresh(Rect clip)
     }
 }
 
-void WidgetParent::rdp_input_scancode(
-    long param1, long param2, long param3,
-    long param4, Keymap2 * keymap)
+void WidgetParent::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (!keymap->nb_kevent_available()) {
-        if (this->current_focus) {
-            this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-    }
-
-    while (keymap->nb_kevent_available() > 0) {
-        uint32_t nb_kevent = keymap->nb_kevent_available();
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()) {
-        case Keymap2::KEVENT_TAB:
-            keymap->get_kevent();
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()){
+        case Keymap::KEvent::Tab:
             this->next_focus();
             break;
-        case Keymap2::KEVENT_BACKTAB:
-            keymap->get_kevent();
+
+        case Keymap::KEvent::BackTab:
             this->previous_focus();
             break;
+
         default:
             if (this->current_focus) {
-                this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+                this->current_focus->rdp_input_scancode(flags, scancode, event_time, keymap);
             }
             break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
-        if (nb_kevent == keymap->nb_kevent_available()) {
-            // this is to prevent infinite loop if the kevent is not consummed
-            keymap->get_kevent();
-        }
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetParent::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetParent::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     if (this->current_focus) {
-        this->current_focus->rdp_input_unicode(unicode, flag);
+        this->current_focus->rdp_input_unicode(flag, unicode);
     }
 }
 
-void WidgetParent::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+void WidgetParent::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
@@ -519,7 +504,7 @@ void WidgetParent::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * key
     if (device_flags == MOUSE_FLAG_BUTTON1) {
         if (this->pressed
             && (w != this->pressed)) {
-            this->pressed->rdp_input_mouse(device_flags, x, y, keymap);
+            this->pressed->rdp_input_mouse(device_flags, x, y);
         }
         this->pressed = nullptr;
     }
@@ -531,12 +516,12 @@ void WidgetParent::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * key
                 this->set_widget_focus(w, focus_reason_mousebutton1);
             }
         }
-        w->rdp_input_mouse(device_flags, x, y, keymap);
+        w->rdp_input_mouse(device_flags, x, y);
     }
     else {
-        Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        Widget::rdp_input_mouse(device_flags, x, y);
     }
     if (device_flags == MOUSE_FLAG_MOVE && this->pressed) {
-        this->pressed->rdp_input_mouse(device_flags, x, y, keymap);
+        this->pressed->rdp_input_mouse(device_flags, x, y);
     }
 }

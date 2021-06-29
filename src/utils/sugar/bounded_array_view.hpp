@@ -126,7 +126,6 @@ namespace detail
 
     private:
         T* p;
-        std::size_t n;
     };
 
     template<bool>

@@ -20,7 +20,7 @@
  */
 
 #include "mod/internal/widget/number_edit.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 
 WidgetNumberEdit::WidgetNumberEdit(
     gdi::GraphicApi & drawable, Widget & parent,
@@ -49,15 +49,13 @@ void WidgetNumberEdit::insert_text(const char* text)
     WidgetEdit::insert_text(text);
 }
 
-void WidgetNumberEdit::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetNumberEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() && keymap->top_kevent() == Keymap2::KEVENT_KEY){
-        uint16_t c = keymap->top_char();
+    if (keymap.last_kevent() == Keymap::KEvent::KeyDown) {
+        auto c = keymap.last_decoded_keys().uchars[0];
         if (c < '0' || '9' < c) {
-            keymap->get_char();
-            keymap->get_kevent();
             return ;
         }
     }
-    WidgetEdit::rdp_input_scancode(param1, param2, param3, param4, keymap);
+    WidgetEdit::rdp_input_scancode(flags, scancode, event_time, keymap);
 }

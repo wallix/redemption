@@ -19,7 +19,6 @@
  */
 
 #include "mod/internal/transition_mod.hpp"
-#include "keyboard/keymap2.hpp"
 
 TransitionMod::TransitionMod(
     char const * message,
@@ -43,17 +42,15 @@ TransitionMod::TransitionMod(
 
 TransitionMod::~TransitionMod() = default;
 
-void TransitionMod::rdp_input_scancode(long int param1, long int param2,
-                                       long int param3, long int param4,
-                                       Keymap2* keymap)
+void TransitionMod::rdp_input_scancode(
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    RailModBase::check_alt_f4(param1, param3);
+    RailModBase::check_alt_f4(keymap);
 
-    if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC) {
-        keymap->get_kevent();
+    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
         this->set_mod_signal(BACK_EVENT_STOP);
     }
     else {
-        this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }

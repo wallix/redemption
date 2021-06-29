@@ -103,7 +103,8 @@
 #include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
@@ -602,7 +603,7 @@ private:
     }
 
 public:
-    Keymap2 keymap;
+    Keymap keymap;
 
 private:
     CHANNELS::ChannelDefArray channel_list;
@@ -829,7 +830,7 @@ public:
          , bool fp_support // If true, fast-path must be supported
          )
     : verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
-    , keymap(bool(this->verbose & Verbose::keymap) ? 1 : 0)
+    , keymap(default_layout())
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
     , trans(trans)
     , ini(ini)
@@ -2145,7 +2146,9 @@ public:
                 sec.payload.in_remain());
         }
 
-        this->keymap.init_layout(this->client_info.keylayout);
+        if (auto* layout = find_layout_by_id(KeyLayout::KbdId(this->client_info.keylayout))) {
+            this->keymap.set_layout(*layout);
+        }
         LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
         this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
 
@@ -2422,7 +2425,7 @@ public:
                     this->mouse_x = me.xPos;
                     this->mouse_y = me.yPos;
                     if (this->state == FRONT_UP_AND_RUNNING) {
-                        cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                        cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos);
                         this->has_user_activity = true;
                     }
 
@@ -2464,9 +2467,10 @@ public:
                         "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                         se.eventFlags);
 
-                    this->keymap.synchronize(se.eventFlags);
+                    kbdtypes::KeyLocks key_locks = safe_int{se.eventFlags};
+                    this->keymap.reset_mods(key_locks);
                     if (this->state == FRONT_UP_AND_RUNNING) {
-                        cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
+                        cb.rdp_input_synchronize(key_locks);
                         this->has_user_activity = true;
                     }
                 }
@@ -2481,7 +2485,7 @@ public:
                         uke.unicodeCode);
 
                     if (this->state == FRONT_UP_AND_RUNNING) {
-                        cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
+                        cb.rdp_input_unicode(checked_int(uke.spKeyboardFlags), uke.unicodeCode);
                         this->has_user_activity = true;
                     }
                 }
@@ -3084,12 +3088,12 @@ public:
             });
     }
 
-    void set_keylayout(int LCID) override {
-        this->keymap.init_layout(LCID);
+    void set_keylayout(KeyLayout const& keylayout) override {
+        this->keymap.set_layout(keylayout);
     }
 
-    [[nodiscard]] int get_keylayout() const override {
-        return this->keymap.layout_id();
+    [[nodiscard]] KeyLayout const& get_keylayout() const override {
+        return this->keymap.layout();
     }
 
     void set_focus_on_password_textbox(bool set) override {
@@ -4067,13 +4071,11 @@ private:
                             LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                                 "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
                                 ie.eventTime, se.toggleFlags);
-                            LOG(LOG_INFO, "Front::process_data: (Slow-Path) Synchronize Event toggleFlags=0x%X",
-                                se.toggleFlags);
 
-                            // happens when client gets focus and sends key modifier info
-                            this->keymap.synchronize(se.toggleFlags & 0xFFFF);
+                            kbdtypes::KeyLocks key_locks = checked_int{se.toggleFlags};
+                            this->keymap.reset_mods(key_locks);
                             if (this->state == FRONT_UP_AND_RUNNING) {
-                                cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
+                                cb.rdp_input_synchronize(key_locks);
                                 this->has_user_activity = true;
                             }
                         }
@@ -4089,7 +4091,7 @@ private:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->state == FRONT_UP_AND_RUNNING) {
-                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos);
                                 this->has_user_activity = true;
                             }
 
@@ -4143,7 +4145,7 @@ private:
                                 ie.eventTime, uke.unicodeCode);
                             // happens when client gets focus and sends key modifier info
                             if (this->state == FRONT_UP_AND_RUNNING) {
-                                cb.rdp_input_unicode(uke.unicodeCode, uke.keyboardFlags);
+                                cb.rdp_input_unicode(checked_int(uke.keyboardFlags), uke.unicodeCode);
                                 this->has_user_activity = true;
                             }
                         }
@@ -4513,11 +4515,9 @@ private:
     }
 
 public:
-    void set_keyboard_indicators(uint16_t LedFlags) override
+    void set_keyboard_indicators(kbdtypes::KeyLocks key_locks) override
     {
-        this->keymap.toggle_caps_lock(LedFlags & SlowPath::TS_SYNC_CAPS_LOCK);
-        this->keymap.toggle_scroll_lock(LedFlags & SlowPath::TS_SYNC_SCROLL_LOCK);
-        this->keymap.toggle_num_lock(LedFlags & SlowPath::TS_SYNC_NUM_LOCK);
+        this->keymap.set_locks(key_locks);
     }
 
 private:
@@ -5139,42 +5139,64 @@ public:
 
 private:
     template<class KeyboardEvent_Recv>
-    void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
-        bool tsk_switch_shortcuts;
-
+    void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, uint32_t event_time) {
         struct KeyboardFlags {
-            static uint16_t get(SlowPath::KeyboardEvent_Recv const & ke) {
-                return ke.keyboardFlags;
+            static Keymap::KbdFlags get(SlowPath::KeyboardEvent_Recv const & ke)
+            {
+                return Keymap::KbdFlags(ke.keyboardFlags);
             }
-            static uint16_t get(FastPath::KeyboardEvent_Recv const & ke) {
-                return ke.spKeyboardFlags;
+            static Keymap::KbdFlags get(FastPath::KeyboardEvent_Recv const & ke)
+            {
+                return Keymap::KbdFlags(ke.spKeyboardFlags);
             }
         };
 
-        Keymap2::DecodedKeys decoded_keys = this->keymap.event(
-            KeyboardFlags::get(ke), ke.keyCode, tsk_switch_shortcuts);
+        Keymap::Scancode const scancode = checked_int{ke.keyCode};
+        Keymap::KbdFlags const kbdFlags = KeyboardFlags::get(ke);
+
+        Keymap::DecodedKeys decoded_keys = this->keymap.event(kbdFlags, scancode);
 
         if (this->state == FRONT_UP_AND_RUNNING) {
-            if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
+            if (this->ini.get<cfg::client::disable_tsk_switch_shortcuts>() && this->keymap.is_tsk_switch_shortcut()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                auto const now = this->events_guard.get_monotonic_time();
-                bool const send_to_mod = !this->capture
-                    || (0 == decoded_keys.count)
-                    || (1 == decoded_keys.count
-                        && this->capture->kbd_input(now, decoded_keys.uchars[0]))
-                    || (2 == decoded_keys.count
-                        && this->capture->kbd_input(now, decoded_keys.uchars[0])
-                        && this->capture->kbd_input(now, decoded_keys.uchars[1]));
-                if (send_to_mod) {
-                    cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
+                bool send_to_mod = !this->capture;
+                if (!send_to_mod) {
+                    auto const now = this->events_guard.get_monotonic_time();
+                    auto const& uchars = decoded_keys.uchars;
+                    if (uchars[0] && uchars[1]) {
+                        send_to_mod = this->capture->kbd_input(now, uchars[0])
+                                   || this->capture->kbd_input(now, uchars[1]);
+                    }
+                    else if (uchars[0]) {
+                        send_to_mod = this->capture->kbd_input(now, uchars[0]);
+                    }
+                    else {
+                        uint32_t uchar {};
+                        switch (underlying_cast(keymap.last_kevent())) {
+                            #define CASE(name, value) case underlying_cast(name): uchar = value; break
+                            CASE(Keymap::KEvent::LeftArrow, 0x00002190);
+                            CASE(Keymap::KEvent::UpArrow, 0x00002191);
+                            CASE(Keymap::KEvent::RightArrow, 0x00002192);
+                            CASE(Keymap::KEvent::DownArrow, 0x00002193);
+                            CASE(Keymap::KEvent::Home, 0x00002196);
+                            CASE(Keymap::KEvent::End, 0x00002198);
+                            #undef CASE
+                        }
+
+                        send_to_mod = uchar ? this->capture->kbd_input(now, uchar) : true;
+                    }
                 }
-                this->has_user_activity = true;
+
+                if (send_to_mod) {
+                    cb.rdp_input_scancode(kbdFlags, scancode, event_time, this->keymap);
+                }
             }
+            this->has_user_activity = true;
         }
 
-        if (this->keymap.is_application_switching_shortcut_pressed) {
+        if (this->keymap.is_app_switching_shortcut()) {
             this->possible_active_window_change();
         }
     }

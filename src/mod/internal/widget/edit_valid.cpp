@@ -192,10 +192,10 @@ Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
     return w;
 }
 
-void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (x > this->editbox->eright()) {
-        this->button.rdp_input_mouse(device_flags, x, y, keymap);
+        this->button.rdp_input_mouse(device_flags, x, y);
         this->rdp_input_invalidate(this->button.get_rect());
     }
     else {
@@ -205,20 +205,19 @@ void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y, Keymap2* k
             this->button.state = WidgetButton::State::Normal;
             this->rdp_input_invalidate(this->button.get_rect());
         }
-        this->editbox->rdp_input_mouse(device_flags, x, y, keymap);
+        this->editbox->rdp_input_mouse(device_flags, x, y);
     }
 }
 
 void WidgetEditValid::rdp_input_scancode(
-    long int param1, long int param2, long int param3,
-    long int param4, Keymap2* keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    this->editbox->rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->editbox->rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
-void WidgetEditValid::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetEditValid::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
-    this->editbox->rdp_input_unicode(unicode, flag);
+    this->editbox->rdp_input_unicode(flag, unicode);
 }
 
 void WidgetEditValid::notify(Widget& widget, NotifyApi::notify_event_t event)

@@ -39,6 +39,8 @@ exe-js js_client :
   src/gdi/clip_from_cmd.bc
   src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
+  src/keyboard/scancode/autogen/all_LCIDs_scancodes.bc
+  src/keyboard/scancode/unicode_to_scancode.bc
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/mod/rdp/rdp_negociation_data.bc
@@ -183,6 +185,8 @@ objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 objjs src/gdi/clip_from_cmd.bc : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
+objjs src/keyboard/scancode/autogen/all_LCIDs_scancodes.bc : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
+objjs src/keyboard/scancode/unicode_to_scancode.bc : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/mod/rdp/rdp_negociation_data.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;

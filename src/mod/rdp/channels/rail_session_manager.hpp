@@ -229,14 +229,12 @@ public:
         }
     }
 
-    void input_scancode(long param1, long param2, long device_flags) {
+    void input_scancode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode) {
         if (DialogBoxType::WAITING_SCREEN != this->dialog_box_type) {
             return;
         }
 
-        (void)param2;
-        // 28 for escape key
-        if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
+        if (kbdtypes::pressed_scancode(flags, scancode) == kbdtypes::Scancode::Enter) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
             throw Error(ERR_DISCONNECT_BY_USER);
         }

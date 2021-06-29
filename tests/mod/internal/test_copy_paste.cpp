@@ -30,7 +30,6 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
 
 #include <string>
 #include <string_view>
@@ -155,9 +154,6 @@ RED_AUTO_TEST_CASE(TestPaste)
     CopyPasteFront front(screen_info, copy_paste);
     TestGraphic gd(screen_info.width, screen_info.height);
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
     CopyPasteProcess notifier(copy_paste);
 
     WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_lato_light_16(), nullptr, Theme{});
@@ -169,14 +165,11 @@ RED_AUTO_TEST_CASE(TestPaste)
 
     RED_REQUIRE(copy_paste.ready(front));
 
-    #define edit_paste(s, imgref) do {                             \
-        keymap.push_kevent(Keymap2::KEVENT_PASTE);                 \
-        copy_paste.paste(edit);                                    \
-        RED_CHECK_EQUAL(s ""sv, edit.get_text());                  \
-                                                                   \
-        edit.rdp_input_invalidate(edit.get_rect());                \
-                                                                   \
-        RED_CHECK_IMG(gd, imgref);                                 \
+    #define edit_paste(s, imgref) do {              \
+        copy_paste.paste(edit);                     \
+        RED_CHECK_EQUAL(s ""sv, edit.get_text());   \
+        edit.rdp_input_invalidate(edit.get_rect()); \
+        RED_CHECK_IMG(gd, imgref);                  \
     } while (0)
     edit_paste("", IMG_TEST_PATH "empty.png");
     edit_paste("", IMG_TEST_PATH "empty.png");

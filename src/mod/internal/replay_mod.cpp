@@ -25,7 +25,6 @@ Author(s): Wallix Team
 #include "utils/timebase.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/strutils.hpp"
-#include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_multi_crypto_transport.hpp"
 #include "transport/mwrm_file_data.hpp"
@@ -192,12 +191,11 @@ void ReplayMod::init_reader()
 }
 
 void ReplayMod::rdp_input_scancode(
-    long /*param1*/, long /*param2*/,
-    long /*param3*/, long /*param4*/, Keymap2 * keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0
-     && keymap->get_kevent() == Keymap2::KEVENT_ESC
-    ) {
+    (void)event_time;
+    (void)keymap;
+    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
         this->set_mod_signal(BACK_EVENT_STOP);
     }
 }

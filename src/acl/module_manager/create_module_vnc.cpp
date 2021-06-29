@@ -100,7 +100,7 @@ public:
         uint16_t front_width,
         uint16_t front_height,
         int keylayout,
-        int key_flags,
+        kbdtypes::KeyLocks key_locks,
         bool clipboard_up,
         bool clipboard_down,
         const char * encodings,
@@ -121,7 +121,7 @@ public:
     , mod(
           this->socket_transport, drawable,
           events, username, password, front, front_width, front_height,
-          keylayout, key_flags, clipboard_up, clipboard_down, encodings,
+          keylayout, key_locks, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
           rail_client_execute, vnc_verbose, metrics, session_log)
@@ -147,20 +147,20 @@ public:
         this->mod.rdp_gdi_down();
     }
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
-        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->mod.rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 
     // from RdpInput
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    void rdp_input_mouse(int device_flags, int x, int y) override
     {
-        this->mod.rdp_input_mouse(device_flags, x, y, keymap);
+        this->mod.rdp_input_mouse(device_flags, x, y);
     }
 
     // from RdpInput
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-        this->mod.rdp_input_unicode(unicode, flag);
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override {
+        this->mod.rdp_input_unicode(flag, unicode);
     }
 
     // from RdpInput
@@ -170,9 +170,9 @@ public:
     }
 
     // from RdpInput
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    void rdp_input_synchronize(KeyLocks locks) override
     {
-        return this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
+        return this->mod.rdp_input_synchronize(locks);
     }
 
     void refresh(Rect clip) override
@@ -233,7 +233,8 @@ public:
 ModPack create_mod_vnc(
     gdi::GraphicApi & drawable,
     Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
-    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
+    ClientExecute& rail_client_execute,
+    kbdtypes::KeyLocks key_locks,
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
@@ -282,8 +283,8 @@ ModPack create_mod_vnc(
         front,
         client_info.screen_info.width,
         client_info.screen_info.height,
-        front.get_keylayout(),
-        key_flags,
+        int(front.get_keylayout().kbdid),
+        key_locks,
         ini.get<cfg::mod_vnc::clipboard_up>(),
         ini.get<cfg::mod_vnc::clipboard_down>(),
         ini.get<cfg::mod_vnc::encodings>().c_str(),

@@ -26,7 +26,7 @@
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 
 
 WidgetButton::WidgetButton(
@@ -163,7 +163,7 @@ void WidgetButton::draw(
     }
 }
 
-void WidgetButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetButton::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && this->state == State::Normal) {
         this->state = State::Pressed;
@@ -177,40 +177,39 @@ void WidgetButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keym
         }
     }
     else {
-        this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        this->Widget::rdp_input_mouse(device_flags, x, y);
     }
 }
 
-void WidgetButton::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetButton::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0){
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
-            case Keymap2::KEVENT_ENTER:
-                keymap->get_kevent();
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()){
+        case Keymap::KEvent::Enter:
+            this->send_notify(NOTIFY_SUBMIT);
+            break;
+
+        case Keymap::KEvent::KeyDown:
+            if (keymap.last_decoded_keys().uchars[0] == ' ') {
                 this->send_notify(NOTIFY_SUBMIT);
-                break;
-            case Keymap2::KEVENT_KEY:
-                if (keymap->get_char() == ' ') {
-                    this->send_notify(NOTIFY_SUBMIT);
-                }
-                break;
-            default:
-                Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
-                break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
+            }
+            break;
+
+        default:
+            Widget::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetButton::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetButton::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
-    if (!(flag & SlowPath::KBDFLAGS_RELEASE) && (unicode == 0x0020)) {
+    if (!bool(flag & KbdFlags::Release) && (unicode == ' ')) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     else {
-        Widget::rdp_input_unicode(unicode, flag);
+        Widget::rdp_input_unicode(flag, unicode);
     }
 }
 

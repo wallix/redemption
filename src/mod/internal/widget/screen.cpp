@@ -129,7 +129,7 @@ bool WidgetScreen::previous_focus()
     return false;
 }
 
-void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y)
 {
     this->redo_mouse_pointer_change(x, y);
 
@@ -144,23 +144,23 @@ void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * key
         }
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
+    WidgetParent::rdp_input_mouse(device_flags, x, y);
 }
 
-void WidgetScreen::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetScreen::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     if (this->tooltip) {
         this->hide_tooltip();
     }
-    WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+    WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
-void WidgetScreen::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetScreen::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     if (this->tooltip) {
         this->hide_tooltip();
     }
-    WidgetParent::rdp_input_unicode(unicode, flag);
+    WidgetParent::rdp_input_unicode(flag, unicode);
 }
 
 void WidgetScreen::allow_mouse_pointer_change(bool allow)

@@ -25,7 +25,7 @@
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "utils/theme.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "gdi/graphic_api.hpp"
 
 enum {
@@ -223,33 +223,28 @@ void WidgetDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
 }
 
-void WidgetDialog::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0){
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
-        case Keymap2::KEVENT_ESC:
-            keymap->get_kevent();
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::Esc:
             this->send_notify(NOTIFY_CANCEL);
             break;
-        case Keymap2::KEVENT_LEFT_ARROW:
-        case Keymap2::KEVENT_UP_ARROW:
-        case Keymap2::KEVENT_PGUP:
-            keymap->get_kevent();
+        case Keymap::KEvent::LeftArrow:
+        case Keymap::KEvent::UpArrow:
+        case Keymap::KEvent::PgUp:
             this->dialog.scroll_up();
             break;
 
-        case Keymap2::KEVENT_RIGHT_ARROW:
-        case Keymap2::KEVENT_DOWN_ARROW:
-        case Keymap2::KEVENT_PGDOWN:
-            keymap->get_kevent();
+        case Keymap::KEvent::RightArrow:
+        case Keymap::KEvent::DownArrow:
+        case Keymap::KEvent::PgDown:
             this->dialog.scroll_down();
             break;
         default:
-            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }

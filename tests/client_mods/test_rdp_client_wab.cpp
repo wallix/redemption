@@ -102,7 +102,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , "x"
                                , "10.10.47.154"
                                , "192.168.1.100"
-                               , 7
+                               , kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
+                               | kbdtypes::KeyLocks::ScrollLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet

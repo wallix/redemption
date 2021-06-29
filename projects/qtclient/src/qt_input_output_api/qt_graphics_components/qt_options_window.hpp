@@ -23,7 +23,7 @@
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "utils/strutils.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keylayouts.hpp"
 
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
@@ -219,8 +219,11 @@ public:
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
 
-        for (auto* layout : Keymap2::keylayouts()) {
-            this->_languageComboBox.addItem(layout->locale_name, layout->LCID);
+        for (auto const& layout : keylayouts()) {
+            this->_languageComboBox.addItem(
+                QString::fromLatin1(layout.locale_name.c_str(), layout.locale_name.size()),
+                underlying_cast(layout.kbdid)
+            );
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutKeyboard->addRow(new QLabel("", this));

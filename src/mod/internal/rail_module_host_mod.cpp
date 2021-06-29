@@ -24,6 +24,7 @@
 #include "mod/null/null.hpp"
 #include "RAIL/client_execute.hpp"
 #include "core/RDP/slowpath.hpp"
+#include "keyboard/keymap.hpp"
 
 
 using namespace std::chrono_literals;
@@ -38,25 +39,16 @@ void RailModuleHostMod::rdp_input_invalidate(Rect r)
 }
 
 void RailModuleHostMod::rdp_input_scancode(
-    long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
 
-    if (this->rail_enabled) {
-        if (!this->alt_key_pressed) {
-            if ((param1 == 56) && !(param3 & SlowPath::KBDFLAGS_RELEASE)) {
-                this->alt_key_pressed = true;
-            }
-        }
-        else {
-            if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
-                this->alt_key_pressed = false;
-            }
-            else if ((param1 == 62) && !param3) {
-                LOG(LOG_INFO, "RailModuleHostMod::rdp_input_scancode: Close by user (Alt+F4)");
-                throw Error(ERR_WIDGET);    // F4 key pressed
-            }
-        }
+    if (this->rail_enabled
+     && keymap.last_kevent() == Keymap::KEvent::F4
+     && keymap.is_alt_pressed()
+    ) {
+        LOG(LOG_INFO, "RailModuleHostMod::rdp_input_scancode: Close by user (Alt+F4)");
+        throw Error(ERR_WIDGET);
     }
 }
 
@@ -122,7 +114,7 @@ void RailModuleHostMod::rdp_gdi_up_and_running()
     mod.rdp_gdi_up_and_running();
 }
 
-void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y)
 {
     Rect client_execute_auxiliary_window_rect = this->rail_client_execute.get_auxiliary_window_rect();
 
@@ -131,7 +123,7 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
     ) {
         mod_api& mod = this->module_host.get_managed_mod();
 
-        mod.rdp_input_mouse(device_flags, x, y, keymap);
+        mod.rdp_input_mouse(device_flags, x, y);
     }
     else {
         if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
@@ -144,7 +136,7 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
         }
 
         if (!this->rail_enabled) {
-            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+            this->screen.rdp_input_mouse(device_flags, x, y);
             return;
         }
 
@@ -163,7 +155,7 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
             this->current_mouse_owner = MouseOwner::WidgetModule;
         }
 
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+        this->screen.rdp_input_mouse(device_flags, x, y);
 
         if (mouse_is_captured) {
             this->screen.allow_mouse_pointer_change(true);

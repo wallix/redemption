@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -299,14 +300,20 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_10.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    bool ctrl_alt_delete;
+    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
+        using KFlags = Keymap::KbdFlags;
+        using Scancode = Keymap::Scancode;
+        auto scancode = Scancode(scancode_and_flags);
+        auto flags = KFlags(scancode_and_flags & 0xff00u);
+        keymap.event(flags, scancode);
+        wedit.rdp_input_scancode(flags, scancode, 0, keymap);
+        keymap.event(flags | KFlags::Release, scancode);
+        wedit.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+    };
 
-    keymap.event(0, 16, ctrl_alt_delete); // 'a'
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, ctrl_alt_delete);
+    rdp_input_scancode(0x10); // 'a'
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_11.png");
     RED_CHECK(notifier.last_widget == &wedit);
@@ -314,9 +321,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    keymap.event(0, 17, ctrl_alt_delete); // 'z'
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
+    rdp_input_scancode(0x11); // 'z'
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_12.png");
     RED_CHECK(notifier.last_widget == &wedit);
@@ -324,69 +329,55 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x148); // up
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_13.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x14d); // right
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_12.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0e); // backspace
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_11.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x14b); // left
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_16.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x14b); // left
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_17.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_DELETE);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x153); // delete
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_18.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_END);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x14f); // end
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_19.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_HOME);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x147); // home
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_20.png");
 
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x1c); // enter
     RED_CHECK(notifier.last_widget == &wedit);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x+10, y+3, nullptr);
+    wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x+10, y+3);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
@@ -488,72 +479,59 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
-    Keymap2 keymap;
-    const int layout = 0x040C;
-    keymap.init_layout(layout);
-    bool    ctrl_alt_delete;
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 0;
-    keyboardFlags = 0 ;
-    keyCode = 16 ; // key is 'a'
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
+        using KFlags = Keymap::KbdFlags;
+        using Scancode = Keymap::Scancode;
+        auto scancode = Scancode(scancode_and_flags);
+        auto flags = KFlags(scancode_and_flags & 0xff00u);
+        keymap.event(flags, scancode);
+        wedit.rdp_input_scancode(flags, scancode, 0, keymap);
+        keymap.event(flags | KFlags::Release, scancode);
+        wedit.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+    };
+
+    rdp_input_scancode(0x10); // 'a'
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_24.png");
 
-    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x11); // 'z'
+    rdp_input_scancode(0x12); // 'e'
+    rdp_input_scancode(0x10); // 'a'
+    rdp_input_scancode(0x10); // 'a'
+    rdp_input_scancode(0x10); // 'a'
+    rdp_input_scancode(0x10); // 'a'
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_25.png");
 
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x10); // 'a'
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_26.png");
 
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x10); // 'a'
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_27.png");
 
-    keymap.event(keyboardFlags, keyCode + 9, ctrl_alt_delete);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(0x19); // 'p'
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_28.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_HOME);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x147); // home
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_29.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_END);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x14f); // end
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_28.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    rdp_input_scancode(0x0e); // backspace
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_31.png");
 
     for (int i = 0; i < 10; i++) {
-        keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-        parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+        rdp_input_scancode(0x14b); // left
     }
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 

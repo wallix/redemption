@@ -23,7 +23,7 @@
 #include "core/RDP/slowpath.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "utils/colors.hpp"
@@ -334,7 +334,7 @@ void WidgetEdit::move_to_first_character()
     this->update_draw_cursor(old_cursor_rect);
 }
 
-void WidgetEdit::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetEdit::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
         if (x <= this->x() + this->label.x_text) {
@@ -375,214 +375,206 @@ void WidgetEdit::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap
             }
         }
     } else {
-        Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        Widget::rdp_input_mouse(device_flags, x, y);
     }
 }
 
-void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    while (keymap->nb_kevent_available() > 0){
-        uint32_t nb_kevent = keymap->nb_kevent_available();
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
-            case Keymap2::KEVENT_LEFT_ARROW:
-            case Keymap2::KEVENT_UP_ARROW:
-                keymap->get_kevent();
-                if (this->edit_pos > 0) {
-                    Rect old_cursor_rect = this->get_cursor_rect();
-                    this->decrement_edit_pos();
-                    this->update_draw_cursor(old_cursor_rect);
-                }
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::None:
+            break;
 
-                if (keymap->is_ctrl_pressed()) {
-                    while ( (this->label.buffer[(this->edit_buffer_pos)-1] != ' ')
-                                || (this->label.buffer[(this->edit_buffer_pos)] ==' ') ){
-                        if (this->edit_pos > 0) {
-                            Rect old_cursor_rect = this->get_cursor_rect();
-                            this->decrement_edit_pos();
-                            this->update_draw_cursor(old_cursor_rect);
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    break;
-                }
-                break;
+        case Keymap::KEvent::LeftArrow:
+        case Keymap::KEvent::UpArrow:
+            if (this->edit_pos > 0) {
+                Rect old_cursor_rect = this->get_cursor_rect();
+                this->decrement_edit_pos();
+                this->update_draw_cursor(old_cursor_rect);
+            }
 
-            case Keymap2::KEVENT_RIGHT_ARROW:
-            case Keymap2::KEVENT_DOWN_ARROW:
-                keymap->get_kevent();
-                if (this->edit_pos < this->num_chars) {
-                    Rect old_cursor_rect = this->get_cursor_rect();
-                    this->increment_edit_pos();
-                    this->update_draw_cursor(old_cursor_rect);
-                }
-
-                if (keymap->is_ctrl_pressed()) {
-                    while ( (this->label.buffer[(this->edit_buffer_pos)-1] == ' ')
-                            || (this->label.buffer[(this->edit_buffer_pos)] != ' ') ){
-                        if (this->edit_pos < this->num_chars) {
-                            Rect old_cursor_rect = this->get_cursor_rect();
-                            this->increment_edit_pos();
-                            this->update_draw_cursor(old_cursor_rect);
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    break;
-                }
-                break;
-
-            case Keymap2::KEVENT_BACKSPACE:
-                keymap->get_kevent();
-                if (this->edit_pos > 0) {
-                    auto remove_one_char = [this]{
-                        this->num_chars--;
-                        size_t pxtmp = this->cursor_px_pos;
-                        size_t ebpos = this->edit_buffer_pos;
+            if (keymap.is_ctrl_pressed()) {
+                while ( (this->label.buffer[(this->edit_buffer_pos)-1] != ' ')
+                     || (this->label.buffer[(this->edit_buffer_pos)] == ' ')
+                ){
+                    if (this->edit_pos > 0) {
+                        Rect old_cursor_rect = this->get_cursor_rect();
                         this->decrement_edit_pos();
-                        UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
-                        this->buffer_size += this->edit_buffer_pos - ebpos;
-                        Rect const rect(
-                            this->x() + this->cursor_px_pos + this->label.x_text,
-                            this->y() + this->label.y_text + 1,
-                            this->w_text - this->cursor_px_pos + 3,
-                            this->h_text
-                        );
-                        this->w_text -= pxtmp - this->cursor_px_pos;
-                        return rect;
-                    };
-                    if (keymap->is_ctrl_pressed()) {
-                        // TODO remove_n_char
-                        Rect rect = this->get_cursor_rect();
-                        while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] == ' ') {
-                            rect = rect.disjunct(remove_one_char());
-                        }
-                        while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] != ' ') {
-                            rect = rect.disjunct(remove_one_char());
-                        }
-                        this->drawable.begin_update();
-                        this->rdp_input_invalidate(rect);
-                        this->drawable.end_update();
+                        this->update_draw_cursor(old_cursor_rect);
                     }
                     else {
-                        this->drawable.begin_update();
-                        this->rdp_input_invalidate(remove_one_char());
-                        this->drawable.end_update();
+                        break;
                     }
                 }
-                break;
-            case Keymap2::KEVENT_DELETE:
-                keymap->get_kevent();
-                if (this->edit_pos < this->num_chars) {
-                    auto remove_one_char = [this]{
-                        size_t len = this->utf8len_current_char();
-                        char c = this->label.buffer[this->edit_buffer_pos + len];
-                        this->label.buffer[this->edit_buffer_pos + len] = 0;
-                        gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
-                        this->h_text = tm.height;
-                        this->label.buffer[this->edit_buffer_pos + len] = c;
-                        UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
-                        this->buffer_size -= len;
-                        this->num_chars--;
-                        Rect const rect(
-                            this->x() + this->cursor_px_pos + this->label.x_text,
-                            this->y() + this->label.y_text + 1,
-                            this->w_text - this->cursor_px_pos + 3,
-                            this->h_text
-                        );
-                        this->w_text -= tm.width;
-                        return rect;
-                    };
-                    if (keymap->is_ctrl_pressed()) {
-                        // TODO remove_n_char
-                        Rect rect = this->get_cursor_rect();
-                        if (this->label.buffer[this->edit_buffer_pos] == ' ') {
-                            rect = rect.disjunct(remove_one_char());
-                            while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] == ' ') {
-                                rect = rect.disjunct(remove_one_char());
-                            }
-                        }
-                        else {
-                            while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] != ' ') {
-                                rect = rect.disjunct(remove_one_char());
-                            }
-                            while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] == ' ') {
-                                rect = rect.disjunct(remove_one_char());
-                            }
-                        }
-                        this->drawable.begin_update();
-                        this->rdp_input_invalidate(this->get_cursor_rect().disjunct(rect));
-                        this->drawable.end_update();
+            }
+            break;
+
+        case Keymap::KEvent::RightArrow:
+        case Keymap::KEvent::DownArrow:
+            if (this->edit_pos < this->num_chars) {
+                Rect old_cursor_rect = this->get_cursor_rect();
+                this->increment_edit_pos();
+                this->update_draw_cursor(old_cursor_rect);
+            }
+
+            if (keymap.is_ctrl_pressed()) {
+                while ( (this->label.buffer[(this->edit_buffer_pos)-1] == ' ')
+                        || (this->label.buffer[(this->edit_buffer_pos)] != ' ') ){
+                    if (this->edit_pos < this->num_chars) {
+                        Rect old_cursor_rect = this->get_cursor_rect();
+                        this->increment_edit_pos();
+                        this->update_draw_cursor(old_cursor_rect);
                     }
                     else {
-                        this->drawable.begin_update();
-                        this->rdp_input_invalidate(this->get_cursor_rect().disjunct(remove_one_char()));
-                        this->drawable.end_update();
+                        break;
                     }
                 }
-                break;
-            case Keymap2::KEVENT_END:
-                keymap->get_kevent();
-                if (this->edit_pos < this->num_chars) {
-                    this->move_to_last_character();
-                }
-                break;
-            case Keymap2::KEVENT_HOME:
-                keymap->get_kevent();
-                if (this->edit_pos) {
-                    this->move_to_first_character();
-                }
-                break;
-            case Keymap2::KEVENT_KEY:
-                if (this->num_chars < WidgetLabel::buffer_size - 5) {
-                    this->insert_unicode_char(keymap->get_char());
-                }
-                else {
-                    // No need to get_event if get_char has been called already
-                    keymap->get_kevent();
-                }
-                break;
-            case Keymap2::KEVENT_ENTER:
-                keymap->get_kevent();
-                this->send_notify(NOTIFY_SUBMIT);
-                break;
-            case Keymap2::KEVENT_PASTE:
-                keymap->get_kevent();
-                this->send_notify(NOTIFY_PASTE);
-                break;
-            case Keymap2::KEVENT_COPY:
-                keymap->get_kevent();
-                this->send_notify(NOTIFY_COPY);
-                break;
-            case Keymap2::KEVENT_CUT:
-                keymap->get_kevent();
-                this->send_notify(NOTIFY_CUT);
-                {
+            }
+            break;
+
+        case Keymap::KEvent::Backspace:
+            if (this->edit_pos > 0) {
+                auto remove_one_char = [this]{
+                    this->num_chars--;
+                    size_t pxtmp = this->cursor_px_pos;
+                    size_t ebpos = this->edit_buffer_pos;
+                    this->decrement_edit_pos();
+                    UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
+                    this->buffer_size += this->edit_buffer_pos - ebpos;
+                    Rect const rect(
+                        this->x() + this->cursor_px_pos + this->label.x_text,
+                        this->y() + this->label.y_text + 1,
+                        this->w_text - this->cursor_px_pos + 3,
+                        this->h_text
+                    );
+                    this->w_text -= pxtmp - this->cursor_px_pos;
+                    return rect;
+                };
+
+                if (keymap.is_ctrl_pressed()) {
+                    // TODO remove_n_char
+                    Rect rect = this->get_cursor_rect();
+                    while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] == ' ') {
+                        rect = rect.disjunct(remove_one_char());
+                    }
+                    while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] != ' ') {
+                        rect = rect.disjunct(remove_one_char());
+                    }
                     this->drawable.begin_update();
-                    this->label.rdp_input_invalidate(this->label.get_rect());
-                    this->draw_cursor(this->get_cursor_rect());
+                    this->rdp_input_invalidate(rect);
                     this->drawable.end_update();
                 }
-                break;
-            default:
-                Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
-                break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
-        if (nb_kevent == keymap->nb_kevent_available()) {
-            // this is to prevent infinite loop if the kevent is not consummed
-            keymap->get_kevent();
-        }
+                else {
+                    this->drawable.begin_update();
+                    this->rdp_input_invalidate(remove_one_char());
+                    this->drawable.end_update();
+                }
+            }
+            break;
+
+        case Keymap::KEvent::Delete:
+            if (this->edit_pos < this->num_chars) {
+                auto remove_one_char = [this]{
+                    size_t len = this->utf8len_current_char();
+                    char c = this->label.buffer[this->edit_buffer_pos + len];
+                    this->label.buffer[this->edit_buffer_pos + len] = 0;
+                    gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+                    this->h_text = tm.height;
+                    this->label.buffer[this->edit_buffer_pos + len] = c;
+                    UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
+                    this->buffer_size -= len;
+                    this->num_chars--;
+                    Rect const rect(
+                        this->x() + this->cursor_px_pos + this->label.x_text,
+                        this->y() + this->label.y_text + 1,
+                        this->w_text - this->cursor_px_pos + 3,
+                        this->h_text
+                    );
+                    this->w_text -= tm.width;
+                    return rect;
+                };
+
+                if (keymap.is_ctrl_pressed()) {
+                    // TODO remove_n_char
+                    Rect rect = this->get_cursor_rect();
+                    if (this->label.buffer[this->edit_buffer_pos] == ' ') {
+                        rect = rect.disjunct(remove_one_char());
+                        while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] == ' ') {
+                            rect = rect.disjunct(remove_one_char());
+                        }
+                    }
+                    else {
+                        while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] != ' ') {
+                            rect = rect.disjunct(remove_one_char());
+                        }
+                        while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] == ' ') {
+                            rect = rect.disjunct(remove_one_char());
+                        }
+                    }
+                    this->drawable.begin_update();
+                    this->rdp_input_invalidate(this->get_cursor_rect().disjunct(rect));
+                    this->drawable.end_update();
+                }
+                else {
+                    this->drawable.begin_update();
+                    this->rdp_input_invalidate(this->get_cursor_rect().disjunct(remove_one_char()));
+                    this->drawable.end_update();
+                }
+            }
+            break;
+
+        case Keymap::KEvent::End:
+            if (this->edit_pos < this->num_chars) {
+                this->move_to_last_character();
+            }
+            break;
+
+        case Keymap::KEvent::Home:
+            if (this->edit_pos) {
+                this->move_to_first_character();
+            }
+            break;
+
+        case Keymap::KEvent::KeyDown:
+            for (auto uchars : keymap.last_decoded_keys().uchars) {
+                if (uchars && this->num_chars < WidgetLabel::buffer_size - 5) {
+                    this->insert_unicode_char(uchars);
+                }
+            }
+            break;
+
+        case Keymap::KEvent::Enter:
+            this->send_notify(NOTIFY_SUBMIT);
+            break;
+
+        case Keymap::KEvent::Paste:
+            this->send_notify(NOTIFY_PASTE);
+            break;
+
+        case Keymap::KEvent::Copy:
+            this->send_notify(NOTIFY_COPY);
+            break;
+
+        case Keymap::KEvent::Cut:
+            this->send_notify(NOTIFY_CUT);
+            this->drawable.begin_update();
+            this->label.rdp_input_invalidate(this->label.get_rect());
+            this->draw_cursor(this->get_cursor_rect());
+            this->drawable.end_update();
+            break;
+
+        default:
+            Widget::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetEdit::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+void WidgetEdit::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
-    if (flag & SlowPath::KBDFLAGS_RELEASE) {
+    if (bool(flag & KbdFlags::Release)) {
         return;
     }
 

@@ -76,6 +76,9 @@ rule emcc_flags ( properties * )
     #     ;
     # }
 
+    # fix udl warning
+    fs += <cxxflags>-Wno-reserved-identifier ;
+
     return $(fs) ;
 }
 
@@ -212,6 +215,8 @@ constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
     <cxxflags>--bind
     <cxxflags>"-s EXIT_RUNTIME=1"
+    # execve and fork with boost unit test
+    <cxxflags>"-s ALLOW_UNIMPLEMENTED_SYSCALLS"
 ;
 
 objjs log_test.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/log_as_logtest.cpp

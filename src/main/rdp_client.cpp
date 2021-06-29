@@ -243,7 +243,7 @@ int main(int argc, char** argv)
               , 800
               , 600
               , 0x04C         /* keylayout */
-              , 0             /* key_flags */
+              , kbdtypes::KeyLocks::NoLocks
               , true          /* clipboard */
               , true          /* clipboard */
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
         , password.c_str()
         , target_device.c_str()
         , "0.0.0.0"   // client ip is silenced
-        , /*front.keymap.key_flags*/ 0
+        , kbdtypes::KeyLocks::NoLocks
         , font
         , theme
         , server_auto_reconnect_packet

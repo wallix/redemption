@@ -50,113 +50,118 @@
 
 using namespace std::chrono_literals;
 
-RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
+namespace
 {
-    ClientInfo info;
-    info.build                 = 2600;
-    info.keylayout             = 0x040C;
-    info.console_session       = false;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp       = BitsPerPixel{16};
-    info.screen_info.width     = 1024;
-    info.screen_info.height    = 768;
-    info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
-                                 | PERF_DISABLE_FULLWINDOWDRAG
-                                 | PERF_DISABLE_MENUANIMATIONS;
+    ClientInfo get_client_info()
+    {
+        ClientInfo info;
+        info.build                 = 2600;
+        info.keylayout             = 0x040C;
+        info.console_session       = false;
+        info.brush_cache_code      = 0;
+        info.screen_info.bpp       = BitsPerPixel{16};
+        info.screen_info.width     = 1024;
+        info.screen_info.height    = 768;
+        info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
+                                    | PERF_DISABLE_FULLWINDOWDRAG
+                                    | PERF_DISABLE_MENUANIMATIONS;
 
-    info.order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = 1;
-    info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
-    info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
+        info.order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
+        info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
+        info.order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
+        info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
+        info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = 1;
+        info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
+        info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
+        info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
+        info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
 
-    info.order_caps.orderSupportExFlags = 0xFFFF;
+        info.order_caps.orderSupportExFlags = 0xFFFF;
 
-#ifdef GENERATE_TESTING_DATA
-    // Uncomment the code block below to generate testing data.
-    SSL_library_init();
-#endif
+        snprintf(info.hostname, sizeof(info.hostname), "CLT02");
 
-    FakeFront front(info.screen_info);
+        return info;
+    }
 
-    Inifile ini;
-    RedirectionInfo redir_info;
+    struct LicenseTestContext
+    {
+        ClientInfo info = get_client_info();
+        RedirectionInfo redir_info;
+        Inifile ini;
 
-    ini.set_acl<cfg::context::target_host>("10.10.44.230");
-    ini.set_acl<cfg::globals::target_user>("Tester@RED");
-    ini.set_acl<cfg::context::target_password>("SecureLinux$42");
+        EventManager event_manager;
+        NullSessionLog session_log;
 
-    bool already_redirected = false;
+        FakeFront front{info.screen_info};
 
-#ifndef GENERATE_TESTING_DATA
-    // Comment the code block below to generate testing data.
-    #include "fixtures/test_license_api_woel_1.hpp"
-    #include "fixtures/test_license_api_woel_2.hpp"
-    #include "fixtures/test_license_api_license.hpp"
-#endif
+        Theme theme;
+        std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
-    EventManager event_manager;
-    auto& events = event_manager.get_events();
-    NullSessionLog session_log;
+        LicenseTestContext()
+        {
+            #ifdef GENERATE_TESTING_DATA
+            SSL_library_init();
+            #endif
 
-    for (bool do_work = true; do_work; ) {
-        do_work = false;
+            ini.set_acl<cfg::context::target_host>("10.10.44.230");
+            ini.set_acl<cfg::globals::target_user>("Tester@RED");
+            ini.set_acl<cfg::context::target_password>("SecureLinux$42");
+        }
 
-        try {
-#ifdef GENERATE_TESTING_DATA
-            // Uncomment the code block below to generate testing data.
-            const char * name       = "RDP W2008 TLS Target";
-            unique_fd    client_sck = ip_connect(ini.get<cfg::context::target_host>().c_str(), 3389);
+        void set_new_target()
+        {
+            const char * host = char_ptr_cast(redir_info.host);
+            const char * password = char_ptr_cast(redir_info.password);
+            const char * username = char_ptr_cast(redir_info.username);
+            const char * change_user = "";
+            if (redir_info.dont_store_username && username[0] != 0) {
+                LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                ini.set_acl<cfg::globals::target_user>(username);
+                change_user = username;
+            }
+            if (password[0] != 0) {
+                LOG(LOG_INFO, "SrvRedir: Change target password");
+                ini.set_acl<cfg::context::target_password>(password);
+            }
+            LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+            ini.set_acl<cfg::context::target_host>(host);
+        }
 
-            // Uncomment the code block below to generate testing data.
-            std::string error_message;
-            SocketTransport trans( name
-                             , std::move(client_sck)
-                             , ini.get<cfg::context::target_host>().c_str()
-                             , 3389
-                             , std::chrono::seconds(1)
-                             , SocketTransport::Verbose::dump
-                             , &error_message
-                             );
-#else
-            // Comment the code block below to generate testing data.
-            TestTransport trans(
-                    (already_redirected ? cstr_array_view(indata_woel_2) : cstr_array_view(indata_woel_1)),
-                    (already_redirected ? cstr_array_view(outdata_woel_2) : cstr_array_view(outdata_woel_1))
-                );
-#endif
+        ModRDPParams get_mod_rdp_params()
+        {
+            ModRDPParams mod_rdp_params(
+                ini.get<cfg::globals::target_user>().c_str(),
+                ini.get<cfg::context::target_password>().c_str(),
+                ini.get<cfg::context::target_host>().c_str(),
+                "10.10.43.33",
+                kbdtypes::KeyLocks::NoLocks,
+                global_font(),
+                theme,
+                server_auto_reconnect_packet,
+                ini.get_mutable_ref<cfg::context::close_box_extra_message>(),
+                RDPVerbose(0));
 
-            snprintf(info.hostname, sizeof(info.hostname), "CLT02");
-
-            Theme theme;
-
-            std::array<uint8_t, 28> server_auto_reconnect_packet {};
-            ModRDPParams mod_rdp_params( ini.get<cfg::globals::target_user>().c_str()
-                                       , ini.get<cfg::context::target_password>().c_str()
-                                       , ini.get<cfg::context::target_host>().c_str()
-                                       , "10.10.43.33"
-                                       , 7
-                                       , global_font()
-                                       , theme
-                                       , server_auto_reconnect_packet
-                                       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                                       , RDPVerbose(0)
-                                       );
             mod_rdp_params.device_id                       = "device_id";
             //mod_rdp_params.enable_tls                      = true;
             mod_rdp_params.enable_nla                      = false;
             //mod_rdp_params.enable_krb                      = false;
             //mod_rdp_params.enable_clipboard                = true;
             mod_rdp_params.enable_fastpath                 = false;
-            mod_rdp_params.disabled_orders                 = TS_NEG_MEM3BLT_INDEX | TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
-                                                             TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
-                                                             TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
-                                                             TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
-                                                             TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
+            mod_rdp_params.disabled_orders                 = TS_NEG_MEM3BLT_INDEX
+                                                           | TS_NEG_DRAWNINEGRID_INDEX
+                                                           | TS_NEG_MULTI_DRAWNINEGRID_INDEX
+                                                           | TS_NEG_SAVEBITMAP_INDEX
+                                                           | TS_NEG_MULTIDSTBLT_INDEX
+                                                           | TS_NEG_MULTIPATBLT_INDEX
+                                                           | TS_NEG_MULTISCRBLT_INDEX
+                                                           | TS_NEG_MULTIOPAQUERECT_INDEX
+                                                           | TS_NEG_FAST_INDEX_INDEX
+                                                           | TS_NEG_POLYGON_SC_INDEX
+                                                           | TS_NEG_POLYGON_CB_INDEX
+                                                           | TS_NEG_POLYLINE_INDEX
+                                                           | TS_NEG_FAST_GLYPH_INDEX
+                                                           | TS_NEG_ELLIPSE_SC_INDEX
+                                                           | TS_NEG_ELLIPSE_CB_INDEX;
             mod_rdp_params.enable_new_pointer              = false;
             //mod_rdp_params.rdp_compression                 = 0;
             //mod_rdp_params.error_message                   = nullptr;
@@ -169,10 +174,95 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
 
-            // To always get the same client random, in tests
-            LCGRandom gen;
+            return mod_rdp_params;
+        }
 
+        gdi::NullOsd osd;
+        const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+        ModRdpFactory mod_rdp_factory;
+        TLSClientParams tls_client_params;
+        // To always get the same client random, in tests
+        LCGRandom gen;
 
+        std::unique_ptr<mod_api> new_mod_rdp(Transport& trans, LicenseApi& license_store)
+        {
+            auto mod = ::new_mod_rdp(
+                trans, front.gd(), osd, event_manager.get_events(),
+                session_log, front, info, redir_info, gen, channels_authorizations,
+                get_mod_rdp_params(), tls_client_params, license_store, ini,
+                nullptr, nullptr, mod_rdp_factory);
+            LOG(LOG_INFO, "--- new mod");
+            return mod;
+        }
+
+#ifdef GENERATE_TESTING_DATA
+        std::string error_message;
+        SocketTransport socket_transport()
+        {
+            const char * name       = "RDP W2008 TLS Target";
+            unique_fd    client_sck = ip_connect(ini.get<cfg::context::target_host>().c_str(), 3389);
+
+            return SocketTransport(
+                name,
+                std::move(client_sck),
+                ini.get<cfg::context::target_host>().c_str(),
+                3389,
+                std::chrono::seconds(1),
+                SocketTransport::Verbose::dump,
+                &error_message
+            );
+        }
+
+        void event_loop(Transport& trans, LicenseApi& license_store)
+        {
+            auto mod = new_mod_rdp(trans, license_store);
+
+            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
+
+            // TODO: fix that for actual TESTING DATA GENERATION
+            unique_server_loop(unique_fd(trans.get_fd()), [&](int /*sck*/)->bool {
+                (void)sck;
+                LOG(LOG_INFO, "is_up_and_running=%s", mod->is_up_and_running() ? "Yes" : "No");
+                if (!already_redirected) {
+                    return true;
+                }
+                return !mod->is_up_and_running();
+            });
+        }
+#else
+        void event_loop(TestTransport& trans, LicenseApi& license_store)
+        {
+            auto mod = new_mod_rdp(trans, license_store);
+
+            trans.disable_remaining_error();
+            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
+
+            int n = 0;
+            while (!event_manager.is_empty() && (++n < 70)) {
+                event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            }
+        }
+#endif
+    };
+}
+
+RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
+{
+    LicenseTestContext ctx;
+
+    bool already_redirected = false;
+
+#ifndef GENERATE_TESTING_DATA
+    // Comment the code block below to generate testing data.
+    #include "fixtures/test_license_api_woel_1.hpp"
+    #include "fixtures/test_license_api_woel_2.hpp"
+    #include "fixtures/test_license_api_license.hpp"
+#endif
+
+    for (bool do_work = true; do_work; ) {
+        do_work = false;
+
+        try {
 #ifdef GENERATE_TESTING_DATA
             class CaptureLicenseStore : public LicenseApi
             {
@@ -275,69 +365,23 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 #endif
 
-            gdi::NullOsd osd;
-
-            const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
-            ModRdpFactory mod_rdp_factory;
-
-            TLSClientParams tls_client_params;
-
-            auto mod = new_mod_rdp(
-                trans, front.gd(), osd, events,
-                session_log, front, info, redir_info, gen,
-                channels_authorizations, mod_rdp_params, tls_client_params,
-                license_store, ini, nullptr, nullptr, mod_rdp_factory);
-
-            RED_CHECK_EQUAL(info.screen_info.width, 1024);
-            RED_CHECK_EQUAL(info.screen_info.height, 768);
-
-            LOG(LOG_INFO, "--- Looping 1");
-
 #ifdef GENERATE_TESTING_DATA
-            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
-
-            // TODO: fix that for actual TESTING DATA GENERATION
-            unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
-                (void)sck;
-                LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
-                if (!already_redirected) {
-                    return true;
-                }
-                return !mod->is_up_and_running();
-            });
+            SocketTransport trans = ctx.socket_transport();
 #else
-            trans.disable_remaining_error();
-            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
-
-            int n = 0;
-            while (!event_manager.is_empty() && (++n < 70)) {
-                event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
-            }
+            // Comment the code block below to generate testing data.
+            TestTransport trans(
+                    (already_redirected ? cstr_array_view(indata_woel_2) : cstr_array_view(indata_woel_1)),
+                    (already_redirected ? cstr_array_view(outdata_woel_2) : cstr_array_view(outdata_woel_1))
+                );
 #endif
+
+            ctx.event_loop(trans, license_store);
         }
         catch(Error const & e) {
             if (e.id == ERR_RDP_SERVER_REDIR) {
                 LOG(LOG_INFO, "SERVER REDIRECTION");
 
-                {
-                    // SET new target in ini
-                    const char * host = char_ptr_cast(redir_info.host);
-                    const char * password = char_ptr_cast(redir_info.password);
-                    const char * username = char_ptr_cast(redir_info.username);
-                    const char * change_user = "";
-                    if (redir_info.dont_store_username && username[0] != 0) {
-                        LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                        ini.set_acl<cfg::globals::target_user>(username);
-                        change_user = username;
-                    }
-                    if (password[0] != 0) {
-                        LOG(LOG_INFO, "SrvRedir: Change target password");
-                        ini.set_acl<cfg::context::target_password>(password);
-                    }
-                    LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                    ini.set_acl<cfg::context::target_host>(host);
-                    auto message = std::string(change_user) + '@' + std::string(host);
-                }
+                ctx.set_new_target();
 
                 do_work = true;
 
@@ -353,43 +397,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
 RED_AUTO_TEST_CASE(TestWithExistingLicense)
 {
-    ClientInfo info;
-    info.build                 = 2600;
-    info.keylayout             = 0x040C;
-    info.console_session       = false;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp       = BitsPerPixel{16};
-    info.screen_info.width     = 1024;
-    info.screen_info.height    = 768;
-    info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
-                                 | PERF_DISABLE_FULLWINDOWDRAG
-                                 | PERF_DISABLE_MENUANIMATIONS;
-
-    info.order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = 1;
-    info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
-    info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
-    info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
-
-    info.order_caps.orderSupportExFlags = 0xFFFF;
-
-#ifdef GENERATE_TESTING_DATA
-    // Uncomment the code block below to generate testing data.
-    SSL_library_init();
-#endif
-
-    FakeFront front(info.screen_info);
-
-    RedirectionInfo redir_info;
-    Inifile ini;
-
-    ini.set_acl<cfg::context::target_host>("10.10.44.230");
-    ini.set_acl<cfg::globals::target_user>("Tester@RED");
-    ini.set_acl<cfg::context::target_password>("SecureLinux$42");
+    LicenseTestContext ctx;
 
     bool already_redirected = false;
 
@@ -400,79 +408,10 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 #endif
     #include "fixtures/test_license_api_license.hpp"
 
-    EventManager event_manager;
-    auto& events = event_manager.get_events();
-    NullSessionLog session_log;
-
     for (bool do_work = true; do_work; ) {
         do_work = false;
 
         try {
-#ifdef GENERATE_TESTING_DATA
-            // Uncomment the code block below to generate testing data.
-            const char * name       = "RDP W2008 TLS Target";
-            unique_fd    client_sck = ip_connect(ini.get<cfg::context::target_host>().c_str(), 3389);
-
-            // Uncomment the code block below to generate testing data.
-            std::string error_message;
-            SocketTransport t( name
-                             , std::move(client_sck)
-                             , ini.get<cfg::context::target_host>().c_str()
-                             , 3389
-                             , std::chrono::seconds(1)
-                             , SocketTransport::Verbose::dump
-                             , &error_message
-                             );
-#else
-            // Comment the code block below to generate testing data.
-            TestTransport t(
-                    (already_redirected ? cstr_array_view(indata_wel_2) : cstr_array_view(indata_wel_1)),
-                    (already_redirected ? cstr_array_view(outdata_wel_2) : cstr_array_view(outdata_wel_1))
-                );
-#endif
-
-            snprintf(info.hostname, sizeof(info.hostname), "CLT02");
-
-            Theme theme;
-
-            std::array<uint8_t, 28> server_auto_reconnect_packet {};
-            ModRDPParams mod_rdp_params( ini.get<cfg::globals::target_user>().c_str()
-                                       , ini.get<cfg::context::target_password>().c_str()
-                                       , ini.get<cfg::context::target_host>().c_str()
-                                       , "10.10.43.33"
-                                       , 7
-                                       , global_font()
-                                       , theme
-                                       , server_auto_reconnect_packet
-                                       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                                       , RDPVerbose(0)
-                                       );
-            mod_rdp_params.device_id                       = "device_id";
-            //mod_rdp_params.enable_tls                      = true;
-            mod_rdp_params.enable_nla                      = false;
-            //mod_rdp_params.enable_krb                      = false;
-            //mod_rdp_params.enable_clipboard                = true;
-            mod_rdp_params.enable_fastpath                 = false;
-            mod_rdp_params.disabled_orders                 = TS_NEG_MEM3BLT_INDEX | TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
-                                                             TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
-                                                             TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
-                                                             TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
-                                                             TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
-            mod_rdp_params.enable_new_pointer              = false;
-            //mod_rdp_params.rdp_compression                 = 0;
-            //mod_rdp_params.error_message                   = nullptr;
-            //mod_rdp_params.disconnect_on_logon_user_change = false;
-            mod_rdp_params.open_session_timeout            = 5s;
-            //mod_rdp_params.certificate_change_action       = 0;
-            //mod_rdp_params.extra_orders                    = "";
-            mod_rdp_params.large_pointer_support             = false;
-            mod_rdp_params.experimental_fix_input_event_sync = false;
-
-            mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
-
-            // To always get the same client random, in tests
-            LCGRandom gen;
-
             class ReplayLicenseStore : public LicenseApi
             {
             public:
@@ -525,75 +464,34 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                 std::string_view expected_company_name;
                 std::string_view expected_product_id;
                 bytes_view       expected_license_data;
-            } license_store(license_client_name, license_version, license_scope, license_company_name,
-                  license_product_id, bytes_view(license_data, sizeof(license_data)));
+            };
 
-            gdi::NullOsd osd;
-
-            const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
-            ModRdpFactory mod_rdp_factory;
-
-            TLSClientParams tls_client_params;
-
-            auto mod = new_mod_rdp(
-                t, front.gd(), osd, events,
-                session_log, front, info, redir_info, gen, channels_authorizations,
-                mod_rdp_params, tls_client_params, license_store, ini,
-                nullptr, nullptr, mod_rdp_factory);
-
-            RED_CHECK_EQUAL(info.screen_info.width, 1024);
-            RED_CHECK_EQUAL(info.screen_info.height, 768);
+            ReplayLicenseStore license_store(
+                license_client_name,
+                license_version,
+                license_scope,
+                license_company_name,
+                license_product_id,
+                make_array_view(license_data)
+            );
 
 #ifdef GENERATE_TESTING_DATA
-            // Uncomment the code block below to generate testing data.
-            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
-
-            // TODO: fix that for actual data generation
-            unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
-                (void)sck;
-                LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
-                if (!already_redirected) {
-                    return true;
-                }
-                return !mod->is_up_and_running();
-            });
-#endif
-
-#ifndef GENERATE_TESTING_DATA
+            SocketTransport trans = ctx.socket_transport();
+#else
             // Comment the code block below to generate testing data.
-            t.disable_remaining_error();
-
-            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
-
-            int n = 0;
-            while (!event_manager.is_empty() && (++n < 70)) {
-                event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
-            }
+            TestTransport trans(
+                    (already_redirected ? cstr_array_view(indata_wel_2) : cstr_array_view(indata_wel_1)),
+                    (already_redirected ? cstr_array_view(outdata_wel_2) : cstr_array_view(outdata_wel_1))
+                );
 #endif
+
+            ctx.event_loop(trans, license_store);
         }
         catch(Error const & e) {
             if (e.id == ERR_RDP_SERVER_REDIR) {
                 LOG(LOG_INFO, "SERVER REDIRECTION");
 
-                {
-                    // SET new target in ini
-                    const char * host = char_ptr_cast(redir_info.host);
-                    const char * password = char_ptr_cast(redir_info.password);
-                    const char * username = char_ptr_cast(redir_info.username);
-                    const char * change_user = "";
-                    if (redir_info.dont_store_username && username[0] != 0) {
-                        LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                        ini.set_acl<cfg::globals::target_user>(username);
-                        change_user = username;
-                    }
-                    if (password[0] != 0) {
-                        LOG(LOG_INFO, "SrvRedir: Change target password");
-                        ini.set_acl<cfg::context::target_password>(password);
-                    }
-                    LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                    ini.set_acl<cfg::context::target_host>(host);
-                    auto message = std::string(change_user) + '@' + std::string(host);
-                }
+                ctx.set_new_target();
 
                 do_work = true;
 

@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/pp.hpp"
+#include "cxx/diagnostic.hpp"
 
 #include <boost/test/test_tools.hpp>
 
@@ -41,13 +42,17 @@ Author(s): Jonathan Poelen
                 return func(lhs, rhs);                                            \
             }                                                                     \
                                                                                   \
+                                                                                  \
             template<class PrevExprType>                                          \
             static void                                                           \
             report(std::ostream&, PrevExprType const&, RED_PP_IDENTITY t2 const&) \
             {}                                                                    \
                                                                                   \
+            REDEMPTION_DIAGNOSTIC_PUSH()                                          \
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")        \
             static char const* revert()                                           \
             { return " " #rev " "; }                                              \
+            REDEMPTION_DIAGNOSTIC_POP()                                           \
         };                                                                        \
     }
 

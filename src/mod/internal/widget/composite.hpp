@@ -143,12 +143,11 @@ public:
     void rdp_input_invalidate(Rect clip) override;
     void refresh(Rect clip) override;
 
-    void rdp_input_scancode(long param1, long param2, long param3,
-                            long param4, Keymap2 * keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 };
 
 

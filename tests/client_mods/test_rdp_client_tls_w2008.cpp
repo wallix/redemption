@@ -104,8 +104,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , "S3cur3!1nux"
                                , "10.10.47.35"
                                , "192.168.1.100"
-                               , 7
-                               , global_font()
+                               , kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
+                               | kbdtypes::KeyLocks::ScrollLock                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , close_box_extra_message
@@ -233,7 +234,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , "S3cur3!1nux"
                                , "10.10.47.16"
                                , "10.10.43.33"
-                               , 7
+                               , kbdtypes::KeyLocks::ScrollLock
+                               | kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet

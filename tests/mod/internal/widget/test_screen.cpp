@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
@@ -88,11 +89,19 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_BEGIN);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_1.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    wscreen.rdp_input_scancode(0,0,0,0, &keymap);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode, Keymap::KbdFlags flags = Keymap::KbdFlags()){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        flags |= (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        wscreen.rdp_input_scancode(flags, scancode, 0, keymap);
+        wscreen.rdp_input_invalidate(wscreen.get_rect());
+    };
+
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK(notifier1.last_widget == nullptr);
     RED_CHECK(notifier2.last_widget == &wbutton2);
     RED_CHECK(notifier3.last_widget == &wbutton3);
@@ -105,8 +114,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier3.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_2.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    wscreen.rdp_input_scancode(0,0,0,0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK(notifier1.last_widget == nullptr);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == &wbutton3);
@@ -119,8 +127,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    wscreen.rdp_input_scancode(0,0,0,0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK(notifier1.last_widget == &wbutton1);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == nullptr);
@@ -133,8 +140,8 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_4.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
-    wscreen.rdp_input_scancode(0,0,0,0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::LShift);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK(notifier1.last_widget == &wbutton1);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == nullptr);
@@ -147,8 +154,8 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
-    wscreen.rdp_input_scancode(0,0,0,0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
+    rdp_input_scancode(Keymap::KeyCode::LShift, Keymap::KbdFlags::Release);
     RED_CHECK(notifier1.last_widget == nullptr);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == &wbutton3);
@@ -162,7 +169,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_2.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                            wbutton1.x(), wbutton1.y(), &keymap);
+                            wbutton1.x(), wbutton1.y());
     RED_CHECK(notifier1.last_widget == &wbutton1);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == &wbutton3);
@@ -176,7 +183,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_7.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                            wbutton2.x(), wbutton2.y(), &keymap);
+                            wbutton2.x(), wbutton2.y());
     RED_CHECK(notifier1.last_widget == nullptr);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == nullptr);
@@ -184,8 +191,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier1.last_event == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_4.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    wscreen.rdp_input_scancode(0,0,0,0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK(notifier1.last_widget == &wbutton1);
     RED_CHECK(notifier2.last_widget == &wbutton2);
     RED_CHECK(notifier3.last_widget == nullptr);
@@ -199,7 +205,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_1.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                            wbutton4.x(), wbutton4.y(), &keymap);
+                            wbutton4.x(), wbutton4.y());
     RED_CHECK(notifier1.last_widget == nullptr);
     RED_CHECK(notifier2.last_widget == &wbutton2);
     RED_CHECK(notifier3.last_widget == nullptr);
@@ -213,7 +219,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_10.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                            wbutton4.x(), wbutton4.y(), &keymap);
+                            wbutton4.x(), wbutton4.y());
     RED_CHECK(notifier1.last_widget == nullptr);
     RED_CHECK(notifier2.last_widget == nullptr);
     RED_CHECK(notifier3.last_widget == nullptr);

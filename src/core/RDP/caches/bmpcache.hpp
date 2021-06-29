@@ -191,7 +191,7 @@ private:
             this->storage.template update<T>();
         }
 
-        T * allocate(size_type /*n*/, std::allocator<void>::const_pointer /*hint*/ = nullptr) /*NOLINT*/
+        T * allocate(size_type /*n*/, void const* /*hint*/ = nullptr) /*NOLINT*/
         {
             return static_cast<T*>(this->storage.pop());
         }

@@ -310,7 +310,7 @@ public:
            , uint16_t front_width
            , uint16_t front_height
            , int keylayout
-           , int key_flags
+           , kbdtypes::KeyLocks key_locks
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
@@ -779,19 +779,18 @@ public:
     void initial_clear_screen();
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
-    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override;
-    void rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/) override;
-    void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
     void send_keyevent(uint8_t down_flag, uint32_t key);
 
 private:
+    void input_keycode(KbdFlags flags, uint16_t scancode);
     void rdp_input_clip_data(bytes_view data);
 
 public:
-    void rdp_input_synchronize(
-        uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2
-    ) override;
+    void rdp_input_synchronize(KeyLocks locks) override;
 
 private:
     void update_screen(Rect r, uint8_t incr);

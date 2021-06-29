@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestFront)
                                 , "S3cur3!1nux"
                                 , "10.10.47.36"
                                 , "10.10.43.33"
-                                , 2
+                                , kbdtypes::KeyLocks::NumLock
                                 , global_font()
                                 , theme
                                 , server_auto_reconnect_packet

@@ -22,13 +22,14 @@
 #pragma once
 
 #include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/capabilities/order.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/channel_names.hpp"
-#include "mod/rdp/rdp_verbose.hpp"
+#include "keyboard/kbdtypes.hpp"
 #include "mod/rdp/channels/validator_params.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "utils/log.hpp"
 #include "utils/ref.hpp"
-#include "core/RDP/windows_execute_shell_params.hpp"
-#include "core/RDP/capabilities/order.hpp"
 
 #ifndef __EMSCRIPTEN__
 # include "mod/rdp/params/rdp_session_probe_params.hpp"
@@ -93,7 +94,7 @@ struct ModRDPParams
 
     Transport  * persistent_key_list_transport = nullptr;
 
-    int key_flags;
+    kbdtypes::KeyLocks key_locks;
 
     bool         ignore_auth_channel = false;
     CHANNELS::ChannelNameId auth_channel;
@@ -221,7 +222,7 @@ struct ModRDPParams
                 , const char * target_password
                 , const char * target_host
                 , const char * client_address
-                , int key_flags
+                , kbdtypes::KeyLocks key_locks
                 , Font const & font
                 , Theme const & theme
                 , std::array<uint8_t, 28>& server_auto_reconnect_packet_ref
@@ -234,7 +235,7 @@ struct ModRDPParams
         , client_address(client_address)
         , krb_armoring_user(nullptr)
         , krb_armoring_password(nullptr)
-        , key_flags(key_flags)
+        , key_locks(key_locks)
         , font(font)
         , theme(theme)
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
@@ -344,7 +345,7 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
 
-        RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
+        RDP_PARAMS_LOG("%02x",   unsigned,              key_locks);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    auth_channel);

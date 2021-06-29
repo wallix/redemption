@@ -26,7 +26,8 @@
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/login_mod.hpp"
 #include "gdi/graphic_api.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 #include "core/events.hpp"
@@ -42,9 +43,7 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     Inifile ini;
     Theme theme;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
     RED_CHECK_NE(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
@@ -53,7 +52,8 @@ RED_AUTO_TEST_CASE(TestLoginMod)
                Rect(0, 0, 799, 599), client_execute, global_font(), theme);
     d.init();
 
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c)); // enter
+    d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
 
     RED_CHECK_EQUAL(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_EQUAL(ini.get<cfg::context::password>(), "pass");
@@ -70,10 +70,6 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
 
     Inifile ini;
     Theme theme;
-
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 

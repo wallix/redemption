@@ -21,7 +21,7 @@
 
 #include "mod/internal/widget/language_button.hpp"
 #include "core/front_api.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "utils/log.hpp"
 #include "utils/theme.hpp"
 #include "utils/sugar/splitter.hpp"
@@ -29,7 +29,7 @@
 
 
 LanguageButton::LanguageButton(
-    std::string const & enable_locales,
+    std::string_view enable_locales,
     Widget & parent,
     gdi::GraphicApi & drawable,
     FrontAPI & front,
@@ -41,48 +41,37 @@ LanguageButton::LanguageButton(
                        theme.global.focus_color, 2, font, 7, 7)
     , front(front)
     , parent_redraw(parent)
+    , front_layout(front.get_keylayout())
 {
     using std::begin;
     using std::end;
 
-    auto LCID = front.get_keylayout();
+    this->locales.push_back(bool(front_layout.kbdid)
+        ? Ref(this->front_layout)
+        : Ref(default_layout()));
 
-    {
-        auto const keylayouts = Keymap2::keylayouts();
-        auto const it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
-            return k->LCID == LCID;
-        });
-        if (it == end(keylayouts)) {
-            auto & default_layout = Keymap2::default_layout();
-            LCID = default_layout.LCID;
-            this->locales.push_back({default_layout.locale_name, default_layout.LCID});
-        }
-        else {
-            this->locales.push_back({(*it)->locale_name, (*it)->LCID});
-        }
-    }
-
+    auto const layouts = keylayouts();
 
     for (auto && r : make_splitter(enable_locales, ',')) {
-        auto const trimmed_range = trim(r);
-        auto cstr = begin(trimmed_range).base();
-        auto cend = end(trimmed_range).base();
+        auto trimmed = trim(r);
+        auto const name = chars_view{begin(trimmed), end(trimmed)}
+            .as<std::string_view>();
 
-        auto const keylayouts = Keymap2::keylayouts();
-        auto const it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
-            return strncmp(k->locale_name, cstr, cend-cstr) == 0;
+        auto const it = std::find_if(begin(layouts), end(layouts), [&](KeyLayout const& k){
+            return k.locale_name.to_sv() == name;
         });
-        if (it != end(keylayouts)) {
-            if ((*it)->LCID != LCID) {
-                this->locales.push_back({(*it)->locale_name, (*it)->LCID});
+        if (it != end(layouts)) {
+            if (it->kbdid != front_layout.kbdid) {
+                this->locales.push_back(*it);
             }
         }
         else {
-            LOG(LOG_WARNING, "Layout \"%.*s\" not found.", static_cast<int>(cend - cstr), cstr);
+            LOG(LOG_WARNING, "Layout \"%.*s\" not found.",
+                static_cast<int>(name.size()), name.data());
         }
     }
 
-    this->set_text(this->locales[0].locale_name);
+    this->set_text(this->locales.front().get().locale_name);
 
     Dimension dim = this->get_optimal_dim();
     this->set_wh(dim);
@@ -95,7 +84,8 @@ void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
         Rect rect = this->get_rect();
 
         this->selected_language = (this->selected_language + 1) % this->locales.size();
-        this->set_text(this->locales[this->selected_language].locale_name);
+        KeyLayout const& layout = this->locales[this->selected_language];
+        this->set_text(layout.locale_name);
 
         Dimension dim = this->get_optimal_dim();
         this->set_wh(dim);
@@ -104,6 +94,6 @@ void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
         rect.cy = std::max(rect.cy, this->cy());
         this->parent_redraw.rdp_input_invalidate(rect);
 
-        front.set_keylayout(this->locales[this->selected_language].LCID);
+        front.set_keylayout(layout);
     }
 }

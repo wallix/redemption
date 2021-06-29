@@ -28,7 +28,8 @@
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/button.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/grid/"
@@ -121,8 +122,8 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     uint16_t mouse_x = wgrid.x() + 50;
     uint16_t mouse_y = wgrid.get_widget(1, 0)->y();
 
-    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, nullptr);
-    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, nullptr);
+    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y);
+    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y);
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
                                     0 + wgrid.y(),
@@ -131,17 +132,20 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_3.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode, Keymap::KbdFlags flags = Keymap::KbdFlags()){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        flags |= (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        wgrid.rdp_input_scancode(flags, scancode, 0, keymap);
+    };
+
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    rdp_input_scancode(Keymap::KeyCode::DownArrow);
+    rdp_input_scancode(Keymap::KeyCode::DownArrow);
+    rdp_input_scancode(Keymap::KeyCode::DownArrow);
 
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),

@@ -25,142 +25,68 @@
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/dialog_mod.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 #include "utils/timebase.hpp"
 
-RED_AUTO_TEST_CASE(TestDialogMod)
+namespace
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    TimeBase time_base;
-    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
+    struct DialogModContextTest
+    {
+        ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
+        FakeFront front{screen_info};
+        WindowListCaps window_list_caps;
+        TimeBase time_base;
+        ClientExecute client_execute{time_base, front.gd(), front, window_list_caps, false};
 
-    Inifile ini;
-    Theme theme;
+        Inifile ini;
+        Theme theme;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+        DialogMod d;
+        Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
 
-    DialogMod d(ini, front.gd(), front, screen_info.width, screen_info.height,
-                Rect(0, 0, 799, 599), "Title", "Hello, World", "OK",
-                client_execute, global_font(), theme);
-    d.init();
-    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+        DialogModContextTest(char const* button_text, ChallengeOpt has_challenge = NO_CHALLENGE)
+        : d(ini, front.gd(), front, screen_info.width, screen_info.height,
+            Rect(0, 0, 799, 599), "Title", "Hello, World", button_text,
+            client_execute, global_font(), theme, has_challenge)
+        {
+            d.init();
+        }
 
-    RED_CHECK(ini.get<cfg::context::accept_message>());
+        void keydown(uint8_t scancode)
+        {
+            keymap.event(Keymap::KbdFlags(), Keymap::Scancode(scancode));
+            d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(scancode), 0, keymap);
+        }
+    };
 }
 
 
+RED_AUTO_TEST_CASE(TestDialogMod)
+{
+    DialogModContextTest dialog("Ok");
+    dialog.keydown(0x1c); // enter
+    RED_CHECK(dialog.ini.get<cfg::context::accept_message>());
+}
+
 RED_AUTO_TEST_CASE(TestDialogModReject)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    TimeBase time_base;
-    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
-
-    Inifile ini;
-    Theme theme;
-
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
-    DialogMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
-                "Title", "Hello, World", "Cancel", client_execute, global_font(), theme);
-    d.init();
-
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    RED_CHECK(!ini.get<cfg::context::accept_message>());
+    DialogModContextTest dialog("Cancel");
+    dialog.keydown(0x01); // esc
+    RED_CHECK(!dialog.ini.get<cfg::context::accept_message>());
 }
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    TimeBase time_base;
-    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
-
-    Inifile ini;
-    Theme theme;
-
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
-    DialogMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
-                "Title", "Hello, World", "Cancel", client_execute, global_font(),
-                theme, CHALLENGE_ECHO);
-    d.init();
-
-    bool ctrl_alt_del;
-
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 16; // key is 'a'
-
-    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
-}
-
-RED_AUTO_TEST_CASE(TestDialogModChallenge2)
-{
-    ScreenInfo screen_info{1600, 1200, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    TimeBase time_base;
-    ClientExecute client_execute(time_base, front.gd(), front, window_list_caps, false);
-
-    Inifile ini;
-    Theme theme;
-
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
-    DialogMod d(ini, front.gd(), front, 1600, 1200, Rect(800, 600, 799, 599),
-                "Title", "Hello, World", "Cancel", client_execute, global_font(),
-                theme, CHALLENGE_ECHO);
-    d.init();
-
-    bool ctrl_alt_del;
-
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 16; // key is 'a'
-
-    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
+    DialogModContextTest dialog("Cancel", CHALLENGE_ECHO);
+    dialog.keydown(0x11); // 'z'
+    dialog.keydown(0x12); // 'e'
+    dialog.keydown(0x10); // 'a'
+    dialog.keydown(0x10); // 'a'
+    dialog.keydown(0x10); // 'a'
+    dialog.keydown(0x10); // 'a'
+    dialog.keydown(0x1c); // enter
+    RED_CHECK_EQUAL("zeaaaa", dialog.ini.get<cfg::context::password>());
 }

@@ -19,7 +19,6 @@
 
 */
 
-#include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 
@@ -28,12 +27,7 @@ int main()
 {
     ScreenInfo screen_info{1, 1, BitsPerPixel{24}};
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-
     EventContainer events;
     TestGraphic gd(screen_info.width, screen_info.height);
     Bouncer2Mod d(gd, events, screen_info.width, screen_info.height);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

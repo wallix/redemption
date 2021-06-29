@@ -22,7 +22,7 @@
 #include "core/font.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "mod/internal/widget/login.hpp"
 #include "utils/theme.hpp"
 
@@ -364,34 +364,31 @@ void WidgetLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
 }
 
-void WidgetLogin::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0){
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()){
-        case Keymap2::KEVENT_ESC:
-            keymap->get_kevent();
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()){
+        case Keymap::KEvent::Esc:
             this->send_notify(NOTIFY_CANCEL);
             break;
-        case Keymap2::KEVENT_PGUP:
-            keymap->get_kevent();
+
+        case Keymap::KEvent::PgUp:
             this->message_label.scroll_up();
             break;
 
-        case Keymap2::KEVENT_PGDOWN:
-            keymap->get_kevent();
+        case Keymap::KEvent::PgDown:
             this->message_label.scroll_down();
             break;
+
         default:
-            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetLogin::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetLogin::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = this->widget_at_pos(x, y);
@@ -400,5 +397,5 @@ void WidgetLogin::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keyma
         }
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
+    WidgetParent::rdp_input_mouse(device_flags, x, y);
 }

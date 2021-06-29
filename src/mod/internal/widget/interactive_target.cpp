@@ -20,7 +20,6 @@
  */
 
 #include "mod/internal/widget/interactive_target.hpp"
-#include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
 
 #include <cstring>
@@ -255,13 +254,12 @@ void WidgetInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t e
     }
 }
 
-void WidgetInteractiveTarget::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+void WidgetInteractiveTarget::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
-        keymap->get_kevent();
+    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
         this->send_notify(NOTIFY_CANCEL);
     }
     else {
-        WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }

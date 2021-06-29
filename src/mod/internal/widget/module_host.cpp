@@ -611,26 +611,26 @@ void WidgetModuleHost::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetModuleHost::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+void WidgetModuleHost::rdp_input_mouse(int device_flags, int x, int y)
 {
     this->current_pointer_pos_x = x;
     this->current_pointer_pos_y = y;
 
     if (this->vision_rect.contains_pt(x, y)) {
-        this->managed_mod->rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y, keymap);
+        this->managed_mod->rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y);
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
+    WidgetParent::rdp_input_mouse(device_flags, x, y);
 }
 
-void WidgetModuleHost::rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+void WidgetModuleHost::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    this->managed_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->managed_mod->rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
-void WidgetModuleHost::rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+void WidgetModuleHost::rdp_input_synchronize(KeyLocks locks)
 {
-    this->managed_mod->rdp_input_synchronize(time, device_flags, param1, param2);
+    this->managed_mod->rdp_input_synchronize(locks);
 }
 
 // Widget

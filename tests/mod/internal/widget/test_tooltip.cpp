@@ -58,18 +58,6 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_1.png");
 }
 
-static void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget * w, const char * text)
-{
-    parent->rdp_input_mouse(device_flags, x, y, keymap);
-    if (device_flags == MOUSE_FLAG_MOVE) {
-        Widget * wid = parent->widget_at_pos(x, y);
-        if (wid == w) {
-            parent->show_tooltip(w, text, x, y, Rect(0, 0, 500, 41));
-        }
-    }
-
-}
-
 RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 {
     TestGraphic drawable(800, 600);
@@ -94,26 +82,27 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     parent.add_widget(&label);
     parent.add_widget(&label2);
 
+    auto rdp_input_mouse = [&](WidgetLabel const& label, const char * text) {
+        auto x = label.x() + label.cx() / 2;
+        auto y = label.y() + label.cy() / 2;
+        parent.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y);
+        Widget * wid = parent.widget_at_pos(x, y);
+        RED_CHECK(wid == &label);
+        parent.show_tooltip(wid, text, x, y, Rect(0, 0, 500, 41));
+        parent.rdp_input_invalidate(parent.get_rect());
+    };
+
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_2.png");
 
-    rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label.x() + label.cx() / 2, label.y() + label.cy() / 2,
-                    nullptr, &parent, &label, "Test tooltip description");
-    parent.rdp_input_invalidate(parent.get_rect());
-
+    rdp_input_mouse(label, "Test tooltip description");
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_3.png");
 
-    rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
-                    nullptr, &parent, &label2,
+    rdp_input_mouse(label2,
                     "Test tooltip\n"
                     "description in\n"
                     "multilines !");
-
-    parent.rdp_input_invalidate(parent.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_4.png");
 
     parent.tooltip->set_text("Test tooltip\n"

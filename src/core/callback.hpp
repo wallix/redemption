@@ -29,37 +29,22 @@
 #include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "keyboard/kbdtypes.hpp"
 #include "utils/rect.hpp"
 
 #include <string>
 
 class InStream;
-struct Keymap2;
+struct Keymap;
 class ScreenInfo;
 
 enum : uint16_t {
     RDP_INPUT_SYNCHRONIZE          = 0,
-    RDP_INPUT_CODEPOINT            = 1,
-    RDP_INPUT_VIRTKEY              = 2,
+    // RDP_INPUT_CODEPOINT            = 1,
+    // RDP_INPUT_VIRTKEY              = 2,
     RDP_INPUT_SCANCODE             = 4,
     RDP_INPUT_UNICODE              = 5,
     RDP_INPUT_MOUSE                = 0x8001
-};
-
-/* Device flags */
-enum : uint16_t {
-    KBD_FLAG_RIGHT                 = 0x0001,
-    KBD_FLAG_EXT                   = 0x0100,
-    KBD_FLAG_QUIET                 = 0x1000,
-    KBD_FLAG_DOWN                  = 0x4000,
-    KBD_FLAG_UP                    = 0x8000
-};
-
-/* These are for synchronization; not for keystrokes */
-enum : uint16_t {
-    KBD_FLAG_SCROLL                = 0x0001,
-    KBD_FLAG_NUMLOCK               = 0x0002,
-    KBD_FLAG_CAPITAL               = 0x0004
 };
 
 enum : uint16_t {
@@ -75,27 +60,17 @@ enum : uint16_t {
     MOUSE_FLAG_WHEEL_NEGATIVE      = 0x0100
 };
 
-enum : uint8_t {
-    FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
-  , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
-};
-
-enum: uint8_t {
-    KBD_SCANCODE_ALTGR  = 0x38,
-    KBD_SCANCODE_SHIFT  = 0x36,
-    KBD_SCANCODE_ENTER  = 0x1C,
-    KBD_SCANCODE_BK_SPC = 0x0E,
-    KBD_SCANCODE_CTRL   = 0x1D,
-    KBD_SCANCODE_DELETE = 0x53
-};
-
 struct WidgetApi : private noncopyable
 {
+    using KbdFlags = kbdtypes::KbdFlags;
+    using Scancode = kbdtypes::Scancode;
+    using KeyLocks = kbdtypes::KeyLocks;
+
     virtual ~WidgetApi() = default;
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
-    virtual void rdp_input_unicode(uint16_t unicode, uint16_t flag) { (void)unicode; (void)flag; }
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
+    virtual void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) = 0;
+    virtual void rdp_input_unicode(KbdFlags flag, uint16_t unicode) { (void)unicode; (void)flag; }
+    virtual void rdp_input_mouse(int device_flags, int x, int y) = 0;
+    virtual void rdp_input_synchronize(KeyLocks locks) = 0;
     virtual void rdp_input_invalidate(Rect r) = 0;
     void rdp_input_invalidate2(array_view<Rect> vr) {
         for (Rect const & rect : vr) {
@@ -115,11 +90,15 @@ struct WidgetApi : private noncopyable
 
 struct RdpInput : private noncopyable
 {
+    using KbdFlags = kbdtypes::KbdFlags;
+    using Scancode = kbdtypes::Scancode;
+    using KeyLocks = kbdtypes::KeyLocks;
+
     virtual ~RdpInput() = default;
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
-    virtual void rdp_input_unicode(uint16_t unicode, uint16_t flag) { (void)unicode; (void)flag; }
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
+    virtual void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) = 0;
+    virtual void rdp_input_unicode(KbdFlags flag, uint16_t unicode) { (void)unicode; (void)flag; }
+    virtual void rdp_input_mouse(int device_flags, int x, int y) = 0;
+    virtual void rdp_input_synchronize(KeyLocks locks) = 0;
     virtual void rdp_input_invalidate(Rect r) = 0;
     virtual void rdp_input_invalidate2(array_view<Rect> vr) {
         for (Rect const & rect : vr) {

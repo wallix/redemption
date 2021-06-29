@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "keyboard/keymap2.hpp"
+#include "keyboard/kbdtypes.hpp"
 #include "acl/mod_pack.hpp"
 #include "utils/ref.hpp"
 
@@ -57,7 +57,7 @@ ModPack create_mod_rdp(
     FrontAPI & front,
     ClientInfo client_info /* /!\ modified */,
     ClientExecute & rail_client_execute,
-    Keymap2::KeyFlags key_flags,
+    kbdtypes::KeyLocks key_lock_flags,
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,

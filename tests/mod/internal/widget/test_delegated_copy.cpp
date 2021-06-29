@@ -60,13 +60,13 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     RED_CHECK(!notifier.last_widget);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_1.png");
 
-    delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 10, nullptr);
+    delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 10);
 
     RED_CHECK(notifier.last_event == NOTIFY_COPY);
     RED_CHECK(notifier.last_widget == &dummy_widget);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_2.png");
 
-    delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 10, 10, nullptr);
+    delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 10, 10);
 
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_1.png");
 }

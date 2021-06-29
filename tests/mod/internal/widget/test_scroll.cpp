@@ -71,13 +71,13 @@ struct TestScrollCtx
 
     void down(int x, int y)
     {
-        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x, y, nullptr);
+        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x, y);
         this->draw();
     }
 
     void up(int x, int y)
     {
-        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
+        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
         this->draw();
     }
 };

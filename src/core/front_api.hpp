@@ -27,6 +27,8 @@
 #include "acl/auth_api.hpp"
 #include "gdi/screen_info.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "keyboard/kbdtypes.hpp"
+#include "keyboard/keylayout.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
@@ -64,13 +66,13 @@ public:
 
     virtual void update_pointer_position(uint16_t x, uint16_t y) { (void)x; (void)y; }
 
-    virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
+    virtual void set_keyboard_indicators(kbdtypes::KeyLocks key_locks) { (void)key_locks; }
 
     ////////////////////////////////
     // Session Probe.
 
     virtual void session_probe_started(bool /*unused*/) {}
-    virtual void set_keylayout(int LCID) { (void)LCID; }
+    virtual void set_keylayout(KeyLayout const& layout) { (void)layout; }
     virtual void set_focus_on_password_textbox(bool /*unused*/) {}
     virtual void set_focus_on_unidentified_input_field(bool /*unused*/) {}
     virtual void set_consent_ui_visible(bool /*unused*/) {}
@@ -80,8 +82,10 @@ public:
     // RemoteApp.
     virtual void send_savesessioninfo() {}
 
-    /// \return  -1 is an error
-    [[nodiscard]] virtual int get_keylayout() const { return -1; }
+    [[nodiscard]] virtual KeyLayout const& get_keylayout() const
+    {
+        return KeyLayout::null_layout();
+    }
 
     virtual ~FrontAPI() = default;
 };

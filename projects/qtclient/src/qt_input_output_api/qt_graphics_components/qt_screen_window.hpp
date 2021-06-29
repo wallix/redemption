@@ -121,23 +121,26 @@ public:
         this->callback->mouseButtonEvent(x, y, flag);
     }
 
-    void send_scancode(uint16_t flag, QKeyEvent *e)
+    void send_scancode(kbdtypes::KbdFlags flag, QKeyEvent *e)
     {
         const uint16_t scancode = Qt_ScanCode_KeyMap
             ::x11_native_scancode_to_rdp_scancode(e->nativeScanCode());
         if (scancode) {
-            this->callback->send_rdp_scanCode(scancode & 0xffu, flag | (scancode & 0xff00u));
+            this->callback->send_rdp_scanCode(
+                flag | kbdtypes::KbdFlags(scancode & 0xff00u),
+                kbdtypes::Scancode(scancode & 0xffu)
+            );
         }
     }
 
     void keyPressEvent(QKeyEvent *e) override
     {
-        this->send_scancode(0, e);
+        this->send_scancode(kbdtypes::KbdFlags::NoFlags, e);
     }
 
     void keyReleaseEvent(QKeyEvent *e) override
     {
-        this->send_scancode(KBD_FLAG_UP, e);
+        this->send_scancode(kbdtypes::KbdFlags::Release, e);
     }
 
     void wheelEvent(QWheelEvent *e) override {

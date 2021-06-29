@@ -25,7 +25,6 @@
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/delegated_copy.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
 
 
@@ -95,28 +94,32 @@ void WidgetTestMod::rdp_input_invalidate(Rect clip)
     this->d->screen.rdp_input_invalidate(clip);
 }
 
-void WidgetTestMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+void WidgetTestMod::rdp_input_mouse(int device_flags, int x, int y)
 {
-    this->d->screen.rdp_input_mouse(device_flags, x, y, keymap);
+    this->d->screen.rdp_input_mouse(device_flags, x, y);
 }
 
 void WidgetTestMod::rdp_input_scancode(
-    long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ENTER) {
-        keymap->get_kevent();
+    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
         this->set_mod_signal(BACK_EVENT_STOP);
     }
     else {
-        this->d->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->d->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }
 
-void WidgetTestMod::rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/)
-{}
+void WidgetTestMod::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
+{
+    (void)flag;
+    (void)unicode;
+}
 
-void WidgetTestMod::rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/, int16_t /*param1*/, int16_t /*param2*/)
-{}
+void WidgetTestMod::rdp_input_synchronize(KeyLocks locks)
+{
+    (void)locks;
+}
 
 void WidgetTestMod::refresh(Rect clip)
 {

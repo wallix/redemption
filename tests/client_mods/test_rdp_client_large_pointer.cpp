@@ -117,7 +117,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
                                , "SecureKurwa$42"
                                , "10.10.44.27"
                                , "192.168.1.100"
-                               , 7
+                               , kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
+                               | kbdtypes::KeyLocks::ScrollLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
@@ -247,7 +249,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
                                , "SecureLinux$42"
                                , "10.10.44.89"
                                , "192.168.1.100"
-                               , 7
+                               , kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
+                               | kbdtypes::KeyLocks::ScrollLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet

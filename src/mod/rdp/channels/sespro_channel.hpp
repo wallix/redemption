@@ -27,6 +27,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/kv_list_from_strings.hpp"
 #include "gdi/screen_functions.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/front_api.hpp"
@@ -1126,8 +1127,11 @@ public:
                             KVLog("display_name"_av, parameters_[1]),
                         });
 
-                        this->front.set_keylayout(
-                            ::strtol(parameters_[0].c_str(), nullptr, 16));
+                        auto n = ::strtol(parameters_[0].c_str(), nullptr, 16);
+                        auto* layout = find_layout_by_id(KeyLayout::KbdId(n));
+                        if (layout) {
+                            this->front.set_keylayout(*layout);
+                        }
                     }
                     else {
                         message_format_invalid = true;

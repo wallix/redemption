@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -112,7 +113,8 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     params.label[2] = "Protocol";
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
-                                "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+                            "1", "1",  extra_button, params,
+                            global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -305,60 +307,37 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.selector_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                             selector.selector_lines.x() + 20,
-                                            selector.selector_lines.y() + 40,
-                                            nullptr);
+                                            selector.selector_lines.y() + 40);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_6.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        selector.rdp_input_scancode(flags, scancode, 0, keymap);
+        selector.rdp_input_invalidate(selector.get_rect());
+    };
 
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::UpArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_END);
-    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::End);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_8.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::DownArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::DownArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_6.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_HOME);
-    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::Home);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
-
-    // int x = selector.selector_lines.rect.x + 5;
-    // int y = selector.selector_lines.rect.y + 3;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
-    // x += selector.selector_lines.group_w;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
-    // x += selector.selector_lines.target_w;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
-    // x += selector.selector_lines.protocol_w;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
@@ -420,92 +399,55 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     curx = selector.edit_filters[0].x() + 2;
     cury = selector.edit_filters[0].y() + 2;
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                             curx, cury,
-                             nullptr);
+                             curx, cury);
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                             curx, cury,
-                             nullptr);
+                             curx, cury);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_12.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        selector.rdp_input_scancode(flags, scancode, 0, keymap);
+        selector.rdp_input_invalidate(selector.get_rect());
+    };
 
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_13.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_14.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::Tab);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_15.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_END);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::End);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_16.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::UpArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_17.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_18.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::Tab);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_19.png");
 
-    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-    keymap.push_kevent(Keymap2::KEVENT_TAB);
-    selector.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
+    rdp_input_scancode(Keymap::KeyCode::RightArrow);
+    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    rdp_input_scancode(Keymap::KeyCode::Enter);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
+    rdp_input_scancode(Keymap::KeyCode::Tab);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_20.png");
 }
 

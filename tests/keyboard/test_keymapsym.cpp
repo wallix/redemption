@@ -35,7 +35,7 @@ enum ScancodeState {
 };
 
 struct check_key_events {
-    ScancodeState flags;   // input keyboard flags
+    kbdtypes::KbdFlags flags;   // input keyboard flags
     uint8_t  code;         // key scancode, or 0 if there is another keysym to read from previous keys
     uint16_t rflags;       // expected keymap flags (persistant flags)
     uint32_t rkey;         // expected generated key (or 0 if no key to send,
@@ -46,12 +46,14 @@ struct check_key_events {
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
+    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
+
+    using KbdFlags = kbdtypes::KbdFlags;
 
     RED_CHECK(not keymap.is_shift_pressed());
 
-    uint16_t keyboardFlags = 0 ; // key is not extended, key was up, key goes down
+    auto keyboardFlags = KbdFlags::NoFlags;
     uint16_t keyCode = 54 ; // key is left shift
     keymap.event(keyboardFlags, keyCode);
     auto key = keymap.get_sym(downflag);
@@ -62,7 +64,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
     RED_CHECK(keymap.is_left_shift_pressed());
     RED_CHECK(not keymap.is_right_shift_pressed());
 
-    keyboardFlags = 0 ; // key is not extended, key was up, key goes down
+    keyboardFlags = KbdFlags::NoFlags;
     keyCode = 16 ; // key is 'A'
     keymap.event(keyboardFlags, keyCode);
 
@@ -72,7 +74,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
     RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
 
-    keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
+    keyboardFlags = KbdFlags::Release; // key is not extended, key was down, key goes up
     keymap.event(keyboardFlags, 54); // key is left shift
 
     RED_CHECK(not keymap.is_shift_pressed());
@@ -80,7 +82,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
     RED_CHECK(not keymap.is_right_shift_pressed());
 
     // shift was released, but not A (last char down goes 'a' for autorepeat)
-    keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
+    keyboardFlags = KbdFlags::Release; // key is not extended, key was down, key goes up
     keyCode = 16 ; // key is 'A'
     keymap.event(keyboardFlags, keyCode);
 
@@ -88,24 +90,24 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
     RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
 
-    keyboardFlags = 0 ; // key is not extended, key was up, key goes down
+    keyboardFlags = KbdFlags::NoFlags; // key is not extended, key was up, key goes down
     keyCode = 0x10 ; // key is 'A'
     keymap.event(keyboardFlags, keymap.get_sym(downflag));
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
     RED_CHECK(not keymap.is_caps_locked());
-    keymap.event(0, 0x3A);
+    keymap.event(KbdFlags::NoFlags, 0x3A);
     RED_CHECK(keymap.is_caps_locked());
 
     // CAPSLOCK Up
     // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
-    keymap.event(0xc000, 0x3A);
+    keymap.event(KbdFlags::Release, 0x3A);
     RED_CHECK(keymap.is_caps_locked());
 
     // Now I hit the 'A' key on french keyboard
-    keymap.event(0, 0x10);
-    keymap.event(0xc000, 0x10); // A up
+    keymap.event(KbdFlags::NoFlags, 0x10);
+    keymap.event(KbdFlags::Release, 0x10); // A up
     RED_CHECK(keymap.is_caps_locked());
     RED_CHECK_EQUAL(2, keymap.nb_sym_available());
     RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
@@ -113,41 +115,40 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
     RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag);
 
-    keymap.event(0, 0x02);
+    keymap.event(KbdFlags::NoFlags, 0x02);
     RED_CHECK_EQUAL('&', keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0, 0x36); // left shift down
+    keymap.event(KbdFlags::NoFlags, 0x36); // left shift down
     RED_CHECK_EQUAL(0xffe2, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0xc000, 0x36); // left shift up
+    keymap.event(KbdFlags::Release, 0x36); // left shift up
     RED_CHECK_EQUAL(0xffe2, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag);
 
-    keymap.event(0, 0x2A); // right shift down
+    keymap.event(KbdFlags::NoFlags, 0x2A); // right shift down
     RED_CHECK_EQUAL(0xffe1, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0xc000, 0x2A); // right shift up
+    keymap.event(KbdFlags::Release, 0x2A); // right shift up
     RED_CHECK_EQUAL(0xffe1, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag);
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
     RED_CHECK(keymap.is_caps_locked());
-    keymap.event(0, 0x3A); // capslock down
+    keymap.event(KbdFlags::NoFlags, 0x3A); // capslock down
     RED_CHECK(not keymap.is_caps_locked());
-    keymap.event(0xC000, 0x3A); // capslock up
+    keymap.event(KbdFlags::Release, 0x3A); // capslock up
     RED_CHECK(not keymap.is_caps_locked());
     // Capse Lock do not send anything: fully managed inside proxy
     RED_CHECK_EQUAL(0, keymap.nb_sym_available());
 
-
     // Now I hit the 'A' key on french keyboard
-    keymap.event(0, 0x10);
+    keymap.event(KbdFlags::NoFlags, 0x10);
     RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
-    keymap.event(0xc000, 0x10); // up
+    keymap.event(KbdFlags::Release, 0x10); // up
     RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, keymap.nb_sym_available());
 }
@@ -155,23 +156,25 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
 RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
+    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
+
+    using KbdFlags = kbdtypes::KbdFlags;
 
     // CAPSLOCK is not transmitted but has effect on keyboard (applied by Bastion)
     // Is is really the right thing to do ?
 
     check_key_events keys[] = {
-        {DOWN, 0x3A, 4, 0, 1},  // CAPSLOCK ON
-        {UP,   0x3A, 4, 0, 0},
-        {DOWN, 16,   4, 'A', 1}, // A
-        {UP,   16,   4, 'A', 0},
-        {DOWN, 0x2A, 4, 0xffe1, 1}, // SHIFT + A
-        {DOWN, 16, 4, 'a', 1},
-        {UP,   16, 4, 'a', 0},
-        {UP,   0x2A, 4, 0xffe1, 0},
-        {DOWN, 0x3A, 0, 0, 1},   // CAPSLOCK OFF
-        {UP,   0x3A, 0, 0, 0},
+        {KbdFlags::NoFlags, 0x3A, 4, 0, 1},  // CAPSLOCK ON
+        {KbdFlags::Release, 0x3A, 4, 0, 0},
+        {KbdFlags::NoFlags, 16,   4, 'A', 1}, // A
+        {KbdFlags::Release, 16,   4, 'A', 0},
+        {KbdFlags::NoFlags, 0x2A, 4, 0xffe1, 1}, // SHIFT + A
+        {KbdFlags::NoFlags, 16, 4, 'a', 1},
+        {KbdFlags::Release, 16, 4, 'a', 0},
+        {KbdFlags::Release, 0x2A, 4, 0xffe1, 0},
+        {KbdFlags::NoFlags, 0x3A, 0, 0, 1},   // CAPSLOCK OFF
+        {KbdFlags::Release, 0x3A, 0, 0, 0},
     };
     size_t i = 0;
     for (auto k: keys){
@@ -245,18 +248,20 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
 
 RED_AUTO_TEST_CASE(TestKeymapSymEuro)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
+    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
-    keymap.event(0x0000, 0x001d);
+    using KbdFlags = kbdtypes::KbdFlags;
+
+    keymap.event(KbdFlags::NoFlags, 0x001d);
     RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0x0000, 0x0038);
+    keymap.event(KbdFlags::NoFlags, 0x0038);
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0x0000, 0x0012); // 'e' down
+    keymap.event(KbdFlags::NoFlags, 0x0012); // 'e' down
 
     // I get an E, which means the translation is done by target VNC server not here
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag)); // up
@@ -272,7 +277,7 @@ RED_AUTO_TEST_CASE(TestKeymapSymEuro)
     RED_CHECK_EQUAL(0x65, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0x8000, 0x0012); // 'e' up
+    keymap.event(KbdFlags::Release, 0x0012); // 'e' up
 
     RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
 
@@ -285,18 +290,18 @@ RED_AUTO_TEST_CASE(TestKeymapSymEuro)
     RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag); // down
 
-    keymap.event(0x8000, 0x001d); // ctrl up
+    keymap.event(KbdFlags::Release, 0x001d); // ctrl up
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
 
     RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag);
 
-    keymap.event(0x8000, 0x0038); // Alt up
+    keymap.event(KbdFlags::Release, 0x0038); // Alt up
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag);
 
-    keymap.event(0x8000, 0x0038); // Alt up
+    keymap.event(KbdFlags::Release, 0x0038); // Alt up
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag); // Alt up
@@ -304,15 +309,17 @@ RED_AUTO_TEST_CASE(TestKeymapSymEuro)
 
 RED_AUTO_TEST_CASE(TestKeymapSymUpUp)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
+    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
-    keymap.event(0x8000, 0x0038); // Alt up
+    using KbdFlags = kbdtypes::KbdFlags;
+
+    keymap.event(KbdFlags::Release, 0x0038); // Alt up
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag);
 
-    keymap.event(0x8000, 0x0038); // Alt up
+    keymap.event(KbdFlags::Release, 0x0038); // Alt up
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag); // Alt down
@@ -320,15 +327,17 @@ RED_AUTO_TEST_CASE(TestKeymapSymUpUp)
 
 RED_AUTO_TEST_CASE(TestKeymapSymDownDown)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
+    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
-    keymap.event(0x0000, 0x0038); // Alt down
+    using KbdFlags = kbdtypes::KbdFlags;
+
+    keymap.event(KbdFlags::NoFlags, 0x0038); // Alt down
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
 
-    keymap.event(0x0000, 0x0038); // Alt down
+    keymap.event(KbdFlags::NoFlags, 0x0038); // Alt down
     RED_CHECK_EQUAL(1, keymap.nb_sym_available());
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag); // Alt down

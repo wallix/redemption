@@ -262,7 +262,7 @@ Dimension WidgetScrollBar::get_optimal_dim() const
 }
 
 // RdpInput
-void WidgetScrollBar::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+void WidgetScrollBar::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
         this->mouse_down = true;
@@ -350,6 +350,6 @@ void WidgetScrollBar::rdp_input_mouse(int device_flags, int x, int y, Keymap2* k
         }
     }
     else {
-        this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        this->Widget::rdp_input_mouse(device_flags, x, y);
     }
 }

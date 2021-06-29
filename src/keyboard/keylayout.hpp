@@ -1,29 +1,30 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Dominique Lafages
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
-
-   header file. Keylayout object, used by keymap managers
+Product name: redemption, a FLOSS RDP proxy
+Copyright (C) Wallix 2021
+Author(s): Proxies Team
 */
 
 #pragma once
 
+#include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
+
 #include <cstdint>
+
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE
@@ -47,94 +48,157 @@
 // http://kbdlayout.info/
 
 
-struct Keylayout
+struct KeyLayout
 {
-    enum {
-        MAX_SECOND_KEYS = 33,
-        MAX_LAYOUT_CHARS = 128,
-    };
+    static KeyLayout const& null_layout() noexcept;
 
-    int LCID; // Microsoft Locale ID code used for keyboard layouts
+    enum class KbdId : uint32_t;
 
-    using KeyLayout_t = uint16_t[MAX_LAYOUT_CHARS];
+    enum class RCtrlIsCtrl : bool;
 
-    // keylayout working tables (X11 mode : begins in 8e position.)
-    // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
-    KeyLayout_t const & noMod;
-    KeyLayout_t const & shift;
-    KeyLayout_t const & altGr;
-    KeyLayout_t const & shiftAltGr;
-    KeyLayout_t const & ctrl;
-    KeyLayout_t const & capslock_noMod;
-    KeyLayout_t const & capslock_shift;
-    KeyLayout_t const & capslock_altGr;
-    KeyLayout_t const & capslock_shiftAltGr;
+    using unicode_t = uint16_t;
 
-    char const * locale_name;
+    static constexpr unicode_t DK = unicode_t(1) << (sizeof(unicode_t) * 8 - 1);
 
-    struct dkey_key_t {
-        uint16_t secondKey;
-        uint16_t modifiedKey;
-    };
-
-    struct dkey_t {                                 // Struture holding a deadkey and the rules to apply to available second keys:
-         uint16_t   uchar;                       // unicode code point
-         uint8_t    extendedKeyCode;             // scancode + extended bit
-         uint8_t    nbSecondKeys;                // number of second keys available for that deadkey
-         dkey_key_t secondKeys[MAX_SECOND_KEYS]; // the couples second key/modified key
-    };
-
-    //dkey_t deadkeys[MAX_DEADKEYS];
-    dkey_t const * deadkeys;
-    uint8_t nbDeadkeys;  // Effective number of deadkeys for the locale
-
-
-    Keylayout( int LCID
-             , char const * LCID_locale_name
-             , const KeyLayout_t & LCID_noMod
-             , const KeyLayout_t & LCID_shift
-             , const KeyLayout_t & LCID_altGr
-             , const KeyLayout_t & LCID_shiftAltGr
-             , const KeyLayout_t & LCID_ctrl
-             , const KeyLayout_t & LCID_capslock_noMod
-             , const KeyLayout_t & LCID_capslock_shift
-             , const KeyLayout_t & LCID_capslock_altGr
-             , const KeyLayout_t & LCID_capslock_shiftAltGr
-             , const dkey_t * LCID_deadkeys
-             , uint8_t nbDeadkeys
-             )
-        : LCID(LCID)
-        , noMod(LCID_noMod)
-        , shift(LCID_shift)
-        , altGr(LCID_altGr)
-        , shiftAltGr(LCID_shiftAltGr)
-        , ctrl(LCID_ctrl)
-        , capslock_noMod(LCID_capslock_noMod)
-        , capslock_shift(LCID_capslock_shift)
-        , capslock_altGr(LCID_capslock_altGr)
-        , capslock_shiftAltGr(LCID_capslock_shiftAltGr)
-        , locale_name(LCID_locale_name)
-        , deadkeys(LCID_deadkeys)
-        , nbDeadkeys(nbDeadkeys)
-    {}
-
-    Keylayout(Keylayout const &) = delete;
-    Keylayout& operator=(Keylayout const &) = delete;
-
-
-    [[nodiscard]] bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode) const
+    struct DKeyTable
     {
-        for (int i=0; i < this->nbDeadkeys; i++) {
-            // Search if a make is a deadkey by its scancode AND by its unicode translation.
-            // NB : unicode alone is not enough. (e.g. french CARET from scancode 'Ox1A' is a deadkey but
-            //      from scancode '0x0A' it isn't).
-            if (   (this->deadkeys[i].extendedKeyCode == extendedKeyCode)
-               and (this->deadkeys[i].uchar == uchar)
-               )
-            {
-                return true;
-            }
+        struct DKey
+        {
+            unicode_t second;
+            unicode_t result;
+        };
+
+        struct Meta
+        {
+            uint16_t size;
+            unicode_t accent;
+        };
+
+        union Data
+        {
+            Meta meta;
+            DKey dkey;
+        };
+
+        Data const* data;
+
+        explicit operator bool () const noexcept
+        {
+            return data;
         }
-        return false;
-    }
+
+        unicode_t accent() const noexcept
+        {
+            return data[0].meta.accent;
+        }
+
+        array_view<DKey> dkeys() const noexcept
+        {
+            static_assert(sizeof(DKey) == sizeof(Data));
+            static_assert(alignof(DKey) == alignof(Data));
+            return array_view{reinterpret_cast<DKey const*>(&data[1]), data[0].meta.size};
+        }
+
+        unicode_t find_composition(unicode_t unicode) const noexcept
+        {
+            for (auto& dkey : dkeys()) {
+                if (dkey.second == unicode) {
+                    return dkey.result;
+                }
+            }
+            return 0;
+        }
+    };
+
+    struct Mods
+    {
+        enum : unsigned
+        {
+            Shift,
+            Control,
+            Menu,
+            NumLock,
+            CapsLock,
+            OEM_8,
+        };
+    };
+
+    KbdId kbdid;
+    RCtrlIsCtrl right_ctrl_is_ctrl;
+    zstring_view locale_name;
+
+    sized_array_view<sized_array_view<unicode_t, 256>, 64> keymap_by_mod;
+    sized_array_view<sized_array_view<DKeyTable, 128>, 64> dkeymap_by_mod;
 };
+
+
+// null_layout() implementation
+
+namespace detail
+{
+    inline constexpr KeyLayout::unicode_t null_layout_unicodes[256] {};
+    inline constexpr KeyLayout::DKeyTable null_layout_keytables[128] {};
+    inline constexpr sized_array_view<KeyLayout::unicode_t, 256> null_layout_unicode_by_mods[]
+    {
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes, null_layout_unicodes, null_layout_unicodes,
+        null_layout_unicodes,
+    };
+    inline constexpr sized_array_view<KeyLayout::DKeyTable, 128> null_layout_keytable_by_mods[]
+    {
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables, null_layout_keytables, null_layout_keytables,
+        null_layout_keytables,
+    };
+
+    inline constexpr KeyLayout null_layout_layout{
+        KeyLayout::KbdId(0),
+        KeyLayout::RCtrlIsCtrl(true),
+        "null"_zv,
+        detail::null_layout_unicode_by_mods,
+        detail::null_layout_keytable_by_mods
+    };
+}
+
+inline KeyLayout const& KeyLayout::null_layout() noexcept
+{
+    return detail::null_layout_layout;
+}

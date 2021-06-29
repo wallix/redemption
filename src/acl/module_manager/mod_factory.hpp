@@ -63,7 +63,7 @@ class ModFactory
     Font const & glyphs;
     Theme & theme;
     ClientExecute & rail_client_execute;
-    Keymap2 & keymap;
+    Keymap & keymap;
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
     Random & gen;
     CryptoContext & cctx;
@@ -88,7 +88,7 @@ public:
                Ref<Font const> glyphs,
                Theme & theme,
                ClientExecute & rail_client_execute,
-               Keymap2 & keymap,
+               Keymap & keymap,
                Random & gen,
                CryptoContext & cctx
         )
@@ -384,7 +384,7 @@ public:
             this->front,
             this->client_info,
             this->rail_client_execute,
-            this->keymap.key_flags,
+            this->keymap.locks(),
             this->glyphs, this->theme,
             this->events,
             session_log,
@@ -405,7 +405,8 @@ public:
             this->mod_wrapper.get_graphics(),
             this->ini,
             this->front, this->client_info,
-            this->rail_client_execute, this->keymap.key_flags,
+            this->rail_client_execute,
+            this->keymap.locks(),
             this->glyphs, this->theme,
             this->events,
             session_log);

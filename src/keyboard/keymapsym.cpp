@@ -28,10 +28,10 @@
 
 // using namespace std;
 
-KeymapSym::KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, int verbose)
+KeymapSym::KeymapSym(int keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, int verbose)
 // Initial state of keys (at least lock keys) is copied from Keymap2
 : keys_down{}
-, key_flags(key_flags)
+, key_flags(int(key_locks))
 , ibuf_sym(0)
 , nbuf_sym(0)
 , dead_key(DEADKEY_NONE)
@@ -51,47 +51,10 @@ KeymapSym::KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, 
     }
 }
 
-// [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
-//  (TS_FP_SYNC_EVENT)
-// ========================================================
-
-// The TS_FP_SYNC_EVENT structure is the fast-path variant of the TS_SYNC_EVENT
-//  (section 2.2.8.1.1.3.1.1.5) structure.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |  eventHeader  |
-// +---------------+
-
-// eventHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
-//  the same as the eventHeader byte field, specified in section 2.2.8.1.2.2.
-//  The eventCode bitfield (3 bits in size) MUST be set to
-//  FASTPATH_INPUT_EVENT_SYNC (3). The eventFlags bitfield (5 bits in size)
-//  contains flags indicating the "on" status of the keyboard toggle keys.
-
-// +--------------------------------------+------------------------------------+
-// | 5-Bit Codes                          | Meaning                            |
-// +--------------------------------------+------------------------------------+
-// | 0x01 FASTPATH_INPUT_SYNC_SCROLL_LOCK | Indicates that the Scroll Lock     |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-// | 0x02 FASTPATH_INPUT_SYNC_NUM_LOCK    | Indicates that the Num Lock        |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-// | 0x04 FASTPATH_INPUT_SYNC_CAPS_LOCK   | Indicates that the Caps Lock       |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-// | 0x08 FASTPATH_INPUT_SYNC_KANA_LOCK   | Indicates that the Kana Lock       |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-
-
 // TODO: synchronize is not called, we currently have a direct change of key_flags from vnc
-void KeymapSym::synchronize(uint16_t param1)
+void KeymapSym::synchronize(kbdtypes::KeyLocks locks)
 {
-    this->key_flags = param1 & 0x07;
+    this->key_flags = int(locks);
     // non sticky keys are forced to be UP
     this->keys_down[LEFT_SHIFT] = 0;
     this->keys_down[RIGHT_SHIFT] = 0;
@@ -162,24 +125,27 @@ const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
 // triggered the event.
 
 
-void KeymapSym::event(int device_flags, long keycode)
+void KeymapSym::event(kbdtypes::KbdFlags flags, uint16_t keycode)
 {
      LOG_IF(this->verbose & 2, LOG_INFO,
         "KeymapSym::event(keyboardFlags=%04x (%s%s), keycode=%04x flags=%04x (%s %s %s %s %s %s %s))",
-        static_cast<unsigned>(device_flags), (device_flags & KBDFLAGS_RELEASE)?"UP":"DOWN",(device_flags & KBDFLAGS_EXTENDED)?" EXT":"",
-        static_cast<unsigned>(keycode), static_cast<unsigned>(this->key_flags),
-        (this->key_flags & SCROLLLOCK)?"SCR ":"",
-        (this->key_flags & NUMLOCK)?"NUM ":"",
-        (this->key_flags & CAPSLOCK)?"CAPS ":"",
-        (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
-        (this->key_flags & FLG_ALT)?"ALT ":"",
-        (this->key_flags & FLG_WINDOWS)?"WIN ":"",
-        (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
+        static_cast<unsigned>(flags),
+        bool(flags & kbdtypes::KbdFlags::Release) ? "UP" : "DOWN",
+        bool(flags & kbdtypes::KbdFlags::Extended) ? " EXT": "",
+        static_cast<unsigned>(keycode),
+        static_cast<unsigned>(this->key_flags),
+        (this->key_flags & SCROLLLOCK) ? "SCR " : "",
+        (this->key_flags & NUMLOCK) ? "NUM " : "",
+        (this->key_flags & CAPSLOCK) ? "CAPS " : "",
+        (this->key_flags & FLG_SHIFT) ? "SHIFT " : "",
+        (this->key_flags & FLG_ALT) ? "ALT " : "",
+        (this->key_flags & FLG_WINDOWS) ? "WIN " : "",
+        (this->key_flags & FLG_ALTGR) ? "ALTGR " : "");
 
     if (this->is_apple) {
-        this->apple_keyboard_translation(device_flags, keycode);
+        this->apple_keyboard_translation(flags, keycode);
     } else {
-        this->key_event(device_flags, keycode);
+        this->key_event(flags, keycode);
     }
 }
 
@@ -246,9 +212,9 @@ void KeymapSym::putback_modifiers()
 }
 
 
-void KeymapSym::key_event(int device_flags, long keycode) {
+void KeymapSym::key_event(kbdtypes::KbdFlags flags, uint16_t keycode) {
 
-    KeySym ks = this->get_key(device_flags, keycode);
+    KeySym ks = this->get_key(flags, keycode);
     uint32_t key = ks.sym;
     uint8_t downflag = ks.down;
 
@@ -304,9 +270,9 @@ void KeymapSym::key_event(int device_flags, long keycode) {
     }
 }
 
-void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
+void KeymapSym::apple_keyboard_translation(kbdtypes::KbdFlags flags, uint16_t keycode) {
 
-    uint8_t downflag = !(device_flags & KBDFLAGS_RELEASE);
+    uint8_t downflag = !bool(flags & kbdtypes::KbdFlags::Release);
 
     switch (this->keylayout) {
         case FICTITIOUS_MACOS_EN_US:                    // United States - macOS
@@ -321,7 +287,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     break;
 
                 default:
-                    this->key_event(device_flags, keycode);
+                    this->key_event(flags, keycode);
                     break;
             }
             break;
@@ -336,7 +302,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0xa4, downflag)); // @
                         this->push_sym(KeySym(0xffe9, 1));
                     } else {
-                        this->key_event(device_flags, keycode);
+                        this->key_event(flags, keycode);
                     }
                     break;
 
@@ -348,7 +314,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0xffe2, 0));
                         this->push_sym(KeySym(0xffe9, 1));
                     } else {
-                        this->key_event(device_flags, keycode);
+                        this->key_event(flags, keycode);
                     }
                     break;
 
@@ -358,7 +324,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0x36, downflag)); // §
                         this->push_sym(KeySym(0xffe2, 1));
                     } else {
-                        if (device_flags & KeymapSym::KBDFLAGS_EXTENDED) {
+                        if (bool(flags & kbdtypes::KbdFlags::Extended)) {
                             this->push_sym(KeySym(0xffe2, 1));
                             this->push_sym(KeySym(0x3e, downflag)); // /
                             this->push_sym(KeySym(0xffe2, 0));
@@ -374,7 +340,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0x3d, downflag));
                         this->push_sym(KeySym(0xffe2, 0));
                     } else {
-                        this->key_event(device_flags, keycode);
+                        this->key_event(flags, keycode);
                     }
                     break;
 
@@ -388,7 +354,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     if (this->is_shift_pressed()) {
                         this->push_sym(KeySym(0x5c, downflag));
                     } else {
-                        this->key_event(device_flags, keycode);
+                        this->key_event(flags, keycode);
                     }
                     break;
 
@@ -417,7 +383,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     break;
 
                 default:
-                    this->key_event(device_flags, keycode);
+                    this->key_event(flags, keycode);
                     break;
             }
             break;
@@ -439,13 +405,13 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
 //            case 0x0409: // United States
 //            case 0x0407: // GERMAN
         default:
-           this->key_event(device_flags, keycode);
+           this->key_event(flags, keycode);
            break;
     }
 }
 
 
-KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_t keyCode)
+KeymapSym::KeySym KeymapSym::get_key(kbdtypes::KbdFlags keyboardFlags, const uint16_t keyCode)
 {
     enum {
            SCROLLLOCK  = 0x01
@@ -467,13 +433,13 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
 //    uint8_t extendedKeyCode = keyCode|((keyboardFlags_pos >> 1)&0x80);
 
     // Commented code above is disabling all extended codes, putting them back
-    uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
+    uint8_t extendedKeyCode = keyCode|((underlying_cast(keyboardFlags) >> 1)&0x80);
 
 
     // TODO: see how it interacts with autorepeat
     // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
 
-    if (keyboardFlags & KBDFLAGS_RELEASE){ // up or down and released
+    if (bool(keyboardFlags & kbdtypes::KbdFlags::Release)){ // up or down and released
        // Down and key released
        this->keys_down[extendedKeyCode] = 0; // up
     }
