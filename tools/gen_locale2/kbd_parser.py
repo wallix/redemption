@@ -3,6 +3,7 @@ from typing import Optional, NamedTuple, Union, Iterator
 
 import xml.etree.ElementTree as ET
 from itertools import groupby
+from enum import Enum
 import sys
 
 
@@ -79,7 +80,7 @@ def verbose_print(*args):
     print(*args, file=sys.stderr)
 
 def parse_xml_layout(filename, log=verbose_print):
-    scancodes = {
+    keymap_mods = {
         0x00: {k:[None for i in range(0, 128)] for k in (
             '',
             'VK_SHIFT',
@@ -126,7 +127,7 @@ def parse_xml_layout(filename, log=verbose_print):
             extra_scancodes[sc] = Key(scancode=sc, codepoint=0, text='', vk=vk, deadkeys=dict())
             continue
 
-        keymaps = scancodes[sc >> 8]
+        keymaps = keymap_mods[sc >> 8]
         sc = sc & 0xff
         assert sc
 
@@ -180,7 +181,7 @@ def parse_xml_layout(filename, log=verbose_print):
                 _parse_deadkeys(log, result, key.deadkeys)
 
     return KeyLayout(klid, locale_name, display_name,
-                     scancodes[0], scancodes[0xE0], extra_scancodes)
+                     keymap_mods[0], keymap_mods[0xE0], extra_scancodes)
 
 def _accu_scancodes(strings:list[str], map:list[Key]):
     for i,k in enumerate(map):
@@ -228,6 +229,12 @@ def _all_equal(iterable):
     g = groupby(iterable)
     return next(g, True) and not next(g, False)
 
+
+class ModStatus(Enum):
+    DISABLED = 0
+    ENABLED = 1
+    ALL_EQUAL = 2
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         print(sys.argv[0], 'layout.xml...')
@@ -239,9 +246,24 @@ if __name__ == "__main__":
             layouts.append(layout)
             print_layout(layout)
 
-        mods = layouts[0].normal_keymaps.keys()
-        for i in range(10000):
+        mod_infos = {}
+        for keymap_type in ('normal_keymaps', 'extended_keymaps'):
+            mods = getattr(layouts[0], keymap_type).keys()
+            mod_states = {}
             for mod in mods:
-                if _all_equal(layout.normal_keymaps[mod] for layout in layouts):
-                    # print(mod or 'normal')
-                    pass
+                are_same = _all_equal(getattr(layout, keymap_type)[mod] for layout in layouts)
+                status = (
+                    ModStatus.DISABLED if all(k is None for k in getattr(layouts[0], keymap_type)[mod])
+                    else ModStatus.ALL_EQUAL
+                ) if are_same else ModStatus.ENABLED
+                mod_states[mod] = status
+            mod_infos[keymap_type] = mod_states
+
+        are_same = _all_equal(layout.extra_scancodes for layout in layouts)
+        status = (
+            ModStatus.ALL_EQUAL if layouts[0].extra_scancodes
+            else ModStatus.DISABLED
+        ) if are_same else ModStatus.ENABLED
+        mod_infos['extra_scancodes'] = {'': status}
+
+        print(mod_infos)
