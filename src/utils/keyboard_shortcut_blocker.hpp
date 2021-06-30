@@ -19,6 +19,8 @@
                Meng Tan, Raphael Zhou
 */
 
+#pragma once
+
 #include "core/RDP/slowpath.hpp"
 #include "keyboard/scancode/unicode_to_scancode.hpp"
 #include "utils/log.hpp"
