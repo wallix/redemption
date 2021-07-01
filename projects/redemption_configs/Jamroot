@@ -66,9 +66,6 @@ R"xxxyyyzzz(' > autogen/include/configs/autogen/vnc_cp_spec.hpp
 R"xxxyyyzzz(' > autogen/include/configs/autogen/cp_mapping.hpp
     cat ../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py >> autogen/include/configs/autogen/cp_mapping.hpp
     echo ')xxxyyyzzz"' >> autogen/include/configs/autogen/cp_mapping.hpp
-
-    cp ../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py ../../tools/sesman/wl/sesmanworker/
-    cp ../../tools/sesman/sesmanworker/sesmanbacktoselector.py ../../tools/sesman/wl/sesmanworker/
 }
 
 actions generate_debug_verbose_description
