@@ -994,6 +994,8 @@ enum KS_Symbols {
 //    hebrew_shin                       3321     0x0cf9
 //    hebrew_taf                        3322     0x0cfa
 
+#define FICTITIOUS_MACOS_EN_US 0xf409
+
 struct KeymapSym
 {
     enum {

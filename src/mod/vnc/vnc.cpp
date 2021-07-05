@@ -62,7 +62,7 @@ mod_vnc::mod_vnc( Transport & t
     , width(front_width)
     , height(front_height)
     , verbose(verbose)
-    , keymapSym(keylayout, key_flags, server_is_unix, server_is_macos, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
+    , keymapSym(keylayout, key_flags, server_is_unix, server_is_macos || true, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
