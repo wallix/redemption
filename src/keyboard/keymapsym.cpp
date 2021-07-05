@@ -275,11 +275,17 @@ void KeymapSym::key_event(int device_flags, long keycode) {
             default:
                 break;
             case 0x65:
-                this->push_sym(KeySym(0xffe3, 1));
-                this->push_sym(KeySym(0xffe9, 1));
+                if (!this->is_apple)
+                {
+                    this->push_sym(KeySym(0xffe3, 1));
+                    this->push_sym(KeySym(0xffe9, 1));
+                }
                 this->push_sym(KeySym(0x65, downflag));
-                this->push_sym(KeySym(0xffe3, 0));
-                this->push_sym(KeySym(0xffe9, 0));
+                if (!this->is_apple)
+                {
+                    this->push_sym(KeySym(0xffe3, 0));
+                    this->push_sym(KeySym(0xffe9, 0));
+                }
                 break;
             }
             this->putback_modifiers();

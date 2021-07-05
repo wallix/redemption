@@ -338,7 +338,7 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
     keymapSym.event(device_flags, keycode);
 
 
-    //#define ORIGINAL_KEY 0x33
+    //#define ORIGINAL_KEY 0x71   // 'a'
     //static uint16_t option_key = ORIGINAL_KEY;
 
     uint8_t downflag = 0;
@@ -352,7 +352,7 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
         //if (key == ORIGINAL_KEY) key = option_key;
         //else if (key == 0xFFE3 && (device_flags & 0x8000)) option_key -= 1;
         //else if (key == 0xFFE4 && (device_flags & 0x8000)) option_key += 1;
-        //LOG(LOG_INFO, "> > > > > mod_vnc::rdp_input_scancode(): key=0x%X (2) downflag=0x%X", key, downflag);
+        //LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(): key=0x%X (2) downflag=0x%X", key, downflag);
         this->send_keyevent(downflag, key);
     }
 }
