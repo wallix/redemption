@@ -1056,11 +1056,17 @@ public:
                     this->remove_modifiers();
                     switch (key){
                     case 0x65:
-                        this->send_keyevent(1, 0xffe3);
-                        this->send_keyevent(1, 0xffe9);
+                        if (!this->server_is_apple)
+                        {
+                            this->send_keyevent(1, 0xffe3);
+                            this->send_keyevent(1, 0xffe9);
+                        }
                         this->send_keyevent(downflag, 0x65);
-                        this->send_keyevent(0, 0xffe3);
-                        this->send_keyevent(0, 0xffe9);
+                        if (!this->server_is_apple)
+                        {
+                            this->send_keyevent(0, 0xffe3);
+                            this->send_keyevent(0, 0xffe9);
+                        }
                         break;
                     default:
                         this->send_keyevent(downflag, key);
