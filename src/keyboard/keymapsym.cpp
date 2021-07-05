@@ -45,7 +45,7 @@ KeymapSym::KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, 
 , keylayout_WORK_shiftcapslock_sym{}
 {
     if (is_apple) {
-        this->init_layout_sym(0x0409);
+        this->init_layout_sym(FICTITIOUS_MACOS_EN_US);
     } else {
         this->init_layout_sym(keylayout);
     }
@@ -185,57 +185,63 @@ void KeymapSym::event(int device_flags, long keycode)
 
 void KeymapSym::remove_modifiers()
 {
-    // KS_Alt_L = 0xffe9,
-    if (this->is_left_alt_pressed()){
-        this->push_sym(KeySym(0xffe9, 0));
-    }
-    // KS_Alt_R = 0xffea,
-    if (this->is_right_alt_pressed()){
-        this->push_sym(KeySym(0xffea, 0));
-    }
-    // KS_Control_R = 0xffe4,
-    if (this->is_right_ctrl_pressed()){
-        this->push_sym(KeySym(0xffe4, 0));
-    }
-    // KS_Control_L = 0xffe3,
-    if (this->is_left_ctrl_pressed()){
-        this->push_sym(KeySym(0xffe3, 0));
-    }
-    // KS_Shift_L = 0xffe1,
-    if (this->is_left_shift_pressed()){
-        this->push_sym(KeySym(0xffe1, 0));
-    }
-    // KS_Shift_R = 0xffe2,
-    if (this->is_right_shift_pressed()){
-        this->push_sym(KeySym(0xffe2, 0));
+    if (!this->is_apple)
+    {
+        // KS_Alt_L = 0xffe9,
+        if (this->is_left_alt_pressed()){
+            this->push_sym(KeySym(0xffe9, 0));
+        }
+        // KS_Alt_R = 0xffea,
+        if (this->is_right_alt_pressed()){
+            this->push_sym(KeySym(0xffea, 0));
+        }
+        // KS_Control_R = 0xffe4,
+        if (this->is_right_ctrl_pressed()){
+            this->push_sym(KeySym(0xffe4, 0));
+        }
+        // KS_Control_L = 0xffe3,
+        if (this->is_left_ctrl_pressed()){
+            this->push_sym(KeySym(0xffe3, 0));
+        }
+        // KS_Shift_L = 0xffe1,
+        if (this->is_left_shift_pressed()){
+            this->push_sym(KeySym(0xffe1, 0));
+        }
+        // KS_Shift_R = 0xffe2,
+        if (this->is_right_shift_pressed()){
+            this->push_sym(KeySym(0xffe2, 0));
+        }
     }
 }
 
 void KeymapSym::putback_modifiers()
 {
-    // KS_Alt_L = 0xffe9,
-    if (this->is_left_alt_pressed()){
-        this->push_sym(KeySym(0xffe9, 1));
-    }
-    // KS_Alt_R = 0xffea,
-    if (this->is_right_alt_pressed()){
-        this->push_sym(KeySym(0xffea, 1));
-    }
-    // KS_Control_R = 0xffe4,
-    if (this->is_right_ctrl_pressed()){
-        this->push_sym(KeySym(0xffe4, 1));
-    }
-    // KS_Control_L = 0xffe3,
-    if (this->is_left_ctrl_pressed()){
-        this->push_sym(KeySym(0xffe3, 1));
-    }
-    // KS_Shift_L = 0xffe1,
-    if (this->is_left_shift_pressed()){
-        this->push_sym(KeySym(0xffe1, 1));
-    }
-    // KS_Shift_R = 0xffe2,
-    if (this->is_right_shift_pressed()){
-        this->push_sym(KeySym(0xffe2, 1));
+    if (!this->is_apple)
+    {
+        // KS_Alt_L = 0xffe9,
+        if (this->is_left_alt_pressed()){
+            this->push_sym(KeySym(0xffe9, 1));
+        }
+        // KS_Alt_R = 0xffea,
+        if (this->is_right_alt_pressed()){
+            this->push_sym(KeySym(0xffea, 1));
+        }
+        // KS_Control_R = 0xffe4,
+        if (this->is_right_ctrl_pressed()){
+            this->push_sym(KeySym(0xffe4, 1));
+        }
+        // KS_Control_L = 0xffe3,
+        if (this->is_left_ctrl_pressed()){
+            this->push_sym(KeySym(0xffe3, 1));
+        }
+        // KS_Shift_L = 0xffe1,
+        if (this->is_left_shift_pressed()){
+            this->push_sym(KeySym(0xffe1, 1));
+        }
+        // KS_Shift_R = 0xffe2,
+        if (this->is_right_shift_pressed()){
+            this->push_sym(KeySym(0xffe2, 1));
+        }
     }
 }
 
@@ -297,14 +303,31 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
     uint8_t downflag = !(device_flags & KBDFLAGS_RELEASE);
 
     switch (this->keylayout) {
+        case FICTITIOUS_MACOS_EN_US:                    // United States - macOS
+            switch (keycode) {
 
+                case 0x56:
+                    if (this->is_shift_pressed()) {
+                        this->push_sym(KeySym(0x7e, downflag)); /* > */
+                    } else {
+                        this->push_sym(KeySym(0x60, downflag)); /* < */
+                    }
+                    break;
+
+                default:
+                    this->key_event(device_flags, keycode);
+                    break;
+            }
+            break;
+
+/*
         case 0x040c:                                    // French
             switch (keycode) {
 
                 case 0x0b:
                     if (this->is_alt_pressed()) {
                         this->push_sym(KeySym(0xffe9, 0));
-                        this->push_sym(KeySym(0xa4, downflag)); /* @ */
+                        this->push_sym(KeySym(0xa4, downflag)); // @
                         this->push_sym(KeySym(0xffe9, 1));
                     } else {
                         this->key_event(device_flags, keycode);
@@ -315,7 +338,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     if (this->is_alt_pressed()) {
                         this->push_sym(KeySym(0xffe9, 0));
                         this->push_sym(KeySym(0xffe2, 1));
-                        this->push_sym(KeySym(0xa4, downflag)); /* # */
+                        this->push_sym(KeySym(0xa4, downflag)); // #
                         this->push_sym(KeySym(0xffe2, 0));
                         this->push_sym(KeySym(0xffe9, 1));
                     } else {
@@ -326,20 +349,20 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                 case 0x35:
                     if (this->is_shift_pressed()) {
                         this->push_sym(KeySym(0xffe2, 0));
-                        this->push_sym(KeySym(0x36, downflag)); /* § */
+                        this->push_sym(KeySym(0x36, downflag)); // §
                         this->push_sym(KeySym(0xffe2, 1));
                     } else {
                         if (device_flags & KeymapSym::KBDFLAGS_EXTENDED) {
                             this->push_sym(KeySym(0xffe2, 1));
-                            this->push_sym(KeySym(0x3e, downflag)); /* / */
+                            this->push_sym(KeySym(0x3e, downflag)); // /
                             this->push_sym(KeySym(0xffe2, 0));
                         } else {
-                            this->push_sym(KeySym(0x38, downflag)); /* ! */
+                            this->push_sym(KeySym(0x38, downflag)); // !
                         }
                     }
                     break;
 
-                case 0x07: /* - */
+                case 0x07: // -
                     if (!this->is_shift_pressed()) {
                         this->push_sym(KeySym(0xffe2, 1));
                         this->push_sym(KeySym(0x3d, downflag));
@@ -349,13 +372,13 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     }
                     break;
 
-                case 0x2b: /* * */
+                case 0x2b: // *
                     this->push_sym(KeySym(0xffe2, 1));
                     this->push_sym(KeySym(0x2a, downflag));
                     this->push_sym(KeySym(0xffe2, 0));
                     break;
 
-                case 0x1b: /* £ */
+                case 0x1b: // £
                     if (this->is_shift_pressed()) {
                         this->push_sym(KeySym(0x5c, downflag));
                     } else {
@@ -363,27 +386,27 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     }
                     break;
 
-                case 0x09: /* _ */
+                case 0x09: // _
                     if (!this->is_shift_pressed()) {
                         this->push_sym(KeySym(0xffe2, 1));
                         this->push_sym(KeySym(0xad, downflag));
                         this->push_sym(KeySym(0xffe2, 0));
                     } else {
-                        this->push_sym(KeySym(0x38, downflag)); /* 8 */
+                        this->push_sym(KeySym(0x38, downflag)); // 8
                     }
                     break;
 
                 case 0x56:
                     if (this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0x7e, downflag)); /* > */
+                        this->push_sym(KeySym(0x7e, downflag)); // >
                     } else {
                         this->push_sym(KeySym(0xffe2, 1));
-                        this->push_sym(KeySym(0x60, downflag)); /* < */
+                        this->push_sym(KeySym(0x60, downflag)); // <
                         this->push_sym(KeySym(0xffe2, 0));
                     }
                     break;
 
-                case 0x0d: /* = */
+                case 0x0d: // =
                     this->push_sym(KeySym(0x2f, downflag));
                     break;
 
@@ -392,6 +415,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     break;
             }
             break;
+*/
 
         // Note: specialize and treat special case if need arise.
         // (like french keyboard above)
@@ -505,7 +529,7 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
         /* kEYPAD HOME */
         case 0x47: return KeySym((this->key_flags & NUMLOCK)?KS_KP_7:KS_Home, downflag);
         /* KP_0 or kEYPAD INSER */
-        case 0x52: return KeySym((this->key_flags & NUMLOCK)?'0':0xFF63, downflag);
+        case 0x52: return KeySym((this->key_flags & NUMLOCK)?/*'0'*/KS_KP_0:0xFF63, downflag);
 
     //----------------
     // All other keys
