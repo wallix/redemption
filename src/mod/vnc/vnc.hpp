@@ -268,14 +268,15 @@ public:
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
         }
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
+            LOG(LOG_INFO, "server_is_apple=%s", (this->server_is_apple ? "yes" : "no"));
         }
 
         ::time(&this->beginning);
 
         // TODO init layout sym with apple layout
         if (this->server_is_apple) {
-            keymapSym.init_layout_sym(0x0409);
+            keymapSym.init_layout_sym(FICTITIOUS_MACOS_EN_US);
+            this->keylayout = FICTITIOUS_MACOS_EN_US;
         } else {
             keymapSym.init_layout_sym(keylayout);
         }
@@ -963,57 +964,61 @@ public:
 
     void remove_modifiers()
     {
-        // KS_Alt_L = 0xffe9,
-        if (this->keymapSym.is_left_alt_pressed()){
-            this->send_keyevent(0, 0xffe9);
-        }
-        // KS_Alt_R = 0xffea,
-        if (this->keymapSym.is_right_alt_pressed()){
-            this->send_keyevent(0, 0xffea);
-        }
-        // KS_Control_R = 0xffe4,
-        if (this->keymapSym.is_right_ctrl_pressed()){
-            this->send_keyevent(0, 0xffe4);
-        }
-        // KS_Control_L = 0xffe3,
-        if (this->keymapSym.is_left_ctrl_pressed()){
-            this->send_keyevent(0, 0xffe3);
-        }
-        // KS_Shift_L = 0xffe1,
-        if (this->keymapSym.is_left_shift_pressed()){
-            this->send_keyevent(0, 0xffe1);
-        }
-        // KS_Shift_R = 0xffe2,
-        if (this->keymapSym.is_right_shift_pressed()){
-            this->send_keyevent(0, 0xffe2);
+        if (!this->server_is_apple) {
+            // KS_Alt_L = 0xffe9,
+            if (this->keymapSym.is_left_alt_pressed()){
+                this->send_keyevent(0, 0xffe9);
+            }
+            // KS_Alt_R = 0xffea,
+            if (this->keymapSym.is_right_alt_pressed()){
+                this->send_keyevent(0, 0xffea);
+            }
+            // KS_Control_R = 0xffe4,
+            if (this->keymapSym.is_right_ctrl_pressed()){
+                this->send_keyevent(0, 0xffe4);
+            }
+            // KS_Control_L = 0xffe3,
+            if (this->keymapSym.is_left_ctrl_pressed()){
+                this->send_keyevent(0, 0xffe3);
+            }
+            // KS_Shift_L = 0xffe1,
+            if (this->keymapSym.is_left_shift_pressed()){
+                this->send_keyevent(0, 0xffe1);
+            }
+            // KS_Shift_R = 0xffe2,
+            if (this->keymapSym.is_right_shift_pressed()){
+                this->send_keyevent(0, 0xffe2);
+            }
         }
     }
 
     void putback_modifiers()
     {
-        // KS_Alt_L = 0xffe9,
-        if (this->keymapSym.is_left_alt_pressed()){
-            this->send_keyevent(1, 0xffe9);
-        }
-        // KS_Alt_R = 0xffea,
-        if (this->keymapSym.is_right_alt_pressed()){
-            this->send_keyevent(1, 0xffea);
-        }
-        // KS_Control_R = 0xffe4,
-        if (this->keymapSym.is_right_ctrl_pressed()){
-            this->send_keyevent(1, 0xffe4);
-        }
-        // KS_Control_L = 0xffe3,
-        if (this->keymapSym.is_left_ctrl_pressed()){
-            this->send_keyevent(1, 0xffe3);
-        }
-        // KS_Shift_L = 0xffe1,
-        if (this->keymapSym.is_left_shift_pressed()){
-            this->send_keyevent(1, 0xffe1);
-        }
-        // KS_Shift_R = 0xffe2,
-        if (this->keymapSym.is_right_shift_pressed()){
-            this->send_keyevent(1, 0xffe2);
+        if (!this->server_is_apple) {
+            // KS_Alt_L = 0xffe9,
+            if (this->keymapSym.is_left_alt_pressed()){
+                this->send_keyevent(1, 0xffe9);
+            }
+            // KS_Alt_R = 0xffea,
+            if (this->keymapSym.is_right_alt_pressed()){
+                this->send_keyevent(1, 0xffea);
+            }
+            // KS_Control_R = 0xffe4,
+            if (this->keymapSym.is_right_ctrl_pressed()){
+                this->send_keyevent(1, 0xffe4);
+            }
+            // KS_Control_L = 0xffe3,
+            if (this->keymapSym.is_left_ctrl_pressed()){
+                this->send_keyevent(1, 0xffe3);
+            }
+            // KS_Shift_L = 0xffe1,
+            if (this->keymapSym.is_left_shift_pressed()){
+                this->send_keyevent(1, 0xffe1);
+            }
+            // KS_Shift_R = 0xffe2,
+            if (this->keymapSym.is_right_shift_pressed()){
+                this->send_keyevent(1, 0xffe2);
+            }
         }
     }
 
@@ -1099,13 +1104,31 @@ public:
 
         switch (this->keylayout) {
 
+            case FICTITIOUS_MACOS_EN_US:                    // United States - macOS
+                switch (keycode) {
+
+                    case 0x56:
+                        if (this->keymapSym.is_shift_pressed()) {
+                            this->send_keyevent(downflag, 0x7e); /* > */
+                        } else {
+                            this->send_keyevent(downflag, 0x60); /* < */
+                        }
+                        break;
+
+                    default:
+                        this->keyMapSym_event(device_flags, keycode, downflag);
+                        break;
+                }
+                break;
+
+/*
             case 0x040c:                                    // French
                 switch (keycode) {
 
                     case 0x0b:
                         if (this->keymapSym.is_alt_pressed()) {
                             this->send_keyevent(0, 0xffe9);
-                            this->send_keyevent(downflag, 0xa4); /* @ */
+                            this->send_keyevent(downflag, 0xa4); // @
                             this->send_keyevent(1, 0xffe9);
                         } else {
                             this->keyMapSym_event(device_flags, keycode, downflag);
@@ -1116,7 +1139,7 @@ public:
                         if (this->keymapSym.is_alt_pressed()) {
                             this->send_keyevent(0, 0xffe9);
                             this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0xa4); /* # */
+                            this->send_keyevent(downflag, 0xa4); // #
                             this->send_keyevent(0, 0xffe2);
                             this->send_keyevent(1, 0xffe9);
                         } else {
@@ -1127,20 +1150,20 @@ public:
                     case 0x35:
                         if (this->keymapSym.is_shift_pressed()) {
                             this->send_keyevent(0, 0xffe2);
-                            this->send_keyevent(downflag, 0x36); /* § */
+                            this->send_keyevent(downflag, 0x36); // §
                             this->send_keyevent(1, 0xffe2);
                         } else {
                             if (device_flags & KeymapSym::KBDFLAGS_EXTENDED) {
                                 this->send_keyevent(1, 0xffe2);
-                                this->send_keyevent(downflag, 0x3e); /* / */
+                                this->send_keyevent(downflag, 0x3e); // /
                                 this->send_keyevent(0, 0xffe2);
                             } else {
-                                this->send_keyevent(downflag, 0x38); /* ! */
+                                this->send_keyevent(downflag, 0x38); // !
                             }
                         }
                         break;
 
-                    case 0x07: /* - */
+                    case 0x07: // -
                         if (!this->keymapSym.is_shift_pressed()) {
                             this->send_keyevent(1, 0xffe2);
                             this->send_keyevent(downflag, 0x3d);
@@ -1150,13 +1173,13 @@ public:
                         }
                         break;
 
-                    case 0x2b: /* * */
+                    case 0x2b: // *
                         this->send_keyevent(1, 0xffe2);
                         this->send_keyevent(downflag, 0x2a);
                         this->send_keyevent(0, 0xffe2);
                         break;
 
-                    case 0x1b: /* £ */
+                    case 0x1b: // £
                         if (this->keymapSym.is_shift_pressed()) {
                             this->send_keyevent(downflag, 0x5c);
                         } else {
@@ -1164,27 +1187,27 @@ public:
                         }
                         break;
 
-                    case 0x09: /* _ */
+                    case 0x09: // _
                         if (!this->keymapSym.is_shift_pressed()) {
                             this->send_keyevent(1, 0xffe2);
                             this->send_keyevent(downflag, 0xad);
                             this->send_keyevent(0, 0xffe2);
                         } else {
-                            this->send_keyevent(downflag, 0x38); /* 8 */
+                            this->send_keyevent(downflag, 0x38); // 8
                         }
                         break;
 
                     case 0x56:
                         if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(downflag, 0x7e); /* > */
+                            this->send_keyevent(downflag, 0x7e); // >
                         } else {
                             this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0x60); /* < */
+                            this->send_keyevent(downflag, 0x60); // <
                             this->send_keyevent(0, 0xffe2);
                         }
                         break;
 
-                    case 0x0d: /* = */
+                    case 0x0d: // =
                         this->send_keyevent(downflag, 0x2f);
                         break;
 
@@ -1193,6 +1216,7 @@ public:
                         break;
                 }
                 break;
+*/
 
             // Note: specialize and treat special case if need arise.
             // (like french keyboard above)

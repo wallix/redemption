@@ -24,6 +24,8 @@
 
 #include <cstdint>
 
+#define FICTITIOUS_MACOS_EN_US 0xf409
+
 struct KeymapSym
 {
     enum {

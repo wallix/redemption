@@ -201,7 +201,7 @@ enum KS_Symbols {
 //    App                              65373     0xff5d
     KS_App                              =     0xff5d,
     KS_Win_L = 0xffeb, // Actually Super_L, Win_L is 0xff5b but doesn' t work with VNC
-    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC 
+    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC
 
 //    Hyper_L                          65517     0xffed
     KS_Hyper_L                          =     0xffed,
@@ -1196,9 +1196,9 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 this->key_flags ^= SCROLLLOCK;
             }
             break;
- 
+
             //--------------------------------------------------------
-            // KEYPAD : Keypad keys whose meaning depends on Numlock 
+            // KEYPAD : Keypad keys whose meaning depends on Numlock
             //          are handled apart by the code below
             //          47 48 49 4B 4C 4D 4F 50 51 52 53
             //--------------------------------------------------------
@@ -1240,7 +1240,7 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
             break;
         /* KP_0 or kEYPAD INSER */
         case 0x52:
-            this->push_sym((this->key_flags & NUMLOCK)?'0':0xFF63);
+            this->push_sym((this->key_flags & NUMLOCK)?/*'0'*/KS_KP_0:0xFF63);
             break;
 
     //----------------
@@ -1357,9 +1357,9 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
             if (this->verbose){
                 LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
             }
-            if ((ksym == 0xFE52 ) // DEADKEYS 
-            || (ksym == 0xFE57) 
-            || (ksym == 0x60) 
+            if ((ksym == 0xFE52 ) // DEADKEYS
+            || (ksym == 0xFE57)
+            || (ksym == 0x60)
             || (ksym == 0x7E)) {
                 //-------------------------------------------------
                 // ksym is NOT in Printable unicode character range
