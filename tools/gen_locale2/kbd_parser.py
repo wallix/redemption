@@ -447,15 +447,18 @@ if __name__ == "__main__":
         extended_layouts = load_layout_infos(layouts, 'extended_keymaps', extended_mod_supported,
                                              unique_keymap, unique_deadkeys)
 
-        strings = []
+        strings = [
+            '#include "keyboard/keylayout2.hpp"\n\n',
+            'constexpr auto DK = KeyLayout2::DK;\n\n',
+        ]
 
         # print keymap (scancodes[128] with DK (0x8000) mask for deadkey)
         for keymap, idx in unique_keymap.items():
-            strings.append(f'static constexpr uint16_t keymap_{idx}[128] {{\n')
+            strings.append(f'static constexpr KeyLayout2::unicode_t keymap_{idx}[128] {{\n')
             for i in range(128//8):
                 char_comment = []
                 has_char_comment = False
-                strings.append(f'    /* 0x{i*8:02X} - 0x{i*8+7:02X} */  ')
+                strings.append(f'/*{i*8:02X}-{i*8+7:02X}*/ ')
 
                 for j in range(i*8, i*8+8):
                     if (key := keymap[j]) and (codepoint := key.codepoint):
@@ -471,16 +474,16 @@ if __name__ == "__main__":
                         else:
                             strings.append(f'{"DK|" if key.is_deadkey else "   "}0x{codepoint:04x}, ')
                             if 0x20 <= codepoint <= 0x7E:
-                                char_comment.append(f'{chr(codepoint):>11}')
+                                char_comment.append(f'{chr(codepoint):>10} ')
                                 has_char_comment = True
                             elif 0x07 <= codepoint <= 0x0D:
-                                char_comment.append(f'\\{"abtnvfr"[codepoint - 0x7]:>11}')
+                                char_comment.append(f'\\{"abtnvfr"[codepoint - 0x7]:>10} ')
                                 has_char_comment = True
                             elif codepoint == 0x1b:
-                                char_comment.append('        ESC')
+                                char_comment.append('       ESC ')
                                 has_char_comment = True
                             elif codepoint > 127:
-                                char_comment.append(f'{key.text:>11}')
+                                char_comment.append(f'{key.text:>10} ')
                                 has_char_comment = True
                             else:
                                 char_comment.append('           ')
@@ -490,7 +493,7 @@ if __name__ == "__main__":
 
                 strings.append('\n')
                 if has_char_comment:
-                    strings.append('                   //')
+                    strings.append('       //')
                     strings += char_comment
                     strings.append('\n')
 
@@ -500,9 +503,9 @@ if __name__ == "__main__":
         unique_deadkeys = {v:k for k,v in unique_deadkeys.items()}
         for idx,deadkeys in unique_deadkeys.items():
             accent = next(iter(deadkeys))[0]
-            strings.append(f'static constexpr DKeyData dkeydata_{idx}[] {{\n')
+            strings.append(f'static constexpr DKeyTable::Data dkeydata_{idx}[] {{\n')
             strings.append(f'    {{.size={len(deadkeys)}}},\n')
-            strings.append(f'    {{.unicode=0x{ord(accent):04X} /* {accent} */}},\n')
+            strings.append(f'    {{.accent=0x{ord(accent):04X} /* {accent} */}},\n')
             strings += (f'    {{.dkey={{0x{ord(with_):04X} /* {with_} */, 0x{codepoint:04X} /* {chr(codepoint)} */}}}},\n' for accent, with_, codepoint in deadkeys)
             strings.append('};\n\n')
 
@@ -518,26 +521,20 @@ if __name__ == "__main__":
             strings.append(f'static constexpr DKeyTable dkeymap_{idx}[] {{\n')
             for i in range(128//8):
                 strings.append('    ')
-                strings += (f'dkeydata_{deadmap[j]:<3},' if deadmap[j] else 'nullptr,     ' \
+                strings += (f'{f"{{dkeydata_{deadmap[j]}}},":<16}' if deadmap[j] else '{nullptr},      ' \
                             for j in range(i*8, i*8+8))
                 strings.append('\n')
             strings.append('};\n\n')
 
-        shift_mod = 1
-        ctrl_mod = 2
-        alt_mod = 4
-        numlock_mod = 8
-        capslock_mod = 16
-        oem8_mod = 32
 
         mods_to_mask = {
             '': 0,
-            'VK_SHIFT': shift_mod,
-            'VK_CONTROL': ctrl_mod,
-            'VK_MENU': alt_mod,
-            'VK_NUMLOCK': numlock_mod,
-            'VK_CAPITAL': capslock_mod,
-            'VK_OEM_8': oem8_mod,
+            'VK_SHIFT': 1,
+            'VK_CONTROL': 2,
+            'VK_MENU': 4,
+            'VK_NUMLOCK': 8,
+            'VK_CAPITAL': 16,
+            'VK_OEM_8': 32,
         }
 
         # prepare keymap_mod and dkeymap_mod
@@ -557,7 +554,7 @@ if __name__ == "__main__":
             k1 = unique_layout_keymap.setdefault(k1, len(unique_layout_keymap))
             k2 = unique_layout_dkeymap.setdefault(k2, len(unique_layout_dkeymap))
             layout = normal_layout.layout
-            strings2.append(f'    KeyLayout{{0x{layout.klid}, "{layout.locale_name}", "{layout.display_name}", keymap_mod_{k1}, dkeymap_mod_{k2}, ')
+            strings2.append(f'    KeyLayout2{{KeyLayout2::KbdId(0x{layout.klid}), "{layout.locale_name}", /*"{layout.display_name}", */keymap_mod_{k1}, dkeymap_mod_{k2}, ')
 
             mods_array = [0]*64
             for mod, keymap, dkeymap, idx in extended_layout.keymaps:
@@ -570,20 +567,25 @@ if __name__ == "__main__":
         strings2.append('};\n')
 
         # print layout
-        for unique_layout,prefix in ((unique_layout_keymap, ''), (unique_layout_dkeymap, 'd')):
+        for unique_layout,prefix,atype in (
+            (unique_layout_keymap, '', 'KeyLayout2::unicode_t'),
+            (unique_layout_dkeymap, 'd', 'DKeyTable')
+        ):
             for k,idx in unique_layout.items():
-                strings.append(f'static constexpr sized_array_view<uin16_t, 128> {prefix}keymap_mod_{idx}[] {{\n')
-                for i in range(64//4):
-                    strings.append(f'    {prefix}keymap_mod_{k[i*4]}, {prefix}keymap_mod_{k[i*4+1]}, {prefix}keymap_mod_{k[i*4+2]}, {prefix}keymap_mod_{k[i*4+3]},\n')
+                strings.append(f'static constexpr sized_array_view<{atype}, 128> {prefix}keymap_mod_{idx}[] {{\n')
+                for i in range(64//8):
+                    strings.append('   ')
+                    strings += (f' {prefix}keymap_{k[i]},' for i in range(i*8, i*8+8))
+                    strings.append('\n')
                 strings.append('};\n\n')
 
         # print layout
-        strings2.append('\narray_view<KeyLayout> get_layouts(uint32_t id) noexcept\n')
+        strings2.append('\narray_view<KeyLayout> KeyLayout2::keylayouts() noexcept\n')
         strings2.append('{\n    return layouts;\n}\n\n')
-        strings2.append('KeyLayout const* get_layout_by_id(uint32_t id) noexcept\n')
+        strings2.append('KeyLayout const* KeyLayout2::find_layout_by_id(KbdId id) noexcept\n')
         strings2.append('{\n    switch (id)\n    {\n')
         for i,(layout,keymaps) in enumerate(normal_layouts):
-            strings2.append(f'    case {layout.klid}: return &layouts[{i}];\n')
+            strings2.append(f'    case 0x{layout.klid}: return &layouts[{i}];\n')
         strings2.append('    }\n    return nullptr;\n}\n')
 
         print(''.join(strings))
