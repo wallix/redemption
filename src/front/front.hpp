@@ -5153,8 +5153,6 @@ private:
 
         Keymap2::DecodedKeys decoded_keys = this->keymap.event(
             KeyboardFlags::get(ke), ke.keyCode, tsk_switch_shortcuts);
-        //LOG(LOG_INFO, "Decoded keyboard input data:");
-        //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
         if (this->state == FRONT_UP_AND_RUNNING) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {

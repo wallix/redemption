@@ -418,8 +418,6 @@ public:
 
     bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
     {
-        LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::rdp_input_scancode: device_flags=0x%04X keyCode=0x%X", keyboardFlags, keyCode);
-
         if (this->keyboard_shortcut_blocker_sp)
         {
             return this->keyboard_shortcut_blocker_sp->scancode_mast_be_blocked(keyboardFlags, keyCode);
