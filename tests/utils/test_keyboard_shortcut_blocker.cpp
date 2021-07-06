@@ -27,11 +27,11 @@ RED_AUTO_TEST_CASE(Test_KeyboardShortcutBlocker_0)
 {
     KeyboardShortcutBlocker keyboard_shortcut_blocker(0x40c, std::string("Ctrl+S"), true);
 
-    RED_CHECK(!keyboard_shortcut_blocker.scancode_mast_be_blocked(0x0, 0x1D));
+    RED_CHECK(!keyboard_shortcut_blocker.scancode_must_be_blocked(0x0, 0x1D));
 
-    RED_CHECK(keyboard_shortcut_blocker.scancode_mast_be_blocked(0x0, 0x1F));
+    RED_CHECK(keyboard_shortcut_blocker.scancode_must_be_blocked(0x0, 0x1F));
 
-    RED_CHECK(keyboard_shortcut_blocker.scancode_mast_be_blocked(0x08000, 0x1F));
+    RED_CHECK(keyboard_shortcut_blocker.scancode_must_be_blocked(0x08000, 0x1F));
 
-    RED_CHECK(!keyboard_shortcut_blocker.scancode_mast_be_blocked(0x08000, 0x1D));
+    RED_CHECK(!keyboard_shortcut_blocker.scancode_must_be_blocked(0x08000, 0x1D));
 }

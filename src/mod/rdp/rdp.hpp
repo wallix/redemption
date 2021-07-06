@@ -416,11 +416,11 @@ public:
     , keylayout(keylayout)
     {}
 
-    bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
+    bool scancode_must_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
     {
         if (this->keyboard_shortcut_blocker_sp)
         {
-            return this->keyboard_shortcut_blocker_sp->scancode_mast_be_blocked(keyboardFlags, keyCode);
+            return this->keyboard_shortcut_blocker_sp->scancode_must_be_blocked(keyboardFlags, keyCode);
         }
 
         return false;
@@ -2436,7 +2436,7 @@ public:
             }
 
 #ifndef __EMSCRIPTEN__
-            if (!this->channels.scancode_mast_be_blocked(device_flags, param1))
+            if (!this->channels.scancode_must_be_blocked(device_flags, param1))
             {
                 this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
             }

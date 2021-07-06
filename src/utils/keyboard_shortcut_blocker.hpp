@@ -144,11 +144,11 @@ class KeyboardShortcutBlocker
                 "KeyboardShortcutBlocker::Shortcut::Shortcut(): FinalKeyCode=0x%X", this->final_key_code);
         }
 
-        bool scancode_mast_be_blocked(bool alt, bool ctrl, bool shift, bool meta, uint16_t keyboardFlags,
+        bool scancode_must_be_blocked(bool alt, bool ctrl, bool shift, bool meta, uint16_t keyboardFlags,
             uint16_t keyCode)
         {
             LOG_IF(this->verbose, LOG_INFO,
-                "KeyboardShortcutBlocker::Shortcut::scancode_mast_be_blocked(): "
+                "KeyboardShortcutBlocker::Shortcut::scancode_must_be_blocked(): "
                     "Ctrl=%s Alt=%s Shift=%s Meta=%s keyboardFlags=0x%04X",
                 ctrl ? "Yes" : "No",
                 alt ? "Yes" : "No",
@@ -169,7 +169,7 @@ class KeyboardShortcutBlocker
                         this->pressed = false;
 
                         LOG_IF(this->verbose, LOG_INFO,
-                            "KeyboardShortcutBlocker::Shortcut::scancode_mast_be_blocked(): Key-release event. Shortcut=\"%s\"",
+                            "KeyboardShortcutBlocker::Shortcut::scancode_must_be_blocked(): Key-release event. Shortcut=\"%s\"",
                             this->shortcut_string.c_str());
 
                         return true;
@@ -180,7 +180,7 @@ class KeyboardShortcutBlocker
                     this->pressed = true;
 
                     LOG_IF(this->verbose, LOG_INFO,
-                        "KeyboardShortcutBlocker::Shortcut::scancode_mast_be_blocked(): Key-down event. Shortcut=\"%s\"",
+                        "KeyboardShortcutBlocker::Shortcut::scancode_must_be_blocked(): Key-down event. Shortcut=\"%s\"",
                         this->shortcut_string.c_str());
 
                     return true;
@@ -271,7 +271,7 @@ private:
     }
 
 public:
-    bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
+    bool scancode_must_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
     {
         bool pressed = !(keyboardFlags & SlowPath::KBDFLAGS_RELEASE);
 
@@ -318,7 +318,7 @@ public:
 
         for (auto & shortcut : this->shortcuts)
         {
-            if (shortcut.scancode_mast_be_blocked(
+            if (shortcut.scancode_must_be_blocked(
                     this->left_alt_pressed || this->right_alt_pressed,
                     this->left_ctrl_pressed || this->right_ctrl_pressed,
                     this->left_shift_pressed || this->right_shift_pressed,
