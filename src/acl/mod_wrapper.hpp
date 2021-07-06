@@ -158,9 +158,7 @@ public:
             this->clear_osd_message();
         }
         if (!message.empty()) {
-            str_assign(this->osd_message,
-                       message,
-                       " ",
+            str_assign(this->osd_message, message, ' ',
                        TR(trkeys::disable_osd, language(this->ini)));
             this->is_disable_by_input = true;
             this->prepare_osd_message();
@@ -245,16 +243,6 @@ private:
             keymap->get_kevent();
             this->disable_osd();
             return;
-        }
-        if (this->enable_osd) {
-
-            if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
-                && keymap->top_kevent() == Keymap2::KEVENT_INSERT
-            ) {
-                keymap->get_kevent();
-                this->disable_osd();
-                this->target_info_is_shown = false;
-            }
         }
 
         this->get_mod().rdp_input_scancode(param1, param2, param3, param4, keymap);
