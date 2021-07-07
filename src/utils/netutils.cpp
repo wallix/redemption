@@ -23,7 +23,6 @@
 
 #include "utils/netutils.hpp"
 
-#include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/select.hpp"
 #include "utils/sugar/int_to_chars.hpp"
@@ -463,6 +462,164 @@ struct LineBuffer
     }
 };
 
+namespace minipeg
+{
+namespace
+{
+    struct Rng
+    {
+        char const* s;
+        char const* e;
+
+        std::size_t size() const noexcept { return std::size_t(e-s); }
+    };
+
+    auto to_parser(char c)
+    {
+        return [c](Rng& r){
+            if (*r.s == c) {
+                ++r.s;
+                return true;
+            }
+            return false;
+        };
+    }
+
+    auto to_parser(std::string_view s)
+    {
+        return [s](Rng& r){
+            if (r.size() >= s.size()) {
+                if (std::string_view(r.s, s.size()) == s) {
+                    r.s += s.size();
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    auto to_parser(char const* s)
+    {
+        return to_parser(std::string_view(s));
+    }
+
+    template<class P>
+    P to_parser(P p)
+    {
+        return p;
+    }
+
+    template<class... Ps>
+    auto group(Ps... ps)
+    {
+        if constexpr (sizeof...(Ps) == 1) {
+            return [](auto p) { return p; }(to_parser(ps)...);
+        }
+        else {
+            return [](auto... p) {
+                return [=](Rng& r){
+                    auto s = r.s;
+                    if ((... && p(r))) {
+                        return true;
+                    }
+                    r.s = s;
+                    return false;
+                };
+            }(to_parser(ps)...);
+        }
+    }
+
+    template<class... Ps>
+    auto zero_or_one(Ps... ps)
+    {
+        return [p = group(ps...)](Rng& r){
+            p(r);
+            return true;
+        };
+    }
+
+    template<class... Ps>
+    auto one_or_more(Ps... ps)
+    {
+        return [p = group(ps...)](Rng& r){
+            if (p(r)) {
+                while (p(r)) {
+                }
+                return true;
+            }
+            return false;
+        };
+    }
+
+    template<std::size_t N, std::size_t M = N, class... Ps>
+    auto repeat(Ps... ps)
+    {
+        return [p = group(ps...)](Rng& r){
+            auto s = r.s;
+            for (std::size_t i = 0; i < N; ++i) {
+                if (!p(r)) {
+                    r.s = s;
+                    return false;
+                }
+            }
+
+            for (std::size_t i = N; i < M && p(r); ++i) {
+            }
+
+            return true;
+        };
+    }
+
+    template<class... Ps>
+    auto after(Ps... ps)
+    {
+        return [p = group(ps...)](Rng& r){
+            auto s = r.s;
+            while (!p(r)) {
+                ++r.s;
+                if (r.s == r.e) {
+                    r.s = s;
+                    return false;
+                }
+            }
+            return true;
+        };
+    }
+
+    template<class F>
+    auto is(F f)
+    {
+        return [f](Rng& r){
+            if (f(*r.s)) {
+                ++r.s;
+                return true;
+            }
+            return false;
+        };
+    }
+
+    struct Capture
+    {
+        char const* start;
+        char const* end;
+    };
+
+    template<class... Ps>
+    auto capture(Capture& cap, Ps... ps)
+    {
+        return [&cap, p = group(ps...)](Rng& r){
+            auto s = r.s;
+            if (p(r)) {
+                cap.start = s;
+                cap.end = r.s;
+                return true;
+            }
+            return false;
+        };
+    }
+} // namespace minpeg
+} // anonymous namespace
+
 zstring_view parse_ip_conntrack(
     int fd, const char * source, const char * dest, int sport, int dport,
     writable_bytes_view transparent_dest, uint32_t verbose)
@@ -470,33 +627,34 @@ zstring_view parse_ip_conntrack(
     LineBuffer line(fd);
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
 
-    char strre[512];
-#define RE_IP_DEF "\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?"
-    // sprintf(strre,
-    //         "^ *6 +\\d+ +ESTABLISHED +"
-    //         "src=" RE_IP_DEF " +"
-    //         "dst=(" RE_IP_DEF ") +"
-    //         "sport=\\d+ +dport=\\d+( +packets=\\d+ bytes=\\d+)? +"
-    //         "src=%s +"
-    //         "dst=%s +"
-    //         "sport=%d +dport=%d( +packets=\\d+ bytes=\\d+)? +"
-    //         "\\[ASSURED] +mark=\\d+ +secmark=\\d+ use=\\d+$",
-    //         source, dest, sport, dport
-    // );
-    sprintf(strre,
-            "^(?:ipv4 +2 +)?"
-            "tcp +6 +\\d+ +ESTABLISHED +"
-            "src=" RE_IP_DEF " +"
-            "dst=(" RE_IP_DEF ") +"
-            "sport=\\d+ +dport=\\d+ .*"
-            "src=%s +"
-            "dst=%s +"
-            "sport=%d +dport=%d .*"
-            "\\[ASSURED].*",
-            source, dest, sport, dport
+    using namespace minipeg;
+
+    Capture ip_dest_cap;
+    auto sport_s = int_to_decimal_chars(sport);
+    auto dport_s = int_to_decimal_chars(dport);
+
+    auto sv = [](chars_view av) { return std::string_view(av.data(), av.size()); };
+    auto is_digit = [](char c) { return c <= '9' && c >= '0'; };
+
+    auto digit = is(is_digit);
+    auto ws = one_or_more(' ');
+    auto int_ = one_or_more(digit);
+    auto int3 = repeat<1, 3>(digit);
+    auto ip = group(int3, '.', int3, '.', int3, '.', int3);
+
+    auto parser = group(
+        zero_or_one("ipv4", ws, '2', ws),
+        "tcp", ws, '6', ws, int_, ws, "ESTABLISHED", ws,
+        "src=", ip, ws,
+        "dst=", capture(ip_dest_cap, ip), ws,
+        "sport=", int_, ws,
+        "dport=", int_, ' ',
+        after("src="), source, ws,
+        "dst=", dest, ws,
+        "sport=", sv(sport_s), ws,
+        "dport=", sv(dport_s), ' ',
+        after("[ASSURED]")
     );
-#undef RE_IP_DEF
-    re::Regex regex(strre);
 
     int status = line.readline();
     for (; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
@@ -515,15 +673,15 @@ zstring_view parse_ip_conntrack(
             line.buffer[line.eol-1] = 0;
         }
 
-        re::Regex::range_matches matches = regex.exact_match(s);
-        if ( ! matches.empty() ) {
-            const size_t match_size = matches[0].second - matches[0].first;
+        Rng rng{s, line.buffer + (line.eol - 1)};
+        if (parser(rng)) {
+            const size_t match_size = std::size_t(ip_dest_cap.end - ip_dest_cap.start);
             if (match_size >= transparent_dest.size()){
                 LOG(LOG_WARNING, "No enough space to store transparent ip target address");
                 return zstring_view{};
             }
 
-            memcpy(transparent_dest.data(), matches[0].first, match_size);
+            memcpy(transparent_dest.data(), ip_dest_cap.start, match_size);
             transparent_dest[match_size] = 0;
 
             auto ip = zstring_view::from_null_terminated(
