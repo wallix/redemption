@@ -33,8 +33,8 @@ namespace
 {
     ImageView create_img(
         uint16_t width, uint16_t height, uint8_t const* data,
-        unsigned line_bytes, BytesPerPixel bytes_per_pixel
-    ) noexcept
+        unsigned line_bytes, BytesPerPixel bytes_per_pixel,
+        ImageView::Storage storage) noexcept
     {
         return ImageView(
             data,
@@ -42,15 +42,25 @@ namespace
             height,
             line_bytes,
             bytes_per_pixel,
-            ImageView::Storage::BottomToTop,
+            storage,
             &BGRPalette::classic_332()
         );
     }
 } // namespace anonymous
 
-DrawablePointer::DrawablePointer()
-    : image_data_view_data(create_img(0, 0, nullptr, 0, BytesPerPixel{3}))
-    , image_data_view_mask(create_img(0, 0, nullptr, 0, BytesPerPixel{3}))
+DrawablePointer::DrawablePointer() :
+    image_data_view_data(create_img(0,
+                                    0,
+                                    nullptr,
+                                    0,
+                                    BytesPerPixel{3},
+                                    ImageView::Storage::BottomToTop)),
+    image_data_view_mask(create_img(0,
+                                    0,
+                                    nullptr,
+                                    0,
+                                    BytesPerPixel{3},
+                                    ImageView::Storage::BottomToTop))
 {
     static_assert(std::size_t(RdpPointer::DATA_SIZE) == sizeof(this->data));
     static_assert(MAX_WIDTH * MAX_HEIGHT * Drawable::Bpp == sizeof(BufferSaver));
@@ -73,6 +83,7 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
 
     const BitsPerPixel bits_per_pixel = cursor.xor_bits_per_pixel();
     auto pointer_data = cursor.xor_mask();
+    auto storage = ImageView::Storage::BottomToTop;
 
     switch (bits_per_pixel) {
         case BitsPerPixel::BitsPP1: {
@@ -98,8 +109,14 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
                 }
             }
 
-            this->image_data_view_data = create_img(
-                this->width, this->height, this->data, this->width * 3, BytesPerPixel(3));
+            storage = ImageView::Storage::TopToBottom;
+
+            this->image_data_view_data = create_img(this->width,
+                                                    this->height,
+                                                    this->data,
+                                                    this->width * 3,
+                                                    BytesPerPixel(3),
+                                                    storage);
             break;
         }
 
@@ -134,8 +151,14 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
                 }
             }
 
-            this->image_data_view_data = create_img(
-                this->width, this->height, this->data, this->width * 3, BytesPerPixel(3));
+            storage = ImageView::Storage::TopToBottom;
+
+            this->image_data_view_data = create_img(this->width,
+                                                    this->height,
+                                                    this->data,
+                                                    this->width * 3,
+                                                    BytesPerPixel(3),
+                                                    storage);
             break;
         }
 
@@ -149,8 +172,12 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
                 this->width * underlying_cast(bytes_per_pixel));
 
             ::memcpy(this->data, pointer_data.data(), pointer_data.size());
-            this->image_data_view_data = create_img(
-                this->width, this->height, this->data, line_bytes, bytes_per_pixel);
+            this->image_data_view_data = create_img(this->width,
+                                                    this->height,
+                                                    this->data,
+                                                    line_bytes,
+                                                    bytes_per_pixel,
+                                                    storage);
             break;
         }
 
@@ -179,8 +206,12 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
     /* xorMask doesn't contain alpha channel info,
         so we will skip the 4th byte on each pixel
         on reading with BytesPerPixel{3} rather than BytesPerPixel{4} */
-    this->image_data_view_mask = create_img(
-        this->width, this->height, this->mask, this->width * 3, BytesPerPixel{3});
+    this->image_data_view_mask = create_img(this->width,
+                                            this->height,
+                                            this->mask,
+                                            this->width * 3,
+                                            BytesPerPixel{3},
+                                            storage);
 }
 
 void DrawablePointer::trace_mouse(Drawable& drawable, BufferSaver& drawable_buffer) const
