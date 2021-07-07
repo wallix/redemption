@@ -2907,6 +2907,12 @@ test-run tests/keyboard/scancode/test_unicode_to_scancode :
   <covfile>src/keyboard/scancode/unicode_to_scancode.cpp
   <covfile>src/keyboard/scancode/unicode_to_scancode.hpp
 ;
+test-run tests/keyboard/test_keymap :
+  $(REDEMPTION_TEST_PATH)/keyboard/test_keymap.cpp
+:
+  <library>src/keyboard/keylayout2.o
+  <covfile>src/keyboard/keymap.hpp
+;
 test-run tests/keyboard/test_keymap2 :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymap2.cpp
 :
@@ -6221,6 +6227,7 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
+obj src/keyboard/keylayout2.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayout2.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/keyboard/scancode/autogen/all_LCIDs_scancodes.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
@@ -6511,6 +6518,7 @@ alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
 alias test_unicode_to_scancode : tests/keyboard/scancode/test_unicode_to_scancode ;
+alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymap2 : tests/keyboard/test_keymap2 ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
@@ -6858,6 +6866,7 @@ alias test_graphic_cmd_color.coverage : tests/gdi/test_graphic_cmd_color.coverag
 alias test_protected_graphics.coverage : tests/gdi/test_protected_graphics.coverage ;
 alias test_text_metrics.coverage : tests/gdi/test_text_metrics.coverage ;
 alias test_unicode_to_scancode.coverage : tests/keyboard/scancode/test_unicode_to_scancode.coverage ;
+alias test_keymap.coverage : tests/keyboard/test_keymap.coverage ;
 alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
 alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
 alias test_bouncer2_mod.coverage : tests/mod/internal/test_bouncer2_mod.coverage ;
@@ -7261,6 +7270,7 @@ alias tests/keyboard/scancode.norec :
   tests/keyboard/scancode/test_unicode_to_scancode
 ;
 alias tests/keyboard.norec :
+  tests/keyboard/test_keymap
   tests/keyboard/test_keymap2
   tests/keyboard/test_keymapsym
 ;
