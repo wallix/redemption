@@ -170,7 +170,7 @@ public:
     {
         auto new_mod = new SelectorMod(
             this->ini,
-            this->graphics,
+            this->mod_wrapper.get_graphics(),
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

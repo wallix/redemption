@@ -27,18 +27,29 @@ Author(s): Proxy Team
 
 namespace gdi
 {
+    enum class OsdMsgUrgency : std::uint8_t
+    {
+       NORMAL,
+       INFO,
+       WARNING,
+       ALERT
+    };
+
     class OsdApi : private noncopyable
     {
     public:
-        virtual void display_osd_message(std::string_view message) = 0;
+        virtual void display_osd_message(std::string_view message,
+                                         OsdMsgUrgency omu = OsdMsgUrgency::NORMAL) = 0;
         virtual ~OsdApi() = default;
     };
 
     struct NullOsd : gdi::OsdApi
     {
-        void display_osd_message(std::string_view message) override
+        void display_osd_message(std::string_view message,
+                                 OsdMsgUrgency omu = OsdMsgUrgency::NORMAL) override
         {
             (void)message;
+            (void)omu;
         }
     };
 } // namespace gdi

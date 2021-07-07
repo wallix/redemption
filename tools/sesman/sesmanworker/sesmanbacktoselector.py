@@ -7,6 +7,8 @@
 back_to_selector_default_sent = {
     u'alternate_shell': u'',
     u'auth_channel_answer': u'',
+    u'banner_message': u'',
+    u'banner_type': 0,
     u'device_id': u'',
     u'duration_max': 0,
     u'formflag': 0,

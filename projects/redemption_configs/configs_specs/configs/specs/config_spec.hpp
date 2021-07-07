@@ -940,6 +940,9 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), names{"rail_module_host_mod_is_active"}, set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"smartcard_login"});
+
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"banner_message"});
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<BannerType>(), names{"banner_type"});
     });
 
     W.section("theme", [&]

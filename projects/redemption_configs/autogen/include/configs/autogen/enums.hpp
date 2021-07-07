@@ -613,3 +613,15 @@ template<> struct is_valid_enum_value<LoginLanguage>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
+enum class BannerType : uint8_t
+{
+    info = 0,
+    warn = 1,
+    alert = 2,
+};
+
+template<> struct is_valid_enum_value<BannerType>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 2; }
+};
+

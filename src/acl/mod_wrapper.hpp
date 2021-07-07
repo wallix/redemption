@@ -74,6 +74,7 @@ private:
     Inifile & ini;
 
     std::string osd_message;
+    bool allow_disable_osd_message;
     Rect clip;
     RDPColor color;
     RDPColor background_color;
@@ -89,8 +90,10 @@ private:
     MonotonicTimePoint end_time_session {};
     TimeBase const& time_base;
 
+    gdi::MultiLineTextMetrics line_metrics;
+
 public:
-    explicit ModWrapper(
+   explicit ModWrapper(
         CRef<TimeBase> time_base, BGRPalette const & palette, gdi::GraphicApi& graphics,
         Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs,
         ClientExecute & rail_client_execute, Inifile & ini)
@@ -99,6 +102,7 @@ public:
     , rail_client_execute(rail_client_execute)
     , palette(palette)
     , ini(ini)
+    , allow_disable_osd_message(false)
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
     , keymap(keymap)
@@ -152,16 +156,20 @@ public:
         return this->gfilter;
     }
 
-    void display_osd_message(std::string_view message) override
+    void display_osd_message(std::string_view message,
+                             gdi::OsdMsgUrgency omu = gdi::OsdMsgUrgency::NORMAL) override
     {
         if (message != this->osd_message) {
             this->clear_osd_message();
         }
         if (!message.empty()) {
-            str_assign(this->osd_message, message, ' ',
+            str_assign(this->osd_message,
+                       message,
+                       ' ',
                        TR(trkeys::disable_osd, language(this->ini)));
+            this->allow_disable_osd_message = true;
             this->is_disable_by_input = true;
-            this->prepare_osd_message();
+            this->prepare_osd_message(omu);
             this->draw_osd_message();
         }
     }
@@ -284,8 +292,9 @@ private:
                     }
                     if (!msg.empty()) {
                         this->osd_message = std::move(msg);
+                        this->allow_disable_osd_message = false;
                         this->is_disable_by_input = false;
-                        this->prepare_osd_message();
+                        this->prepare_osd_message(gdi::OsdMsgUrgency::NORMAL);
                         this->draw_osd_message();
                     }
 
@@ -374,31 +383,87 @@ private:
     static constexpr int padw = 16;
     static constexpr int padh = 16;
 
-    void prepare_osd_message()
+    void prepare_osd_message(gdi::OsdMsgUrgency omu)
     {
         this->bogus_refresh_rect_ex
           = (this->ini.get<cfg::globals::bogus_refresh_rect>()
          && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
          && (this->client_info.cs_monitor.monitorCount > 1));
 
-        gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
-        int w = tm.width + padw * 2;
-        int h = tm.height + padh * 2;
-        this->color = color_encode(BGRColor(BLACK), this->client_info.screen_info.bpp);
-        this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->client_info.screen_info.bpp);
+        BGRColor bgr_color;
+        BGRColor bgr_background_color;
+
+        switch (omu)
+        {
+           case gdi::OsdMsgUrgency::NORMAL :
+               bgr_color = BLACK;
+               bgr_background_color = LIGHT_YELLOW;
+               break;
+           case gdi::OsdMsgUrgency::INFO :
+               bgr_color = BLUE;
+               bgr_background_color = LIGHT_YELLOW;
+               this->osd_message.insert(0, "INFO: ");
+               break;
+           case gdi::OsdMsgUrgency::WARNING :
+               bgr_color = ORANGE;
+               bgr_background_color = LIGHT_YELLOW;
+               this->osd_message.insert(0, "WARNING: ");
+               break;
+           case gdi::OsdMsgUrgency::ALERT :
+               bgr_color = RED;
+               bgr_background_color = LIGHT_YELLOW;
+               this->osd_message.insert(0, "ALERT: ");
+               break;
+        }
+
+        this->color = color_encode(bgr_color,
+                                   this->client_info.screen_info.bpp);
+        this->background_color = color_encode(bgr_background_color,
+                                              this->client_info.screen_info.bpp);
 
         if (this->client_info.remote_program
-        && (this->winapi == static_cast<windowing_api*>(&this->rail_client_execute))) {
+            && (this->winapi == static_cast<windowing_api *>(&this->rail_client_execute)))
+        {
+            Rect current_work_area_rect =
+                this->rail_client_execute.get_current_work_area_rect();
 
-            Rect current_work_area_rect = this->rail_client_execute.get_current_work_area_rect();
+            this->line_metrics =
+                gdi::MultiLineTextMetrics(this->glyphs,
+                                          this->osd_message.c_str(),
+                                          current_work_area_rect.cx - padw);
+
+            int w = this->line_metrics.max_width() + padw * 2;
+            int h = this->line_metrics.lines().size()
+                * this->glyphs.max_height()
+                + padh
+                * 2;
 
             this->clip = Rect(
-                current_work_area_rect.x +
-                    (current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
-                0, w, h);
+                current_work_area_rect.x + (
+                   current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
+                0,
+                w,
+                h);
         }
-        else {
-            this->clip = Rect(this->client_info.screen_info.width < w ? 0 : (this->client_info.screen_info.width - w) / 2, 0, w, h);
+        else
+        {
+            this->line_metrics =
+                gdi::MultiLineTextMetrics(this->glyphs,
+                                          this->osd_message.c_str(),
+                                          this->client_info.screen_info.width - padw);
+
+            int w = this->line_metrics.max_width() + padw * 2;
+            int h = this->line_metrics.lines().size()
+                * this->glyphs.max_height()
+                + padh
+                * 2;
+
+            this->clip = Rect(
+                this->client_info.screen_info.width < w ?
+                    0 : (this->client_info.screen_info.width - w) / 2,
+                0,
+                w,
+                h);
         }
 
         this->set_protected_rect(this->clip);
@@ -442,12 +507,39 @@ private:
             encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
         drawable.draw(line_etop, this->clip, color_ctx);
 
-        gdi::server_draw_text(
-            drawable, this->glyphs,
-            osd_rect.x + padw, padh,
-            this->osd_message.c_str(),
-            this->color, this->background_color, color_ctx, this->clip
-        );
+        auto lines = this->line_metrics.lines();
+        int16_t dy = padh;
+        uint32_t i = 0;
+
+        while (i < lines.size() - 1)
+        {
+            gdi::server_draw_text(
+                drawable,
+                this->glyphs,
+                osd_rect.x + padw,
+                dy,
+                lines[i++].str,
+                this->color,
+                this->background_color,
+                color_ctx,
+                this->clip);
+            dy += padh;
+        }
+
+        if (this->allow_disable_osd_message)
+        {
+            gdi::server_draw_text(
+                drawable,
+                this->glyphs,
+                osd_rect.x + padw,
+                dy + 4,
+                lines[i].str,
+                color_encode(BGRColor(BLACK),
+                             this->client_info.screen_info.bpp),
+                this->background_color,
+                color_ctx,
+                this->clip);
+        }
 
         this->clip = Rect();
     }
@@ -491,4 +583,3 @@ private:
         return false;
     }
 };
-

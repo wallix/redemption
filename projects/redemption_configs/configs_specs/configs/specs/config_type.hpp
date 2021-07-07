@@ -252,6 +252,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("EN")
       .value("FR")
     ;
+
+    e.enumeration_list("BannerType")
+      .value("info")
+      .value("warn")
+      .value("alert")
+    ;
 }
 
 }

@@ -217,6 +217,8 @@ namespace configs
         "rd_shadow_invitation_addr"_zv,
         "rd_shadow_invitation_port"_zv,
         "smartcard_login"_zv,
+        "banner_message"_zv,
+        "banner_type"_zv,
     };
 
 

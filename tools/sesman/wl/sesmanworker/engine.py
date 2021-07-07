@@ -147,6 +147,7 @@ class Engine(object):
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
+        self._selector_banner = {}
         self.challenge = None
         self.session_record = None
         self.session_record_type = None
@@ -342,6 +343,17 @@ class Engine(object):
                           "'wabengine', key 'trace', (((%s)))" %
                           traceback.format_exc())
         return u'localfile_hashed'
+
+    def get_selector_banner(self):
+        try:
+            self._selector_banner = self.wabengine_conf.get('banner')
+        except Exception:
+            import traceback
+            Logger().info("Engine get_selector_banner failed: "
+                          "configuration file section "
+                          "'wabgine', key 'trace', (((%s)))" %
+                          traceback.format_exc())
+        return self._selector_banner
 
     def get_trace_encryption_key(self, path, old_scheme=False):
         with manage_transaction(self.wabengine):
