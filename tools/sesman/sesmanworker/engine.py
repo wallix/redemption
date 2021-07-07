@@ -58,6 +58,7 @@ from .checkout import (
     SHADOW_REJECTED,
 )
 from . import targetaccuratefilter as taf
+from .addrutils import is_device_in_subnet
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
 DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
@@ -66,34 +67,6 @@ FINGERPRINT_SHA1 = 0
 FINGERPRINT_MD5 = 1
 FINGERPRINT_MD5_LEN = 16
 FINGERPRINT_SHA1_LEN = 20
-
-
-def _binary_ip(network, bits):
-    # TODO need Ipv6 support
-    # This is a bit too resilient, add check for obviously bad values
-    a, b, c, d = [int(x) & 0xFF for x in network.split('.')]
-    mask = (0xFFFFFFFF >> bits) ^ 0xFFFFFFFF
-    return ((a << 24) + (b << 16) + (c << 8) + d) & mask
-
-
-def is_device_in_subnet(device, subnet):
-    if subnet is None:
-        return False
-    if '/' in subnet:
-        try:
-            network, bits = subnet.rsplit('/')
-            network_bits = _binary_ip(network, int(bits))
-            device_bits = _binary_ip(device, int(bits))
-            result = network_bits == device_bits
-        except Exception as e:
-            Logger().error("Bad host definition device '%s' subnet '%s': %s" %
-                           (device, subnet, str(e)))
-            result = False
-    else:
-        result = device == subnet
-    Logger().debug("checking if device %s is in subnet %s -> %s" %
-                   (device, subnet, ['No', 'Yes'][result]))
-    return result
 
 
 def resolve_reverse_dns(ip_str):
