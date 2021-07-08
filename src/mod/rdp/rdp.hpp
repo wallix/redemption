@@ -128,6 +128,8 @@ struct FileValidatorService;
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
 
+#include "keyboard/keymap2.hpp"
+
 #include <cstdlib>
 #include <deque>
 #include <bitset>
@@ -1997,6 +1999,8 @@ class mod_rdp : public mod_api, public rdp_api
     RDPMetrics * metrics;
     FileValidatorService * file_validator_service;
 #endif
+
+    bool rd_28168_show_input_event = false;
 
 public:
     using Verbose = RDPVerbose;
@@ -5997,6 +6001,25 @@ private:
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath: Synchronize Event toggleFlags=0x%X",
                 static_cast<unsigned>(param1));
         }
+else if (message_type == RDP_INPUT_SCANCODE)
+{
+    if (device_flags & SlowPath::KBDFLAGS_RELEASE && param1 == Keymap2::F12)
+    {
+        rd_28168_show_input_event = !rd_28168_show_input_event;
+    }
+
+    if (rd_28168_show_input_event)
+    {
+        LOG(LOG_INFO, "mod_rdp::send_input: (s) Scancode 0x%0X", device_flags);
+    }
+}
+else if (message_type == RDP_INPUT_MOUSE)
+{
+    if (rd_28168_show_input_event)
+    {
+        LOG(LOG_INFO, "mod_rdp::send_input: (s) Mouse 0x%0X %d %d", device_flags, param1, param2);
+    }
+}
 
         this->send_pdu_type2(
             PDUTYPE2_INPUT, RDP::STREAM_HI,
@@ -6060,6 +6083,26 @@ private:
                 channel_data_size = stream.tailroom();
             },
             [&](StreamSize<256> /*maxlen*/, OutStream & fastpath_header, writable_bytes_view packet) {
+if (message_type == RDP_INPUT_SCANCODE)
+{
+    if (device_flags & SlowPath::KBDFLAGS_RELEASE && param1 == Keymap2::F12)
+    {
+        rd_28168_show_input_event = !rd_28168_show_input_event;
+    }
+
+    if (rd_28168_show_input_event)
+    {
+        LOG(LOG_INFO, "mod_rdp::send_input: (f) Scancode 0x%0X", device_flags);
+    }
+}
+else if (message_type == RDP_INPUT_MOUSE)
+{
+    if (rd_28168_show_input_event)
+    {
+        LOG(LOG_INFO, "mod_rdp::send_input: (f) Mouse 0x%0X %d %d", device_flags, param1, param2);
+    }
+}
+
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet.data(), packet.size(), 1,
                     this->encrypt, this->negociation_result.encryptionLevel,
