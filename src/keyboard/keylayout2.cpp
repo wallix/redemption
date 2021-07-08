@@ -87,25 +87,6 @@ static constexpr KeyLayout2::unicode_t keymap_3[128] {
 };
 
 static constexpr KeyLayout2::unicode_t keymap_4[128] {
-/*00-07*/         0,         0,         0,       '2',       '3',       '4',       '5',       '6', 
-/*08-0F*/       '7',       '8',       '9',       '0',         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',       '/',         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',       '"', 
-/*28-2F*/         0,         0,         0,         0,       'y',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_5[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -124,29 +105,7 @@ static constexpr KeyLayout2::unicode_t keymap_5[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_6[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
-       //                                                                ˇ                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '/',       '(',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       '"', 
-/*28-2F*/       '!', DK|0x00b0,         0,      '\'',       'Y',       'X',       'C',       'V', 
-       //                    °                                                                   
-/*30-37*/       'B',       'N',       'M',       '?',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_7[128] {
+static constexpr KeyLayout2::unicode_t keymap_5[128] {
 /*00-07*/         0,         0,         0,    0x011a,    0x0160,    0x010c,    0x0158,    0x017d, 
        //                                          Ě          Š          Č          Ř          Ž 
 /*08-0F*/    0x00dd,    0x00c1,    0x00cd,    0x00c9,         0,         0,         0,         0, 
@@ -169,7 +128,7 @@ static constexpr KeyLayout2::unicode_t keymap_7[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_8[128] {
+static constexpr KeyLayout2::unicode_t keymap_6[128] {
 /*00-07*/         0,         0,         0,    0x011a,    0x0160,    0x010c,    0x0158,    0x017d, 
        //                                          Ě          Š          Č          Ř          Ž 
 /*08-0F*/    0x00dd,    0x00c1,    0x00cd,    0x00c9,         0,         0,         0,         0, 
@@ -192,7 +151,7 @@ static constexpr KeyLayout2::unicode_t keymap_8[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_9[128] {
+static constexpr KeyLayout2::unicode_t keymap_7[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -213,7 +172,7 @@ static constexpr KeyLayout2::unicode_t keymap_9[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_10[128] {
+static constexpr KeyLayout2::unicode_t keymap_8[128] {
 /*00-07*/         0,         0,       '~', DK|0x02c7,    DK|'^', DK|0x02d8, DK|0x00b0, DK|0x02db, 
        //                                          ˇ          ˘          °          ˛ 
 /*08-0F*/    DK|'`', DK|0x02d9, DK|0x00b4, DK|0x02dd, DK|0x00a8, DK|0x00b8,         0,         0, 
@@ -238,7 +197,7 @@ static constexpr KeyLayout2::unicode_t keymap_10[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_11[128] {
+static constexpr KeyLayout2::unicode_t keymap_9[128] {
 /*00-07*/         0,    0x001b,       '+',    0x011b,    0x0161,    0x010d,    0x0159,    0x017e, 
        //                  ESC                     ě          š          č          ř          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -262,7 +221,7 @@ static constexpr KeyLayout2::unicode_t keymap_11[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_12[128] {
+static constexpr KeyLayout2::unicode_t keymap_10[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -286,7 +245,7 @@ static constexpr KeyLayout2::unicode_t keymap_12[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_13[128] {
+static constexpr KeyLayout2::unicode_t keymap_11[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -309,7 +268,7 @@ static constexpr KeyLayout2::unicode_t keymap_13[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_14[128] {
+static constexpr KeyLayout2::unicode_t keymap_12[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -331,29 +290,7 @@ static constexpr KeyLayout2::unicode_t keymap_14[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_15[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00e5,         0,         0,         0,       'a',       's', 
-       //                               å                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00e6, 
-       //                                                                                      æ 
-/*28-2F*/    0x00f8,         0,         0,         0,       'z',       'x',       'c',       'v', 
-       //         ø                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_16[128] {
+static constexpr KeyLayout2::unicode_t keymap_13[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -372,30 +309,7 @@ static constexpr KeyLayout2::unicode_t keymap_16[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_17[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00c5,    DK|'^',      '\r',         0,       'A',       'S', 
-       //                               Å                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00c6, 
-       //                                                                                      Æ 
-/*28-2F*/    0x00d8,    0x00a7,         0,       '*',       'Z',       'X',       'C',       'V', 
-       //         Ø          §                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_18[128] {
+static constexpr KeyLayout2::unicode_t keymap_14[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -417,7 +331,7 @@ static constexpr KeyLayout2::unicode_t keymap_18[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_19[128] {
+static constexpr KeyLayout2::unicode_t keymap_15[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -439,7 +353,7 @@ static constexpr KeyLayout2::unicode_t keymap_19[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_20[128] {
+static constexpr KeyLayout2::unicode_t keymap_16[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -460,7 +374,7 @@ static constexpr KeyLayout2::unicode_t keymap_20[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_21[128] {
+static constexpr KeyLayout2::unicode_t keymap_17[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0,       '|',         0,         0, 
@@ -482,7 +396,7 @@ static constexpr KeyLayout2::unicode_t keymap_21[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_22[128] {
+static constexpr KeyLayout2::unicode_t keymap_18[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -506,7 +420,7 @@ static constexpr KeyLayout2::unicode_t keymap_22[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_23[128] {
+static constexpr KeyLayout2::unicode_t keymap_19[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00df, DK|0x00b4,      '\b',      '\t', 
@@ -530,7 +444,7 @@ static constexpr KeyLayout2::unicode_t keymap_23[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_24[128] {
+static constexpr KeyLayout2::unicode_t keymap_20[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00a7,       '$',       '%',       '&', 
        //                  ESC                                §                                  
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -553,7 +467,7 @@ static constexpr KeyLayout2::unicode_t keymap_24[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_25[128] {
+static constexpr KeyLayout2::unicode_t keymap_21[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00df,         0,         0,         0, 
        //                                                     ß                                  
@@ -576,30 +490,7 @@ static constexpr KeyLayout2::unicode_t keymap_25[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_26[128] {
-/*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
-/*08-0F*/       '7',       '8',       '9',       '0',    0x00df,         0,         0,         0, 
-       //                                                     ß                                  
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00fc,       '+',         0,         0,       'a',       's', 
-       //                               ü                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f6, 
-       //                                                                                      ö 
-/*28-2F*/    0x00e4,         0,         0,       '#',       'y',       'x',       'c',       'v', 
-       //         ä                                                                              
-/*30-37*/       'b',       'n',       'm',       ',',       '.',         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_27[128] {
+static constexpr KeyLayout2::unicode_t keymap_22[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x1e9e,         0,         0,         0, 
        //                                                     ẞ                                  
@@ -619,30 +510,7 @@ static constexpr KeyLayout2::unicode_t keymap_27[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_28[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a7,       '$',       '%',       '&', 
-       //                  ESC                                §                                  
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00dc,       '*',      '\r',         0,       'A',       'S', 
-       //                               Ü                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d6, 
-       //                                                                                      Ö 
-/*28-2F*/    0x00c4,    0x00b0,         0,      '\'',       'Y',       'X',       'C',       'V', 
-       //         Ä          °                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_29[128] {
+static constexpr KeyLayout2::unicode_t keymap_23[128] {
 /*00-07*/         0,         0,       '!',       '"',    0x00a7,       '$',       '%',       '&', 
        //                                                     §                                  
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',         0,         0,         0, 
@@ -665,7 +533,7 @@ static constexpr KeyLayout2::unicode_t keymap_29[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_30[128] {
+static constexpr KeyLayout2::unicode_t keymap_24[128] {
 /*00-07*/         0,         0,       '!',       '"',    0x00a7,       '$',       '%',       '&', 
        //                                                     §                                  
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',         0,         0,         0, 
@@ -688,7 +556,7 @@ static constexpr KeyLayout2::unicode_t keymap_30[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_31[128] {
+static constexpr KeyLayout2::unicode_t keymap_25[128] {
 /*00-07*/         0,         0,         0,    0x00b2,    0x00b3,         0,         0,         0, 
        //                                          ²          ³                                  
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -710,7 +578,7 @@ static constexpr KeyLayout2::unicode_t keymap_31[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_32[128] {
+static constexpr KeyLayout2::unicode_t keymap_26[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00df, DK|0x00b4,      '\b',      '\t', 
@@ -734,7 +602,7 @@ static constexpr KeyLayout2::unicode_t keymap_32[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_33[128] {
+static constexpr KeyLayout2::unicode_t keymap_27[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -759,7 +627,7 @@ static constexpr KeyLayout2::unicode_t keymap_33[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_34[128] {
+static constexpr KeyLayout2::unicode_t keymap_28[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -784,7 +652,7 @@ static constexpr KeyLayout2::unicode_t keymap_34[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_35[128] {
+static constexpr KeyLayout2::unicode_t keymap_29[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x03b5,    0x03c1,    0x03c4,    0x03c5,    0x03b8,    0x03b9, 
@@ -808,31 +676,7 @@ static constexpr KeyLayout2::unicode_t keymap_35[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_36[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/         0,         0,    0x03b5,    0x03c1,    0x03c4,    0x03c5,    0x03b8,    0x03b9, 
-       //                               ε          ρ          τ          υ          θ          ι 
-/*18-1F*/    0x03bf,    0x03c0,         0,         0,         0,         0,    0x03b1,    0x03c3, 
-       //         ο          π                                                      α          σ 
-/*20-27*/    0x03b4,    0x03c6,    0x03b3,    0x03b7,    0x03be,    0x03ba,    0x03bb,         0, 
-       //         δ          φ          γ          η          ξ          κ          λ            
-/*28-2F*/         0,         0,         0,         0,    0x03b6,    0x03c7,    0x03c8,    0x03c9, 
-       //                                                     ζ          χ          ψ          ω 
-/*30-37*/    0x03b2,    0x03bd,    0x03bc,         0,         0,         0,         0,         0, 
-       //         β          ν          μ                                                        
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_37[128] {
+static constexpr KeyLayout2::unicode_t keymap_30[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,    0x001f,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -851,32 +695,7 @@ static constexpr KeyLayout2::unicode_t keymap_37[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_38[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       ':', DK|0x0385,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
-       //                    ΅          Ε          Ρ          Τ          Υ          Θ          Ι 
-/*18-1F*/    0x039f,    0x03a0,       '{',       '}',      '\r',         0,    0x0391,    0x03a3, 
-       //         Ο          Π                                                      Α          Σ 
-/*20-27*/    0x0394,    0x03a6,    0x0393,    0x0397,    0x039e,    0x039a,    0x039b, DK|0x00a8, 
-       //         Δ          Φ          Γ          Η          Ξ          Κ          Λ          ¨ 
-/*28-2F*/       '"',       '~',         0,       '|',    0x0396,    0x03a7,    0x03a8,    0x03a9, 
-       //                                                     Ζ          Χ          Ψ          Ω 
-/*30-37*/    0x0392,    0x039d,    0x039c,       '<',       '>',       '?',         0,       '*', 
-       //         Β          Ν          Μ                                                        
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_39[128] {
+static constexpr KeyLayout2::unicode_t keymap_31[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
@@ -900,7 +719,7 @@ static constexpr KeyLayout2::unicode_t keymap_39[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_40[128] {
+static constexpr KeyLayout2::unicode_t keymap_32[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
@@ -924,7 +743,7 @@ static constexpr KeyLayout2::unicode_t keymap_40[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_41[128] {
+static constexpr KeyLayout2::unicode_t keymap_33[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -945,7 +764,7 @@ static constexpr KeyLayout2::unicode_t keymap_41[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_42[128] {
+static constexpr KeyLayout2::unicode_t keymap_34[128] {
 /*00-07*/         0,         0,         0,    0x00b2,    0x00b3,    0x00a3,    0x00a7,    0x00b6, 
        //                                          ²          ³          £          §          ¶ 
 /*08-0F*/         0,    0x00a4,    0x00a6,    0x00b0,    0x00b1,    0x00bd,         0,         0, 
@@ -970,7 +789,7 @@ static constexpr KeyLayout2::unicode_t keymap_42[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_43[128] {
+static constexpr KeyLayout2::unicode_t keymap_35[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -995,7 +814,7 @@ static constexpr KeyLayout2::unicode_t keymap_43[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_44[128] {
+static constexpr KeyLayout2::unicode_t keymap_36[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -1015,7 +834,7 @@ static constexpr KeyLayout2::unicode_t keymap_44[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_45[128] {
+static constexpr KeyLayout2::unicode_t keymap_37[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -1035,7 +854,7 @@ static constexpr KeyLayout2::unicode_t keymap_45[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_46[128] {
+static constexpr KeyLayout2::unicode_t keymap_38[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -1054,46 +873,7 @@ static constexpr KeyLayout2::unicode_t keymap_46[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_47[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_48[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',       '~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_49[128] {
+static constexpr KeyLayout2::unicode_t keymap_39[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -1112,7 +892,7 @@ static constexpr KeyLayout2::unicode_t keymap_49[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_50[128] {
+static constexpr KeyLayout2::unicode_t keymap_40[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -1131,7 +911,7 @@ static constexpr KeyLayout2::unicode_t keymap_50[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_51[128] {
+static constexpr KeyLayout2::unicode_t keymap_41[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -1152,7 +932,7 @@ static constexpr KeyLayout2::unicode_t keymap_51[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_52[128] {
+static constexpr KeyLayout2::unicode_t keymap_42[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -1172,7 +952,7 @@ static constexpr KeyLayout2::unicode_t keymap_52[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_53[128] {
+static constexpr KeyLayout2::unicode_t keymap_43[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00a1,      '\b',      '\t', 
@@ -1195,7 +975,7 @@ static constexpr KeyLayout2::unicode_t keymap_53[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_54[128] {
+static constexpr KeyLayout2::unicode_t keymap_44[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00b7,       '$',       '%',       '&', 
        //                  ESC                                ·                                  
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    0x00bf,      '\b',      '\t', 
@@ -1218,7 +998,7 @@ static constexpr KeyLayout2::unicode_t keymap_54[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_55[128] {
+static constexpr KeyLayout2::unicode_t keymap_45[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -1239,51 +1019,7 @@ static constexpr KeyLayout2::unicode_t keymap_55[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_56[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f1, 
-       //                                                                                      ñ 
-/*28-2F*/         0,         0,         0,    0x00e7,       'z',       'x',       'c',       'v', 
-       //                                          ç                                             
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_57[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00b7,       '$',       '%',       '&', 
-       //                  ESC                                ·                                  
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    0x00bf,      '\b',      '\t', 
-       //                                                                ¿                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    DK|'^',       '*',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d1, 
-       //                                                                                      Ñ 
-/*28-2F*/ DK|0x00a8,    0x00aa,         0,    0x00c7,       'Z',       'X',       'C',       'V', 
-       //         ¨          ª                     Ç                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_58[128] {
+static constexpr KeyLayout2::unicode_t keymap_46[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -1304,7 +1040,7 @@ static constexpr KeyLayout2::unicode_t keymap_58[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_59[128] {
+static constexpr KeyLayout2::unicode_t keymap_47[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -1325,7 +1061,7 @@ static constexpr KeyLayout2::unicode_t keymap_59[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_60[128] {
+static constexpr KeyLayout2::unicode_t keymap_48[128] {
 /*00-07*/         0,         0,       '|',       '@',       '#',    DK|'~',    0x20ac,    0x00ac, 
        //                                                                €          ¬ 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -1346,7 +1082,7 @@ static constexpr KeyLayout2::unicode_t keymap_60[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_61[128] {
+static constexpr KeyLayout2::unicode_t keymap_49[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00a1,      '\b',      '\t', 
@@ -1369,7 +1105,7 @@ static constexpr KeyLayout2::unicode_t keymap_61[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_62[128] {
+static constexpr KeyLayout2::unicode_t keymap_50[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -1393,7 +1129,7 @@ static constexpr KeyLayout2::unicode_t keymap_62[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_63[128] {
+static constexpr KeyLayout2::unicode_t keymap_51[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -1416,7 +1152,7 @@ static constexpr KeyLayout2::unicode_t keymap_63[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_64[128] {
+static constexpr KeyLayout2::unicode_t keymap_52[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -1438,52 +1174,7 @@ static constexpr KeyLayout2::unicode_t keymap_64[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_65[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00e5,         0,         0,         0,       'a',       's', 
-       //                               å                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f6, 
-       //                                                                                      ö 
-/*28-2F*/    0x00e4,         0,         0,         0,       'z',       'x',       'c',       'v', 
-       //         ä                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_66[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00c5,    DK|'^',      '\r',         0,       'A',       'S', 
-       //                               Å                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d6, 
-       //                                                                                      Ö 
-/*28-2F*/    0x00c4,    0x00bd,         0,       '*',       'Z',       'X',       'C',       'V', 
-       //         Ä          ½                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_67[128] {
+static constexpr KeyLayout2::unicode_t keymap_53[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -1505,7 +1196,7 @@ static constexpr KeyLayout2::unicode_t keymap_67[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_68[128] {
+static constexpr KeyLayout2::unicode_t keymap_54[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -1527,7 +1218,7 @@ static constexpr KeyLayout2::unicode_t keymap_68[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_69[128] {
+static constexpr KeyLayout2::unicode_t keymap_55[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -1549,7 +1240,7 @@ static constexpr KeyLayout2::unicode_t keymap_69[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_70[128] {
+static constexpr KeyLayout2::unicode_t keymap_56[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -1573,7 +1264,7 @@ static constexpr KeyLayout2::unicode_t keymap_70[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_71[128] {
+static constexpr KeyLayout2::unicode_t keymap_57[128] {
 /*00-07*/         0,    0x001b,       '&',    0x00e9,       '"',      '\'',       '(',       '-', 
        //                  ESC                     é                                             
 /*08-0F*/    0x00e8,       '_',    0x00e7,    0x00e0,       ')',       '=',      '\b',      '\t', 
@@ -1595,7 +1286,7 @@ static constexpr KeyLayout2::unicode_t keymap_71[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_72[128] {
+static constexpr KeyLayout2::unicode_t keymap_58[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '+',      '\b',      '\t', 
@@ -1619,7 +1310,7 @@ static constexpr KeyLayout2::unicode_t keymap_72[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_73[128] {
+static constexpr KeyLayout2::unicode_t keymap_59[128] {
 /*00-07*/         0,         0,       '&',    0x00e9,       '"',      '\'',       '(',       '-', 
        //                                          é                                             
 /*08-0F*/    0x00e8,       '_',    0x00e7,    0x00e0,       ')',       '=',         0,         0, 
@@ -1641,29 +1332,7 @@ static constexpr KeyLayout2::unicode_t keymap_73[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_74[128] {
-/*00-07*/         0,         0,       '&',    0x00e9,       '"',      '\'',       '(',       '-', 
-       //                                          é                                             
-/*08-0F*/    0x00e8,       '_',    0x00e7,    0x00e0,       ')',       '=',         0,         0, 
-       //         è                     ç          à                                             
-/*10-17*/       'a',       'z',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    DK|'^',       '$',         0,         0,       'q',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',       'm', 
-/*28-2F*/    0x00f9,         0,         0,       '*',       'w',       'x',       'c',       'v', 
-       //         ù                                                                              
-/*30-37*/       'b',       'n',       ',',       ';',       ':',       '!',         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_75[128] {
+static constexpr KeyLayout2::unicode_t keymap_60[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,    0x001b,    0x001f, 
        //                                                                         ESC            
 /*08-0F*/         0,    0x001c,    0x001e,         0,         0,         0,         0,         0, 
@@ -1683,31 +1352,7 @@ static constexpr KeyLayout2::unicode_t keymap_75[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_76[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '+',      '\b',      '\t', 
-       //                                                     °                                  
-/*10-17*/       'A',       'Z',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P', DK|0x00a8,    0x00a3,      '\r',         0,       'Q',       'S', 
-       //                               ¨          £                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       'M', 
-/*28-2F*/       '%',         0,         0,    0x00b5,       'W',       'X',       'C',       'V', 
-       //                                          µ                                             
-/*30-37*/       'B',       'N',       '?',       '.',       '/',    0x00a7,         0,       '*', 
-       //                                                                §                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_77[128] {
+static constexpr KeyLayout2::unicode_t keymap_61[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '+',         0,         0, 
        //                                                     °                                  
@@ -1730,7 +1375,7 @@ static constexpr KeyLayout2::unicode_t keymap_77[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_78[128] {
+static constexpr KeyLayout2::unicode_t keymap_62[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '+',         0,         0, 
        //                                                     °                                  
@@ -1753,7 +1398,7 @@ static constexpr KeyLayout2::unicode_t keymap_78[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_79[128] {
+static constexpr KeyLayout2::unicode_t keymap_63[128] {
 /*00-07*/         0,         0,         0,    DK|'~',       '#',       '{',       '[',       '|', 
 /*08-0F*/    DK|'`',      '\\',       '^',       '@',       ']',       '}',         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -1774,7 +1419,7 @@ static constexpr KeyLayout2::unicode_t keymap_79[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_80[128] {
+static constexpr KeyLayout2::unicode_t keymap_64[128] {
 /*00-07*/         0,    0x001b,       '&',    0x00e9,       '"',      '\'',       '(',       '-', 
        //                  ESC                     é                                             
 /*08-0F*/    0x00e8,       '_',    0x00e7,    0x00e0,       ')',       '=',      '\b',      '\t', 
@@ -1796,7 +1441,7 @@ static constexpr KeyLayout2::unicode_t keymap_80[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_81[128] {
+static constexpr KeyLayout2::unicode_t keymap_65[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00f6,       '-',      '\b',      '\t', 
@@ -1821,7 +1466,7 @@ static constexpr KeyLayout2::unicode_t keymap_81[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_82[128] {
+static constexpr KeyLayout2::unicode_t keymap_66[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',    0x00d6,       '_',      '\b',      '\t', 
@@ -1846,7 +1491,7 @@ static constexpr KeyLayout2::unicode_t keymap_82[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_83[128] {
+static constexpr KeyLayout2::unicode_t keymap_67[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x00f6,         0,         0,         0, 
        //                                                     ö                                  
@@ -1869,55 +1514,7 @@ static constexpr KeyLayout2::unicode_t keymap_83[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_84[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,    0x00f6,         0,         0,         0, 
-       //                                                     ö                                  
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00f0,         0,         0,         0,       'a',       's', 
-       //                               ð                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00e6, 
-       //                                                                                      æ 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,    0x00fe,         0,         0, 
-       //                                                                þ                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_85[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',    0x00d6,       '_',      '\b',      '\t', 
-       //                                                     Ö                                  
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00d0,       '?',      '\r',         0,       'A',       'S', 
-       //                               Ð                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00c6, 
-       //                                                                                      Æ 
-/*28-2F*/      '\'', DK|0x00a8,         0,       '*',       'Z',       'X',       'C',       'V', 
-       //                    ¨                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',    0x00de,         0,       '*', 
-       //                                                                Þ                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_86[128] {
+static constexpr KeyLayout2::unicode_t keymap_68[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x00d6,         0,         0,         0, 
        //                                                     Ö                                  
@@ -1940,7 +1537,7 @@ static constexpr KeyLayout2::unicode_t keymap_86[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_87[128] {
+static constexpr KeyLayout2::unicode_t keymap_69[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x00d6,         0,         0,         0, 
        //                                                     Ö                                  
@@ -1963,7 +1560,7 @@ static constexpr KeyLayout2::unicode_t keymap_87[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_88[128] {
+static constexpr KeyLayout2::unicode_t keymap_70[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,    0x20ac,         0, 
        //                                                                           €            
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -1986,7 +1583,7 @@ static constexpr KeyLayout2::unicode_t keymap_88[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_89[128] {
+static constexpr KeyLayout2::unicode_t keymap_71[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00f6,       '-',      '\b',      '\t', 
@@ -2011,7 +1608,7 @@ static constexpr KeyLayout2::unicode_t keymap_89[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_90[128] {
+static constexpr KeyLayout2::unicode_t keymap_72[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00ec,      '\b',      '\t', 
@@ -2035,7 +1632,7 @@ static constexpr KeyLayout2::unicode_t keymap_90[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_91[128] {
+static constexpr KeyLayout2::unicode_t keymap_73[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '&', 
        //                  ESC                                £                                  
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '^',      '\b',      '\t', 
@@ -2058,7 +1655,7 @@ static constexpr KeyLayout2::unicode_t keymap_91[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_92[128] {
+static constexpr KeyLayout2::unicode_t keymap_74[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -2077,30 +1674,7 @@ static constexpr KeyLayout2::unicode_t keymap_92[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_93[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '&', 
-       //                  ESC                                £                                  
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '^',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00e9,       '*',      '\r',         0,       'A',       'S', 
-       //                               é                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00e7, 
-       //                                                                                      ç 
-/*28-2F*/    0x00b0,       '|',         0,    0x00a7,       'Z',       'X',       'C',       'V', 
-       //         °                                §                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_94[128] {
+static constexpr KeyLayout2::unicode_t keymap_75[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -2121,7 +1695,7 @@ static constexpr KeyLayout2::unicode_t keymap_94[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_95[128] {
+static constexpr KeyLayout2::unicode_t keymap_76[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,    0x20ac,         0, 
        //                                                                           €            
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -2142,7 +1716,7 @@ static constexpr KeyLayout2::unicode_t keymap_95[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_96[128] {
+static constexpr KeyLayout2::unicode_t keymap_77[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00ec,      '\b',      '\t', 
@@ -2166,7 +1740,7 @@ static constexpr KeyLayout2::unicode_t keymap_96[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_97[128] {
+static constexpr KeyLayout2::unicode_t keymap_78[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '/',    0x00b0,      '\b',      '\t', 
@@ -2189,7 +1763,7 @@ static constexpr KeyLayout2::unicode_t keymap_97[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_98[128] {
+static constexpr KeyLayout2::unicode_t keymap_79[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '_',       '(',       ')',      '\'',       '?',    DK|'~',      '\b',      '\t', 
@@ -2211,48 +1785,7 @@ static constexpr KeyLayout2::unicode_t keymap_98[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_99[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_100[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '_',       '(',       ')',      '\'',       '?',    DK|'~',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    DK|'^',       '|',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00b1, 
-       //                                                                                      ± 
-/*28-2F*/    DK|'`',    0x00a7,         0,       '>',       'Z',       'X',       'C',       'V', 
-       //         §                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '=',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '[',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_101[128] {
+static constexpr KeyLayout2::unicode_t keymap_80[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -2271,7 +1804,7 @@ static constexpr KeyLayout2::unicode_t keymap_101[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_102[128] {
+static constexpr KeyLayout2::unicode_t keymap_81[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001c,    0x001d,    0x007f,         0, 
@@ -2292,7 +1825,7 @@ static constexpr KeyLayout2::unicode_t keymap_102[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_103[128] {
+static constexpr KeyLayout2::unicode_t keymap_82[128] {
 /*00-07*/         0,         0,    0x00b9,    0x00b2,    0x00b3,    0x00bc,    0x00bd,    0x00be, 
        //                               ¹          ²          ³          ¼          ½          ¾ 
 /*08-0F*/    0x00a3,       '{',       '}',         0,      '\\', DK|0x00b8,         0,         0, 
@@ -2318,7 +1851,7 @@ static constexpr KeyLayout2::unicode_t keymap_103[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_104[128] {
+static constexpr KeyLayout2::unicode_t keymap_83[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '/',    0x00b0,      '\b',      '\t', 
@@ -2341,7 +1874,7 @@ static constexpr KeyLayout2::unicode_t keymap_104[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_105[128] {
+static constexpr KeyLayout2::unicode_t keymap_84[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\\',      '\b',      '\t', 
@@ -2364,7 +1897,7 @@ static constexpr KeyLayout2::unicode_t keymap_105[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_106[128] {
+static constexpr KeyLayout2::unicode_t keymap_85[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -2387,7 +1920,7 @@ static constexpr KeyLayout2::unicode_t keymap_106[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_107[128] {
+static constexpr KeyLayout2::unicode_t keymap_86[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -2409,52 +1942,7 @@ static constexpr KeyLayout2::unicode_t keymap_107[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_108[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00e5,         0,         0,         0,       'a',       's', 
-       //                               å                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f8, 
-       //                                                                                      ø 
-/*28-2F*/    0x00e6,         0,         0,         0,       'z',       'x',       'c',       'v', 
-       //         æ                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_109[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00c5,    DK|'^',      '\r',         0,       'A',       'S', 
-       //                               Å                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d8, 
-       //                                                                                      Ø 
-/*28-2F*/    0x00c6,    0x00a7,         0,       '*',       'Z',       'X',       'C',       'V', 
-       //         Æ          §                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_110[128] {
+static constexpr KeyLayout2::unicode_t keymap_87[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -2476,7 +1964,7 @@ static constexpr KeyLayout2::unicode_t keymap_110[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_111[128] {
+static constexpr KeyLayout2::unicode_t keymap_88[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -2498,7 +1986,7 @@ static constexpr KeyLayout2::unicode_t keymap_111[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_112[128] {
+static constexpr KeyLayout2::unicode_t keymap_89[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0, DK|0x00b4,         0,         0, 
@@ -2521,7 +2009,7 @@ static constexpr KeyLayout2::unicode_t keymap_112[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_113[128] {
+static constexpr KeyLayout2::unicode_t keymap_90[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\\',      '\b',      '\t', 
@@ -2544,7 +2032,7 @@ static constexpr KeyLayout2::unicode_t keymap_113[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_114[128] {
+static constexpr KeyLayout2::unicode_t keymap_91[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -2564,7 +2052,7 @@ static constexpr KeyLayout2::unicode_t keymap_114[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_115[128] {
+static constexpr KeyLayout2::unicode_t keymap_92[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0119,         0,         0,         0,         0,         0, 
@@ -2588,7 +2076,7 @@ static constexpr KeyLayout2::unicode_t keymap_115[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_116[128] {
+static constexpr KeyLayout2::unicode_t keymap_93[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0118,         0,         0,         0,         0,         0, 
@@ -2612,27 +2100,7 @@ static constexpr KeyLayout2::unicode_t keymap_116[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_117[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',    DK|'~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_118[128] {
+static constexpr KeyLayout2::unicode_t keymap_94[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001f,         0,    0x007f,         0, 
@@ -2653,7 +2121,7 @@ static constexpr KeyLayout2::unicode_t keymap_118[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_119[128] {
+static constexpr KeyLayout2::unicode_t keymap_95[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0119,         0,         0,         0,    0x20ac,         0, 
@@ -2677,7 +2145,7 @@ static constexpr KeyLayout2::unicode_t keymap_119[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_120[128] {
+static constexpr KeyLayout2::unicode_t keymap_96[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -2697,7 +2165,7 @@ static constexpr KeyLayout2::unicode_t keymap_120[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_121[128] {
+static constexpr KeyLayout2::unicode_t keymap_97[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -2719,7 +2187,7 @@ static constexpr KeyLayout2::unicode_t keymap_121[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,       '.',         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_122[128] {
+static constexpr KeyLayout2::unicode_t keymap_98[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%', DK|0x00a8, 
        //                  ESC                                                                 ¨ 
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -2740,7 +2208,7 @@ static constexpr KeyLayout2::unicode_t keymap_122[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,       '.',         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_123[128] {
+static constexpr KeyLayout2::unicode_t keymap_99[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -2760,48 +2228,7 @@ static constexpr KeyLayout2::unicode_t keymap_123[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_124[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00e7, 
-       //                                                                                      ç 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_125[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%', DK|0x00a8, 
-       //                  ESC                                                                 ¨ 
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    DK|'`',       '{',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00c7, 
-       //                                                                                      Ç 
-/*28-2F*/    DK|'^',       '"',         0,       '}',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       ':',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,       '?',         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,       '.',         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_126[128] {
+static constexpr KeyLayout2::unicode_t keymap_100[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -2821,7 +2248,7 @@ static constexpr KeyLayout2::unicode_t keymap_126[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_127[128] {
+static constexpr KeyLayout2::unicode_t keymap_101[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -2841,7 +2268,7 @@ static constexpr KeyLayout2::unicode_t keymap_127[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_128[128] {
+static constexpr KeyLayout2::unicode_t keymap_102[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001f,         0,    0x007f,         0, 
@@ -2862,7 +2289,7 @@ static constexpr KeyLayout2::unicode_t keymap_128[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_129[128] {
+static constexpr KeyLayout2::unicode_t keymap_103[128] {
 /*00-07*/         0,         0,    0x00b9,    0x00b2,    0x00b3,    0x00a3,    0x00a2,    0x00ac, 
        //                               ¹          ²          ³          £          ¢          ¬ 
 /*08-0F*/         0,         0,         0,         0,         0,    0x00a7,         0,         0, 
@@ -2887,7 +2314,7 @@ static constexpr KeyLayout2::unicode_t keymap_129[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_130[128] {
+static constexpr KeyLayout2::unicode_t keymap_104[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -2909,7 +2336,7 @@ static constexpr KeyLayout2::unicode_t keymap_130[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,       '.',         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_131[128] {
+static constexpr KeyLayout2::unicode_t keymap_105[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\'',      '\b',      '\t', 
@@ -2932,7 +2359,7 @@ static constexpr KeyLayout2::unicode_t keymap_131[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_132[128] {
+static constexpr KeyLayout2::unicode_t keymap_106[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
@@ -2955,7 +2382,7 @@ static constexpr KeyLayout2::unicode_t keymap_132[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_133[128] {
+static constexpr KeyLayout2::unicode_t keymap_107[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
@@ -2977,29 +2404,7 @@ static constexpr KeyLayout2::unicode_t keymap_133[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_134[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x0103,    0x00ee,         0,         0,       'a',       's', 
-       //                               ă          î                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x015f, 
-       //                                                                                      ş 
-/*28-2F*/    0x0163,         0,         0,    0x00e2,       'y',       'x',       'c',       'v', 
-       //         ţ                                â                                             
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_135[128] {
+static constexpr KeyLayout2::unicode_t keymap_108[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/    0x001e,         0,         0,         0,    0x001f,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -3018,30 +2423,7 @@ static constexpr KeyLayout2::unicode_t keymap_135[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_136[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x0102,    0x00ce,      '\r',         0,       'A',       'S', 
-       //                               Ă          Î                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x015e, 
-       //                                                                                      Ş 
-/*28-2F*/    0x0162,       '[',         0,    0x00c2,       'Y',       'X',       'C',       'V', 
-       //         Ţ                                Â                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_137[128] {
+static constexpr KeyLayout2::unicode_t keymap_109[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -3063,7 +2445,7 @@ static constexpr KeyLayout2::unicode_t keymap_137[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_138[128] {
+static constexpr KeyLayout2::unicode_t keymap_110[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -3085,7 +2467,7 @@ static constexpr KeyLayout2::unicode_t keymap_138[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_139[128] {
+static constexpr KeyLayout2::unicode_t keymap_111[128] {
 /*00-07*/         0,         0,       '~', DK|0x02c7,    DK|'^', DK|0x02d8, DK|0x00b0, DK|0x02db, 
        //                                          ˇ          ˘          °          ˛ 
 /*08-0F*/       '`', DK|0x00b7, DK|0x00b4, DK|0x02dd, DK|0x00a8, DK|0x00b8,         0,         0, 
@@ -3110,7 +2492,7 @@ static constexpr KeyLayout2::unicode_t keymap_139[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_140[128] {
+static constexpr KeyLayout2::unicode_t keymap_112[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\'',      '\b',      '\t', 
@@ -3133,7 +2515,7 @@ static constexpr KeyLayout2::unicode_t keymap_140[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_141[128] {
+static constexpr KeyLayout2::unicode_t keymap_113[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -3158,7 +2540,7 @@ static constexpr KeyLayout2::unicode_t keymap_141[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_142[128] {
+static constexpr KeyLayout2::unicode_t keymap_114[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
        //                  ESC                                №                                  
 /*08-0F*/       '?',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -3183,7 +2565,7 @@ static constexpr KeyLayout2::unicode_t keymap_142[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_143[128] {
+static constexpr KeyLayout2::unicode_t keymap_115[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
@@ -3207,56 +2589,7 @@ static constexpr KeyLayout2::unicode_t keymap_143[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_144[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
-       //         й          ц          у          к          е          н          г          ш 
-/*18-1F*/    0x0449,    0x0437,    0x0445,    0x044a,         0,         0,    0x0444,    0x044b, 
-       //         щ          з          х          ъ                                ф          ы 
-/*20-27*/    0x0432,    0x0430,    0x043f,    0x0440,    0x043e,    0x043b,    0x0434,    0x0436, 
-       //         в          а          п          р          о          л          д          ж 
-/*28-2F*/    0x044d,    0x0451,         0,         0,    0x044f,    0x0447,    0x0441,    0x043c, 
-       //         э          ё                                я          ч          с          м 
-/*30-37*/    0x0438,    0x0442,    0x044c,    0x0431,    0x044e,         0,         0,         0, 
-       //         и          т          ь          б          ю                                  
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_145[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
-       //                  ESC                                №                                  
-/*08-0F*/       '?',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
-       //         Й          Ц          У          К          Е          Н          Г          Ш 
-/*18-1F*/    0x0429,    0x0417,    0x0425,    0x042a,      '\r',         0,    0x0424,    0x042b, 
-       //         Щ          З          Х          Ъ                                Ф          Ы 
-/*20-27*/    0x0412,    0x0410,    0x041f,    0x0420,    0x041e,    0x041b,    0x0414,    0x0416, 
-       //         В          А          П          Р          О          Л          Д          Ж 
-/*28-2F*/    0x042d,    0x0401,         0,       '/',    0x042f,    0x0427,    0x0421,    0x041c, 
-       //         Э          Ё                                Я          Ч          С          М 
-/*30-37*/    0x0418,    0x0422,    0x042c,    0x0411,    0x042e,       ',',         0,       '*', 
-       //         И          Т          Ь          Б          Ю                                  
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '/',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_146[128] {
+static constexpr KeyLayout2::unicode_t keymap_116[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -3280,7 +2613,7 @@ static constexpr KeyLayout2::unicode_t keymap_146[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_147[128] {
+static constexpr KeyLayout2::unicode_t keymap_117[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -3304,7 +2637,7 @@ static constexpr KeyLayout2::unicode_t keymap_147[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_148[128] {
+static constexpr KeyLayout2::unicode_t keymap_118[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -3324,7 +2657,7 @@ static constexpr KeyLayout2::unicode_t keymap_148[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_149[128] {
+static constexpr KeyLayout2::unicode_t keymap_119[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,    0x20bd,         0,         0,         0,         0,         0,         0, 
        //                    ₽                                                                   
@@ -3344,7 +2677,7 @@ static constexpr KeyLayout2::unicode_t keymap_149[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_150[128] {
+static constexpr KeyLayout2::unicode_t keymap_120[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -3369,7 +2702,7 @@ static constexpr KeyLayout2::unicode_t keymap_150[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_151[128] {
+static constexpr KeyLayout2::unicode_t keymap_121[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -3392,7 +2725,7 @@ static constexpr KeyLayout2::unicode_t keymap_151[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_152[128] {
+static constexpr KeyLayout2::unicode_t keymap_122[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
@@ -3415,7 +2748,7 @@ static constexpr KeyLayout2::unicode_t keymap_152[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_153[128] {
+static constexpr KeyLayout2::unicode_t keymap_123[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
@@ -3437,52 +2770,7 @@ static constexpr KeyLayout2::unicode_t keymap_153[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_154[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x0161,    0x0111,         0,         0,       'a',       's', 
-       //                               š          đ                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x010d, 
-       //                                                                                      č 
-/*28-2F*/    0x0107,         0,         0,    0x017e,       'y',       'x',       'c',       'v', 
-       //         ć                                ž                                             
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_155[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x0160,    0x0110,      '\r',         0,       'A',       'S', 
-       //                               Š          Đ                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x010c, 
-       //                                                                                      Č 
-/*28-2F*/    0x0106, DK|0x00a8,         0,    0x017d,       'Y',       'X',       'C',       'V', 
-       //         Ć          ¨                     Ž                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_156[128] {
+static constexpr KeyLayout2::unicode_t keymap_124[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -3504,7 +2792,7 @@ static constexpr KeyLayout2::unicode_t keymap_156[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_157[128] {
+static constexpr KeyLayout2::unicode_t keymap_125[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -3526,7 +2814,7 @@ static constexpr KeyLayout2::unicode_t keymap_157[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_158[128] {
+static constexpr KeyLayout2::unicode_t keymap_126[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -3547,7 +2835,7 @@ static constexpr KeyLayout2::unicode_t keymap_158[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_159[128] {
+static constexpr KeyLayout2::unicode_t keymap_127[128] {
 /*00-07*/         0,         0,       '~', DK|0x02c7,    DK|'^', DK|0x02d8, DK|0x00b0, DK|0x02db, 
        //                                          ˇ          ˘          °          ˛ 
 /*08-0F*/       '`', DK|0x02d9, DK|0x00b4, DK|0x02dd, DK|0x00a8, DK|0x00b8,         0,         0, 
@@ -3573,7 +2861,7 @@ static constexpr KeyLayout2::unicode_t keymap_159[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_160[128] {
+static constexpr KeyLayout2::unicode_t keymap_128[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -3596,7 +2884,7 @@ static constexpr KeyLayout2::unicode_t keymap_160[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_161[128] {
+static constexpr KeyLayout2::unicode_t keymap_129[128] {
 /*00-07*/         0,    0x001b,       '+',    0x013e,    0x0161,    0x010d,    0x0165,    0x017e, 
        //                  ESC                     ľ          š          č          ť          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -3620,7 +2908,7 @@ static constexpr KeyLayout2::unicode_t keymap_161[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_162[128] {
+static constexpr KeyLayout2::unicode_t keymap_130[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
@@ -3642,7 +2930,7 @@ static constexpr KeyLayout2::unicode_t keymap_162[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_163[128] {
+static constexpr KeyLayout2::unicode_t keymap_131[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
@@ -3661,26 +2949,7 @@ static constexpr KeyLayout2::unicode_t keymap_163[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_164[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/         0,         0,         0,         0,       'y',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_165[128] {
+static constexpr KeyLayout2::unicode_t keymap_132[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -3699,29 +2968,7 @@ static constexpr KeyLayout2::unicode_t keymap_165[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_166[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
-       //                                                                ˇ                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '/',       '(',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       '"', 
-/*28-2F*/       '!', DK|0x00b0,         0,       ')',       'Y',       'X',       'C',       'V', 
-       //                    °                                                                   
-/*30-37*/       'B',       'N',       'M',       '?',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '*',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_167[128] {
+static constexpr KeyLayout2::unicode_t keymap_133[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -3740,7 +2987,7 @@ static constexpr KeyLayout2::unicode_t keymap_167[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_168[128] {
+static constexpr KeyLayout2::unicode_t keymap_134[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -3759,7 +3006,7 @@ static constexpr KeyLayout2::unicode_t keymap_168[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_169[128] {
+static constexpr KeyLayout2::unicode_t keymap_135[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -3780,7 +3027,7 @@ static constexpr KeyLayout2::unicode_t keymap_169[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_170[128] {
+static constexpr KeyLayout2::unicode_t keymap_136[128] {
 /*00-07*/         0,         0,       '~', DK|0x02c7,    DK|'^', DK|0x02d8, DK|0x00b0, DK|0x02db, 
        //                                          ˇ          ˘          °          ˛ 
 /*08-0F*/       '`', DK|0x02d9, DK|0x00b4, DK|0x02dd, DK|0x00a8, DK|0x00b8,         0,         0, 
@@ -3805,7 +3052,7 @@ static constexpr KeyLayout2::unicode_t keymap_170[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_171[128] {
+static constexpr KeyLayout2::unicode_t keymap_137[128] {
 /*00-07*/         0,    0x001b,       '+',    0x013e,    0x0161,    0x010d,    0x0165,    0x017e, 
        //                  ESC                     ľ          š          č          ť          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -3829,7 +3076,7 @@ static constexpr KeyLayout2::unicode_t keymap_171[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_172[128] {
+static constexpr KeyLayout2::unicode_t keymap_138[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '*',       '-',      '\b',      '\t', 
@@ -3853,7 +3100,7 @@ static constexpr KeyLayout2::unicode_t keymap_172[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_173[128] {
+static constexpr KeyLayout2::unicode_t keymap_139[128] {
 /*00-07*/         0,    0x001b,       '!',      '\'',    DK|'^',       '+',       '%',       '&', 
        //                  ESC                                                        
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '_',      '\b',      '\t', 
@@ -3877,7 +3124,7 @@ static constexpr KeyLayout2::unicode_t keymap_173[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_174[128] {
+static constexpr KeyLayout2::unicode_t keymap_140[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',    0x0131, 
@@ -3900,30 +3147,7 @@ static constexpr KeyLayout2::unicode_t keymap_174[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_175[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',    0x0131, 
-       //                                                                                      ı 
-/*18-1F*/       'o',       'p',    0x011f,    0x00fc,         0,         0,       'a',       's', 
-       //                               ğ          ü                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x015f, 
-       //                                                                                      ş 
-/*28-2F*/       'i',         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',    0x00f6,    0x00e7,         0,         0,         0, 
-       //                                          ö          ç                                  
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_176[128] {
+static constexpr KeyLayout2::unicode_t keymap_141[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,         0,    0x001f,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -3942,7 +3166,7 @@ static constexpr KeyLayout2::unicode_t keymap_176[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_177[128] {
+static constexpr KeyLayout2::unicode_t keymap_142[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,       'i', 
@@ -3962,7 +3186,7 @@ static constexpr KeyLayout2::unicode_t keymap_177[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_178[128] {
+static constexpr KeyLayout2::unicode_t keymap_143[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,    0x0130, 
@@ -3983,31 +3207,7 @@ static constexpr KeyLayout2::unicode_t keymap_178[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_179[128] {
-/*00-07*/         0,    0x001b,       '!',      '\'',    DK|'^',       '+',       '%',       '&', 
-       //                  ESC                                                        
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '_',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x011e,    0x00dc,      '\r',         0,       'A',       'S', 
-       //                               Ğ          Ü                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x015e, 
-       //                                                                                      Ş 
-/*28-2F*/    0x0130,    0x00e9,         0,       ';',       'Z',       'X',       'C',       'V', 
-       //         İ          é                                                                   
-/*30-37*/       'B',       'N',       'M',    0x00d6,    0x00c7,       ':',         0,       '*', 
-       //                                          Ö          Ç                                  
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_180[128] {
+static constexpr KeyLayout2::unicode_t keymap_144[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -4030,7 +3230,7 @@ static constexpr KeyLayout2::unicode_t keymap_180[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_181[128] {
+static constexpr KeyLayout2::unicode_t keymap_145[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -4053,7 +3253,7 @@ static constexpr KeyLayout2::unicode_t keymap_181[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_182[128] {
+static constexpr KeyLayout2::unicode_t keymap_146[128] {
 /*00-07*/         0,         0,       '>',    0x00a3,       '#',       '$',    0x00bd,         0, 
        //                                          £                                ½            
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',       '|',         0,         0, 
@@ -4076,7 +3276,7 @@ static constexpr KeyLayout2::unicode_t keymap_182[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_183[128] {
+static constexpr KeyLayout2::unicode_t keymap_147[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '*',       '-',      '\b',      '\t', 
@@ -4100,7 +3300,7 @@ static constexpr KeyLayout2::unicode_t keymap_183[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_184[128] {
+static constexpr KeyLayout2::unicode_t keymap_148[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -4126,7 +3326,7 @@ static constexpr KeyLayout2::unicode_t keymap_184[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_185[128] {
+static constexpr KeyLayout2::unicode_t keymap_149[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
        //                  ESC                                №                                  
 /*08-0F*/       '?',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -4152,7 +3352,7 @@ static constexpr KeyLayout2::unicode_t keymap_185[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_186[128] {
+static constexpr KeyLayout2::unicode_t keymap_150[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
@@ -4177,32 +3377,7 @@ static constexpr KeyLayout2::unicode_t keymap_186[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_187[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
-       //         й          ц          у          к          е          н          г          ш 
-/*18-1F*/    0x0449,    0x0437,    0x0445,    0x0457,         0,         0,    0x0444,    0x0456, 
-       //         щ          з          х          ї                                ф          і 
-/*20-27*/    0x0432,    0x0430,    0x043f,    0x0440,    0x043e,    0x043b,    0x0434,    0x0436, 
-       //         в          а          п          р          о          л          д          ж 
-/*28-2F*/    0x0454,    0x0451,         0,         0,    0x044f,    0x0447,    0x0441,    0x043c, 
-       //         є          ё                                я          ч          с          м 
-/*30-37*/    0x0438,    0x0442,    0x044c,    0x0431,    0x044e,         0,         0,         0, 
-       //         и          т          ь          б          ю                                  
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0491,         0, 
-       //                                                                           ґ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_188[128] {
+static constexpr KeyLayout2::unicode_t keymap_151[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,    0x0491,         0, 
@@ -4222,7 +3397,7 @@ static constexpr KeyLayout2::unicode_t keymap_188[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_189[128] {
+static constexpr KeyLayout2::unicode_t keymap_152[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,    0x0490,         0, 
@@ -4242,33 +3417,7 @@ static constexpr KeyLayout2::unicode_t keymap_189[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_190[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
-       //                  ESC                                №                                  
-/*08-0F*/       '?',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
-       //         Й          Ц          У          К          Е          Н          Г          Ш 
-/*18-1F*/    0x0429,    0x0417,    0x0425,    0x0407,      '\r',         0,    0x0424,    0x0406, 
-       //         Щ          З          Х          Ї                                Ф          І 
-/*20-27*/    0x0412,    0x0410,    0x041f,    0x0420,    0x041e,    0x041b,    0x0414,    0x0416, 
-       //         В          А          П          Р          О          Л          Д          Ж 
-/*28-2F*/    0x0404,    0x0401,         0,       '/',    0x042f,    0x0427,    0x0421,    0x041c, 
-       //         Є          Ё                                Я          Ч          С          М 
-/*30-37*/    0x0418,    0x0422,    0x042c,    0x0411,    0x042e,       ',',         0,       '*', 
-       //         И          Т          Ь          Б          Ю                                  
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0490,         0, 
-       //                                                                           Ґ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_191[128] {
+static constexpr KeyLayout2::unicode_t keymap_153[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -4293,7 +3442,7 @@ static constexpr KeyLayout2::unicode_t keymap_191[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_192[128] {
+static constexpr KeyLayout2::unicode_t keymap_154[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -4318,7 +3467,7 @@ static constexpr KeyLayout2::unicode_t keymap_192[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_193[128] {
+static constexpr KeyLayout2::unicode_t keymap_155[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -4344,7 +3493,7 @@ static constexpr KeyLayout2::unicode_t keymap_193[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_194[128] {
+static constexpr KeyLayout2::unicode_t keymap_156[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -4368,7 +3517,7 @@ static constexpr KeyLayout2::unicode_t keymap_194[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_195[128] {
+static constexpr KeyLayout2::unicode_t keymap_157[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -4391,7 +3540,7 @@ static constexpr KeyLayout2::unicode_t keymap_195[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_196[128] {
+static constexpr KeyLayout2::unicode_t keymap_158[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -4413,29 +3562,7 @@ static constexpr KeyLayout2::unicode_t keymap_196[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_197[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00fc,    0x00f5,         0,         0,       'a',       's', 
-       //                               ü          õ                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f6, 
-       //                                                                                      ö 
-/*28-2F*/    0x00e4,         0,         0,         0,       'z',       'x',       'c',       'v', 
-       //         ä                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_198[128] {
+static constexpr KeyLayout2::unicode_t keymap_159[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -4456,7 +3583,7 @@ static constexpr KeyLayout2::unicode_t keymap_198[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_199[128] {
+static constexpr KeyLayout2::unicode_t keymap_160[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',         0,         0, 
        //                                                     £                                  
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -4478,30 +3605,7 @@ static constexpr KeyLayout2::unicode_t keymap_199[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_200[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00dc,    0x00d5,      '\r',         0,       'A',       'S', 
-       //                               Ü          Õ                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d6, 
-       //                                                                                      Ö 
-/*28-2F*/    0x00c4,    DK|'~',         0,       '*',       'Z',       'X',       'C',       'V', 
-       //         Ä                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_201[128] {
+static constexpr KeyLayout2::unicode_t keymap_161[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -4523,7 +3627,7 @@ static constexpr KeyLayout2::unicode_t keymap_201[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_202[128] {
+static constexpr KeyLayout2::unicode_t keymap_162[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -4545,7 +3649,7 @@ static constexpr KeyLayout2::unicode_t keymap_202[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_203[128] {
+static constexpr KeyLayout2::unicode_t keymap_163[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -4566,7 +3670,7 @@ static constexpr KeyLayout2::unicode_t keymap_203[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_204[128] {
+static constexpr KeyLayout2::unicode_t keymap_164[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -4589,7 +3693,7 @@ static constexpr KeyLayout2::unicode_t keymap_204[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_205[128] {
+static constexpr KeyLayout2::unicode_t keymap_165[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -4610,7 +3714,7 @@ static constexpr KeyLayout2::unicode_t keymap_205[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_206[128] {
+static constexpr KeyLayout2::unicode_t keymap_166[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -4634,7 +3738,7 @@ static constexpr KeyLayout2::unicode_t keymap_206[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_207[128] {
+static constexpr KeyLayout2::unicode_t keymap_167[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       'f',      '\b',      '\t', 
@@ -4659,7 +3763,7 @@ static constexpr KeyLayout2::unicode_t keymap_207[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_208[128] {
+static constexpr KeyLayout2::unicode_t keymap_168[128] {
 /*00-07*/         0,    0x001b,       '!',    0x00ab,    0x00bb,       '$',       '%',       '/', 
        //                  ESC                     «          »                                  
 /*08-0F*/       '&',    0x00d7,       '(',       ')',       '_',       'F',      '\b',      '\t', 
@@ -4685,7 +3789,7 @@ static constexpr KeyLayout2::unicode_t keymap_208[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_209[128] {
+static constexpr KeyLayout2::unicode_t keymap_169[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,       'f',         0,         0, 
 /*10-17*/    0x016b,       'g',       'j',       'r',       'm',       'v',       'n',       'z', 
@@ -4709,31 +3813,7 @@ static constexpr KeyLayout2::unicode_t keymap_209[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_210[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,       'f',         0,         0, 
-/*10-17*/    0x016b,       'g',       'j',       'r',       'm',       'v',       'n',       'z', 
-       //         ū                                                                              
-/*18-1F*/    0x0113,    0x010d,    0x017e,       'h',         0,         0,    0x0161,       'u', 
-       //         ē          č          ž                                           š            
-/*20-27*/       's',       'i',       'l',       'd',       'a',       't',       'e',       'c', 
-/*28-2F*/         0,         0,         0,    0x0137,    0x0146,       'b',    0x012b,       'k', 
-       //                                          ķ          ņ                     ī            
-/*30-37*/       'p',       'o',    0x0101,         0,         0,    0x013c,         0,         0, 
-       //                               ā                                ļ                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0123,         0, 
-       //                                                                           ģ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_211[128] {
+static constexpr KeyLayout2::unicode_t keymap_170[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',    0x0123,         0,    0x0157,       'w',       'y',         0,         0, 
@@ -4755,7 +3835,7 @@ static constexpr KeyLayout2::unicode_t keymap_211[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_212[128] {
+static constexpr KeyLayout2::unicode_t keymap_171[128] {
 /*00-07*/         0,         0,         0,       '@',       '#',       '$',    DK|'~',       '^', 
 /*08-0F*/    0x00b1,         0,         0,         0,    0x2014,       ';',         0,         0, 
        //         ±                                           —                                  
@@ -4778,33 +3858,7 @@ static constexpr KeyLayout2::unicode_t keymap_212[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_213[128] {
-/*00-07*/         0,    0x001b,       '!',    0x00ab,    0x00bb,       '$',       '%',       '/', 
-       //                  ESC                     «          »                                  
-/*08-0F*/       '&',    0x00d7,       '(',       ')',       '_',       'F',      '\b',      '\t', 
-       //                    ×                                                                   
-/*10-17*/    0x016a,       'G',       'J',       'R',       'M',       'V',       'N',       'Z', 
-       //         Ū                                                                              
-/*18-1F*/    0x0112,    0x010c,    0x017d,       'H',      '\r',         0,    0x0160,       'U', 
-       //         Ē          Č          Ž                                           Š            
-/*20-27*/       'S',       'I',       'L',       'D',       'A',       'T',       'E',       'C', 
-/*28-2F*/ DK|0x00b0,       '?',         0,    0x0136,    0x0145,       'B',    0x012a,       'K', 
-       //         °                                Ķ          Ņ                     Ī            
-/*30-37*/       'P',       'O',    0x0100,       ';',       ':',    0x013b,         0,       '*', 
-       //                               Ā                                Ļ                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0122,         0, 
-       //                                                                           Ģ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_214[128] {
+static constexpr KeyLayout2::unicode_t keymap_172[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,       'F',         0,         0, 
 /*10-17*/    0x016a,       'G',       'J',       'R',       'M',       'V',       'N',       'Z', 
@@ -4828,7 +3882,7 @@ static constexpr KeyLayout2::unicode_t keymap_214[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_215[128] {
+static constexpr KeyLayout2::unicode_t keymap_173[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,       'F',         0,         0, 
 /*10-17*/    0x016a,       'G',       'J',       'R',       'M',       'V',       'N',       'Z', 
@@ -4852,7 +3906,7 @@ static constexpr KeyLayout2::unicode_t keymap_215[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_216[128] {
+static constexpr KeyLayout2::unicode_t keymap_174[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -4873,7 +3927,7 @@ static constexpr KeyLayout2::unicode_t keymap_216[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_217[128] {
+static constexpr KeyLayout2::unicode_t keymap_175[128] {
 /*00-07*/         0,         0,    0x00ab,         0,         0,    0x20ac,       '"',    0x2019, 
        //                               «                                €                     ’ 
 /*08-0F*/         0,       ':',         0,         0,    0x2013,       '=',         0,         0, 
@@ -4898,7 +3952,7 @@ static constexpr KeyLayout2::unicode_t keymap_217[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_218[128] {
+static constexpr KeyLayout2::unicode_t keymap_176[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',    0x0122,         0,    0x0156,       'W',       'Y',         0,         0, 
@@ -4920,7 +3974,7 @@ static constexpr KeyLayout2::unicode_t keymap_218[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_219[128] {
+static constexpr KeyLayout2::unicode_t keymap_177[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       'f',      '\b',      '\t', 
@@ -4945,7 +3999,7 @@ static constexpr KeyLayout2::unicode_t keymap_219[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_220[128] {
+static constexpr KeyLayout2::unicode_t keymap_178[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '/',       ';',       ':',       ',', 
        //                  ESC                                                                   
 /*08-0F*/       '.',       '?',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -4970,7 +4024,7 @@ static constexpr KeyLayout2::unicode_t keymap_220[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_221[128] {
+static constexpr KeyLayout2::unicode_t keymap_179[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -4995,7 +4049,7 @@ static constexpr KeyLayout2::unicode_t keymap_221[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_222[128] {
+static constexpr KeyLayout2::unicode_t keymap_180[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0105,    0x017e,       'e',       'r',       't',       'y',       'u',       'i', 
@@ -5019,56 +4073,7 @@ static constexpr KeyLayout2::unicode_t keymap_222[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_223[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0105,    0x017e,       'e',       'r',       't',       'y',       'u',       'i', 
-       //         ą          ž                                                                   
-/*18-1F*/       'o',       'p',    0x012f,         0,         0,         0,       'a',       's', 
-       //                               į                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x0173, 
-       //                                                                                      ų 
-/*28-2F*/    0x0117,         0,         0,         0,       'z',    0x016b,       'c',       'v', 
-       //         ė                                                      ū                       
-/*30-37*/       'b',       'n',       'm',    0x010d,    0x0161,    0x0119,         0,         0, 
-       //                                          č          š          ę                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_224[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
-/*10-17*/    0x0104,    0x017d,       'E',       'R',       'T',       'Y',       'U',       'I', 
-       //         Ą          Ž                                                                   
-/*18-1F*/       'O',       'P',    0x012e,    0x201d,      '\r',         0,       'A',       'S', 
-       //                               Į          ”                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x0172, 
-       //                                                                                      Ų 
-/*28-2F*/    0x0116,       '~',         0,      '\\',       'Z',    0x016a,       'C',       'V', 
-       //         Ė                                                      Ū                       
-/*30-37*/       'B',       'N',       'M',    0x010c,    0x0160,    0x0118,         0,       '*', 
-       //                                          Č          Š          Ę                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_225[128] {
+static constexpr KeyLayout2::unicode_t keymap_181[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0104,    0x017d,       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -5092,7 +4097,7 @@ static constexpr KeyLayout2::unicode_t keymap_225[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_226[128] {
+static constexpr KeyLayout2::unicode_t keymap_182[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0104,    0x017d,       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -5116,7 +4121,7 @@ static constexpr KeyLayout2::unicode_t keymap_226[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_227[128] {
+static constexpr KeyLayout2::unicode_t keymap_183[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/       '{',       '[',       ']',       '}',         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -5136,7 +4141,7 @@ static constexpr KeyLayout2::unicode_t keymap_227[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_228[128] {
+static constexpr KeyLayout2::unicode_t keymap_184[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '/',       ';',       ':',       ',', 
        //                  ESC                                                                   
 /*08-0F*/       '.',       '?',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -5161,7 +4166,7 @@ static constexpr KeyLayout2::unicode_t keymap_228[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_229[128] {
+static constexpr KeyLayout2::unicode_t keymap_185[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -5187,7 +4192,7 @@ static constexpr KeyLayout2::unicode_t keymap_229[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_230[128] {
+static constexpr KeyLayout2::unicode_t keymap_186[128] {
 /*00-07*/         0,    0x001b,       '!',    0x201e,    0x201c,    0x2019,       '%',    0x2018, 
        //                  ESC                     „          “          ’                     ‘ 
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -5213,7 +4218,7 @@ static constexpr KeyLayout2::unicode_t keymap_230[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_231[128] {
+static constexpr KeyLayout2::unicode_t keymap_187[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0459,    0x045a,    0x0435,    0x0440,    0x0442,    0x0455,    0x0443,    0x0438, 
@@ -5238,58 +4243,7 @@ static constexpr KeyLayout2::unicode_t keymap_231[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_232[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0459,    0x045a,    0x0435,    0x0440,    0x0442,    0x0455,    0x0443,    0x0438, 
-       //         љ          њ          е          р          т          ѕ          у          и 
-/*18-1F*/    0x043e,    0x043f,    0x0448,    0x0453,         0,         0,    0x0430,    0x0441, 
-       //         о          п          ш          ѓ                                а          с 
-/*20-27*/    0x0434,    0x0444,    0x0433,    0x0445,    0x0458,    0x043a,    0x043b,    0x0447, 
-       //         д          ф          г          х          ј          к          л          ч 
-/*28-2F*/    0x045c,         0,         0,    0x0436,    0x0437,    0x045f,    0x0446,    0x0432, 
-       //         ќ                                ж          з          џ          ц          в 
-/*30-37*/    0x0431,    0x043d,    0x043c,         0,         0,         0,         0,         0, 
-       //         б          н          м                                                        
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0451,         0, 
-       //                                                                           ё            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_233[128] {
-/*00-07*/         0,    0x001b,       '!',    0x201e,    0x201c,    0x2019,       '%',    0x2018, 
-       //                  ESC                     „          “          ’                     ‘ 
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/    0x0409,    0x040a,    0x0415,    0x0420,    0x0422,    0x0405,    0x0423,    0x0418, 
-       //         Љ          Њ          Е          Р          Т          Ѕ          У          И 
-/*18-1F*/    0x041e,    0x041f,    0x0428,    0x0403,      '\r',         0,    0x0410,    0x0421, 
-       //         О          П          Ш          Ѓ                                А          С 
-/*20-27*/    0x0414,    0x0424,    0x0413,    0x0425,    0x0408,    0x041a,    0x041b,    0x0427, 
-       //         Д          Ф          Г          Х          Ј          К          Л          Ч 
-/*28-2F*/    0x040c,       '~',         0,    0x0416,    0x0417,    0x040f,    0x0426,    0x0412, 
-       //         Ќ                                Ж          З          Џ          Ц          В 
-/*30-37*/    0x0411,    0x041d,    0x041c,       ';',       ':',       '?',         0,       '*', 
-       //         Б          Н          М                                                        
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0401,         0, 
-       //                                                                           Ё            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_234[128] {
+static constexpr KeyLayout2::unicode_t keymap_188[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0409,    0x040a,    0x0415,    0x0420,    0x0422,    0x0405,    0x0423,    0x0418, 
@@ -5314,7 +4268,7 @@ static constexpr KeyLayout2::unicode_t keymap_234[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_235[128] {
+static constexpr KeyLayout2::unicode_t keymap_189[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0409,    0x040a,    0x0415,    0x0420,    0x0422,    0x0405,    0x0423,    0x0418, 
@@ -5339,7 +4293,7 @@ static constexpr KeyLayout2::unicode_t keymap_235[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_236[128] {
+static constexpr KeyLayout2::unicode_t keymap_190[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -5363,7 +4317,7 @@ static constexpr KeyLayout2::unicode_t keymap_236[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_237[128] {
+static constexpr KeyLayout2::unicode_t keymap_191[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -5389,7 +4343,7 @@ static constexpr KeyLayout2::unicode_t keymap_237[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_238[128] {
+static constexpr KeyLayout2::unicode_t keymap_192[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -5413,7 +4367,7 @@ static constexpr KeyLayout2::unicode_t keymap_238[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_239[128] {
+static constexpr KeyLayout2::unicode_t keymap_193[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -5436,7 +4390,7 @@ static constexpr KeyLayout2::unicode_t keymap_239[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_240[128] {
+static constexpr KeyLayout2::unicode_t keymap_194[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -5458,52 +4412,7 @@ static constexpr KeyLayout2::unicode_t keymap_240[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_241[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00e5,    0x00f0,         0,         0,       'a',       's', 
-       //                               å          ð                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00e6, 
-       //                                                                                      æ 
-/*28-2F*/    0x00f8,         0,         0,         0,       'z',       'x',       'c',       'v', 
-       //         ø                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_242[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00c5,    0x00d0,      '\r',         0,       'A',       'S', 
-       //                               Å          Ð                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00c6, 
-       //                                                                                      Æ 
-/*28-2F*/    0x00d8,    0x00a7,         0,       '*',       'Z',       'X',       'C',       'V', 
-       //         Ø          §                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_243[128] {
+static constexpr KeyLayout2::unicode_t keymap_195[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -5525,7 +4434,7 @@ static constexpr KeyLayout2::unicode_t keymap_243[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_244[128] {
+static constexpr KeyLayout2::unicode_t keymap_196[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -5547,7 +4456,7 @@ static constexpr KeyLayout2::unicode_t keymap_244[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_245[128] {
+static constexpr KeyLayout2::unicode_t keymap_197[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0,       '|',         0,         0, 
@@ -5570,7 +4479,7 @@ static constexpr KeyLayout2::unicode_t keymap_245[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_246[128] {
+static constexpr KeyLayout2::unicode_t keymap_198[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -5594,7 +4503,7 @@ static constexpr KeyLayout2::unicode_t keymap_246[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_247[128] {
+static constexpr KeyLayout2::unicode_t keymap_199[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -5616,7 +4525,7 @@ static constexpr KeyLayout2::unicode_t keymap_247[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_248[128] {
+static constexpr KeyLayout2::unicode_t keymap_200[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',    0x20ac,       '$',       '%',       '^', 
        //                  ESC                                €                                  
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -5638,7 +4547,7 @@ static constexpr KeyLayout2::unicode_t keymap_248[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_249[128] {
+static constexpr KeyLayout2::unicode_t keymap_201[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -5659,7 +4568,7 @@ static constexpr KeyLayout2::unicode_t keymap_249[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_250[128] {
+static constexpr KeyLayout2::unicode_t keymap_202[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00e8,         0,         0,         0,    0x00f9,    0x00ec, 
@@ -5680,7 +4589,7 @@ static constexpr KeyLayout2::unicode_t keymap_250[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_251[128] {
+static constexpr KeyLayout2::unicode_t keymap_203[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c8,         0,         0,         0,    0x00d9,    0x00cc, 
@@ -5701,7 +4610,7 @@ static constexpr KeyLayout2::unicode_t keymap_251[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_252[128] {
+static constexpr KeyLayout2::unicode_t keymap_204[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -5722,7 +4631,7 @@ static constexpr KeyLayout2::unicode_t keymap_252[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_253[128] {
+static constexpr KeyLayout2::unicode_t keymap_205[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -5743,7 +4652,7 @@ static constexpr KeyLayout2::unicode_t keymap_253[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_254[128] {
+static constexpr KeyLayout2::unicode_t keymap_206[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -5763,7 +4672,7 @@ static constexpr KeyLayout2::unicode_t keymap_254[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_255[128] {
+static constexpr KeyLayout2::unicode_t keymap_207[128] {
 /*00-07*/         0,         0,         0,         0,    0x00a3,         0,         0,         0, 
        //                                                     £                                  
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -5785,7 +4694,7 @@ static constexpr KeyLayout2::unicode_t keymap_255[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_256[128] {
+static constexpr KeyLayout2::unicode_t keymap_208[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c8,         0,         0,         0,    0x00d9,    0x00cc, 
@@ -5806,7 +4715,7 @@ static constexpr KeyLayout2::unicode_t keymap_256[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_257[128] {
+static constexpr KeyLayout2::unicode_t keymap_209[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -5828,7 +4737,7 @@ static constexpr KeyLayout2::unicode_t keymap_257[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_258[128] {
+static constexpr KeyLayout2::unicode_t keymap_210[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00e2,         0,         0,         0,    0x0167,         0,         0,    0x00ef, 
@@ -5852,7 +4761,7 @@ static constexpr KeyLayout2::unicode_t keymap_258[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_259[128] {
+static constexpr KeyLayout2::unicode_t keymap_211[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c2,         0,         0,         0,    0x0166,         0,         0,    0x00cf, 
@@ -5876,7 +4785,7 @@ static constexpr KeyLayout2::unicode_t keymap_259[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_260[128] {
+static constexpr KeyLayout2::unicode_t keymap_212[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -5896,7 +4805,7 @@ static constexpr KeyLayout2::unicode_t keymap_260[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_261[128] {
+static constexpr KeyLayout2::unicode_t keymap_213[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0, DK|0x00b4,         0,         0, 
@@ -5922,7 +4831,7 @@ static constexpr KeyLayout2::unicode_t keymap_261[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_262[128] {
+static constexpr KeyLayout2::unicode_t keymap_214[128] {
 /*00-07*/         0,    0x001b,       '"',    0x04d9,    0x0456,    0x04a3,    0x0493,       ',', 
        //                  ESC                     ә          і          ң          ғ            
 /*08-0F*/       '.',    0x04af,    0x04b1,    0x049b,    0x04e9,    0x04bb,      '\b',      '\t', 
@@ -5948,7 +4857,7 @@ static constexpr KeyLayout2::unicode_t keymap_262[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_263[128] {
+static constexpr KeyLayout2::unicode_t keymap_215[128] {
 /*00-07*/         0,    0x001b,       '!',    0x04d8,    0x0406,    0x04a2,    0x0492,       ';', 
        //                  ESC                     Ә          І          Ң          Ғ            
 /*08-0F*/       ':',    0x04ae,    0x04b0,    0x049a,    0x04e8,    0x04ba,      '\b',      '\t', 
@@ -5974,7 +4883,7 @@ static constexpr KeyLayout2::unicode_t keymap_263[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_264[128] {
+static constexpr KeyLayout2::unicode_t keymap_216[128] {
 /*00-07*/         0,         0,         0,    0x04d9,    0x0456,    0x04a3,    0x0493,         0, 
        //                                          ә          і          ң          ғ            
 /*08-0F*/         0,    0x04af,    0x04b1,    0x049b,    0x04e9,    0x04bb,         0,         0, 
@@ -6000,59 +4909,7 @@ static constexpr KeyLayout2::unicode_t keymap_264[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_265[128] {
-/*00-07*/         0,         0,         0,    0x04d9,    0x0456,    0x04a3,    0x0493,         0, 
-       //                                          ә          і          ң          ғ            
-/*08-0F*/         0,    0x04af,    0x04b1,    0x049b,    0x04e9,    0x04bb,         0,         0, 
-       //                    ү          ұ          қ          ө          һ                       
-/*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
-       //         й          ц          у          к          е          н          г          ш 
-/*18-1F*/    0x0449,    0x0437,    0x0445,    0x044a,         0,         0,    0x0444,    0x044b, 
-       //         щ          з          х          ъ                                ф          ы 
-/*20-27*/    0x0432,    0x0430,    0x043f,    0x0440,    0x043e,    0x043b,    0x0434,    0x0436, 
-       //         в          а          п          р          о          л          д          ж 
-/*28-2F*/    0x044d,         0,         0,         0,    0x044f,    0x0447,    0x0441,    0x043c, 
-       //         э                                           я          ч          с          м 
-/*30-37*/    0x0438,    0x0442,    0x044c,    0x0431,    0x044e,         0,         0,         0, 
-       //         и          т          ь          б          ю                                  
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,      '\\',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_266[128] {
-/*00-07*/         0,    0x001b,       '!',    0x04d8,    0x0406,    0x04a2,    0x0492,       ';', 
-       //                  ESC                     Ә          І          Ң          Ғ            
-/*08-0F*/       ':',    0x04ae,    0x04b0,    0x049a,    0x04e8,    0x04ba,      '\b',      '\t', 
-       //                    Ү          Ұ          Қ          Ө          Һ                       
-/*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
-       //         Й          Ц          У          К          Е          Н          Г          Ш 
-/*18-1F*/    0x0429,    0x0417,    0x0425,    0x042a,      '\r',         0,    0x0424,    0x042b, 
-       //         Щ          З          Х          Ъ                                Ф          Ы 
-/*20-27*/    0x0412,    0x0410,    0x041f,    0x0420,    0x041e,    0x041b,    0x0414,    0x0416, 
-       //         В          А          П          Р          О          Л          Д          Ж 
-/*28-2F*/    0x042d,       ')',         0,       '/',    0x042f,    0x0427,    0x0421,    0x041c, 
-       //         Э                                           Я          Ч          С          М 
-/*30-37*/    0x0418,    0x0422,    0x042c,    0x0411,    0x042e,       '?',         0,       '*', 
-       //         И          Т          Ь          Б          Ю                                  
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_267[128] {
+static constexpr KeyLayout2::unicode_t keymap_217[128] {
 /*00-07*/         0,         0,         0,    0x04d8,    0x0406,    0x04a2,    0x0492,         0, 
        //                                          Ә          І          Ң          Ғ            
 /*08-0F*/         0,    0x04ae,    0x04b0,    0x049a,    0x04e8,    0x04ba,         0,         0, 
@@ -6078,7 +4935,7 @@ static constexpr KeyLayout2::unicode_t keymap_267[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_268[128] {
+static constexpr KeyLayout2::unicode_t keymap_218[128] {
 /*00-07*/         0,         0,         0,    0x04d8,    0x0406,    0x04a2,    0x0492,         0, 
        //                                          Ә          І          Ң          Ғ            
 /*08-0F*/         0,    0x04ae,    0x04b0,    0x049a,    0x04e8,    0x04ba,         0,         0, 
@@ -6104,7 +4961,7 @@ static constexpr KeyLayout2::unicode_t keymap_268[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_269[128] {
+static constexpr KeyLayout2::unicode_t keymap_219[128] {
 /*00-07*/         0,    0x001b,       '"',    0x04d9,    0x0456,    0x04a3,    0x0493,       ',', 
        //                  ESC                     ә          і          ң          ғ            
 /*08-0F*/       '.',    0x04af,    0x04b1,    0x049b,    0x04e9,    0x04bb,      '\b',      '\t', 
@@ -6130,7 +4987,7 @@ static constexpr KeyLayout2::unicode_t keymap_269[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_270[128] {
+static constexpr KeyLayout2::unicode_t keymap_220[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x04af,         0,         0,    0x04a3,         0,         0, 
@@ -6151,7 +5008,7 @@ static constexpr KeyLayout2::unicode_t keymap_270[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_271[128] {
+static constexpr KeyLayout2::unicode_t keymap_221[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x04ae,         0,         0,    0x04a2,         0,         0, 
@@ -6172,7 +5029,7 @@ static constexpr KeyLayout2::unicode_t keymap_271[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_272[128] {
+static constexpr KeyLayout2::unicode_t keymap_222[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -6198,7 +5055,7 @@ static constexpr KeyLayout2::unicode_t keymap_272[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_273[128] {
+static constexpr KeyLayout2::unicode_t keymap_223[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
        //                  ESC                                №                                  
 /*08-0F*/       '?',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -6224,7 +5081,7 @@ static constexpr KeyLayout2::unicode_t keymap_273[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_274[128] {
+static constexpr KeyLayout2::unicode_t keymap_224[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0439,    0x04e9,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
@@ -6249,32 +5106,7 @@ static constexpr KeyLayout2::unicode_t keymap_274[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_275[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0439,    0x04e9,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
-       //         й          ө          у          к          е          н          г          ш 
-/*18-1F*/    0x04d9,    0x0437,    0x0445,    0x04af,         0,         0,    0x0444,    0x044b, 
-       //         ә          з          х          ү                                ф          ы 
-/*20-27*/    0x0432,    0x0430,    0x043f,    0x0440,    0x043e,    0x043b,    0x0434,    0x04a3, 
-       //         в          а          п          р          о          л          д          ң 
-/*28-2F*/    0x044d,    0x04bb,         0,         0,    0x044f,    0x0447,    0x0441,    0x043c, 
-       //         э          һ                                я          ч          с          м 
-/*30-37*/    0x0438,    0x0442,    0x0497,    0x0431,    0x044e,         0,         0,         0, 
-       //         и          т          җ          б          ю                                  
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0491,         0, 
-       //                                                                           ґ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_276[128] {
+static constexpr KeyLayout2::unicode_t keymap_225[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,    0x0446,         0,    0x04a1,         0,         0,    0x0493,         0, 
@@ -6298,7 +5130,7 @@ static constexpr KeyLayout2::unicode_t keymap_276[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_277[128] {
+static constexpr KeyLayout2::unicode_t keymap_226[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,    0x20bd,         0,         0,         0,         0,         0,         0, 
        //                    ₽                                                                   
@@ -6323,33 +5155,7 @@ static constexpr KeyLayout2::unicode_t keymap_277[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_278[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
-       //                  ESC                                №                                  
-/*08-0F*/       '?',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/    0x0419,    0x04e8,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
-       //         Й          Ө          У          К          Е          Н          Г          Ш 
-/*18-1F*/    0x04d8,    0x0417,    0x0425,    0x04ae,      '\r',         0,    0x0424,    0x042b, 
-       //         Ә          З          Х          Ү                                Ф          Ы 
-/*20-27*/    0x0412,    0x0410,    0x041f,    0x0420,    0x041e,    0x041b,    0x0414,    0x04a2, 
-       //         В          А          П          Р          О          Л          Д          Ң 
-/*28-2F*/    0x042d,    0x04ba,         0,       '/',    0x042f,    0x0427,    0x0421,    0x041c, 
-       //         Э          Һ                                Я          Ч          С          М 
-/*30-37*/    0x0418,    0x0422,    0x0496,    0x0411,    0x042e,       ',',         0,       '*', 
-       //         И          Т          Җ          Б          Ю                                  
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x0490,         0, 
-       //                                                                           Ґ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_279[128] {
+static constexpr KeyLayout2::unicode_t keymap_227[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x04e8,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -6374,7 +5180,7 @@ static constexpr KeyLayout2::unicode_t keymap_279[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_280[128] {
+static constexpr KeyLayout2::unicode_t keymap_228[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x04e8,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -6399,7 +5205,7 @@ static constexpr KeyLayout2::unicode_t keymap_280[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_281[128] {
+static constexpr KeyLayout2::unicode_t keymap_229[128] {
 /*00-07*/         0,         0,         0,       '@',       '#',       '$',         0,         0, 
 /*08-0F*/       '[',       ']',       '{',       '}',         0,         0,         0,         0, 
 /*10-17*/         0,    0x0446,         0,    0x04a1,         0,         0,    0x0493,         0, 
@@ -6423,7 +5229,7 @@ static constexpr KeyLayout2::unicode_t keymap_281[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_282[128] {
+static constexpr KeyLayout2::unicode_t keymap_230[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,    0x0426,         0,    0x04a0,         0,         0,    0x0492,         0, 
@@ -6447,7 +5253,7 @@ static constexpr KeyLayout2::unicode_t keymap_282[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_283[128] {
+static constexpr KeyLayout2::unicode_t keymap_231[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -6473,7 +5279,7 @@ static constexpr KeyLayout2::unicode_t keymap_283[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_284[128] {
+static constexpr KeyLayout2::unicode_t keymap_232[128] {
 /*00-07*/         0,    0x001b,    0x2116,       '-',       '"',    0x20ae,       ':',       '.', 
        //                  ESC          №                                ₮                       
 /*08-0F*/       '_',       ',',       '%',       '?',    0x0435,    0x0449,      '\b',      '\t', 
@@ -6499,7 +5305,7 @@ static constexpr KeyLayout2::unicode_t keymap_284[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_285[128] {
+static constexpr KeyLayout2::unicode_t keymap_233[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x0415,    0x0429,      '\b',      '\t', 
@@ -6525,7 +5331,7 @@ static constexpr KeyLayout2::unicode_t keymap_285[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_286[128] {
+static constexpr KeyLayout2::unicode_t keymap_234[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x0435,    0x0449,         0,         0, 
        //                                                     е          щ                       
@@ -6550,58 +5356,7 @@ static constexpr KeyLayout2::unicode_t keymap_286[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_287[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,    0x0435,    0x0449,         0,         0, 
-       //                                                     е          щ                       
-/*10-17*/    0x0444,    0x0446,    0x0443,    0x0436,    0x044d,    0x043d,    0x0433,    0x0448, 
-       //         ф          ц          у          ж          э          н          г          ш 
-/*18-1F*/    0x04af,    0x0437,    0x043a,    0x044a,         0,         0,    0x0439,    0x044b, 
-       //         ү          з          к          ъ                                й          ы 
-/*20-27*/    0x0431,    0x04e9,    0x0430,    0x0445,    0x0440,    0x043e,    0x043b,    0x0434, 
-       //         б          ө          а          х          р          о          л          д 
-/*28-2F*/    0x043f,         0,         0,         0,    0x044f,    0x0447,    0x0451,    0x0441, 
-       //         п                                           я          ч          ё          с 
-/*30-37*/    0x043c,    0x0438,    0x0442,    0x044c,    0x0432,    0x044e,         0,         0, 
-       //         м          и          т          ь          в          ю                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_288[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',    0x0415,    0x0429,      '\b',      '\t', 
-       //                                                     Е          Щ                       
-/*10-17*/    0x0424,    0x0426,    0x0423,    0x0416,    0x042d,    0x041d,    0x0413,    0x0428, 
-       //         Ф          Ц          У          Ж          Э          Н          Г          Ш 
-/*18-1F*/    0x04ae,    0x0417,    0x041a,    0x042a,      '\r',         0,    0x0419,    0x042b, 
-       //         Ү          З          К          Ъ                                Й          Ы 
-/*20-27*/    0x0411,    0x04e8,    0x0410,    0x0425,    0x0420,    0x041e,    0x041b,    0x0414, 
-       //         Б          Ө          А          Х          Р          О          Л          Д 
-/*28-2F*/    0x041f,       '+',         0,       '|',    0x042f,    0x0427,    0x0401,    0x0421, 
-       //         П                                           Я          Ч          Ё          С 
-/*30-37*/    0x041c,    0x0418,    0x0422,    0x042c,    0x0412,    0x042e,         0,       '*', 
-       //         М          И          Т          Ь          В          Ю                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_289[128] {
+static constexpr KeyLayout2::unicode_t keymap_235[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x0415,    0x0429,         0,         0, 
        //                                                     Е          Щ                       
@@ -6626,7 +5381,7 @@ static constexpr KeyLayout2::unicode_t keymap_289[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_290[128] {
+static constexpr KeyLayout2::unicode_t keymap_236[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x0415,    0x0429,         0,         0, 
        //                                                     Е          Щ                       
@@ -6651,7 +5406,7 @@ static constexpr KeyLayout2::unicode_t keymap_290[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_291[128] {
+static constexpr KeyLayout2::unicode_t keymap_237[128] {
 /*00-07*/         0,    0x001b,    0x2116,       '-',       '"',    0x20ae,       ':',       '.', 
        //                  ESC          №                                ₮                       
 /*08-0F*/       '_',       ',',       '%',       '?',    0x0435,    0x0449,      '\b',      '\t', 
@@ -6677,7 +5432,7 @@ static constexpr KeyLayout2::unicode_t keymap_291[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_292[128] {
+static constexpr KeyLayout2::unicode_t keymap_238[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -6697,7 +5452,7 @@ static constexpr KeyLayout2::unicode_t keymap_292[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_293[128] {
+static constexpr KeyLayout2::unicode_t keymap_239[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '^', 
        //                  ESC                                £                                  
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -6718,7 +5473,7 @@ static constexpr KeyLayout2::unicode_t keymap_293[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_294[128] {
+static constexpr KeyLayout2::unicode_t keymap_240[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,    0x1e83,    0x00e9,         0,         0,    0x00fd,    0x00fa,    0x00ed, 
@@ -6740,7 +5495,7 @@ static constexpr KeyLayout2::unicode_t keymap_294[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_295[128] {
+static constexpr KeyLayout2::unicode_t keymap_241[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,    0x1e82,    0x00c9,         0,         0,    0x00dd,    0x00da,    0x00cd, 
@@ -6762,28 +5517,7 @@ static constexpr KeyLayout2::unicode_t keymap_295[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_296[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '^', 
-       //                  ESC                                £                                  
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '@',    0x00ac,         0,       '~',       'Z',       'X',       'C',       'V', 
-       //                    ¬                                                                   
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_297[128] {
+static constexpr KeyLayout2::unicode_t keymap_242[128] {
 /*00-07*/         0,         0,         0, DK|0x00a8,         0,    0x20ac,         0,    DK|'^', 
        //                                          ¨                     €            
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -6806,7 +5540,7 @@ static constexpr KeyLayout2::unicode_t keymap_297[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_298[128] {
+static constexpr KeyLayout2::unicode_t keymap_243[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,    0x1e82,    0x00c9,         0,         0,    0x00dd,    0x00da,    0x00cd, 
@@ -6828,7 +5562,7 @@ static constexpr KeyLayout2::unicode_t keymap_298[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_299[128] {
+static constexpr KeyLayout2::unicode_t keymap_244[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -6848,7 +5582,7 @@ static constexpr KeyLayout2::unicode_t keymap_299[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_300[128] {
+static constexpr KeyLayout2::unicode_t keymap_245[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    DK|'^',      '\b',      '\t', 
@@ -6871,7 +5605,7 @@ static constexpr KeyLayout2::unicode_t keymap_300[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_301[128] {
+static constexpr KeyLayout2::unicode_t keymap_246[128] {
 /*00-07*/         0,    0x001b,       '+',       '"',       '*',    0x00e7,       '%',       '&', 
        //                  ESC                                           ç                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -6894,49 +5628,7 @@ static constexpr KeyLayout2::unicode_t keymap_301[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_302[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/         0,         0,         0,         0,       'y',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_303[128] {
-/*00-07*/         0,    0x001b,       '+',       '"',       '*',    0x00e7,       '%',       '&', 
-       //                  ESC                                           ç                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00fc,       '!',      '\r',         0,       'A',       'S', 
-       //                               ü                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00f6, 
-       //                                                                                      ö 
-/*28-2F*/    0x00e4,    0x00b0,         0,    0x00a3,       'Y',       'X',       'C',       'V', 
-       //         ä          °                     £                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_304[128] {
+static constexpr KeyLayout2::unicode_t keymap_247[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -6955,7 +5647,7 @@ static constexpr KeyLayout2::unicode_t keymap_304[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_305[128] {
+static constexpr KeyLayout2::unicode_t keymap_248[128] {
 /*00-07*/         0,         0,    0x00a6,       '@',       '#',    0x00b0,    0x00a7,    0x00ac, 
        //                               ¦                                °          §          ¬ 
 /*08-0F*/       '|',    0x00a2,         0,         0, DK|0x00b4,    DK|'~',         0,         0, 
@@ -6977,7 +5669,7 @@ static constexpr KeyLayout2::unicode_t keymap_305[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_306[128] {
+static constexpr KeyLayout2::unicode_t keymap_249[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    DK|'^',      '\b',      '\t', 
@@ -7000,7 +5692,7 @@ static constexpr KeyLayout2::unicode_t keymap_306[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_307[128] {
+static constexpr KeyLayout2::unicode_t keymap_250[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -7020,7 +5712,7 @@ static constexpr KeyLayout2::unicode_t keymap_307[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_308[128] {
+static constexpr KeyLayout2::unicode_t keymap_251[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -7040,7 +5732,7 @@ static constexpr KeyLayout2::unicode_t keymap_308[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_309[128] {
+static constexpr KeyLayout2::unicode_t keymap_252[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    DK|'^',      '\b',      '\t', 
@@ -7063,7 +5755,7 @@ static constexpr KeyLayout2::unicode_t keymap_309[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_310[128] {
+static constexpr KeyLayout2::unicode_t keymap_253[128] {
 /*00-07*/         0,    0x001b,       '+',       '"',       '*',    0x00e7,       '%',       '&', 
        //                  ESC                                           ç                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -7086,7 +5778,7 @@ static constexpr KeyLayout2::unicode_t keymap_310[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_311[128] {
+static constexpr KeyLayout2::unicode_t keymap_254[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
@@ -7108,52 +5800,7 @@ static constexpr KeyLayout2::unicode_t keymap_311[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_312[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00c8,         0,         0,         0,       'a',       's', 
-       //                               È                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00c9, 
-       //                                                                                      É 
-/*28-2F*/    0x00c0,         0,         0,         0,       'y',       'x',       'c',       'v', 
-       //         À                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_313[128] {
-/*00-07*/         0,    0x001b,       '+',       '"',       '*',    0x00e7,       '%',       '&', 
-       //                  ESC                                           ç                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00e8,       '!',      '\r',         0,       'A',       'S', 
-       //                               è                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00e9, 
-       //                                                                                      é 
-/*28-2F*/    0x00e0,    0x00b0,         0,    0x00a3,       'Y',       'X',       'C',       'V', 
-       //         à          °                     £                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_314[128] {
+static constexpr KeyLayout2::unicode_t keymap_255[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -7175,7 +5822,7 @@ static constexpr KeyLayout2::unicode_t keymap_314[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_315[128] {
+static constexpr KeyLayout2::unicode_t keymap_256[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -7197,7 +5844,7 @@ static constexpr KeyLayout2::unicode_t keymap_315[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_316[128] {
+static constexpr KeyLayout2::unicode_t keymap_257[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    DK|'^',      '\b',      '\t', 
@@ -7220,7 +5867,7 @@ static constexpr KeyLayout2::unicode_t keymap_316[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_317[128] {
+static constexpr KeyLayout2::unicode_t keymap_258[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -7240,7 +5887,7 @@ static constexpr KeyLayout2::unicode_t keymap_317[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_318[128] {
+static constexpr KeyLayout2::unicode_t keymap_259[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00e9,         0,         0,         0,    0x00fa,    0x00ed, 
@@ -7261,7 +5908,7 @@ static constexpr KeyLayout2::unicode_t keymap_318[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_319[128] {
+static constexpr KeyLayout2::unicode_t keymap_260[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c9,         0,         0,         0,    0x00da,    0x00cd, 
@@ -7282,7 +5929,7 @@ static constexpr KeyLayout2::unicode_t keymap_319[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_320[128] {
+static constexpr KeyLayout2::unicode_t keymap_261[128] {
 /*00-07*/         0,         0,         0,         0,         0,    0x20ac,         0,         0, 
        //                                                                €                       
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -7305,7 +5952,7 @@ static constexpr KeyLayout2::unicode_t keymap_320[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_321[128] {
+static constexpr KeyLayout2::unicode_t keymap_262[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c9,         0,         0,         0,    0x00da,    0x00cd, 
@@ -7326,7 +5973,7 @@ static constexpr KeyLayout2::unicode_t keymap_321[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_322[128] {
+static constexpr KeyLayout2::unicode_t keymap_263[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -7346,7 +5993,7 @@ static constexpr KeyLayout2::unicode_t keymap_322[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_323[128] {
+static constexpr KeyLayout2::unicode_t keymap_264[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00bf,      '\b',      '\t', 
@@ -7369,7 +6016,7 @@ static constexpr KeyLayout2::unicode_t keymap_323[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_324[128] {
+static constexpr KeyLayout2::unicode_t keymap_265[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    0x00a1,      '\b',      '\t', 
@@ -7393,7 +6040,7 @@ static constexpr KeyLayout2::unicode_t keymap_324[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_325[128] {
+static constexpr KeyLayout2::unicode_t keymap_266[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -7413,51 +6060,7 @@ static constexpr KeyLayout2::unicode_t keymap_325[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_326[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f1, 
-       //                                                                                      ñ 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_327[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    0x00a1,      '\b',      '\t', 
-       //                                                                ¡                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P', DK|0x00a8,       '*',      '\r',         0,       'A',       'S', 
-       //                               ¨                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d1, 
-       //                                                                                      Ñ 
-/*28-2F*/       '[',    0x00b0,         0,       ']',       'Z',       'X',       'C',       'V', 
-       //                    °                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_328[128] {
+static constexpr KeyLayout2::unicode_t keymap_267[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -7477,7 +6080,7 @@ static constexpr KeyLayout2::unicode_t keymap_328[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_329[128] {
+static constexpr KeyLayout2::unicode_t keymap_268[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -7497,7 +6100,7 @@ static constexpr KeyLayout2::unicode_t keymap_329[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_330[128] {
+static constexpr KeyLayout2::unicode_t keymap_269[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001c,         0,    0x007f,         0, 
@@ -7518,7 +6121,7 @@ static constexpr KeyLayout2::unicode_t keymap_330[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_331[128] {
+static constexpr KeyLayout2::unicode_t keymap_270[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,      '\\',         0,         0,         0, 
 /*10-17*/       '@',         0,         0,         0,         0,         0,         0,         0, 
@@ -7538,7 +6141,7 @@ static constexpr KeyLayout2::unicode_t keymap_331[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_332[128] {
+static constexpr KeyLayout2::unicode_t keymap_271[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00bf,      '\b',      '\t', 
@@ -7561,7 +6164,7 @@ static constexpr KeyLayout2::unicode_t keymap_332[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_333[128] {
+static constexpr KeyLayout2::unicode_t keymap_272[128] {
 /*00-07*/         0,    0x001b,       '&',    0x00e9,       '"',      '\'',       '(',    0x00a7, 
        //                  ESC                     é                                           § 
 /*08-0F*/    0x00e8,       '!',    0x00e7,    0x00e0,       ')',       '-',      '\b',      '\t', 
@@ -7583,7 +6186,7 @@ static constexpr KeyLayout2::unicode_t keymap_333[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_334[128] {
+static constexpr KeyLayout2::unicode_t keymap_273[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '_',      '\b',      '\t', 
@@ -7606,7 +6209,7 @@ static constexpr KeyLayout2::unicode_t keymap_334[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_335[128] {
+static constexpr KeyLayout2::unicode_t keymap_274[128] {
 /*00-07*/         0,         0,       '&',    0x00e9,       '"',      '\'',       '(',    0x00a7, 
        //                                          é                                           § 
 /*08-0F*/    0x00e8,       '!',    0x00e7,    0x00e0,       ')',       '-',         0,         0, 
@@ -7628,29 +6231,7 @@ static constexpr KeyLayout2::unicode_t keymap_335[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_336[128] {
-/*00-07*/         0,         0,       '&',    0x00e9,       '"',      '\'',       '(',    0x00a7, 
-       //                                          é                                           § 
-/*08-0F*/    0x00e8,       '!',    0x00e7,    0x00e0,       ')',       '-',         0,         0, 
-       //         è                     ç          à                                             
-/*10-17*/       'a',       'z',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    DK|'^',       '$',         0,         0,       'q',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',       'm', 
-/*28-2F*/    0x00f9,         0,         0,    0x00b5,       'w',       'x',       'c',       'v', 
-       //         ù                                µ                                             
-/*30-37*/       'b',       'n',       ',',       ';',       ':',       '=',         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_337[128] {
+static constexpr KeyLayout2::unicode_t keymap_275[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -7670,30 +6251,7 @@ static constexpr KeyLayout2::unicode_t keymap_337[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_338[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '_',      '\b',      '\t', 
-       //                                                     °                                  
-/*10-17*/       'A',       'Z',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P', DK|0x00a8,       '*',      '\r',         0,       'Q',       'S', 
-       //                               ¨                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       'M', 
-/*28-2F*/       '%',    0x00b3,         0,    0x00a3,       'W',       'X',       'C',       'V', 
-       //                    ³                     £                                             
-/*30-37*/       'B',       'N',       '?',       '.',       '/',       '+',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_339[128] {
+static constexpr KeyLayout2::unicode_t keymap_276[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '_',         0,         0, 
        //                                                     °                                  
@@ -7715,7 +6273,7 @@ static constexpr KeyLayout2::unicode_t keymap_339[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_340[128] {
+static constexpr KeyLayout2::unicode_t keymap_277[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '_',         0,         0, 
        //                                                     °                                  
@@ -7737,7 +6295,7 @@ static constexpr KeyLayout2::unicode_t keymap_340[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_341[128] {
+static constexpr KeyLayout2::unicode_t keymap_278[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,    0x001f,    0x007f,         0, 
@@ -7758,7 +6316,7 @@ static constexpr KeyLayout2::unicode_t keymap_341[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_342[128] {
+static constexpr KeyLayout2::unicode_t keymap_279[128] {
 /*00-07*/         0,         0,       '|',       '@',       '#',       '{',       '[',       '^', 
 /*08-0F*/         0,         0,       '{',       '}',         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -7779,7 +6337,7 @@ static constexpr KeyLayout2::unicode_t keymap_342[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_343[128] {
+static constexpr KeyLayout2::unicode_t keymap_280[128] {
 /*00-07*/         0,    0x001b,       '&',    0x00e9,       '"',      '\'',       '(',    0x00a7, 
        //                  ESC                     é                                           § 
 /*08-0F*/    0x00e8,       '!',    0x00e7,    0x00e0,       ')',       '-',      '\b',      '\t', 
@@ -7801,7 +6359,7 @@ static constexpr KeyLayout2::unicode_t keymap_343[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_344[128] {
+static constexpr KeyLayout2::unicode_t keymap_281[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00ab,      '\b',      '\t', 
@@ -7825,7 +6383,7 @@ static constexpr KeyLayout2::unicode_t keymap_344[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_345[128] {
+static constexpr KeyLayout2::unicode_t keymap_282[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    0x00bb,      '\b',      '\t', 
@@ -7848,50 +6406,7 @@ static constexpr KeyLayout2::unicode_t keymap_345[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_346[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00e7, 
-       //                                                                                      ç 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_347[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    0x00bb,      '\b',      '\t', 
-       //                                                                »                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '*',    DK|'`',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00c7, 
-       //                                                                                      Ç 
-/*28-2F*/    0x00aa,       '|',         0,    DK|'^',       'Z',       'X',       'C',       'V', 
-       //         ª                                                                   
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_348[128] {
+static constexpr KeyLayout2::unicode_t keymap_283[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -7911,7 +6426,7 @@ static constexpr KeyLayout2::unicode_t keymap_348[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_349[128] {
+static constexpr KeyLayout2::unicode_t keymap_284[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -7931,7 +6446,7 @@ static constexpr KeyLayout2::unicode_t keymap_349[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_350[128] {
+static constexpr KeyLayout2::unicode_t keymap_285[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,    0x00a7,    0x20ac,         0, 
        //                                                     £          §          €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0,         0,         0,         0, 
@@ -7953,7 +6468,7 @@ static constexpr KeyLayout2::unicode_t keymap_350[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_351[128] {
+static constexpr KeyLayout2::unicode_t keymap_286[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00ab,      '\b',      '\t', 
@@ -7977,7 +6492,7 @@ static constexpr KeyLayout2::unicode_t keymap_351[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_352[128] {
+static constexpr KeyLayout2::unicode_t keymap_287[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -8000,7 +6515,7 @@ static constexpr KeyLayout2::unicode_t keymap_352[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_353[128] {
+static constexpr KeyLayout2::unicode_t keymap_288[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
@@ -8023,30 +6538,7 @@ static constexpr KeyLayout2::unicode_t keymap_353[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_354[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x0160,    0x0110,      '\r',         0,       'A',       'S', 
-       //                               Š          Đ                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x010c, 
-       //                                                                                      Č 
-/*28-2F*/    0x0106,       '~',         0,    0x017d,       'Y',       'X',       'C',       'V', 
-       //         Ć                                Ž                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_355[128] {
+static constexpr KeyLayout2::unicode_t keymap_289[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -8069,7 +6561,7 @@ static constexpr KeyLayout2::unicode_t keymap_355[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_356[128] {
+static constexpr KeyLayout2::unicode_t keymap_290[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00e2,         0,         0,         0,    0x0167,         0,         0,    0x00ef, 
@@ -8093,7 +6585,7 @@ static constexpr KeyLayout2::unicode_t keymap_356[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_357[128] {
+static constexpr KeyLayout2::unicode_t keymap_291[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c2,         0,         0,         0,    0x0166,         0,         0,    0x00cf, 
@@ -8117,7 +6609,7 @@ static constexpr KeyLayout2::unicode_t keymap_357[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_358[128] {
+static constexpr KeyLayout2::unicode_t keymap_292[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -8142,7 +6634,7 @@ static constexpr KeyLayout2::unicode_t keymap_358[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_359[128] {
+static constexpr KeyLayout2::unicode_t keymap_293[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x0493,    0x04b3,      '\b',      '\t', 
@@ -8168,7 +6660,7 @@ static constexpr KeyLayout2::unicode_t keymap_359[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_360[128] {
+static constexpr KeyLayout2::unicode_t keymap_294[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
        //                  ESC                                №                                  
 /*08-0F*/       '?',       '*',       '(',       ')',    0x0492,    0x04b2,      '\b',      '\t', 
@@ -8194,7 +6686,7 @@ static constexpr KeyLayout2::unicode_t keymap_360[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_361[128] {
+static constexpr KeyLayout2::unicode_t keymap_295[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x0493,    0x04b3,         0,         0, 
        //                                                     ғ          ҳ                       
@@ -8219,58 +6711,7 @@ static constexpr KeyLayout2::unicode_t keymap_361[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_362[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,    0x0493,    0x04b3,         0,         0, 
-       //                                                     ғ          ҳ                       
-/*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
-       //         й          ц          у          к          е          н          г          ш 
-/*18-1F*/    0x045e,    0x0437,    0x0445,    0x044a,         0,         0,    0x0444,    0x049b, 
-       //         ў          з          х          ъ                                ф          қ 
-/*20-27*/    0x0432,    0x0430,    0x043f,    0x0440,    0x043e,    0x043b,    0x0434,    0x0436, 
-       //         в          а          п          р          о          л          д          ж 
-/*28-2F*/    0x044d,    0x0451,         0,         0,    0x044f,    0x0447,    0x0441,    0x043c, 
-       //         э          ё                                я          ч          с          м 
-/*30-37*/    0x0438,    0x0442,    0x044c,    0x0431,    0x044e,         0,         0,         0, 
-       //         и          т          ь          б          ю                                  
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_363[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x2116,       ';',       '%',       ':', 
-       //                  ESC                                №                                  
-/*08-0F*/       '?',       '*',       '(',       ')',    0x0492,    0x04b2,      '\b',      '\t', 
-       //                                                     Ғ          Ҳ                       
-/*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
-       //         Й          Ц          У          К          Е          Н          Г          Ш 
-/*18-1F*/    0x040e,    0x0417,    0x0425,    0x042a,      '\r',         0,    0x0424,    0x049a, 
-       //         Ў          З          Х          Ъ                                Ф          Қ 
-/*20-27*/    0x0412,    0x0410,    0x041f,    0x0420,    0x041e,    0x041b,    0x0414,    0x0416, 
-       //         В          А          П          Р          О          Л          Д          Ж 
-/*28-2F*/    0x042d,    0x0401,         0,       '/',    0x042f,    0x0427,    0x0421,    0x041c, 
-       //         Э          Ё                                Я          Ч          С          М 
-/*30-37*/    0x0418,    0x0422,    0x042c,    0x0411,    0x042e,       ',',         0,       '*', 
-       //         И          Т          Ь          Б          Ю                                  
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '/',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_364[128] {
+static constexpr KeyLayout2::unicode_t keymap_296[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x0492,    0x04b2,         0,         0, 
        //                                                     Ғ          Ҳ                       
@@ -8295,7 +6736,7 @@ static constexpr KeyLayout2::unicode_t keymap_364[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_365[128] {
+static constexpr KeyLayout2::unicode_t keymap_297[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,    0x0492,    0x04b2,         0,         0, 
        //                                                     Ғ          Ҳ                       
@@ -8320,7 +6761,7 @@ static constexpr KeyLayout2::unicode_t keymap_365[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_366[128] {
+static constexpr KeyLayout2::unicode_t keymap_298[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    0x0493,    0x04b3,      '\b',      '\t', 
@@ -8346,7 +6787,7 @@ static constexpr KeyLayout2::unicode_t keymap_366[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_367[128] {
+static constexpr KeyLayout2::unicode_t keymap_299[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '_',       '+',      '\b',      '\t', 
@@ -8366,7 +6807,7 @@ static constexpr KeyLayout2::unicode_t keymap_367[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_368[128] {
+static constexpr KeyLayout2::unicode_t keymap_300[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x2212,       '+',         0,         0, 
        //                                                     −                                  
@@ -8391,32 +6832,7 @@ static constexpr KeyLayout2::unicode_t keymap_368[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_369[128] {
-/*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
-/*08-0F*/       '7',       '8',       '9',       '0',    0x2212,       '+',         0,         0, 
-       //                                                     −                                  
-/*10-17*/    0x148b,    0x1431,    0x1546,    0x1596,    0x1671,    0x1673,    0x1675,    0x15a4, 
-       //         ᒋ          ᐱ          ᕆ          ᖖ          ᙱ          ᙳ          ᙵ          ᖤ 
-/*18-1F*/    0x15a0,    0x15a6,    0x1505,         0,         0,         0,    0x148d,    0x1433, 
-       //         ᖠ          ᖦ          ᔅ                                           ᒍ          ᐳ 
-/*20-27*/    0x1548,    0x1555,       '(',       ')',    0x152a,    0x1557,    0x15a2,         0, 
-       //         ᕈ          ᕕ                                ᔪ          ᕗ          ᖢ            
-/*28-2F*/         0,         0,         0,         0,    0x1490,    0x1438,    0x154b,       '?', 
-       //                                                     ᒐ          ᐸ          ᕋ            
-/*30-37*/    0x157c,    0x14c7,    0x14da,         0,         0,    0x1559,         0,         0, 
-       //         ᕼ          ᓇ          ᓚ                                ᕙ                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_370[128] {
+static constexpr KeyLayout2::unicode_t keymap_301[128] {
 /*00-07*/         0,         0,    0x00a2,    0x00ae,    0x00bc,    0x00bd,    0x00be,       '^', 
        //                               ¢          ®          ¼          ½          ¾            
 /*08-0F*/    0x2154,    0x00a9,    0x00f7,       '+',         0,         0,         0,         0, 
@@ -8442,27 +6858,7 @@ static constexpr KeyLayout2::unicode_t keymap_370[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_371[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',       '~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_372[128] {
+static constexpr KeyLayout2::unicode_t keymap_302[128] {
 /*00-07*/         0,         0,    0x1595,    0x1449,    0x1550,    0x1483,    0x1466,    0x1585, 
        //                               ᖕ          ᑉ          ᕐ          ᒃ          ᑦ          ᖅ 
 /*08-0F*/    0x14bb,    0x14d0,    0x14ea,    0x153e,       '-',    0x155d,         0,         0, 
@@ -8488,7 +6884,7 @@ static constexpr KeyLayout2::unicode_t keymap_372[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_373[128] {
+static constexpr KeyLayout2::unicode_t keymap_303[128] {
 /*00-07*/         0,         0,    0x1595,    0x1449,    0x1550,    0x1483,    0x1466,    0x1585, 
        //                               ᖕ          ᑉ          ᕐ          ᒃ          ᑦ          ᖅ 
 /*08-0F*/    0x14bb,    0x14d0,    0x14ea,    0x153e,       '-',    0x155d,         0,         0, 
@@ -8514,7 +6910,7 @@ static constexpr KeyLayout2::unicode_t keymap_373[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_374[128] {
+static constexpr KeyLayout2::unicode_t keymap_304[128] {
 /*00-07*/         0,         0,       '!',       '@',       '#',       '$',       '%',       '*', 
 /*08-0F*/       '&',    0x2022,       '[',       ']',         0,       '=',         0,         0, 
        //                    •                                                                   
@@ -8539,7 +6935,7 @@ static constexpr KeyLayout2::unicode_t keymap_374[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_375[128] {
+static constexpr KeyLayout2::unicode_t keymap_305[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -8563,7 +6959,7 @@ static constexpr KeyLayout2::unicode_t keymap_375[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_376[128] {
+static constexpr KeyLayout2::unicode_t keymap_306[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '?', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -8587,7 +6983,7 @@ static constexpr KeyLayout2::unicode_t keymap_376[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_377[128] {
+static constexpr KeyLayout2::unicode_t keymap_307[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -8610,30 +7006,7 @@ static constexpr KeyLayout2::unicode_t keymap_377[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_378[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,    0x00e7,         0,         0,       'a',       's', 
-       //                                          ç                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/    0x00e8,         0,         0,    0x00e0,       'z',       'x',       'c',       'v', 
-       //         è                                à                                             
-/*30-37*/       'b',       'n',       'm',         0,         0,    0x00e9,         0,         0, 
-       //                                                                é                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,    0x00f9,         0, 
-       //                                                                           ù            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_379[128] {
+static constexpr KeyLayout2::unicode_t keymap_308[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -8654,7 +7027,7 @@ static constexpr KeyLayout2::unicode_t keymap_379[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_380[128] {
+static constexpr KeyLayout2::unicode_t keymap_309[128] {
 /*00-07*/         0,         0,    0x00a1,    0x00b2,    0x00a3,    0x00a4,         0,         0, 
        //                               ¡          ²          £          ¤                       
 /*08-0F*/         0,         0,    0x00b1,         0,    0x00bf,         0,         0,         0, 
@@ -8680,31 +7053,7 @@ static constexpr KeyLayout2::unicode_t keymap_380[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_381[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '?', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    DK|'^',    0x00c7,      '\r',         0,       'A',       'S', 
-       //                               Ç                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/    0x00c8,    0x00b0,         0,    0x00c0,       'Z',       'X',       'C',       'V', 
-       //         È          °                     À                                             
-/*30-37*/       'B',       'N',       'M',      '\'',       '.',    0x00c9,         0,       '*', 
-       //                                                                É                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,    0x00d9,         0, 
-       //                                                                           Ù            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_382[128] {
+static constexpr KeyLayout2::unicode_t keymap_310[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -8727,7 +7076,7 @@ static constexpr KeyLayout2::unicode_t keymap_382[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_383[128] {
+static constexpr KeyLayout2::unicode_t keymap_311[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -8750,7 +7099,7 @@ static constexpr KeyLayout2::unicode_t keymap_383[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_384[128] {
+static constexpr KeyLayout2::unicode_t keymap_312[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001f,         0,    0x007f,         0, 
@@ -8771,7 +7120,7 @@ static constexpr KeyLayout2::unicode_t keymap_384[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_385[128] {
+static constexpr KeyLayout2::unicode_t keymap_313[128] {
 /*00-07*/         0,         0,    0x00b9,       '@',    0x00b3,    0x00bc,    0x00bd,    0x00be, 
        //                               ¹                     ³          ¼          ½          ¾ 
 /*08-0F*/       '{',       '[',       ']',       '}',       '|', DK|0x00b8,         0,         0, 
@@ -8797,7 +7146,7 @@ static constexpr KeyLayout2::unicode_t keymap_385[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_386[128] {
+static constexpr KeyLayout2::unicode_t keymap_314[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -8818,7 +7167,7 @@ static constexpr KeyLayout2::unicode_t keymap_386[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_387[128] {
+static constexpr KeyLayout2::unicode_t keymap_315[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -8842,7 +7191,7 @@ static constexpr KeyLayout2::unicode_t keymap_387[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_388[128] {
+static constexpr KeyLayout2::unicode_t keymap_316[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',   DK|'\'',       '+',      '\b',      '\t', 
@@ -8867,7 +7216,7 @@ static constexpr KeyLayout2::unicode_t keymap_388[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_389[128] {
+static constexpr KeyLayout2::unicode_t keymap_317[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
@@ -8892,7 +7241,7 @@ static constexpr KeyLayout2::unicode_t keymap_389[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_390[128] {
+static constexpr KeyLayout2::unicode_t keymap_318[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0459,    0x045a,    0x0435,    0x0440,    0x0442,    0x0437,    0x0443,    0x0438, 
@@ -8916,56 +7265,7 @@ static constexpr KeyLayout2::unicode_t keymap_390[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_391[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0459,    0x045a,    0x0435,    0x0440,    0x0442,    0x0437,    0x0443,    0x0438, 
-       //         љ          њ          е          р          т          з          у          и 
-/*18-1F*/    0x043e,    0x043f,    0x0448,    0x0452,         0,         0,    0x0430,    0x0441, 
-       //         о          п          ш          ђ                                а          с 
-/*20-27*/    0x0434,    0x0444,    0x0433,    0x0445,    0x0458,    0x043a,    0x043b,    0x0447, 
-       //         д          ф          г          х          ј          к          л          ч 
-/*28-2F*/    0x045b,         0,         0,    0x0436,    0x0455,    0x045f,    0x0446,    0x0432, 
-       //         ћ                                ж          ѕ          џ          ц          в 
-/*30-37*/    0x0431,    0x043d,    0x043c,         0,         0,         0,         0,         0, 
-       //         б          н          м                                                        
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_392[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
-/*10-17*/    0x0409,    0x040a,    0x0415,    0x0420,    0x0422,    0x0417,    0x0423,    0x0418, 
-       //         Љ          Њ          Е          Р          Т          З          У          И 
-/*18-1F*/    0x041e,    0x041f,    0x0428,    0x0402,      '\r',         0,    0x0410,    0x0421, 
-       //         О          П          Ш          Ђ                                А          С 
-/*20-27*/    0x0414,    0x0424,    0x0413,    0x0425,    0x0408,    0x041a,    0x041b,    0x0427, 
-       //         Д          Ф          Г          Х          Ј          К          Л          Ч 
-/*28-2F*/    0x040b,       '~',         0,    0x0416,    0x0405,    0x040f,    0x0426,    0x0412, 
-       //         Ћ                                Ж          Ѕ          Џ          Ц          В 
-/*30-37*/    0x0411,    0x041d,    0x041c,       ';',       ':',       '_',         0,       '*', 
-       //         Б          Н          М                                                        
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_393[128] {
+static constexpr KeyLayout2::unicode_t keymap_319[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0409,    0x040a,    0x0415,    0x0420,    0x0422,    0x0417,    0x0423,    0x0418, 
@@ -8989,7 +7289,7 @@ static constexpr KeyLayout2::unicode_t keymap_393[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_394[128] {
+static constexpr KeyLayout2::unicode_t keymap_320[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0409,    0x040a,    0x0415,    0x0420,    0x0422,    0x0417,    0x0423,    0x0418, 
@@ -9013,7 +7313,7 @@ static constexpr KeyLayout2::unicode_t keymap_394[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_395[128] {
+static constexpr KeyLayout2::unicode_t keymap_321[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -9033,7 +7333,7 @@ static constexpr KeyLayout2::unicode_t keymap_395[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_396[128] {
+static constexpr KeyLayout2::unicode_t keymap_322[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',   DK|'\'',       '+',      '\b',      '\t', 
@@ -9058,7 +7358,7 @@ static constexpr KeyLayout2::unicode_t keymap_396[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_397[128] {
+static constexpr KeyLayout2::unicode_t keymap_323[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -9081,7 +7381,7 @@ static constexpr KeyLayout2::unicode_t keymap_397[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_398[128] {
+static constexpr KeyLayout2::unicode_t keymap_324[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '/',       '$',       '%',       '?', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -9104,7 +7404,7 @@ static constexpr KeyLayout2::unicode_t keymap_398[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_399[128] {
+static constexpr KeyLayout2::unicode_t keymap_325[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -9124,50 +7424,7 @@ static constexpr KeyLayout2::unicode_t keymap_399[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_400[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,    0x00e9,         0,         0, 
-       //                                                                é                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_401[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '/',       '$',       '%',       '?', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    DK|'^', DK|0x00a8,      '\r',         0,       'A',       'S', 
-       //                               ¨                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/    DK|'`',       '|',         0,       '>',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',      '\'',       '.',    0x00c9,         0,       '*', 
-       //                                                                É                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,    0x00bb,         0, 
-       //                                                                           »            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_402[128] {
+static constexpr KeyLayout2::unicode_t keymap_326[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -9187,7 +7444,7 @@ static constexpr KeyLayout2::unicode_t keymap_402[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_403[128] {
+static constexpr KeyLayout2::unicode_t keymap_327[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -9207,7 +7464,7 @@ static constexpr KeyLayout2::unicode_t keymap_403[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_404[128] {
+static constexpr KeyLayout2::unicode_t keymap_328[128] {
 /*00-07*/         0,         0,    0x00b1,       '@',    0x00a3,    0x00a2,    0x00a4,    0x00ac, 
        //                               ±                     £          ¢          ¤          ¬ 
 /*08-0F*/    0x00a6,    0x00b2,    0x00b3,    0x00bc,    0x00bd,    0x00be,         0,         0, 
@@ -9231,7 +7488,7 @@ static constexpr KeyLayout2::unicode_t keymap_404[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_405[128] {
+static constexpr KeyLayout2::unicode_t keymap_329[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -9254,7 +7511,7 @@ static constexpr KeyLayout2::unicode_t keymap_405[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_406[128] {
+static constexpr KeyLayout2::unicode_t keymap_330[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c9,         0,         0,         0,    0x00da,    0x00cd, 
@@ -9276,7 +7533,7 @@ static constexpr KeyLayout2::unicode_t keymap_406[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_407[128] {
+static constexpr KeyLayout2::unicode_t keymap_331[128] {
 /*00-07*/         0,         0,         0,         0,         0,    0x20ac,         0,         0, 
        //                                                                €                       
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -9299,7 +7556,7 @@ static constexpr KeyLayout2::unicode_t keymap_407[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_408[128] {
+static constexpr KeyLayout2::unicode_t keymap_332[128] {
 /*00-07*/         0,         0,         0,         0,       '^',         0,    0x00b0,         0, 
        //                                                                           °            
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -9321,7 +7578,7 @@ static constexpr KeyLayout2::unicode_t keymap_408[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_409[128] {
+static constexpr KeyLayout2::unicode_t keymap_333[128] {
 /*00-07*/         0,    0x001b,       '+',    0x011b,    0x0161,    0x010d,    0x0159,    0x017e, 
        //                  ESC                     ě          š          č          ř          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -9345,7 +7602,7 @@ static constexpr KeyLayout2::unicode_t keymap_409[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_410[128] {
+static constexpr KeyLayout2::unicode_t keymap_334[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
@@ -9367,7 +7624,7 @@ static constexpr KeyLayout2::unicode_t keymap_410[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_411[128] {
+static constexpr KeyLayout2::unicode_t keymap_335[128] {
 /*00-07*/         0,         0,         0,       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -9386,26 +7643,7 @@ static constexpr KeyLayout2::unicode_t keymap_411[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_412[128] {
-/*00-07*/         0,         0,         0,       '2',       '3',       '4',       '5',       '6', 
-/*08-0F*/       '7',       '8',       '9',       '0',         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',       '/',         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',       '"', 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_413[128] {
+static constexpr KeyLayout2::unicode_t keymap_336[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,       '_',       '+',         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -9426,29 +7664,7 @@ static constexpr KeyLayout2::unicode_t keymap_413[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_414[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
-       //                                                                ˇ                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '/',       '(',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       '"', 
-/*28-2F*/       '!', DK|0x00b0,         0,      '\'',       'Z',       'X',       'C',       'V', 
-       //                    °                                                                   
-/*30-37*/       'B',       'N',       'M',       '?',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_415[128] {
+static constexpr KeyLayout2::unicode_t keymap_337[128] {
 /*00-07*/         0,         0,         0,    0x011a,    0x0160,    0x010c,    0x0158,    0x017d, 
        //                                          Ě          Š          Č          Ř          Ž 
 /*08-0F*/    0x00dd,    0x00c1,    0x00cd,    0x00c9,         0,         0,         0,         0, 
@@ -9471,7 +7687,7 @@ static constexpr KeyLayout2::unicode_t keymap_415[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_416[128] {
+static constexpr KeyLayout2::unicode_t keymap_338[128] {
 /*00-07*/         0,         0,         0,    0x011a,    0x0160,    0x010c,    0x0158,    0x017d, 
        //                                          Ě          Š          Č          Ř          Ž 
 /*08-0F*/    0x00dd,    0x00c1,    0x00cd,    0x00c9,         0,         0,         0,         0, 
@@ -9494,7 +7710,7 @@ static constexpr KeyLayout2::unicode_t keymap_416[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_417[128] {
+static constexpr KeyLayout2::unicode_t keymap_339[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,    0x001e, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001f,         0,    0x007f,         0, 
@@ -9515,7 +7731,7 @@ static constexpr KeyLayout2::unicode_t keymap_417[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_418[128] {
+static constexpr KeyLayout2::unicode_t keymap_340[128] {
 /*00-07*/         0,         0,       '!',       '@',       '#',       '$',       '%',       '^', 
 /*08-0F*/       '&',       '*',       '(',       ')',       '-',       '=',         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -9537,7 +7753,7 @@ static constexpr KeyLayout2::unicode_t keymap_418[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_419[128] {
+static constexpr KeyLayout2::unicode_t keymap_341[128] {
 /*00-07*/         0,    0x001b,       '+',    0x011b,    0x0161,    0x010d,    0x0159,    0x017e, 
        //                  ESC                     ě          š          č          ř          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -9561,7 +7777,7 @@ static constexpr KeyLayout2::unicode_t keymap_419[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_420[128] {
+static constexpr KeyLayout2::unicode_t keymap_342[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
@@ -9583,29 +7799,7 @@ static constexpr KeyLayout2::unicode_t keymap_420[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_421[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00fc,         0,         0,         0,       'a',       's', 
-       //                               ü                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f6, 
-       //                                                                                      ö 
-/*28-2F*/    0x00e4,         0,         0,         0,       'y',       'x',       'c',       'v', 
-       //         ä                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_422[128] {
+static constexpr KeyLayout2::unicode_t keymap_343[128] {
 /*00-07*/         0,         0,         0,    0x00b2,    0x00b3,         0,         0,         0, 
        //                                          ²          ³                                  
 /*08-0F*/       '{',       '[',       ']',       '}',    0x1e9e,         0,         0,         0, 
@@ -9627,7 +7821,7 @@ static constexpr KeyLayout2::unicode_t keymap_422[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_423[128] {
+static constexpr KeyLayout2::unicode_t keymap_344[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -9649,7 +7843,7 @@ static constexpr KeyLayout2::unicode_t keymap_423[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_424[128] {
+static constexpr KeyLayout2::unicode_t keymap_345[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       ']',      '\b',      '\t', 
@@ -9674,7 +7868,7 @@ static constexpr KeyLayout2::unicode_t keymap_424[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_425[128] {
+static constexpr KeyLayout2::unicode_t keymap_346[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '&', 
        //                  ESC                                £                                  
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '[',      '\b',      '\t', 
@@ -9699,7 +7893,7 @@ static constexpr KeyLayout2::unicode_t keymap_425[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_426[128] {
+static constexpr KeyLayout2::unicode_t keymap_347[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,         0,    0x001b,         0,         0, 
        //                                                              ESC                       
@@ -9719,32 +7913,7 @@ static constexpr KeyLayout2::unicode_t keymap_426[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_427[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '&', 
-       //                  ESC                                £                                  
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '[',      '\b',      '\t', 
-/*10-17*/       ':',       '~',    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
-       //                               Ε          Ρ          Τ          Υ          Θ          Ι 
-/*18-1F*/    0x039f,    0x03a0,       '*',       '{',      '\r',         0,    0x0391,    0x03a3, 
-       //         Ο          Π                                                      Α          Σ 
-/*20-27*/    0x0394,    0x03a6,    0x0393,    0x0397,    0x039e,    0x039a,    0x039b, DK|0x00a8, 
-       //         Δ          Φ          Γ          Η          Ξ          Κ          Λ          ¨ 
-/*28-2F*/ DK|0x0385,    0x00b1,         0,       '@',    0x0396,    0x03a7,    0x03a8,    0x03a9, 
-       //         ΅          ±                                Ζ          Χ          Ψ          Ω 
-/*30-37*/    0x0392,    0x039d,    0x039c,       ';',       ':',       '_',         0,       '*', 
-       //         Β          Ν          Μ                                                        
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_428[128] {
+static constexpr KeyLayout2::unicode_t keymap_348[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,    0x001d,    0x007f,         0, 
@@ -9765,7 +7934,7 @@ static constexpr KeyLayout2::unicode_t keymap_428[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_429[128] {
+static constexpr KeyLayout2::unicode_t keymap_349[128] {
 /*00-07*/         0,         0,         0,    0x00b2,    0x00b3,    0x00a3,    0x00a7,    0x00b6, 
        //                                          ²          ³          £          §          ¶ 
 /*08-0F*/         0,    0x00a4,    0x00a6,    0x00b0,    0x00b1,    0x00bd,         0,         0, 
@@ -9790,7 +7959,7 @@ static constexpr KeyLayout2::unicode_t keymap_429[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_430[128] {
+static constexpr KeyLayout2::unicode_t keymap_350[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       ']',      '\b',      '\t', 
@@ -9815,7 +7984,7 @@ static constexpr KeyLayout2::unicode_t keymap_430[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_431[128] {
+static constexpr KeyLayout2::unicode_t keymap_351[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '[',       ']',      '\b',      '\t', 
@@ -9835,7 +8004,7 @@ static constexpr KeyLayout2::unicode_t keymap_431[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_432[128] {
+static constexpr KeyLayout2::unicode_t keymap_352[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '{',       '}',      '\b',      '\t', 
@@ -9855,7 +8024,7 @@ static constexpr KeyLayout2::unicode_t keymap_432[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_433[128] {
+static constexpr KeyLayout2::unicode_t keymap_353[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,       'p',       'y',       'f',       'g',       'c', 
@@ -9874,26 +8043,7 @@ static constexpr KeyLayout2::unicode_t keymap_433[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_434[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/         0,         0,         0,       'p',       'y',       'f',       'g',       'c', 
-/*18-1F*/       'r',       'l',         0,         0,         0,         0,       'a',       'o', 
-/*20-27*/       'e',       'u',       'i',       'd',       'h',       't',       'n',       's', 
-/*28-2F*/         0,         0,         0,         0,         0,       'q',       'j',       'k', 
-/*30-37*/       'x',       'b',       'm',       'w',       'v',       'z',         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_435[128] {
+static constexpr KeyLayout2::unicode_t keymap_354[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,    0x001e, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -9912,27 +8062,7 @@ static constexpr KeyLayout2::unicode_t keymap_435[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_436[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '{',       '}',      '\b',      '\t', 
-/*10-17*/       '"',       '<',       '>',       'P',       'Y',       'F',       'G',       'C', 
-/*18-1F*/       'R',       'L',       '?',       '+',      '\r',         0,       'A',       'O', 
-/*20-27*/       'E',       'U',       'I',       'D',       'H',       'T',       'N',       'S', 
-/*28-2F*/       '_',       '~',         0,       '|',       ':',       'Q',       'J',       'K', 
-/*30-37*/       'X',       'B',       'M',       'W',       'V',       'Z',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_437[128] {
+static constexpr KeyLayout2::unicode_t keymap_355[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,       'P',       'Y',       'F',       'G',       'C', 
@@ -9951,7 +8081,7 @@ static constexpr KeyLayout2::unicode_t keymap_437[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_438[128] {
+static constexpr KeyLayout2::unicode_t keymap_356[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,       'P',       'Y',       'F',       'G',       'C', 
@@ -9970,7 +8100,7 @@ static constexpr KeyLayout2::unicode_t keymap_438[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_439[128] {
+static constexpr KeyLayout2::unicode_t keymap_357[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,    0x001b,    0x001d,    0x007f,         0, 
@@ -9991,7 +8121,7 @@ static constexpr KeyLayout2::unicode_t keymap_439[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_440[128] {
+static constexpr KeyLayout2::unicode_t keymap_358[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '[',       ']',      '\b',      '\t', 
@@ -10011,7 +8141,7 @@ static constexpr KeyLayout2::unicode_t keymap_440[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_441[128] {
+static constexpr KeyLayout2::unicode_t keymap_359[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-', DK|0x00a8,      '\b',      '\t', 
@@ -10035,7 +8165,7 @@ static constexpr KeyLayout2::unicode_t keymap_441[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_442[128] {
+static constexpr KeyLayout2::unicode_t keymap_360[128] {
 /*00-07*/         0,    0x001b,    0x00aa,       '"',       '/',       '(',       ')',    0x00a1, 
        //                  ESC          ª                                                      ¡ 
 /*08-0F*/       '!',    0x00bf,       '?',    0x20a7,       '+', DK|0x00a8,      '\b',      '\t', 
@@ -10059,7 +8189,7 @@ static constexpr KeyLayout2::unicode_t keymap_442[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_443[128] {
+static constexpr KeyLayout2::unicode_t keymap_361[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -10081,53 +8211,7 @@ static constexpr KeyLayout2::unicode_t keymap_443[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_444[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x00f7,         0,         0,         0,       'a',       's', 
-       //                               ÷                                                        
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f1, 
-       //                                                                                      ñ 
-/*28-2F*/    0x00e7,         0,         0,         0,       'z',       'x',       'c',       'v', 
-       //         ç                                                                              
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_445[128] {
-/*00-07*/         0,    0x001b,    0x00aa,       '"',       '/',       '(',       ')',    0x00a1, 
-       //                  ESC          ª                                                      ¡ 
-/*08-0F*/       '!',    0x00bf,       '?',    0x20a7,       '+', DK|0x00a8,      '\b',      '\t', 
-       //                    ¿                     ₧                     ¨                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00d7,    DK|'`',      '\r',         0,       'A',       'S', 
-       //                               ×                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d1, 
-       //                                                                                      Ñ 
-/*28-2F*/    0x00c7,    0x00b7,         0, DK|0x00b4,       'Z',       'X',       'C',       'V', 
-       //         Ç          ·                     ´                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '%',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_446[128] {
+static constexpr KeyLayout2::unicode_t keymap_362[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -10149,7 +8233,7 @@ static constexpr KeyLayout2::unicode_t keymap_446[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_447[128] {
+static constexpr KeyLayout2::unicode_t keymap_363[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -10171,7 +8255,7 @@ static constexpr KeyLayout2::unicode_t keymap_447[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_448[128] {
+static constexpr KeyLayout2::unicode_t keymap_364[128] {
 /*00-07*/         0,         0,       '|',       '@',       '#',    0x00bc,    0x00bd,    0x00ac, 
        //                                                                ¼          ½          ¬ 
 /*08-0F*/       '_',       '#',    0x00a7,      '\\',       '*',    DK|'~',         0,         0, 
@@ -10194,7 +8278,7 @@ static constexpr KeyLayout2::unicode_t keymap_448[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_449[128] {
+static constexpr KeyLayout2::unicode_t keymap_365[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-', DK|0x00a8,      '\b',      '\t', 
@@ -10218,7 +8302,7 @@ static constexpr KeyLayout2::unicode_t keymap_449[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_450[128] {
+static constexpr KeyLayout2::unicode_t keymap_366[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',    0x00f6,    0x00fc,    0x00f3,      '\b',      '\t', 
@@ -10243,7 +8327,7 @@ static constexpr KeyLayout2::unicode_t keymap_450[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_451[128] {
+static constexpr KeyLayout2::unicode_t keymap_367[128] {
 /*00-07*/         0,    0x001b,      '\'',       '"',       '+',       '!',       '%',       '/', 
        //                  ESC                                                                   
 /*08-0F*/       '=',       '(',       ')',    0x00d6,    0x00dc,    0x00d3,      '\b',      '\t', 
@@ -10268,7 +8352,7 @@ static constexpr KeyLayout2::unicode_t keymap_451[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_452[128] {
+static constexpr KeyLayout2::unicode_t keymap_368[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,    0x00f6,    0x00fc,    0x00f3,         0,         0, 
        //                                          ö          ü          ó                       
@@ -10292,56 +8376,7 @@ static constexpr KeyLayout2::unicode_t keymap_452[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_453[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,    0x00f6,    0x00fc,    0x00f3,         0,         0, 
-       //                                          ö          ü          ó                       
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    0x0151,    0x00fa,         0,         0,       'a',       's', 
-       //                               ő          ú                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00e9, 
-       //                                                                                      é 
-/*28-2F*/    0x00e1,    0x00ed,         0,    0x0171,       'z',       'x',       'c',       'v', 
-       //         á          í                     ű                                             
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x00ed,         0, 
-       //                                                                           í            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_454[128] {
-/*00-07*/         0,    0x001b,      '\'',       '"',       '+',       '!',       '%',       '/', 
-       //                  ESC                                                                   
-/*08-0F*/       '=',       '(',       ')',    0x00d6,    0x00dc,    0x00d3,      '\b',      '\t', 
-       //                                          Ö          Ü          Ó                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x0150,    0x00da,      '\r',         0,       'A',       'S', 
-       //                               Ő          Ú                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00c9, 
-       //                                                                                      É 
-/*28-2F*/    0x00c1,    0x00cd,         0,    0x0170,       'Z',       'X',       'C',       'V', 
-       //         Á          Í                     Ű                                             
-/*30-37*/       'B',       'N',       'M',       '?',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x00cd,         0, 
-       //                                                                           Í            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_455[128] {
+static constexpr KeyLayout2::unicode_t keymap_369[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,    0x00d6,    0x00dc,    0x00d3,         0,         0, 
        //                                          Ö          Ü          Ó                       
@@ -10365,7 +8400,7 @@ static constexpr KeyLayout2::unicode_t keymap_455[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_456[128] {
+static constexpr KeyLayout2::unicode_t keymap_370[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,    0x00d6,    0x00dc,    0x00d3,         0,         0, 
        //                                          Ö          Ü          Ó                       
@@ -10389,7 +8424,7 @@ static constexpr KeyLayout2::unicode_t keymap_456[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_457[128] {
+static constexpr KeyLayout2::unicode_t keymap_371[128] {
 /*00-07*/         0,         0,       '~',    0x02c7,       '^',    0x02d8,    0x00b0,    0x02db, 
        //                                          ˇ                     ˘          °          ˛ 
 /*08-0F*/       '`',    0x02d9,    0x00b4,    0x02dd,         0,         0,         0,         0, 
@@ -10414,7 +8449,7 @@ static constexpr KeyLayout2::unicode_t keymap_457[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_458[128] {
+static constexpr KeyLayout2::unicode_t keymap_372[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',    0x00f6,    0x00fc,    0x00f3,      '\b',      '\t', 
@@ -10439,30 +8474,7 @@ static constexpr KeyLayout2::unicode_t keymap_458[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_459[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '&', 
-       //                  ESC                                £                                  
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '^',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x00e9,       '*',      '\r',         0,       'A',       'S', 
-       //                               é                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00e7, 
-       //                                                                                      ç 
-/*28-2F*/    0x00b0,       '|',         0,    0x00a7,       'Z',       'X',       'C',       'V', 
-       //         °                                §                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_460[128] {
+static constexpr KeyLayout2::unicode_t keymap_373[128] {
 /*00-07*/         0,         0,         0,         0,       '#',         0,    0x20ac,         0, 
        //                                                                           €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0,         0,         0,         0, 
@@ -10483,7 +8495,7 @@ static constexpr KeyLayout2::unicode_t keymap_460[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_461[128] {
+static constexpr KeyLayout2::unicode_t keymap_374[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',    0x00ec,      '\b',      '\t', 
@@ -10507,7 +8519,7 @@ static constexpr KeyLayout2::unicode_t keymap_461[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_462[128] {
+static constexpr KeyLayout2::unicode_t keymap_375[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\'',      '\b',      '\t', 
@@ -10530,7 +8542,7 @@ static constexpr KeyLayout2::unicode_t keymap_462[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_463[128] {
+static constexpr KeyLayout2::unicode_t keymap_376[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
@@ -10553,7 +8565,7 @@ static constexpr KeyLayout2::unicode_t keymap_463[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_464[128] {
+static constexpr KeyLayout2::unicode_t keymap_377[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
@@ -10573,50 +8585,7 @@ static constexpr KeyLayout2::unicode_t keymap_464[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_465[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'z',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x0142, 
-       //                                                                                      ł 
-/*28-2F*/         0,         0,         0,         0,       'y',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_466[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
-/*18-1F*/       'O',       'P',    0x0144,    0x0107,      '\r',         0,       'A',       'S', 
-       //                               ń          ć                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x0141, 
-       //                                                                                      Ł 
-/*28-2F*/    0x0119, DK|0x00b7,         0,    0x017a,       'Y',       'X',       'C',       'V', 
-       //         ę          ·                     ź                                             
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_467[128] {
+static constexpr KeyLayout2::unicode_t keymap_378[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -10636,7 +8605,7 @@ static constexpr KeyLayout2::unicode_t keymap_467[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_468[128] {
+static constexpr KeyLayout2::unicode_t keymap_379[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Z',       'U',       'I', 
@@ -10656,7 +8625,7 @@ static constexpr KeyLayout2::unicode_t keymap_468[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_469[128] {
+static constexpr KeyLayout2::unicode_t keymap_380[128] {
 /*00-07*/         0,         0,       '~', DK|0x02c7,    DK|'^', DK|0x02d8, DK|0x00b0, DK|0x02db, 
        //                                          ˇ          ˘          °          ˛ 
 /*08-0F*/       '`', DK|0x00b7, DK|0x00b4, DK|0x02dd, DK|0x00a8, DK|0x00b8,         0,         0, 
@@ -10682,7 +8651,7 @@ static constexpr KeyLayout2::unicode_t keymap_469[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_470[128] {
+static constexpr KeyLayout2::unicode_t keymap_381[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\'',      '\b',      '\t', 
@@ -10705,7 +8674,7 @@ static constexpr KeyLayout2::unicode_t keymap_470[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_471[128] {
+static constexpr KeyLayout2::unicode_t keymap_382[128] {
 /*00-07*/         0,    0x001b,    0x2116,       '-',       '/',       '"',       ':',       ',', 
        //                  ESC          №                                                        
 /*08-0F*/       '.',       '_',       '?',       '%',       '!',       ';',      '\b',      '\t', 
@@ -10730,7 +8699,7 @@ static constexpr KeyLayout2::unicode_t keymap_471[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_472[128] {
+static constexpr KeyLayout2::unicode_t keymap_383[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '=',      '\\',      '\b',      '\t', 
@@ -10755,7 +8724,7 @@ static constexpr KeyLayout2::unicode_t keymap_472[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_473[128] {
+static constexpr KeyLayout2::unicode_t keymap_384[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
@@ -10779,56 +8748,7 @@ static constexpr KeyLayout2::unicode_t keymap_473[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_474[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x0439,    0x0446,    0x0443,    0x043a,    0x0435,    0x043d,    0x0433,    0x0448, 
-       //         й          ц          у          к          е          н          г          ш 
-/*18-1F*/    0x0449,    0x0437,    0x0445,    0x044a,         0,         0,    0x0444,    0x044b, 
-       //         щ          з          х          ъ                                ф          ы 
-/*20-27*/    0x0432,    0x0430,    0x043f,    0x0440,    0x043e,    0x043b,    0x0434,    0x0436, 
-       //         в          а          п          р          о          л          д          ж 
-/*28-2F*/    0x044d,         0,         0,         0,    0x044f,    0x0447,    0x0441,    0x043c, 
-       //         э                                           я          ч          с          м 
-/*30-37*/    0x0438,    0x0442,    0x044c,    0x0431,    0x044e,    0x0451,         0,         0, 
-       //         и          т          ь          б          ю          ё                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_475[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '=',      '\\',      '\b',      '\t', 
-/*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
-       //         Й          Ц          У          К          Е          Н          Г          Ш 
-/*18-1F*/    0x0429,    0x0417,    0x0425,    0x042a,      '\r',         0,    0x0424,    0x042b, 
-       //         Щ          З          Х          Ъ                                Ф          Ы 
-/*20-27*/    0x0412,    0x0410,    0x041f,    0x0420,    0x041e,    0x041b,    0x0414,    0x0416, 
-       //         В          А          П          Р          О          Л          Д          Ж 
-/*28-2F*/    0x042d,       '+',         0,       '(',    0x042f,    0x0427,    0x0421,    0x041c, 
-       //         Э                                           Я          Ч          С          М 
-/*30-37*/    0x0418,    0x0422,    0x042c,    0x0411,    0x042e,    0x0401,         0,       '*', 
-       //         И          Т          Ь          Б          Ю          Ё                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '(',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_476[128] {
+static constexpr KeyLayout2::unicode_t keymap_385[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -10852,7 +8772,7 @@ static constexpr KeyLayout2::unicode_t keymap_476[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_477[128] {
+static constexpr KeyLayout2::unicode_t keymap_386[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x0419,    0x0426,    0x0423,    0x041a,    0x0415,    0x041d,    0x0413,    0x0428, 
@@ -10876,7 +8796,7 @@ static constexpr KeyLayout2::unicode_t keymap_477[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_478[128] {
+static constexpr KeyLayout2::unicode_t keymap_387[128] {
 /*00-07*/         0,    0x001b,    0x2116,       '-',       '/',       '"',       ':',       ',', 
        //                  ESC          №                                                        
 /*08-0F*/       '.',       '_',       '?',       '%',       '!',       ';',      '\b',      '\t', 
@@ -10901,7 +8821,7 @@ static constexpr KeyLayout2::unicode_t keymap_478[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_479[128] {
+static constexpr KeyLayout2::unicode_t keymap_388[128] {
 /*00-07*/         0,    0x001b,       '+',    0x013e,    0x0161,    0x010d,    0x0165,    0x017e, 
        //                  ESC                     ľ          š          č          ť          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -10925,7 +8845,7 @@ static constexpr KeyLayout2::unicode_t keymap_479[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_480[128] {
+static constexpr KeyLayout2::unicode_t keymap_389[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
@@ -10947,29 +8867,7 @@ static constexpr KeyLayout2::unicode_t keymap_480[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_481[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',       '%', DK|0x02c7,      '\b',      '\t', 
-       //                                                                ˇ                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '/',       '(',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       '"', 
-/*28-2F*/       '!', DK|0x00b0,         0,       ')',       'Z',       'X',       'C',       'V', 
-       //                    °                                                                   
-/*30-37*/       'B',       'N',       'M',       '?',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '*',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_482[128] {
+static constexpr KeyLayout2::unicode_t keymap_390[128] {
 /*00-07*/         0,    0x001b,       '+',    0x013e,    0x0161,    0x010d,    0x0165,    0x017e, 
        //                  ESC                     ľ          š          č          ť          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,      '\b',      '\t', 
@@ -10993,7 +8891,7 @@ static constexpr KeyLayout2::unicode_t keymap_482[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_483[128] {
+static constexpr KeyLayout2::unicode_t keymap_391[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '/',       '-',      '\b',      '\t', 
@@ -11017,7 +8915,7 @@ static constexpr KeyLayout2::unicode_t keymap_483[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_484[128] {
+static constexpr KeyLayout2::unicode_t keymap_392[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    DK|'^',       '$',       '%',       '&', 
        //                  ESC                                                        
 /*08-0F*/      '\'',       '(',       ')',       '=',       '?',       '_',      '\b',      '\t', 
@@ -11042,7 +8940,7 @@ static constexpr KeyLayout2::unicode_t keymap_484[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_485[128] {
+static constexpr KeyLayout2::unicode_t keymap_393[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'f',       'g',    0x011f,    0x0131,       'o',       'd',       'r',       'n', 
@@ -11065,30 +8963,7 @@ static constexpr KeyLayout2::unicode_t keymap_485[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_486[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/       'f',       'g',    0x011f,    0x0131,       'o',       'd',       'r',       'n', 
-       //                               ğ          ı                                             
-/*18-1F*/       'h',       'p',       'q',       'w',         0,         0,       'u',       'i', 
-/*20-27*/       'e',       'a',    0x00fc,       't',       'k',       'm',       'l',       'y', 
-       //                               ü                                                        
-/*28-2F*/    0x015f,         0,         0,       'x',       'j',    0x00f6,       'v',       'c', 
-       //         ş                                                      ö                       
-/*30-37*/    0x00e7,       'z',       's',       'b',         0,         0,         0,         0, 
-       //         ç                                                                              
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_487[128] {
+static constexpr KeyLayout2::unicode_t keymap_394[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -11108,7 +8983,7 @@ static constexpr KeyLayout2::unicode_t keymap_487[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_488[128] {
+static constexpr KeyLayout2::unicode_t keymap_395[128] {
 /*00-07*/         0,         0,    0x00a1,         0,    0x00b3,    0x00a4,         0,         0, 
        //                               ¡                     ³          ¤                       
 /*08-0F*/         0,         0,         0,         0,    0x00bf,         0,         0,         0, 
@@ -11135,32 +9010,7 @@ static constexpr KeyLayout2::unicode_t keymap_488[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_489[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    DK|'^',       '$',       '%',       '&', 
-       //                  ESC                                                        
-/*08-0F*/      '\'',       '(',       ')',       '=',       '?',       '_',      '\b',      '\t', 
-/*10-17*/       'F',       'G',    0x011e,       'I',       'O',       'D',       'R',       'N', 
-       //                               Ğ                                                        
-/*18-1F*/       'H',       'P',       'Q',       'W',      '\r',         0,       'U',    0x0130, 
-       //                                                                                      İ 
-/*20-27*/       'E',       'A',    0x00dc,       'T',       'K',       'M',       'L',       'Y', 
-       //                               Ü                                                        
-/*28-2F*/    0x015e,       '*',         0,       'X',       'J',    0x00d6,       'V',       'C', 
-       //         Ş                                                      Ö                       
-/*30-37*/    0x00c7,       'Z',       'S',       'B',       ':',       ';',         0,       '*', 
-       //         Ç                                                                              
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_490[128] {
+static constexpr KeyLayout2::unicode_t keymap_396[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'F',       'G',    0x011e,       'I',       'O',       'D',       'R',       'N', 
@@ -11184,7 +9034,7 @@ static constexpr KeyLayout2::unicode_t keymap_490[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_491[128] {
+static constexpr KeyLayout2::unicode_t keymap_397[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'F',       'G',    0x011e,       'I',       'O',       'D',       'R',       'N', 
@@ -11208,7 +9058,7 @@ static constexpr KeyLayout2::unicode_t keymap_491[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_492[128] {
+static constexpr KeyLayout2::unicode_t keymap_398[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,    0x001b,         0,         0,    0x001c,         0,    0x007f,         0, 
@@ -11229,7 +9079,7 @@ static constexpr KeyLayout2::unicode_t keymap_492[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_493[128] {
+static constexpr KeyLayout2::unicode_t keymap_399[128] {
 /*00-07*/         0,         0,    0x00b9,    0x00b2,       '#',    0x00bc,    0x00bd,    0x00be, 
        //                               ¹          ²                     ¼          ½          ¾ 
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',       '|',         0,         0, 
@@ -11254,7 +9104,7 @@ static constexpr KeyLayout2::unicode_t keymap_493[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_494[128] {
+static constexpr KeyLayout2::unicode_t keymap_400[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -11274,7 +9124,7 @@ static constexpr KeyLayout2::unicode_t keymap_494[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_495[128] {
+static constexpr KeyLayout2::unicode_t keymap_401[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '/',       '-',      '\b',      '\t', 
@@ -11298,7 +9148,7 @@ static constexpr KeyLayout2::unicode_t keymap_495[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_496[128] {
+static constexpr KeyLayout2::unicode_t keymap_402[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -11319,7 +9169,7 @@ static constexpr KeyLayout2::unicode_t keymap_496[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_497[128] {
+static constexpr KeyLayout2::unicode_t keymap_403[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0113,    0x0157,         0,         0,    0x016b,    0x012b, 
@@ -11343,7 +9193,7 @@ static constexpr KeyLayout2::unicode_t keymap_497[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_498[128] {
+static constexpr KeyLayout2::unicode_t keymap_404[128] {
 /*00-07*/         0,         0,         0,         0,         0,    0x00a7,    0x00b0,         0, 
        //                                                                §          °            
 /*08-0F*/    0x00b1,    0x00d7,         0,         0,    0x2014,         0,         0,         0, 
@@ -11369,27 +9219,7 @@ static constexpr KeyLayout2::unicode_t keymap_498[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_499[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',    DK|'~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_500[128] {
+static constexpr KeyLayout2::unicode_t keymap_405[128] {
 /*00-07*/         0,         0,    0x00a0,    0x00ab,    0x00bb,    0x20ac,         0,    0x2019, 
        //                                          «          »          €                     ’ 
 /*08-0F*/         0,         0,         0,         0,    0x2013,         0,         0,         0, 
@@ -11415,7 +9245,7 @@ static constexpr KeyLayout2::unicode_t keymap_500[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_501[128] {
+static constexpr KeyLayout2::unicode_t keymap_406[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x0112,    0x0156,         0,         0,    0x016a,    0x012a, 
@@ -11439,7 +9269,7 @@ static constexpr KeyLayout2::unicode_t keymap_501[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_502[128] {
+static constexpr KeyLayout2::unicode_t keymap_407[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -11460,7 +9290,7 @@ static constexpr KeyLayout2::unicode_t keymap_502[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_503[128] {
+static constexpr KeyLayout2::unicode_t keymap_408[128] {
 /*00-07*/         0,    0x001b,    0x0105,    0x010d,    0x0119,    0x0117,    0x012f,    0x0161, 
        //                  ESC          ą          č          ę          ė          į          š 
 /*08-0F*/    0x0173,    0x016b,       '9',       '0',       '-',    0x017e,      '\b',      '\t', 
@@ -11481,7 +9311,7 @@ static constexpr KeyLayout2::unicode_t keymap_503[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_504[128] {
+static constexpr KeyLayout2::unicode_t keymap_409[128] {
 /*00-07*/         0,    0x001b,    0x0104,    0x010c,    0x0118,    0x0116,    0x012e,    0x0160, 
        //                  ESC          Ą          Č          Ę          Ė          Į          Š 
 /*08-0F*/    0x0172,    0x016a,       '(',       ')',       '_',    0x017d,      '\b',      '\t', 
@@ -11502,7 +9332,7 @@ static constexpr KeyLayout2::unicode_t keymap_504[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_505[128] {
+static constexpr KeyLayout2::unicode_t keymap_410[128] {
 /*00-07*/         0,         0,    0x0105,    0x010d,    0x0119,    0x0117,    0x012f,    0x0161, 
        //                               ą          č          ę          ė          į          š 
 /*08-0F*/    0x0173,    0x016b,         0,         0,         0,    0x017e,         0,         0, 
@@ -11523,28 +9353,7 @@ static constexpr KeyLayout2::unicode_t keymap_505[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_506[128] {
-/*00-07*/         0,         0,    0x0105,    0x010d,    0x0119,    0x0117,    0x012f,    0x0161, 
-       //                               ą          č          ę          ė          į          š 
-/*08-0F*/    0x0173,    0x016b,         0,         0,         0,    0x017e,         0,         0, 
-       //         ų          ū                                           ž                       
-/*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',         0,         0,         0,         0,       'a',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',         0, 
-/*28-2F*/         0,         0,         0,         0,       'z',       'x',       'c',       'v', 
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_507[128] {
+static constexpr KeyLayout2::unicode_t keymap_411[128] {
 /*00-07*/         0,         0,       '!',       '@',       '#',       '$',       '%',       '^', 
 /*08-0F*/       '&',       '*',         0,         0,         0,       '+',         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -11563,28 +9372,7 @@ static constexpr KeyLayout2::unicode_t keymap_507[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_508[128] {
-/*00-07*/         0,    0x001b,    0x0104,    0x010c,    0x0118,    0x0116,    0x012e,    0x0160, 
-       //                  ESC          Ą          Č          Ę          Ė          Į          Š 
-/*08-0F*/    0x0172,    0x016a,       '(',       ')',       '_',    0x017d,      '\b',      '\t', 
-       //         Ų          Ū                                           Ž                       
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',       '~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_509[128] {
+static constexpr KeyLayout2::unicode_t keymap_412[128] {
 /*00-07*/         0,         0,    0x0104,    0x010c,    0x0118,    0x0116,    0x012e,    0x0160, 
        //                               Ą          Č          Ę          Ė          Į          Š 
 /*08-0F*/    0x0172,    0x016a,         0,         0,         0,    0x017d,         0,         0, 
@@ -11605,7 +9393,7 @@ static constexpr KeyLayout2::unicode_t keymap_509[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_510[128] {
+static constexpr KeyLayout2::unicode_t keymap_413[128] {
 /*00-07*/         0,         0,    0x0104,    0x010c,    0x0118,    0x0116,    0x012e,    0x0160, 
        //                               Ą          Č          Ę          Ė          Į          Š 
 /*08-0F*/    0x0172,    0x016a,         0,         0,         0,    0x017d,         0,         0, 
@@ -11626,7 +9414,7 @@ static constexpr KeyLayout2::unicode_t keymap_510[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_511[128] {
+static constexpr KeyLayout2::unicode_t keymap_414[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',         0,       '=',         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -11646,7 +9434,7 @@ static constexpr KeyLayout2::unicode_t keymap_511[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_512[128] {
+static constexpr KeyLayout2::unicode_t keymap_415[128] {
 /*00-07*/         0,    0x001b,    0x0105,    0x010d,    0x0119,    0x0117,    0x012f,    0x0161, 
        //                  ESC          ą          č          ę          ė          į          š 
 /*08-0F*/    0x0173,    0x016b,       '9',       '0',       '-',    0x017e,      '\b',      '\t', 
@@ -11667,7 +9455,7 @@ static constexpr KeyLayout2::unicode_t keymap_512[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_513[128] {
+static constexpr KeyLayout2::unicode_t keymap_416[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -11690,7 +9478,7 @@ static constexpr KeyLayout2::unicode_t keymap_513[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_514[128] {
+static constexpr KeyLayout2::unicode_t keymap_417[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x20ac,       '$',       '%',       '^', 
        //                  ESC                                €                                  
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -11713,7 +9501,7 @@ static constexpr KeyLayout2::unicode_t keymap_514[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_515[128] {
+static constexpr KeyLayout2::unicode_t keymap_418[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',       'e',       'r',       't',       'y',       'u',       'i', 
@@ -11735,7 +9523,7 @@ static constexpr KeyLayout2::unicode_t keymap_515[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_516[128] {
+static constexpr KeyLayout2::unicode_t keymap_419[128] {
 /*00-07*/         0,         0,         0,         0,    0x00a3,         0,         0,         0, 
        //                                                     £                                  
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -11757,7 +9545,7 @@ static constexpr KeyLayout2::unicode_t keymap_516[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_517[128] {
+static constexpr KeyLayout2::unicode_t keymap_420[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c8,         0,         0,         0,    0x00d9,    0x00cc, 
@@ -11779,7 +9567,7 @@ static constexpr KeyLayout2::unicode_t keymap_517[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_518[128] {
+static constexpr KeyLayout2::unicode_t keymap_421[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -11801,7 +9589,7 @@ static constexpr KeyLayout2::unicode_t keymap_518[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_519[128] {
+static constexpr KeyLayout2::unicode_t keymap_422[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
@@ -11823,7 +9611,7 @@ static constexpr KeyLayout2::unicode_t keymap_519[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_520[128] {
+static constexpr KeyLayout2::unicode_t keymap_423[128] {
 /*00-07*/         0,         0,         0,         0,    0x00a3,         0,         0,         0, 
        //                                                     £                                  
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -11845,7 +9633,7 @@ static constexpr KeyLayout2::unicode_t keymap_520[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_521[128] {
+static constexpr KeyLayout2::unicode_t keymap_424[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -11868,7 +9656,7 @@ static constexpr KeyLayout2::unicode_t keymap_521[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_522[128] {
+static constexpr KeyLayout2::unicode_t keymap_425[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\\',      '\b',      '\t', 
@@ -11893,7 +9681,7 @@ static constexpr KeyLayout2::unicode_t keymap_522[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_523[128] {
+static constexpr KeyLayout2::unicode_t keymap_426[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -11918,7 +9706,7 @@ static constexpr KeyLayout2::unicode_t keymap_523[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_524[128] {
+static constexpr KeyLayout2::unicode_t keymap_427[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00e1,    0x0161,       'e',       'r',       't',    0x0167,       'u',       'i', 
@@ -11942,31 +9730,7 @@ static constexpr KeyLayout2::unicode_t keymap_524[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_525[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x00e1,    0x0161,       'e',       'r',       't',    0x0167,       'u',       'i', 
-       //         á          š                                           ŧ                       
-/*18-1F*/       'o',       'p',    0x00e5,    0x014b,         0,         0,       'a',       's', 
-       //                               å          ŋ                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f8, 
-       //                                                                                      ø 
-/*28-2F*/    0x00e6,         0,         0,    0x0111,       'z',    0x010d,       'c',       'v', 
-       //         æ                                đ                     č                       
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x017e,         0, 
-       //                                                                           ž            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_526[128] {
+static constexpr KeyLayout2::unicode_t keymap_428[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',         0,         0,         0,       'y',         0,    0x00ef, 
@@ -11990,7 +9754,7 @@ static constexpr KeyLayout2::unicode_t keymap_526[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_527[128] {
+static constexpr KeyLayout2::unicode_t keymap_429[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',         0,         0,         0,       'Y',         0,    0x00cf, 
@@ -12014,32 +9778,7 @@ static constexpr KeyLayout2::unicode_t keymap_527[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_528[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/    0x00c1,    0x0160,       'E',       'R',       'T',    0x0166,       'U',       'I', 
-       //         Á          Š                                           Ŧ                       
-/*18-1F*/       'O',       'P',    0x00c5,    0x014a,      '\r',         0,       'A',       'S', 
-       //                               Å          Ŋ                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d8, 
-       //                                                                                      Ø 
-/*28-2F*/    0x00c6,    0x00a7,         0,    0x0110,       'Z',    0x010c,       'C',       'V', 
-       //         Æ          §                     Đ                     Č                       
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x017d,         0, 
-       //                                                                           Ž            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_529[128] {
+static constexpr KeyLayout2::unicode_t keymap_430[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c1,    0x0160,       'E',       'R',       'T',    0x0166,       'U',       'I', 
@@ -12063,7 +9802,7 @@ static constexpr KeyLayout2::unicode_t keymap_529[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_530[128] {
+static constexpr KeyLayout2::unicode_t keymap_431[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c1,    0x0160,       'E',       'R',       'T',    0x0166,       'U',       'I', 
@@ -12087,7 +9826,7 @@ static constexpr KeyLayout2::unicode_t keymap_530[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_531[128] {
+static constexpr KeyLayout2::unicode_t keymap_432[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',         0, DK|0x00b4,         0,         0, 
@@ -12114,7 +9853,7 @@ static constexpr KeyLayout2::unicode_t keymap_531[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_532[128] {
+static constexpr KeyLayout2::unicode_t keymap_433[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',         0,         0,         0,       'Y',         0,    0x00cf, 
@@ -12138,7 +9877,7 @@ static constexpr KeyLayout2::unicode_t keymap_532[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_533[128] {
+static constexpr KeyLayout2::unicode_t keymap_434[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+',      '\\',      '\b',      '\t', 
@@ -12163,52 +9902,7 @@ static constexpr KeyLayout2::unicode_t keymap_533[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_534[128] {
-/*00-07*/         0,         0,       '&',    0x00e9,       '"',      '\'',       '(',    0x00a7, 
-       //                                          é                                           § 
-/*08-0F*/    0x00e8,       '!',    0x00e7,    0x00e0,       ')',       '-',         0,         0, 
-       //         è                     ç          à                                             
-/*10-17*/       'a',       'z',       'e',       'r',       't',       'y',       'u',       'i', 
-/*18-1F*/       'o',       'p',    DK|'^',       '$',         0,         0,       'q',       's', 
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',       'm', 
-/*28-2F*/    0x00f9,         0,         0,    0x00b5,       'w',       'x',       'c',       'v', 
-       //         ù                                µ                                             
-/*30-37*/       'b',       'n',       ',',       ';',       ':',       '=',         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_535[128] {
-/*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
-       //                  ESC                                                                   
-/*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '_',      '\b',      '\t', 
-       //                                                     °                                  
-/*10-17*/       'A',       'Z',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P', DK|0x00a8,       '*',      '\r',         0,       'Q',       'S', 
-       //                               ¨                                                        
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       'M', 
-/*28-2F*/       '%',    0x00b3,         0,    0x00a3,       'W',       'X',       'C',       'V', 
-       //                    ³                     £                                             
-/*30-37*/       'B',       'N',       '?',       '.',       '/',       '+',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_536[128] {
+static constexpr KeyLayout2::unicode_t keymap_435[128] {
 /*00-07*/         0,         0,       '1',       '2',       '3',       '4',       '5',       '6', 
 /*08-0F*/       '7',       '8',       '9',       '0',    0x00b0,       '_',         0,         0, 
        //                                                     °                                  
@@ -12230,7 +9924,7 @@ static constexpr KeyLayout2::unicode_t keymap_536[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_537[128] {
+static constexpr KeyLayout2::unicode_t keymap_436[128] {
 /*00-07*/         0,    0x001b,       '&',    0x00e9,       '"',      '\'',       '(',    0x00a7, 
        //                  ESC                     é                                           § 
 /*08-0F*/    0x00e8,       '!',    0x00e7,    0x00e0,       ')',       '-',      '\b',      '\t', 
@@ -12252,7 +9946,7 @@ static constexpr KeyLayout2::unicode_t keymap_537[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_538[128] {
+static constexpr KeyLayout2::unicode_t keymap_437[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -12276,7 +9970,7 @@ static constexpr KeyLayout2::unicode_t keymap_538[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_539[128] {
+static constexpr KeyLayout2::unicode_t keymap_438[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '?', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -12300,31 +9994,7 @@ static constexpr KeyLayout2::unicode_t keymap_539[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_540[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '?', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P', DK|0x00a8,    0x00c7,      '\r',         0,       'A',       'S', 
-       //                               ¨          Ç                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/    0x00c8,      '\\',         0,    0x00c0,       'Z',       'X',       'C',       'V', 
-       //         È                                À                                             
-/*30-37*/       'B',       'N',       'M',      '\'',       '"',    0x00c9,         0,       '*', 
-       //                                                                É                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,    0x00d9,         0, 
-       //                                                                           Ù            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_541[128] {
+static constexpr KeyLayout2::unicode_t keymap_439[128] {
 /*00-07*/         0,         0,         0,         0,         0,    0x00a4,         0,         0, 
        //                                                                ¤                       
 /*08-0F*/       '{',       '}',       '[',       ']',         0,    0x00ac,         0,         0, 
@@ -12349,7 +10019,7 @@ static constexpr KeyLayout2::unicode_t keymap_541[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_542[128] {
+static constexpr KeyLayout2::unicode_t keymap_440[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -12373,7 +10043,7 @@ static constexpr KeyLayout2::unicode_t keymap_542[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_543[128] {
+static constexpr KeyLayout2::unicode_t keymap_441[128] {
 /*00-07*/         0,         0,    0x00a1,         0,    0x00a3,    0x20ac,    0x215c,    0x215d, 
        //                               ¡                     £          €          ⅜          ⅝ 
 /*08-0F*/    0x215e,    0x2122,    0x00b1,         0,    0x00bf, DK|0x02db,         0,         0, 
@@ -12400,7 +10070,7 @@ static constexpr KeyLayout2::unicode_t keymap_543[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_544[128] {
+static constexpr KeyLayout2::unicode_t keymap_442[128] {
 /*00-07*/         0,         0,    0x00b9,    0x00b2,    0x00b3,    0x00bc,    0x00bd,    0x00be, 
        //                               ¹          ²          ³          ¼          ½          ¾ 
 /*08-0F*/         0,         0,         0,         0,         0, DK|0x00b8,         0,         0, 
@@ -12426,7 +10096,7 @@ static constexpr KeyLayout2::unicode_t keymap_544[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_545[128] {
+static constexpr KeyLayout2::unicode_t keymap_443[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '^', 
        //                  ESC                                £                                  
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -12446,7 +10116,7 @@ static constexpr KeyLayout2::unicode_t keymap_545[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_546[128] {
+static constexpr KeyLayout2::unicode_t keymap_444[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00e9,         0,         0,    0x00fd,    0x00fa,    0x00ed, 
@@ -12467,7 +10137,7 @@ static constexpr KeyLayout2::unicode_t keymap_546[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_547[128] {
+static constexpr KeyLayout2::unicode_t keymap_445[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c9,         0,         0,    0x00dd,    0x00da,    0x00cd, 
@@ -12489,27 +10159,7 @@ static constexpr KeyLayout2::unicode_t keymap_547[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_548[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',       '^', 
-       //                  ESC                                £                                  
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '@',       '`',         0,       '~',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_549[128] {
+static constexpr KeyLayout2::unicode_t keymap_446[128] {
 /*00-07*/         0,         0,         0,         0,         0,    0x20ac,         0,         0, 
        //                                                                €                       
 /*08-0F*/    0x204a,         0,         0,         0,         0,         0,         0,         0, 
@@ -12533,7 +10183,7 @@ static constexpr KeyLayout2::unicode_t keymap_549[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_550[128] {
+static constexpr KeyLayout2::unicode_t keymap_447[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x00c9,         0,         0,    0x00dd,    0x00da,    0x00cd, 
@@ -12554,7 +10204,7 @@ static constexpr KeyLayout2::unicode_t keymap_550[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_551[128] {
+static constexpr KeyLayout2::unicode_t keymap_448[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,       '%', DK|0x02c7,         0,         0, 
        //                                                                ˇ                       
@@ -12577,27 +10227,7 @@ static constexpr KeyLayout2::unicode_t keymap_551[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_552[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',       '~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_553[128] {
+static constexpr KeyLayout2::unicode_t keymap_449[128] {
 /*00-07*/         0,         0,       '+',    0x011b,    0x0161,    0x010d,    0x0159,    0x017e, 
        //                                          ě          š          č          ř          ž 
 /*08-0F*/    0x00fd,    0x00e1,    0x00ed,    0x00e9,       '=', DK|0x00b4,         0,         0, 
@@ -12623,7 +10253,7 @@ static constexpr KeyLayout2::unicode_t keymap_553[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_554[128] {
+static constexpr KeyLayout2::unicode_t keymap_450[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -12649,7 +10279,7 @@ static constexpr KeyLayout2::unicode_t keymap_554[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_555[128] {
+static constexpr KeyLayout2::unicode_t keymap_451[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',    0x00ac, 
        //                  ESC                                £                                ¬ 
 /*08-0F*/       '/',       '(',       ')',       '=',    0x00b0,       '*',      '\b',      '\t', 
@@ -12676,7 +10306,7 @@ static constexpr KeyLayout2::unicode_t keymap_555[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_556[128] {
+static constexpr KeyLayout2::unicode_t keymap_452[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00b7,    0x03c2,    0x03b5,    0x03c1,    0x03c4,    0x03c5,    0x03b8,    0x03b9, 
@@ -12700,58 +10330,7 @@ static constexpr KeyLayout2::unicode_t keymap_556[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_557[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x00b7,    0x03c2,    0x03b5,    0x03c1,    0x03c4,    0x03c5,    0x03b8,    0x03b9, 
-       //         ·          ς          ε          ρ          τ          υ          θ          ι 
-/*18-1F*/    0x03bf,    0x03c0,         0,         0,         0,         0,    0x03b1,    0x03c3, 
-       //         ο          π                                                      α          σ 
-/*20-27*/    0x03b4,    0x03c6,    0x03b3,    0x03b7,    0x03be,    0x03ba,    0x03bb,         0, 
-       //         δ          φ          γ          η          ξ          κ          λ            
-/*28-2F*/         0,         0,         0,         0,    0x03b6,    0x03c7,    0x03c8,    0x03c9, 
-       //                                                     ζ          χ          ψ          ω 
-/*30-37*/    0x03b2,    0x03bd,    0x03bc,         0,         0,         0,         0,         0, 
-       //         β          ν          μ                                                        
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_558[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',    0x00a3,       '$',       '%',    0x00ac, 
-       //                  ESC                                £                                ¬ 
-/*08-0F*/       '/',       '(',       ')',       '=',    0x00b0,       '*',      '\b',      '\t', 
-       //                                                     °                                  
-/*10-17*/    0x2015,    0x00a6,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
-       //         ―          ¦          Ε          Ρ          Τ          Υ          Θ          Ι 
-/*18-1F*/    0x039f,    0x03a0,    0x00ab,    0x00bb,      '\r',         0,    0x0391,    0x03a3, 
-       //         Ο          Π          «          »                                Α          Σ 
-/*20-27*/    0x0394,    0x03a6,    0x0393,    0x0397,    0x039e,    0x039a,    0x039b, DK|0x00a8, 
-       //         Δ          Φ          Γ          Η          Ξ          Κ          Λ          ¨ 
-/*28-2F*/    0x2018,    0x00b1,         0,    0x00b3,    0x0396,    0x03a7,    0x03a8,    0x03a9, 
-       //         ‘          ±                     ³          Ζ          Χ          Ψ          Ω 
-/*30-37*/    0x0392,    0x039d,    0x039c,       ';',       ':',       '_',         0,       '*', 
-       //         Β          Ν          Μ                                                        
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x00a9,         0, 
-       //                                                                           ©            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_559[128] {
+static constexpr KeyLayout2::unicode_t keymap_453[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x2015,    0x00a6,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
@@ -12775,7 +10354,7 @@ static constexpr KeyLayout2::unicode_t keymap_559[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_560[128] {
+static constexpr KeyLayout2::unicode_t keymap_454[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x2015,    0x00a6,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
@@ -12799,7 +10378,7 @@ static constexpr KeyLayout2::unicode_t keymap_560[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_561[128] {
+static constexpr KeyLayout2::unicode_t keymap_455[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -12820,7 +10399,7 @@ static constexpr KeyLayout2::unicode_t keymap_561[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_562[128] {
+static constexpr KeyLayout2::unicode_t keymap_456[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -12846,7 +10425,7 @@ static constexpr KeyLayout2::unicode_t keymap_562[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_563[128] {
+static constexpr KeyLayout2::unicode_t keymap_457[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -12866,7 +10445,7 @@ static constexpr KeyLayout2::unicode_t keymap_563[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_564[128] {
+static constexpr KeyLayout2::unicode_t keymap_458[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',    DK|'^', 
        //                  ESC                                                        
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -12886,7 +10465,7 @@ static constexpr KeyLayout2::unicode_t keymap_564[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_565[128] {
+static constexpr KeyLayout2::unicode_t keymap_459[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00e4,    0x00e5,    0x00e9,         0,    0x00fe,    0x00fc,    0x00fa,    0x00ed, 
@@ -12910,7 +10489,7 @@ static constexpr KeyLayout2::unicode_t keymap_565[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_566[128] {
+static constexpr KeyLayout2::unicode_t keymap_460[128] {
 /*00-07*/         0,         0,    0x00b9,         0,         0,    0x00a3,         0,         0, 
        //                               ¹                                £                       
 /*08-0F*/         0,         0,         0,         0,         0,    0x00f7,         0,         0, 
@@ -12936,27 +10515,7 @@ static constexpr KeyLayout2::unicode_t keymap_566[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_567[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',    DK|'^', 
-       //                  ESC                                                        
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/    DK|'"',    DK|'~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_568[128] {
+static constexpr KeyLayout2::unicode_t keymap_461[128] {
 /*00-07*/         0,         0,    0x00a1,    0x00b2,    0x00b3,    0x00a4,    0x20ac,    0x00bc, 
        //                               ¡          ²          ³          ¤          €          ¼ 
 /*08-0F*/    0x00bd,    0x00be,    0x2018,    0x2019,    0x00a5,    0x00d7,         0,         0, 
@@ -12982,7 +10541,7 @@ static constexpr KeyLayout2::unicode_t keymap_568[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_569[128] {
+static constexpr KeyLayout2::unicode_t keymap_462[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c4,    0x00c5,    0x00c9,         0,    0x00de,    0x00dc,    0x00da,    0x00cd, 
@@ -13006,7 +10565,7 @@ static constexpr KeyLayout2::unicode_t keymap_569[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_570[128] {
+static constexpr KeyLayout2::unicode_t keymap_463[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -13026,7 +10585,7 @@ static constexpr KeyLayout2::unicode_t keymap_570[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_571[128] {
+static constexpr KeyLayout2::unicode_t keymap_464[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -13052,7 +10611,7 @@ static constexpr KeyLayout2::unicode_t keymap_571[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_572[128] {
+static constexpr KeyLayout2::unicode_t keymap_465[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
        //                  ESC                                           ¤                       
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
@@ -13077,7 +10636,7 @@ static constexpr KeyLayout2::unicode_t keymap_572[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_573[128] {
+static constexpr KeyLayout2::unicode_t keymap_466[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00e1,    0x0161,       'e',       'r',       't',    0x0167,       'u',       'i', 
@@ -13101,31 +10660,7 @@ static constexpr KeyLayout2::unicode_t keymap_573[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_574[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x00e1,    0x0161,       'e',       'r',       't',    0x0167,       'u',       'i', 
-       //         á          š                                           ŧ                       
-/*18-1F*/       'o',       'p',    0x00e5,    0x014b,         0,         0,       'a',       's', 
-       //                               å          ŋ                                             
-/*20-27*/       'd',       'f',       'g',       'h',       'j',       'k',       'l',    0x00f6, 
-       //                                                                                      ö 
-/*28-2F*/    0x00e4,         0,         0,    0x0111,       'z',    0x010d,       'c',       'v', 
-       //         ä                                đ                     č                       
-/*30-37*/       'b',       'n',       'm',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x017e,         0, 
-       //                                                                           ž            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_575[128] {
+static constexpr KeyLayout2::unicode_t keymap_467[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'q',       'w',         0,         0,         0,       'y',         0,    0x00ef, 
@@ -13149,7 +10684,7 @@ static constexpr KeyLayout2::unicode_t keymap_575[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_576[128] {
+static constexpr KeyLayout2::unicode_t keymap_468[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',         0,         0,         0,       'Y',         0,    0x00cf, 
@@ -13173,32 +10708,7 @@ static constexpr KeyLayout2::unicode_t keymap_576[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_577[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',    0x00a4,       '%',       '&', 
-       //                  ESC                                           ¤                       
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',    DK|'`',      '\b',      '\t', 
-/*10-17*/    0x00c1,    0x0160,       'E',       'R',       'T',    0x0166,       'U',       'I', 
-       //         Á          Š                                           Ŧ                       
-/*18-1F*/       'O',       'P',    0x00c5,    0x014a,      '\r',         0,       'A',       'S', 
-       //                               Å          Ŋ                                             
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',    0x00d6, 
-       //                                                                                      Ö 
-/*28-2F*/    0x00c4,    0x00bd,         0,    0x0110,       'Z',    0x010c,       'C',       'V', 
-       //         Ä          ½                     Đ                     Č                       
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x017d,         0, 
-       //                                                                           Ž            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_578[128] {
+static constexpr KeyLayout2::unicode_t keymap_469[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c1,    0x0160,       'E',       'R',       'T',    0x0166,       'U',       'I', 
@@ -13222,7 +10732,7 @@ static constexpr KeyLayout2::unicode_t keymap_578[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_579[128] {
+static constexpr KeyLayout2::unicode_t keymap_470[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x00c1,    0x0160,       'E',       'R',       'T',    0x0166,       'U',       'I', 
@@ -13246,7 +10756,7 @@ static constexpr KeyLayout2::unicode_t keymap_579[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_580[128] {
+static constexpr KeyLayout2::unicode_t keymap_471[128] {
 /*00-07*/         0,         0,         0,       '@',    0x00a3,       '$',    0x20ac,         0, 
        //                                                     £                     €            
 /*08-0F*/       '{',       '[',       ']',       '}',      '\\',         0,         0,         0, 
@@ -13272,7 +10782,7 @@ static constexpr KeyLayout2::unicode_t keymap_580[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_581[128] {
+static constexpr KeyLayout2::unicode_t keymap_472[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       'Q',       'W',         0,         0,         0,       'Y',         0,    0x00cf, 
@@ -13296,7 +10806,7 @@ static constexpr KeyLayout2::unicode_t keymap_581[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_582[128] {
+static constexpr KeyLayout2::unicode_t keymap_473[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '+', DK|0x00b4,      '\b',      '\t', 
@@ -13322,7 +10832,7 @@ static constexpr KeyLayout2::unicode_t keymap_582[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_583[128] {
+static constexpr KeyLayout2::unicode_t keymap_474[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '.',      '\b',      '\t', 
@@ -13348,7 +10858,7 @@ static constexpr KeyLayout2::unicode_t keymap_583[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_584[128] {
+static constexpr KeyLayout2::unicode_t keymap_475[128] {
 /*00-07*/         0,    0x001b,       '!',       '?',       '+',       '"',       '%',       '=', 
        //                  ESC                                                                   
 /*08-0F*/       ':',       '/',    0x2013,    0x2116,       '$',    0x20ac,      '\b',      '\t', 
@@ -13375,7 +10885,7 @@ static constexpr KeyLayout2::unicode_t keymap_584[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_585[128] {
+static constexpr KeyLayout2::unicode_t keymap_476[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/    0x042b,    0x0443,    0x0435,    0x0438,    0x0448,    0x0449,    0x043a,    0x0441, 
@@ -13400,59 +10910,7 @@ static constexpr KeyLayout2::unicode_t keymap_585[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_586[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*10-17*/    0x042b,    0x0443,    0x0435,    0x0438,    0x0448,    0x0449,    0x043a,    0x0441, 
-       //         Ы          у          е          и          ш          щ          к          с 
-/*18-1F*/    0x0434,    0x0437,    0x0446,         0,         0,         0,    0x040d,    0x044f, 
-       //         д          з          ц                                           Ѝ          я 
-/*20-27*/    0x0430,    0x043e,    0x0436,    0x0433,    0x0442,    0x043d,    0x0432,    0x043c, 
-       //         а          о          ж          г          т          н          в          м 
-/*28-2F*/    0x0447,         0,         0,         0,    0x044e,    0x0439,    0x044a,    0x044d, 
-       //         ч                                           ю          й          ъ          э 
-/*30-37*/    0x0444,    0x0445,    0x043f,    0x0440,    0x043b,    0x0431,         0,         0, 
-       //         ф          х          п          р          л          б                       
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x045d,         0, 
-       //                                                                           ѝ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_587[128] {
-/*00-07*/         0,    0x001b,       '!',       '?',       '+',       '"',       '%',       '=', 
-       //                  ESC                                                                   
-/*08-0F*/       ':',       '/',    0x2013,    0x2116,       '$',    0x20ac,      '\b',      '\t', 
-       //                               –          №                     €                       
-/*10-17*/    0x044b,    0x0423,    0x0415,    0x0418,    0x0428,    0x0429,    0x041a,    0x0421, 
-       //         ы          У          Е          И          Ш          Щ          К          С 
-/*18-1F*/    0x0414,    0x0417,    0x0426,    0x00a7,      '\r',         0,    0x045d,    0x042f, 
-       //         Д          З          Ц          §                                ѝ          Я 
-/*20-27*/    0x0410,    0x041e,    0x0416,    0x0413,    0x0422,    0x041d,    0x0412,    0x041c, 
-       //         А          О          Ж          Г          Т          Н          В          М 
-/*28-2F*/    0x0427,       ')',         0,    0x201c,    0x042e,    0x0419,    0x042a,    0x042d, 
-       //         Ч                                “          Ю          Й          Ъ          Э 
-/*30-37*/    0x0424,    0x0425,    0x041f,    0x0420,    0x041b,    0x0411,         0,       '*', 
-       //         Ф          Х          П          Р          Л          Б                       
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,    0x040d,         0, 
-       //                                                                           Ѝ            
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_588[128] {
+static constexpr KeyLayout2::unicode_t keymap_477[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       ',',    0x0423,    0x0415,    0x0418,    0x0428,    0x0429,    0x041a,    0x0421, 
@@ -13477,7 +10935,7 @@ static constexpr KeyLayout2::unicode_t keymap_588[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_589[128] {
+static constexpr KeyLayout2::unicode_t keymap_478[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/       ',',    0x0423,    0x0415,    0x0418,    0x0428,    0x0429,    0x041a,    0x0421, 
@@ -13502,7 +10960,7 @@ static constexpr KeyLayout2::unicode_t keymap_589[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_590[128] {
+static constexpr KeyLayout2::unicode_t keymap_479[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '.',      '\b',      '\t', 
@@ -13528,7 +10986,7 @@ static constexpr KeyLayout2::unicode_t keymap_590[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_591[128] {
+static constexpr KeyLayout2::unicode_t keymap_480[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       ']',      '\b',      '\t', 
@@ -13550,7 +11008,7 @@ static constexpr KeyLayout2::unicode_t keymap_591[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_592[128] {
+static constexpr KeyLayout2::unicode_t keymap_481[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '[',      '\b',      '\t', 
@@ -13572,29 +11030,7 @@ static constexpr KeyLayout2::unicode_t keymap_592[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_593[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '[',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '*',       '{',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L', DK|0x00a8, 
-       //                                                                                      ¨ 
-/*28-2F*/ DK|0x0385,       '|',         0,       '@',       'Z',       'X',       'C',       'V', 
-       //         ΅                                                                              
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_594[128] {
+static constexpr KeyLayout2::unicode_t keymap_482[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,    0x001d,    0x007f,         0, 
@@ -13615,7 +11051,7 @@ static constexpr KeyLayout2::unicode_t keymap_594[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_595[128] {
+static constexpr KeyLayout2::unicode_t keymap_483[128] {
 /*00-07*/         0,         0,         0,    0x00b2,    0x00b3,    0x00a3,    0x00a7,    0x00b6, 
        //                                          ²          ³          £          §          ¶ 
 /*08-0F*/         0,    0x00a4,    0x00a6,    0x00b0,    0x00b1,    0x00bd,         0,         0, 
@@ -13640,7 +11076,7 @@ static constexpr KeyLayout2::unicode_t keymap_595[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_596[128] {
+static constexpr KeyLayout2::unicode_t keymap_484[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       ']',      '\b',      '\t', 
@@ -13662,7 +11098,7 @@ static constexpr KeyLayout2::unicode_t keymap_596[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_597[128] {
+static constexpr KeyLayout2::unicode_t keymap_485[128] {
 /*00-07*/         0,    0x001b,       '[',       ']',       '/',       'p',       'f',       'm', 
        //                  ESC                                                                   
 /*08-0F*/       'l',       'j',       '4',       '3',       '2',       '1',      '\b',      '\t', 
@@ -13682,7 +11118,7 @@ static constexpr KeyLayout2::unicode_t keymap_597[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_598[128] {
+static constexpr KeyLayout2::unicode_t keymap_486[128] {
 /*00-07*/         0,    0x001b,       '{',       '}',       '?',       'P',       'F',       'M', 
        //                  ESC                                                                   
 /*08-0F*/       'L',       'J',       '$',       '#',       '@',       '!',      '\b',      '\t', 
@@ -13702,7 +11138,7 @@ static constexpr KeyLayout2::unicode_t keymap_598[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_599[128] {
+static constexpr KeyLayout2::unicode_t keymap_487[128] {
 /*00-07*/         0,         0,         0,         0,         0,       'p',       'f',       'm', 
 /*08-0F*/       'l',       'j',         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,       'q',       'b',       'y',       'u',       'r',       's',       'o', 
@@ -13721,26 +11157,7 @@ static constexpr KeyLayout2::unicode_t keymap_599[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_600[128] {
-/*00-07*/         0,         0,         0,         0,         0,       'p',       'f',       'm', 
-/*08-0F*/       'l',       'j',         0,         0,         0,         0,         0,         0, 
-/*10-17*/         0,       'q',       'b',       'y',       'u',       'r',       's',       'o', 
-/*18-1F*/         0,         0,         0,         0,         0,         0,         0,       'k', 
-/*20-27*/       'c',       'd',       't',       'h',       'e',       'a',       'z',         0, 
-/*28-2F*/         0,         0,         0,         0,         0,       'x',       'g',       'v', 
-/*30-37*/       'w',       'n',       'i',         0,         0,         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_601[128] {
+static constexpr KeyLayout2::unicode_t keymap_488[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -13759,27 +11176,7 @@ static constexpr KeyLayout2::unicode_t keymap_601[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_602[128] {
-/*00-07*/         0,    0x001b,       '{',       '}',       '?',       'P',       'F',       'M', 
-       //                  ESC                                                                   
-/*08-0F*/       'L',       'J',       '$',       '#',       '@',       '!',      '\b',      '\t', 
-/*10-17*/       ':',       'Q',       'B',       'Y',       'U',       'R',       'S',       'O', 
-/*18-1F*/       '>',       '^',       '%',       '+',      '\r',         0,       '_',       'K', 
-/*20-27*/       'C',       'D',       'T',       'H',       'E',       'A',       'Z',       '*', 
-/*28-2F*/       '&',       '~',         0,       '|',       '"',       'X',       'G',       'V', 
-/*30-37*/       'W',       'N',       'I',       '<',       ')',       '(',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_603[128] {
+static constexpr KeyLayout2::unicode_t keymap_489[128] {
 /*00-07*/         0,         0,         0,         0,         0,       'P',       'F',       'M', 
 /*08-0F*/       'L',       'J',         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,       'Q',       'B',       'Y',       'U',       'R',       'S',       'O', 
@@ -13798,7 +11195,7 @@ static constexpr KeyLayout2::unicode_t keymap_603[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_604[128] {
+static constexpr KeyLayout2::unicode_t keymap_490[128] {
 /*00-07*/         0,         0,         0,         0,         0,       'P',       'F',       'M', 
 /*08-0F*/       'L',       'J',         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,       'Q',       'B',       'Y',       'U',       'R',       'S',       'O', 
@@ -13817,7 +11214,7 @@ static constexpr KeyLayout2::unicode_t keymap_604[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_605[128] {
+static constexpr KeyLayout2::unicode_t keymap_491[128] {
 /*00-07*/         0,    0x001b,    0x001b,    0x001d,         0,         0,         0,         0, 
        //                  ESC        ESC                                                        
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -13837,7 +11234,7 @@ static constexpr KeyLayout2::unicode_t keymap_605[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_606[128] {
+static constexpr KeyLayout2::unicode_t keymap_492[128] {
 /*00-07*/         0,    0x001b,       '[',       ']',       '/',       'p',       'f',       'm', 
        //                  ESC                                                                   
 /*08-0F*/       'l',       'j',       '4',       '3',       '2',       '1',      '\b',      '\t', 
@@ -13857,7 +11254,7 @@ static constexpr KeyLayout2::unicode_t keymap_606[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_607[128] {
+static constexpr KeyLayout2::unicode_t keymap_493[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -13878,7 +11275,7 @@ static constexpr KeyLayout2::unicode_t keymap_607[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_608[128] {
+static constexpr KeyLayout2::unicode_t keymap_494[128] {
 /*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
        //                  ESC                                                                   
 /*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
@@ -13899,28 +11296,7 @@ static constexpr KeyLayout2::unicode_t keymap_608[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_609[128] {
-/*00-07*/         0,    0x001b,       '!',       '"',       '#',       '$',       '%',       '&', 
-       //                  ESC                                                                   
-/*08-0F*/       '/',       '(',       ')',       '=',       '?',       '*',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L', DK|0x00a8, 
-       //                                                                                      ¨ 
-/*28-2F*/    DK|'~',       '|',         0,       '@',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       ';',       ':',       '_',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_610[128] {
+static constexpr KeyLayout2::unicode_t keymap_495[128] {
 /*00-07*/         0,    0x001b,         0,         0,         0,         0,         0,         0, 
        //                  ESC                                                                   
 /*08-0F*/         0,         0,         0,         0,         0,         0,    0x007f,         0, 
@@ -13941,7 +11317,7 @@ static constexpr KeyLayout2::unicode_t keymap_610[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_611[128] {
+static constexpr KeyLayout2::unicode_t keymap_496[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,    0x20ac,         0,         0,         0,         0,         0, 
@@ -13961,7 +11337,7 @@ static constexpr KeyLayout2::unicode_t keymap_611[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_612[128] {
+static constexpr KeyLayout2::unicode_t keymap_497[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',      '\'',       '+',      '\b',      '\t', 
@@ -13982,7 +11358,7 @@ static constexpr KeyLayout2::unicode_t keymap_612[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_613[128] {
+static constexpr KeyLayout2::unicode_t keymap_498[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       'j',       'l', 
        //                  ESC                                                                   
 /*08-0F*/       'm',       'f',       'p',       '/',       '[',       ']',      '\b',      '\t', 
@@ -14002,7 +11378,7 @@ static constexpr KeyLayout2::unicode_t keymap_613[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_614[128] {
+static constexpr KeyLayout2::unicode_t keymap_499[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       'J',       'L', 
        //                  ESC                                                                   
 /*08-0F*/       'M',       'F',       'P',       '?',       '{',       '}',      '\b',      '\t', 
@@ -14022,7 +11398,7 @@ static constexpr KeyLayout2::unicode_t keymap_614[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_615[128] {
+static constexpr KeyLayout2::unicode_t keymap_500[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,       'j',       'l', 
 /*08-0F*/       'm',       'f',       'p',         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,       'q',         0,       'o',       'r',       's',       'u', 
@@ -14041,26 +11417,7 @@ static constexpr KeyLayout2::unicode_t keymap_615[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_616[128] {
-/*00-07*/         0,         0,         0,         0,         0,         0,       'j',       'l', 
-/*08-0F*/       'm',       'f',       'p',         0,         0,         0,         0,         0, 
-/*10-17*/         0,         0,       'q',         0,       'o',       'r',       's',       'u', 
-/*18-1F*/       'y',       'b',         0,         0,         0,         0,         0,         0, 
-/*20-27*/       'z',       'a',       'e',       'h',       't',       'd',       'c',       'k', 
-/*28-2F*/         0,         0,         0,         0,         0,         0,       'x',         0, 
-/*30-37*/       'i',       'n',       'w',       'v',       'g',         0,         0,         0, 
-/*38-3F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,         0,         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_617[128] {
+static constexpr KeyLayout2::unicode_t keymap_501[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,    0x001e,         0,         0,         0,         0,         0,         0, 
@@ -14079,27 +11436,7 @@ static constexpr KeyLayout2::unicode_t keymap_617[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_618[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       'J',       'L', 
-       //                  ESC                                                                   
-/*08-0F*/       'M',       'F',       'P',       '?',       '{',       '}',      '\b',      '\t', 
-/*10-17*/       '%',       '^',       'Q',       '>',       'O',       'R',       'S',       'U', 
-/*18-1F*/       'Y',       'B',       ':',       '+',      '\r',         0,       '&',       '*', 
-/*20-27*/       'Z',       'A',       'E',       'H',       'T',       'D',       'C',       'K', 
-/*28-2F*/       '_',       '~',         0,       '|',       '(',       ')',       'X',       '<', 
-/*30-37*/       'I',       'N',       'W',       'V',       'G',       '"',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_619[128] {
+static constexpr KeyLayout2::unicode_t keymap_502[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,       'J',       'L', 
 /*08-0F*/       'M',       'F',       'P',         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,       'Q',         0,       'O',       'R',       'S',       'U', 
@@ -14118,7 +11455,7 @@ static constexpr KeyLayout2::unicode_t keymap_619[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_620[128] {
+static constexpr KeyLayout2::unicode_t keymap_503[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,       'J',       'L', 
 /*08-0F*/       'M',       'F',       'P',         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,       'Q',         0,       'O',       'R',       'S',       'U', 
@@ -14137,7 +11474,7 @@ static constexpr KeyLayout2::unicode_t keymap_620[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_621[128] {
+static constexpr KeyLayout2::unicode_t keymap_504[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       'j',       'l', 
        //                  ESC                                                                   
 /*08-0F*/       'm',       'f',       'p',       '/',       '[',       ']',      '\b',      '\t', 
@@ -14157,7 +11494,7 @@ static constexpr KeyLayout2::unicode_t keymap_621[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_622[128] {
+static constexpr KeyLayout2::unicode_t keymap_505[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',    DK|'^', 
        //                  ESC                                                        
 /*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
@@ -14177,7 +11514,7 @@ static constexpr KeyLayout2::unicode_t keymap_622[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_623[128] {
+static constexpr KeyLayout2::unicode_t keymap_506[128] {
 /*00-07*/         0,         0,    0x00b9,         0,         0,    0x00a3,         0,         0, 
        //                               ¹                                £                       
 /*08-0F*/         0,         0,         0,         0,         0,    0x00f7,         0,         0, 
@@ -14203,27 +11540,7 @@ static constexpr KeyLayout2::unicode_t keymap_623[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_624[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',    DK|'^', 
-       //                  ESC                                                        
-/*08-0F*/       '&',       '*',       '(',       ')',       '_',       '+',      '\b',      '\t', 
-/*10-17*/       'Q',       'W',       'E',       'R',       'T',       'Y',       'U',       'I', 
-/*18-1F*/       'O',       'P',       '{',       '}',      '\r',         0,       'A',       'S', 
-/*20-27*/       'D',       'F',       'G',       'H',       'J',       'K',       'L',       ':', 
-/*28-2F*/       '"',    DK|'~',         0,       '|',       'Z',       'X',       'C',       'V', 
-/*30-37*/       'B',       'N',       'M',       '<',       '>',       '?',         0,       '*', 
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       '.',         0,         0,       '|',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_625[128] {
+static constexpr KeyLayout2::unicode_t keymap_507[128] {
 /*00-07*/         0,         0,    0x00a1,    0x00b2,    0x00b3,    0x00a4,    0x20ac,    0x00bc, 
        //                               ¡          ²          ³          ¤          €          ¼ 
 /*08-0F*/    0x00bd,    0x00be,    0x2018,    0x2019,    0x00a5,    0x00d7,         0,         0, 
@@ -14249,7 +11566,7 @@ static constexpr KeyLayout2::unicode_t keymap_625[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_626[128] {
+static constexpr KeyLayout2::unicode_t keymap_508[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',       '-',       '=',      '\b',      '\t', 
@@ -14269,7 +11586,7 @@ static constexpr KeyLayout2::unicode_t keymap_626[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_627[128] {
+static constexpr KeyLayout2::unicode_t keymap_509[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    DK|'-',    DK|'=',      '\b',      '\t', 
@@ -14294,7 +11611,7 @@ static constexpr KeyLayout2::unicode_t keymap_627[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_628[128] {
+static constexpr KeyLayout2::unicode_t keymap_510[128] {
 /*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
        //                  ESC                                                                   
 /*08-0F*/       '&',       '*',       '(',       ')',    DK|'_',    DK|'+',      '\b',      '\t', 
@@ -14319,7 +11636,7 @@ static constexpr KeyLayout2::unicode_t keymap_628[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_629[128] {
+static constexpr KeyLayout2::unicode_t keymap_511[128] {
 /*00-07*/         0,         0,         0,    0x00b2,    0x00b3,         0,         0,         0, 
        //                                          ²          ³                                  
 /*08-0F*/         0,         0,         0,         0,         0, DK|0x1fdf,         0,         0, 
@@ -14343,32 +11660,7 @@ static constexpr KeyLayout2::unicode_t keymap_629[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_630[128] {
-/*00-07*/         0,    0x001b,       '!',       '@',       '#',       '$',       '%',       '^', 
-       //                  ESC                                                                   
-/*08-0F*/       '&',       '*',       '(',       ')',    DK|'_',    DK|'+',      '\b',      '\t', 
-/*10-17*/    DK|':', DK|0x0385,    0x0395,    0x03a1,    0x03a4,    0x03a5,    0x0398,    0x0399, 
-       //         ΅          Ε          Ρ          Τ          Υ          Θ          Ι 
-/*18-1F*/    0x039f,    0x03a0,    DK|'{',    DK|'}',      '\r',         0,    0x0391,    0x03a3, 
-       //         Ο          Π                                Α          Σ 
-/*20-27*/    0x0394,    0x03a6,    0x0393,    0x0397,    0x039e,    0x039a,    0x039b, DK|0x00a8, 
-       //         Δ          Φ          Γ          Η          Ξ          Κ          Λ          ¨ 
-/*28-2F*/    DK|'"',    DK|'`',         0,    DK|'|',    0x0396,    0x03a7,    0x03a8,    0x03a9, 
-       //                    Ζ          Χ          Ψ          Ω 
-/*30-37*/    0x0392,    0x039d,    0x039c,       '<',       '>',    DK|'?',         0,       '*', 
-       //         Β          Ν          Μ                                             
-/*38-3F*/         0,       ' ',         0,         0,         0,         0,         0,         0, 
-/*40-47*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*48-4F*/         0,         0,       '-',         0,         0,         0,       '+',         0, 
-/*50-57*/         0,         0,         0,       ',',         0,         0,       '>',         0, 
-/*58-5F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*60-67*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*68-6F*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*70-77*/         0,         0,         0,         0,         0,         0,         0,         0, 
-/*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
-};
-
-static constexpr KeyLayout2::unicode_t keymap_631[128] {
+static constexpr KeyLayout2::unicode_t keymap_512[128] {
 /*00-07*/         0,         0,    0x03da,    0x03de,    0x03e0,    0x00a3,    0x00a7,    0x00b6, 
        //                               Ϛ          Ϟ          Ϡ          £          §          ¶ 
 /*08-0F*/         0,    0x00a4,    0x00a6,    0x00b0,    0x00b1, DK|0x00bd,         0,         0, 
@@ -14394,7 +11686,7 @@ static constexpr KeyLayout2::unicode_t keymap_631[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_632[128] {
+static constexpr KeyLayout2::unicode_t keymap_513[128] {
 /*00-07*/         0,    0x001b,       '1',       '2',       '3',       '4',       '5',       '6', 
        //                  ESC                                                                   
 /*08-0F*/       '7',       '8',       '9',       '0',    DK|'-',    DK|'=',      '\b',      '\t', 
@@ -14419,7 +11711,7 @@ static constexpr KeyLayout2::unicode_t keymap_632[128] {
 /*78-7F*/         0,         0,         0,         0,      '\t',         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_633[128] {
+static constexpr KeyLayout2::unicode_t keymap_514[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -14438,7 +11730,7 @@ static constexpr KeyLayout2::unicode_t keymap_633[128] {
 /*78-7F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 };
 
-static constexpr KeyLayout2::unicode_t keymap_634[128] {
+static constexpr KeyLayout2::unicode_t keymap_515[128] {
 /*00-07*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*08-0F*/         0,         0,         0,         0,         0,         0,         0,         0, 
 /*10-17*/         0,         0,         0,         0,         0,         0,         0,         0, 
@@ -16655,10 +13947,10 @@ static constexpr KeyLayout2::DKeyTable dkeymap_42[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_0[] {
-    keymap_1, keymap_2, keymap_9, keymap_5, keymap_0, keymap_0, keymap_10, keymap_0,
-    keymap_11, keymap_6, keymap_0, keymap_0, keymap_0, keymap_0, keymap_10, keymap_0,
-    keymap_7, keymap_3, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_8, keymap_4, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_1, keymap_2, keymap_7, keymap_4, keymap_0, keymap_0, keymap_8, keymap_0,
+    keymap_9, keymap_2, keymap_0, keymap_0, keymap_0, keymap_0, keymap_8, keymap_0,
+    keymap_5, keymap_3, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_6, keymap_3, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16666,7 +13958,7 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_0[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_1[] {
-    keymap_633, keymap_633, keymap_634, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_514, keymap_514, keymap_515, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16677,10 +13969,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_1[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_2[] {
-    keymap_12, keymap_13, keymap_20, keymap_16, keymap_0, keymap_0, keymap_21, keymap_0,
-    keymap_22, keymap_17, keymap_0, keymap_0, keymap_0, keymap_0, keymap_21, keymap_0,
-    keymap_18, keymap_14, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_19, keymap_15, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_10, keymap_11, keymap_16, keymap_13, keymap_0, keymap_0, keymap_17, keymap_0,
+    keymap_18, keymap_11, keymap_0, keymap_0, keymap_0, keymap_0, keymap_17, keymap_0,
+    keymap_14, keymap_12, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_15, keymap_12, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16688,10 +13980,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_2[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_3[] {
-    keymap_23, keymap_24, keymap_9, keymap_5, keymap_0, keymap_0, keymap_31, keymap_27,
-    keymap_32, keymap_28, keymap_0, keymap_0, keymap_0, keymap_0, keymap_31, keymap_27,
-    keymap_29, keymap_25, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_30, keymap_26, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_19, keymap_20, keymap_7, keymap_4, keymap_0, keymap_0, keymap_25, keymap_22,
+    keymap_26, keymap_20, keymap_0, keymap_0, keymap_0, keymap_0, keymap_25, keymap_22,
+    keymap_23, keymap_21, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_24, keymap_21, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16699,10 +13991,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_3[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_4[] {
-    keymap_33, keymap_34, keymap_41, keymap_37, keymap_0, keymap_0, keymap_42, keymap_0,
-    keymap_43, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_42, keymap_0,
-    keymap_39, keymap_35, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_40, keymap_36, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_27, keymap_28, keymap_33, keymap_30, keymap_0, keymap_0, keymap_34, keymap_0,
+    keymap_35, keymap_28, keymap_0, keymap_0, keymap_0, keymap_0, keymap_34, keymap_0,
+    keymap_31, keymap_29, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_32, keymap_29, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16710,10 +14002,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_4[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_5[] {
-    keymap_44, keymap_45, keymap_51, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_52, keymap_48, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_36, keymap_37, keymap_41, keymap_30, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_42, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16721,10 +14013,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_5[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_6[] {
-    keymap_53, keymap_54, keymap_51, keymap_16, keymap_0, keymap_0, keymap_60, keymap_0,
-    keymap_61, keymap_57, keymap_0, keymap_0, keymap_0, keymap_0, keymap_60, keymap_0,
-    keymap_58, keymap_55, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_59, keymap_56, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_43, keymap_44, keymap_41, keymap_13, keymap_0, keymap_0, keymap_48, keymap_0,
+    keymap_49, keymap_44, keymap_0, keymap_0, keymap_0, keymap_0, keymap_48, keymap_0,
+    keymap_46, keymap_45, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_47, keymap_45, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16732,10 +14024,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_6[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_7[] {
-    keymap_62, keymap_63, keymap_20, keymap_16, keymap_0, keymap_0, keymap_69, keymap_0,
-    keymap_70, keymap_66, keymap_0, keymap_0, keymap_0, keymap_0, keymap_69, keymap_0,
-    keymap_67, keymap_64, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_68, keymap_65, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_50, keymap_51, keymap_16, keymap_13, keymap_0, keymap_0, keymap_55, keymap_0,
+    keymap_56, keymap_51, keymap_0, keymap_0, keymap_0, keymap_0, keymap_55, keymap_0,
+    keymap_53, keymap_52, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_54, keymap_52, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16743,10 +14035,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_7[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_8[] {
-    keymap_71, keymap_72, keymap_51, keymap_75, keymap_0, keymap_0, keymap_79, keymap_0,
-    keymap_80, keymap_76, keymap_0, keymap_0, keymap_0, keymap_0, keymap_79, keymap_0,
-    keymap_77, keymap_73, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_78, keymap_74, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_57, keymap_58, keymap_41, keymap_60, keymap_0, keymap_0, keymap_63, keymap_0,
+    keymap_64, keymap_58, keymap_0, keymap_0, keymap_0, keymap_0, keymap_63, keymap_0,
+    keymap_61, keymap_59, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_62, keymap_59, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16754,10 +14046,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_8[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_9[] {
-    keymap_81, keymap_82, keymap_20, keymap_16, keymap_0, keymap_0, keymap_88, keymap_0,
-    keymap_89, keymap_85, keymap_0, keymap_0, keymap_0, keymap_0, keymap_88, keymap_0,
-    keymap_86, keymap_83, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_87, keymap_84, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_65, keymap_66, keymap_16, keymap_13, keymap_0, keymap_0, keymap_70, keymap_0,
+    keymap_71, keymap_66, keymap_0, keymap_0, keymap_0, keymap_0, keymap_70, keymap_0,
+    keymap_68, keymap_67, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_69, keymap_67, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16765,10 +14057,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_9[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_10[] {
-    keymap_90, keymap_91, keymap_94, keymap_16, keymap_0, keymap_0, keymap_95, keymap_92,
-    keymap_96, keymap_93, keymap_0, keymap_0, keymap_0, keymap_0, keymap_95, keymap_92,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_72, keymap_73, keymap_75, keymap_13, keymap_0, keymap_0, keymap_76, keymap_74,
+    keymap_77, keymap_73, keymap_0, keymap_0, keymap_0, keymap_0, keymap_76, keymap_74,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16776,10 +14068,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_10[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_11[] {
-    keymap_97, keymap_98, keymap_102, keymap_16, keymap_0, keymap_0, keymap_103, keymap_0,
-    keymap_104, keymap_100, keymap_0, keymap_0, keymap_0, keymap_0, keymap_103, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_78, keymap_79, keymap_81, keymap_13, keymap_0, keymap_0, keymap_82, keymap_0,
+    keymap_83, keymap_79, keymap_0, keymap_0, keymap_0, keymap_0, keymap_82, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16787,10 +14079,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_11[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_12[] {
-    keymap_105, keymap_106, keymap_20, keymap_16, keymap_0, keymap_0, keymap_112, keymap_0,
-    keymap_113, keymap_109, keymap_0, keymap_0, keymap_0, keymap_0, keymap_112, keymap_0,
-    keymap_110, keymap_107, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_111, keymap_108, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_84, keymap_85, keymap_16, keymap_13, keymap_0, keymap_0, keymap_89, keymap_0,
+    keymap_90, keymap_85, keymap_0, keymap_0, keymap_0, keymap_0, keymap_89, keymap_0,
+    keymap_87, keymap_86, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_88, keymap_86, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16798,10 +14090,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_12[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_13[] {
-    keymap_44, keymap_114, keymap_118, keymap_37, keymap_0, keymap_0, keymap_119, keymap_116,
-    keymap_120, keymap_117, keymap_0, keymap_0, keymap_0, keymap_0, keymap_119, keymap_116,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_116, keymap_115,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_116, keymap_115,
+    keymap_36, keymap_91, keymap_94, keymap_30, keymap_0, keymap_0, keymap_95, keymap_93,
+    keymap_96, keymap_91, keymap_0, keymap_0, keymap_0, keymap_0, keymap_95, keymap_93,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_93, keymap_92,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_93, keymap_92,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16809,10 +14101,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_13[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_14[] {
-    keymap_121, keymap_122, keymap_128, keymap_37, keymap_0, keymap_0, keymap_129, keymap_0,
-    keymap_130, keymap_125, keymap_0, keymap_0, keymap_0, keymap_0, keymap_129, keymap_0,
-    keymap_126, keymap_123, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_127, keymap_124, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_97, keymap_98, keymap_102, keymap_30, keymap_0, keymap_0, keymap_103, keymap_0,
+    keymap_104, keymap_98, keymap_0, keymap_0, keymap_0, keymap_0, keymap_103, keymap_0,
+    keymap_100, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16820,10 +14112,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_14[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_15[] {
-    keymap_131, keymap_132, keymap_9, keymap_135, keymap_0, keymap_0, keymap_139, keymap_0,
-    keymap_140, keymap_136, keymap_0, keymap_0, keymap_0, keymap_0, keymap_139, keymap_0,
-    keymap_137, keymap_133, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_138, keymap_134, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_105, keymap_106, keymap_7, keymap_108, keymap_0, keymap_0, keymap_111, keymap_0,
+    keymap_112, keymap_106, keymap_0, keymap_0, keymap_0, keymap_0, keymap_111, keymap_0,
+    keymap_109, keymap_107, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_110, keymap_107, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16831,10 +14123,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_15[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_16[] {
-    keymap_141, keymap_142, keymap_148, keymap_37, keymap_0, keymap_0, keymap_149, keymap_0,
-    keymap_150, keymap_145, keymap_0, keymap_0, keymap_0, keymap_0, keymap_149, keymap_0,
-    keymap_146, keymap_143, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_147, keymap_144, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_113, keymap_114, keymap_118, keymap_30, keymap_0, keymap_0, keymap_119, keymap_0,
+    keymap_120, keymap_114, keymap_0, keymap_0, keymap_0, keymap_0, keymap_119, keymap_0,
+    keymap_116, keymap_115, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_117, keymap_115, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16842,10 +14134,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_16[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_17[] {
-    keymap_151, keymap_152, keymap_158, keymap_37, keymap_0, keymap_0, keymap_159, keymap_0,
-    keymap_160, keymap_155, keymap_0, keymap_0, keymap_0, keymap_0, keymap_159, keymap_0,
-    keymap_156, keymap_153, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_157, keymap_154, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_121, keymap_122, keymap_126, keymap_30, keymap_0, keymap_0, keymap_127, keymap_0,
+    keymap_128, keymap_122, keymap_0, keymap_0, keymap_0, keymap_0, keymap_127, keymap_0,
+    keymap_124, keymap_123, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_125, keymap_123, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16853,10 +14145,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_17[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_18[] {
-    keymap_161, keymap_162, keymap_169, keymap_165, keymap_0, keymap_0, keymap_170, keymap_0,
-    keymap_171, keymap_166, keymap_0, keymap_0, keymap_0, keymap_0, keymap_170, keymap_0,
-    keymap_167, keymap_163, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_168, keymap_164, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_129, keymap_130, keymap_135, keymap_132, keymap_0, keymap_0, keymap_136, keymap_0,
+    keymap_137, keymap_130, keymap_0, keymap_0, keymap_0, keymap_0, keymap_136, keymap_0,
+    keymap_133, keymap_131, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_134, keymap_131, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16864,10 +14156,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_18[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_19[] {
-    keymap_172, keymap_173, keymap_51, keymap_176, keymap_0, keymap_0, keymap_182, keymap_178,
-    keymap_183, keymap_179, keymap_0, keymap_0, keymap_0, keymap_0, keymap_182, keymap_178,
-    keymap_180, keymap_174, keymap_0, keymap_0, keymap_0, keymap_0, keymap_178, keymap_177,
-    keymap_181, keymap_175, keymap_0, keymap_0, keymap_0, keymap_0, keymap_178, keymap_177,
+    keymap_138, keymap_139, keymap_41, keymap_141, keymap_0, keymap_0, keymap_146, keymap_143,
+    keymap_147, keymap_139, keymap_0, keymap_0, keymap_0, keymap_0, keymap_146, keymap_143,
+    keymap_144, keymap_140, keymap_0, keymap_0, keymap_0, keymap_0, keymap_143, keymap_142,
+    keymap_145, keymap_140, keymap_0, keymap_0, keymap_0, keymap_0, keymap_143, keymap_142,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16875,10 +14167,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_19[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_20[] {
-    keymap_184, keymap_185, keymap_128, keymap_16, keymap_0, keymap_0, keymap_188, keymap_189,
-    keymap_193, keymap_190, keymap_0, keymap_0, keymap_0, keymap_0, keymap_188, keymap_189,
-    keymap_191, keymap_186, keymap_0, keymap_0, keymap_0, keymap_0, keymap_189, keymap_188,
-    keymap_192, keymap_187, keymap_0, keymap_0, keymap_0, keymap_0, keymap_189, keymap_188,
+    keymap_148, keymap_149, keymap_102, keymap_13, keymap_0, keymap_0, keymap_151, keymap_152,
+    keymap_155, keymap_149, keymap_0, keymap_0, keymap_0, keymap_0, keymap_151, keymap_152,
+    keymap_153, keymap_150, keymap_0, keymap_0, keymap_0, keymap_0, keymap_152, keymap_151,
+    keymap_154, keymap_150, keymap_0, keymap_0, keymap_0, keymap_0, keymap_152, keymap_151,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16886,10 +14178,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_20[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_21[] {
-    keymap_194, keymap_195, keymap_203, keymap_16, keymap_0, keymap_0, keymap_204, keymap_199,
-    keymap_206, keymap_200, keymap_0, keymap_0, keymap_0, keymap_0, keymap_204, keymap_199,
-    keymap_201, keymap_196, keymap_0, keymap_0, keymap_0, keymap_0, keymap_205, keymap_198,
-    keymap_202, keymap_197, keymap_0, keymap_0, keymap_0, keymap_0, keymap_205, keymap_198,
+    keymap_156, keymap_157, keymap_163, keymap_13, keymap_0, keymap_0, keymap_164, keymap_160,
+    keymap_166, keymap_157, keymap_0, keymap_0, keymap_0, keymap_0, keymap_164, keymap_160,
+    keymap_161, keymap_158, keymap_0, keymap_0, keymap_0, keymap_0, keymap_165, keymap_159,
+    keymap_162, keymap_158, keymap_0, keymap_0, keymap_0, keymap_0, keymap_165, keymap_159,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16897,10 +14189,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_21[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_22[] {
-    keymap_207, keymap_208, keymap_216, keymap_37, keymap_0, keymap_0, keymap_217, keymap_212,
-    keymap_219, keymap_213, keymap_0, keymap_0, keymap_0, keymap_0, keymap_217, keymap_212,
-    keymap_214, keymap_209, keymap_0, keymap_0, keymap_0, keymap_0, keymap_218, keymap_211,
-    keymap_215, keymap_210, keymap_0, keymap_0, keymap_0, keymap_0, keymap_218, keymap_211,
+    keymap_167, keymap_168, keymap_174, keymap_30, keymap_0, keymap_0, keymap_175, keymap_171,
+    keymap_177, keymap_168, keymap_0, keymap_0, keymap_0, keymap_0, keymap_175, keymap_171,
+    keymap_172, keymap_169, keymap_0, keymap_0, keymap_0, keymap_0, keymap_176, keymap_170,
+    keymap_173, keymap_169, keymap_0, keymap_0, keymap_0, keymap_0, keymap_176, keymap_170,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16908,10 +14200,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_22[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_23[] {
-    keymap_220, keymap_221, keymap_51, keymap_37, keymap_0, keymap_0, keymap_227, keymap_0,
-    keymap_228, keymap_224, keymap_0, keymap_0, keymap_0, keymap_0, keymap_227, keymap_0,
-    keymap_225, keymap_222, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_226, keymap_223, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_178, keymap_179, keymap_41, keymap_30, keymap_0, keymap_0, keymap_183, keymap_0,
+    keymap_184, keymap_179, keymap_0, keymap_0, keymap_0, keymap_0, keymap_183, keymap_0,
+    keymap_181, keymap_180, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_182, keymap_180, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16919,10 +14211,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_23[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_24[] {
-    keymap_229, keymap_230, keymap_128, keymap_16, keymap_0, keymap_0, keymap_236, keymap_0,
-    keymap_237, keymap_233, keymap_0, keymap_0, keymap_0, keymap_0, keymap_236, keymap_0,
-    keymap_234, keymap_231, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_235, keymap_232, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_185, keymap_186, keymap_102, keymap_13, keymap_0, keymap_0, keymap_190, keymap_0,
+    keymap_191, keymap_186, keymap_0, keymap_0, keymap_0, keymap_0, keymap_190, keymap_0,
+    keymap_188, keymap_187, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_189, keymap_187, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16930,10 +14222,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_24[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_25[] {
-    keymap_238, keymap_239, keymap_20, keymap_16, keymap_0, keymap_0, keymap_245, keymap_0,
-    keymap_246, keymap_242, keymap_0, keymap_0, keymap_0, keymap_0, keymap_245, keymap_0,
-    keymap_243, keymap_240, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_244, keymap_241, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_192, keymap_193, keymap_16, keymap_13, keymap_0, keymap_0, keymap_197, keymap_0,
+    keymap_198, keymap_193, keymap_0, keymap_0, keymap_0, keymap_0, keymap_197, keymap_0,
+    keymap_195, keymap_194, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_196, keymap_194, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16941,10 +14233,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_25[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_26[] {
-    keymap_247, keymap_248, keymap_254, keymap_0, keymap_0, keymap_0, keymap_255, keymap_251,
-    keymap_257, keymap_248, keymap_0, keymap_0, keymap_0, keymap_0, keymap_255, keymap_251,
-    keymap_252, keymap_249, keymap_0, keymap_0, keymap_0, keymap_0, keymap_256, keymap_250,
-    keymap_253, keymap_249, keymap_0, keymap_0, keymap_0, keymap_0, keymap_256, keymap_250,
+    keymap_199, keymap_200, keymap_206, keymap_0, keymap_0, keymap_0, keymap_207, keymap_203,
+    keymap_209, keymap_200, keymap_0, keymap_0, keymap_0, keymap_0, keymap_207, keymap_203,
+    keymap_204, keymap_201, keymap_0, keymap_0, keymap_0, keymap_0, keymap_208, keymap_202,
+    keymap_205, keymap_201, keymap_0, keymap_0, keymap_0, keymap_0, keymap_208, keymap_202,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16952,10 +14244,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_26[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_27[] {
-    keymap_105, keymap_106, keymap_260, keymap_0, keymap_0, keymap_0, keymap_261, keymap_259,
-    keymap_113, keymap_109, keymap_0, keymap_0, keymap_0, keymap_0, keymap_261, keymap_259,
-    keymap_110, keymap_107, keymap_0, keymap_0, keymap_0, keymap_0, keymap_259, keymap_258,
-    keymap_111, keymap_108, keymap_0, keymap_0, keymap_0, keymap_0, keymap_259, keymap_258,
+    keymap_84, keymap_85, keymap_212, keymap_0, keymap_0, keymap_0, keymap_213, keymap_211,
+    keymap_90, keymap_85, keymap_0, keymap_0, keymap_0, keymap_0, keymap_213, keymap_211,
+    keymap_87, keymap_86, keymap_0, keymap_0, keymap_0, keymap_0, keymap_211, keymap_210,
+    keymap_88, keymap_86, keymap_0, keymap_0, keymap_0, keymap_0, keymap_211, keymap_210,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16963,10 +14255,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_27[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_28[] {
-    keymap_262, keymap_263, keymap_128, keymap_16, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_269, keymap_266, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_267, keymap_264, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_268, keymap_265, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_214, keymap_215, keymap_102, keymap_13, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_219, keymap_215, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_217, keymap_216, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_218, keymap_216, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16974,10 +14266,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_28[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_29[] {
-    keymap_141, keymap_142, keymap_148, keymap_37, keymap_0, keymap_0, keymap_270, keymap_271,
-    keymap_150, keymap_145, keymap_0, keymap_0, keymap_0, keymap_0, keymap_270, keymap_271,
-    keymap_146, keymap_143, keymap_0, keymap_0, keymap_0, keymap_0, keymap_271, keymap_270,
-    keymap_147, keymap_144, keymap_0, keymap_0, keymap_0, keymap_0, keymap_271, keymap_270,
+    keymap_113, keymap_114, keymap_118, keymap_30, keymap_0, keymap_0, keymap_220, keymap_221,
+    keymap_120, keymap_114, keymap_0, keymap_0, keymap_0, keymap_0, keymap_220, keymap_221,
+    keymap_116, keymap_115, keymap_0, keymap_0, keymap_0, keymap_0, keymap_221, keymap_220,
+    keymap_117, keymap_115, keymap_0, keymap_0, keymap_0, keymap_0, keymap_221, keymap_220,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16985,10 +14277,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_29[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_30[] {
-    keymap_272, keymap_273, keymap_128, keymap_16, keymap_0, keymap_0, keymap_281, keymap_277,
-    keymap_283, keymap_278, keymap_0, keymap_0, keymap_0, keymap_0, keymap_281, keymap_277,
-    keymap_279, keymap_274, keymap_0, keymap_0, keymap_0, keymap_0, keymap_282, keymap_276,
-    keymap_280, keymap_275, keymap_0, keymap_0, keymap_0, keymap_0, keymap_282, keymap_276,
+    keymap_222, keymap_223, keymap_102, keymap_13, keymap_0, keymap_0, keymap_229, keymap_226,
+    keymap_231, keymap_223, keymap_0, keymap_0, keymap_0, keymap_0, keymap_229, keymap_226,
+    keymap_227, keymap_224, keymap_0, keymap_0, keymap_0, keymap_0, keymap_230, keymap_225,
+    keymap_228, keymap_224, keymap_0, keymap_0, keymap_0, keymap_0, keymap_230, keymap_225,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -16996,10 +14288,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_30[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_31[] {
-    keymap_284, keymap_285, keymap_148, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_291, keymap_288, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_289, keymap_286, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_290, keymap_287, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_232, keymap_233, keymap_118, keymap_30, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_237, keymap_233, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_235, keymap_234, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_236, keymap_234, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17007,10 +14299,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_31[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_32[] {
-    keymap_292, keymap_293, keymap_260, keymap_0, keymap_0, keymap_0, keymap_297, keymap_295,
-    keymap_299, keymap_296, keymap_0, keymap_0, keymap_0, keymap_0, keymap_297, keymap_295,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_298, keymap_294,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_298, keymap_294,
+    keymap_238, keymap_239, keymap_212, keymap_0, keymap_0, keymap_0, keymap_242, keymap_241,
+    keymap_244, keymap_239, keymap_0, keymap_0, keymap_0, keymap_0, keymap_242, keymap_241,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_243, keymap_240,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_243, keymap_240,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17018,10 +14310,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_32[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_33[] {
-    keymap_300, keymap_301, keymap_94, keymap_16, keymap_0, keymap_0, keymap_305, keymap_0,
-    keymap_306, keymap_303, keymap_0, keymap_0, keymap_0, keymap_0, keymap_305, keymap_0,
-    keymap_167, keymap_163, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_304, keymap_302, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_245, keymap_246, keymap_75, keymap_13, keymap_0, keymap_0, keymap_248, keymap_0,
+    keymap_249, keymap_246, keymap_0, keymap_0, keymap_0, keymap_0, keymap_248, keymap_0,
+    keymap_133, keymap_131, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_247, keymap_131, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17029,10 +14321,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_33[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_34[] {
-    keymap_307, keymap_45, keymap_51, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_308, keymap_48, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_250, keymap_37, keymap_41, keymap_30, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_251, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17040,10 +14332,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_34[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_35[] {
-    keymap_309, keymap_310, keymap_94, keymap_16, keymap_0, keymap_0, keymap_305, keymap_0,
-    keymap_316, keymap_313, keymap_0, keymap_0, keymap_0, keymap_0, keymap_305, keymap_0,
-    keymap_314, keymap_311, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_315, keymap_312, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_252, keymap_253, keymap_75, keymap_13, keymap_0, keymap_0, keymap_248, keymap_0,
+    keymap_257, keymap_253, keymap_0, keymap_0, keymap_0, keymap_0, keymap_248, keymap_0,
+    keymap_255, keymap_254, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_256, keymap_254, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17051,10 +14343,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_35[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_36[] {
-    keymap_317, keymap_293, keymap_51, keymap_37, keymap_0, keymap_0, keymap_320, keymap_319,
-    keymap_322, keymap_296, keymap_0, keymap_0, keymap_0, keymap_0, keymap_320, keymap_319,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_321, keymap_318,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_321, keymap_318,
+    keymap_258, keymap_239, keymap_41, keymap_30, keymap_0, keymap_0, keymap_261, keymap_260,
+    keymap_263, keymap_239, keymap_0, keymap_0, keymap_0, keymap_0, keymap_261, keymap_260,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_262, keymap_259,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_262, keymap_259,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17062,10 +14354,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_36[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_37[] {
-    keymap_323, keymap_324, keymap_330, keymap_16, keymap_0, keymap_0, keymap_331, keymap_0,
-    keymap_332, keymap_327, keymap_0, keymap_0, keymap_0, keymap_0, keymap_331, keymap_0,
-    keymap_328, keymap_325, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_329, keymap_326, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_264, keymap_265, keymap_269, keymap_13, keymap_0, keymap_0, keymap_270, keymap_0,
+    keymap_271, keymap_265, keymap_0, keymap_0, keymap_0, keymap_0, keymap_270, keymap_0,
+    keymap_267, keymap_266, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_268, keymap_266, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17073,10 +14365,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_37[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_38[] {
-    keymap_333, keymap_334, keymap_341, keymap_16, keymap_0, keymap_0, keymap_342, keymap_337,
-    keymap_343, keymap_338, keymap_0, keymap_0, keymap_0, keymap_0, keymap_342, keymap_337,
-    keymap_339, keymap_335, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_340, keymap_336, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_272, keymap_273, keymap_278, keymap_13, keymap_0, keymap_0, keymap_279, keymap_275,
+    keymap_280, keymap_273, keymap_0, keymap_0, keymap_0, keymap_0, keymap_279, keymap_275,
+    keymap_276, keymap_274, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_277, keymap_274, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17084,10 +14376,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_38[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_39[] {
-    keymap_344, keymap_345, keymap_349, keymap_16, keymap_0, keymap_0, keymap_350, keymap_0,
-    keymap_351, keymap_347, keymap_0, keymap_0, keymap_0, keymap_0, keymap_350, keymap_0,
-    keymap_126, keymap_123, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_348, keymap_346, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_281, keymap_282, keymap_284, keymap_13, keymap_0, keymap_0, keymap_285, keymap_0,
+    keymap_286, keymap_282, keymap_0, keymap_0, keymap_0, keymap_0, keymap_285, keymap_0,
+    keymap_100, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_283, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17095,10 +14387,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_39[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_40[] {
-    keymap_352, keymap_353, keymap_260, keymap_0, keymap_0, keymap_0, keymap_159, keymap_0,
-    keymap_355, keymap_354, keymap_0, keymap_0, keymap_0, keymap_0, keymap_159, keymap_0,
-    keymap_156, keymap_153, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_157, keymap_154, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_287, keymap_288, keymap_212, keymap_0, keymap_0, keymap_0, keymap_127, keymap_0,
+    keymap_289, keymap_288, keymap_0, keymap_0, keymap_0, keymap_0, keymap_127, keymap_0,
+    keymap_124, keymap_123, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_125, keymap_123, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17106,10 +14398,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_40[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_41[] {
-    keymap_62, keymap_63, keymap_260, keymap_0, keymap_0, keymap_0, keymap_358, keymap_357,
-    keymap_70, keymap_66, keymap_0, keymap_0, keymap_0, keymap_0, keymap_358, keymap_357,
-    keymap_67, keymap_64, keymap_0, keymap_0, keymap_0, keymap_0, keymap_357, keymap_356,
-    keymap_68, keymap_65, keymap_0, keymap_0, keymap_0, keymap_0, keymap_357, keymap_356,
+    keymap_50, keymap_51, keymap_212, keymap_0, keymap_0, keymap_0, keymap_292, keymap_291,
+    keymap_56, keymap_51, keymap_0, keymap_0, keymap_0, keymap_0, keymap_292, keymap_291,
+    keymap_53, keymap_52, keymap_0, keymap_0, keymap_0, keymap_0, keymap_291, keymap_290,
+    keymap_54, keymap_52, keymap_0, keymap_0, keymap_0, keymap_0, keymap_291, keymap_290,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17117,10 +14409,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_41[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_42[] {
-    keymap_359, keymap_360, keymap_148, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_366, keymap_363, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_364, keymap_361, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_365, keymap_362, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_293, keymap_294, keymap_118, keymap_30, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_298, keymap_294, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_296, keymap_295, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_297, keymap_295, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17128,10 +14420,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_42[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_43[] {
-    keymap_44, keymap_367, keymap_260, keymap_0, keymap_0, keymap_0, keymap_374, keymap_370,
-    keymap_52, keymap_371, keymap_0, keymap_0, keymap_0, keymap_0, keymap_374, keymap_370,
-    keymap_372, keymap_368, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_373, keymap_369, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_36, keymap_299, keymap_212, keymap_0, keymap_0, keymap_0, keymap_304, keymap_301,
+    keymap_42, keymap_299, keymap_0, keymap_0, keymap_0, keymap_0, keymap_304, keymap_301,
+    keymap_302, keymap_300, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_303, keymap_300, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17139,10 +14431,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_43[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_44[] {
-    keymap_375, keymap_376, keymap_384, keymap_16, keymap_0, keymap_0, keymap_385, keymap_380,
-    keymap_387, keymap_381, keymap_0, keymap_0, keymap_0, keymap_0, keymap_385, keymap_380,
-    keymap_382, keymap_377, keymap_0, keymap_0, keymap_0, keymap_0, keymap_386, keymap_379,
-    keymap_383, keymap_378, keymap_0, keymap_0, keymap_0, keymap_0, keymap_386, keymap_379,
+    keymap_305, keymap_306, keymap_312, keymap_13, keymap_0, keymap_0, keymap_313, keymap_309,
+    keymap_315, keymap_306, keymap_0, keymap_0, keymap_0, keymap_0, keymap_313, keymap_309,
+    keymap_310, keymap_307, keymap_0, keymap_0, keymap_0, keymap_0, keymap_314, keymap_308,
+    keymap_311, keymap_307, keymap_0, keymap_0, keymap_0, keymap_0, keymap_314, keymap_308,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17150,10 +14442,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_44[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_45[] {
-    keymap_388, keymap_389, keymap_260, keymap_0, keymap_0, keymap_0, keymap_395, keymap_0,
-    keymap_396, keymap_392, keymap_0, keymap_0, keymap_0, keymap_0, keymap_395, keymap_0,
-    keymap_393, keymap_390, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_394, keymap_391, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_316, keymap_317, keymap_212, keymap_0, keymap_0, keymap_0, keymap_321, keymap_0,
+    keymap_322, keymap_317, keymap_0, keymap_0, keymap_0, keymap_0, keymap_321, keymap_0,
+    keymap_319, keymap_318, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_320, keymap_318, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17161,10 +14453,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_45[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_46[] {
-    keymap_397, keymap_398, keymap_384, keymap_16, keymap_0, keymap_0, keymap_404, keymap_0,
-    keymap_405, keymap_401, keymap_0, keymap_0, keymap_0, keymap_0, keymap_404, keymap_0,
-    keymap_402, keymap_399, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_403, keymap_400, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_323, keymap_324, keymap_312, keymap_13, keymap_0, keymap_0, keymap_328, keymap_0,
+    keymap_329, keymap_324, keymap_0, keymap_0, keymap_0, keymap_0, keymap_328, keymap_0,
+    keymap_326, keymap_325, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_327, keymap_325, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17172,10 +14464,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_46[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_47[] {
-    keymap_292, keymap_293, keymap_51, keymap_37, keymap_0, keymap_0, keymap_407, keymap_406,
-    keymap_299, keymap_296, keymap_0, keymap_0, keymap_0, keymap_0, keymap_407, keymap_406,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_321, keymap_318,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_321, keymap_318,
+    keymap_238, keymap_239, keymap_41, keymap_30, keymap_0, keymap_0, keymap_331, keymap_330,
+    keymap_244, keymap_239, keymap_0, keymap_0, keymap_0, keymap_0, keymap_331, keymap_330,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_262, keymap_259,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_262, keymap_259,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17183,10 +14475,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_47[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_48[] {
-    keymap_388, keymap_389, keymap_260, keymap_0, keymap_0, keymap_0, keymap_408, keymap_0,
-    keymap_396, keymap_392, keymap_0, keymap_0, keymap_0, keymap_0, keymap_408, keymap_0,
-    keymap_393, keymap_390, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_394, keymap_391, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_316, keymap_317, keymap_212, keymap_0, keymap_0, keymap_0, keymap_332, keymap_0,
+    keymap_322, keymap_317, keymap_0, keymap_0, keymap_0, keymap_0, keymap_332, keymap_0,
+    keymap_319, keymap_318, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_320, keymap_318, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17194,10 +14486,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_48[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_49[] {
-    keymap_409, keymap_410, keymap_417, keymap_0, keymap_0, keymap_0, keymap_418, keymap_413,
-    keymap_419, keymap_414, keymap_0, keymap_0, keymap_0, keymap_0, keymap_418, keymap_413,
-    keymap_415, keymap_411, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_416, keymap_412, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_333, keymap_334, keymap_339, keymap_0, keymap_0, keymap_0, keymap_340, keymap_336,
+    keymap_341, keymap_334, keymap_0, keymap_0, keymap_0, keymap_0, keymap_340, keymap_336,
+    keymap_337, keymap_335, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_338, keymap_335, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17205,10 +14497,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_49[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_50[] {
-    keymap_23, keymap_24, keymap_9, keymap_5, keymap_0, keymap_0, keymap_31, keymap_422,
-    keymap_32, keymap_28, keymap_0, keymap_0, keymap_0, keymap_0, keymap_31, keymap_422,
-    keymap_314, keymap_420, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_423, keymap_421, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_19, keymap_20, keymap_7, keymap_4, keymap_0, keymap_0, keymap_25, keymap_343,
+    keymap_26, keymap_20, keymap_0, keymap_0, keymap_0, keymap_0, keymap_25, keymap_343,
+    keymap_255, keymap_342, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_344, keymap_342, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17216,10 +14508,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_50[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_51[] {
-    keymap_424, keymap_425, keymap_428, keymap_426, keymap_0, keymap_0, keymap_429, keymap_0,
-    keymap_430, keymap_427, keymap_0, keymap_0, keymap_0, keymap_0, keymap_429, keymap_0,
-    keymap_39, keymap_35, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_40, keymap_36, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_345, keymap_346, keymap_348, keymap_347, keymap_0, keymap_0, keymap_349, keymap_0,
+    keymap_350, keymap_346, keymap_0, keymap_0, keymap_0, keymap_0, keymap_349, keymap_0,
+    keymap_31, keymap_29, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_32, keymap_29, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17227,10 +14519,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_51[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_52[] {
-    keymap_431, keymap_432, keymap_439, keymap_435, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_440, keymap_436, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_437, keymap_433, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_438, keymap_434, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_351, keymap_352, keymap_357, keymap_354, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_358, keymap_352, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_355, keymap_353, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_356, keymap_353, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17238,10 +14530,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_52[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_53[] {
-    keymap_441, keymap_442, keymap_51, keymap_16, keymap_0, keymap_0, keymap_448, keymap_0,
-    keymap_449, keymap_445, keymap_0, keymap_0, keymap_0, keymap_0, keymap_448, keymap_0,
-    keymap_446, keymap_443, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_447, keymap_444, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_359, keymap_360, keymap_41, keymap_13, keymap_0, keymap_0, keymap_364, keymap_0,
+    keymap_365, keymap_360, keymap_0, keymap_0, keymap_0, keymap_0, keymap_364, keymap_0,
+    keymap_362, keymap_361, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_363, keymap_361, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17249,10 +14541,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_53[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_54[] {
-    keymap_450, keymap_451, keymap_9, keymap_37, keymap_0, keymap_0, keymap_457, keymap_0,
-    keymap_458, keymap_454, keymap_0, keymap_0, keymap_0, keymap_0, keymap_457, keymap_0,
-    keymap_455, keymap_452, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_456, keymap_453, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_366, keymap_367, keymap_7, keymap_30, keymap_0, keymap_0, keymap_371, keymap_0,
+    keymap_372, keymap_367, keymap_0, keymap_0, keymap_0, keymap_0, keymap_371, keymap_0,
+    keymap_369, keymap_368, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_370, keymap_368, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17260,10 +14552,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_54[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_55[] {
-    keymap_90, keymap_91, keymap_94, keymap_16, keymap_0, keymap_0, keymap_460, keymap_0,
-    keymap_461, keymap_459, keymap_0, keymap_0, keymap_0, keymap_0, keymap_460, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_72, keymap_73, keymap_75, keymap_13, keymap_0, keymap_0, keymap_373, keymap_0,
+    keymap_374, keymap_73, keymap_0, keymap_0, keymap_0, keymap_0, keymap_373, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17271,10 +14563,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_55[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_56[] {
-    keymap_462, keymap_463, keymap_51, keymap_37, keymap_0, keymap_0, keymap_469, keymap_0,
-    keymap_470, keymap_466, keymap_0, keymap_0, keymap_0, keymap_0, keymap_469, keymap_0,
-    keymap_467, keymap_464, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_468, keymap_465, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_375, keymap_376, keymap_41, keymap_30, keymap_0, keymap_0, keymap_380, keymap_0,
+    keymap_381, keymap_376, keymap_0, keymap_0, keymap_0, keymap_0, keymap_380, keymap_0,
+    keymap_378, keymap_377, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_379, keymap_377, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17282,10 +14574,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_56[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_57[] {
-    keymap_471, keymap_472, keymap_128, keymap_16, keymap_0, keymap_0, keymap_149, keymap_0,
-    keymap_478, keymap_475, keymap_0, keymap_0, keymap_0, keymap_0, keymap_149, keymap_0,
-    keymap_476, keymap_473, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_477, keymap_474, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_382, keymap_383, keymap_102, keymap_13, keymap_0, keymap_0, keymap_119, keymap_0,
+    keymap_387, keymap_383, keymap_0, keymap_0, keymap_0, keymap_0, keymap_119, keymap_0,
+    keymap_385, keymap_384, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_386, keymap_384, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17293,10 +14585,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_57[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_58[] {
-    keymap_479, keymap_480, keymap_128, keymap_16, keymap_0, keymap_0, keymap_170, keymap_0,
-    keymap_482, keymap_481, keymap_0, keymap_0, keymap_0, keymap_0, keymap_170, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_388, keymap_389, keymap_102, keymap_13, keymap_0, keymap_0, keymap_136, keymap_0,
+    keymap_390, keymap_389, keymap_0, keymap_0, keymap_0, keymap_0, keymap_136, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17304,10 +14596,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_58[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_59[] {
-    keymap_483, keymap_484, keymap_492, keymap_176, keymap_0, keymap_0, keymap_493, keymap_488,
-    keymap_495, keymap_489, keymap_0, keymap_0, keymap_0, keymap_0, keymap_493, keymap_488,
-    keymap_490, keymap_485, keymap_0, keymap_0, keymap_0, keymap_0, keymap_494, keymap_487,
-    keymap_491, keymap_486, keymap_0, keymap_0, keymap_0, keymap_0, keymap_494, keymap_487,
+    keymap_391, keymap_392, keymap_398, keymap_141, keymap_0, keymap_0, keymap_399, keymap_395,
+    keymap_401, keymap_392, keymap_0, keymap_0, keymap_0, keymap_0, keymap_399, keymap_395,
+    keymap_396, keymap_393, keymap_0, keymap_0, keymap_0, keymap_0, keymap_400, keymap_394,
+    keymap_397, keymap_393, keymap_0, keymap_0, keymap_0, keymap_0, keymap_400, keymap_394,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17315,10 +14607,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_59[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_60[] {
-    keymap_496, keymap_114, keymap_51, keymap_37, keymap_0, keymap_0, keymap_500, keymap_498,
-    keymap_502, keymap_499, keymap_0, keymap_0, keymap_0, keymap_0, keymap_500, keymap_498,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_501, keymap_497,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_501, keymap_497,
+    keymap_402, keymap_91, keymap_41, keymap_30, keymap_0, keymap_0, keymap_405, keymap_404,
+    keymap_407, keymap_91, keymap_0, keymap_0, keymap_0, keymap_0, keymap_405, keymap_404,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_406, keymap_403,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_406, keymap_403,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17326,10 +14618,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_60[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_61[] {
-    keymap_503, keymap_504, keymap_51, keymap_37, keymap_0, keymap_0, keymap_511, keymap_507,
-    keymap_512, keymap_508, keymap_0, keymap_0, keymap_0, keymap_0, keymap_511, keymap_507,
-    keymap_509, keymap_505, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_510, keymap_506, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_408, keymap_409, keymap_41, keymap_30, keymap_0, keymap_0, keymap_414, keymap_411,
+    keymap_415, keymap_409, keymap_0, keymap_0, keymap_0, keymap_0, keymap_414, keymap_411,
+    keymap_412, keymap_410, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_413, keymap_410, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17337,10 +14629,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_61[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_62[] {
-    keymap_513, keymap_514, keymap_260, keymap_0, keymap_0, keymap_0, keymap_520, keymap_517,
-    keymap_521, keymap_514, keymap_0, keymap_0, keymap_0, keymap_0, keymap_520, keymap_517,
-    keymap_518, keymap_515, keymap_0, keymap_0, keymap_0, keymap_0, keymap_256, keymap_516,
-    keymap_519, keymap_515, keymap_0, keymap_0, keymap_0, keymap_0, keymap_256, keymap_516,
+    keymap_416, keymap_417, keymap_212, keymap_0, keymap_0, keymap_0, keymap_423, keymap_420,
+    keymap_424, keymap_417, keymap_0, keymap_0, keymap_0, keymap_0, keymap_423, keymap_420,
+    keymap_421, keymap_418, keymap_0, keymap_0, keymap_0, keymap_0, keymap_208, keymap_419,
+    keymap_422, keymap_418, keymap_0, keymap_0, keymap_0, keymap_0, keymap_208, keymap_419,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17348,10 +14640,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_62[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_63[] {
-    keymap_522, keymap_523, keymap_260, keymap_0, keymap_0, keymap_0, keymap_531, keymap_527,
-    keymap_533, keymap_528, keymap_0, keymap_0, keymap_0, keymap_0, keymap_531, keymap_527,
-    keymap_529, keymap_524, keymap_0, keymap_0, keymap_0, keymap_0, keymap_532, keymap_526,
-    keymap_530, keymap_525, keymap_0, keymap_0, keymap_0, keymap_0, keymap_532, keymap_526,
+    keymap_425, keymap_426, keymap_212, keymap_0, keymap_0, keymap_0, keymap_432, keymap_429,
+    keymap_434, keymap_426, keymap_0, keymap_0, keymap_0, keymap_0, keymap_432, keymap_429,
+    keymap_430, keymap_427, keymap_0, keymap_0, keymap_0, keymap_0, keymap_433, keymap_428,
+    keymap_431, keymap_427, keymap_0, keymap_0, keymap_0, keymap_0, keymap_433, keymap_428,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17359,10 +14651,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_63[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_64[] {
-    keymap_333, keymap_334, keymap_341, keymap_16, keymap_0, keymap_0, keymap_342, keymap_337,
-    keymap_537, keymap_535, keymap_0, keymap_0, keymap_0, keymap_0, keymap_342, keymap_337,
-    keymap_339, keymap_335, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_536, keymap_534, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_272, keymap_273, keymap_278, keymap_13, keymap_0, keymap_0, keymap_279, keymap_275,
+    keymap_436, keymap_273, keymap_0, keymap_0, keymap_0, keymap_0, keymap_279, keymap_275,
+    keymap_276, keymap_274, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_435, keymap_274, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17370,21 +14662,21 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_64[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_65[] {
-    keymap_538, keymap_539, keymap_260, keymap_0, keymap_0, keymap_0, keymap_541, keymap_0,
-    keymap_542, keymap_540, keymap_0, keymap_0, keymap_0, keymap_0, keymap_541, keymap_0,
-    keymap_382, keymap_377, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_383, keymap_378, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_544, keymap_543, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_437, keymap_438, keymap_212, keymap_0, keymap_0, keymap_0, keymap_439, keymap_0,
+    keymap_440, keymap_438, keymap_0, keymap_0, keymap_0, keymap_0, keymap_439, keymap_0,
+    keymap_310, keymap_307, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_311, keymap_307, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_442, keymap_441, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_66[] {
-    keymap_292, keymap_545, keymap_51, keymap_37, keymap_0, keymap_0, keymap_549, keymap_547,
-    keymap_299, keymap_548, keymap_0, keymap_0, keymap_0, keymap_0, keymap_549, keymap_547,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_550, keymap_546,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_550, keymap_546,
+    keymap_238, keymap_443, keymap_41, keymap_30, keymap_0, keymap_0, keymap_446, keymap_445,
+    keymap_244, keymap_443, keymap_0, keymap_0, keymap_0, keymap_0, keymap_446, keymap_445,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_447, keymap_444,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_447, keymap_444,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17392,10 +14684,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_66[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_67[] {
-    keymap_44, keymap_45, keymap_417, keymap_0, keymap_0, keymap_0, keymap_553, keymap_551,
-    keymap_120, keymap_552, keymap_0, keymap_0, keymap_0, keymap_0, keymap_553, keymap_551,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_36, keymap_37, keymap_339, keymap_0, keymap_0, keymap_0, keymap_449, keymap_448,
+    keymap_96, keymap_37, keymap_0, keymap_0, keymap_0, keymap_0, keymap_449, keymap_448,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17403,10 +14695,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_67[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_68[] {
-    keymap_554, keymap_555, keymap_51, keymap_37, keymap_0, keymap_0, keymap_561, keymap_0,
-    keymap_562, keymap_558, keymap_0, keymap_0, keymap_0, keymap_0, keymap_561, keymap_0,
-    keymap_559, keymap_556, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_560, keymap_557, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_450, keymap_451, keymap_41, keymap_30, keymap_0, keymap_0, keymap_455, keymap_0,
+    keymap_456, keymap_451, keymap_0, keymap_0, keymap_0, keymap_0, keymap_455, keymap_0,
+    keymap_453, keymap_452, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_454, keymap_452, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17414,10 +14706,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_68[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_69[] {
-    keymap_563, keymap_564, keymap_51, keymap_37, keymap_0, keymap_0, keymap_568, keymap_566,
-    keymap_570, keymap_567, keymap_0, keymap_0, keymap_0, keymap_0, keymap_568, keymap_566,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_569, keymap_565,
-    keymap_50, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_569, keymap_565,
+    keymap_457, keymap_458, keymap_41, keymap_30, keymap_0, keymap_0, keymap_461, keymap_460,
+    keymap_463, keymap_458, keymap_0, keymap_0, keymap_0, keymap_0, keymap_461, keymap_460,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_462, keymap_459,
+    keymap_40, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_462, keymap_459,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17425,10 +14717,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_69[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_70[] {
-    keymap_571, keymap_572, keymap_260, keymap_0, keymap_0, keymap_0, keymap_580, keymap_576,
-    keymap_582, keymap_577, keymap_0, keymap_0, keymap_0, keymap_0, keymap_580, keymap_576,
-    keymap_578, keymap_573, keymap_0, keymap_0, keymap_0, keymap_0, keymap_581, keymap_575,
-    keymap_579, keymap_574, keymap_0, keymap_0, keymap_0, keymap_0, keymap_581, keymap_575,
+    keymap_464, keymap_465, keymap_212, keymap_0, keymap_0, keymap_0, keymap_471, keymap_468,
+    keymap_473, keymap_465, keymap_0, keymap_0, keymap_0, keymap_0, keymap_471, keymap_468,
+    keymap_469, keymap_466, keymap_0, keymap_0, keymap_0, keymap_0, keymap_472, keymap_467,
+    keymap_470, keymap_466, keymap_0, keymap_0, keymap_0, keymap_0, keymap_472, keymap_467,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17436,10 +14728,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_70[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_71[] {
-    keymap_583, keymap_584, keymap_260, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_590, keymap_587, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_588, keymap_585, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_589, keymap_586, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_474, keymap_475, keymap_212, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_479, keymap_475, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_477, keymap_476, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_478, keymap_476, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17447,10 +14739,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_71[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_72[] {
-    keymap_591, keymap_592, keymap_594, keymap_426, keymap_0, keymap_0, keymap_595, keymap_0,
-    keymap_596, keymap_593, keymap_0, keymap_0, keymap_0, keymap_0, keymap_595, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_480, keymap_481, keymap_482, keymap_347, keymap_0, keymap_0, keymap_483, keymap_0,
+    keymap_484, keymap_481, keymap_0, keymap_0, keymap_0, keymap_0, keymap_483, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17458,10 +14750,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_72[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_73[] {
-    keymap_597, keymap_598, keymap_605, keymap_601, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_606, keymap_602, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_603, keymap_599, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_604, keymap_600, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_485, keymap_486, keymap_491, keymap_488, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_492, keymap_486, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_489, keymap_487, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_490, keymap_487, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17469,10 +14761,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_73[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_74[] {
-    keymap_607, keymap_608, keymap_610, keymap_0, keymap_0, keymap_0, keymap_611, keymap_0,
-    keymap_612, keymap_609, keymap_0, keymap_0, keymap_0, keymap_0, keymap_611, keymap_0,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_101, keymap_99, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_493, keymap_494, keymap_495, keymap_0, keymap_0, keymap_0, keymap_496, keymap_0,
+    keymap_497, keymap_494, keymap_0, keymap_0, keymap_0, keymap_0, keymap_496, keymap_0,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17480,10 +14772,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_74[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_75[] {
-    keymap_613, keymap_614, keymap_439, keymap_617, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_621, keymap_618, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_619, keymap_615, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_620, keymap_616, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_498, keymap_499, keymap_357, keymap_501, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_504, keymap_499, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_502, keymap_500, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_503, keymap_500, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17491,10 +14783,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_75[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_76[] {
-    keymap_307, keymap_622, keymap_51, keymap_37, keymap_0, keymap_0, keymap_625, keymap_623,
-    keymap_626, keymap_624, keymap_0, keymap_0, keymap_0, keymap_0, keymap_625, keymap_623,
-    keymap_49, keymap_46, keymap_0, keymap_0, keymap_0, keymap_0, keymap_569, keymap_565,
-    keymap_101, keymap_47, keymap_0, keymap_0, keymap_0, keymap_0, keymap_569, keymap_565,
+    keymap_250, keymap_505, keymap_41, keymap_30, keymap_0, keymap_0, keymap_507, keymap_506,
+    keymap_508, keymap_505, keymap_0, keymap_0, keymap_0, keymap_0, keymap_507, keymap_506,
+    keymap_39, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_462, keymap_459,
+    keymap_80, keymap_38, keymap_0, keymap_0, keymap_0, keymap_0, keymap_462, keymap_459,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17502,10 +14794,10 @@ static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_76[] {
 };
 
 static constexpr sized_array_view<KeyLayout2::unicode_t, 128> keymap_mod_77[] {
-    keymap_627, keymap_628, keymap_41, keymap_37, keymap_0, keymap_0, keymap_631, keymap_629,
-    keymap_632, keymap_630, keymap_0, keymap_0, keymap_0, keymap_0, keymap_631, keymap_629,
-    keymap_39, keymap_35, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
-    keymap_40, keymap_36, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_509, keymap_510, keymap_33, keymap_30, keymap_0, keymap_0, keymap_512, keymap_511,
+    keymap_513, keymap_510, keymap_0, keymap_0, keymap_0, keymap_0, keymap_512, keymap_511,
+    keymap_31, keymap_29, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
+    keymap_32, keymap_29, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
     keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0, keymap_0,
@@ -17837,7 +15129,7 @@ static constexpr KeyLayout2 layouts[] {
     KeyLayout2{KeyLayout2::KbdId(0x00000406), KeyLayout2::RCtrlLikeOEM8(false), "da"_zv, /*"Danish"_zv, */keymap_mod_2, dkeymap_mod_1, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000407), KeyLayout2::RCtrlLikeOEM8(false), "de-DE"_zv, /*"German"_zv, */keymap_mod_3, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000408), KeyLayout2::RCtrlLikeOEM8(false), "el"_zv, /*"Greek"_zv, */keymap_mod_4, dkeymap_mod_3, keymap_mod_1},
-    KeyLayout2{KeyLayout2::KbdId(0x00010402), KeyLayout2::RCtrlLikeOEM8(false), "bg"_zv, /*"Bulgarian (Latin)"_zv, */keymap_mod_5, dkeymap_mod_2, keymap_mod_1},
+    KeyLayout2{KeyLayout2::KbdId(0x00000409), KeyLayout2::RCtrlLikeOEM8(false), "en-US"_zv, /*"US"_zv, */keymap_mod_5, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000040a), KeyLayout2::RCtrlLikeOEM8(false), "es-ES"_zv, /*"Spanish"_zv, */keymap_mod_6, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000040b), KeyLayout2::RCtrlLikeOEM8(false), "fi"_zv, /*"Finnish"_zv, */keymap_mod_7, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000040c), KeyLayout2::RCtrlLikeOEM8(false), "fr-FR"_zv, /*"French"_zv, */keymap_mod_8, dkeymap_mod_2, keymap_mod_1},
@@ -17854,7 +15146,7 @@ static constexpr KeyLayout2 layouts[] {
     KeyLayout2{KeyLayout2::KbdId(0x0000041d), KeyLayout2::RCtrlLikeOEM8(false), "sv-SE"_zv, /*"Swedish"_zv, */keymap_mod_7, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000041f), KeyLayout2::RCtrlLikeOEM8(false), "tr"_zv, /*"Turkish Q"_zv, */keymap_mod_19, dkeymap_mod_10, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000422), KeyLayout2::RCtrlLikeOEM8(false), "uk"_zv, /*"Ukrainian"_zv, */keymap_mod_20, dkeymap_mod_2, keymap_mod_1},
-    KeyLayout2{KeyLayout2::KbdId(0x0000041a), KeyLayout2::RCtrlLikeOEM8(false), "hr-HR"_zv, /*"Standard"_zv, */keymap_mod_17, dkeymap_mod_2, keymap_mod_1},
+    KeyLayout2{KeyLayout2::KbdId(0x00000424), KeyLayout2::RCtrlLikeOEM8(false), "sl"_zv, /*"Slovenian"_zv, */keymap_mod_17, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000425), KeyLayout2::RCtrlLikeOEM8(false), "et"_zv, /*"Estonian"_zv, */keymap_mod_21, dkeymap_mod_11, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000426), KeyLayout2::RCtrlLikeOEM8(false), "lv"_zv, /*"Latvian"_zv, */keymap_mod_22, dkeymap_mod_12, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000427), KeyLayout2::RCtrlLikeOEM8(false), "lt"_zv, /*"Lithuanian IBM"_zv, */keymap_mod_23, dkeymap_mod_2, keymap_mod_1},
@@ -17873,7 +15165,7 @@ static constexpr KeyLayout2 layouts[] {
     KeyLayout2{KeyLayout2::KbdId(0x00000809), KeyLayout2::RCtrlLikeOEM8(false), "en-GB"_zv, /*"United Kingdom"_zv, */keymap_mod_36, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000080a), KeyLayout2::RCtrlLikeOEM8(false), "es-MX"_zv, /*"Latin American"_zv, */keymap_mod_37, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000080c), KeyLayout2::RCtrlLikeOEM8(false), "fr-BE"_zv, /*"Belgian French"_zv, */keymap_mod_38, dkeymap_mod_2, keymap_mod_1},
-    KeyLayout2{KeyLayout2::KbdId(0x0000080c), KeyLayout2::RCtrlLikeOEM8(false), "fr-BE"_zv, /*"Belgian French"_zv, */keymap_mod_38, dkeymap_mod_2, keymap_mod_1},
+    KeyLayout2{KeyLayout2::KbdId(0x00000813), KeyLayout2::RCtrlLikeOEM8(false), "nl-BE"_zv, /*"Belgian (Period)"_zv, */keymap_mod_38, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000816), KeyLayout2::RCtrlLikeOEM8(false), "pt-PT"_zv, /*"Portuguese"_zv, */keymap_mod_39, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000081a), KeyLayout2::RCtrlLikeOEM8(false), "sr-Latn-CS"_zv, /*"Serbian (Latin)"_zv, */keymap_mod_40, dkeymap_mod_17, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000083b), KeyLayout2::RCtrlLikeOEM8(false), "se-Latn-SE"_zv, /*"Swedish with Sami"_zv, */keymap_mod_41, dkeymap_mod_2, keymap_mod_1},
@@ -17882,7 +15174,7 @@ static constexpr KeyLayout2 layouts[] {
     KeyLayout2{KeyLayout2::KbdId(0x00000c0c), KeyLayout2::RCtrlLikeOEM8(false), "fr-CA"_zv, /*"Canadian French (Legacy)"_zv, */keymap_mod_44, dkeymap_mod_18, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00000c1a), KeyLayout2::RCtrlLikeOEM8(false), "sr-Cyrl-CS"_zv, /*"Serbian (Cyrillic)"_zv, */keymap_mod_45, dkeymap_mod_19, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00001009), KeyLayout2::RCtrlLikeOEM8(false), "en-CA"_zv, /*"Canadian French"_zv, */keymap_mod_46, dkeymap_mod_2, keymap_mod_1},
-    KeyLayout2{KeyLayout2::KbdId(0x0000046e), KeyLayout2::RCtrlLikeOEM8(false), "lb"_zv, /*"Luxembourgish"_zv, */keymap_mod_33, dkeymap_mod_2, keymap_mod_1},
+    KeyLayout2{KeyLayout2::KbdId(0x0000100c), KeyLayout2::RCtrlLikeOEM8(false), "fr-CH"_zv, /*"Swiss French"_zv, */keymap_mod_33, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00001809), KeyLayout2::RCtrlLikeOEM8(false), "en-IE"_zv, /*"Irish"_zv, */keymap_mod_47, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0000201a), KeyLayout2::RCtrlLikeOEM8(false), "bs-Cyrl"_zv, /*"Bosnian (Cyrillic)"_zv, */keymap_mod_48, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00010402), KeyLayout2::RCtrlLikeOEM8(false), "bg"_zv, /*"Bulgarian (Latin)"_zv, */keymap_mod_5, dkeymap_mod_2, keymap_mod_1},
@@ -17894,7 +15186,7 @@ static constexpr KeyLayout2 layouts[] {
     KeyLayout2{KeyLayout2::KbdId(0x0001040e), KeyLayout2::RCtrlLikeOEM8(false), "hu"_zv, /*"Hungarian 101-key"_zv, */keymap_mod_54, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00010410), KeyLayout2::RCtrlLikeOEM8(false), "it-IT"_zv, /*"Italian (142)"_zv, */keymap_mod_55, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00010415), KeyLayout2::RCtrlLikeOEM8(false), "pl"_zv, /*"Polish (214)"_zv, */keymap_mod_56, dkeymap_mod_21, keymap_mod_1},
-    KeyLayout2{KeyLayout2::KbdId(0x00000416), KeyLayout2::RCtrlLikeOEM8(false), "pt-BR"_zv, /*"Portuguese (Brazil ABNT)"_zv, */keymap_mod_14, dkeymap_mod_2, keymap_mod_1},
+    KeyLayout2{KeyLayout2::KbdId(0x00010416), KeyLayout2::RCtrlLikeOEM8(false), "pt-BR"_zv, /*"Portuguese (Brazil ABNT2)"_zv, */keymap_mod_14, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00010419), KeyLayout2::RCtrlLikeOEM8(false), "ru"_zv, /*"Russian (Typewriter)"_zv, */keymap_mod_57, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0001041b), KeyLayout2::RCtrlLikeOEM8(false), "sk"_zv, /*"Slovak (QWERTY)"_zv, */keymap_mod_58, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0001041f), KeyLayout2::RCtrlLikeOEM8(false), "tr"_zv, /*"Turkish F"_zv, */keymap_mod_59, dkeymap_mod_22, keymap_mod_1},
@@ -17903,7 +15195,7 @@ static constexpr KeyLayout2 layouts[] {
     KeyLayout2{KeyLayout2::KbdId(0x0001043a), KeyLayout2::RCtrlLikeOEM8(false), "mt"_zv, /*"Maltese 48-Key"_zv, */keymap_mod_62, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0001043b), KeyLayout2::RCtrlLikeOEM8(false), "se-Latn-NO"_zv, /*"Sami Extended Norway"_zv, */keymap_mod_63, dkeymap_mod_23, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x0001080c), KeyLayout2::RCtrlLikeOEM8(false), "fr-BE"_zv, /*"Belgian (Comma)"_zv, */keymap_mod_64, dkeymap_mod_2, keymap_mod_1},
-    KeyLayout2{KeyLayout2::KbdId(0x0000083b), KeyLayout2::RCtrlLikeOEM8(false), "se-Latn-SE"_zv, /*"Swedish with Sami"_zv, */keymap_mod_41, dkeymap_mod_2, keymap_mod_1},
+    KeyLayout2{KeyLayout2::KbdId(0x0001083b), KeyLayout2::RCtrlLikeOEM8(false), "se-Latn-SE"_zv, /*"Finnish with Sami"_zv, */keymap_mod_41, dkeymap_mod_2, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00011009), KeyLayout2::RCtrlLikeOEM8(true ), "en-CA"_zv, /*"Canadian Multilingual Standard"_zv, */keymap_mod_65, dkeymap_mod_24, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00011809), KeyLayout2::RCtrlLikeOEM8(false), "en-IE"_zv, /*"Scottish Gaelic"_zv, */keymap_mod_66, dkeymap_mod_25, keymap_mod_1},
     KeyLayout2{KeyLayout2::KbdId(0x00020405), KeyLayout2::RCtrlLikeOEM8(false), "cs"_zv, /*"Czech Programmers"_zv, */keymap_mod_67, dkeymap_mod_2, keymap_mod_1},
@@ -17932,7 +15224,7 @@ KeyLayout2 const* KeyLayout2::find_layout_by_id(KbdId id) noexcept
     case KbdId{0x00000406}: return &layouts[1];
     case KbdId{0x00000407}: return &layouts[2];
     case KbdId{0x00000408}: return &layouts[3];
-    case KbdId{0x00010402}: return &layouts[4];
+    case KbdId{0x00000409}: return &layouts[4];
     case KbdId{0x0000040a}: return &layouts[5];
     case KbdId{0x0000040b}: return &layouts[6];
     case KbdId{0x0000040c}: return &layouts[7];
@@ -17949,7 +15241,7 @@ KeyLayout2 const* KeyLayout2::find_layout_by_id(KbdId id) noexcept
     case KbdId{0x0000041d}: return &layouts[18];
     case KbdId{0x0000041f}: return &layouts[19];
     case KbdId{0x00000422}: return &layouts[20];
-    case KbdId{0x0000041a}: return &layouts[21];
+    case KbdId{0x00000424}: return &layouts[21];
     case KbdId{0x00000425}: return &layouts[22];
     case KbdId{0x00000426}: return &layouts[23];
     case KbdId{0x00000427}: return &layouts[24];
@@ -17968,7 +15260,7 @@ KeyLayout2 const* KeyLayout2::find_layout_by_id(KbdId id) noexcept
     case KbdId{0x00000809}: return &layouts[37];
     case KbdId{0x0000080a}: return &layouts[38];
     case KbdId{0x0000080c}: return &layouts[39];
-    case KbdId{0x0000080c}: return &layouts[40];
+    case KbdId{0x00000813}: return &layouts[40];
     case KbdId{0x00000816}: return &layouts[41];
     case KbdId{0x0000081a}: return &layouts[42];
     case KbdId{0x0000083b}: return &layouts[43];
@@ -17977,7 +15269,7 @@ KeyLayout2 const* KeyLayout2::find_layout_by_id(KbdId id) noexcept
     case KbdId{0x00000c0c}: return &layouts[46];
     case KbdId{0x00000c1a}: return &layouts[47];
     case KbdId{0x00001009}: return &layouts[48];
-    case KbdId{0x0000046e}: return &layouts[49];
+    case KbdId{0x0000100c}: return &layouts[49];
     case KbdId{0x00001809}: return &layouts[50];
     case KbdId{0x0000201a}: return &layouts[51];
     case KbdId{0x00010402}: return &layouts[52];
@@ -17989,7 +15281,7 @@ KeyLayout2 const* KeyLayout2::find_layout_by_id(KbdId id) noexcept
     case KbdId{0x0001040e}: return &layouts[58];
     case KbdId{0x00010410}: return &layouts[59];
     case KbdId{0x00010415}: return &layouts[60];
-    case KbdId{0x00000416}: return &layouts[61];
+    case KbdId{0x00010416}: return &layouts[61];
     case KbdId{0x00010419}: return &layouts[62];
     case KbdId{0x0001041b}: return &layouts[63];
     case KbdId{0x0001041f}: return &layouts[64];
@@ -17998,7 +15290,7 @@ KeyLayout2 const* KeyLayout2::find_layout_by_id(KbdId id) noexcept
     case KbdId{0x0001043a}: return &layouts[67];
     case KbdId{0x0001043b}: return &layouts[68];
     case KbdId{0x0001080c}: return &layouts[69];
-    case KbdId{0x0000083b}: return &layouts[70];
+    case KbdId{0x0001083b}: return &layouts[70];
     case KbdId{0x00011009}: return &layouts[71];
     case KbdId{0x00011809}: return &layouts[72];
     case KbdId{0x00020405}: return &layouts[73];

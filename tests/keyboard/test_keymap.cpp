@@ -26,15 +26,14 @@ Author(s): Proxies Team
 RED_AUTO_TEST_CASE(TestKeymap)
 {
     Keymap keymap;
-    // const int layout = 0x040C;
-    // keymap.init_layout(layout);
+    keymap.set_layout(*KeyLayout2::find_layout_by_id(KeyLayout2::KbdId(0x040C)));
 
     using KbdFlags = Keymap::KbdFlags;
     using Scancode = Keymap::Scancode;
 
     Keymap::DecodedKeys decoded_keys;
 
-    decoded_keys = keymap.event(KbdFlags(), Scancode(54) /*shift*/);
+    decoded_keys = keymap.event(KbdFlags(), Scancode(54) /*right shift*/);
     RED_CHECK_EQUAL(0, decoded_keys.count);
 
     decoded_keys = keymap.event(KbdFlags(), Scancode(16) /*A*/);

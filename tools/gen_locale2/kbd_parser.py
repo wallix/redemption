@@ -470,8 +470,8 @@ if __name__ == "__main__":
         for idx,deadkeys in unique_deadkeys.items():
             accent = next(iter(deadkeys))[0]
             strings.append(f'static constexpr KeyLayout2::DKeyTable::Data dkeydata_{idx}[] {{\n')
-            strings.append(f'    {{.meta={{{len(deadkeys)}, .accent=0x{ord(accent):04X} /* {accent} */}}}},\n')
-            strings += (f'    {{.dkey={{0x{ord(with_):04X} /* {with_} */, 0x{codepoint:04X} /* {chr(codepoint)} */}}}},\n' for accent, with_, codepoint in deadkeys)
+            strings.append(f'    {{.meta={{.size={len(deadkeys)}, .accent=0x{ord(accent):04X} /* {accent} */}}}},\n')
+            strings += (f'    {{.dkey={{.second=0x{ord(with_):04X} /* {with_} */, .result=0x{codepoint:04X} /* {chr(codepoint)} */}}}},\n' for accent, with_, codepoint in deadkeys)
             strings.append('};\n\n')
 
         # dkeymap memoization

@@ -24,6 +24,7 @@
 #pragma once
 
 #include "keyboard/keylayout2.hpp"
+#include "utils/sugar/cast.hpp"
 #include "cxx/cxx.hpp"
 
 
@@ -196,27 +197,27 @@ struct Keymap
         return nullptr;
     }
 
-    struct KeyStates
-    {
-        // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
-        uint64_t keys_down[4];
-
-        void set(uint8_t pos, uint64_t x) noexcept
-        {
-            assert(x == 1 || x == 0);
-            this->keys_down[pos / 64] = (this->keys_down[pos / 64] & (uint64_t(1) << (pos % 64)))
-                                      | (x << (pos % 64));
-        }
-
-        uint64_t get(uint8_t pos) const noexcept
-        {
-            return (this->keys_down[pos / 64] >> (pos % 64)) & 0x1;
-        }
-
-        uint64_t get();
-    };
-
-    KeyStates keys_down;
+//     struct KeyStates
+//     {
+//         // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
+//         uint64_t keys_down[4];
+//
+//         void set(uint8_t pos, uint64_t x) noexcept
+//         {
+//             assert(x == 1 || x == 0);
+//             this->keys_down[pos / 64] = (this->keys_down[pos / 64] & (uint64_t(1) << (pos % 64)))
+//                                       | (x << (pos % 64));
+//         }
+//
+//         uint64_t get(uint8_t pos) const noexcept
+//         {
+//             return (this->keys_down[pos / 64] >> (pos % 64)) & 0x1;
+//         }
+//
+//         uint64_t get();
+//     };
+//
+//     KeyStates keys_down;
 
     static array_view<KeyLayout2> keylayouts() noexcept;
 
@@ -265,7 +266,7 @@ struct Keymap
         };
     };
 
-    unsigned key_flags;
+    unsigned key_flags = 0;
 
     DecodedKeys event(uint16_t scancode_and_flags) noexcept
     {
@@ -280,25 +281,25 @@ struct Keymap
 
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t keycode = uint8_t(scancode) | ((uint16_t(flags) >> 1) & 0x80u);
-        uint64_t down = ~((uint64_t(flags) >> 15) & 0x1u);
-        this->keys_down.set(keycode, down);
+//         uint64_t down = ~((uint64_t(flags) >> 15) & 0x1u);
+//         this->keys_down.set(keycode, down);
 
         switch (keycode)
         {
             // Lock keys
 
             case uint8_t(KeyCode::CapsLock):
-                if (down) {
+                if (underlying_cast(flags) & underlying_cast(KbdFlags::Release)) {
                     this->key_flags ^= 1u << KeyModsIndex::CapsLock;
                 }
                 break;
             case uint8_t(KeyCode::NumLock):
-                if (down) {
+                if (underlying_cast(flags) & underlying_cast(KbdFlags::Release)) {
                     this->key_flags ^= 1u << KeyModsIndex::NumLock;
                 }
                 break;
             // case uint8_t(KeyCode::ScrollLock):
-            //     if (bit){
+            //     if (underlying_cast(flags) & underlying_cast(KbdFlags::Release)){
             //         this->key_flags ^= KeyMods::ScrollLock;
             //     }
             //     break;
@@ -355,16 +356,19 @@ struct Keymap
 
         auto rctrl_is_ctrl = unsigned(this->layout.right_ctrl_like_oem8);
 
-        auto numlock = (this->key_flags >> KeyModsIndex::NumLock);
-        auto capslock = (this->key_flags >> KeyModsIndex::CapsLock);
-        auto ctrl = (this->key_flags >> KeyModsIndex::LCtrl)
-                  | ((this->key_flags >> KeyModsIndex::RCtrl) & rctrl_is_ctrl);
-        auto oem8 = ((this->key_flags >> KeyModsIndex::RCtrl) & ~rctrl_is_ctrl);
-        auto alt = (this->key_flags >> KeyModsIndex::Alt);
-        auto altgr = (this->key_flags >> KeyModsIndex::AltGr)
-                   | (alt & ctrl);
-        auto shift = (this->key_flags >> KeyModsIndex::LShift)
-                   | (this->key_flags >> KeyModsIndex::RShift);
+        auto numlock = (this->key_flags >> KeyModsIndex::NumLock) & 0x1;
+        auto capslock = (this->key_flags >> KeyModsIndex::CapsLock) & 0x1;
+        auto ctrl = ( (this->key_flags >> KeyModsIndex::LCtrl)
+                    | ((this->key_flags >> KeyModsIndex::RCtrl) & rctrl_is_ctrl)
+                    ) & 0x1;
+        auto oem8 = ((this->key_flags >> KeyModsIndex::RCtrl) & ~rctrl_is_ctrl) & 0x1;
+        auto alt = (this->key_flags >> KeyModsIndex::Alt) & 0x1;
+        auto altgr = ( (this->key_flags >> KeyModsIndex::AltGr)
+                     | (alt & ctrl)
+                     ) & 0x1;
+        auto shift = ( (this->key_flags >> KeyModsIndex::LShift)
+                     | (this->key_flags >> KeyModsIndex::RShift)
+                     ) & 0x1;
 
         this->mods = checked_int(0u
                    | (shift << KeyLayout2::Mods::Shift)
@@ -379,11 +383,6 @@ struct Keymap
                    );
 
         return decoded_keys;
-    }
-
-    void init_layout(KeyLayout2 layout)
-    {
-        this->layout = layout;
     }
 
     void synchronize(uint16_t param1);
