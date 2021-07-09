@@ -25,8 +25,32 @@
 
 #include "keyboard/keylayout2.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/flags.hpp"
 #include "cxx/cxx.hpp"
 
+namespace detail
+{
+    enum class  KeyModsIndex : unsigned
+    {
+        LCtrl,
+        RCtrl,
+        LShift,
+        RShift,
+        // LWin,
+        // RWin,
+        Alt,
+        AltGr,
+        NumLock,
+        CapsLock,
+        max_
+    };
+}
+
+template<>
+struct utils::enum_as_flag<detail::KeyModsIndex>
+{
+    static constexpr std::size_t max = std::size_t(detail::KeyModsIndex::max_);
+};
 
 struct Keymap
 {
@@ -59,37 +83,27 @@ struct Keymap
     enum class KbdFlags : uint16_t
     {
         Extended = 0x0100,
-        Down     = 0x4000,
+        // Down     = 0x4000,
         Release  = 0x8000,
     };
 
     enum class KeyCode : uint8_t
     {
         Esc = 0x01,
-        F1 = 0x3B,
-        F2 = 0x3C,
-        F3 = 0x3D,
-        F4 = 0x3E,
-        F5 = 0x3F,
-        F6 = 0x40,
-        F7 = 0x41,
-        F8 = 0x42,
-        F9 = 0x43,
-        F10 = 0x44,
         F11 = 0x57,
         F12 = 0x58,
-        LCtrl = 0x1D,
-        RCtrl = 0x1D | 0x80,
-        LShift = 0x2A,
-        RShift = 0x36,
-        LAlt = 0x38,
-        RAlt = 0x38 | 0x80,
-        LWin = 0x5B | 0x80,
-        RWin = 0x5C | 0x80,
-        Apps = 0x5D | 0x80,
-        CapsLock = 0x3A,
-        NumLock = 0x45,
-        ScrollLock = 0x46,
+        // LCtrl = 0x1D,
+        // RCtrl = 0x1D | 0x80,
+        // LShift = 0x2A,
+        // RShift = 0x36,
+        // LAlt = 0x38,
+        // RAlt = 0x38 | 0x80,
+        // LWin = 0x5B | 0x80,
+        // RWin = 0x5C | 0x80,
+        // Apps = 0x5D | 0x80,
+        // CapsLock = 0x3A,
+        // NumLock = 0x45,
+        // ScrollLock = 0x46,
         UpArrow = 0x48 | 0x80,
         LeftArrow = 0x4B | 0x80,
         RightArrow = 0x4D | 0x80,
@@ -115,86 +129,23 @@ struct Keymap
     enum class Scancode : uint8_t;
 
     KeyLayout2 layout;
-    uint8_t mods {};
-    KeyLayout2::DKeyTable dkey {};
-    bool verbose;
+    uint8_t imods {};
+    KeyLayout2::DKeyTable dkeys {};
 
     using unicode_t = KeyLayout2::unicode_t;
 
-    struct KCodeEvent
+    struct DecodedKey
     {
-        uint8_t mods;
         KeyCode keycode;
-        unicode_t uchar;
-
-        bool is_ctrl_pressed() const noexcept
-        {
-            return (mods >> KeyLayout2::Mods::Control) & 0x1;
-        }
+        // 2 unicode chars when bad dead key
+        std::array<unicode_t, 2> uchars;
     };
 
-    struct KCodeEventBuffer
+    DecodedKey _decoded_key {};
+
+    DecodedKey decoded_key() const
     {
-        void push(KCodeEvent kevt) noexcept
-        {
-            events[pos] = kevt;
-            ++pos;
-            cyclic |= pos >> 1;
-            current += cyclic;
-            current &= 0xf;
-            pos &= 0xf;
-        }
-
-        bool has_kevent() const noexcept
-        {
-            return current != pos;
-        }
-
-        KCodeEvent const& top_kevent() const noexcept
-        {
-            assert (has_kevent());
-            return events[current];
-        }
-
-        void next() noexcept
-        {
-            assert (has_kevent());
-            ++current;
-            current &= 0xf;
-        }
-
-        void clear() noexcept
-        {
-            pos = 0;
-            current = 0;
-            cyclic = 0;
-        }
-
-    private:
-        int8_t pos = 0;
-        int8_t current = 0;
-        int8_t cyclic = 0;
-        KCodeEvent events[16];
-    };
-
-    KCodeEventBuffer kcode_events;
-
-    KCodeEvent const* pop_kevent() noexcept
-    {
-        if (kcode_events.has_kevent()) {
-            auto* ret = &kcode_events.top_kevent();
-            kcode_events.next();
-            return ret;
-        }
-        return nullptr;
-    }
-
-    KCodeEvent const* get_kevent() const noexcept
-    {
-        if (kcode_events.has_kevent()) {
-            return &kcode_events.top_kevent();
-        }
-        return nullptr;
+        return _decoded_key;
     }
 
 //     struct KeyStates
@@ -236,53 +187,27 @@ struct Keymap
         this->layout = new_layout;
     }
 
-    struct DecodedKeys
+    using KeyMods = detail::KeyModsIndex;
+    using KeyModFlags = utils::flags_t<KeyMods>;
+
+    unsigned _key_flags = 0;
+
+    void event(uint16_t scancode_and_flags) noexcept
     {
-        unicode_t uchars[2];
-        uint16_t count = 0;
-
-        void set_uchar(unicode_t uchar) noexcept
-        {
-            assert(count < 2);
-            uchars[count] = uchar;
-            ++count;
-        }
-    };
-
-    struct KeyModsIndex
-    {
-        enum : unsigned
-        {
-            LCtrl,
-            RCtrl,
-            LShift,
-            RShift,
-            // LWin,
-            // RWin,
-            Alt,
-            AltGr,
-            NumLock,
-            CapsLock,
-        };
-    };
-
-    unsigned key_flags = 0;
-
-    DecodedKeys event(uint16_t scancode_and_flags) noexcept
-    {
-        return event(KbdFlags(scancode_and_flags & 0xff00u), Scancode(scancode_and_flags));
+        event(KbdFlags(scancode_and_flags & 0xff00u), Scancode(scancode_and_flags));
     }
 
-    DecodedKeys event(KbdFlags flags, Scancode scancode) noexcept
+    void event(KbdFlags flags, Scancode scancode) noexcept
     {
-        DecodedKeys decoded_keys;
-
         assert(uint8_t(scancode) <= 0x7fu);
 
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
-        uint8_t keycode = uint8_t(scancode) | ((uint16_t(flags) >> 1) & 0x80u);
+        uint8_t keycode = uint8_t(scancode) | ((uint16_t(flags) & 0x100u) >> 1);
 //         uint64_t down = ~((uint64_t(flags) >> 15) & 0x1u);
 //         this->keys_down.set(keycode, down);
+
+        _decoded_key.keycode = KeyCode(keycode);
+        _decoded_key.uchars = {};
 
         switch (keycode)
         {
@@ -290,12 +215,12 @@ struct Keymap
 
             case uint8_t(KeyCode::CapsLock):
                 if (underlying_cast(flags) & underlying_cast(KbdFlags::Release)) {
-                    this->key_flags ^= 1u << KeyModsIndex::CapsLock;
+                    this->_key_flags ^= 1u << unsigned(KeyMods::CapsLock);
                 }
                 break;
             case uint8_t(KeyCode::NumLock):
                 if (underlying_cast(flags) & underlying_cast(KbdFlags::Release)) {
-                    this->key_flags ^= 1u << KeyModsIndex::NumLock;
+                    this->_key_flags ^= 1u << unsigned(KeyMods::NumLock);
                 }
                 break;
             // case uint8_t(KeyCode::ScrollLock):
@@ -306,83 +231,85 @@ struct Keymap
 
             // Modifier keys
 
-            case uint8_t(KeyCode::LCtrl): this->key_flags ^= 1u << KeyModsIndex::LCtrl; break;
-            case uint8_t(KeyCode::RCtrl): this->key_flags ^= 1u << KeyModsIndex::RCtrl; break;
-            case uint8_t(KeyCode::LShift): this->key_flags ^= 1u << KeyModsIndex::LShift; break;
-            case uint8_t(KeyCode::RShift): this->key_flags ^= 1u << KeyModsIndex::RShift; break;
-            case uint8_t(KeyCode::LAlt): this->key_flags ^= 1u << KeyModsIndex::Alt; break;
-            case uint8_t(KeyCode::RAlt): this->key_flags ^= 1u << KeyModsIndex::AltGr; break;
+            case uint8_t(KeyCode::LCtrl): this->_key_flags ^= 1u << unsigned(KeyMods::LCtrl); break;
+            case uint8_t(KeyCode::RCtrl): this->_key_flags ^= 1u << unsigned(KeyMods::RCtrl); break;
+            case uint8_t(KeyCode::LShift): this->_key_flags ^= 1u << unsigned(KeyMods::LShift); break;
+            case uint8_t(KeyCode::RShift): this->_key_flags ^= 1u << unsigned(KeyMods::RShift); break;
+            case uint8_t(KeyCode::LAlt): this->_key_flags ^= 1u << unsigned(KeyMods::Alt); break;
+            case uint8_t(KeyCode::RAlt): this->_key_flags ^= 1u << unsigned(KeyMods::AltGr); break;
 
             default: {
                 auto i = keycode & 0x7fu;
                 if (!(keycode & 0x80u)) {
-                    auto unicode = this->layout.keymap_by_mod[this->mods][i];
+                    auto unicode = this->layout.keymap_by_mod[this->imods][i];
 
-                    if (REDEMPTION_UNLIKELY(this->dkey)) {
-                        if (auto unicode2 = this->dkey.find(unicode)) {
-                            decoded_keys.set_uchar(unicode2);
-                            kcode_events.push({KCodeEvent{mods, KeyCode(keycode), unicode2}});
+                    if (REDEMPTION_UNLIKELY(this->dkeys)) {
+                        if (auto unicode2 = this->dkeys.find(unicode)) {
+                            _decoded_key.uchars[0] = unicode2;
                         }
                         else {
-                            decoded_keys.set_uchar(this->dkey.accent());
-                            if (unicode) {
-                                decoded_keys.set_uchar(unicode);
-                                kcode_events.push({KCodeEvent{mods, KeyCode(keycode), unicode}});
-                            }
+                            _decoded_key.uchars[0] = this->dkeys.accent();
+                            _decoded_key.uchars[1] = unicode_t(unicode & ~KeyLayout2::DK);
                         }
-                        this->dkey = {};
+                        this->dkeys = {};
                     }
                     else if (REDEMPTION_UNLIKELY(unicode & KeyLayout2::DK)) {
-                        this->dkey = this->layout.dkeymap_by_mod[this->mods][i];
+                        this->dkeys = this->layout.dkeymap_by_mod[this->imods][i];
                     }
                     else {
-                        if (unicode) {
-                            decoded_keys.set_uchar(unicode);
-                        }
-                        kcode_events.push({KCodeEvent{mods, KeyCode(keycode), unicode}});
+                        _decoded_key.uchars[0] = unicode;
                     }
                 }
                 else {
-                    auto unicode = this->layout.extended_keymap_by_mod[this->mods][i];
-                    if (auto unicode = this->layout.extended_keymap_by_mod[this->mods][i]) {
-                        decoded_keys.set_uchar(unicode);
-                    }
-                    kcode_events.push({KCodeEvent{mods, KeyCode(keycode), unicode}});
+                    _decoded_key.uchars[0] = this->layout.extended_keymap_by_mod[this->imods][i];
                 }
 
-                return decoded_keys;
+                return ;
             }
         }
 
-        auto rctrl_is_ctrl = unsigned(this->layout.right_ctrl_like_oem8);
+        auto rctrl_is_ctrl = unsigned(this->layout.right_ctrl_is_ctrl);
 
-        auto numlock = (this->key_flags >> KeyModsIndex::NumLock) & 0x1;
-        auto capslock = (this->key_flags >> KeyModsIndex::CapsLock) & 0x1;
-        auto ctrl = ( (this->key_flags >> KeyModsIndex::LCtrl)
-                    | ((this->key_flags >> KeyModsIndex::RCtrl) & rctrl_is_ctrl)
+        auto numlock = (_key_flags >> unsigned(KeyMods::NumLock)) & 0x1;
+        auto capslock = (_key_flags >> unsigned(KeyMods::CapsLock)) & 0x1;
+        auto ctrl = ( (_key_flags >> unsigned(KeyMods::LCtrl))
+                    | ((_key_flags >> unsigned(KeyMods::RCtrl)) & rctrl_is_ctrl)
                     ) & 0x1;
-        auto oem8 = ((this->key_flags >> KeyModsIndex::RCtrl) & ~rctrl_is_ctrl) & 0x1;
-        auto alt = (this->key_flags >> KeyModsIndex::Alt) & 0x1;
-        auto altgr = ( (this->key_flags >> KeyModsIndex::AltGr)
+        auto oem8 = ((_key_flags >> unsigned(KeyMods::RCtrl)) & ~rctrl_is_ctrl) & 0x1;
+        auto alt = (_key_flags >> unsigned(KeyMods::Alt)) & 0x1;
+        auto altgr = ( (_key_flags >> unsigned(KeyMods::AltGr))
                      | (alt & ctrl)
                      ) & 0x1;
-        auto shift = ( (this->key_flags >> KeyModsIndex::LShift)
-                     | (this->key_flags >> KeyModsIndex::RShift)
+        auto shift = ( (_key_flags >> unsigned(KeyMods::LShift))
+                     | (_key_flags >> unsigned(KeyMods::RShift))
                      ) & 0x1;
 
-        this->mods = checked_int(0u
-                   | (shift << KeyLayout2::Mods::Shift)
-                   | (ctrl << KeyLayout2::Mods::Control)
-                   | (alt << KeyLayout2::Mods::Menu)
-                   // enable Ctrl and Alt when AltGr
-                   | (altgr << KeyLayout2::Mods::Control)
-                   | (altgr << KeyLayout2::Mods::Menu)
-                   | (oem8 << KeyLayout2::Mods::OEM_8)
-                   | (numlock << KeyLayout2::Mods::NumLock)
-                   | (capslock << KeyLayout2::Mods::CapsLock)
-                   );
+        imods = checked_int(0u
+              | (shift << KeyLayout2::Mods::Shift)
+              | (ctrl << KeyLayout2::Mods::Control)
+              | (alt << KeyLayout2::Mods::Menu)
+              // enable Ctrl and Alt when AltGr
+              | (altgr << KeyLayout2::Mods::Control)
+              | (altgr << KeyLayout2::Mods::Menu)
+              | (oem8 << KeyLayout2::Mods::OEM_8)
+              | (numlock << KeyLayout2::Mods::NumLock)
+              | (capslock << KeyLayout2::Mods::CapsLock)
+              );
+    }
 
-        return decoded_keys;
+    KeyModFlags mods() const noexcept
+    {
+        return KeyModFlags(_key_flags).normalized();
+    }
+
+    // TODO lctrl+alt+sup (canadien) = ?
+    bool is_ctrl_pressed() const noexcept
+    {
+        auto rctrl_is_ctrl = unsigned(this->layout.right_ctrl_is_ctrl);
+        auto ctrl = ( (this->_key_flags >> unsigned(KeyMods::LCtrl))
+                    | ((this->_key_flags >> unsigned(KeyMods::RCtrl)) & rctrl_is_ctrl)
+                    ) & 0x1;
+        return bool(ctrl);
     }
 
     void synchronize(uint16_t param1);

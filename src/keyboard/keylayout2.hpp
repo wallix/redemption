@@ -52,7 +52,7 @@ struct KeyLayout2
 {
     enum class KbdId : uint32_t;
 
-    enum class RCtrlLikeOEM8 : bool;
+    enum class RCtrlIsCtrl : bool;
 
     using unicode_t = uint16_t;
 
@@ -117,7 +117,7 @@ struct KeyLayout2
     };
 
     KbdId kbdid;
-    RCtrlLikeOEM8 right_ctrl_like_oem8;
+    RCtrlIsCtrl right_ctrl_is_ctrl;
     zstring_view locale_name;
 
     sized_array_view<sized_array_view<unicode_t, 128>, 64> keymap_by_mod;

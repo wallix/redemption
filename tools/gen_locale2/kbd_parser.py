@@ -309,7 +309,7 @@ def load_layout_infos(layouts, attr, mods,
             keymap = keymaps[mod]
             keys = []
             dkeys = []
-            old_dkidx = len(unique_deadkeys)
+            has_dkidx = False
             for key in keymap:
                 idk = 0
                 if key and (key.codepoint or key.text):
@@ -318,6 +318,7 @@ def load_layout_infos(layouts, attr, mods,
                                     for dk in key.deadkeys.values()]
                         deadkeys.sort()
                         idk = unique_deadkeys.setdefault((*deadkeys,), len(unique_deadkeys)+1)
+                        has_dkidx = True
                     dkeys.append(idk)
                     keys.append(Key2(codepoint=key.codepoint,
                                      is_deadkey=True if idk else False,
@@ -326,7 +327,7 @@ def load_layout_infos(layouts, attr, mods,
                     dkeys.append(0)
                     keys.append(None)
             idx = unique_keymap.setdefault((*keys,), len(unique_keymap))
-            dkeys = None if old_dkidx == len(unique_deadkeys) else (*dkeys,)
+            dkeys = (*dkeys,) if has_dkidx else None
             keymap_for_layout.append(Keymap2(mod=mod, keymap=keymap, idx=idx, dkeymap=dkeys))
         layouts2.append(LayoutInfo(layout=layout, keymaps=keymap_for_layout))
     return layouts2
@@ -519,7 +520,7 @@ if __name__ == "__main__":
             k1 = unique_layout_keymap.setdefault(k1, len(unique_layout_keymap))
             k2 = unique_layout_dkeymap.setdefault(k2, len(unique_layout_dkeymap))
             layout = normal_layout.layout
-            strings2.append(f'    KeyLayout2{{KeyLayout2::KbdId(0x{layout.klid}), KeyLayout2::RCtrlLikeOEM8({layout.has_right_ctrl_like_oem8 and "true " or "false"}), "{layout.locale_name}"_zv, /*"{layout.display_name}"_zv, */keymap_mod_{k1}, dkeymap_mod_{k2}, ')
+            strings2.append(f'    KeyLayout2{{KeyLayout2::KbdId(0x{layout.klid}), KeyLayout2::RCtrlIsCtrl({layout.has_right_ctrl_like_oem8 and "false" or "true "}), "{layout.locale_name}"_zv, /*"{layout.display_name}"_zv, */keymap_mod_{k1}, dkeymap_mod_{k2}, ')
 
             mods_array = [0]*64
             for mod, keymap, dkeymap, idx in extended_layout.keymaps:

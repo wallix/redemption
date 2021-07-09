@@ -19,8 +19,51 @@ Author(s): Proxies Team
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/compare_collection.hpp"
 
 #include "keyboard/keymap.hpp"
+
+
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+# include "utils/sugar/int_to_chars.hpp"
+
+static ut::assertion_result test_comp_decoded(Keymap::DecodedKey a, Keymap::DecodedKey b)
+{
+    ut::assertion_result ar(true);
+
+    if (REDEMPTION_UNLIKELY(a.keycode != b.keycode || a.uchars[0] != b.uchars[0] || a.uchars[1] != b.uchars[1])) {
+        ar = false;
+
+        auto put = [&](std::ostream& out, Keymap::DecodedKey const& x){
+            char uchar0[] = " (x)";
+            char uchar1[] = " (x)";
+            auto to_ascii = [](char* s, KeyLayout2::unicode_t uni) -> char const* {
+                if (' ' <= uni && uni <= '~') {
+                    s[2] = char(uni);
+                    return s;
+                }
+                return "";
+            };
+
+            out << "{.keycode=0x" << int_to_fixed_hexadecimal_upper_zchars(underlying_cast(x.keycode))
+                << ", .uchar0=0x" << int_to_fixed_hexadecimal_upper_zchars(x.uchars[0])
+                << to_ascii(uchar0, x.uchars[0])
+                << ", .uchar1=0x" << int_to_fixed_hexadecimal_upper_zchars(x.uchars[1])
+                << to_ascii(uchar1, x.uchars[1])
+                << "}";
+        };
+
+        auto& out = ar.message().stream();
+        out << "[";
+        ut::put_data_with_diff(out, a, "!=", b, put);
+        out << "]";
+    }
+
+    return ar;
+}
+
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::Keymap::DecodedKey), (::Keymap::DecodedKey), ::test_comp_decoded)
+#endif
 
 
 RED_AUTO_TEST_CASE(TestKeymap)
@@ -31,167 +74,55 @@ RED_AUTO_TEST_CASE(TestKeymap)
     using KbdFlags = Keymap::KbdFlags;
     using Scancode = Keymap::Scancode;
 
-    Keymap::DecodedKeys decoded_keys;
+    using DecodedKey = Keymap::DecodedKey;
+    using KeyCode = Keymap::KeyCode;
 
-    decoded_keys = keymap.event(KbdFlags(), Scancode(54) /*right shift*/);
-    RED_CHECK_EQUAL(0, decoded_keys.count);
+    using KeyModFlags = Keymap::KeyModFlags;
+    using KeyMods = Keymap::KeyMods;
 
-    decoded_keys = keymap.event(KbdFlags(), Scancode(16) /*A*/);
-    RED_CHECK_EQUAL(1, decoded_keys.count);
-    RED_CHECK_EQUAL('A', decoded_keys.uchars[0]);
+    auto event = [&](uint16_t scancode_and_flags){
+        keymap.event(KbdFlags(scancode_and_flags & 0xff00u), Scancode(scancode_and_flags));
+        return keymap.decoded_key();
+    };
 
-    auto* kevt = keymap.get_kevent();
-    RED_REQUIRE(kevt);
-    RED_CHECK_EQUAL(kevt->uchar, 'A');
+    uint16_t release = checked_int(KbdFlags::Release);
 
-//     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
-//     keyCode = 54 ; // key is right shift
-//     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-//
-//     RED_CHECK_EQUAL(0, decoded_keys.count);
-//     RED_CHECK(not keymap.is_shift_pressed());
-//     RED_CHECK(not keymap.is_left_shift_pressed());
-//     RED_CHECK(not keymap.is_right_shift_pressed());
-//
-//     // shift was released, but not A (last char down goes 'a' for autorepeat)
-//
-//     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
-//     keyCode = 16 ; // key is 'A'
-//     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-//
-//     keyboardFlags = 0 ; // key is not extended, key was up, key goes down
-//     keyCode = 16 ; // key is 'A'
-//     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('a', key);
-//
-//     // CAPSLOCK Down
-//     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-//     RED_CHECK(not keymap.is_caps_locked());
-//     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-//     RED_CHECK(keymap.is_caps_locked());
-//
-//     // CAPSLOCK Up
-//     // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
-//     decoded_keys = keymap.event(0xc000, 0x3A, ctrl_alt_delete);
-//     RED_CHECK(keymap.is_caps_locked());
-//
-//     // Now I hit the 'A' key on french keyboard
-//     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('A', key);
-//
-//     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // A up
-//
-//     RED_CHECK(keymap.is_caps_locked());
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('1', key);
-//
-//     // left shift down
-//     decoded_keys = keymap.event(0, 0x36, ctrl_alt_delete);
-//
-//     // left shift up
-//     decoded_keys = keymap.event(0xc000, 0x36, ctrl_alt_delete);
-//
-//     // right shift down
-//     decoded_keys = keymap.event(0, 0x2A, ctrl_alt_delete);
-//
-//     // right shift up
-//     decoded_keys = keymap.event(0xc000, 0x2A, ctrl_alt_delete);
-//
-//     // CAPSLOCK Down
-//     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-//     RED_CHECK(keymap.is_caps_locked());
-//     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-//     RED_CHECK(not keymap.is_caps_locked());
-//     decoded_keys = keymap.event(0xC000, 0x3A, ctrl_alt_delete); // capslock up
-//     RED_CHECK(not keymap.is_caps_locked());
-//
-//     // Now I hit the 'A' key on french keyboard
-//     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('a', key);
-//     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
-//
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('&', key);
-//     decoded_keys = keymap.event(0xc000, 0x02, ctrl_alt_delete);
-//
-//     // left shift down
-//     decoded_keys = keymap.event(0, 54, ctrl_alt_delete);
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('1', key);
-//
-//     // left shift up
-//     decoded_keys = keymap.event(0xc000, 54, ctrl_alt_delete);
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('&', key);
-//
-//     RED_CHECK(not keymap.is_caps_locked());
-//     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-//     RED_CHECK(keymap.is_caps_locked());
-//     decoded_keys = keymap.event(0xC000, 0x3A, ctrl_alt_delete); // capslock up
-//     RED_CHECK(keymap.is_caps_locked());
-//
-//
-//     // Now I hit the 'A' key on french keyboard
-//     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-//     RED_CHECK_EQUAL('A', keymap.get_char());
-//     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
-//
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     RED_CHECK_EQUAL('1', keymap.get_char());
-//     decoded_keys = keymap.event(0xc000, 0x02, ctrl_alt_delete);
-//
-//     // left shift down
-//     decoded_keys = keymap.event(0, 54, ctrl_alt_delete);
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     RED_CHECK_EQUAL('&', keymap.get_char());
-//
-//     // left shift up
-//     decoded_keys = keymap.event(0xc000, 54, ctrl_alt_delete);
-//     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-//     RED_CHECK_EQUAL('1', keymap.get_char());
-//
-//     // altgr down
-//     // RDP_INPUT_SCANCODE time=538966481 flags=0000 param1=001d param2=0000 -> CTRL
-//     // altgr down autorepeat
-//     // RDP_INPUT_SCANCODE time=538966481 flags=0100 param1=0038 param2=0000 -> ALT
-//     decoded_keys = keymap.event(0x0000, 0x1d, ctrl_alt_delete); // CTRL
-//     RED_CHECK(keymap.is_ctrl_pressed());
-//     decoded_keys = keymap.event(0x0100, 0x38, ctrl_alt_delete); // ALT Right
-//     RED_CHECK(keymap.is_right_alt_pressed());
-//     decoded_keys = keymap.event(0x0000, 0x04, ctrl_alt_delete); // Sharp
-//     RED_CHECK_EQUAL(1, keymap.nb_char_available());
-//     RED_CHECK_EQUAL('#', keymap.get_char());
-//
-//     decoded_keys = keymap.event(0xC000, 0x03, ctrl_alt_delete); // Tilde
-//     decoded_keys = keymap.event(0xC100, 0x38, ctrl_alt_delete); // ALT Right
-//     RED_CHECK(not keymap.is_right_alt_pressed());
-//     decoded_keys = keymap.event(0xC000, 0x1d, ctrl_alt_delete); // CTRL
-//     RED_CHECK(not keymap.is_ctrl_pressed());
-//
-//
-//     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
-//     RED_CHECK_EQUAL(1, keymap.nb_char_available());
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('/', key);
-//
-//     decoded_keys = keymap.event(0xC000, 0x03, ctrl_alt_delete); // Tilde
-//     decoded_keys = keymap.event(0xC100, 0x38, ctrl_alt_delete); // ALT Right
-//     RED_CHECK(not keymap.is_right_alt_pressed());
-//     decoded_keys = keymap.event(0xC000, 0x1d, ctrl_alt_delete); // CTRL
-//     RED_CHECK(not keymap.is_ctrl_pressed());
-//
-//     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
-//     RED_CHECK_EQUAL(1, keymap.nb_char_available());
-//     key = keymap.get_char();
-//     RED_CHECK_EQUAL('/', key);
-//     RED_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQ(keymap.mods().as_uint(), 0);
+    RED_CHECK_EQ(event(0x10 /*a*/), (DecodedKey{KeyCode(0x10), {'a'}}));
+    RED_CHECK_EQ(event(0x36 /*right shift*/), (DecodedKey{KeyCode(0x36), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMods::RShift).as_uint());
+    RED_CHECK_EQ(event(0x10 /*a*/), (DecodedKey{KeyCode(0x10), {'A'}}));
+    RED_CHECK(!keymap.is_ctrl_pressed());
+    RED_CHECK_EQ(event(0x11d /*right ctrl*/), (DecodedKey{KeyCode(0x80 | 0x1d), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMods::RShift | KeyMods::RCtrl).as_uint());
+    RED_CHECK(keymap.is_ctrl_pressed());
+    RED_CHECK_EQ(event(0x10 /*a*/), (DecodedKey{KeyCode(0x10), {}}));
+    RED_CHECK_EQ(event(release | 0x11d /*right ctrl*/), (DecodedKey{KeyCode(0x80 | 0x1d), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMods::RShift).as_uint());
+    RED_CHECK_EQ(event(0x10 /*a*/), (DecodedKey{KeyCode(0x10), {'A'}}));
+    RED_CHECK_EQ(event(0x02 /*&*/), (DecodedKey{KeyCode(0x02), {'1'}}));
+    RED_CHECK_EQ(event(0x2a /*left shift*/), (DecodedKey{KeyCode(0x2a), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMods::RShift | KeyMods::LShift).as_uint());
+    RED_CHECK_EQ(event(release | 0x36 /*right shift*/), (DecodedKey{KeyCode(0x36), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMods::LShift).as_uint());
+    RED_CHECK_EQ(event(release | 0x2a /*left shift*/), (DecodedKey{KeyCode(0x2a), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), 0);
+    RED_CHECK_EQ(event(0x10 /*a*/), (DecodedKey{KeyCode(0x10), {'a'}}));
+    RED_CHECK_EQ(event(0x02 /*&*/), (DecodedKey{KeyCode(0x02), {'&'}}));
+    RED_CHECK_EQ(event(0x14b /*left*/), (DecodedKey{KeyCode(0x80 | 0x4b), {}}));
+    RED_CHECK_EQ(keymap.mods().as_uint(), 0);
+
+    // dead keys
+
+    RED_CHECK_EQ(event(0x1a /*^*/), (DecodedKey{KeyCode(0x1a), {}}));
+    RED_CHECK_EQ(event(0x1a /*^*/), (DecodedKey{KeyCode(0x1a), {'^', '^'}}));
+
+    RED_CHECK_EQ(event(0x1a /*^*/), (DecodedKey{KeyCode(0x1a), {}}));
+    RED_CHECK_EQ(event(0x22 /*g*/), (DecodedKey{KeyCode(0x22), {'^', 'g'}}));
+
+    RED_CHECK_EQ(event(0x1a /*^*/), (DecodedKey{KeyCode(0x1a), {}}));
+    RED_CHECK_EQ(event(0x12 /*e*/), (DecodedKey{KeyCode(0x12), {0xEA /*ê*/}}));
+
 // }
 //
 // RED_AUTO_TEST_CASE(TestDeadKeys)
@@ -201,7 +132,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
 //     keymap.init_layout(layout);
 //     RED_CHECK_EQUAL(0, keymap.nb_char_available());
 //
-//     Keymap::DecodedKeys decoded_keys;
+//     Keymap::DecodedKey decoded_keys;
 //     bool    ctrl_alt_delete;
 //
 //     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
@@ -412,7 +343,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
 //     Keymap keymap;
 //     keymap.init_layout(0x040C);
 //
-//     Keymap::DecodedKeys decoded_keys;
+//     Keymap::DecodedKey decoded_keys;
 //     bool    ctrl_alt_delete;
 //
 //     RED_CHECK_EQUAL(0, keymap.nb_char_available());
@@ -479,7 +410,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
 //     // all lock keys are supposed to be inactive at this, point
 //     RED_CHECK_EQUAL(0, keymap.key_flags);
 //
-//     Keymap::DecodedKeys decoded_keys;
+//     Keymap::DecodedKey decoded_keys;
 //     bool    ctrl_alt_delete;
 //
 //     decoded_keys = keymap.event(0x0000, 0x45, ctrl_alt_delete); // activate numlock
