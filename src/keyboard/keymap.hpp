@@ -292,7 +292,7 @@ struct Keymap
 
     KeyModFlags mods() const noexcept
     {
-        return KeyModFlags(_key_flags).normalized();
+        return KeyModFlags(_key_flags);
     }
 
     // TODO lctrl+alt+sup (canadien) = ?
