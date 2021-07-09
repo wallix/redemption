@@ -23,16 +23,14 @@ class Key(NamedTuple):
     vk:str
     deadkeys:DeadKeysType
 
-KeymapType = list[Optional[Key]] # always 128 elements
+KeymapType = list[Optional[Key]] # always 256 elements
 KeymapsType = dict[str, KeymapType]
 
 class KeyLayout(NamedTuple):
     klid:int
     locale_name:str
     display_name:str
-    normal_keymaps:KeymapsType
-    # 0xEO
-    extended_keymaps:KeymapsType
+    keymaps:KeymapsType
     extra_scancodes:dict[int, Key]
     has_right_ctrl_like_oem8:bool
 
@@ -99,41 +97,30 @@ def parse_xml_layout(filename, log=verbose_print):
     # VK_MENU = Alt
     # VK_CAPITAL = CapsLock
     # VK_CONTROL + VK_MENU = AltGr
-    keymap_mods = {
-        0x00: {k:[None]*128 for k in (
-            '',
-            'VK_SHIFT',
-            'VK_SHIFT VK_CONTROL',
-            'VK_SHIFT VK_CAPITAL',
-            'VK_SHIFT VK_NUMLOCK',
-            'VK_SHIFT VK_KANA',
-            'VK_SHIFT VK_OEM_8',
-            'VK_SHIFT VK_CONTROL VK_MENU',
-            'VK_SHIFT VK_CONTROL VK_KANA',
-            'VK_SHIFT VK_KANA VK_NUMLOCK',
-            'VK_SHIFT VK_CONTROL VK_MENU VK_CAPITAL',
-            'VK_SHIFT VK_CONTROL VK_MENU VK_NUMLOCK',
-            'VK_CONTROL',
-            'VK_CONTROL VK_MENU',
-            'VK_CONTROL VK_KANA',
-            'VK_CONTROL VK_MENU VK_NUMLOCK',
-            'VK_CONTROL VK_MENU VK_CAPITAL',
-            'VK_CAPITAL',
-            'VK_NUMLOCK',
-            'VK_OEM_8',
-            'VK_KANA',
-            'VK_KANA VK_NUMLOCK',
-        )},
-        # extended
-        0xE0: {k:[None]*128 for k in (
-            '',
-            'VK_SHIFT',
-            'VK_CONTROL',
-            'VK_KANA',
-            'VK_SHIFT VK_KANA',
-            'VK_CONTROL VK_KANA',
-        )},
-    }
+    keymaps = {k:[None]*256 for k in (
+        '',
+        'VK_SHIFT',
+        'VK_SHIFT VK_CONTROL',
+        'VK_SHIFT VK_CAPITAL',
+        'VK_SHIFT VK_NUMLOCK',
+        'VK_SHIFT VK_KANA',
+        'VK_SHIFT VK_OEM_8',
+        'VK_SHIFT VK_CONTROL VK_MENU',
+        'VK_SHIFT VK_CONTROL VK_KANA',
+        'VK_SHIFT VK_KANA VK_NUMLOCK',
+        'VK_SHIFT VK_CONTROL VK_MENU VK_CAPITAL',
+        'VK_SHIFT VK_CONTROL VK_MENU VK_NUMLOCK',
+        'VK_CONTROL',
+        'VK_CONTROL VK_MENU',
+        'VK_CONTROL VK_KANA',
+        'VK_CONTROL VK_MENU VK_NUMLOCK',
+        'VK_CONTROL VK_MENU VK_CAPITAL',
+        'VK_CAPITAL',
+        'VK_NUMLOCK',
+        'VK_OEM_8',
+        'VK_KANA',
+        'VK_KANA VK_NUMLOCK',
+    )}
     extra_scancodes = {}
 
     # ascii letter for dead keys
@@ -149,8 +136,13 @@ def parse_xml_layout(filename, log=verbose_print):
         sc, vk, _ = _getattribs(log, pk, 'PK', {'SC': True, 'VK': True, 'Name': False})
         sc = int(sc, 16)
 
+        assert sc & 0xff
+        assert (sc & 0xff) <= 0x7f
+        assert (sc >> 8) in (0, 0xE0, 0xE1)
+
         # Pause
-        if sc > 0xE07F:
+        if sc > 0xE100:
+            assert sc == 0xE11D
             extra_scancodes[sc] = Key(scancode=sc, codepoint=0, text='', vk=vk, deadkeys=dict())
             continue
 
@@ -160,17 +152,13 @@ def parse_xml_layout(filename, log=verbose_print):
             assert sc == 0xE01D # right ctrl
             right_ctrl_like_oem8 = sc
 
-        keymaps = keymap_mods[sc >> 8]
-        sc = sc & 0xff
-        assert sc
+        sc = (sc & 0x7f) | (0x80 if sc >> 8 else 0)
 
         if not pk:
             keys = keymaps['']
             assert sc not in keys
             keys[sc] = Key(scancode=sc, codepoint=0, text='', vk=vk, deadkeys=dict())
             continue
-
-        assert sc < 128
 
         for result in pk:
             text, codepoint, vk, with_ = _getattribs(log, result, 'Result', {'Text': False,
@@ -210,26 +198,25 @@ def parse_xml_layout(filename, log=verbose_print):
                 assert deadkeys
                 keys[sc] = Key(scancode=sc, codepoint=ord(accent), text=accent, vk=vk, deadkeys=deadkeys)
 
-    normal_keymaps_mods = keymap_mods[0]
 
     # new keymap: shiftlock + numlock
     for num_mod, caps_mod, final_mod in _merge_numlock_capital:
-        assert final_mod not in normal_keymaps_mods
-        caps_keymap = normal_keymaps_mods[caps_mod]
-        numlock_keymap = normal_keymaps_mods[num_mod]
-        keymap = [None] * 128
-        for i in range(128):
+        assert final_mod not in keymaps
+        caps_keymap = keymaps[caps_mod]
+        numlock_keymap = keymaps[num_mod]
+        keymap = [None] * 256
+        for i in range(256):
             k = caps_keymap[i]
             knum = numlock_keymap[i]
             assert not (k and knum)
             keymap[i] = k or knum
-        normal_keymaps_mods[final_mod] = keymap
+        keymaps[final_mod] = keymap
 
     # merge mod to numlock mod
     for num_mod, merged_mod in _merge_numlock:
-        keymap = normal_keymaps_mods[merged_mod]
-        numlock_keymap = normal_keymaps_mods[num_mod]
-        for i in range(128):
+        keymap = keymaps[merged_mod]
+        numlock_keymap = keymaps[num_mod]
+        for i in range(256):
             k = keymap[i]
             knum = numlock_keymap[i]
             assert not (k and knum)
@@ -237,7 +224,7 @@ def parse_xml_layout(filename, log=verbose_print):
                 numlock_keymap[i] = k
 
     return KeyLayout(klid, locale_name, display_name,
-                     normal_keymaps_mods, keymap_mods[0xE0], extra_scancodes,
+                     keymaps, extra_scancodes,
                      right_ctrl_like_oem8)
 
 def _accu_scancodes(strings:list[str], map:list[Key]):
@@ -249,6 +236,7 @@ def _accu_scancodes(strings:list[str], map:list[Key]):
                     text = ('\\a', '\\b', '\\t', '\\n', '\\v', '\\f', '\\r')[k.codepoint - 0x07]
                 elif k.codepoint:
                     text = ''
+            # del
             elif k.codepoint == 127:
                 text = ''
             strings.append(f"  0x{i:02X}: codepoint=0x{k.codepoint:04x} text='{text}' vk='{k.vk}'\n")
@@ -264,12 +252,8 @@ def _accu_scancodes(strings:list[str], map:list[Key]):
 def print_layout(layout:KeyLayout, printer=sys.stdout.write):
     strings = [f'KLID: {layout.klid}\nLocalName: {layout.locale_name}\nDisplayName: {layout.display_name}\n']
 
-    for mapname,map in layout.normal_keymaps.items():
+    for mapname,map in layout.keymaps.items():
         strings.append(f'{mapname or "normal"} (0x00)\n')
-        _accu_scancodes(strings, map)
-
-    for mapname,map in layout.extended_keymaps.items():
-        strings.append(f'{mapname or "normal"} (0xE0)\n')
         _accu_scancodes(strings, map)
 
     strings.append('extra:\n')
@@ -298,12 +282,12 @@ class LayoutInfo(NamedTuple):
     layout:KeyLayout
     keymaps:list[Keymap2]
 
-def load_layout_infos(layouts, attr, mods,
+def load_layout_infos(layouts, mods,
                       unique_keymap:dict[Optional[tuple], int],
                       unique_deadkeys:dict[tuple, int]) -> list[LayoutInfo]:
     layouts2:list[LayoutInfo] = []
     for layout in layouts:
-        keymaps = getattr(layout, attr)
+        keymaps = layout.keymaps
         keymap_for_layout = []
         for mod in mods:
             keymap = keymaps[mod]
@@ -326,8 +310,9 @@ def load_layout_infos(layouts, attr, mods,
                 else:
                     dkeys.append(0)
                     keys.append(None)
+            assert (all(i == 0 for i in dkeys[128:]))
             idx = unique_keymap.setdefault((*keys,), len(unique_keymap))
-            dkeys = (*dkeys,) if has_dkidx else None
+            dkeys = (*dkeys[:128],) if has_dkidx else None
             keymap_for_layout.append(Keymap2(mod=mod, keymap=keymap, idx=idx, dkeymap=dkeys))
         layouts2.append(LayoutInfo(layout=layout, keymaps=keymap_for_layout))
     return layouts2
@@ -338,7 +323,7 @@ if __name__ == "__main__":
     else:
         layouts:list[KeyLayout] = []
         log = null_fn
-        # log = verbose_print
+        #log = verbose_print
         for filename in sys.argv[1:]:
             log('filename:', filename)
             layout = parse_xml_layout(filename, log)
@@ -346,7 +331,7 @@ if __name__ == "__main__":
             if log == verbose_print:
                 print_layout(layout)
 
-        normal_mod_supported = OrderedDict({
+        supported_mods = OrderedDict({
             '': True,
             'VK_SHIFT': True,
             'VK_SHIFT VK_CAPITAL': True,
@@ -369,28 +354,20 @@ if __name__ == "__main__":
             'VK_OEM_8': True,
         })
 
-        extended_mod_supported = OrderedDict({
-            '': True,
-            'VK_SHIFT': True,
-            'VK_CONTROL': True
-        })
-
         error_messages = []
-        for attr,seq in (('normal_keymaps', normal_mod_supported),
-                         ('extended_keymaps', extended_mod_supported)):
-            for layout in layouts:
-                for mod,keymap in getattr(layout, attr).items():
-                    if mod in seq:
-                        # check that codepoint <= 0x7fff
-                        if not all(not key or key.codepoint <= 0x7fff for key in keymap):
-                            error_messages.append(f'{attr}: {mod or "NoMod"} for {layout.klid}/{layout.locale_name} have a codepoint greater that 0x7fff')
-                        # check that there is no deadkeys of deadkeys
-                        if not all(not key or key.deadkeys or all(d.deadkeys is None for d in key.deadkeys) for key in keymap):
-                            error_messages.append(f'{attr}: {mod or "NoMod"} for {layout.klid}/{layout.locale_name} have a deadkeys of deadkeys')
-                    else:
-                        # check that unknown mod is empty
-                        if not all(key is None for key in keymap):
-                            error_messages.append(f'{attr}: {mod or "NoMod"} for {layout.klid}/{layout.locale_name} is not null')
+        for layout in layouts:
+            for mod,keymap in layout.keymaps.items():
+                if mod in supported_mods:
+                    # check that codepoint <= 0x7fff
+                    if not all(not key or key.codepoint <= 0x7fff for key in keymap):
+                        error_messages.append(f'{mod or "NoMod"} for {layout.klid}/{layout.locale_name} have a codepoint greater that 0x7fff')
+                    # check that there is no deadkeys of deadkeys
+                    if not all(not key or key.deadkeys or all(d.deadkeys is None for d in key.deadkeys) for key in keymap):
+                        error_messages.append(f'{mod or "NoMod"} for {layout.klid}/{layout.locale_name} have a deadkeys of deadkeys')
+                else:
+                    # check that unknown mod is empty
+                    if not all(key is None for key in keymap):
+                        error_messages.append(f'{mod or "NoMod"} for {layout.klid}/{layout.locale_name} is not null')
         if error_messages:
             raise Exception('\n'.join(error_messages))
 
@@ -407,22 +384,19 @@ if __name__ == "__main__":
             0x5C: '\\\\',
         }
 
-        unique_keymap = {(None,)*128: 0,}
+        unique_keymap = {(None,)*256: 0,}
         unique_deadkeys = {}
-        normal_layouts = load_layout_infos(layouts, 'normal_keymaps', normal_mod_supported,
-                                           unique_keymap, unique_deadkeys)
-        extended_layouts = load_layout_infos(layouts, 'extended_keymaps', extended_mod_supported,
-                                             unique_keymap, unique_deadkeys)
+        layouts2 = load_layout_infos(layouts, supported_mods, unique_keymap, unique_deadkeys)
 
         strings = [
             '#include "keyboard/keylayout2.hpp"\n\n',
             'constexpr auto DK = KeyLayout2::DK;\n\n',
         ]
 
-        # print keymap (scancodes[128] with DK (0x8000) mask for deadkey)
+        # print keymap (scancodes[256] with DK (mask for deadkey)
         for keymap, idx in unique_keymap.items():
-            strings.append(f'static constexpr KeyLayout2::unicode_t keymap_{idx}[128] {{\n')
-            for i in range(128//8):
+            strings.append(f'static constexpr KeyLayout2::unicode_t keymap_{idx}[256] {{\n')
+            for i in range(256//8):
                 char_comment = []
                 has_char_comment = False
                 strings.append(f'/*{i*8:02X}-{i*8+7:02X}*/ ')
@@ -477,7 +451,7 @@ if __name__ == "__main__":
 
         # dkeymap memoization
         dktables = {(0,)*128: 0,}
-        for layout, keymaps in chain(normal_layouts, extended_layouts):
+        for layout, keymaps in layouts2:
             for mod, keymap, dkeymap, idx in keymaps:
                 if dkeymap:
                     dktables.setdefault(dkeymap, len(dktables))
@@ -507,10 +481,10 @@ if __name__ == "__main__":
         unique_layout_keymap = {}
         unique_layout_dkeymap = {}
         strings2 = ['static constexpr KeyLayout2 layouts[] {\n']
-        for normal_layout,extended_layout in zip(normal_layouts, extended_layouts):
+        for layout in layouts2:
             mods_array = [0]*64
             dmods_array = [0]*64
-            for mod, keymap, dkeymap, idx in normal_layout.keymaps:
+            for mod, keymap, dkeymap, idx in layout.keymaps:
                 mask = sum(mods_to_mask[m] for m in mod.split(' '))
                 mods_array[mask] = idx
                 if dkeymap:
@@ -519,26 +493,17 @@ if __name__ == "__main__":
             k2 = (*dmods_array,)
             k1 = unique_layout_keymap.setdefault(k1, len(unique_layout_keymap))
             k2 = unique_layout_dkeymap.setdefault(k2, len(unique_layout_dkeymap))
-            layout = normal_layout.layout
-            strings2.append(f'    KeyLayout2{{KeyLayout2::KbdId(0x{layout.klid}), KeyLayout2::RCtrlIsCtrl({layout.has_right_ctrl_like_oem8 and "false" or "true "}), "{layout.locale_name}"_zv, /*"{layout.display_name}"_zv, */keymap_mod_{k1}, dkeymap_mod_{k2}, ')
-
-            mods_array = [0]*64
-            for mod, keymap, dkeymap, idx in extended_layout.keymaps:
-                mask = sum(mods_to_mask[m] for m in mod.split(' '))
-                mods_array[mask] = idx
-                assert not dkeymap
-            k1 = (*mods_array,)
-            k1 = unique_layout_keymap.setdefault(k1, len(unique_layout_keymap))
-            strings2.append(f'keymap_mod_{k1}}},\n')
+            layout = layout.layout
+            strings2.append(f'    KeyLayout2{{KeyLayout2::KbdId(0x{layout.klid}), KeyLayout2::RCtrlIsCtrl({layout.has_right_ctrl_like_oem8 and "false" or "true "}), "{layout.locale_name}"_zv, /*"{layout.display_name}"_zv, */keymap_mod_{k1}, dkeymap_mod_{k2}}},\n')
         strings2.append('};\n')
 
         # print layout
         for unique_layout,prefix,atype in (
-            (unique_layout_keymap, '', 'KeyLayout2::unicode_t'),
-            (unique_layout_dkeymap, 'd', 'KeyLayout2::DKeyTable')
+            (unique_layout_keymap, '', 'KeyLayout2::unicode_t, 256'),
+            (unique_layout_dkeymap, 'd', 'KeyLayout2::DKeyTable, 128')
         ):
             for k,idx in unique_layout.items():
-                strings.append(f'static constexpr sized_array_view<{atype}, 128> {prefix}keymap_mod_{idx}[] {{\n')
+                strings.append(f'static constexpr sized_array_view<{atype}> {prefix}keymap_mod_{idx}[] {{\n')
                 for i in range(64//8):
                     strings.append('   ')
                     strings += (f' {prefix}keymap_{k[i]},' for i in range(i*8, i*8+8))

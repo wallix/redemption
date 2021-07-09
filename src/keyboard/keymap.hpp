@@ -92,17 +92,17 @@ struct Keymap
         Esc = 0x01,
         F11 = 0x57,
         F12 = 0x58,
-        // LCtrl = 0x1D,
-        // RCtrl = 0x1D | 0x80,
-        // LShift = 0x2A,
-        // RShift = 0x36,
-        // LAlt = 0x38,
-        // RAlt = 0x38 | 0x80,
+        LCtrl = 0x1D,
+        RCtrl = 0x1D | 0x80,
+        LShift = 0x2A,
+        RShift = 0x36,
+        LAlt = 0x38,
+        RAlt = 0x38 | 0x80,
         // LWin = 0x5B | 0x80,
         // RWin = 0x5C | 0x80,
         // Apps = 0x5D | 0x80,
-        // CapsLock = 0x3A,
-        // NumLock = 0x45,
+        CapsLock = 0x3A,
+        NumLock = 0x45,
         // ScrollLock = 0x46,
         UpArrow = 0x48 | 0x80,
         LeftArrow = 0x4B | 0x80,
@@ -177,9 +177,8 @@ struct Keymap
         return *KeyLayout2::find_layout_by_id(KeyLayout2::KbdId(0x40C));
     }
 
-    explicit Keymap(bool verbose = false) noexcept
+    explicit Keymap() noexcept
     : layout(default_layout())
-    , verbose(verbose)
     {}
 
     void set_layout(KeyLayout2 new_layout) noexcept
@@ -239,29 +238,23 @@ struct Keymap
             case uint8_t(KeyCode::RAlt): this->_key_flags ^= 1u << unsigned(KeyMods::AltGr); break;
 
             default: {
-                auto i = keycode & 0x7fu;
-                if (!(keycode & 0x80u)) {
-                    auto unicode = this->layout.keymap_by_mod[this->imods][i];
+                auto unicode = this->layout.keymap_by_mod[this->imods][keycode];
 
-                    if (REDEMPTION_UNLIKELY(this->dkeys)) {
-                        if (auto unicode2 = this->dkeys.find(unicode)) {
-                            _decoded_key.uchars[0] = unicode2;
-                        }
-                        else {
-                            _decoded_key.uchars[0] = this->dkeys.accent();
-                            _decoded_key.uchars[1] = unicode_t(unicode & ~KeyLayout2::DK);
-                        }
-                        this->dkeys = {};
-                    }
-                    else if (REDEMPTION_UNLIKELY(unicode & KeyLayout2::DK)) {
-                        this->dkeys = this->layout.dkeymap_by_mod[this->imods][i];
+                if (REDEMPTION_UNLIKELY(this->dkeys)) {
+                    if (auto unicode2 = this->dkeys.find(unicode)) {
+                        _decoded_key.uchars[0] = unicode2;
                     }
                     else {
-                        _decoded_key.uchars[0] = unicode;
+                        _decoded_key.uchars[0] = this->dkeys.accent();
+                        _decoded_key.uchars[1] = unicode_t(unicode & ~KeyLayout2::DK);
                     }
+                    this->dkeys = {};
+                }
+                else if (REDEMPTION_UNLIKELY(unicode & KeyLayout2::DK)) {
+                    this->dkeys = this->layout.dkeymap_by_mod[this->imods][keycode];
                 }
                 else {
-                    _decoded_key.uchars[0] = this->layout.extended_keymap_by_mod[this->imods][i];
+                    _decoded_key.uchars[0] = unicode;
                 }
 
                 return ;

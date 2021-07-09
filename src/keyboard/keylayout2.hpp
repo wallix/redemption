@@ -120,9 +120,8 @@ struct KeyLayout2
     RCtrlIsCtrl right_ctrl_is_ctrl;
     zstring_view locale_name;
 
-    sized_array_view<sized_array_view<unicode_t, 128>, 64> keymap_by_mod;
+    sized_array_view<sized_array_view<unicode_t, 256>, 64> keymap_by_mod;
     sized_array_view<sized_array_view<DKeyTable, 128>, 64> dkeymap_by_mod;
-    sized_array_view<sized_array_view<unicode_t, 128>, 64> extended_keymap_by_mod;
 
     static array_view<KeyLayout2> keylayouts() noexcept;
     static KeyLayout2 const* find_layout_by_id(KbdId id) noexcept;
