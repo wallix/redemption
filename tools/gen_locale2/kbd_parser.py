@@ -395,7 +395,7 @@ if __name__ == "__main__":
 
         # print keymap (scancodes[256] with DK (mask for deadkey)
         for keymap, idx in unique_keymap.items():
-            strings.append(f'static constexpr KeyLayout2::unicode_t keymap_{idx}[256] {{\n')
+            strings.append(f'static constexpr KeyLayout2::unicode_t keymap_{idx}[] {{\n')
             for i in range(256//8):
                 char_comment = []
                 has_char_comment = False

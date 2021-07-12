@@ -334,7 +334,7 @@ const searchScancodeWithMask = function(scancodeMods, controlMask) {
     }
 };
 
-/// \return a function (key, flag) => (Array[Number]| undefined)
+/// \return a function (key, flag) => (Array[Number] | undefined)
 /// and add properties follow:
 /// - getLayout()
 /// - setLayout(layout)

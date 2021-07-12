@@ -87,14 +87,19 @@ struct KeyLayout2
 
         unicode_t accent() const noexcept
         {
-            return data[1].meta.accent;
+            return data[0].meta.accent;
         }
 
-        unicode_t find(unicode_t unicode) const noexcept
+        array_view<DKey> dkeys() const noexcept
         {
             static_assert(sizeof(DKey) == sizeof(Data));
             static_assert(alignof(DKey) == alignof(Data));
-            for (auto& dkey : array_view{reinterpret_cast<DKey const*>(&data[2]), data[0].meta.size}) {
+            return array_view{reinterpret_cast<DKey const*>(&data[1]), data[0].meta.size};
+        }
+
+        unicode_t find_composition(unicode_t unicode) const noexcept
+        {
+            for (auto& dkey : dkeys()) {
                 if (dkey.second == unicode) {
                     return dkey.result;
                 }
