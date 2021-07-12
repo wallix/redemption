@@ -72,6 +72,8 @@ private:
     std::string service_user;
     uint8_t password[2048];
     uint8_t service_password[2048];
+    std::string keytab_path;
+    std::string service_keytab_path;
     std::vector<uint8_t> domain;
     const char * target_host;
 
@@ -129,13 +131,15 @@ public:
      * \param[in] password User password.
      * \param[in] domain Domain name.
      * \param[in] hostname Host name.
-     * \param[in] service_username Service user name (may be set to null for specifying no delegate user).
-     * \param[in] service_password Service user password (may be set to null for specifying no delegate user).
+     * \param[in] service_username Service user name.
+     * \param[in] service_password Service user password.
+     * \param[in] service_keytab_path Service keytab file path.
      */
     void set_identity(bytes_view username, char const * password,
         bytes_view domain, chars_view hostname,
         char const * service_username = nullptr,
-        char const * service_password = nullptr);
+        char const * service_password = nullptr,
+        char const * service_keytab_path = nullptr);
 
     void send_negotiation_request(OutTransport trans);
 
