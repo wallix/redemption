@@ -222,7 +222,7 @@ class rdpCredsspServerKerberos final
             setenv("KRB5CCNAME", cache, 1);
             LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
             if (pAuthData) {
-                int ret = this->credentials->get_credentials(pAuthData->princname,
+                int ret = this->credentials->get_credentials_password(pAuthData->princname,
                                                              pAuthData->princpass,
                                                              nullptr, nullptr);
                 if (!ret) {

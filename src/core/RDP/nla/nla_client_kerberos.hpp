@@ -23,14 +23,164 @@
 
 #ifndef __EMSCRIPTEN__
 
+#include <string_view>
+
 #include "core/RDP/nla/credssp.hpp"
+#include "utils/fileutils.hpp"
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include "core/RDP/nla/kerberos.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/translation.hpp"
 
 #include "transport/transport.hpp"
+
+
+///
+class SEC_WINNT_AUTH_IDENTITY
+{
+private:
+    ///
+    std::string username_utf8;
+
+    ///
+    std::string username_utf16;
+
+    ///
+    std::vector<uint8_t> domain_utf8;
+
+    ///
+    std::vector<uint8_t> domain_utf16;
+
+    ///
+    std::vector<uint8_t> password_utf8;
+
+    ///
+    std::vector<uint8_t> password_utf16;
+
+    ///
+    struct
+    {
+        ///
+        std::string keytab_file_path;
+    }
+    kerberos;
+
+public:
+    SEC_WINNT_AUTH_IDENTITY()
+    {
+    }
+
+    bool is_empty_user_domain() const
+    {
+        return (this->username_utf16.empty() && this->domain_utf16.empty());
+    }
+
+    bool is_valid() const
+    {
+        return (
+            !this->username_utf16.empty()/* &&
+            !this->domain_utf16.empty()*/
+        );
+    }
+
+    void set_kerberos_keytab_path(std::string_view value)
+    {
+        this->kerberos.keytab_file_path = value;
+    }
+
+    const char * get_kerberos_principal_name() const
+    {
+        return this->username_utf8.c_str();
+    }
+
+    const char * get_kerberos_password() const
+    {
+        return char_ptr_cast(this->password_utf8.data());
+    }
+
+    const char * get_kerberos_keytab_path() const
+    {
+        return this->kerberos.keytab_file_path.c_str();
+    }
+
+    bool has_kerberos_keytab() const
+    {
+        return file_exist(this->kerberos.keytab_file_path);
+    }
+
+    bytes_view get_username_utf8() const
+    {
+        return this->username_utf8;
+    }
+
+    bytes_view get_username_utf16() const
+    {
+        return this->username_utf16;
+    }
+
+    bytes_view get_password_utf8() const
+    {
+        return this->password_utf8;
+    }
+
+    bytes_view get_password_utf16() const
+    {
+        return this->password_utf16;
+    }
+
+    bytes_view get_domain_utf8() const
+    {
+        return this->domain_utf8;
+    }
+
+    bytes_view get_domain_utf16() const
+    {
+        return this->domain_utf16;
+    }
+
+    void set_username_from_utf8(bytes_view username)
+    {
+        this->username_utf8.assign(username.begin(), username.end());
+        ::UTF8toResizableUTF16(username, this->username_utf16);
+    }
+
+    void set_domain_from_utf8(bytes_view domain)
+    {
+        this->domain_utf8.assign(domain.begin(), domain.end());
+        ::UTF8toResizableUTF16(domain, this->domain_utf16);
+    }
+
+    void set_password_from_utf8(const uint8_t *password)
+    {
+        if (password)
+        {
+            const std::size_t password_length_utf8 = UTF8Len(password);
+            const std::size_t password_length_utf16 = password_length_utf8 << 1;
+
+            this->password_utf8.assign(password, password + password_length_utf8);
+            this->password_utf16.resize(password_length_utf16);
+            UTF8toUTF16({password, std::strlen(char_ptr_cast(password))},
+                this->password_utf16.data(), this->password_utf16.size());
+        }
+        else
+        {
+            this->password_utf8.clear();
+            this->password_utf16.clear();
+        }
+    }
+
+    void clear()
+    {
+        this->username_utf8.clear();
+        this->username_utf16.clear();
+        this->domain_utf8.clear();
+        this->domain_utf16.clear();
+        this->password_utf8.clear();
+        this->password_utf16.clear();
+    }
+};
 
 class rdpCredsspClientKerberos
 {
@@ -48,112 +198,6 @@ private:
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
     std::string ServicePrincipalName;
-
-    struct SEC_WINNT_AUTH_IDENTITY
-    {
-        // kerberos only
-        //@{
-        std::string princname;
-//        char princname[256];
-        char princpass[256];
-        //@}
-        // ntlm only
-        //@{
-        private:
-        std::string User;
-        std::vector<uint8_t> Domain;
-        public:
-        std::vector<uint8_t> Password;
-        //@}
-
-        public:
-        SEC_WINNT_AUTH_IDENTITY()
-        {
-            this->princpass[0] = 0;
-        }
-
-        void user_init_copy(bytes_view av)
-        {
-            this->User.assign(av.data(), av.data()+av.size());
-        }
-
-        void domain_init_copy(bytes_view av)
-        {
-            this->Domain.assign(av.data(), av.data()+av.size());
-        }
-
-        bool is_empty_user_domain() const {
-            return (this->User.empty() && this->Domain.empty());
-        }
-
-        [[nodiscard]] bytes_view get_password_utf16_av() const
-        {
-            return this->Password;
-        }
-
-        [[nodiscard]] const std::string & get_user_utf16_av() const
-        {
-            return this->User;
-        }
-
-        [[nodiscard]] bytes_view get_domain_utf16_av() const
-        {
-            return this->Domain;
-        }
-
-        void SetUserFromUtf8(chars_view user)
-        {
-            ::UTF8toResizableUTF16(user, this->User);
-        }
-
-        void SetDomainFromUtf8(bytes_view domain)
-        {
-            ::UTF8toResizableUTF16(domain, this->Domain);
-        }
-
-        void SetPasswordFromUtf8(const uint8_t * password)
-        {
-            if (password) {
-                size_t password_len = UTF8Len(password);
-                this->Password = std::vector<uint8_t>(password_len * 2);
-                UTF8toUTF16({password, strlen(char_ptr_cast(password))}, this->Password.data(), password_len * 2);
-            }
-            else {
-                this->Password.clear();
-            }
-        }
-
-        void SetKrbAuthIdentity(const std::string & user, const uint8_t * pass)
-        {
-            auto copy = [](char (&arr)[256], uint8_t const* data){
-                if (data) {
-                    const char * p = char_ptr_cast(data);
-                    const size_t length = p ? strnlen(p, 255) : 0;
-                    memcpy(arr, data, length);
-                    arr[length] = 0;
-                }
-            };
-
-
-            this->princname = user;
-            copy(this->princpass, pass);
-        }
-
-        void clear()
-        {
-            this->User.clear();
-            this->Domain.clear();
-            this->Password.clear();
-        }
-
-        void CopyAuthIdentity(bytes_view user_utf16_av, bytes_view domain_utf16_av, bytes_view password_utf16_av)
-        {
-            this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
-            this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());
-            this->Password.assign(password_utf16_av.data(),password_utf16_av.data()+password_utf16_av.size());
-        }
-
-    };
 
     struct Krb5Creds_deleter
     {
@@ -191,20 +235,35 @@ private:
         int ret(-1);
 
         // retrieve and cache credentials of a possible service identity
-        if (service_identity && !service_identity->is_empty_user_domain())
+        if (service_identity && service_identity->is_valid())
         {
             // form the service credentials cache name
             snprintf(fast_cache_name, 255, "FILE:/tmp/krb_red_fast_%d", pid);
             fast_cache_name[255] = 0;
 
-            LOG(LOG_INFO, "Retrieving service credentials...");
-
             // set FAST cache name
             fast_cache_name_ptr = fast_cache_name;
 
-            // do retrieve service credentials
-            ret = this->sspi_credentials->get_credentials(service_identity->princname,
-                service_identity->princpass, fast_cache_name, nullptr);
+            // do retrieve credentials using either keytab or password
+            if (service_identity->has_kerberos_keytab())
+            {
+                LOG(LOG_INFO, "Retrieving service credentials using keytab at '%s'...",
+                    service_identity->get_kerberos_keytab_path());
+
+                ret = this->sspi_credentials->get_credentials_keytab(
+                    service_identity->get_kerberos_principal_name(),
+                    service_identity->get_kerberos_keytab_path(),
+                    fast_cache_name, nullptr);
+            }
+            else
+            {
+                LOG(LOG_INFO, "Retrieving service credentials using password...");
+
+                ret = this->sspi_credentials->get_credentials_password(
+                    service_identity->get_kerberos_principal_name(),
+                    service_identity->get_kerberos_password(),
+                    fast_cache_name, nullptr);
+            }
             if (ret)
             {
                 LOG(LOG_ERR, "Failed to retrieve service credentials (%d)", ret);
@@ -225,11 +284,27 @@ private:
         setenv("KRB5CCNAME", cache_name, 1);
         LOG(LOG_INFO, "set KRB5CCNAME to %s", cache_name);
 
-        // retrieve main credentials
+        // retrieve and cache main credentials
         if (identity)
         {
-            ret = this->sspi_credentials->get_credentials(identity->princname,
-                identity->princpass, nullptr, fast_cache_name_ptr);
+            LOG(LOG_INFO, "Retrieving main credentials using password...");
+
+            // do retrieve credentials using password
+            ret = this->sspi_credentials->get_credentials_password(
+                identity->get_kerberos_principal_name(),
+                identity->get_kerberos_password(),
+                nullptr, fast_cache_name_ptr);
+
+            if (ret)
+            {
+                LOG(LOG_ERR, "Failed to retrieve main credentials (%d)", ret);
+
+                goto cleanup;
+            }
+            else
+            {
+                LOG(LOG_INFO, "Main credentials cached to '%s'", cache_name);
+            }
         }
 
     cleanup:
@@ -428,7 +503,7 @@ private:
 
     Transport & trans;
 
-    void SetHostnameFromUtf8(const std::string pszTargetName) {
+    void SetHostnameFromUtf8(std::string_view pszTargetName) {
         this->ServicePrincipalName = pszTargetName;
     }
 
@@ -732,7 +807,9 @@ private:
                 result = emitTSCredentialsPassword({},std::string{}, {}, this->credssp_verbose);
             }
             else {
-                result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av(), this->credssp_verbose);
+                result = emitTSCredentialsPassword(this->identity.get_domain_utf16(),
+                    this->identity.get_username_utf16(), this->identity.get_password_utf16(),
+                    this->credssp_verbose);
             }
         }
         else {
@@ -754,30 +831,18 @@ private:
             this->ts_request.authInfo, this->send_seq_num++);
     }
 
-private:
-    void set_credentials(SEC_WINNT_AUTH_IDENTITY &identity,
-        bytes_view domain, const std::string &username,
-        const uint8_t *password, const std::string &hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::set_credentials");
-        identity.SetUserFromUtf8(username);
-        identity.SetDomainFromUtf8(domain);
-        identity.SetPasswordFromUtf8(password);
-        this->SetHostnameFromUtf8(hostname);
-        // hexdump_c(pass, strlen((char*)pass));
-        // hexdump_c(hostname, strlen((char*)hostname));
-        identity.SetKrbAuthIdentity(username, password);
-    }
-
 public:
     rdpCredsspClientKerberos(OutTransport transport,
-               const std::string & username,
+               std::string_view hostname,
+               std::string_view target_host,
                bytes_view domain,
+               std::string_view username,
                const uint8_t * password,
-               const std::string & hostname,
-               const std::string target_host,
+               std::string_view /*keytab_path*/,
                const bool restricted_admin_mode,
-               const std::string & service_username,
+               std::string_view service_username,
                const uint8_t * service_password,
+               std::string_view service_keytab_path,
                Random & rand,
                std::string& extra_message,
                Language lang,
@@ -794,12 +859,18 @@ public:
         , trans(transport.get_transport())
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::Initialization");
-        this->set_credentials(this->identity, domain, username, password, hostname);
-        if (!service_username.empty() && service_password)
-        {
-            this->set_credentials(this->service_identity, domain, service_username,
-                service_password, hostname);
-        }
+
+        this->SetHostnameFromUtf8(hostname);
+
+        this->identity.set_username_from_utf8(username);
+        this->identity.set_domain_from_utf8(domain);
+        this->identity.set_password_from_utf8(password);
+
+        this->service_identity.set_username_from_utf8(service_username);
+        this->service_identity.set_domain_from_utf8(domain);
+        this->service_identity.set_password_from_utf8(service_password);
+        this->service_identity.set_kerberos_keytab_path(service_keytab_path);
+
         this->client_auth_data.state = ClientAuthenticateData::Start;
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");

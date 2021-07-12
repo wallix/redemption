@@ -89,7 +89,7 @@ RdpNego::~RdpNego() = default;
 
 void RdpNego::set_identity(bytes_view username, char const * password,
     bytes_view domain, chars_view hostname,
-    char const * service_username, char const * service_password)
+    char const * service_username, char const * service_password, char const * service_keytab_path)
 {
     if (this->nla) {
         this->user.assign(username.begin(), username.end());
@@ -103,14 +103,18 @@ void RdpNego::set_identity(bytes_view username, char const * password,
         this->hostname.assign(hostname.begin(), hostname.end());
 
         // set service username/password
-        if (service_username && service_password)
+        if (service_username && (service_password || service_keytab_path))
         {
-            this->service_user.assign(service_username, service_username + strlen(service_username));
+            this->service_user.assign(service_username);
 
-            // Password is a multi-sz!
-            // TODO sould be array_view<z?string_view> or vector<z?string_view>
+            // // Password is a multi-sz!
+            // // TODO sould be array_view<z?string_view> or vector<z?string_view>
             MultiSZCopy(char_ptr_cast(this->service_password), sizeof(this->service_password), service_password);
             this->current_service_password = this->service_password;
+
+            if (service_keytab_path){
+                this->service_keytab_path.assign(service_keytab_path);
+            }
         }
     }
 }
@@ -407,10 +411,11 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         #ifndef __EMSCRIPTEN__
         try {
             this->credsspKerberos = std::make_unique<rdpCredsspClientKerberos>(
-                trans, this->user, this->domain, this->current_password,
-                this->hostname, this->target_host,
+                trans,
+                this->hostname, this->target_host, this->domain,
+                this->user, this->current_password, nullptr,
                 this->restricted_admin_mode,
-                this->service_user, this->current_service_password,
+                this->service_user, this->current_service_password, this->service_keytab_path,
                 this->rand, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp),
                 bool(this->verbose & Verbose::negotiation)
