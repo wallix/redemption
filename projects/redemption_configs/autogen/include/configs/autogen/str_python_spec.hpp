@@ -985,7 +985,7 @@ bogus_vlc_frame_rate = boolean(default=True)
 codec_id = string(default='mp4')
 
 #_advanced
-framerate = integer(min=0, default=5)
+framerate = integer(min=1, max=120, default=5)
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 # /!\ Some browsers and video decoders don't support crf=0

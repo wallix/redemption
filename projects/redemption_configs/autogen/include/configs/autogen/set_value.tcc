@@ -1823,7 +1823,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::video::framerate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<::configs::spec_types::range<unsigned int, 1, 120>>{},
                 av
             );
         }

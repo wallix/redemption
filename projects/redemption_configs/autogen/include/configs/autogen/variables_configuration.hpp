@@ -3669,7 +3669,7 @@ namespace cfg {
         static constexpr char const * section = "video";
         static constexpr char const * name = "framerate";
         using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using sesman_and_spec_type = ::configs::spec_types::range<unsigned int, 1, 120>;
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
@@ -5857,7 +5857,6 @@ struct video
 , cfg::video::png_interval
 , cfg::video::frame_interval
 , cfg::video::png_limit
-, cfg::video::framerate
 , cfg::video::capture_flags
 , cfg::video::replay_path
 , cfg::video::hash_path
@@ -5870,6 +5869,7 @@ struct video
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
 , cfg::video::bogus_vlc_frame_rate
+, cfg::video::framerate
 , cfg::video::notimestamp
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
