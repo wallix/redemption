@@ -699,7 +699,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_vlc_frame_rate"}, desc{"Needed to play a video with old ffplay or VLC v1.\nNote: Useless with mpv, MPlayer or VLC v2."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"codec_id"}, set("mp4"));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"framerate"}, set(5));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::range<types::unsigned_, 1, 120>>(), names{"framerate"}, set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"ffmpeg_options"}, desc{
             "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
             "/!\\ Some browsers and video decoders don't support crf=0"
