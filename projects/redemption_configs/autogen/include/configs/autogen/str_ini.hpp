@@ -1228,6 +1228,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #codec_id = mp4
 
+# min = 1, max = 120
 # min = 0
 #_advanced
 #framerate = 5

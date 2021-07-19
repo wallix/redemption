@@ -3252,7 +3252,7 @@ namespace cfg
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
+        using sesman_and_spec_type = ::configs::spec_types::range<unsigned, 1, 120>;
         using mapped_type = sesman_and_spec_type;
         type value { 5 };
     };
