@@ -416,6 +416,19 @@ public:
     , keylayout(keylayout)
     {}
 
+    void log6(LogId id, KVLogList kv_list)
+    {
+        this->session_log.log6(id, kv_list);
+
+        if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
+            std::string msg;
+            for (auto const& kv : kv_list) {
+                str_append(msg, kv.key, '=', kv.value, ' ');
+            }
+            LOG(LOG_INFO, "type=%s %s", msg, detail::log_id_string_map[unsigned(id)]);
+        }
+    }
+
     bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
     {
         LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::rdp_input_scancode: device_flags=0x%04X keyCode=0x%X", keyboardFlags, keyCode);
@@ -953,6 +966,57 @@ public:
             FileSystemVirtualChannel& rdpdr_channel = *this->file_system_virtual_channel;
 
             rdpdr_channel.disable_session_probe_drive();
+        }
+        else if (!::strcasecmp(order.c_str(), "WEB_NAVIGATION")) {
+            if (parameters.size() == 1) {
+                this->log6(LogId::WEB_NAVIGATION, {
+                    KVLog("url"_av, parameters[0]),
+                });
+            }
+        }
+        else if (!::strcasecmp(order.c_str(), "EDIT_CHANGED")) {
+            if (parameters.size() == 2) {
+                this->log6(LogId::EDIT_CHANGED, {
+                    KVLog("window"_av, parameters[0]),
+                    KVLog("edit"_av, parameters[1]),
+                });
+            }
+        }
+        else if (!::strcasecmp(order.c_str(), "EDIT_CHANGED_2")) {
+            if (parameters.size() == 3) {
+                this->log6(LogId::EDIT_CHANGED_2, {
+                    KVLog("window"_av, parameters[0]),
+                    KVLog("edit"_av, parameters[1]),
+                    KVLog("value"_av, parameters[2]),
+                });
+            }
+        }
+        else if (!::strcasecmp(order.c_str(), "SELECT_CHANGED")) {
+            if (parameters.size() == 3) {
+                this->log6(LogId::SELECT_CHANGED, {
+                    KVLog("window"_av, parameters[0]),
+                    KVLog("edit"_av, parameters[1]),
+                    KVLog("value"_av, parameters[2]),
+                });
+            }
+        }
+        else if (!::strcasecmp(order.c_str(), "BUTTON_CLICKED")) {
+            if (parameters.size() == 2) {
+                this->log6(LogId::BUTTON_CLICKED, {
+                    KVLog("window"_av, parameters[0]),
+                    KVLog("button"_av, parameters[1]),
+                });
+            }
+        }
+        else if (!::strcasecmp(order.c_str(), "CHECKBOX_CLICKED")) {
+            if (parameters.size() == 3) {
+                this->log6(LogId::CHECKBOX_CLICKED, {
+                    KVLog("window"_av, parameters[0]),
+                    KVLog("checkbox"_av, parameters[1]),
+                    KVLog("state"_av,
+                        ::button_state_to_string(::atoi(parameters[2].c_str()))),
+                });
+            }
         }
         else {
             LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
