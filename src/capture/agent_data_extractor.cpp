@@ -307,6 +307,10 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
                 break;
             case LogId::EDIT_CHANGED:
                 return line_with_2_var("windows"_av, "edit"_av);
+            case LogId::EDIT_CHANGED_2:
+                return line_with_3_var("windows"_av, "edit"_av, "value"_av);
+            case LogId::SELECT_CHANGED:
+                return line_with_3_var("windows"_av, "edit"_av, "value"_av);
             case LogId::DRIVE_REDIRECTION_USE:
                 return line_with_2_var("device_name"_av, "device_type"_av);
             case LogId::DRIVE_REDIRECTION_READ:
@@ -460,6 +464,8 @@ bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
         case LogId::BUTTON_CLICKED:
         case LogId::CHECKBOX_CLICKED:
         case LogId::EDIT_CHANGED:
+        case LogId::EDIT_CHANGED_2:
+        case LogId::SELECT_CHANGED:
         case LogId::DRIVE_REDIRECTION_USE:
         case LogId::DRIVE_REDIRECTION_READ:
         case LogId::DRIVE_REDIRECTION_WRITE:

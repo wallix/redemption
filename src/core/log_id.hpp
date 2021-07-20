@@ -124,7 +124,9 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(DYNAMIC_CHANNEL_CREATION_ALLOWED, DynamicChannel)          \
     f(DYNAMIC_CHANNEL_CREATION_REJECTED, DynamicChannel)         \
     f(FILE_BLOCKED, FileVerification)                            \
-    f(SESSION_LOCKED, Session)
+    f(SESSION_LOCKED, Session)                                   \
+    f(EDIT_CHANGED_2, Widget)                                    \
+    f(SELECT_CHANGED, Widget)
 
 
 enum class LogId : unsigned

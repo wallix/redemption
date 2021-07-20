@@ -1438,6 +1438,18 @@ public:
                         message_format_invalid = true;
                     }
                 }
+                else if (!::strcasecmp(order_.c_str(), "EDIT_CHANGED_2")) {
+                    if (parameters_.size() == 3) {
+                        this->log6(LogId::EDIT_CHANGED_2, {
+                            KVLog("window"_av, parameters_[0]),
+                            KVLog("edit"_av, parameters_[1]),
+                            KVLog("value"_av, parameters_[2]),
+                        });
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
 
                 else if (!::strcasecmp(order_.c_str(), "WEB_ATTEMPT_TO_PRINT")) {
                     if (parameters_.size() == 2) {
