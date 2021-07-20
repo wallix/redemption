@@ -165,7 +165,7 @@ public:
         if (!message.empty()) {
             str_assign(this->osd_message,
                        message,
-                       ' ',
+                       '\n',
                        TR(trkeys::disable_osd, language(this->ini)));
             this->allow_disable_osd_message = true;
             this->is_disable_by_input = true;
