@@ -34,7 +34,8 @@ except Exception:
     tracelog = traceback.format_exc()
     try:
         from .fake.proxyengine import *
-        LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
+        import os
+        LOCAL_TRACE_PATH_RDP = os.getenv('LOCAL_TRACE_PATH_RDP') or u'/var/wab/recorded/rdp/'
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
