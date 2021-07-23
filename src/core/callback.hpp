@@ -60,34 +60,6 @@ enum : uint16_t {
     MOUSE_FLAG_WHEEL_NEGATIVE      = 0x0100
 };
 
-struct WidgetApi : private noncopyable
-{
-    using KbdFlags = kbdtypes::KbdFlags;
-    using Scancode = kbdtypes::Scancode;
-    using KeyLocks = kbdtypes::KeyLocks;
-
-    virtual ~WidgetApi() = default;
-    virtual void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) = 0;
-    virtual void rdp_input_unicode(KbdFlags flag, uint16_t unicode) { (void)unicode; (void)flag; }
-    virtual void rdp_input_mouse(int device_flags, int x, int y) = 0;
-    virtual void rdp_input_synchronize(KeyLocks locks) = 0;
-    virtual void rdp_input_invalidate(Rect r) = 0;
-    void rdp_input_invalidate2(array_view<Rect> vr) {
-        for (Rect const & rect : vr) {
-            if (!rect.isempty()) {
-                this->rdp_input_invalidate(rect);
-            }
-        }
-    }
-
-    virtual void rdp_allow_display_updates(uint16_t /*left*/, uint16_t /*top*/, uint16_t /*right*/, uint16_t /*bottom*/)
-    {}
-    virtual void rdp_suppress_display_updates() {}
-
-    virtual void refresh(Rect clip) = 0;
-};
-
-
 struct RdpInput : private noncopyable
 {
     using KbdFlags = kbdtypes::KbdFlags;

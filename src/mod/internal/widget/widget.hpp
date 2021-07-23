@@ -50,7 +50,7 @@ enum NotifyEventType
     NOTIFY_VSCROLL,
 };
 
-class Widget : public WidgetApi, public NotifyApi
+class Widget : public RdpInput, public NotifyApi
 {
 public:
     struct Color
@@ -173,8 +173,12 @@ public:
         return w;
     }
 
-    // External world can generate 4 kind of events
-    // - keyboard event (scancode)
+    void rdp_gdi_up_and_running() override
+    {}
+
+    void rdp_gdi_down() override
+    {}
+
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override {
         (void)flags;
         (void)scancode;
