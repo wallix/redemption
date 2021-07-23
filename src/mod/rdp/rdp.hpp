@@ -1554,9 +1554,9 @@ public:
             channel.log(-1u);
         }
 
-        if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-        }
+        flags |= (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL)
+            ? CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+            : uint32_t();
 
         if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;

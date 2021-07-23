@@ -389,9 +389,7 @@ video_recorder::video_recorder(
     REDEMPTION_DIAGNOSTIC_POP()
 
     // some formats want stream headers to be separate
-    if(fmt->flags & AVFMT_GLOBALHEADER){
-        this->d->codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
+    this->d->codec_ctx->flags |= (fmt->flags & AVFMT_GLOBALHEADER) ? AV_CODEC_FLAG_GLOBAL_HEADER : 0;
 
     // dump_format can be handy for debugging
     // it dump information about file to stderr

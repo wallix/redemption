@@ -957,10 +957,7 @@ public:
         Bounds bounds(oldcommon.clip, this->clip);
 
         header.control |= (this->order != oldcommon.order) * CHANGE;
-
-        if (header.control & BOUNDS){
-            header.control |= ((bounds.bounds_flags == 0) * LASTBOUNDS);
-        }
+        header.control |= (header.control & BOUNDS) ? ((bounds.bounds_flags == 0) * LASTBOUNDS) : 0;
 
         this->_emit(stream, header);
 

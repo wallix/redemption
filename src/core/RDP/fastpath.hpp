@@ -547,12 +547,9 @@ namespace FastPath {
 
             this->eventFlags = eventHeader & 0x1F;
 
-            //if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
-            //    this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE;
-            //}
-            this->spKeyboardFlags = (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE) ?
-                                    SlowPath::KBDFLAGS_RELEASE :
-                                    0;
+            this->spKeyboardFlags = (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE)
+                                  ? SlowPath::KBDFLAGS_RELEASE
+                                  : 0;
 
             if (!stream.in_check_rem(2)) {
                 LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: data truncated, expected=2 remains=%zu",

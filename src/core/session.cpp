@@ -127,12 +127,11 @@ class Session
         })
         , time_base(time_base)
         {
-            if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
-                this->dont_log |= LogCategoryId::Drive;
-            }
-            if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
-                this->dont_log |= LogCategoryId::Clipboard;
-            }
+            auto has_drive = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
+            auto has_clipboard = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
+
+            this->dont_log |= (has_drive ? LogCategoryId::Drive : LogCategoryId::None);
+            this->dont_log |= (has_clipboard ? LogCategoryId::Clipboard : LogCategoryId::None);
         }
 
         [[nodiscard]]
