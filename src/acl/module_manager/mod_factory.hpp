@@ -43,6 +43,7 @@
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
+#include "scard/scard_rdp_mod.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
@@ -414,5 +415,22 @@ public:
         mod_pack.enable_osd = true;
         mod_pack.connected = true;
         return mod_pack;
+    }
+
+    auto create_smartcard_mod() -> ModPack
+    {
+        auto new_mod = new SmartcardMod(
+            this->ini,
+            this->front,
+            this->events,
+            this->graphics,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
+        
+        return {new_mod, nullptr, nullptr, true, true, nullptr};
     }
 };

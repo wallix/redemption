@@ -28,11 +28,12 @@ enum class ModuleName : uint8_t
     autotest = 15,
     widgettest = 16,
     card = 17,
+    smartcard = 18,
 };
 
 template<> struct is_valid_enum_value<ModuleName>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 17; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 18; }
 };
 
 // Specifies the type of data to be captured:

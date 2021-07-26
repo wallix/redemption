@@ -585,6 +585,10 @@ private:
             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_transition_mod();
             break;
+        
+        case ModuleName::smartcard:
+            mod_pack = mod_factory.create_smartcard_mod();
+            break;
 
         case ModuleName::INTERNAL:
         case ModuleName::UNKNOWN:

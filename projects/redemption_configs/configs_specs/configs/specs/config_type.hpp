@@ -45,6 +45,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("autotest")
       .value("widgettest")
       .value("card")
+      .value("smartcard")
     ;
 
     e.enumeration_flags("CaptureFlags", "Specifies the type of data to be captured:")

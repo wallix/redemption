@@ -23,6 +23,7 @@ inline constexpr zstring_view enum_zstr_ModuleName[] {
     "autotest"_zv,
     "widgettest"_zv,
     "card"_zv,
+    "smartcard"_zv,
 };
 
 inline constexpr zstring_view enum_zint_ModuleName[] {
@@ -44,6 +45,7 @@ inline constexpr zstring_view enum_zint_ModuleName[] {
     "15"_zv,
     "16"_zv,
     "17"_zv,
+    "18"_zv,
 };
 
 zstring_view assign_zbuf_from_cfg(
@@ -74,7 +76,7 @@ parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<ModuleName> /*ty
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 17>()
+        std::integral_constant<ul, 18>()
     )) {
         return err;
     }
@@ -103,12 +105,13 @@ inline constexpr std::pair<chars_view, ModuleName> enum_str_value_ModuleName[] {
     {"AUTOTEST"_av, ModuleName::autotest},
     {"WIDGETTEST"_av, ModuleName::widgettest},
     {"CARD"_av, ModuleName::card},
+    {"SMARTCARD"_av, ModuleName::smartcard},
 };
 
 parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_ModuleName>(
-        x, value, "bad value, expected: UNKNOWN, login, selector, confirm, challenge, valid, transitory, close, close_back, interactive_target, RDP, VNC, INTERNAL, waitinfo, bouncer2, autotest, widgettest, card");
+        x, value, "bad value, expected: UNKNOWN, login, selector, confirm, challenge, valid, transitory, close, close_back, interactive_target, RDP, VNC, INTERNAL, waitinfo, bouncer2, autotest, widgettest, card, smartcard");
 }
 
 zstring_view assign_zbuf_from_cfg(

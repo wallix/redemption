@@ -1,0 +1,90 @@
+/*
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
+
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
+
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2021
+    Author(s): Florent Plard
+*/
+
+#pragma once
+
+#include <memory>
+
+#include "configs/config_access.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/rail_mod_base.hpp"
+#include "core/events.hpp"
+#include "scard/scard_bridge.hpp"
+
+using SmartcardModVariables = vcfg::variables<
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
+    vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
+    vcfg::var<cfg::internal_mod::enable_target_field,   vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+>;
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+class SmartcardMod : public RailModBase, public NotifyApi
+{
+public:
+    ///
+    SmartcardMod(
+        SmartcardModVariables vars,
+        FrontAPI &front,
+        EventContainer &events,
+        gdi::GraphicApi &graphics,
+        uint16_t width, uint16_t height,
+        ClientExecute &rail_client_execute,
+        const Font &font,
+        const Theme &theme
+    );
+
+    ///
+    void init() override;
+
+    ///
+    void acl_update(const AclFieldMask &acl_fields) override;
+
+    ///
+    void notify(Widget &sender, notify_event_t event) override;
+
+    ///
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
+        InStream &chunk, size_t length, uint32_t flags) override;
+
+private:
+    ///
+    SmartcardModVariables _variables;
+
+    ///
+    EventsGuard _events_guard;
+
+    ///
+    CopyPaste _copy_paste;
+
+    ///
+    std::unique_ptr<scard_bridge> _scard_bridge_ptr;
+};

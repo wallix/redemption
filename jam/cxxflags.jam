@@ -26,6 +26,7 @@ REDEMPTION_CXXFLAGS +=
     <define>_LARGEFILE64_SOURCE
 
     <conditional>@flags
+    <include>/usr/include/PCSC/
 ;
 
 # ./compiler-options.lua -f -stl_fix,msvc_isystem,msvc_isystem_with_template_from_non_external,exceptions,sanitizers_extra,pie,rtti,coverage generators/bjam.lua cxx- >> cxxflags.jam

@@ -34,6 +34,7 @@ inline ModuleName get_internal_module_id_from_target(std::string_view target_nam
     if (target_name == "widget2_message") return ModuleName::selector;
     if (target_name == "widgettest") return ModuleName::widgettest;
     if (target_name == "card") return ModuleName::card;
+    if (target_name == "smartcard") return ModuleName::smartcard;
     return ModuleName::UNKNOWN;
 }
 
@@ -56,6 +57,7 @@ inline const char * get_module_name(ModuleName module_id) noexcept
         case ModuleName::selector:              return "MODULE_INTERNAL_SELECTOR";
         case ModuleName::widgettest:            return "MODULE_INTERNAL_WIDGETTEST";
         case ModuleName::waitinfo:              return "MODULE_INTERNAL_WAIT_INFO";
+        case ModuleName::smartcard:             return "MODULE_INTERNAL_SMARTCARD";
         case ModuleName::transitory:            return "MODULE_TRANSITORY";
         case ModuleName::UNKNOWN: break;
     }
