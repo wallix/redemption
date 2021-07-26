@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 # compress: tar --zstd -cf kbdlayout.info.zst kbdlayout.info
 # uncompress: tar --zstd -xf kbdlayout.info.zst
 
-./kbd_parser.py \
+./gen_cpp.py \
   kbdlayout.info/00000405.xml \
   kbdlayout.info/00000406.xml \
   kbdlayout.info/00000407.xml \
