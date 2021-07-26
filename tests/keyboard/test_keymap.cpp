@@ -24,10 +24,6 @@ Author(s): Proxies Team
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 
-
-#if !REDEMPTION_UNIT_TEST_FAST_CHECK
-# include "utils/sugar/int_to_chars.hpp"
-
 namespace
 {
 
@@ -35,18 +31,30 @@ struct DecodedKeyAndKEvent
 {
     Keymap::DecodedKeys decoded_keys;
     Keymap::KEvent kevent;
+
+    bool operator == (DecodedKeyAndKEvent const& other) const noexcept
+    {
+        return decoded_keys.keycode == other.decoded_keys.keycode
+            && decoded_keys.flags == other.decoded_keys.flags
+            && decoded_keys.uchars[0] == other.decoded_keys.uchars[0]
+            && decoded_keys.uchars[1] == other.decoded_keys.uchars[1]
+            && kevent == other.kevent;
+    }
 };
+
+}
+
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+# include "utils/sugar/int_to_chars.hpp"
+
+namespace
+{
 
 static ut::assertion_result test_comp_decoded(DecodedKeyAndKEvent a, DecodedKeyAndKEvent b)
 {
     ut::assertion_result ar(true);
 
-    if (REDEMPTION_UNLIKELY(a.decoded_keys.keycode != b.decoded_keys.keycode
-                         || a.decoded_keys.flags != b.decoded_keys.flags
-                         || a.decoded_keys.uchars[0] != b.decoded_keys.uchars[0]
-                         || a.decoded_keys.uchars[1] != b.decoded_keys.uchars[1]
-                         || a.kevent != b.kevent
-    )) {
+    if (REDEMPTION_UNLIKELY(!(a == b))) {
         ar = false;
 
         auto put = [&](std::ostream& out, DecodedKeyAndKEvent const& x){
