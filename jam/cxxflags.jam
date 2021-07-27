@@ -1,7 +1,7 @@
 # https://boostorg.github.io/build/manual/develop/index.html
 
 REDEMPTION_CXXFLAGS +=
-    <cxxflags>-std=c++17
+    <cxxflags>-std=c++2a
     <cxxflags>-msse3
 
     # clang-12 use -fbracket-depth as fold limit...

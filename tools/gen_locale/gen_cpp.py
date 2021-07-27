@@ -2,6 +2,7 @@
 from typing import Optional, NamedTuple
 from kbd_parser import KeymapType, KeyLayout, parse_argv
 from collections import OrderedDict
+import re
 
 class Key2(NamedTuple):
     codepoint:int
@@ -18,7 +19,7 @@ class LayoutInfo(NamedTuple):
     layout:KeyLayout
     keymaps:list[Keymap2]
 
-def load_layout_infos(layouts, mods,
+def load_layout_infos(layouts:list[KeyLayout], mods:dict,
                       unique_keymap:dict[Optional[tuple], int],
                       unique_deadkeys:dict[tuple, int]) -> list[LayoutInfo]:
     layouts2:list[LayoutInfo] = []
@@ -115,11 +116,8 @@ layouts2 = load_layout_infos(layouts, supported_mods, unique_keymap, unique_dead
 
 strings = [
     '#include "keyboard/keylayouts.hpp"\n\n',
-    '#include "cxx/diagnostic.hpp"\n\n',
     'constexpr auto DK = KeyLayout::DK;\n\n',
     'using KbdId = KeyLayout::KbdId;\n\n',
-    'REDEMPTION_DIAGNOSTIC_PUSH()\n',
-    'REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc++20-designator")\n\n',
 ]
 
 # print keymap (scancodes[256] with DK (mask for deadkey)
@@ -223,7 +221,7 @@ for layout in layouts2:
     k1 = unique_layout_keymap.setdefault(k1, len(unique_layout_keymap))
     k2 = unique_layout_dkeymap.setdefault(k2, len(unique_layout_dkeymap))
     layout = layout.layout
-    strings2.append(f'    KeyLayout{{KbdId(0x{layout.klid}), KeyLayout::RCtrlIsCtrl({layout.has_right_ctrl_like_oem8 and "false" or "true "}), "{layout.locale_name}"_zv, /*"{layout.display_name}"_zv, */keymap_mod_{k1}, dkeymap_mod_{k2}}},\n')
+    strings2.append(f'    KeyLayout{{KbdId(0x{layout.klid}), KeyLayout::RCtrlIsCtrl({layout.has_right_ctrl_like_oem8 and "false" or "true "}), "{layout.proxy_name or layout.locale_name}"_zv/*, "{layout.display_name}"_zv, "{layout.locale_name}"_zv*/, keymap_mod_{k1}, dkeymap_mod_{k2}}},\n')
 strings2.append('};\n')
 
 # print layout
@@ -247,7 +245,7 @@ strings2.append('{\n    switch (id)\n    {\n')
 for i,layout in enumerate(layouts):
     strings2.append(f'    case KbdId{{0x{layout.klid}}}: return &layouts[{i}];\n')
 strings2.append('    }\n    return nullptr;\n}\n')
-strings2.append('\nREDEMPTION_DIAGNOSTIC_POP()\n')
 
-print(''.join(strings))
-print(''.join(strings2))
+output = f"{''.join(strings)}\n{''.join(strings2)}"
+output = re.sub(' +\n', '\n', output)
+print(output)

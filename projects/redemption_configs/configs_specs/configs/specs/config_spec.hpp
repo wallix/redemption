@@ -28,7 +28,7 @@
 
 #include "include/debug_verbose_description.hpp"
 
-#include "keyboard/keymap2.hpp" // Keymap2::keylayouts()
+#include "keyboard/keylayouts.hpp"
 #include "utils/colors.hpp"
 #include "utils/file_permissions.hpp"
 
@@ -202,8 +202,8 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::unsigned_>(), names{"keyboard_layout"}, set(0));
         std::string keyboard_layout_proposals_desc;
-        for (auto const* k : Keymap2::keylayouts()) {
-            keyboard_layout_proposals_desc += k->locale_name;
+        for (KeyLayout const& layout : keylayouts()) {
+            keyboard_layout_proposals_desc += layout.name;
             keyboard_layout_proposals_desc += ", ";
         }
         if (!keyboard_layout_proposals_desc.empty()) {

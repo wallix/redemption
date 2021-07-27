@@ -58,7 +58,7 @@ LanguageButton::LanguageButton(
             .as<std::string_view>();
 
         auto const it = std::find_if(begin(layouts), end(layouts), [&](KeyLayout const& k){
-            return k.locale_name.to_sv() == name;
+            return k.name.to_sv() == name;
         });
         if (it != end(layouts)) {
             if (it->kbdid != front_layout.kbdid) {
@@ -71,7 +71,7 @@ LanguageButton::LanguageButton(
         }
     }
 
-    this->set_text(this->locales.front().get().locale_name);
+    this->set_text(this->locales.front().get().name);
 
     Dimension dim = this->get_optimal_dim();
     this->set_wh(dim);
@@ -85,7 +85,7 @@ void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
 
         this->selected_language = (this->selected_language + 1) % this->locales.size();
         KeyLayout const& layout = this->locales[this->selected_language];
-        this->set_text(layout.locale_name);
+        this->set_text(layout.name);
 
         Dimension dim = this->get_optimal_dim();
         this->set_wh(dim);

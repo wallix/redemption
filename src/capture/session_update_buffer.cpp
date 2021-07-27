@@ -139,12 +139,12 @@ SessionUpdateBuffer::DataIterator & SessionUpdateBuffer::DataIterator::operator+
     return *this;
 }
 
-bool SessionUpdateBuffer::DataIterator::operator==(const SessionUpdateBuffer::DataIterator& other) noexcept
+bool SessionUpdateBuffer::DataIterator::operator==(const SessionUpdateBuffer::DataIterator& other) const noexcept
 {
     return iterator_ == other.iterator_;
 }
 
-bool SessionUpdateBuffer::DataIterator::operator!=(const SessionUpdateBuffer::DataIterator& other) noexcept
+bool SessionUpdateBuffer::DataIterator::operator!=(const SessionUpdateBuffer::DataIterator& other) const noexcept
 {
     return !(*this == other);
 }

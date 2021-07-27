@@ -125,7 +125,7 @@ struct KeyLayout
 
     KbdId kbdid;
     RCtrlIsCtrl right_ctrl_is_ctrl;
-    zstring_view locale_name;
+    zstring_view name;
 
     sized_array_view<sized_array_view<unicode_t, 256>, 64> keymap_by_mod;
     sized_array_view<sized_array_view<DKeyTable, 128>, 64> dkeymap_by_mod;

@@ -167,8 +167,7 @@ private:
     public:
         storage_value_set & storage;
 
-        using pointer = typename std::allocator<T>::pointer;
-        using size_type = typename std::allocator<T>::size_type;
+        using size_type = std::size_t;
 
         template<class U>
         struct rebind {
@@ -196,7 +195,7 @@ private:
             return static_cast<T*>(this->storage.pop());
         }
 
-        void deallocate(pointer p, size_type /*n*/)
+        void deallocate(T * p, size_type /*n*/)
         {
             this->storage.push(p);
         }

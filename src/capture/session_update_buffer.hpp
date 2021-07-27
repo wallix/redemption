@@ -55,8 +55,8 @@ public:
     {
         DataIterator& operator++() noexcept;
         Data const& operator*() noexcept;
-        bool operator==(DataIterator const& other) noexcept;
-        bool operator!=(DataIterator const& other) noexcept;
+        bool operator==(DataIterator const& other) const noexcept;
+        bool operator!=(DataIterator const& other) const noexcept;
 
     private:
         EventContainer::const_iterator iterator_;

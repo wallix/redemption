@@ -236,8 +236,6 @@ namespace
         auto duration = t.time_since_epoch();
         return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
     }
-
-    const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
 } // namespace
 
 
