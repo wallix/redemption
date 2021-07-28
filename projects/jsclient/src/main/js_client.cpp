@@ -200,8 +200,8 @@ namespace
     RDPVerbose extract_rdp_verbose(emscripten::val const& config)
     {
         static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
-        return get_or(config, "verbose", RDPVerbose(0));
-        // | (get_or(config, "verbose2", uint32_t(0)) << 32);
+        return get_or(config, "verbosity", RDPVerbose(0));
+        // | (get_or(config, "verbosity2", uint32_t(0)) << 32);
     }
 }
 
@@ -503,9 +503,9 @@ public:
         this->mod->rdp_input_scancode(flags, key, 0, *keymap);
     }
 
-    void write_unicode_event(kbdtypes::KbdFlags flag, uint16_t unicode)
+    void write_unicode_event(uint16_t unicode, uint16_t flag)
     {
-        this->mod->rdp_input_unicode(flag, unicode);
+        this->mod->rdp_input_unicode(kbdtypes::KbdFlags(flag), unicode);
     }
 
     void write_mouse_event(int x, int y, int device_flags)

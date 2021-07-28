@@ -135,7 +135,7 @@ div, section, canvas{
         </fieldset>
         <fieldset>
             <legend>Others</legend>
-            <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
+            <label for="verbosity">verbosity: <input type="text" id="verbosity" name="verbosity" placeholder="Verbosity"/></label>
             <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
         </fieldset>
         </div>
@@ -185,7 +185,7 @@ div, section, canvas{
 
 <script src="js_client.js"></script>
 <script src="scancodes.js"></script>
-<script src="reversed_keylayouts.js"></script>
+<script src="reversed_layouts.js"></script>
 <script src="rdp_graphics.js"></script>
 <script src="out_stream.js"></script>
 <script src="clipboard.js"></script>
@@ -204,7 +204,7 @@ const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
 const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const disabled_graphics_input = document.getElementById('disabledGraphics');
-const verbose_input = document.getElementById('verbose');
+const verbosity_input = document.getElementById('verbosity');
 const kbdmethod_input = document.getElementById('kbdmethod');
 const kbdlayout_input = document.getElementById('kbdlayout');
 const kbdos_input = document.getElementById('kbdos');
@@ -225,11 +225,11 @@ const ctrlAltDel = document.getElementById('ctrlAltDel');
 let defaultLayoutId;
 for (let i = 0; i < layouts.length; ++i) {
     const layout = layouts[i];
-    const name = layout.name;
+    const displayName = layout.displayName;
     const opt = document.createElement('option');
-    opt.textContent = `${name} (0x${layout.lcid.toString(16).padStart(5, '0')})`;
+    opt.textContent = `${layout.localeName} 0x${layout.klid.toString(16).padStart(5, '0')} (${displayName})`;
     opt.value = i;
-    if (name === 'fr-FR') {
+    if (displayName === 'French') {
         opt.selected = true;
         defaultLayoutId = i;
     }
@@ -637,7 +637,7 @@ function run(openCb, closeCb)
         console.group('keyboard');
         console.log(`method: (${kbdMethodId}) ${kbdmethod_input[kbdMethodId].value}`);
         if (kbdMethodId <= 1) {
-            console.log(`layout: (0x${layout.lcid.toString(16)}) ${layout.name}`);
+            console.log(`layout: (0x${layout.klid.toString(16)}) ${layout.name}`);
             console.log(`OS: ${kbdOsType}`);
             ucs2scancode.setLayout(layout);
             ucs2scancode.setOSBehavior(kbdOsType);
@@ -699,18 +699,21 @@ function run(openCb, closeCb)
             username: user_input.value,
             password: pass_input.value,
             // getRandomValues: (data) => crypto.getRandomValues(data),
-            verbose: Number(verbose_input.value) || 0/*0x04000000*/,
+            verbosity: Number(verbosity_input.value) || 0/*0x04000000*/,
         }, JSON.parse(jsonConfig_input.value || '{}'));
 
         console.table(config);
 
         rdpclient = new RdpClient(gd, config);
 
+        window.rdpclient = rdpclient;
+        window.sendData = sendData;
+
         const cliprdr = new Cliprdr(cbFiles, sendData, Module);
         const clipboard = new ClipboardChannel(
             rdpclient.getCallbackAsVoidPtr(),
             cliprdr,
-            /*verbose = */0x04000000);
+            /*verbosity = */0x04000000);
         cliprdr.setEmcChannel(clipboard);
         addChannel(clipboard);
 
@@ -794,7 +797,7 @@ const inputs = {
     height: [height_input, 'value', number],
     bpp: [bpp_input, 'selectedIndex', parseInt],
     gdimpl: [gdimpl_input, 'selectedIndex', identity],
-    verbose: [verbose_input, 'value', number],
+    verbosity: [verbosity_input, 'value', number],
     kbdmethod: [kbdmethod_input, 'selectedIndex', identity],
     kbdlayout: [kbdlayout_input, 'selectedIndex', numberOrDefault(defaultLayoutId)],
     kbdos: [kbdos_input, 'checked', checkedTrue],
