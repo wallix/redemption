@@ -10,14 +10,14 @@ from kbd_parser import KeymapType, KeyLayout, Key, parse_argv
 
 vk_control_masks = {
     '':             0,
-    'VK_SHIFT':     0x10000 << 0,
-    'VK_CONTROL':   0x10000 << 1,
-    'VK_MENU':      0x10000 << 2,
-    'VK_NUMLOCK':   0x10000 << 3,
-    'VK_CAPITAL':   0x10000 << 4,
-    'VK_OEM_8':     0x10000 << 5,
-    'VK_KANA':      0x10000 << 6,
-    'VK_KANALOCK':  0x10000 << 7,
+    'VK_SHIFT':     1 << 0,
+    'VK_CONTROL':   1 << 1,
+    'VK_MENU':      1 << 2,
+    'VK_NUMLOCK':   1 << 3,
+    'VK_CAPITAL':   1 << 4,
+    'VK_OEM_8':     1 << 5,
+    'VK_KANA':      1 << 6,
+    'VK_KANALOCK':  1 << 7,
 }
 
 vk_actions = {
@@ -141,44 +141,64 @@ char_to_char_table = {
     '\'': '\\\'',
 }
 
+codepoint_to_jskey = {
+    0x08: 'Backspace',
+    0x5E: 'Tab',
+    0x1C: 'Enter',
+    0x1B: 'Escape',
+}
+
 def vk_mod_to_mod_flags(mods:str) -> int:
     mod_flags = 0
     for m in mods.split(' '):
         mod_flags |= vk_control_masks[m]
     return mod_flags
 
-def key_to_value(key:Key, mod_flags:int) -> int:
+def key_to_scancode(key:Key) -> int:
     extended = 0x100 if key.is_extended() else 0
     scancode = key.scancode & 0x7f
-    return mod_flags | extended | scancode
+    return extended | scancode
 
 
 layouts:list[KeyLayout] = parse_argv()
 
 error_messages = []
+# output = ['// keymap: { text: { mod_flags: [scancodes...] } }\n']
+output = ['// keymap: { text: { mod_flags: scancode } }\n']
+output = ['// actions: { name: scancode }\n']
+output = ['// deadkeys: { text: [ idxAccent, idxKeymap, idxKeymap ? ]\n']
+output = ['// accents: [ { mod_flags: [scancodes...] } ]\n']
 output = ['const layouts = [\n']
 
 for layout in layouts:
+    normal_rkeymap = {}
+    special_rkeymap = {}
+    action_rkeymap = {}
     # text character and action
-    rkeymap = {}
-    actions_keymap = {}
     for mods,keymap in layout.keymaps.items():
         mod_flags = vk_mod_to_mod_flags(mods)
         for key in keymap:
             if key and not key.deadkeys:
                 if key.text:
-                    map:list = rkeymap.setdefault((key.text, key.codepoint), [])
-                    value = key_to_value(key, mod_flags)
-                    map.append(f'0x{value:x}, ')
+                    map:dict = normal_rkeymap.setdefault((key.text, key.codepoint), {})
+                    scancodes:list = map.setdefault(mod_flags, [])
+                    scancodes.append(f'0x{key_to_scancode(key):x}, ')
+
+                    if text := codepoint_to_jskey.get(key.codepoint, None):
+                        special_rkeymap[(text, key.codepoint)] = map
+                    elif key.text == ' ':
+                        special_rkeymap[('Space', key.codepoint)] = map
+
                 elif key_and_scancode := vk_actions.get(key.vk, None):
-                    if mod_flags not in (0, 0x80000): # noMod and numLock
+                    if mod_flags not in (0, 0x8): # noMod and numLock
                         error_messages.append(f'Action key with control key ({key.vk} + {mods or "noMod"}) in {layout.display_name} (0x{layout.klid})')
                     else:
-                        scancode = (key.scancode & 0x7f) | (0x100 if key.scancode & 0x80 else 0)
+                        scancode = key_to_scancode(key)
                         if key_and_scancode[1] != scancode and (key.vk, scancode) not in vk_actions_dup:
-                            actions_keymap[key_and_scancode[0]] = scancode
+                            action_rkeymap[key_and_scancode[0]] = scancode
+
                 elif key.vk is not None and key.vk not in vk_unknowns:
-                    if not (key.codepoint == 0 and mod_flags in (0, 0x80000, 0x20000)): # noMod numLock ctrl
+                    if not (key.codepoint == 0 and mod_flags in (0, 0x8, 0x2)): # noMod numLock ctrl
                         error_messages.append(f'Unknown {key} + {mods or "noMod"} in {layout.display_name} (0x{layout.klid})')
 
     # dead key and dead key of dead key
@@ -188,19 +208,19 @@ for layout in layouts:
         mod_flags = vk_mod_to_mod_flags(mods)
         for key in keymap:
             if key and key.deadkeys:
-                value = key_to_value(key, mod_flags)
+                value = key_to_scancode(key)
                 for dkey in key.deadkeys.values():
                     if not dkey.deadkeys:
-                        map:tuple[set,set] = rdeadkeymap.setdefault(dkey.text, (set(), set()))
-                        map[0].add(f'0x{value:x}, ')
+                        map:tuple[dict,set] = rdeadkeymap.setdefault(dkey.text, (dict(), set()))
+                        map[0].setdefault(mod_flags, []).append(f'0x{value:x}, ')
                         map[1].add(f"'{char_to_char_table.get(dkey.with_, dkey.with_)}', ")
                     else:
                         m0 = f'0x{value:x}, '
                         m1 = f"'{char_to_char_table.get(dkey.with_, dkey.with_)}', "
                         for dkey2 in dkey.deadkeys.values():
                             assert not dkey2.deadkeys
-                            map:tuple[set,set] = rdeadkeymap2.setdefault(dkey2.text, (set(), set(), set()))
-                            map[0].add(m0)
+                            map:tuple[dict,set,set] = rdeadkeymap2.setdefault(dkey2.text, (dict(), set(), set()))
+                            map[0].setdefault(mod_flags, []).append(m0)
                             map[1].add(m1)
                             map[2].add(f"'{char_to_char_table.get(dkey2.with_, dkey2.with_)}', ")
 
@@ -211,31 +231,42 @@ for layout in layouts:
 
     output.append(f'{{\n  klid: 0x{layout.klid},\n  localeName: "{layout.locale_name}",\n  displayName: "{layout.display_name}",\n  ctrlRightIsOem8: {"true" if layout.has_right_ctrl_like_oem8 else "false"},\n  keymap: {{\n')
 
-    for (text, codepoint), rkeys in rkeymap.items():
-        k = char_to_char_table.get(text) or (text if text.isprintable() else f'\\x{codepoint:02x}')
-        output.append(f"    '{k}': [{''.join(rkeys)}],\n")
+    for rkeymap in (normal_rkeymap, special_rkeymap):
+        for (text, codepoint), scancodes_by_mods in rkeymap.items():
+            k = char_to_char_table.get(text) or (text if text.isprintable() else f'\\x{codepoint:02x}')
+            output.append(f"    '{k}': {{ ")
+            for mod_flags, rkeys in scancodes_by_mods.items():
+                # output.append(f"      0x{mod_flags:x}: [{''.join(rkeys)}], \n")
+                output.append(f"0x{mod_flags:x}: {rkeys[0]}")
+            output.append("},\n")
 
-    for name, scancode in actions_keymap.items():
-        output.append(f"    '{name}': [0x{scancode|0xff0000:x}],\n")
+    output.append('  },\n  actions: {\n')
+    for name, scancode in action_rkeymap.items():
+        output.append(f"    {name}: 0x{scancode:x},\n")
 
     output.append('  },\n  deadkeys: {\n')
-    output.append('    // text: [accenref, VKs]\n')
 
     accents = dict()
-    push_ref = lambda rkeys1: accents.setdefault(''.join(rkeys1), len(accents))
+    push_ref = lambda scancodes_by_mods: \
+        accents.setdefault(
+            ''.join(\
+                f"0x{mod_flags:x}: {', '.join(scancodes)}" \
+                    for mod_flags, scancodes in scancodes_by_mods.items()),
+            len(accents)
+        )
 
-    for text, (rkeys1, rkeys2) in rdeadkeymap.items():
+    for text, (scancodes_by_mods, rkeys1) in rdeadkeymap.items():
         text = char_to_char_table.get(text, text)
-        output.append(f"    '{text}': [{push_ref(rkeys1)}, [{''.join(rkeys2)}]],\n")
+        output.append(f"    '{text}': [{push_ref(scancodes_by_mods)}, [{', '.join(rkeys1)}]],\n")
 
-    for text, (rkeys1, rkeys2, rkeys3) in rdeadkeymap2.items():
+    for text, (scancodes_by_mods, rkeys1, rkeys2) in rdeadkeymap2.items():
         text = char_to_char_table.get(text, text)
-        output.append(f"    '{text}': [{push_ref(rkeys1)}, [{''.join(rkeys2)}], [{''.join(rkeys3)}]],\n")
+        output.append(f"    '{text}': [{push_ref(scancodes_by_mods)}, [{', '.join(rkeys1)}], [{', '.join(rkeys2)}]],\n")
 
     output.append('  },\n  accents: [\n')
 
     for scancodes in accents:
-        output.append(f'    [{scancodes}],\n')
+        output.append(f'    [{{{scancodes}}}],\n')
 
     output.append('  ]\n},\n')
 
@@ -245,14 +276,6 @@ output.append('const actionLayout = {')
 for key_and_scancode in vk_actions.values():
     output.append(f'  "{key_and_scancode[0]}": 0x{key_and_scancode[1]:x},\n')
 output.append('};')
-
-# output.append('\n\nconst layoutsByKlid = {\n')
-# for i,layout in enumerate(layouts):
-#     output.append(f'  0x{layout.klid}: layouts[{i}],\n')
-# output.append('};\n\nconst layoutsByDisplayName = {\n')
-# for i,layout in enumerate(layouts):
-#     output.append(f'  "{layout.display_name}": layouts[{i}],\n')
-# output.append('};')
 
 print(''.join(output))
 

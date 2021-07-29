@@ -183,35 +183,27 @@ const keycodeToSingleScancode = function(code) {
     }
 };
 
-/// \return Array[Number] | undefined
-const keycodeToMultiScancodes = function(code) {
-    switch (code)
-    {
-    case "Pause": return [0x001D, 0x0045];
-    }
-};
-
 /// \return Number | undefined
 const numpadKeyToScancode = function(key) {
     switch (key)
     {
-    case "Escape":                  return 0x0001;
-    case "*":                       return 0x0037;
-    case "7": case "Home":          return 0x0047;
-    case "8": case "ArrowUp":       return 0x0048;
-    case "9": case "PageUp":        return 0x0049;
-    case "-":                       return 0x004A;
-    case "4": case "ArrowLeft":     return 0x004B;
-    case "5": case "Unidentified":  return 0x004C;
-    case "6": case "AltRight":      return 0x004D;
-    case "+":                       return 0x004E;
-    case "1": case "End":           return 0x004F;
-    case "2": case "ArrowDown":     return 0x0050;
-    case "3": case "PageDown":      return 0x0051;
-    case "0": case "Insert":        return 0x0052;
-    case ".": case "Delete":        return 0x0053;
-    case "=":                       return 0x0059;
-    case ",":                       return 0x007E;
+    case "Escape":                  return 0x01;
+    case "*":                       return 0x37;
+    case "7": case "Home":          return 0x47;
+    case "8": case "ArrowUp":       return 0x48;
+    case "9": case "PageUp":        return 0x49;
+    case "-":                       return 0x4A;
+    case "4": case "ArrowLeft":     return 0x4B;
+    case "5": case "Unidentified":  return 0x4C;
+    case "6": case "AltRight":      return 0x4D;
+    case "+":                       return 0x4E;
+    case "1": case "End":           return 0x4F;
+    case "2": case "ArrowDown":     return 0x50;
+    case "3": case "PageDown":      return 0x51;
+    case "0": case "Insert":        return 0x52;
+    case ".": case "Delete":        return 0x53;
+    case "=":                       return 0x59;
+    case ",":                       return 0x7E;
     case "Enter":                   return 0x11C;
     case "/":                       return 0x135;
     case "NumLock":                 return 0x145;
@@ -220,36 +212,35 @@ const numpadKeyToScancode = function(key) {
 
 /// \brief convert keycode to scancodes
 /// \return Array[Number] | undefined
-const keycodeToScancodes = function(k, flag) {
-    const scancode = keycodeToSingleScancode(k);
+const codeToScancodes = function(code, flag) {
+    const scancode = keycodeToSingleScancode(code);
     if (scancode) return [scancode | flag];
-    const scancodes = keycodeToMultiScancodes(k);
-    if (scancodes) return [scancodes[0] | flag, scancodes[1] | flag];
+    if (code === "Pause") return [0x21D | flag, 0x45 | flag];
 };
 
 
 // reverse keylayout mask
-const NoMod = 0x10000 << 0;
-const ShiftMod = 0x10000 << 1;
-const AltGrMod = 0x10000 << 2;
-const ShiftAltGrMod = 0x10000 << 3;
-// const CapsLockMod = 0x10000 << 4;
-// const ShiftCapsLockMod = 0x10000 << 5;
-// const AltGrCapsLockMod = 0x10000 << 6;
-// const ShiftAltGrCapsLockMod = 0x10000 << 7;
-const CtrlMod = 0x10000 << 8;
+const NoMod       = 0;
+const ShiftMod    = 1 << 0;
+const CtrlMod     = 1 << 1;
+const AltMod      = 1 << 2;
+const NumLockMod  = 1 << 3;
+const CapsLockMod = 1 << 4;
+const OEM8Mod     = 1 << 5;
+const KanaMod     = 1 << 6;
+const KanaLockMod = 1 << 7;
 
 // extra flags
-const AltMod = 0x10000 << 9;
-const ShiftRightMod = 0x1 << 1;
-const CtrlRightMod = 0x1 << 8;
-const BothCtrlMod = CtrlMod | CtrlRightMod;
-const BothShiftMod = ShiftMod | ShiftRightMod;
+const AltGrMod      = 1 << 8;
+const RightShiftMod = 1 << 9;
+const RightCtrlMod  = 1 << 10;
+const BothCtrlMod   = CtrlMod | RightCtrlMod;
+const BothShiftMod  = ShiftMod | RightShiftMod;
 
-// move CtrlRightMod/ShiftRightMod into CtrlMod/ShiftMod
+// move RightCtrlMod/RightShiftMod into CtrlMod/ShiftMod
 const modMaskToUndirectionalMod = function(m) {
-    return (m & ~0xffff) | ((m & (ShiftRightMod | CtrlRightMod)) << 16);
-}
+    return (m & ~0xffff) | ((m & (RightShiftMod | RightCtrlMod)) << 16);
+};
 
 // Control scancodes
 const ShiftLeftScancode = 0x2A;
@@ -259,63 +250,26 @@ const CtrlRightScancode = 0x11D;
 const AltScancode = 0x38;
 const AltGrScancode = 0x138;
 
-const ReleaseKeyFlag = 0x8000;
-const AcquireKeyFlag = 0;
+const Release = 0x8000;
+const Acquire = 0;
 
-const windowsControlMaskMap = {
-    [ShiftMod]: ShiftMod,
-    [AltGrMod]: AltGrMod,
-    [CtrlMod]: CtrlMod,
-    [AltMod]: AltMod,
 
-    [ShiftMod | AltGrMod]: ShiftAltGrMod,
-    [ShiftMod | CtrlMod]: ShiftMod | CtrlMod,
-    [ShiftMod | AltMod]: ShiftMod | AltMod,
-
-    [AltGrMod | CtrlMod]: AltGrMod,
-    [AltGrMod | AltMod]: AltGrMod,
-
-    [CtrlMod | AltMod]: AltGrMod,
-
-    [ShiftMod | AltGrMod | CtrlMod]: ShiftAltGrMod,
-    [ShiftMod | AltGrMod | AltMod]: ShiftAltGrMod,
-    [ShiftMod | CtrlMod | AltMod]: ShiftAltGrMod,
-
-    [AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod,
-
-    [ShiftMod | AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod,
-};
-
-const linuxControlMaskMap = {
-    [ShiftMod]: ShiftMod,
-    [AltGrMod]: AltGrMod,
-    [CtrlMod]: CtrlMod,
-    [AltMod]: AltMod,
-
-    [ShiftMod | AltGrMod]: ShiftAltGrMod,
-    [ShiftMod | CtrlMod]: ShiftMod | CtrlMod,
-    [ShiftMod | AltMod]: ShiftMod | AltMod,
-
-    [AltGrMod | CtrlMod]: AltGrMod | CtrlMod,
-    [AltGrMod | AltMod]: AltGrMod,
-
-    [CtrlMod | AltMod]: CtrlMod | AltMod,
-
-    [ShiftMod | AltGrMod | CtrlMod]: ShiftAltGrMod | CtrlMod,
-    [ShiftMod | AltGrMod | AltMod]: ShiftAltGrMod,
-    [ShiftMod | CtrlMod | AltMod]: ShiftMod | CtrlMod | AltMod,
-
-    [AltGrMod | CtrlMod | AltMod]: AltGrMod | CtrlMod,
-
-    [ShiftMod | AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod | CtrlMod,
-};
+// Control scancodes
+const LShiftSC   = 0x2A;
+const RShiftSC   = 0x36;
+const LCtrlSC    = 0x1D;
+const RCtrlSC    = 0x11D;
+const AltSC      = 0x38;
+const AltGrSC    = 0x138;
+const CapsLockSC = 0x3A;
+const NumLockSC  = 0x145;
 
 const windowsCtrlFilterMask = AltGrMod | AltMod;
 const linuxCtrlFilterMask = 0;
 
 const syncControls = function(scancodeFlag, modMask, accu) {
-    if (modMask & ShiftRightMod) accu.push(scancodeFlag | ShiftRightScancode);
-    if (modMask & CtrlRightMod)  accu.push(scancodeFlag | CtrlRightScancode);
+    if (modMask & RightShiftMod) accu.push(scancodeFlag | ShiftRightScancode);
+    if (modMask & RightCtrlMod)  accu.push(scancodeFlag | CtrlRightScancode);
     if (modMask & ShiftMod) accu.push(scancodeFlag | ShiftLeftScancode);
     if (modMask & CtrlMod)  accu.push(scancodeFlag | CtrlLeftScancode);
     if (modMask & AltMod)   accu.push(scancodeFlag | AltScancode);
@@ -327,13 +281,13 @@ const emulateKey = function(modMask, ...scancodes) {
     // /**/for (const x of [...scancodes]) console.log(`    scancode: 0x${x.toString(16)}`);
 
     const accu = [];
-    syncControls(ReleaseKeyFlag, modMask, accu);
+    syncControls(Release, modMask, accu);
     accu.push(...scancodes);
-    syncControls(AcquireKeyFlag, modMask, accu);
+    syncControls(Acquire, modMask, accu);
     return accu;
 };
 
-const searchScancodeWithMask = function(scancodeMods, controlMask) {
+const searchScancodeWithSameControlMask = function(scancodeMods, controlMask) {
     // /**/let s = ''; for (const x of scancodeMods) s += ` 0x${x.toString(16)},`;
     // /**/console.log(`search: (0x${controlMask.toString(16)}) ${s}`);
     const len = scancodeMods.length;
@@ -341,10 +295,247 @@ const searchScancodeWithMask = function(scancodeMods, controlMask) {
         const data = scancodeMods[i];
         if (data & controlMask) {
             // /**/console.log('0x'+(data & 0xff).toString(16))
-            return data & 0xff;
+            return data & 0xffff;
         }
     }
 };
+
+function keyToScancodeConverter = function() {
+    let rlayout;
+    let rkeymap;
+    let deadKeymap;
+    let accentKeymap;
+
+    let modFlags;
+    let virtualModFlags;
+
+    let ctrlIsOem8;
+
+    let isDeadKey = false;
+
+    const scancodeByModsToScancodes = function(scancodeByMods) {
+        let scancode = scancodeByMods[modFlags];
+        if (scancode) {
+            return [scancode | flag];
+        }
+
+        // emulate control key up/down
+
+        let expectedModFlags;
+        for (expectedModFlags in scancodeByMods) {
+            scancode = scancodeByMods[expectedModFlags];
+            break;
+        }
+
+        const down = flag ^ Release;
+        const release = flag & Release;
+
+        const accu = [];
+
+        // ctrl, alt, altgr, oem8
+        if ((modFlags ^ expectedModFlags) & (AltMod | CtrlMod | OEM8Mod)) {
+            const expectedAltFlags = expectedModFlags & AltMod;
+            const expectedCtrlFlags = expectedModFlags & CtrlMod;
+            const expectedOem8Flags = expectedModFlags & OEM8Mod;
+            switch (expectedAltFlags | expectedCtrlFlags | expectedOem8Flags) {
+                case 0:
+                    if (virtualModFlags & (RightCtrlMod | OEM8Mod)) accu.push(RCtrlSC | release);
+                    if (virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (virtualModFlags & AltMod) accu.push(AltSC | release);
+                    break;
+
+                case AltMod:
+                    if (!(virtualModFlags & AltMod)) accu.push(AltSC | down);
+                    if (virtualModFlags & (RightCtrlMod | OEM8Mod)) accu.push(RCtrlSC | release);
+                    if (virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    break;
+
+                case CtrlMod:
+                    if (!(virtualModFlags & (RightCtrlMod | CtrlMod))) accu.push(RCtrlSC | down);
+                    if (virtualModFlags & OEM8Mod) accu.push(RCtrlSC | release);
+                    if (virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (virtualModFlags & AltMod) accu.push(AltSC | release);
+                    break;
+
+                case OEM8Mod:
+                    if (!(virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    if (virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (virtualModFlags & AltMod) accu.push(AltSC | release);
+                    break;
+
+                case (AltMod | OEM8Mod):
+                    if (!(virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    if (!(virtualModFlags & AltMod)) accu.push(AltSC | down);
+                    if (virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    break;
+
+                case (CtrlMod | OEM8Mod):
+                    if (!(virtualModFlags & CtrlMod)) accu.push(LCtrlSC | down);
+                    if (!(virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    if (virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (virtualModFlags & AltMod) accu.push(AltSC | release);
+                    break;
+
+                case (AltMod | CtrlMod):
+                case (AltMod | CtrlMod | OEM8Mod):
+                    if (!(virtualModFlags & AltGrMod) && (virtualModFlags & (AltMod | CtrlMod)) != (AltMod | CtrlMod)) {
+                        if (virtualModFlags & (AltMod | CtrlMod)) {
+                            if (!(virtualModFlags & (CtrlMod | RightCtrlMod))) accu.push(LCtrlSC | down);
+                            if (!(virtualModFlags & AltMod)) accu.push(AltSC | down);
+                        }
+                        else accu.push(AltGrMod | down);
+                    }
+
+                    if (expectedOem8Flags) {
+                        if (!(virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    }
+                    else {
+                        if (virtualModFlags & OEM8Mod) accu.push(RCtrlSC | release);
+                    }
+                    break;
+            }
+        }
+
+        // left/right shift
+        if ((modFlags ^ expectedModFlags) & ShiftMod) {
+            if (expectedModFlags & ShiftMod) {
+                accu.push(LShiftSC | down);
+            }
+            else {
+                if (virtualModFlags & ShiftMod) accu.push(LShiftSC | release);
+                if (virtualModFlags & RightShiftMod) accu.push(RShiftSC | release);
+            }
+        }
+
+        // CapsLock
+        if ((modFlags ^ expectedModFlags) & CapsLockMod) {
+            accu.push(CapsLockSC | ((expectedModFlags & CapsLockMod) ? down : release));
+        }
+
+        // // KanaMod
+        // if ((modFlags ^ expectedModFlags) & KanaMod) {
+        //     accu.push(KanaModSC | ((expectedModFlags & KanaMod) ? down : release));
+        // }
+        //
+        // // KanaLockMod
+        // if ((modFlags ^ expectedModFlags) & KanaLockMod) {
+        //     accu.push(KanaLockSC | ((expectedModFlags & KanaLockMod) ? down : release));
+        // }
+
+        const accuLen = accu.length;
+        accu.push(scancode);
+        for (const i = 0; i < accuLen; ++i) {
+            accu.push(accu[i] ^ Release);
+        }
+
+        return accu;
+    };
+
+    /// @param flag = 0 or 0x8000 (Release)
+    const convert = function(key, code, flag) {
+        const scancodeByMods = rkeymap[key];
+        if (scancodeByMods) {
+            return scancodeByModsToScancodes(scancodeByMods);
+        }
+
+        const dk = deadKeymap[key];
+
+        // dead key
+        if (dk) {
+            const scancodeByMods = accentKeymap[dk[0]];
+            const accu = scancodeByModsToScancodes(accentKeymap[dk[0]]);
+            for (let i = 1; i < dk.length; ++i) {
+                accu.push(...scancodeByModsToScancodes(rkeymap[dk[i]]));
+            }
+            return accu;
+        }
+
+        // special
+        switch (key) {
+            case "CapsLock":
+                if (flag === Release) {
+                    virtualModFlags ^= CapsLockMod;
+                    modFlags ^= CapsLockMod;
+                }
+                return 0x3A;
+
+            case "NumLock":
+                if (flag === Release) {
+                    virtualModFlags ^= NumLockMod;
+                    modFlags ^= NumLockMod;
+                }
+                return 0x145;
+
+            case "ControlLeft":
+                virtualModFlags ^= CtrlMod;
+                modFlags ^= CtrlMod;
+                return 0x1D;
+
+            case "ControlRight":
+                if (ctrlIsOem8) {
+                    virtualModFlags ^= OEM8Mod;
+                    modFlags ^= OEM8Mod;
+                }
+                else {
+                    virtualModFlags ^= RightCtrlMod;
+                    modFlags ^= CtrlMod;
+                }
+                return 0x11D;
+
+            case "AltGraph":
+            case "AltRight":
+                virtualModFlags ^= AltGrMod;
+                modFlags ^= AltGrMod;
+                return 0x138;
+
+            case "AltLeft":
+                virtualModFlags ^= AltMod;
+                modFlags ^= AltMod;
+                return 0x38;
+
+            case "ShiftLeft":
+                virtualModFlags ^= ShiftMod;
+                modFlags ^= ShiftMod;
+                return 0x2A;
+
+            case "ShiftRight":
+                virtualModFlags ^= RightShiftMod;
+                modFlags ^= ShiftMod;
+                return 0x36;
+
+            default:
+                return codeToScancodes(code, flag);
+        }
+    };
+
+    convert.setLayout = (newLayout) => { layout = newLayout; };
+    convert.getLayout = () => layout;
+
+    convert.getModifierScancodes = () => {
+        if (virtualModFlags) {
+            const accu = [];
+            if (virtualModFlags & ShiftMod) accu.push(LShiftSC);
+            if (virtualModFlags & RightShiftMod) accu.push(RShiftSC);
+            if (virtualModFlags & CtrlMod)  accu.push(LCtrlSC);
+            if (virtualModFlags & (RightCtrlMod | OEM8Mod))  accu.push(RCtrlSC);
+            if (virtualModFlags & AltMod)   accu.push(AltSC);
+            if (virtualModFlags & AltGrMod) accu.push(AltGrSC);
+            if (virtualModFlags & CapsLockMod) accu.push(CapsLockSC);
+            if (virtualModFlags & NumLockMod) accu.push(NumLockSC);
+            return accu;
+        }
+    }
+
+    // states for test
+    convert.getVirtualModFlags = () => virtualModFlags;
+    convert.getModFlags = () => modFlags;
+
+    return convert;
+}
 
 /// \return a function (key, flag) => (Array[Number] | undefined)
 /// and add properties follow:
@@ -380,7 +571,7 @@ const createUnicodeToScancodeConverter = function(layout)
             isDeadKey = false;
             const codes = layout.deadmap[key];
             if (codes) {
-                const scancode = searchScancodeWithMask(codes[1], controlMask);
+                const scancode = searchScancodeWithSameControlMask(codes[1], controlMask);
                 if (scancode) {
                     return [codes[0], scancode];
                 }
@@ -391,7 +582,7 @@ const createUnicodeToScancodeConverter = function(layout)
         if (key.length === 1) {
             const datas = layout.keymap[key];
             if (datas) {
-                const scancode = searchScancodeWithMask(datas, controlMask);
+                const scancode = searchScancodeWithSameControlMask(datas, controlMask);
                 if (scancode) {
                     return [scancode | flag];
                 }
@@ -410,7 +601,7 @@ const createUnicodeToScancodeConverter = function(layout)
                         return emulateKey(mask,
                                           ShiftLeftScancode,
                                           data & 0xff | flag,
-                                          ShiftLeftScancode | ReleaseKeyFlag,
+                                          ShiftLeftScancode | Release,
                         );
                     }
                 }
@@ -423,7 +614,7 @@ const createUnicodeToScancodeConverter = function(layout)
                         return emulateKey(mask,
                                           AltGrScancode,
                                           data & 0xff | flag,
-                                          AltGrScancode | ReleaseKeyFlag,
+                                          AltGrScancode | Release,
                         );
                     }
                 }
@@ -436,14 +627,14 @@ const createUnicodeToScancodeConverter = function(layout)
                         return emulateKey(mask,
                                           ShiftLeftScancode,
                                           data & 0xff | flag,
-                                          ShiftLeftScancode | ReleaseKeyFlag,
+                                          ShiftLeftScancode | Release,
                         );
                     }
                     else if (controlMask & ShiftMod) {
                         return emulateKey(mask,
                                           AltGrScancode,
                                           data & 0xff | flag,
-                                          AltGrScancode | ReleaseKeyFlag,
+                                          AltGrScancode | Release,
                         );
                     }
                     else {
@@ -451,8 +642,8 @@ const createUnicodeToScancodeConverter = function(layout)
                                           ShiftLeftScancode,
                                           AltGrScancode,
                                           data & 0xff | flag,
-                                          AltGrScancode | ReleaseKeyFlag,
-                                          ShiftLeftScancode | ReleaseKeyFlag,
+                                          AltGrScancode | Release,
+                                          ShiftLeftScancode | Release,
                         );
                     }
                 }
@@ -467,7 +658,7 @@ const createUnicodeToScancodeConverter = function(layout)
                 }
 
                 case 'Shift': {
-                    const mod = isRightKey ? ShiftRightMod : ShiftMod;
+                    const mod = isRightKey ? RightShiftMod : ShiftMod;
                     if (flag) {
                         modMask &= ~mod;
                     }
@@ -479,7 +670,7 @@ const createUnicodeToScancodeConverter = function(layout)
                 }
 
                 case 'Control': {
-                    const mod = isRightKey ? CtrlRightMod : CtrlMod;
+                    const mod = isRightKey ? RightCtrlMod : CtrlMod;
                     if (flag) {
                         modMask &= ~mod;
                     }
@@ -512,7 +703,7 @@ const createUnicodeToScancodeConverter = function(layout)
 
                 case 'OS': return [flag | (isRightKey ? 0x15C : 0x15B)];
                 case 'CapsLock': return ;
-                default: return keycodeToScancodes(key, flag);
+                default: return codeToScancodes(key, flag);
             }
 
             controlMask = controlMaskMap[modMaskToUndirectionalMod(modMask)] || NoMod;
@@ -555,7 +746,7 @@ const createUnicodeToScancodeConverter = function(layout)
 try {
     module.exports.keycodeToSingleScancode = keycodeToSingleScancode;
     module.exports.keycodeToMultiScancodes = keycodeToMultiScancodes;
-    module.exports.keycodeToScancodes = keycodeToScancodes;
+    module.exports.codeToScancodes = codeToScancodes;
     module.exports.createUnicodeToScancodeConverter = createUnicodeToScancodeConverter;
     module.exports.numpadKeyToScancode = numpadKeyToScancode;
 }

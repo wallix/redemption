@@ -498,7 +498,7 @@ public:
     void write_scancode_event(uint16_t scancode_and_flags)
     {
         auto key = kbdtypes::Scancode(scancode_and_flags);
-        auto flags = kbdtypes::KbdFlags(scancode_and_flags);
+        auto flags = kbdtypes::KbdFlags(scancode_and_flags & 0xff00);
         Keymap* keymap = nullptr;
         this->mod->rdp_input_scancode(flags, key, 0, *keymap);
     }
