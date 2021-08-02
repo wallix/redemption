@@ -315,11 +315,15 @@ bool Keymap::is_tsk_switch_shortcut() const noexcept
 {
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
     auto ctrl = ctrl_01u(_key_flags, rctrl_is_ctrl);
-    // ctrl+alt/altgr+del or ctrl+shift+esc
-    return ((ctrl & shift_01u(_key_flags)) && _decoded_key.keycode == KeyCode::Esc)
-        || ((ctrl & (altgr_01u(_key_flags) | alt_01u(_key_flags)))
-            && (_decoded_key.keycode == KeyCode::Delete
-             || _decoded_key.keycode == KeyCode::NumpadDelete));
+
+    if (!ctrl) {
+        return false;
+    }
+
+    // ctrl+alt+del or ctrl+shift+esc
+    return (alt_01u(_key_flags) && (_decoded_key.keycode == KeyCode::Delete
+                                 || _decoded_key.keycode == KeyCode::NumpadDelete))
+        || (shift_01u(_key_flags) && _decoded_key.keycode == KeyCode::Esc);
 }
 
 bool Keymap::is_app_switching_shortcut() const noexcept
@@ -328,10 +332,14 @@ bool Keymap::is_app_switching_shortcut() const noexcept
         return false;
     }
 
+    auto is_down = !((underlying_cast(_decoded_key.flags) >> 15) & 0x1u);
+    if (!is_down) {
+        return false;
+    }
+
+    // alt+tab, ctrl+tab, ctrl+alt+tab
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
-    auto ctrl = ctrl_01u(_key_flags, rctrl_is_ctrl);
-    auto alt = alt_01u(_key_flags);
-    return bool(ctrl ^ alt);
+    return alt_01u(_key_flags) || ctrl_01u(_key_flags, rctrl_is_ctrl);
 }
 
 bool Keymap::is_alt_pressed() const noexcept

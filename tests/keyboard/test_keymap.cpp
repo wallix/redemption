@@ -229,4 +229,64 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(release | 0x4b /*numpad4*/), values(KCode(0x4b), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x53 /*numpad.*/), values(KCode(0x53), KFlags(), {'.'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x53 /*numpad.*/), values(KCode(0x53), KFlags(0x8000), {}, KV::None));
+
+    // shortcut for task manager
+    // ctrl+alt+del
+    RED_CHECK_EQ(event(downnnn | 0x11d /*right ctrl*/), values(KCode(0x80 | 0x1d), KFlags(0x0100), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x38 /*alt*/), values(KCode(0x38), KFlags(), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x153 /*del*/), values(KCode(0x80 | 0x53), KFlags(0x0100), {}, KV::Delete));
+    RED_CHECK(keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(release | 0x38 /*alt*/), values(KCode(0x38), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(release | 0x11d /*right ctrl*/), values(KCode(0x80 | 0x1d), KFlags(0x8100), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(release | 0x153 /*del*/), values(KCode(0x80 | 0x53), KFlags(0x8100), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+
+    // shortcut for task manager
+    // ctrl+shift+esc
+    RED_CHECK_EQ(event(downnnn | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x2a /*shift*/), values(KCode(0x2a), KFlags(), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x01 /*esc*/), values(KCode(0x01), KFlags(), {}, KV::Esc));
+    RED_CHECK(keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(release | 0x2a /*shift*/), values(KCode(0x2a), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(release | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(release | 0x01 /*esc*/), values(KCode(0x01), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+
+    // application switching
+    // alt+tab
+    RED_CHECK_EQ(event(downnnn | 0x38 /*alt*/), values(KCode(0x38), KFlags(), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {}, KV::Tab));
+    RED_CHECK(keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(release | 0x0F /*tab*/), values(KCode(0x0F), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {}, KV::Tab));
+    RED_CHECK(keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(release | 0x0F /*tab*/), values(KCode(0x0F), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(release | 0x38 /*alt*/), values(KCode(0x38), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
+
+    // application switching
+    // alt+ctrl
+    RED_CHECK_EQ(event(downnnn | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::None));
+    RED_CHECK(!keymap.is_tsk_switch_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {}, KV::Tab));
+    RED_CHECK(keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(release | 0x0F /*tab*/), values(KCode(0x0F), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {}, KV::Tab));
+    RED_CHECK(keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(release | 0x0F /*tab*/), values(KCode(0x0F), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
+    RED_CHECK_EQ(event(release | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(0x8000), {}, KV::None));
+    RED_CHECK(!keymap.is_app_switching_shortcut());
 }
