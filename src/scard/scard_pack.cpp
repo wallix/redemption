@@ -2751,7 +2751,7 @@ void scard_pack_return_set_attrib::log(int level) const
 //
 // FreeRDP appears not to be encoding the whole Return structure in cases where
 // the ReturnCode is an error ReturnCode. The whole Return structure should always
-// be encoded not matter what the ReturnCode is.
+// be encoded no matter what the ReturnCode is.
 bool has_more_payload_bytes_compat(InStream &stream, SCARD_PACK_LONG return_code)
 {
     if (!return_code)

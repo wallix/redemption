@@ -67,15 +67,14 @@ public:
 private:
     ///
     typedef std::tuple<
-        std::string, std::string, std::string
+        std::string, std::string
     > credentials_container;
 
     ///
     enum
     {
         credentials_entry_index_principal_name = 0,
-        credentials_entry_index_password = 1,
-        credentials_entry_index_security_code = 2
+        credentials_entry_index_security_code = 1
     };
 
     ///

@@ -50,8 +50,8 @@ public:
     ~scard_krb_client();
 
     ///
-    bool get_credentials(std::string x509_identity, std::string pin,
-        std::string principal_name, std::string password);
+    bool get_credentials(std::string pkcs11_identity,
+        std::string principal_name, std::string security_code);
 
 private:
     ///

@@ -26,7 +26,6 @@
 
 // TEST ONLY
 #define TEST_PRINCIPAL_NAME "cyrille@INFERNO.PROXY"
-#define TEST_PASSWORD       "SecureLinux$42"
 #define TEST_SECURITY_CODE  "123456"
 // TEST ONLY
 
@@ -40,7 +39,7 @@
 scard_bridge::scard_bridge(FrontAPI &front, EventContainer &events)
     :
     _events_guard(events),
-    _credentials(TEST_PRINCIPAL_NAME, TEST_PASSWORD, TEST_SECURITY_CODE),
+    _credentials(TEST_PRINCIPAL_NAME, TEST_SECURITY_CODE),
     _rdp_channel_established(false),
     _state(false)
 {
@@ -276,8 +275,6 @@ void scard_bridge::handle_pkcs11_enumeration_end(
         credentials_entry_index_principal_name>(_credentials);
     const auto &security_code = std::get<
         credentials_entry_index_security_code>(_credentials);
-    const auto &password = std::get<
-        credentials_entry_index_password>(_credentials);
     
     // filter matching identities
     auto it = std::find_if(identities.begin(), identities.end(),
@@ -295,8 +292,7 @@ void scard_bridge::handle_pkcs11_enumeration_end(
         // get Kerberos initial credentials
         _krb_client_future = std::async(std::launch::async,
             &scard_krb_client::get_credentials, _krb_client_ptr.get(),
-                it->string(), security_code,
-                principal_name, password);
+                it->string(), principal_name, security_code);
     }
     else
     {

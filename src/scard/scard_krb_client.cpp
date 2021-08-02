@@ -32,9 +32,8 @@ scard_krb_client::~scard_krb_client()
     }
 }
 
-bool scard_krb_client::get_credentials(
-    std::string x509_identity, std::string pin,
-    std::string principal_name, std::string password)
+bool scard_krb_client::get_credentials(std::string pkcs11_identity,
+    std::string principal_name, std::string security_code)
 {
     krb5_error_code ret;
     krb5_creds creds{};
@@ -58,7 +57,7 @@ bool scard_krb_client::get_credentials(
 
         // set pre-authentication options
         ret = krb5_get_init_creds_opt_set_pa(_context, pa_opts,
-            attr, x509_identity.c_str());
+            attr, pkcs11_identity.c_str());
         if (ret)
         {
             LOG(LOG_INFO, "scard_krb_client::get_credentials: "
@@ -90,7 +89,7 @@ bool scard_krb_client::get_credentials(
 
     // get initial credentials, performing pre-authentication
     ret = krb5_get_init_creds_password(_context, &creds, princ,
-        password.c_str(), &prompt_password, const_cast<char *>(pin.c_str()),
+        nullptr, &prompt_password, const_cast<char *>(security_code.c_str()),
         0, nullptr, pa_opts);
     if (ret)
     {

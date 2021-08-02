@@ -722,9 +722,6 @@ public:
                     size += element.packed_size();
                 }
             }
-
-            // padding
-            //size += get_padding_size(_elements.size());
         }
 
         return size;
@@ -817,9 +814,6 @@ public:
         {
             n_packed += element.pack_deferred(stream, pointer_index);
         }
-
-        // padding
-        //n_packed += pad(stream, _elements.size());
 
         return n_packed;
     }
