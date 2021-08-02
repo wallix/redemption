@@ -89,7 +89,7 @@ class AuthentifierSharedData():
         if DEBUG:
             Logger().info(u'send_data (on the wire) length = %s' % len(_list))
 
-        _r_data = b''.join(s for t in _list for s in t[2])
+        _r_data = b''.join(t[2] for t in _list)
         self.proxy_conx.sendall(pack('>H', len(_list)))
         self.proxy_conx.sendall(_r_data)
 
