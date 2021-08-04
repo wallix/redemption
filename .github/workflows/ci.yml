@@ -36,7 +36,7 @@ jobs:
       run: |
         DPKG_CACHE=~/dpkg_cache3
         if [[ "$CACHE_HIT" == 'true' ]]; then
-          sudo cp --force --recursive "$DPKG_CACHE"/* /
+          sudo cp --force --recursive --preserve=all "$DPKG_CACHE"/* /
         else
           # libbz2-dev libpng-dev libssl-dev already installed and freeze restoration
           deps=(
@@ -67,7 +67,10 @@ jobs:
             done
             echo /usr/include/boost/
             find /usr/lib* -type f -name 'libboost_*'
-          } | xargs cp --recursive --parents --target-directory "$DPKG_CACHE"
+            find /usr/include -wholename '*/com_err.h'
+            find /usr/include -wholename '*/mit-krb5/*'
+            find /usr/lib* -wholename '*/mit-krb5/*.so'
+          } | xargs cp --recursive --parents --preserve=all --target-directory "$DPKG_CACHE"
         fi
 
 
