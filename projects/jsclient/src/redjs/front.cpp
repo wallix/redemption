@@ -146,7 +146,7 @@ RED_JS_BINDING_CONSTANTS(
 RED_JS_BINDING_CONSTANTS(
     KbdFlags,
 
-    (("Down",      0x4000))
+    (("Down",      0x0000))
     (("Release",   0x8000))
     (("Extended",  0x0100))
     (("Extended1", 0x0200))

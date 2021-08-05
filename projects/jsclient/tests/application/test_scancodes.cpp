@@ -59,7 +59,8 @@ static ut::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
         auto putval = [](std::ostream& out, emscripten::val const& v){
             out << (v.isUndefined() ? "undefined" : "not_array");
         };
-        return ut::create_assertion_result(false, v, " != ", ref.a, overload{putseq, putval});
+        bool is_undefined = v.isUndefined() && ref.a.data() == nullptr;
+        return ut::create_assertion_result(is_undefined, v, " != ", ref.a, overload{putseq, putval});
     }
 }
 
@@ -68,294 +69,300 @@ RED_TEST_DISPATCH_COMPARISON_EQ((), (::emscripten::val), (::U16Array), ::scancod
 
 RED_JS_AUTO_TEST_CASE(
     TestUnicodeToScancode,
-    (emscripten::val unicodeToScancode),
+    (emscripten::val reversedKeymap),
     (() => {
-        const converter = require("src/application/scancodes").createUnicodeToScancodeConverter;
-        const layout = {
-            name: "fr-FR", lcid: 0x0000040c, keymap: {
-                /*  A */ "\u0041": [
-                    0x00120010 /*   | S |   |     | L |     |     |       |   */,
-                ],
-                /*  a */ "\u0061": [
-                    0x00110010 /* N |   |   |     |   | L+S |     |       |   */,
-                ],
-                /*  b */ "\u0062": [
-                    0x00210030 /* N |   |   |     |   | L+S |     |       |   */,
-                ],
-                /*  o */ "\u006f": [
-                    0x00210018 /* N |   |   |     |   | L+S |     |       |   */,
-                ],
-            }, deadmap: {
-                //                    ~
-                /*  õ */ "\u00f5": [0x03, [
-                    //  o
-                    0x00210018 /* N |   |   |     |   | L+S |     |       |   */,
-                ]],
+        const ReversedKeymap = require("src/application/scancodes").ReversedKeymap;
+        const layouts = require("src/application/reversed_layouts").layouts;
+        for (const layout of layouts) {
+            if (layout.localeName === "fr-FR") {
+                return new ReversedKeymap(layout);
             }
-        };
-
-        return converter(layout);
+        }
     })()
 ) {
-    auto convert = [&unicodeToScancode](char const* key, unsigned state, bool is_right = false){
-        return unicodeToScancode(std::string(key), state, is_right);
+    auto toScancodes2 = [&](std::string_view key, std::string_view code, uint16_t state){
+        return reversedKeymap.call<emscripten::val>("toScancodesAndFlags", std::string(key), std::string(code), state);
     };
 
-    auto getControlMask = [&unicodeToScancode]{
-        return unicodeToScancode.call<uint32_t>("getControlMask");
+    auto toScancodes = [&](std::string_view key, uint16_t state){
+        return toScancodes2(key, key, state);
     };
 
-    auto getModMask = [&unicodeToScancode]{
-        return unicodeToScancode.call<uint32_t>("getModMask");
+    auto getVirtualModFlags = [&reversedKeymap]{
+        return reversedKeymap.call<uint32_t>("getVirtualModFlags");
     };
 
-    auto isDeadKey = [&unicodeToScancode]{
-        return unicodeToScancode.call<bool>("isDeadKey");
+    auto getModFlags = [&reversedKeymap]{
+        return reversedKeymap.call<uint32_t>("getModFlags");
     };
 
     const unsigned keyAcquire = 0;
     const unsigned keyRelease = 0x8000;
 
-    const uint32_t Zero     {0};
-    const uint32_t NoMod    {  0x1'0000};
-    const uint32_t ShiftMod {  0x2'0000};
-    const uint32_t AltGrMod {  0x4'0000};
-    const uint32_t CtrlMod  {0x100'0000};
-    const uint32_t AltMod   {0x200'0000};
-    const uint32_t ShiftRightMod {0x2};
-    auto const h32 = ut::hex_int{8};
+    const uint32_t NoMod       = 0;
+    const uint32_t ShiftMod    = 1 << 0;
+    const uint32_t CtrlMod     = 1 << 1;
+    const uint32_t AltMod      = 1 << 2;
+    // const uint32_t NumLockMod  = 1 << 3;
+    // const uint32_t CapsLockMod = 1 << 4;
+    // const uint32_t OEM8Mod     = 1 << 5;
+    // const uint32_t KanaMod     = 1 << 6;
+    // const uint32_t KanaLockMod = 1 << 7;
+    const uint32_t AltGrMod      = 1 << 8;
+    const uint32_t RightShiftMod = 1 << 9;
+    const uint32_t RightCtrlMod  = 1 << 10;
+    auto const h32 = ut::hex_int::u32();
 
     #define TEST_HEX32(...) BOOST_TEST(__VA_ARGS__, h32)
 
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("y", keyAcquire).isUndefined());
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    // unknown character
+    //@{
+    RED_CHECK(toScancodes("ß", keyAcquire) == U16Array());
+    TEST_HEX32(getModFlags() == 0);
+    TEST_HEX32(getVirtualModFlags() == 0);
+    //@}
 
     // b
     //@{
-    RED_CHECK(convert("b", keyAcquire) == U16A(0x30));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("b", keyAcquire) == U16A(0x30));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("b", keyRelease) == U16A(0x8030));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("b", keyRelease) == U16A(0x8030));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // A
     //@{
-    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("A", keyAcquire) == U16A(0x10));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("A", keyRelease) == U16A(0x8010));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // A'
     //@{
-    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("A", keyAcquire) == U16A(0x10));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("a", keyRelease) == U16A(0x8010));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("a", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // A shift right
     //@{
-    RED_CHECK(convert("Shift", keyAcquire, true) == U16A(0x36));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftRightMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftRight", keyAcquire) == U16A(0x36));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == RightShiftMod);
 
-    RED_CHECK(convert("A", keyAcquire) == U16A(0x10));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftRightMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == RightShiftMod);
 
-    RED_CHECK(convert("A", keyRelease) == U16A(0x8010));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftRightMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == RightShiftMod);
 
-    // right = false -> unchanged state
-    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftRightMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    // ShiftLeft is already released -> unchanged state
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == RightShiftMod);
 
-    RED_CHECK(convert("Shift", keyRelease, true) == U16A(0x8036));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftRight", keyRelease) == U16A(0x8036));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // A shift right + left
     //@{
-    RED_CHECK(convert("Shift", keyAcquire, true) == U16A(0x36));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftRightMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftRight", keyAcquire) == U16A(0x36));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == RightShiftMod);
 
-    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == (ShiftMod | ShiftRightMod));
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == (ShiftMod | RightShiftMod));
 
-    RED_CHECK(convert("A", keyAcquire) == U16A(0x10));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == (ShiftMod | ShiftRightMod));
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == (ShiftMod | RightShiftMod));
 
-    RED_CHECK(convert("A", keyRelease) == U16A(0x8010));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == (ShiftMod | ShiftRightMod));
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == (ShiftMod | RightShiftMod));
 
-    RED_CHECK(convert("Shift", keyRelease, true) == U16A(0x8036));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftRight", keyRelease) == U16A(0x8036));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // a with Shift
     //@{
-    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("a", keyAcquire) == U16A(0x802A, 0x10, 0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("a", keyAcquire) == U16A(0x802A, 0x10, 0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("a", keyRelease) == U16A(0x802A, 0x8010, 0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("a", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // a' with Shift
     //@{
-    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("a", keyAcquire) == U16A(0x802A, 0x10, 0x2A));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == ShiftMod);
-    TEST_HEX32(getControlMask() == ShiftMod);
+    RED_CHECK(toScancodes("a", keyAcquire) == U16A(0x802A, 0x10, 0x2A));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
 
-    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("a", keyRelease) == U16A(0x8010));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("a", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // õ
     //@{
-    RED_CHECK(convert("Dead", keyAcquire).isUndefined());
-    RED_CHECK(isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("Dead", keyAcquire) == U16Array());
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("Dead", keyRelease).isUndefined());
-    RED_CHECK(isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("Dead", keyRelease) == U16Array());
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("õ", keyAcquire) == U16A(0x03, 0x18));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("õ", keyAcquire) == U16A(0x138, 0x03, 0x8138, 0x18));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(convert("o", keyRelease) == U16A(0x8018));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes("o", keyRelease) == U16A(0x8018));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
     // Ctrl, Alt, AltGr
     //@{
-    RED_CHECK(convert("Control", keyAcquire) == U16A(0x1D));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == CtrlMod);
-    TEST_HEX32(getControlMask() == CtrlMod);
+    RED_CHECK(toScancodes2("Control", "ControlLeft", keyAcquire) == U16A(0x1D));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == CtrlMod);
 
-    RED_CHECK(convert("Alt", keyAcquire) == U16A(0x38));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == (CtrlMod | AltMod));
-    TEST_HEX32(getControlMask() == AltGrMod);
+    RED_CHECK(toScancodes2("Alt", "AltLeft", keyAcquire) == U16A(0x38));
+    TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
+    TEST_HEX32(getVirtualModFlags() == (CtrlMod | AltMod));
 
-    RED_CHECK(convert("Control", keyRelease) == U16A(0x801D));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == AltMod);
-    TEST_HEX32(getControlMask() == AltMod);
+    RED_CHECK(toScancodes2("Control", "ControlLeft", keyRelease) == U16A(0x801D));
+    TEST_HEX32(getModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == AltMod);
 
-    RED_CHECK(convert("AltGraph", keyAcquire) == U16A(0x138));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == (AltMod | AltGrMod));
-    TEST_HEX32(getControlMask() == AltGrMod);
+    RED_CHECK(toScancodes2("AltGraph", "AltRight", keyAcquire) == U16A(0x138));
+    TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
+    TEST_HEX32(getVirtualModFlags() == (AltMod | AltGrMod));
 
-    RED_CHECK(convert("Alt", keyRelease) == U16A(0x8038));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == AltGrMod);
-    TEST_HEX32(getControlMask() == AltGrMod);
+    RED_CHECK(toScancodes2("Alt", "AltLeft", keyRelease) == U16A(0x8038));
+    TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
+    TEST_HEX32(getVirtualModFlags() == AltGrMod);
 
-    RED_CHECK(convert("AltGraph", keyRelease) == U16A(0x8138));
-    RED_CHECK(!isDeadKey());
-    TEST_HEX32(getModMask() == Zero);
-    TEST_HEX32(getControlMask() == NoMod);
+    RED_CHECK(toScancodes2("AltGraph", "AltRight", keyRelease) == U16A(0x8138));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Alt", "AltLeft", keyAcquire) == U16A(0x38));
+    TEST_HEX32(getModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == AltMod);
+
+    RED_CHECK(toScancodes2("Control", "ControlRight", keyAcquire) == U16A(0x11D));
+    TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
+    TEST_HEX32(getVirtualModFlags() == (RightCtrlMod | AltMod));
+
+    RED_CHECK(toScancodes2("Control", "ControlRight", keyRelease) == U16A(0x811D));
+    TEST_HEX32(getModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == AltMod);
+
+    RED_CHECK(toScancodes2("Alt", "AltLeft", keyRelease) == U16A(0x8038));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
+
+    // Shift
+    //@{
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2a));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == ShiftMod);
+
+    RED_CHECK(toScancodes2("Shift", "ShiftRight", keyAcquire) == U16A(0x36));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == (ShiftMod | RightShiftMod));
+
+    RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyRelease) == U16A(0x802a));
+    TEST_HEX32(getModFlags() == ShiftMod);
+    TEST_HEX32(getVirtualModFlags() == RightShiftMod);
+
+    RED_CHECK(toScancodes2("Shift", "ShiftRight", keyRelease) == U16A(0x8036));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
+    // OS
+    //@{
+    RED_CHECK(toScancodes2("OS", "OSLeft", keyAcquire) == U16A(0x15b));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("OS", "OSRight", keyAcquire) == U16A(0x15c));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("OS", "OSLeft", keyRelease) == U16A(0x815b));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("OS", "OSRight", keyRelease) == U16A(0x815c));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
+    // TODO check other controls
+    // TODO sync controls
 }

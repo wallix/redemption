@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 # uncompress: tar --zstd -xf ../../../tools/gen_locale/kbdlayout.info.zst
 
-./gen_reverse_keylayout.py \
+./gen_reversed_keylayout.py \
   kbdlayout.info/00000405.xml \
   kbdlayout.info/00000406.xml \
   kbdlayout.info/00000407.xml \

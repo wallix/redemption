@@ -675,49 +675,26 @@ namespace ut
         }
     }
 
-    void print_hex(std::ostream& out, uint64_t x, int ndigit, bool align_by_byte)
+    void print_hex(std::ostream& out, uint64_t x, int ndigit)
     {
-        int n = 1;
-        auto y = x;
-        if (y > 0xffffffffu) {
-            n += 8;
-            y >>= 32;
-        }
-        if (y > 0xffffu) {
-            n += 4;
-            y >>= 16;
-        }
-        if (y > 0xffu) {
-            n += 2;
-            y >>= 8;
-        }
-        ndigit = std::max(n, ndigit);
-
         char const* s = "0123456789ABCDEF";
         char buf[20];
-        char* p = buf;
-        *p++ = '0';
-        *p++ = 'x';
-
-        if (ndigit & 1) {
-            if (align_by_byte) {
-                ++ndigit;
-            }
-            else {
-                *p++ = s[(x >> (ndigit / 2 * 8)) & 0xf];
-                --ndigit;
+        char* p = buf + 2;
+        int maxdigit = 0;
+        for (int i = 0; i < 16; ++i) {
+            unsigned u8 = (x >> (60 - i * 4)) & 0xf;
+            *p++ = s[u8];
+            if (u8) {
+                maxdigit = std::max(maxdigit, 16 - i);
             }
         }
-        auto f = [&](uint32_t x){
-            *p++ = s[(x >> 4) & 0xf];
-            *p++ = s[x & 0xf];
-        };
-        while (ndigit > 0) {
-            ndigit -= 2;
-            f(x >> (ndigit * 4));
-        }
 
-        out.write(buf, p-buf);
+        ndigit = std::max(ndigit, maxdigit);
+        p -= ndigit + 2;
+        p[0] = '0';
+        p[1] = 'x';
+        // out.write(p, ndigit + 2);
+        out.write(p, ndigit + 2);
     }
 
     namespace detail

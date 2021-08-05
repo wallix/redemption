@@ -142,10 +142,10 @@ char_to_char_table = {
 }
 
 codepoint_to_jskey = {
-    0x08: 'Backspace',
     0x5E: 'Tab',
     0x1C: 'Enter',
     0x1B: 'Escape',
+    0x08: 'Backspace',
 }
 
 def vk_mod_to_mod_flags(mods:str) -> int:
@@ -164,11 +164,13 @@ layouts:list[KeyLayout] = parse_argv()
 
 error_messages = []
 # output = ['// keymap: { text: { mod_flags: [scancodes...] } }\n']
-output = ['// keymap: { text: { mod_flags: scancode } }\n']
-output = ['// actions: { name: scancode }\n']
-output = ['// deadkeys: { text: [ idxAccent, idxKeymap, idxKeymap ? ]\n']
-output = ['// accents: [ { mod_flags: [scancodes...] } ]\n']
-output = ['const layouts = [\n']
+output = [
+    '// keymap: { text: { mod_flags: scancode } }\n',
+    '// actions: { name: scancode }\n',
+    '// deadkeys: { text: [ idxAccent, idxKeymap, idxKeymap ? ]\n',
+    '// accents: [ { mod_flags: scancode } ]\n',
+    'const layouts = [\n'
+]
 
 for layout in layouts:
     normal_rkeymap = {}
@@ -186,8 +188,6 @@ for layout in layouts:
 
                     if text := codepoint_to_jskey.get(key.codepoint, None):
                         special_rkeymap[(text, key.codepoint)] = map
-                    elif key.text == ' ':
-                        special_rkeymap[('Space', key.codepoint)] = map
 
                 elif key_and_scancode := vk_actions.get(key.vk, None):
                     if mod_flags not in (0, 0x8): # noMod and numLock
@@ -250,7 +250,7 @@ for layout in layouts:
     push_ref = lambda scancodes_by_mods: \
         accents.setdefault(
             ''.join(\
-                f"0x{mod_flags:x}: {', '.join(scancodes)}" \
+                f"0x{mod_flags:x}: {sorted(set(x for x in ''.join(scancodes).split(', ') if x))[0]}, " \
                     for mod_flags, scancodes in scancodes_by_mods.items()),
             len(accents)
         )
@@ -266,7 +266,7 @@ for layout in layouts:
     output.append('  },\n  accents: [\n')
 
     for scancodes in accents:
-        output.append(f'    [{{{scancodes}}}],\n')
+        output.append(f'    {{{scancodes}}},\n')
 
     output.append('  ]\n},\n')
 
@@ -276,6 +276,14 @@ output.append('const actionLayout = {')
 for key_and_scancode in vk_actions.values():
     output.append(f'  "{key_and_scancode[0]}": 0x{key_and_scancode[1]:x},\n')
 output.append('};')
+output.append('\n\n')
+output.append('try {\n')
+output.append('    module.exports.layouts = layouts;\n')
+output.append('    module.exports.actionLayout = actionLayout;\n')
+output.append('}\n')
+output.append('catch(e) {\n')
+output.append('    // module not found\n')
+output.append('}\n')
 
 print(''.join(output))
 

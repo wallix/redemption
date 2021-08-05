@@ -62,7 +62,7 @@ namespace ut
 
     void put_message_with_diff(std::ostream& out, ::chars_view s1, char const* op, ::chars_view s2, bool nocolor = false); /*NOLINT*/
 
-    void print_hex(std::ostream& out, uint64_t x, int ndigit = 0, bool align_by_byte = false);
+    void print_hex(std::ostream& out, uint64_t x, int ndigit = 0);
 
     struct PatternViewSaver
     {
@@ -82,7 +82,15 @@ namespace ut
         unsigned min_len;
     };
 
-    struct hex_int { int ndigit = 0; };
+    struct hex_int
+    {
+        int ndigit = 0;
+
+        constexpr static hex_int u8() { return {2}; }
+        constexpr static hex_int u16() { return {4}; }
+        constexpr static hex_int u32() { return {8}; }
+        constexpr static hex_int u64() { return {8}; }
+    };
 } // namespace ut
 
 
