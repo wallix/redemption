@@ -32,6 +32,8 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 
+using namespace std::literals::chrono_literals;
+
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 public:
     using Params = SessionProbeClipboardBasedLauncherParams;
@@ -62,6 +64,8 @@ public:
     bool format_data_requested = false;
 
     SessionReactor::TimerPtr event;
+
+    SessionReactor::TimerPtr async_event;
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
@@ -358,7 +362,7 @@ public:
         auto send_scancode = [](auto param1, auto device_flags, auto check_format_list_received, auto wait_for_short_delay){
             return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
                 if (bool(self.verbose & RDPVerbose::sesprobe_launcher)) {
-                    LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %s",
+                    LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> make_delay_sequencer - %s",
                         ctx.sequence_name());
                 }
 
@@ -418,14 +422,14 @@ public:
                             : false),
                         std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                    InStream in_s(out_s.get_bytes());
                     const size_t totalLength = out_s.get_offset();
-                    self.mod.send_to_mod_channel(channel_names::cliprdr,
-                                                 in_s,
-                                                 totalLength,
-                                                   CHANNELS::CHANNEL_FLAG_FIRST
-                                                 | CHANNELS::CHANNEL_FLAG_LAST
-                                                 | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+
+                    self.cliprdr_channel->process_client_message(
+                            totalLength,
+                              CHANNELS::CHANNEL_FLAG_FIRST
+                            | CHANNELS::CHANNEL_FLAG_LAST
+                            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                            out_s.get_bytes());
                 }
 
                 return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).next();
@@ -446,7 +450,7 @@ public:
         auto send_scancode = [](auto param1, auto device_flags, auto check_image_readed, auto wait_for_short_delay){
             return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
                 if (bool(self.verbose & RDPVerbose::sesprobe_launcher)) {
-                    LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %s",
+                    LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> make_run_sequencer - %s",
                         ctx.sequence_name());
                 }
 
@@ -513,7 +517,13 @@ public:
 
                 this->state = State::DELAY;
 
-                make_delay_sequencer();
+                this->async_event = this->session_reactor.create_timer()
+                .set_delay(0s)
+                .on_action([this](auto context) {
+                    make_delay_sequencer();
+
+                    return context.terminate();
+                });
 
                 time_t const now = time(nullptr);
                 this->delay_end_time = (now + (this->params.start_delay_ms.count() + 999) / 1000);
@@ -525,7 +535,13 @@ public:
 
                 this->state = State::RUN;
 
-                make_run_sequencer();
+                this->async_event = this->session_reactor.create_timer()
+                .set_delay(0s)
+                .on_action([this](auto context) {
+                    make_run_sequencer();
+
+                    return context.terminate();
+                });
 
                 this->delay_coefficient = 1.0f;
 
@@ -541,7 +557,13 @@ public:
 
         this->state = State::RUN;
 
-        make_run_sequencer();
+        this->async_event = this->session_reactor.create_timer()
+        .set_delay(0s)
+        .on_action([this](auto context) {
+            make_run_sequencer();
+
+            return context.terminate();
+        });
 
         return false;
     }
