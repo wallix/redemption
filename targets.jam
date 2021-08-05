@@ -223,12 +223,12 @@ exe rdpproxy :
   <library>src/mod/vnc/vnc.o
   <library>src/scard/scard_bridge.o
   <library>src/scard/scard_krb_client.o
-  <library>src/scard/scard_pkcs11_enumerator.o
-  <library>src/scard/scard_pkcs11_identity.o
-  <library>src/scard/scard_pkcs11_module.o
   <library>src/scard/scard_pcsc_common.o
   <library>src/scard/scard_pcsc_environment.o
   <library>src/scard/scard_pcsc_server.o
+  <library>src/scard/scard_pkcs11_enumerator.o
+  <library>src/scard/scard_pkcs11_identity.o
+  <library>src/scard/scard_pkcs11_module.o
   <library>src/scard/scard_rdp_channel.o
   <library>src/scard/scard_rdp_mod.o
   <library>src/scard/scard_utils.o
@@ -464,23 +464,6 @@ exe ppocr_extract_text :
   $(GCOV_NO_BUILD)
 ;
 
-lib librdpcsc :
-  src/scard/winscard.o
-:
-  <library>log.o
-  <library>src/core/error.o
-  <library>src/scard/scard_pcsc_common.o
-  <library>src/scard/scard_pcsc_context.o
-  <library>src/scard/scard_pcsc_client.o
-  <library>src/scard/scard_pcsc_environment.o
-  <library>src/scard/scard_pack.o
-  <library>src/scard/scard_pack_type_native.o
-  <library>src/scard/scard_pack_type_native_convertible.o
-  <library>src/scard/scard_pack_utils.o
-  <library>src/scard/scard_utils.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-
 lib libredrec :
   src/lib/do_recorder.cpp.lib.o
 :
@@ -565,6 +548,24 @@ lib libscytale :
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
 ;
+lib libwinscard :
+  src/lib/winscard.cpp.lib.o
+:
+  <library>log.o
+  <library>src/core/error.o
+  <library>src/scard/scard_pack.o
+  <library>src/scard/scard_pack_type_native.o
+  <library>src/scard/scard_pack_type_native_convertible.o
+  <library>src/scard/scard_pack_utils.o
+  <library>src/scard/scard_pcsc_client.o
+  <library>src/scard/scard_pcsc_common.o
+  <library>src/scard/scard_pcsc_context.o
+  <library>src/scard/scard_pcsc_environment.o
+  <library>src/scard/scard_utils.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(LIB_DEPENDENCIES)
+;
 obj src/lib/do_recorder.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp
 :
@@ -582,6 +583,11 @@ obj src/lib/scytale.cpp.lib.o :
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
 ;
+obj src/lib/winscard.cpp.lib.o :
+  $(REDEMPTION_SRC_PATH)/lib/winscard.cpp
+:
+  $(LIB_DEPENDENCIES)
+;
 
 test-run tests/RAIL/test_client_execute :
   $(REDEMPTION_TEST_PATH)/RAIL/test_client_execute.cpp
@@ -595,8 +601,6 @@ test-run tests/RAIL/test_client_execute :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/scard/scard_rdp_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -2591,7 +2595,18 @@ test-run tests/core/test_mainloop :
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/vnc.o
+  <library>src/scard/scard_bridge.o
+  <library>src/scard/scard_krb_client.o
+  <library>src/scard/scard_pcsc_common.o
+  <library>src/scard/scard_pcsc_environment.o
+  <library>src/scard/scard_pcsc_server.o
+  <library>src/scard/scard_pkcs11_enumerator.o
+  <library>src/scard/scard_pkcs11_identity.o
+  <library>src/scard/scard_pkcs11_module.o
+  <library>src/scard/scard_rdp_channel.o
   <library>src/scard/scard_rdp_mod.o
+  <library>src/scard/scard_utils.o
+  <library>src/scard/scard_x509.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -2765,7 +2780,18 @@ test-run tests/core/test_session :
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/vnc.o
+  <library>src/scard/scard_bridge.o
+  <library>src/scard/scard_krb_client.o
+  <library>src/scard/scard_pcsc_common.o
+  <library>src/scard/scard_pcsc_environment.o
+  <library>src/scard/scard_pcsc_server.o
+  <library>src/scard/scard_pkcs11_enumerator.o
+  <library>src/scard/scard_pkcs11_identity.o
+  <library>src/scard/scard_pkcs11_module.o
+  <library>src/scard/scard_rdp_channel.o
   <library>src/scard/scard_rdp_mod.o
+  <library>src/scard/scard_utils.o
+  <library>src/scard/scard_x509.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -5168,19 +5194,38 @@ test-run tests/regex/test_regex_utils :
 test-run tests/scard/test_scard_pack :
   $(REDEMPTION_TEST_PATH)/scard/test_scard_pack.cpp
 :
-  <library>librdpcsc
+  <library>src/core/error.o
+  <library>src/scard/scard_pack.o
+  <library>src/scard/scard_pack_type_native.o
+  <library>src/scard/scard_pack_type_native_convertible.o
+  <library>src/scard/scard_pack_utils.o
+  <library>src/scard/scard_utils.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/scard/scard_pack.cpp
   <covfile>src/scard/scard_pack.hpp
 ;
 test-run tests/scard/test_scard_pack_type_native_convertible :
   $(REDEMPTION_TEST_PATH)/scard/test_scard_pack_type_native_convertible.cpp
 :
-  <library>librdpcsc
+  <library>src/core/error.o
+  <library>src/scard/scard_pack_type_native.o
+  <library>src/scard/scard_pack_type_native_convertible.o
+  <library>src/scard/scard_pack_utils.o
+  <library>src/scard/scard_utils.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/scard/scard_pack_type_native_convertible.cpp
   <covfile>src/scard/scard_pack_type_native_convertible.hpp
 ;
 test-run tests/scard/test_scard_utils :
   $(REDEMPTION_TEST_PATH)/scard/test_scard_utils.cpp
 :
-  <library>librdpcsc
+  <library>src/core/error.o
+  <library>src/scard/scard_utils.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/scard/scard_utils.cpp
   <covfile>src/scard/scard_utils.hpp
 ;
 test-run tests/server/test_mstsc_client :
@@ -6350,6 +6395,7 @@ obj src/keyboard/scancode/unicode_to_scancode.o : $(REDEMPTION_SRC_PATH)/keyboar
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj src/lib/winscard.o : $(REDEMPTION_SRC_PATH)/lib/winscard.cpp ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
@@ -6421,19 +6467,18 @@ obj src/scard/scard_pack.o : $(REDEMPTION_SRC_PATH)/scard/scard_pack.cpp ;
 obj src/scard/scard_pack_type_native.o : $(REDEMPTION_SRC_PATH)/scard/scard_pack_type_native.cpp ;
 obj src/scard/scard_pack_type_native_convertible.o : $(REDEMPTION_SRC_PATH)/scard/scard_pack_type_native_convertible.cpp ;
 obj src/scard/scard_pack_utils.o : $(REDEMPTION_SRC_PATH)/scard/scard_pack_utils.cpp ;
-obj src/scard/scard_pkcs11_enumerator.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_enumerator.cpp ;
-obj src/scard/scard_pkcs11_identity.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_identity.cpp ;
-obj src/scard/scard_pkcs11_module.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_module.cpp ;
 obj src/scard/scard_pcsc_client.o : $(REDEMPTION_SRC_PATH)/scard/scard_pcsc_client.cpp ;
 obj src/scard/scard_pcsc_common.o : $(REDEMPTION_SRC_PATH)/scard/scard_pcsc_common.cpp ;
 obj src/scard/scard_pcsc_context.o : $(REDEMPTION_SRC_PATH)/scard/scard_pcsc_context.cpp ;
 obj src/scard/scard_pcsc_environment.o : $(REDEMPTION_SRC_PATH)/scard/scard_pcsc_environment.cpp ;
 obj src/scard/scard_pcsc_server.o : $(REDEMPTION_SRC_PATH)/scard/scard_pcsc_server.cpp ;
+obj src/scard/scard_pkcs11_enumerator.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_enumerator.cpp ;
+obj src/scard/scard_pkcs11_identity.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_identity.cpp ;
+obj src/scard/scard_pkcs11_module.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_module.cpp ;
 obj src/scard/scard_rdp_channel.o : $(REDEMPTION_SRC_PATH)/scard/scard_rdp_channel.cpp ;
 obj src/scard/scard_rdp_mod.o : $(REDEMPTION_SRC_PATH)/scard/scard_rdp_mod.cpp ;
 obj src/scard/scard_utils.o : $(REDEMPTION_SRC_PATH)/scard/scard_utils.cpp ;
 obj src/scard/scard_x509.o : $(REDEMPTION_SRC_PATH)/scard/scard_x509.cpp ;
-obj src/scard/winscard.o : $(REDEMPTION_SRC_PATH)/scard/winscard.cpp ;
 obj src/system/linux/system/i18n/message_translator_gettext.o : $(REDEMPTION_SRC_PATH)/system/linux/system/i18n/message_translator_gettext.cpp ;
 obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
@@ -6733,6 +6778,9 @@ alias test_regex_consumer : tests/regex/test_regex_consumer ;
 alias test_regex_parser : tests/regex/test_regex_parser ;
 alias test_regex_state : tests/regex/test_regex_state ;
 alias test_regex_utils : tests/regex/test_regex_utils ;
+alias test_scard_pack : tests/scard/test_scard_pack ;
+alias test_scard_pack_type_native_convertible : tests/scard/test_scard_pack_type_native_convertible ;
+alias test_scard_utils : tests/scard/test_scard_utils ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
 alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
 alias test_rdesktop_client : tests/server/test_rdesktop_client ;
@@ -6844,9 +6892,6 @@ alias test_utf : tests/utils/test_utf ;
 alias test_video_cropper : tests/utils/test_video_cropper ;
 alias test_zlib : tests/utils/test_zlib ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
-alias test_scard_pack : tests/scard/test_scard_pack ;
-alias test_scard_pack_type_native_convertible : tests/scard/test_scard_pack_type_native_convertible ;
-alias test_scard_utils : tests/scard/test_scard_utils ;
 if $(ENABLE_COVERAGE) = "on"
 {
 alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
@@ -7081,6 +7126,9 @@ alias test_regex_consumer.coverage : tests/regex/test_regex_consumer.coverage ;
 alias test_regex_parser.coverage : tests/regex/test_regex_parser.coverage ;
 alias test_regex_state.coverage : tests/regex/test_regex_state.coverage ;
 alias test_regex_utils.coverage : tests/regex/test_regex_utils.coverage ;
+alias test_scard_pack.coverage : tests/scard/test_scard_pack.coverage ;
+alias test_scard_pack_type_native_convertible.coverage : tests/scard/test_scard_pack_type_native_convertible.coverage ;
+alias test_scard_utils.coverage : tests/scard/test_scard_utils.coverage ;
 alias test_ssl_aes.coverage : tests/system/linux/system/test_ssl_aes.coverage ;
 alias test_ssl_md4.coverage : tests/system/linux/system/test_ssl_md4.coverage ;
 alias test_ssl_md5.coverage : tests/system/linux/system/test_ssl_md5.coverage ;
@@ -7186,9 +7234,6 @@ alias test_utf.coverage : tests/utils/test_utf.coverage ;
 alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
 alias test_zlib.coverage : tests/utils/test_zlib.coverage ;
 alias test_pattern.coverage : tests/utils/winpr/test_pattern.coverage ;
-alias test_scard_pack.coverage : tests/scard/test_scard_pack.coverage ;
-alias test_scard_pack_type_native_convertible.coverage : tests/scard/test_scard_pack_type_native_convertible.coverage ;
-alias test_scard_utils.coverage : tests/scard/test_scard_utils.coverage ;
 }
 alias tests/RAIL.norec :
   tests/RAIL/test_client_execute
@@ -7514,6 +7559,11 @@ alias tests/regex.norec :
   tests/regex/test_regex_state
   tests/regex/test_regex_utils
 ;
+alias tests/scard.norec :
+  tests/scard/test_scard_pack
+  tests/scard/test_scard_pack_type_native_convertible
+  tests/scard/test_scard_utils
+;
 alias tests/server.norec :
   tests/server/test_mstsc_client
   tests/server/test_mstsc_client_rdp50bulk
@@ -7662,6 +7712,7 @@ alias tests :
   tests/mod
   tests/proxy_recorder
   tests/regex
+  tests/scard
   tests/server
   tests/transport
   tests/utils
@@ -7810,6 +7861,9 @@ alias tests/proxy_recorder :
 alias tests/regex :
   tests/regex.norec
 ;
+alias tests/scard :
+  tests/scard.norec
+;
 alias tests/server :
   tests/server.norec
 ;
@@ -7889,6 +7943,7 @@ explicit
   tests/mod/vnc.norec
   tests/proxy_recorder.norec
   tests/regex.norec
+  tests/scard.norec
   tests/server.norec
   tests/system/linux/system.norec
   tests/transport.norec
@@ -7943,6 +7998,7 @@ explicit
   tests/mod/vnc
   tests/proxy_recorder
   tests/regex
+  tests/scard
   tests/server
   tests/system/linux/system
   tests/system/linux
