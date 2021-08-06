@@ -13,13 +13,31 @@ import traceback
 import sys
 from datetime import datetime
 
-from logger import Logger
-
 from struct import unpack_from, pack
-from select     import select
+from select import select
 import socket
 
 # import uuid # for random rec_path
+
+
+class Logger():
+    def info(self, s):
+        print("Info: %s" % s)
+
+    def error(self, s):
+        print("Error: %s" % s)
+
+    def warning(self, s):
+        print("Warning: %s" % s)
+
+    def debug(self, s):
+        print("Debug: %s" % s)
+
+    def exception(self, s):
+        print("Exception: %s" % s)
+
+    def trace(self, s):
+        print("Trace: %s" % s)
 
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
@@ -297,7 +315,7 @@ class ACLPassthrough():
                     if DEBUG:
                         Logger().info("exception: '%s'" % e)
                         import traceback
-                        Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                        Logger().info("<<<<%s>>>>" % traceback.format_exc())
                     if e[0] != 4:
                         raise
                     Logger().info("Got Signal %s" % e)
@@ -320,12 +338,12 @@ class ACLPassthrough():
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
         except Exception as e:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
 
         try:
             Logger().info(u"Close connection ...")
@@ -336,7 +354,7 @@ class ACLPassthrough():
         except IOError:
             if DEBUG:
                 Logger().info(u"Close connection: Exception")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
     # END METHOD - START
 
 
@@ -361,7 +379,6 @@ from socket import SOCK_STREAM
 from socket import SOL_SOCKET
 from socket import SO_REUSEADDR
 from select import select
-from logger import Logger
 
 socket_path = '/tmp/redemption-sesman-sock'
 
