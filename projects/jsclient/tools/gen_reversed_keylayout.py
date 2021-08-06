@@ -19,6 +19,9 @@ vk_control_masks = {
     'VK_KANA':      1 << 6,
     'VK_KANALOCK':  1 << 7,
 }
+nomod = 0
+numlock = vk_control_masks['VK_NUMLOCK']
+ctrl = vk_control_masks['VK_CONTROL']
 
 vk_actions = {
     'VK_APPS': ('ContextMenu', 0x15D),
@@ -190,7 +193,7 @@ for layout in layouts:
                         special_rkeymap[(text, key.codepoint)] = map
 
                 elif key_and_scancode := vk_actions.get(key.vk, None):
-                    if mod_flags not in (0, 0x8): # noMod and numLock
+                    if mod_flags not in (nomod, numlock):
                         error_messages.append(f'Action key with control key ({key.vk} + {mods or "noMod"}) in {layout.display_name} (0x{layout.klid})')
                     else:
                         scancode = key_to_scancode(key)
@@ -198,7 +201,7 @@ for layout in layouts:
                             action_rkeymap[key_and_scancode[0]] = scancode
 
                 elif key.vk is not None and key.vk not in vk_unknowns:
-                    if not (key.codepoint == 0 and mod_flags in (0, 0x8, 0x2)): # noMod numLock ctrl
+                    if not (key.codepoint == 0 and mod_flags in (nomod, numlock, ctrl)):
                         error_messages.append(f'Unknown {key} + {mods or "noMod"} in {layout.display_name} (0x{layout.klid})')
 
     # dead key and dead key of dead key
@@ -254,14 +257,15 @@ for layout in layouts:
                     for mod_flags, scancodes in scancodes_by_mods.items()),
             len(accents)
         )
+    sortedrkey = lambda rkeys: ''.join(sorted(rkeys1))
 
     for text, (scancodes_by_mods, rkeys1) in rdeadkeymap.items():
         text = char_to_char_table.get(text, text)
-        output.append(f"    '{text}': [{push_ref(scancodes_by_mods)}, [{', '.join(rkeys1)}]],\n")
+        output.append(f"    '{text}': [{push_ref(scancodes_by_mods)}, [{sortedrkey(rkeys1)}]],\n")
 
     for text, (scancodes_by_mods, rkeys1, rkeys2) in rdeadkeymap2.items():
         text = char_to_char_table.get(text, text)
-        output.append(f"    '{text}': [{push_ref(scancodes_by_mods)}, [{', '.join(rkeys1)}], [{', '.join(rkeys2)}]],\n")
+        output.append(f"    '{text}': [{push_ref(scancodes_by_mods)}, [{sortedrkey(rkeys1)}], [{sortedrkey(rkeys2)}]],\n")
 
     output.append('  },\n  accents: [\n')
 

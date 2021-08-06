@@ -120,11 +120,10 @@ div, section, canvas{
         <fieldset>
             <legend>Keyboard</legend>
             <label for="kbdmethod">Method: <select name="kbdmethod" id="kbdmethod">
-                <option value="unicodeToHybrid">Unicode -> Scancode/Unicode (KeyboardEvent.key)</option>
-                <option value="unicodeToScancode">Unicode -> Scancode (KeyboardEvent.key)</option>
-                <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
-                <option value="unicodeKey">Unicode (KeyboardEvent.key)</option>
-                <option value="unicodeCode">Unicode (KeyboardEvent.code)</option>
+                <option value="codeToScancode">KeyboardEvent.code -> Scancode</option>
+                <option value="keyToScancodeOrUnicode">KeyboardEvent.key -> Scancode or Unicode</option>
+                <option value="keyToScancode">KeyboardEvent.key -> Scancode</option>
+                <option value="unicode" selected="selected">Unicode</option>
             </select></label>
             <fieldset>
                 <legend>Unicode -> Scancode</legend>

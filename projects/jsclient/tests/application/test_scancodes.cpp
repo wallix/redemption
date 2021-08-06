@@ -103,14 +103,15 @@ RED_JS_AUTO_TEST_CASE(
     const uint32_t ShiftMod    = 1 << 0;
     const uint32_t CtrlMod     = 1 << 1;
     const uint32_t AltMod      = 1 << 2;
-    // const uint32_t NumLockMod  = 1 << 3;
-    // const uint32_t CapsLockMod = 1 << 4;
+    const uint32_t NumLockMod  = 1 << 3;
+    const uint32_t CapsLockMod = 1 << 4;
     // const uint32_t OEM8Mod     = 1 << 5;
     // const uint32_t KanaMod     = 1 << 6;
     // const uint32_t KanaLockMod = 1 << 7;
     const uint32_t AltGrMod      = 1 << 8;
     const uint32_t RightShiftMod = 1 << 9;
     const uint32_t RightCtrlMod  = 1 << 10;
+
     auto const h32 = ut::hex_int::u32();
 
     #define TEST_HEX32(...) BOOST_TEST(__VA_ARGS__, h32)
@@ -363,6 +364,38 @@ RED_JS_AUTO_TEST_CASE(
     TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
-    // TODO check other controls
-    // TODO sync controls
+    // sync
+    //@{
+    // const uint32_t ScrollLock   = 0x01;
+    const uint32_t NumLock      = 0x02;
+    // const uint32_t CapsLock     = 0x04;
+    // const uint32_t KanaLock     = 0x08;
+    // const uint32_t ControlLeft  = 0x0010;
+    const uint32_t ControlRight = 0x0020;
+    // const uint32_t ShiftLeft    = 0x0040;
+    // const uint32_t ShiftRight   = 0x0080;
+    const uint32_t AltLeft      = 0x0100;
+    // const uint32_t AltRight     = 0x0200;
+    // const uint32_t OSLeft       = 0x0400;
+    // const uint32_t OSRight      = 0x0800;
+    // const uint32_t Kana         = 0x1000;
+
+    auto sync = [&reversedKeymap](uint32_t syncFlags){
+        return reversedKeymap.call<emscripten::val>("sync", syncFlags);
+    };
+
+    //                              SL      SR     CL     CR      AL     AR      OSL     OSR
+    RED_CHECK(sync(0xffff) == U16A(0x2A,   0x36,  0x1D,  0x11D,  0x38,  0x138,  0x15B,  0x15C));
+    TEST_HEX32(getModFlags() == (ShiftMod | CtrlMod | AltMod | CapsLockMod | NumLockMod));
+    TEST_HEX32(getVirtualModFlags() == (ShiftMod | CtrlMod | AltMod | AltGrMod | CapsLockMod | NumLockMod | RightShiftMod | RightCtrlMod));
+
+    RED_CHECK(sync(0)    == U16A(0x802A, 0x8036, 0x801D, 0x811D, 0x8038, 0x8138, 0x815B, 0x815C));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(sync(NumLock | AltLeft | ControlRight)
+                         == U16A(0x802A, 0x8036, 0x801D,  0x11D, 0x38,   0x8138, 0x815B, 0x815C));
+    TEST_HEX32(getModFlags() == (CtrlMod | AltMod | NumLockMod));
+    TEST_HEX32(getVirtualModFlags() == (AltMod | NumLockMod | RightCtrlMod));
+    //@}
 }

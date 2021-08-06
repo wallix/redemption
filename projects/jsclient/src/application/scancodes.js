@@ -184,29 +184,28 @@ const keycodeToSingleScancode = function(code) {
 };
 
 /// \return Number | undefined
-const numpadKeyToScancode = function(key) {
+const numpadCodeToScancode = function(key) {
     switch (key)
     {
-    case "Escape":                  return 0x01;
-    case "*":                       return 0x37;
-    case "7": case "Home":          return 0x47;
-    case "8": case "ArrowUp":       return 0x48;
-    case "9": case "PageUp":        return 0x49;
-    case "-":                       return 0x4A;
-    case "4": case "ArrowLeft":     return 0x4B;
-    case "5": case "Unidentified":  return 0x4C;
-    case "6": case "AltRight":      return 0x4D;
-    case "+":                       return 0x4E;
-    case "1": case "End":           return 0x4F;
-    case "2": case "ArrowDown":     return 0x50;
-    case "3": case "PageDown":      return 0x51;
-    case "0": case "Insert":        return 0x52;
-    case ".": case "Delete":        return 0x53;
-    case "=":                       return 0x59;
-    case ",":                       return 0x7E;
-    case "Enter":                   return 0x11C;
-    case "/":                       return 0x135;
-    case "NumLock":                 return 0x145;
+    case "NumpadMultiply":  /*case "*": case "Multiply":    */  return 0x37;
+    case "Numpad7":         /*case "7": case "Home":        */  return 0x47;
+    case "Numpad8":         /*case "8": case "ArrowUp":     */  return 0x48;
+    case "Numpad9":         /*case "9": case "PageUp":      */  return 0x49;
+    case "NumpadSubtract":  /*case "-": case "Subtract":    */  return 0x4A;
+    case "Numpad4":         /*case "4": case "ArrowLeft":   */  return 0x4B;
+    case "Numpad5":         /*case "5": case "Unidentified":*/  return 0x4C;
+    case "Numpad6":         /*case "6": case "AltRight":    */  return 0x4D;
+    case "NumpadAdd":       /*case "+": case "Add":         */  return 0x4E;
+    case "Numpad1":         /*case "1": case "End":         */  return 0x4F;
+    case "Numpad2":         /*case "2": case "ArrowDown":   */  return 0x50;
+    case "Numpad3":         /*case "3": case "PageDown":    */  return 0x51;
+    case "Numpad0":         /*case "0": case "Insert":      */  return 0x52;
+    case "NumpadDecimal":   /*case ".": case "Delete":      */  return 0x53;
+    case "NumpadEqual":     /*case "=":                     */  return 0x59;
+    case "NumpadComma":     /*case ",": case "Separator":   */  return 0x7E;
+    case "NumpadEnter":     /*case "Enter":                 */  return 0x11C;
+    case "NumpadDivide":    /*case "/": case "Divide":      */  return 0x135;
+    case "NumLock":         /*                              */  return 0x145;
     }
 };
 
@@ -241,12 +240,33 @@ const LCtrlSC    = 0x1D;
 const RCtrlSC    = 0x11D;
 const AltSC      = 0x38;
 const AltGrSC    = 0x138;
+const LMetaSC    = 0x15B;
+const RMetaSC    = 0x15C;
 const CapsLockSC = 0x3A;
 const NumLockSC  = 0x145;
 
 // key flags
 const KeyRelease = 0x8000;
 const KeyAcquire = 0;
+
+const SyncFlags = Object.freeze({
+    NoSync:    0,
+    // rdp lock flags
+    ScrollLock: 0x01,
+    NumLock:    0x02,
+    CapsLock:   0x04,
+    KanaLock:   0x08,
+    // control scancodes
+    ControlLeft:  0x0010,
+    ControlRight: 0x0020,
+    ShiftLeft:    0x0040,
+    ShiftRight:   0x0080,
+    AltLeft:      0x0100,
+    AltRight:     0x0200,
+    OSLeft:       0x0400,
+    OSRight:      0x0800,
+    Kana:         0x1000,
+});
 
 
 const emptyReversedLayout = {
@@ -260,13 +280,13 @@ const emptyReversedLayout = {
     accents: [],
 };
 
-remappingLeftControls = {
+remappingControlLefts = {
     OS:      'OSLeft',
     Meta:    'OSLeft',
     Shift:   'ShiftLeft',
     Control: 'ControlLeft',
 };
-remappingRightControls = {
+remappingControlRights = {
     OS:      'OSRight',
     Meta:    'OSRight',
     Shift:   'ShiftRight',
@@ -274,89 +294,146 @@ remappingRightControls = {
 };
 // { code : { key: newcode } }
 remappingCodeByKey = {
-    OSLeft: remappingLeftControls,
-    MetaLeft: remappingLeftControls,
-    ShiftLeft: remappingLeftControls,
-    ControlLeft: remappingLeftControls,
-    OSRight: remappingRightControls,
-    MetaRight: remappingRightControls,
-    ShiftRight: remappingRightControls,
-    ControlRight: remappingRightControls,
+    OSLeft: remappingControlLefts,
+    MetaLeft: remappingControlLefts,
+    ShiftLeft: remappingControlLefts,
+    ControlLeft: remappingControlLefts,
+    OSRight: remappingControlRights,
+    MetaRight: remappingControlRights,
+    ShiftRight: remappingControlRights,
+    ControlRight: remappingControlRights,
 };
 
 class ReversedKeymap
 {
+    static NullLayout = emptyReversedLayout;
+    static KeyRelease = KeyRelease;
+    static KeyAcquire = KeyAcquire;
+
     constructor(reversedLayout) {
-        this.modFlags = 0;
-        this.virtualModFlags = 0;
-        this.setReversedLayout(reversedLayout || emptyReversedLayout);
+        this._modFlags = 0;
+        this._virtualModFlags = 0;
+        this.layout = reversedLayout || emptyReversedLayout;
     }
 
     // states for test
-    getVirtualModFlags() { return this.virtualModFlags; }
-    getModFlags() { return this.modFlags; }
+    getVirtualModFlags() { return this._virtualModFlags; }
+    getModFlags() { return this._modFlags; }
 
-    getReversedLayout() {
-        return this.layout;
+    get layout () {
+        return this._layout;
     }
 
-    setReversedLayout(reversedLayout) {
-        this.layout = reversedLayout;
-        this.keymap = reversedLayout.keymap;
-        this.deadKeymap = reversedLayout.deadkeys;
-        this.accentKeymap = reversedLayout.accents;
+    set layout(reversedLayout) {
+        this._layout = reversedLayout;
+        this._keymap = reversedLayout.keymap;
+        this._deadKeymap = reversedLayout.deadkeys;
+        this._accentKeymap = reversedLayout.accents;
 
         // convert left ctrl to oem8 (and vise versa) when ctrlRightIsOem8 change
-        if (this.ctrlIsOem8 !== reversedLayout.ctrlRightIsOem8) {
-            if (this.modFlags & RightCtrlMod) {
-                this.virtualModFlags = this.virtualModFlags & ~RightCtrlMod | OEM8Mod;
-                this.modFlags = this.modFlags & ~RightCtrlMod | OEM8Mod;
+        if (this._ctrlIsOem8 !== reversedLayout.ctrlRightIsOem8) {
+            if (this._modFlags & RightCtrlMod) {
+                this._virtualModFlags = this._virtualModFlags & ~RightCtrlMod | OEM8Mod;
+                this._modFlags = this._modFlags & ~RightCtrlMod | OEM8Mod;
             }
-            else if (this.modFlags & OEM8Mod) {
-                this.virtualModFlags = this.virtualModFlags & ~OEM8Mod | RightCtrlMod;
-                this.modFlags = this.modFlags & ~OEM8Mod | CtrlMod;
+            else if (this._modFlags & OEM8Mod) {
+                this._virtualModFlags = this._virtualModFlags & ~OEM8Mod | RightCtrlMod;
+                this._modFlags = this._modFlags & ~OEM8Mod | CtrlMod;
             }
         }
-        this.ctrlIsOem8 = reversedLayout.ctrlRightIsOem8;
+        this._ctrlIsOem8 = reversedLayout.ctrlRightIsOem8;
+    }
+
+    /// \return scancodes
+    sync(syncFlags) {
+        this._updateLock(syncFlags, SyncFlags.CapsLock, CapsLockMod);
+        this._updateLock(syncFlags, SyncFlags.NumLock, NumLockMod);
+        // this._updateLock(syncFlags, SyncFlags.KanaLock, KanaLockMod);
+        // ignore ScrollLock value
+
+        const accu = []
+        accu.push(LShiftSC | ((syncFlags & SyncFlags.ShiftLeft)    ? KeyAcquire : KeyRelease));
+        accu.push(RShiftSC | ((syncFlags & SyncFlags.ShiftRight)   ? KeyAcquire : KeyRelease));
+        accu.push(LCtrlSC  | ((syncFlags & SyncFlags.ControlLeft)  ? KeyAcquire : KeyRelease));
+        accu.push(RCtrlSC  | ((syncFlags & SyncFlags.ControlRight) ? KeyAcquire : KeyRelease));
+        accu.push(AltSC    | ((syncFlags & SyncFlags.AltLeft)      ? KeyAcquire : KeyRelease));
+        accu.push(AltGrSC  | ((syncFlags & SyncFlags.AltRight)     ? KeyAcquire : KeyRelease));
+        accu.push(LMetaSC  | ((syncFlags & SyncFlags.OSLeft)       ? KeyAcquire : KeyRelease));
+        accu.push(RMetaSC  | ((syncFlags & SyncFlags.OSRight)      ? KeyAcquire : KeyRelease));
+        // accu.push(KanaSC   | ((syncFlags & SyncFlags.Kana)         ? KeyAcquire : KeyRelease));
+
+        let modFlags = 0;
+        let virtualModFlags = 0;
+
+        const updateMods = (syncf, modf, vmodf) => {
+            if (syncFlags & syncf) {
+                modFlags |= modf;
+                virtualModFlags |= vmodf;
+            }
+        }
+
+        updateMods(SyncFlags.ShiftLeft, ShiftMod, ShiftMod);
+        updateMods(SyncFlags.ShiftRight, ShiftMod, RightShiftMod);
+        updateMods(SyncFlags.ControlLeft, CtrlMod, CtrlMod);
+        updateMods(SyncFlags.AltLeft, AltMod, AltMod);
+        updateMods(SyncFlags.AltRight, CtrlMod | AltMod, AltGrMod);
+        updateMods(SyncFlags.CapsLock, CapsLockMod, CapsLockMod);
+        updateMods(SyncFlags.NumLock, NumLockMod, NumLockMod);
+        // updateMods(SyncFlags.Kana, KanaMod, KanaMod);
+        if (syncFlags & SyncFlags.ControlRight) {
+            if (this._ctrlIsOem8) {
+                modFlags |= OEM8Mod;
+                virtualModFlags |= OEM8Mod;
+            }
+            else {
+                modFlags |= CtrlMod;
+                virtualModFlags |= RightCtrlMod;
+            }
+        }
+
+        this._modFlags = modFlags;
+        this._virtualModFlags = virtualModFlags;
+
+        return accu;
     }
 
     getVirtualScancodeMods() {
-        if (this.virtualModFlags) {
+        if (this._virtualModFlags) {
             const accu = [];
-            if (this.virtualModFlags & ShiftMod) accu.push(LShiftSC);
-            if (this.virtualModFlags & RightShiftMod) accu.push(RShiftSC);
-            if (this.virtualModFlags & CtrlMod) accu.push(LCtrlSC);
-            if (this.virtualModFlags & (RightCtrlMod | OEM8Mod))  accu.push(RCtrlSC);
-            if (this.virtualModFlags & AltMod) accu.push(AltSC);
-            if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC);
-            if (this.virtualModFlags & CapsLockMod) accu.push(CapsLockSC);
-            if (this.virtualModFlags & NumLockMod) accu.push(NumLockSC);
+            if (this._virtualModFlags & ShiftMod) accu.push(LShiftSC);
+            if (this._virtualModFlags & RightShiftMod) accu.push(RShiftSC);
+            if (this._virtualModFlags & CtrlMod) accu.push(LCtrlSC);
+            if (this._virtualModFlags & (RightCtrlMod | OEM8Mod))  accu.push(RCtrlSC);
+            if (this._virtualModFlags & AltMod) accu.push(AltSC);
+            if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC);
+            if (this._virtualModFlags & CapsLockMod) accu.push(CapsLockSC);
+            if (this._virtualModFlags & NumLockMod) accu.push(NumLockSC);
             return accu;
         }
     }
 
-    up(key, code) {
+    keyUp(key, code) {
         return this.toScancodesAndFlags(key, code, KeyRelease);
     }
 
-    down(key, code) {
+    keyDown(key, code) {
         return this.toScancodesAndFlags(key, code, KeyAcquire);
     }
 
     /// @param flag = 0 (KeyAcquire) or 0x8000 (KeyRelease)
     toScancodesAndFlags(key, code, flag) {
-        const scancodeByMods = this.keymap[key];
+        const scancodeByMods = this._keymap[key];
         if (scancodeByMods) {
             return this._scancodeByModsToScancodes(scancodeByMods, flag);
         }
 
-        const dk = this.deadKeymap[key];
+        const dk = this._deadKeymap[key];
 
         // dead key
         if (dk) {
-            const accu = this._scancodeByModsToScancodes(this.accentKeymap[dk[0]], flag);
+            const accu = this._scancodeByModsToScancodes(this._accentKeymap[dk[0]], flag);
             for (let i = 1; i < dk.length; ++i) {
-                accu.push(...this._scancodeByModsToScancodes(this.keymap[dk[i]], flag));
+                accu.push(...this._scancodeByModsToScancodes(this._keymap[dk[i]], flag));
             }
             return accu;
         }
@@ -371,7 +448,7 @@ class ReversedKeymap
     }
 
     _scancodeByModsToScancodes(scancodeByMods, flag) {
-        let scancode = scancodeByMods[this.modFlags];
+        let scancode = scancodeByMods[this._modFlags];
         if (scancode) {
             return [scancode | flag];
         }
@@ -400,96 +477,96 @@ class ReversedKeymap
 
         // ctrl, alt, altgr, oem8
         // Note: ctrl+alt = altgr
-        if ((this.modFlags ^ expectedModFlags) & (AltMod | CtrlMod | OEM8Mod)) {
+        if ((this._modFlags ^ expectedModFlags) & (AltMod | CtrlMod | OEM8Mod)) {
             const expectedAltFlags = expectedModFlags & AltMod;
             const expectedCtrlFlags = expectedModFlags & CtrlMod;
             const expectedOem8Flags = expectedModFlags & OEM8Mod;
             switch (expectedAltFlags | expectedCtrlFlags | expectedOem8Flags) {
                 case 0:
-                    if (this.virtualModFlags & (RightCtrlMod | OEM8Mod)) accu.push(RCtrlSC | release);
-                    if (this.virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
-                    if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
-                    if (this.virtualModFlags & AltMod) accu.push(AltSC | release);
+                    if (this._virtualModFlags & (RightCtrlMod | OEM8Mod)) accu.push(RCtrlSC | release);
+                    if (this._virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (this._virtualModFlags & AltMod) accu.push(AltSC | release);
                     break;
 
                 case AltMod:
-                    if (!(this.virtualModFlags & AltMod)) accu.push(AltSC | down);
-                    if (this.virtualModFlags & (RightCtrlMod | OEM8Mod)) accu.push(RCtrlSC | release);
-                    if (this.virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
-                    if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (!(this._virtualModFlags & AltMod)) accu.push(AltSC | down);
+                    if (this._virtualModFlags & (RightCtrlMod | OEM8Mod)) accu.push(RCtrlSC | release);
+                    if (this._virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
                     break;
 
                 case CtrlMod:
-                    if (!(this.virtualModFlags & (RightCtrlMod | CtrlMod))) accu.push(RCtrlSC | down);
-                    if (this.virtualModFlags & OEM8Mod) accu.push(RCtrlSC | release);
-                    if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
-                    if (this.virtualModFlags & AltMod) accu.push(AltSC | release);
+                    if (!(this._virtualModFlags & (RightCtrlMod | CtrlMod))) accu.push(RCtrlSC | down);
+                    if (this._virtualModFlags & OEM8Mod) accu.push(RCtrlSC | release);
+                    if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (this._virtualModFlags & AltMod) accu.push(AltSC | release);
                     break;
 
                 case OEM8Mod:
-                    if (!(this.virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
-                    if (this.virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
-                    if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
-                    if (this.virtualModFlags & AltMod) accu.push(AltSC | release);
+                    if (!(this._virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    if (this._virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (this._virtualModFlags & AltMod) accu.push(AltSC | release);
                     break;
 
                 case (AltMod | OEM8Mod):
-                    if (!(this.virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
-                    if (!(this.virtualModFlags & AltMod)) accu.push(AltSC | down);
-                    if (this.virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
-                    if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (!(this._virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    if (!(this._virtualModFlags & AltMod)) accu.push(AltSC | down);
+                    if (this._virtualModFlags & CtrlMod) accu.push(LCtrlSC | release);
+                    if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
                     break;
 
                 case (CtrlMod | OEM8Mod):
-                    if (!(this.virtualModFlags & CtrlMod)) accu.push(LCtrlSC | down);
-                    if (!(this.virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
-                    if (this.virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
-                    if (this.virtualModFlags & AltMod) accu.push(AltSC | release);
+                    if (!(this._virtualModFlags & CtrlMod)) accu.push(LCtrlSC | down);
+                    if (!(this._virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                    if (this._virtualModFlags & AltGrMod) accu.push(AltGrSC | release);
+                    if (this._virtualModFlags & AltMod) accu.push(AltSC | release);
                     break;
 
                 case (AltMod | CtrlMod):
                 case (AltMod | CtrlMod | OEM8Mod):
-                    if (!(this.virtualModFlags & AltGrMod) && (this.virtualModFlags & (AltMod | CtrlMod)) != (AltMod | CtrlMod)) {
-                        if (this.virtualModFlags & (AltMod | CtrlMod)) {
-                            if (!(this.virtualModFlags & (CtrlMod | RightCtrlMod))) accu.push(LCtrlSC | down);
-                            if (!(this.virtualModFlags & AltMod)) accu.push(AltSC | down);
+                    if (!(this._virtualModFlags & AltGrMod) && (this._virtualModFlags & (AltMod | CtrlMod)) != (AltMod | CtrlMod)) {
+                        if (this._virtualModFlags & (AltMod | CtrlMod)) {
+                            if (!(this._virtualModFlags & (CtrlMod | RightCtrlMod))) accu.push(LCtrlSC | down);
+                            if (!(this._virtualModFlags & AltMod)) accu.push(AltSC | down);
                         }
                         else accu.push(AltGrSC | down);
                     }
 
                     if (expectedOem8Flags) {
-                        if (!(this.virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
+                        if (!(this._virtualModFlags & OEM8Mod)) accu.push(RCtrlSC | down);
                     }
                     else {
-                        if (this.virtualModFlags & OEM8Mod) accu.push(RCtrlSC | release);
+                        if (this._virtualModFlags & OEM8Mod) accu.push(RCtrlSC | release);
                     }
                     break;
             }
         }
 
         // left/right shift
-        if ((this.modFlags ^ expectedModFlags) & ShiftMod) {
+        if ((this._modFlags ^ expectedModFlags) & ShiftMod) {
             if (expectedModFlags & ShiftMod) {
                 accu.push(LShiftSC | down);
             }
             else {
-                if (this.virtualModFlags & ShiftMod) accu.push(LShiftSC | release);
-                if (this.virtualModFlags & RightShiftMod) accu.push(RShiftSC | release);
+                if (this._virtualModFlags & ShiftMod) accu.push(LShiftSC | release);
+                if (this._virtualModFlags & RightShiftMod) accu.push(RShiftSC | release);
             }
         }
 
         // CapsLock
-        if ((this.modFlags ^ expectedModFlags) & CapsLockMod) {
+        if ((this._modFlags ^ expectedModFlags) & CapsLockMod) {
             accu.push(CapsLockSC | ((expectedModFlags & CapsLockMod) ? down : release));
         }
 
         // // KanaMod
-        // if ((this.modFlags ^ expectedModFlags) & KanaMod) {
+        // if ((this._modFlags ^ expectedModFlags) & KanaMod) {
         //     accu.push(KanaModSC | ((expectedModFlags & KanaMod) ? down : release));
         // }
         //
         // // KanaLockMod
-        // if ((this.modFlags ^ expectedModFlags) & KanaLockMod) {
+        // if ((this._modFlags ^ expectedModFlags) & KanaLockMod) {
         //     accu.push(KanaLockSC | ((expectedModFlags & KanaLockMod) ? down : release));
         // }
 
@@ -507,15 +584,15 @@ class ReversedKeymap
         switch (code) {
             case "CapsLock":
                 if (flag === KeyRelease) {
-                    this.virtualModFlags ^= CapsLockMod;
-                    this.modFlags ^= CapsLockMod;
+                    this._virtualModFlags ^= CapsLockMod;
+                    this._modFlags ^= CapsLockMod;
                 }
                 return [0x3A | flag];
 
             case "NumLock":
                 if (flag === KeyRelease) {
-                    this.virtualModFlags ^= NumLockMod;
-                    this.modFlags ^= NumLockMod;
+                    this._virtualModFlags ^= NumLockMod;
+                    this._modFlags ^= NumLockMod;
                 }
                 return [0x145 | flag];
 
@@ -524,7 +601,7 @@ class ReversedKeymap
                 return [0x1D | flag];
 
             case "ControlRight":
-                if (this.ctrlIsOem8) {
+                if (this._ctrlIsOem8) {
                     this._updateFlags(OEM8Mod, OEM8Mod, OEM8Mod, flag);
                 }
                 else {
@@ -561,39 +638,48 @@ class ReversedKeymap
 
     _updateFlags(modf, vmodf, vmodfMask, flag) {
         if (flag === KeyRelease) {
-            this.virtualModFlags &= ~vmodf;
-            this.modFlags &= ~modf;
-            this.modFlags |= (this.virtualModFlags & vmodfMask) ? modf : 0;
+            this._virtualModFlags &= ~vmodf;
+            this._modFlags &= ~modf;
+            this._modFlags |= (this._virtualModFlags & vmodfMask) ? modf : 0;
         }
         else {
-            this.virtualModFlags |= vmodf;
-            this.modFlags |= modf;
+            this._virtualModFlags |= vmodf;
+            this._modFlags |= modf;
         }
-        this.modFlags &= ~modf;
-        this.modFlags |= (this.virtualModFlags & vmodfMask) ? modf : 0;
+        this._modFlags &= ~modf;
+        this._modFlags |= (this._virtualModFlags & vmodfMask) ? modf : 0;
     }
 
     _updateAltGrFlags(vmodf, flag) {
         if (flag === KeyRelease) {
-            this.virtualModFlags &= ~vmodf;
+            this._virtualModFlags &= ~vmodf;
         }
         else {
-            this.virtualModFlags |= vmodf;
+            this._virtualModFlags |= vmodf;
         }
 
-        this.modFlags &= ~(CtrlMod | AltMod);
-        if (this.virtualModFlags & AltGrMod) {
-            this.modFlags |= CtrlMod | AltMod;
+        this._modFlags &= ~(CtrlMod | AltMod);
+        if (this._virtualModFlags & AltGrMod) {
+            this._modFlags |= CtrlMod | AltMod;
         }
         else {
-            const ctrl = this.ctrlIsOem8 ? CtrlMod : (CtrlMod | RightCtrlMod);
-            if (this.virtualModFlags & ctrl) this.modFlags |= CtrlMod;
-            if (this.virtualModFlags & AltMod) this.modFlags |= AltMod;
+            const ctrl = this._ctrlIsOem8 ? CtrlMod : (CtrlMod | RightCtrlMod);
+            if (this._virtualModFlags & ctrl) this._modFlags |= CtrlMod;
+            if (this._virtualModFlags & AltMod) this._modFlags |= AltMod;
+        }
+    }
+
+    _updateLock(lockFlags, lockMod, mod) {
+        if (lockFlags & lockMod) {
+            this._virtualModFlags |= mod;
+            this._modFlags |= mod;
+        }
+        else {
+            this._virtualModFlags &= ~mod;
+            this._modFlags &= ~mod;
         }
     }
 };
-
-ReversedKeymap.nullLayout = emptyReversedLayout;
 
 const scancodeFromscancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff; };
 const flagsFromScancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff00; };
@@ -602,11 +688,10 @@ try {
     module.exports.scancodeFromscancodeAndFlags = scancodeFromscancodeAndFlags;
     module.exports.flagsFromScancodeAndFlags = flagsFromScancodeAndFlags;
     module.exports.keycodeToSingleScancode = keycodeToSingleScancode;
-    module.exports.numpadKeyToScancode = numpadKeyToScancode;
+    module.exports.numpadCodeToScancode = numpadCodeToScancode;
     module.exports.codeToScancodes = codeToScancodes;
     module.exports.ReversedKeymap = ReversedKeymap;
-    module.exports.KeyRelease = KeyRelease;
-    module.exports.KeyAcquire = KeyAcquire;
+    module.exports.SyncFlags = SyncFlags;
 }
 catch (e) {
     // module not found
