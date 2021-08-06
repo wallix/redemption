@@ -511,7 +511,7 @@ scard_pkcs11_certificate_list scard_pkcs11_module::find_signing_certificates(
 //////// PKCS#11 API //////////////////////////////////////////////////////
 
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR function_list)
 {
 	assert(_functions.C_GetFunctionList);
@@ -520,7 +520,7 @@ scard_pkcs11_module::C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR function_list)
         function_list);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Initialize(CK_VOID_PTR init_args)
 {
 	assert(_functions.C_Initialize);
@@ -529,7 +529,7 @@ scard_pkcs11_module::C_Initialize(CK_VOID_PTR init_args)
         init_args);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Finalize(CK_VOID_PTR reserved)
 {
 	assert(_functions.C_Finalize);
@@ -538,7 +538,7 @@ scard_pkcs11_module::C_Finalize(CK_VOID_PTR reserved)
         reserved);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetInfo(CK_INFO_PTR info)
 {
 	assert(_functions.C_GetInfo);
@@ -547,7 +547,7 @@ scard_pkcs11_module::C_GetInfo(CK_INFO_PTR info)
         info);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetSlotList(CK_BBOOL token_present, CK_SLOT_ID_PTR slot_list,
     CK_ULONG_PTR count)
 {
@@ -557,7 +557,7 @@ scard_pkcs11_module::C_GetSlotList(CK_BBOOL token_present, CK_SLOT_ID_PTR slot_l
         token_present, slot_list, count);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetSlotInfo(CK_SLOT_ID slot_id, CK_SLOT_INFO_PTR info)
 {
 	assert(_functions.C_GetSlotInfo);
@@ -566,7 +566,7 @@ scard_pkcs11_module::C_GetSlotInfo(CK_SLOT_ID slot_id, CK_SLOT_INFO_PTR info)
         slot_id, info);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetTokenInfo(CK_SLOT_ID slot_id, CK_TOKEN_INFO_PTR info)
 {
 	assert(_functions.C_GetTokenInfo);
@@ -575,7 +575,7 @@ scard_pkcs11_module::C_GetTokenInfo(CK_SLOT_ID slot_id, CK_TOKEN_INFO_PTR info)
         slot_id, info);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetMechanismList(CK_SLOT_ID  slot_id, CK_MECHANISM_TYPE_PTR mechanism_list,
     CK_ULONG_PTR count)
 {
@@ -585,7 +585,7 @@ scard_pkcs11_module::C_GetMechanismList(CK_SLOT_ID  slot_id, CK_MECHANISM_TYPE_P
         slot_id, mechanism_list, count);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetMechanismInfo(CK_SLOT_ID  slot_id, CK_MECHANISM_TYPE type,
     CK_MECHANISM_INFO_PTR info)
 {
@@ -595,7 +595,7 @@ scard_pkcs11_module::C_GetMechanismInfo(CK_SLOT_ID  slot_id, CK_MECHANISM_TYPE t
         slot_id, type, info);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_InitToken(CK_SLOT_ID slot_id, CK_UTF8CHAR_PTR pin, CK_ULONG pin_length,
     CK_UTF8CHAR_PTR label)
 {
@@ -605,7 +605,7 @@ scard_pkcs11_module::C_InitToken(CK_SLOT_ID slot_id, CK_UTF8CHAR_PTR pin, CK_ULO
         slot_id, pin, pin_length, label);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_InitPIN(CK_SESSION_HANDLE session, CK_UTF8CHAR_PTR pin, CK_ULONG pin_length)
 {
 	assert(_functions.C_InitPIN);
@@ -614,7 +614,7 @@ scard_pkcs11_module::C_InitPIN(CK_SESSION_HANDLE session, CK_UTF8CHAR_PTR pin, C
         session, pin, pin_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SetPIN(CK_SESSION_HANDLE session, CK_UTF8CHAR_PTR old_pin, CK_ULONG old_pin_length,
     CK_UTF8CHAR_PTR new_pin, CK_ULONG new_pin_length)
 {
@@ -624,7 +624,7 @@ scard_pkcs11_module::C_SetPIN(CK_SESSION_HANDLE session, CK_UTF8CHAR_PTR old_pin
         session, old_pin, old_pin_length, new_pin, new_pin_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_OpenSession(CK_SLOT_ID slot_id, CK_FLAGS flags, CK_VOID_PTR application,
     CK_NOTIFY notify, CK_SESSION_HANDLE_PTR session)
 {
@@ -634,7 +634,7 @@ scard_pkcs11_module::C_OpenSession(CK_SLOT_ID slot_id, CK_FLAGS flags, CK_VOID_P
         slot_id, flags, application, notify, session);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_CloseSession(CK_SESSION_HANDLE session)
 {
 	assert(_functions.C_CloseSession);
@@ -643,7 +643,7 @@ scard_pkcs11_module::C_CloseSession(CK_SESSION_HANDLE session)
         session);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_CloseAllSessions(CK_SLOT_ID slot_id)
 {
 	assert(_functions.C_CloseAllSessions);
@@ -652,7 +652,7 @@ scard_pkcs11_module::C_CloseAllSessions(CK_SLOT_ID slot_id)
         slot_id);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetSessionInfo(CK_SESSION_HANDLE session, CK_SESSION_INFO_PTR info)
 {
 	assert(_functions.C_GetSessionInfo);
@@ -661,7 +661,7 @@ scard_pkcs11_module::C_GetSessionInfo(CK_SESSION_HANDLE session, CK_SESSION_INFO
         session, info);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetOperationState(CK_SESSION_HANDLE session, CK_BYTE_PTR operation_state,
     CK_ULONG_PTR operation_state_length)
 {
@@ -671,7 +671,7 @@ scard_pkcs11_module::C_GetOperationState(CK_SESSION_HANDLE session, CK_BYTE_PTR 
         session, operation_state, operation_state_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SetOperationState(CK_SESSION_HANDLE session, CK_BYTE_PTR operation_state,
     CK_ULONG operation_state_length, CK_OBJECT_HANDLE encryption_key,
     CK_OBJECT_HANDLE authentication_key)
@@ -682,7 +682,7 @@ scard_pkcs11_module::C_SetOperationState(CK_SESSION_HANDLE session, CK_BYTE_PTR 
         session, operation_state, operation_state_length, encryption_key, authentication_key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Login(CK_SESSION_HANDLE session, CK_USER_TYPE user_type,
     CK_UTF8CHAR_PTR pin, CK_ULONG pin_length)
 {
@@ -692,7 +692,7 @@ scard_pkcs11_module::C_Login(CK_SESSION_HANDLE session, CK_USER_TYPE user_type,
         session, user_type, pin, pin_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Logout(CK_SESSION_HANDLE session)
 {
 	assert(_functions.C_Logout);
@@ -701,7 +701,7 @@ scard_pkcs11_module::C_Logout(CK_SESSION_HANDLE session)
         session);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_CreateObject(CK_SESSION_HANDLE session, CK_ATTRIBUTE_PTR template_, CK_ULONG count,
     CK_OBJECT_HANDLE_PTR object)
 {
@@ -711,7 +711,7 @@ scard_pkcs11_module::C_CreateObject(CK_SESSION_HANDLE session, CK_ATTRIBUTE_PTR 
         session, template_, count, object);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_CopyObject(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE object,
     CK_ATTRIBUTE_PTR template_, CK_ULONG count, CK_OBJECT_HANDLE_PTR new_object)
 {
@@ -721,7 +721,7 @@ scard_pkcs11_module::C_CopyObject(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE ob
         session, object, template_, count, new_object);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DestroyObject(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE object)
 {
 	assert(_functions.C_DestroyObject);
@@ -730,7 +730,7 @@ scard_pkcs11_module::C_DestroyObject(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE
         session, object);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetObjectSize(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE object, CK_ULONG_PTR size)
 {
 	assert(_functions.C_GetObjectSize);
@@ -739,7 +739,7 @@ scard_pkcs11_module::C_GetObjectSize(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE
         session, object, size);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetAttributeValue(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE object,
     CK_ATTRIBUTE_PTR template_, CK_ULONG count)
 {
@@ -749,7 +749,7 @@ scard_pkcs11_module::C_GetAttributeValue(CK_SESSION_HANDLE session, CK_OBJECT_HA
         session, object, template_, count);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SetAttributeValue(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE object,
 		CK_ATTRIBUTE_PTR template_, CK_ULONG count)
 {
@@ -759,7 +759,7 @@ scard_pkcs11_module::C_SetAttributeValue(CK_SESSION_HANDLE session, CK_OBJECT_HA
         session, object, template_, count);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_FindObjectsInit(CK_SESSION_HANDLE session, CK_ATTRIBUTE_PTR template_,
     CK_ULONG count)
 {
@@ -769,7 +769,7 @@ scard_pkcs11_module::C_FindObjectsInit(CK_SESSION_HANDLE session, CK_ATTRIBUTE_P
         session, template_, count);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_FindObjects(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE_PTR object,
     CK_ULONG max_object_count, CK_ULONG_PTR object_count)
 {
@@ -779,7 +779,7 @@ scard_pkcs11_module::C_FindObjects(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE_P
         session, object, max_object_count, object_count);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_FindObjectsFinal(CK_SESSION_HANDLE session)
 {
 	assert(_functions.C_FindObjectsFinal);
@@ -788,7 +788,7 @@ scard_pkcs11_module::C_FindObjectsFinal(CK_SESSION_HANDLE session)
         session);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_EncryptInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_OBJECT_HANDLE key)
 {
@@ -798,7 +798,7 @@ scard_pkcs11_module::C_EncryptInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR m
         session, mechanism, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Encrypt(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_ULONG data_length,
     CK_BYTE_PTR encrypted_data, CK_ULONG_PTR encrypted_data_length)
 {
@@ -808,7 +808,7 @@ scard_pkcs11_module::C_Encrypt(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_U
         session, data, data_length, encrypted_data, encrypted_data_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_EncryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, CK_ULONG part_length,
     CK_BYTE_PTR encrypted_part, CK_ULONG_PTR encrypted_part_length)
 {
@@ -818,7 +818,7 @@ scard_pkcs11_module::C_EncryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part
         session, part, part_length, encrypted_part, encrypted_part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_EncryptFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR last_encrypted_part,
     CK_ULONG_PTR last_encrypted_part_length)
 {
@@ -828,7 +828,7 @@ scard_pkcs11_module::C_EncryptFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR last_
         session, last_encrypted_part, last_encrypted_part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DecryptInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism, CK_OBJECT_HANDLE key)
 {
 	assert(_functions.C_DecryptInit);
@@ -837,7 +837,7 @@ scard_pkcs11_module::C_DecryptInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR m
         session, mechanism, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Decrypt(CK_SESSION_HANDLE session, CK_BYTE_PTR encrypted_data, CK_ULONG encrypted_data_length,
     CK_BYTE_PTR data, CK_ULONG_PTR data_length)
 {
@@ -847,7 +847,7 @@ scard_pkcs11_module::C_Decrypt(CK_SESSION_HANDLE session, CK_BYTE_PTR encrypted_
         session, encrypted_data, encrypted_data_length, data, data_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DecryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR encrypted_part,
     CK_ULONG encrypted_part_length, CK_BYTE_PTR part, CK_ULONG_PTR part_length)
 {
@@ -857,7 +857,7 @@ scard_pkcs11_module::C_DecryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR encr
         session, encrypted_part, encrypted_part_length, part, part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DecryptFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR last_part,
     CK_ULONG_PTR last_part_length)
 {
@@ -867,7 +867,7 @@ scard_pkcs11_module::C_DecryptFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR last_
         session, last_part, last_part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DigestInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism)
 {
 	assert(_functions.C_DigestInit);
@@ -876,7 +876,7 @@ scard_pkcs11_module::C_DigestInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR me
         session, mechanism);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Digest(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_ULONG data_length,
     CK_BYTE_PTR digest, CK_ULONG_PTR digest_length)
 {
@@ -886,7 +886,7 @@ scard_pkcs11_module::C_Digest(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_UL
         session, data, data_length, digest, digest_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DigestUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, CK_ULONG part_length)
 {
 	assert(_functions.C_DigestUpdate);
@@ -895,7 +895,7 @@ scard_pkcs11_module::C_DigestUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part,
         session, part, part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DigestKey(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE key)
 {
 	assert(_functions.C_DigestKey);
@@ -904,7 +904,7 @@ scard_pkcs11_module::C_DigestKey(CK_SESSION_HANDLE session, CK_OBJECT_HANDLE key
         session, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DigestFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR digest, CK_ULONG_PTR digest_length)
 {
 	assert(_functions.C_DigestFinal);
@@ -913,7 +913,7 @@ scard_pkcs11_module::C_DigestFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR digest
         session, digest, digest_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SignInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism, CK_OBJECT_HANDLE key)
 {
 	assert(_functions.C_SignInit);
@@ -922,7 +922,7 @@ scard_pkcs11_module::C_SignInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mech
         session, mechanism, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Sign(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_ULONG data_length,
     CK_BYTE_PTR signature, CK_ULONG_PTR signature_length)
 {
@@ -932,7 +932,7 @@ scard_pkcs11_module::C_Sign(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_ULON
         session, data, data_length, signature, signature_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SignUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, CK_ULONG part_length)
 {
 	assert(_functions.C_SignUpdate);
@@ -941,7 +941,7 @@ scard_pkcs11_module::C_SignUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, C
         session, part, part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SignFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR signature, CK_ULONG_PTR signature_length)
 {
 	assert(_functions.C_SignFinal);
@@ -950,7 +950,7 @@ scard_pkcs11_module::C_SignFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR signatur
         session, signature, signature_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SignRecoverInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism, CK_OBJECT_HANDLE key)
 {
 	assert(_functions.C_SignRecoverInit);
@@ -959,7 +959,7 @@ scard_pkcs11_module::C_SignRecoverInit(CK_SESSION_HANDLE session, CK_MECHANISM_P
         session, mechanism, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SignRecover(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_ULONG data_length,
     CK_BYTE_PTR signature, CK_ULONG_PTR signature_length)
 {
@@ -969,7 +969,7 @@ scard_pkcs11_module::C_SignRecover(CK_SESSION_HANDLE session, CK_BYTE_PTR data, 
         session, data, data_length, signature, signature_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_VerifyInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism, CK_OBJECT_HANDLE key)
 {
 	assert(_functions.C_VerifyInit);
@@ -978,7 +978,7 @@ scard_pkcs11_module::C_VerifyInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR me
         session, mechanism, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_Verify(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_ULONG data_length,
     CK_BYTE_PTR signature, CK_ULONG signature_length)
 {
@@ -988,7 +988,7 @@ scard_pkcs11_module::C_Verify(CK_SESSION_HANDLE session, CK_BYTE_PTR data, CK_UL
         session, data, data_length, signature, signature_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_VerifyUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, CK_ULONG part_length)
 {
 	assert(_functions.C_VerifyUpdate);
@@ -997,7 +997,7 @@ scard_pkcs11_module::C_VerifyUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part,
         session, part, part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_VerifyFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR signature, CK_ULONG signature_length)
 {
 	assert(_functions.C_VerifyFinal);
@@ -1006,7 +1006,7 @@ scard_pkcs11_module::C_VerifyFinal(CK_SESSION_HANDLE session, CK_BYTE_PTR signat
         session, signature, signature_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_VerifyRecoverInit(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_OBJECT_HANDLE key)
 {
@@ -1016,7 +1016,7 @@ scard_pkcs11_module::C_VerifyRecoverInit(CK_SESSION_HANDLE session, CK_MECHANISM
         session, mechanism, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_VerifyRecover(CK_SESSION_HANDLE session, CK_BYTE_PTR signature, CK_ULONG signature_length,
     CK_BYTE_PTR data, CK_ULONG_PTR data_length)
 {
@@ -1026,7 +1026,7 @@ scard_pkcs11_module::C_VerifyRecover(CK_SESSION_HANDLE session, CK_BYTE_PTR sign
         session, signature, signature_length, data, data_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DigestEncryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, CK_ULONG part_length,
     CK_BYTE_PTR encrypted_part, CK_ULONG_PTR encrypted_part_length)
 {
@@ -1036,7 +1036,7 @@ scard_pkcs11_module::C_DigestEncryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PT
         session, part, part_length, encrypted_part, encrypted_part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DecryptDigestUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR encrypted_part,
     CK_ULONG encrypted_part_length, CK_BYTE_PTR part, CK_ULONG_PTR part_length)
 {
@@ -1046,7 +1046,7 @@ scard_pkcs11_module::C_DecryptDigestUpdate(CK_SESSION_HANDLE session, CK_BYTE_PT
         session, encrypted_part, encrypted_part_length, part, part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SignEncryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR part, CK_ULONG part_length,
     CK_BYTE_PTR encrypted_part, CK_ULONG_PTR encrypted_part_length)
 {
@@ -1056,7 +1056,7 @@ scard_pkcs11_module::C_SignEncryptUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR 
         session, part, part_length, encrypted_part, encrypted_part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DecryptVerifyUpdate(CK_SESSION_HANDLE session, CK_BYTE_PTR encrypted_part,
     CK_ULONG encrypted_part_length, CK_BYTE_PTR part, CK_ULONG_PTR part_length)
 {
@@ -1066,7 +1066,7 @@ scard_pkcs11_module::C_DecryptVerifyUpdate(CK_SESSION_HANDLE session, CK_BYTE_PT
         session, encrypted_part, encrypted_part_length, part, part_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GenerateKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_ATTRIBUTE_PTR template_, CK_ULONG count, CK_OBJECT_HANDLE_PTR key)
 {
@@ -1076,7 +1076,7 @@ scard_pkcs11_module::C_GenerateKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR m
         session, mechanism, template_, count, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GenerateKeyPair(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_ATTRIBUTE_PTR public_key_template, CK_ULONG public_key_attribute_count,
     CK_ATTRIBUTE_PTR private_key_template, CK_ULONG private_key_attribute_count,
@@ -1089,7 +1089,7 @@ scard_pkcs11_module::C_GenerateKeyPair(CK_SESSION_HANDLE session, CK_MECHANISM_P
         private_key_template, private_key_attribute_count, public_key, private_key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_WrapKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_OBJECT_HANDLE wrapping_key, CK_OBJECT_HANDLE key,
     CK_BYTE_PTR wrapped_key, CK_ULONG_PTR wrapped_key_length)
@@ -1100,7 +1100,7 @@ scard_pkcs11_module::C_WrapKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mecha
         session, mechanism, wrapping_key, key, wrapped_key, wrapped_key_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_UnwrapKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_OBJECT_HANDLE unwrapping_key, CK_BYTE_PTR wrapped_key, CK_ULONG wrapped_key_length,
     CK_ATTRIBUTE_PTR template_, CK_ULONG attribute_count, CK_OBJECT_HANDLE_PTR key)
@@ -1112,7 +1112,7 @@ scard_pkcs11_module::C_UnwrapKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mec
         template_, attribute_count, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_DeriveKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mechanism,
     CK_OBJECT_HANDLE base_key, CK_ATTRIBUTE_PTR template_, CK_ULONG attribute_count,
     CK_OBJECT_HANDLE_PTR key)
@@ -1123,7 +1123,7 @@ scard_pkcs11_module::C_DeriveKey(CK_SESSION_HANDLE session, CK_MECHANISM_PTR mec
         session, mechanism, base_key, template_, attribute_count, key);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_SeedRandom(CK_SESSION_HANDLE session, CK_BYTE_PTR seed, CK_ULONG seed_length)
 {
 	assert(_functions.C_SeedRandom);
@@ -1132,7 +1132,7 @@ scard_pkcs11_module::C_SeedRandom(CK_SESSION_HANDLE session, CK_BYTE_PTR seed, C
         session, seed, seed_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GenerateRandom(CK_SESSION_HANDLE session, CK_BYTE_PTR random_data,
     CK_ULONG random_data_length)
 {
@@ -1142,7 +1142,7 @@ scard_pkcs11_module::C_GenerateRandom(CK_SESSION_HANDLE session, CK_BYTE_PTR ran
         session, random_data, random_data_length);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_GetFunctionStatus(CK_SESSION_HANDLE session)
 {
 	assert(_functions.C_GetFunctionStatus);
@@ -1151,7 +1151,7 @@ scard_pkcs11_module::C_GetFunctionStatus(CK_SESSION_HANDLE session)
         session);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_CancelFunction(CK_SESSION_HANDLE session)
 {
 	assert(_functions.C_CancelFunction);
@@ -1160,7 +1160,7 @@ scard_pkcs11_module::C_CancelFunction(CK_SESSION_HANDLE session)
         session);
 }
 
-scard_pkcs11_module::return_value
+scard_pkcs11_return_value
 scard_pkcs11_module::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR slot, CK_VOID_PTR reserved)
 {
 	assert(_functions.C_WaitForSlotEvent);

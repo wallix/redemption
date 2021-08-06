@@ -6,6 +6,7 @@
 #include "scard/scard_pkcs11_enumerator.hpp"
 #include "scard/scard_pkcs11_identity.hpp"
 #include "scard/scard_pkcs11_module.hpp"
+#include "scard/scard_pkcs11_utils.hpp"
 #include "scard/scard_utils.hpp"
 #include "scard/scard_x509.hpp"
 #include "utils/log.hpp"
@@ -33,6 +34,7 @@ scard_pkcs11_identity_list scard_pkcs11_enumerator::enumerate() const
         _handler_ptr->handle_pkcs11_enumeration_start();
     }
 
+    try
     {
         LOG(LOG_INFO, "scard_pkcs11_enumerator::enumerate: "
             "loading PKCS#11 module '%s'", _module_path.c_str());
@@ -200,6 +202,14 @@ scard_pkcs11_identity_list scard_pkcs11_enumerator::enumerate() const
                 }
             }
         }
+    }
+    catch (const scard_pkcs11_exception &e)
+    {
+        LOG(LOG_ERR, "scard_pkcs11_enumerator::enumerate: "
+            "PKCS#11 error: %s (0x%08lu)", return_value_to_string(e.get_return_value()),
+                e.get_return_value());
+        
+        throw e;
     }
     
     // notify handler

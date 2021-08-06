@@ -229,6 +229,7 @@ exe rdpproxy :
   <library>src/scard/scard_pkcs11_enumerator.o
   <library>src/scard/scard_pkcs11_identity.o
   <library>src/scard/scard_pkcs11_module.o
+  <library>src/scard/scard_pkcs11_utils.o
   <library>src/scard/scard_rdp_channel.o
   <library>src/scard/scard_rdp_mod.o
   <library>src/scard/scard_utils.o
@@ -2603,6 +2604,7 @@ test-run tests/core/test_mainloop :
   <library>src/scard/scard_pkcs11_enumerator.o
   <library>src/scard/scard_pkcs11_identity.o
   <library>src/scard/scard_pkcs11_module.o
+  <library>src/scard/scard_pkcs11_utils.o
   <library>src/scard/scard_rdp_channel.o
   <library>src/scard/scard_rdp_mod.o
   <library>src/scard/scard_utils.o
@@ -2788,6 +2790,7 @@ test-run tests/core/test_session :
   <library>src/scard/scard_pkcs11_enumerator.o
   <library>src/scard/scard_pkcs11_identity.o
   <library>src/scard/scard_pkcs11_module.o
+  <library>src/scard/scard_pkcs11_utils.o
   <library>src/scard/scard_rdp_channel.o
   <library>src/scard/scard_rdp_mod.o
   <library>src/scard/scard_utils.o
@@ -6475,6 +6478,7 @@ obj src/scard/scard_pcsc_server.o : $(REDEMPTION_SRC_PATH)/scard/scard_pcsc_serv
 obj src/scard/scard_pkcs11_enumerator.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_enumerator.cpp ;
 obj src/scard/scard_pkcs11_identity.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_identity.cpp ;
 obj src/scard/scard_pkcs11_module.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_module.cpp ;
+obj src/scard/scard_pkcs11_utils.o : $(REDEMPTION_SRC_PATH)/scard/scard_pkcs11_utils.cpp ;
 obj src/scard/scard_rdp_channel.o : $(REDEMPTION_SRC_PATH)/scard/scard_rdp_channel.cpp ;
 obj src/scard/scard_rdp_mod.o : $(REDEMPTION_SRC_PATH)/scard/scard_rdp_mod.cpp ;
 obj src/scard/scard_utils.o : $(REDEMPTION_SRC_PATH)/scard/scard_utils.cpp ;

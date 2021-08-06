@@ -38,6 +38,9 @@
 
 
 ///
+typedef CK_RV scard_pkcs11_return_value;
+
+///
 typedef std::vector<uint8_t> byte_array;
 
 ///
@@ -53,7 +56,8 @@ public:
     }
 
     ///
-    scard_pkcs11_exception(const char *message, CK_RV return_value)
+    scard_pkcs11_exception(const char *message,
+        scard_pkcs11_return_value return_value)
         :
         std::runtime_error(message),
         _rv(return_value)
@@ -69,16 +73,23 @@ public:
     }
 
     ///
-    scard_pkcs11_exception(const std::string& message, CK_RV return_value)
+    scard_pkcs11_exception(const std::string& message,
+        scard_pkcs11_return_value return_value)
         :
         std::runtime_error(message),
         _rv(return_value)
     {
     }
 
+    ///
+    scard_pkcs11_return_value get_return_value() const
+    {
+        return _rv;
+    }
+
 private:
     /// PKCS#11 API return value.
-    const CK_RV _rv;
+    const scard_pkcs11_return_value _rv;
 };
 
 ///
