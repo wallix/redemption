@@ -5,6 +5,7 @@
 #include <PCSC/wintypes.h>
 #include <PCSC/winscard.h>
 
+#include "cxx/cxx.hpp"
 #include "scard/scard_pcsc_client.hpp"
 #include "scard/scard_pcsc_context.hpp"
 #include "scard/scard_pcsc_environment.hpp"
@@ -75,11 +76,8 @@ extern "C"
 {
 #endif  // __cplusplus
 
-#ifndef PCSC_API
-    #define PCSC_API
-#endif  // PCSC_API
-
-PCSC_API LONG SCardEstablishContext(
+REDEMPTION_LIB_EXPORT
+LONG SCardEstablishContext(
     DWORD dwScope,
     /*@null@*/ LPCVOID /*pvReserved1*/,
     /*@null@*/ LPCVOID /*pvReserved2*/,
@@ -105,7 +103,8 @@ PCSC_API LONG SCardEstablishContext(
     return result;
 }
 
-PCSC_API LONG SCardReleaseContext(
+REDEMPTION_LIB_EXPORT
+LONG SCardReleaseContext(
     SCARDCONTEXT hContext)
 {
     LONG result;
@@ -122,7 +121,8 @@ PCSC_API LONG SCardReleaseContext(
     return result;
 }
 
-PCSC_API LONG SCardIsValidContext(
+REDEMPTION_LIB_EXPORT
+LONG SCardIsValidContext(
     SCARDCONTEXT hContext)
 {
     LONG result;
@@ -139,7 +139,8 @@ PCSC_API LONG SCardIsValidContext(
     return result;
 }
 
-PCSC_API LONG SCardConnect(
+REDEMPTION_LIB_EXPORT
+LONG SCardConnect(
     SCARDCONTEXT hContext,
     LPCSTR szReader,
     DWORD dwShareMode,
@@ -173,7 +174,8 @@ PCSC_API LONG SCardConnect(
     return result;
 }
 
-PCSC_API LONG SCardReconnect(
+REDEMPTION_LIB_EXPORT
+LONG SCardReconnect(
     SCARDHANDLE hCard,
     DWORD dwShareMode,
     DWORD dwPreferredProtocols,
@@ -206,7 +208,8 @@ PCSC_API LONG SCardReconnect(
     return result;
 }
 
-PCSC_API LONG SCardDisconnect(
+REDEMPTION_LIB_EXPORT
+LONG SCardDisconnect(
     SCARDHANDLE hCard,
     DWORD dwDisposition)
 {
@@ -235,7 +238,8 @@ PCSC_API LONG SCardDisconnect(
     return result;
 }
 
-PCSC_API LONG SCardBeginTransaction(
+REDEMPTION_LIB_EXPORT
+LONG SCardBeginTransaction(
     SCARDHANDLE hCard)
 {
     LONG result;
@@ -260,7 +264,8 @@ PCSC_API LONG SCardBeginTransaction(
     return result;
 }
 
-PCSC_API LONG SCardEndTransaction(
+REDEMPTION_LIB_EXPORT
+LONG SCardEndTransaction(
     SCARDHANDLE hCard,
     DWORD dwDisposition)
 {
@@ -286,7 +291,8 @@ PCSC_API LONG SCardEndTransaction(
     return result;
 }
 
-PCSC_API LONG SCardStatus(
+REDEMPTION_LIB_EXPORT
+LONG SCardStatus(
     SCARDHANDLE hCard,
     /*@null@*/ /*@out@*/ LPSTR mszReaderNames,
     /*@null@*/ /*@out@*/ LPDWORD pcchReaderLen,
@@ -343,7 +349,8 @@ PCSC_API LONG SCardStatus(
     return result;
 }
 
-PCSC_API LONG SCardGetStatusChange(
+REDEMPTION_LIB_EXPORT
+LONG SCardGetStatusChange(
     SCARDCONTEXT hContext,
     DWORD dwTimeout,
     SCARD_READERSTATE *rgReaderStates,
@@ -368,7 +375,8 @@ PCSC_API LONG SCardGetStatusChange(
     return result;
 }
 
-PCSC_API LONG SCardControl(
+REDEMPTION_LIB_EXPORT
+LONG SCardControl(
     SCARDHANDLE hCard,
     DWORD dwControlCode,
     LPCVOID pbSendBuffer,
@@ -410,7 +418,8 @@ PCSC_API LONG SCardControl(
     return result;
 }
 
-PCSC_API LONG SCardTransmit(
+REDEMPTION_LIB_EXPORT
+LONG SCardTransmit(
     SCARDHANDLE hCard,
     const SCARD_IO_REQUEST *pioSendPci,
     LPCBYTE pbSendBuffer,
@@ -466,7 +475,8 @@ PCSC_API LONG SCardTransmit(
     return result;
 }
 
-PCSC_API LONG SCardListReaderGroups(
+REDEMPTION_LIB_EXPORT
+LONG SCardListReaderGroups(
     SCARDCONTEXT hContext,
     /*@out@*/ LPSTR mszGroups,
     LPDWORD pcchGroups)
@@ -494,7 +504,8 @@ PCSC_API LONG SCardListReaderGroups(
     return result;
 }
 
-PCSC_API LONG SCardListReaders(
+REDEMPTION_LIB_EXPORT
+LONG SCardListReaders(
     SCARDCONTEXT hContext,
     /*@null@*/ /*@out@*/ LPCSTR mszGroups,
     /*@null@*/ /*@out@*/ LPSTR mszReaders,
@@ -523,7 +534,8 @@ PCSC_API LONG SCardListReaders(
     return result;
 }
 
-PCSC_API LONG SCardFreeMemory(
+REDEMPTION_LIB_EXPORT
+LONG SCardFreeMemory(
     SCARDCONTEXT /*hContext*/,
     LPCVOID /*pvMem*/)
 {
@@ -532,7 +544,8 @@ PCSC_API LONG SCardFreeMemory(
     return SCARD_S_SUCCESS;
 }
 
-PCSC_API LONG SCardCancel(
+REDEMPTION_LIB_EXPORT
+LONG SCardCancel(
     SCARDCONTEXT hContext)
 {
     LONG result;
@@ -549,7 +562,8 @@ PCSC_API LONG SCardCancel(
     return result;
 }
 
-PCSC_API LONG SCardGetAttrib(
+REDEMPTION_LIB_EXPORT
+LONG SCardGetAttrib(
     SCARDHANDLE hCard,
     DWORD dwAttrId,
     /*@out@*/ LPBYTE pbAttr,
@@ -587,7 +601,8 @@ PCSC_API LONG SCardGetAttrib(
     return result;
 }
 
-PCSC_API LONG SCardSetAttrib(
+REDEMPTION_LIB_EXPORT
+LONG SCardSetAttrib(
     SCARDHANDLE hCard,
     DWORD dwAttrId,
     LPCBYTE pbAttr,
