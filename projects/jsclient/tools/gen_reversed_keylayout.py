@@ -11,17 +11,21 @@ from kbd_parser import KeymapType, KeyLayout, Key, parse_argv
 vk_control_masks = {
     '':             0,
     'VK_SHIFT':     1 << 0,
-    'VK_CONTROL':   1 << 1,
-    'VK_MENU':      1 << 2,
+    'altgr':        1 << 1,
+    'VK_CAPITAL':   1 << 2,
     'VK_NUMLOCK':   1 << 3,
-    'VK_CAPITAL':   1 << 4,
-    'VK_OEM_8':     1 << 5,
-    'VK_KANA':      1 << 6,
-    'VK_KANALOCK':  1 << 7,
+    'VK_CONTROL':   1 << 4,
+    'VK_MENU':      1 << 5,
+    'VK_OEM_8':     1 << 6,
+    'VK_KANA':      1 << 7,
+    'VK_KANALOCK':  1 << 8,
 }
 nomod = 0
 numlock = vk_control_masks['VK_NUMLOCK']
 ctrl = vk_control_masks['VK_CONTROL']
+alt = vk_control_masks['VK_MENU']
+altgr = vk_control_masks['altgr']
+ctrl_alt = ctrl | alt
 
 vk_actions = {
     'VK_APPS': ('ContextMenu', 0x15D),
@@ -155,6 +159,9 @@ def vk_mod_to_mod_flags(mods:str) -> int:
     mod_flags = 0
     for m in mods.split(' '):
         mod_flags |= vk_control_masks[m]
+    # ctrl+alt to altgr
+    if (mod_flags & ctrl_alt) == ctrl_alt:
+        mod_flags = mod_flags & ~ctrl_alt | altgr
     return mod_flags
 
 def key_to_scancode(key:Key) -> int:
