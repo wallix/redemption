@@ -268,6 +268,18 @@ const SyncFlags = Object.freeze({
     Kana:         0x1000,
 });
 
+const ScancodeByMod = Object.freeze({
+    ControlLeft:  LCtrlSC,
+    ControlRight: RCtrlSC,
+    ShiftLeft:    LShiftSC,
+    ShiftRight:   RShiftSC,
+    AltLeft:      AltSC,
+    AltRight:     AltGrSC,
+    OSLeft:       0x15B,
+    OSRight:      0x15C,
+    Kana:         0x70,
+});
+
 
 const emptyReversedLayout = {
     klid: 0,
@@ -305,6 +317,23 @@ remappingCodeByKey = {
 };
 
 
+/// \return scancodes
+const scancodesForSynchronizedMods = function(syncFlags) {
+    const accu = []
+    accu.push(LShiftSC | ((syncFlags & SyncFlags.ShiftLeft)    ? KeyAcquire : KeyRelease));
+    accu.push(RShiftSC | ((syncFlags & SyncFlags.ShiftRight)   ? KeyAcquire : KeyRelease));
+    accu.push(LCtrlSC  | ((syncFlags & SyncFlags.ControlLeft)  ? KeyAcquire : KeyRelease));
+    accu.push(RCtrlSC  | ((syncFlags & SyncFlags.ControlRight) ? KeyAcquire : KeyRelease));
+    accu.push(AltSC    | ((syncFlags & SyncFlags.AltLeft)      ? KeyAcquire : KeyRelease));
+    accu.push(AltGrSC  | ((syncFlags & SyncFlags.AltRight)     ? KeyAcquire : KeyRelease));
+    accu.push(LMetaSC  | ((syncFlags & SyncFlags.OSLeft)       ? KeyAcquire : KeyRelease));
+    accu.push(RMetaSC  | ((syncFlags & SyncFlags.OSRight)      ? KeyAcquire : KeyRelease));
+    // accu.push(KanaSC   | ((syncFlags & SyncFlags.Kana)         ? KeyAcquire : KeyRelease));
+
+    return accu;
+}
+
+
 // Keyboard behavior
 //
 // Windows: ctrl+alt = altgr
@@ -332,7 +361,7 @@ class ReversedKeymap
     constructor(reversedLayout) {
         this._modFlags = 0;
         this._virtualModFlags = 0;
-        this._altGrIsCtrlAndAlt = false;
+        this._altGrIsCtrlAndAlt = true;
         this.layout = reversedLayout || emptyReversedLayout;
     }
 
@@ -362,24 +391,7 @@ class ReversedKeymap
         this._syncOEM8();
     }
 
-    /// \return scancodes
     sync(syncFlags) {
-        this._updateLock(syncFlags, SyncFlags.CapsLock, CapsLockMod);
-        this._updateLock(syncFlags, SyncFlags.NumLock, NumLockMod);
-        // this._updateLock(syncFlags, SyncFlags.KanaLock, KanaLockMod);
-        // ignore ScrollLock value
-
-        const accu = []
-        accu.push(LShiftSC | ((syncFlags & SyncFlags.ShiftLeft)    ? KeyAcquire : KeyRelease));
-        accu.push(RShiftSC | ((syncFlags & SyncFlags.ShiftRight)   ? KeyAcquire : KeyRelease));
-        accu.push(LCtrlSC  | ((syncFlags & SyncFlags.ControlLeft)  ? KeyAcquire : KeyRelease));
-        accu.push(RCtrlSC  | ((syncFlags & SyncFlags.ControlRight) ? KeyAcquire : KeyRelease));
-        accu.push(AltSC    | ((syncFlags & SyncFlags.AltLeft)      ? KeyAcquire : KeyRelease));
-        accu.push(AltGrSC  | ((syncFlags & SyncFlags.AltRight)     ? KeyAcquire : KeyRelease));
-        accu.push(LMetaSC  | ((syncFlags & SyncFlags.OSLeft)       ? KeyAcquire : KeyRelease));
-        accu.push(RMetaSC  | ((syncFlags & SyncFlags.OSRight)      ? KeyAcquire : KeyRelease));
-        // accu.push(KanaSC   | ((syncFlags & SyncFlags.Kana)         ? KeyAcquire : KeyRelease));
-
         let virtualModFlags = 0;
         let modFlags = 0;
 
@@ -398,15 +410,15 @@ class ReversedKeymap
         updateMods(SyncFlags.AltRight, AltGrMod, AltGrMod);
         updateMods(SyncFlags.CapsLock, CapsLockMod, CapsLockMod);
         updateMods(SyncFlags.NumLock, NumLockMod, NumLockMod);
+        // updateMods(SyncFlags.KanaLock, KanaLockMod, KanaLockMod);
         // updateMods(SyncFlags.Kana, KanaMod, KanaMod);
+        // ignore ScrollLock value
 
         this._virtualModFlags = virtualModFlags;
         this._modFlags = modFlags;
 
         this._syncOEM8();
         this._syncAltGrFlags();
-
-        return accu;
     }
 
     keyUp(key, code) {
@@ -642,12 +654,14 @@ const scancodeFromscancodeAndFlags = function(scancodeAndFlags) { return scancod
 const flagsFromScancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff00; };
 
 try {
+    module.exports.scancodesForSynchronizedMods = scancodesForSynchronizedMods;
     module.exports.scancodeFromscancodeAndFlags = scancodeFromscancodeAndFlags;
     module.exports.flagsFromScancodeAndFlags = flagsFromScancodeAndFlags;
     module.exports.keycodeToSingleScancode = keycodeToSingleScancode;
     module.exports.numpadCodeToScancode = numpadCodeToScancode;
     module.exports.codeToScancodes = codeToScancodes;
     module.exports.ReversedKeymap = ReversedKeymap;
+    module.exports.ScancodeByMod = ScancodeByMod;
     module.exports.NullLayout = NullLayout;
     module.exports.KeyRelease = KeyRelease;
     module.exports.KeyAcquire = KeyAcquire;

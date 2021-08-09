@@ -125,11 +125,10 @@ div, section, canvas{
                 <option value="keyToScancode">KeyboardEvent.key -> Scancode</option>
                 <option value="unicode" selected="selected">Unicode</option>
             </select></label>
+            <label for="kbdAltGrIsCtrlAndAlt"><input type="checkbox" id="kbdAltGrIsCtrlAndAlt" name="kbdAltGrIsCtrlAndAlt" checked="checked"/>Ctrl + Alt = AltGr</label>
             <fieldset>
                 <legend>Unicode -> Scancode</legend>
                 <label for="kbdlayout">Layout: <select name="kbdlayout" id="kbdlayout"></select></label>
-                <label for="kbdos"><input type="checkbox" id="kbdos" name="kbdos" checked="checked"/>Ctrl + Alt = AltGr</label>
-                </select>
             </fieldset>
         </fieldset>
         <fieldset>
@@ -206,7 +205,7 @@ const disabled_graphics_input = document.getElementById('disabledGraphics');
 const verbosity_input = document.getElementById('verbosity');
 const kbdmethod_input = document.getElementById('kbdmethod');
 const kbdlayout_input = document.getElementById('kbdlayout');
-const kbdos_input = document.getElementById('kbdos');
+const kbdAltGrIsCtrlAndAlt_input = document.getElementById('kbdAltGrIsCtrlAndAlt');
 const jsonConfig_input = document.getElementById('jsonConfig');
 const pass_input = document.getElementById('pass');
 const url_input = document.getElementById('url');
@@ -236,7 +235,7 @@ for (let i = 0; i < layouts.length; ++i) {
 }
 
 let kbdInputLayoutEvent = () => {};
-for (const input of [kbdmethod_input, kbdlayout_input, kbdos_input]) {
+for (const input of [kbdmethod_input, kbdlayout_input, kbdAltGrIsCtrlAndAlt_input]) {
     input.addEventListener('input', () => { kbdInputLayoutEvent(); }, false);
 }
 
@@ -265,7 +264,6 @@ Module.log = function(priority, msg) {
 const RdpClient = Module.RdpClient;
 const ClipboardChannel = Module.ClipboardChannel;
 const MouseFlags = Module.MouseFlags;
-const KbdFlags = Module.KbdFlags;
 const InputFlags = Module.InputFlags;
 
 function MultiSelectToInt(e, constants)
@@ -298,7 +296,6 @@ function run(openCb, closeCb)
 
     let hWheelSupport = false;
     let MouseXSupport = false;
-    let onKeyEvent = unicodeToScancodeKeyEvent;
 
     const sendData = function() {
         const out = rdpclient.getOutputData();
@@ -308,190 +305,139 @@ function run(openCb, closeCb)
         }
     };
 
-    const sendScancodes = function(scancodes, evt)
-    {
+    const sendScancodes = function(scancodes, evt) {
         if (scancodes) {
             evt.preventDefault();
             evt.stopImmediatePropagation();
             for (let i = 0; i < scancodes.length; ++i) {
-                console.log('send', scancodes[i], '0x'+scancodes[i].toString(16));
-                rdpclient.writeScancodeEvent(scancodes[i]);
+                const scancode = scancodes[i];
+                console.log('Scancode: send', scancode, '0x'+scancode.toString(16));
+                rdpclient.writeScancodeEvent(scancode);
             }
             sendData();
         }
         else {
-            console.warn('unknown keycode', evt.key, evt.code)
+            console.warn('Scancode: unknown keycode', evt.key, evt.code)
         }
     }
 
-    function scancodeKeyEvent(evt, flag)
-    {
-        // KeyboardEvent.code available with
-        // - chrome 8+
-        // - edge 79+
-        // - firefox 38+
-        // - opera 11+
-        // - safari 10+
-        // Check support with `new KeyboardEvent(0).code !== undefined`
-
-        console.log('scancode', flag, evt.key, evt.code, evt.location);
-
-        const kcode = evt.code;
-        if (kcode.length === 1) {
-            sendScancodes(keycodeToScancodes(kcode, flag), evt);
-        }
-        // use key for special configuration such as Esc <-> CapsLock
-        else {
-            switch (evt.location) {
-                case 3 /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/:
-                    sendScancodes(keycodeToScancodes(kcode, flag), evt);
-                    break;
-
-                default:
-                    sendScancodes(keycodeToScancodes(evt.key, flag) || keycodeToScancodes(kcode, flag), evt);
-            }
-        }
-    }
-
-    function unicodeKey(evt, flag)
-    {
-        console.log('unicode', flag, evt.key, evt.code, evt.location);
-        const key = evt.key;
-
-        if (key.length === 1) {
-            const unicode = key.codePointAt(0);
-            // console.log(key, unicode);
+    const sendUnicode = function(unicode, flag, evt) {
+        if (unicode.length <= 4 /* assume that maximal multi-character length is 4 */) {
             evt.preventDefault();
             evt.stopImmediatePropagation();
-            rdpclient.writeUnicodeEvent(unicode, flag);
+            for (let i = 0; i < unicode.length; ++i) {
+                const code = unicode.charCodeAt(i);
+                console.log('Unicode: send', code, '0x'+code.toString(16));
+                rdpclient.writeUnicodeEvent(code, flag);
+            }
             sendData();
-            return true;
         }
-
-        if (key === 'Dead') {
-            return true;
+        else {
+            console.warn('Unicode: unknown keycode', evt.key, evt.code)
         }
     }
 
-    function unicodeAndScancodeKeyEvent(evt, flag)
-    {
-        switch (evt.location) {
-            case 3: /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
-                const scancode = numpadKeyToScancode(evt.key);
-                if (scancode) {
-                    sendScancodes([scancode | flag], evt);
-                }
-                else if (!unicodeKey(evt, flag)) {
-                    sendScancodes(keycodeToScancodes(evt.code, flag), evt);
-                }
-                break;
-
-            default: /*KeyboardEvent.DOM_KEY_LOCATION_STANDARD*/
-                     /*KeyboardEvent.DOM_KEY_LOCATION_LEFT*/
-                     /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
-                if (!unicodeKey(evt, flag)) {
-                    // use key for special configuration such as Esc <-> CapsLock
-                    sendScancodes(keycodeToScancodes(evt.key, flag) || keycodeToScancodes(evt.code, flag), evt);
-                }
-                break;
-        }
+    const currentLayout = function() {
+        const kbdLayoutId = kbdlayout_input.selectedIndex;
+        const layout = layouts[kbdLayoutId];
+        return layout;
     }
 
-    function unicodeAndKeyKeyEvent(evt, flag)
-    {
-        switch (evt.location) {
-            case 1: { /*KeyboardEvent.DOM_KEY_LOCATION_LEFT*/
-                const scancode = keycodeToSingleScancode(evt.key + 'Left');
-                if (scancode) sendScancodes([scancode | flag], evt);
-                break;
-            }
+    const keymap = new ReversedKeymap(currentLayout());
 
-            case 2: { /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
-                const scancode = keycodeToSingleScancode(evt.key + 'Right');
-                if (scancode) sendScancodes([scancode | flag], evt);
-                break;
-            }
-
-            case 3: { /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
-                const scancode = numpadKeyToScancode(evt.key);
-                if (scancode) sendScancodes([scancode | flag], evt);
-                break;
-            }
-
-            default: /*KeyboardEvent.DOM_KEY_LOCATION_STANDARD*/
-                if (!unicodeKey(evt, flag)) {
-                    sendScancodes(keycodeToScancodes(evt.key, flag), evt);
-                }
-                break;
-        }
-    }
-
-    const ucs2scancode = createUnicodeToScancodeConverter();
-
-    function unicodeToScancodeKeyEvent(evt, flag)
-    {
-        console.log('reverse scancode', flag, evt.key, evt.code, evt.location);
-
-        if (evt.location === 3) { /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
-            const scancode = numpadKeyToScancode(evt.key);
-            if (scancode) {
+    const kbdFunctions = {
+        codeToScancode: function(evt, flag) {
+            if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
+                const scancode = numpadCodeToScancode(evt.code);
                 sendScancodes([scancode | flag], evt);
-                return ;
             }
-        }
-
-        const isRight = (evt.location === 2); /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
-        sendScancodes(ucs2scancode(evt.key, flag, isRight), evt);
-    }
-
-    // same as unicodeToScancodeKeyEvent but send unicode when conversion fail
-    function unicodeToHybridKeyEvent(evt, flag)
-    {
-        console.log('reverse hybrid', flag, evt.key, evt.code, evt.location);
-
-        const key = evt.key;
-
-        if (evt.location === 3) { /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
-            const scancode = numpadKeyToScancode(key);
-            if (scancode) {
-                sendScancodes([scancode | flag], evt);
-                return ;
+            else {
+                // use key for special configuration such as Esc <-> CapsLock
+                sendScancodes(codeToScancodes(evt.key, flag) || codeToScancodes(evt.code, flag), evt);
             }
-        }
-
-        const isRight = (evt.location === 2); /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
-        const scancodes = ucs2scancode(key, flag, isRight);
-        if (scancodes) {
+        },
+        keyToScancodeOrUnicode: function(evt, flag) {
+            const scancodes = keymap.toScancodesAndFlags(evt.key, evt.code, flag);
+            if (scancodes) {
+                sendScancodes(scancodes, evt);
+            }
+            else {
+                sendUnicode(evt.key, flag, evt);
+            }
+        },
+        keyToScancode: function(evt, flag) {
+            const scancodes = keymap.toScancodesAndFlags(evt.key, evt.code, flag);
             sendScancodes(scancodes, evt);
-        }
-        else if (key.length === 1) {
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
+        },
+        unicode: function(evt, flag) {
+            sendUnicode(evt.key, flag, evt);
+        },
+    };
 
-            const scancodes = ucs2scancode.getModifierScancodes();
-            console.log(`mod scancodes: ${scancodes.join(',')}`)
-            if (scancodes) {
-                for (let i = 0; i < scancodes.length; ++i) {
-                    const scancode = 0x8000 /*release*/ | scancodes[i];
-                    console.log('send', scancode, '0x'+scancode.toString(16));
-                    rdpclient.writeScancodeEvent(scancode);
-                }
+    let onKeyEvent = kbdFunctions.keyToScancodeOrUnicode;
+
+    const OSLeftSC = ScancodeByMod.OSLeft;
+    const OSRightSC = ScancodeByMod.OSRight;
+    const AltLeftSC = ScancodeByMod.AltLeft;
+    const AltRightSC = ScancodeByMod.AltRight;
+    const ShiftLeftSC = ScancodeByMod.ShiftLeft;
+    const ShiftRightSC = ScancodeByMod.ShiftRight;
+    const ControlLeftSC = ScancodeByMod.ControlLeft;
+    const ControlRightSC = ScancodeByMod.ControlRight;
+
+
+    const syncKbdMods = function() {
+        const f = onKeyEvent;
+        let sendLocks = true;
+        onKeyEvent = (evt, flag) => {
+            console.log('syncKbdMods');
+
+            let syncFlags = 0;
+
+            // lock
+            if (evt.getModifierState("NumLock")) syncFlags |= SyncFlags.NumLock;
+            if (evt.getModifierState("CapsLock")) syncFlags |= SyncFlags.CapsLock;
+            if (evt.getModifierState("KanaLock")) syncFlags |= SyncFlags.KanaLock;
+            if (evt.getModifierState("ScrollLock")) syncFlags |= SyncFlags.ScrollLock;
+
+            if (sendLocks) {
+                rdpclient.syncKbdLocks(syncFlags);
+                sendLocks = false;
             }
 
-            const unicode = key.codePointAt(0);
-            rdpclient.writeUnicodeEvent(unicode, flag);
+            if (evt.altKey) syncFlags |= SyncFlags.AltLeft
+            if (evt.getModifierState("AltGraph")) syncFlags |= SyncFlags.AltRight;
 
-            if (scancodes) {
-                for (let i = 0; i < scancodes.length; ++i) {
-                    const scancode = scancodes[i];
-                    console.log('send', scancode, '0x'+scancode.toString(16));
-                    rdpclient.writeScancodeEvent(scancode);
-                }
+            let leftOrRight = 0;
+            if (evt.metaKey) leftOrRight |= (evt.code === 'OSRight') ? SyncFlags.OSRight : SyncFlags.OSLeft;
+            if (evt.ctrlKey) leftOrRight |= (evt.code === 'ControlRight') ? SyncFlags.ControlRight : SyncFlags.ControlLeft;
+            if (evt.shiftKey) leftOrRight |= (evt.code === 'ShiftRight') ? SyncFlags.ShiftRight : SyncFlags.ShiftLeft;
+
+            syncFlags |= leftOrRight;
+            sendScancodes(scancodesForSynchronizedMods(syncFlags), evt);
+
+            keymap.sync(syncFlags);
+
+            switch (evt.code) {
+                case "OSLeft":
+                case "OSRight":
+                case "ShiftLeft":
+                case "ShiftRight":
+                case "ControlLeft":
+                case "ControlRight":
+                    break;
+                default:
+                    f(evt, flag);
             }
 
-            sendData();
+            if (!leftOrRight) {
+                onKeyEvent = f;
+            }
         }
-    }
+    };
+
+    const onKeyUp = (evt) => { onKeyEvent(evt, KeyRelease); };
+    const onKeyDown = (evt) => { onKeyEvent(evt, KeyAcquire); };
 
     function sendMouseEvent(evt, flags)
     {
@@ -500,11 +446,6 @@ function run(openCb, closeCb)
         rdpclient.writeMouseEvent(evt.offsetX, evt.offsetY, flags);
         sendData();
     }
-
-    //TODO rename KbdFlags.Down to KbdFlags.Press and add KbdFlags.Down = 0
-    const onKeyUp = (evt) => { onKeyEvent(evt, KbdFlags.Release); };
-    const onKeyDown = (evt) => { onKeyEvent(evt, 0); };
-    const onKeyPress = (evt) => { onKeyEvent(evt, KbdFlags.Down); };
 
     function sendMouseButton(evt, flag)
     {
@@ -538,8 +479,6 @@ function run(openCb, closeCb)
     const docEvents = {
         keyup: onKeyUp,
         keydown: onKeyDown,
-        // TODO re-enable ?
-        // keypress: onKeyPress,
     };
 
     const canvasEvents = {
@@ -598,7 +537,7 @@ function run(openCb, closeCb)
         ecanvas.onclick = () => {};
     }
 
-    function canvasFocus()
+    function canvasFocus(evt)
     {
         console.log('focus');
         addEvents(document, docEvents);
@@ -606,6 +545,7 @@ function run(openCb, closeCb)
             e.preventDefault();
             e.stopImmediatePropagation();
         };
+        syncKbdMods();
     }
 
     function canvasEnableFocus()
@@ -626,29 +566,25 @@ function run(openCb, closeCb)
     function updateKbdInput(inputFlags)
     {
         const kbdMethodId = kbdmethod_input.selectedIndex;
-        const kbdLayoutId = kbdlayout_input.selectedIndex;
-        const kbdOsType = kbdos_input.checked ? 'windows' : 'other';
-        if ((kbdMethodId === 2 || kbdMethodId === 4) && !(inputFlags & InputFlags.Unicode)) {
-            console.log('don\'t support unicode');
+        const altGrIsCtrlAndAlt = kbdAltGrIsCtrlAndAlt_input.checked;
+        const isUnicode = kbdmethod_input[kbdMethodId].value.endsWith(/*[uU]*/"nicode");
+        if (isUnicode && !(inputFlags & InputFlags.Unicode)) {
+            console.warning('don\'t support unicode');
             --kbdMethodId;
         }
-        const layout = layouts[kbdLayoutId];
+        const kbdMethod = kbdmethod_input[kbdMethodId].value;
+        const layout = currentLayout();
         console.group('keyboard');
-        console.log(`method: (${kbdMethodId}) ${kbdmethod_input[kbdMethodId].value}`);
-        if (kbdMethodId <= 1) {
-            console.log(`layout: (0x${layout.klid.toString(16)}) ${layout.name}`);
-            console.log(`OS: ${kbdOsType}`);
-            ucs2scancode.setLayout(layout);
-            ucs2scancode.setOSBehavior(kbdOsType);
-        }
+        console.log(`method: (${kbdMethodId}) ${kbdMethod}`);
+        console.log(`layout: (0x${layout.klid.toString(16)}) ${layout.name}`);
+        console.log(`AltGr = Ctrl + Alt: ${altGrIsCtrlAndAlt}`);
         console.groupEnd();
-        onKeyEvent = [
-            unicodeToHybridKeyEvent,
-            unicodeToScancodeKeyEvent,
-            scancodeKeyEvent,
-            unicodeAndKeyKeyEvent,
-            unicodeAndScancodeKeyEvent,
-        ][kbdMethodId];
+
+        keymap.altGrIsCtrlAndAlt = altGrIsCtrlAndAlt;
+        keymap.layout = layout;
+
+        onKeyEvent = kbdFunctions[kbdMethod];
+        syncKbdMods();
     }
 
     function updateInput()
@@ -799,7 +735,7 @@ const inputs = {
     verbosity: [verbosity_input, 'value', number],
     kbdmethod: [kbdmethod_input, 'selectedIndex', identity],
     kbdlayout: [kbdlayout_input, 'selectedIndex', numberOrDefault(defaultLayoutId)],
-    kbdos: [kbdos_input, 'checked', checkedTrue],
+    kbdAltGrIsCtrlAndAlt: [kbdAltGrIsCtrlAndAlt_input, 'checked', checkedTrue],
     config: [jsonConfig_input, 'value', identity],
 };
 for (const k in inputs) {

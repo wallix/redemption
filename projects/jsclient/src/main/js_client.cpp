@@ -513,6 +513,11 @@ public:
         this->mod->rdp_input_mouse(device_flags, x, y);
     }
 
+    void sync_kbd_locks(uint8_t locks)
+    {
+        this->mod->rdp_input_synchronize(kbdtypes::KeyLocks(locks));
+    }
+
     void add_channel_receiver(redjs::ChannelReceiver receiver)
     {
         this->front.add_channel_receiver(receiver);
@@ -560,5 +565,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("writeMouseEvent", &RdpClient::write_mouse_event)
         .function("getInputFlags", &RdpClient::get_input_flags)
         .function("getKeyboardLayout", &RdpClient::get_keyboard_layout)
+        .function("syncKbdLocks", &RdpClient::sync_kbd_locks)
     ;
 }
