@@ -322,7 +322,11 @@ function run(openCb, closeCb)
     }
 
     const sendUnicode = function(unicode, flag, evt) {
-        if (unicode.length <= 4 /* assume that maximal multi-character length is 4 */) {
+        const scancode = keycodeToSingleScancode(unicode); // actionLayout[unicode];
+        if (scancode) {
+            sendScancodes([scancode | flag], evt)
+        }
+        else {
             evt.preventDefault();
             evt.stopImmediatePropagation();
             for (let i = 0; i < unicode.length; ++i) {
@@ -331,9 +335,6 @@ function run(openCb, closeCb)
                 rdpclient.writeUnicodeEvent(code, flag);
             }
             sendData();
-        }
-        else {
-            console.warn('Unicode: unknown keycode', evt.key, evt.code)
         }
     }
 
@@ -357,6 +358,12 @@ function run(openCb, closeCb)
             }
         },
         keyToScancodeOrUnicode: function(evt, flag) {
+            if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
+                const scancode = numpadCodeToScancode(evt.code);
+                sendScancodes([scancode | flag], evt);
+                return;
+            }
+
             const scancodes = keymap.toScancodesAndFlags(evt.key, evt.code, flag);
             if (scancodes) {
                 sendScancodes(scancodes, evt);
@@ -409,9 +416,9 @@ function run(openCb, closeCb)
             if (evt.getModifierState("AltGraph")) syncFlags |= SyncFlags.AltRight;
 
             let leftOrRight = 0;
-            if (evt.metaKey) leftOrRight |= (evt.code === 'OSRight') ? SyncFlags.OSRight : SyncFlags.OSLeft;
-            if (evt.ctrlKey) leftOrRight |= (evt.code === 'ControlRight') ? SyncFlags.ControlRight : SyncFlags.ControlLeft;
-            if (evt.shiftKey) leftOrRight |= (evt.code === 'ShiftRight') ? SyncFlags.ShiftRight : SyncFlags.ShiftLeft;
+            if (evt.metaKey) leftOrRight |= (evt.code === 'OSRight' && flag === KeyAcquire) ? SyncFlags.OSRight : SyncFlags.OSLeft;
+            if (evt.ctrlKey) leftOrRight |= (evt.code === 'ControlRight' && flag === KeyAcquire) ? SyncFlags.ControlRight : SyncFlags.ControlLeft;
+            if (evt.shiftKey) leftOrRight |= (evt.code === 'ShiftRight' && flag === KeyAcquire) ? SyncFlags.ShiftRight : SyncFlags.ShiftLeft;
 
             syncFlags |= leftOrRight;
             sendScancodes(scancodesForSynchronizedMods(syncFlags), evt);

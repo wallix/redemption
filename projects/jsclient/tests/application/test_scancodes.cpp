@@ -264,7 +264,34 @@ RED_JS_AUTO_TEST_CASE(
     TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
-    // õ
+    // CapsLock + A
+    //@{
+    RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+    TEST_HEX32(getModFlags() == CapsLockMod);
+    TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+    RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+    TEST_HEX32(getModFlags() == CapsLockMod);
+    TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+    RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+    TEST_HEX32(getModFlags() == CapsLockMod);
+    TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+    RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == CapsLockMod);
+    TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+    RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
+    // õ (dead key)
     //@{
     RED_CHECK(toScancodes("Dead", keyAcquire) == U16Array());
     TEST_HEX32(getModFlags() == NoMod);
