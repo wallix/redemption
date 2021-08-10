@@ -319,7 +319,8 @@ remappingCodeByKey = {
 
 /// \return scancodes
 const scancodesForSynchronizedMods = function(syncFlags) {
-    const accu = []
+    const accu = [];
+
     accu.push(LShiftSC | ((syncFlags & SyncFlags.ShiftLeft)    ? KeyAcquire : KeyRelease));
     accu.push(RShiftSC | ((syncFlags & SyncFlags.ShiftRight)   ? KeyAcquire : KeyRelease));
     accu.push(LCtrlSC  | ((syncFlags & SyncFlags.ControlLeft)  ? KeyAcquire : KeyRelease));

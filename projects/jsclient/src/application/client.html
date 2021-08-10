@@ -382,6 +382,7 @@ function run(openCb, closeCb)
     };
 
     let onKeyEvent = kbdFunctions.keyToScancodeOrUnicode;
+    let realOnKeyEvent = onKeyEvent;
 
     const OSLeftSC = ScancodeByMod.OSLeft;
     const OSRightSC = ScancodeByMod.OSRight;
@@ -394,7 +395,6 @@ function run(openCb, closeCb)
 
 
     const syncKbdMods = function() {
-        const f = onKeyEvent;
         let sendLocks = true;
         onKeyEvent = (evt, flag) => {
             console.log('syncKbdMods');
@@ -434,11 +434,11 @@ function run(openCb, closeCb)
                 case "ControlRight":
                     break;
                 default:
-                    f(evt, flag);
+                    realOnKeyEvent(evt, flag);
             }
 
             if (!leftOrRight) {
-                onKeyEvent = f;
+                onKeyEvent = realOnKeyEvent;
             }
         }
     };
@@ -591,6 +591,7 @@ function run(openCb, closeCb)
         keymap.layout = layout;
 
         onKeyEvent = kbdFunctions[kbdMethod];
+        realOnKeyEvent = onKeyEvent;
         syncKbdMods();
     }
 
