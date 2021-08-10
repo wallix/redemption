@@ -222,12 +222,12 @@ const codeToScancodes = function(code, flag) {
 const ShiftMod    = 1 << 0;
 const AltGrMod    = 1 << 1;
 const CapsLockMod = 1 << 2;
-const NumLockMod  = 1 << 3;
-const CtrlMod     = 1 << 4;
-const AltMod      = 1 << 5;
-const OEM8Mod     = 1 << 6;
-const KanaMod     = 1 << 7;
-const KanaLockMod = 1 << 8;
+const CtrlMod     = 1 << 3;
+const AltMod      = 1 << 4;
+const OEM8Mod     = 1 << 5;
+const KanaMod     = 1 << 6;
+const KanaLockMod = 1 << 7;
+const NumLockMod  = 1 << 8;
 
 // extra flags
 const RightShiftMod = 1 << 9;

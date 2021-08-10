@@ -13,12 +13,12 @@ vk_control_masks = {
     'VK_SHIFT':     1 << 0,
     'altgr':        1 << 1,
     'VK_CAPITAL':   1 << 2,
-    'VK_NUMLOCK':   1 << 3,
-    'VK_CONTROL':   1 << 4,
-    'VK_MENU':      1 << 5,
-    'VK_OEM_8':     1 << 6,
-    'VK_KANA':      1 << 7,
-    'VK_KANALOCK':  1 << 8,
+    'VK_CONTROL':   1 << 3,
+    'VK_MENU':      1 << 4,
+    'VK_OEM_8':     1 << 5,
+    'VK_KANA':      1 << 6,
+    'VK_KANALOCK':  1 << 7,
+    'VK_NUMLOCK':   1 << 8,
 }
 nomod = 0
 numlock = vk_control_masks['VK_NUMLOCK']
@@ -189,6 +189,10 @@ for layout in layouts:
     # text character and action
     for mods,keymap in layout.keymaps.items():
         mod_flags = vk_mod_to_mod_flags(mods)
+        # ignore numlock scancodes
+        if mod_flags & numlock:
+            continue
+
         for key in keymap:
             if key and not key.deadkeys:
                 if key.text:
@@ -200,7 +204,7 @@ for layout in layouts:
                         special_rkeymap[(text, key.codepoint)] = map
 
                 elif key_and_scancode := vk_actions.get(key.vk, None):
-                    if mod_flags not in (nomod, numlock):
+                    if mod_flags != nomod:
                         error_messages.append(f'Action key with control key ({key.vk} + {mods or "noMod"}) in {layout.display_name} (0x{layout.klid})')
                     else:
                         scancode = key_to_scancode(key)
@@ -208,7 +212,7 @@ for layout in layouts:
                             action_rkeymap[key_and_scancode[0]] = scancode
 
                 elif key.vk is not None and key.vk not in vk_unknowns:
-                    if not (key.codepoint == 0 and mod_flags in (nomod, numlock, ctrl)):
+                    if not (key.codepoint == 0 and mod_flags in (nomod, ctrl)):
                         error_messages.append(f'Unknown {key} + {mods or "noMod"} in {layout.display_name} (0x{layout.klid})')
 
     # dead key and dead key of dead key

@@ -103,12 +103,12 @@ RED_JS_AUTO_TEST_CASE(
     const uint32_t ShiftMod    = 1 << 0;
     const uint32_t AltGrMod    = 1 << 1;
     const uint32_t CapsLockMod = 1 << 2;
-    const uint32_t NumLockMod  = 1 << 3;
-    const uint32_t CtrlMod     = 1 << 4;
-    const uint32_t AltMod      = 1 << 5;
-    // const uint32_t OEM8Mod     = 1 << 6;
-    // const uint32_t KanaMod     = 1 << 7;
-    // const uint32_t KanaLockMod = 1 << 8;
+    const uint32_t CtrlMod     = 1 << 3;
+    const uint32_t AltMod      = 1 << 4;
+    // const uint32_t OEM8Mod     = 1 << 5;
+    // const uint32_t KanaMod     = 1 << 6;
+    // const uint32_t KanaLockMod = 1 << 7;
+    const uint32_t NumLockMod  = 1 << 8;
     const uint32_t RightShiftMod = 1 << 9;
     const uint32_t RightCtrlMod  = 1 << 10;
 
@@ -432,17 +432,15 @@ RED_JS_AUTO_TEST_CASE(
         return reversedKeymap.call<emscripten::val>("sync", syncFlags);
     };
 
-    //                              SL      SR     CL     CR      AL     AR      OSL     OSR
-    RED_CHECK(sync(0xffff) == U16A(0x2A,   0x36,  0x1D,  0x11D,  0x38,  0x138,  0x15B,  0x15C));
+    sync(0xffff);
     TEST_HEX32(getModFlags() == (ShiftMod | CtrlMod | AltMod | AltGrMod | CapsLockMod | NumLockMod | RightShiftMod | RightCtrlMod));
     TEST_HEX32(getVirtualModFlags() == (ShiftMod | AltGrMod | CapsLockMod | NumLockMod));
 
-    RED_CHECK(sync(0)    == U16A(0x802A, 0x8036, 0x801D, 0x811D, 0x8038, 0x8138, 0x815B, 0x815C));
+    sync(0);
     TEST_HEX32(getModFlags() == NoMod);
     TEST_HEX32(getVirtualModFlags() == NoMod);
 
-    RED_CHECK(sync(NumLock | AltLeft | ControlRight)
-                         == U16A(0x802A, 0x8036, 0x801D,  0x11D, 0x38,   0x8138, 0x815B, 0x815C));
+    sync(NumLock | AltLeft | ControlRight);
     TEST_HEX32(getModFlags() == (AltMod | NumLockMod | RightCtrlMod));
     TEST_HEX32(getVirtualModFlags() == (AltGrMod | NumLockMod));
     //@}
