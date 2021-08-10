@@ -34,7 +34,7 @@ EXE_DEPENDENCIES +=
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "'./'" ] ;
 constant JS_CLIENT_COPY_MODE : [ setvar copy_application_mode : "copy" ] ;
-constant EM_NO_ALLOW_UNIMPLEMENTED_SYSCALLS : [ setvar EM_NO_ALLOW_UNIMPLEMENTED_SYSCALLS : 0 ] ;
+constant EM_NO_ALLOW_UNIMPLEMENTED_SYSCALLS : [ setvar EM_NO_ALLOW_UNIMPLEMENTED_SYSCALLS : 1 ] ;
 
 import feature : feature ;
 feature source_map_support : no yes : propagated ;
@@ -44,6 +44,10 @@ toolset.flags exenode SOURCE_MAP_SUPPORT <source_map_support> ;
 
 rule emcc_flags ( properties * )
 {
+    # local ps = [ property-set.create $(properties) ] ;
+    # local toolset = [ $(ps).get <toolset> ] ;
+    # echo [ $(ps).get <toolset-$(toolset):version> ] ;
+
     local fs = ;
 
     # remove -Wno-ctad-maybe-unsupported
@@ -78,7 +82,7 @@ rule emcc_flags ( properties * )
     # }
 
     # fix udl warning
-    fs += <cxxflags>-Wno-reserved-identifier ;
+    # fs += <cxxflags>-Wno-reserved-identifier ;
 
     return $(fs) ;
 }
