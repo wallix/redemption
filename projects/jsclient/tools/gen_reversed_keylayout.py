@@ -287,7 +287,7 @@ for layout in layouts:
 
 output.append('];\n\n')
 
-output.append('const actionLayout = {')
+output.append('const actionLayout = {\n')
 for key_and_scancode in vk_actions.values():
     output.append(f'  "{key_and_scancode[0]}": 0x{key_and_scancode[1]:x},\n')
 output.append('};')

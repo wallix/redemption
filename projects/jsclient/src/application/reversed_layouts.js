@@ -18453,7 +18453,8 @@ const layouts = [
 },
 ];
 
-const actionLayout = {  "ContextMenu": 0x15d,
+const actionLayout = {
+  "ContextMenu": 0x15d,
   "BrowserBack": 0x16a,
   "BrowserFavorites": 0x166,
   "BrowserForward": 0x169,
