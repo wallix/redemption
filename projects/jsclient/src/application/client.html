@@ -178,7 +178,6 @@ div, section, canvas{
             <a id="cbDownload"></a>
         </div>
     </div>
-
 <section>
 
 <script src="js_client.js"></script>
@@ -338,6 +337,24 @@ function run(openCb, closeCb)
         }
     }
 
+    const isComposing = function(evt) {
+        switch (evt.key) {
+            case 'Control':
+            case 'Shift':
+            case 'Alt':
+            case 'AltGraph':
+            case 'NumLock':
+            case 'ScrollLock':
+            case 'CapsLock':
+            case 'OS':
+                return false;
+            case 'Dead':
+            case 'Compose':
+                return true;
+        }
+        return evt.isComposing;
+    };
+
     const currentLayout = function() {
         const kbdLayoutId = kbdlayout_input.selectedIndex;
         const layout = layouts[kbdLayoutId];
@@ -358,6 +375,8 @@ function run(openCb, closeCb)
             }
         },
         keyToScancodeOrUnicode: function(evt, flag) {
+            if (isComposing(evt)) return;
+
             if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
                 const scancode = numpadCodeToScancode(evt.code);
                 sendScancodes([scancode | flag], evt);
@@ -373,15 +392,65 @@ function run(openCb, closeCb)
             }
         },
         keyToScancode: function(evt, flag) {
+            if (isComposing(evt)) return;
+
             const scancodes = keymap.toScancodesAndFlags(evt.key, evt.code, flag);
             sendScancodes(scancodes, evt);
         },
         unicode: function(evt, flag) {
+            if (isComposing(evt)) return;
+
             sendUnicode(evt.key, flag, evt);
         },
     };
 
+    const unstatedScancodes = function(scancodes) {
+        const set = new Set();
+        for (const scancode of scancodes) {
+            if (scancode & KeyRelease)
+                set.delete(scancode & ~KeyRelease);
+            else
+                set.add(scancode);
+        }
+
+        const len = scancodes.length;
+        for (let i = 0; i < len; ++i) {
+            const scancode = scancodes[i];
+            if (!(scancode & KeyRelease) && set.has(scancode)) {
+                scancodes.push(scancode & KeyRelease);
+            }
+        }
+
+        return scancodes;
+    };
+
+    const kbdComposingFunctions = {
+        codeToScancode: function(evt, text) {},
+        keyToScancodeOrUnicode: function(evt, text) {
+            const scancodes = keymap.toScancodesAndFlags(text, text, KeyAcquire);
+            if (scancodes) {
+                sendScancodes(unstatedScancodes(scancodes), evt);
+            }
+            else {
+                sendUnicode(text, KeyAcquire, evt);
+                sendUnicode(text, KeyRelease, evt);
+            }
+        },
+        keyToScancode: function(evt, text) {
+            const scancodes = keymap.toScancodesAndFlags(text, text, KeyAcquire);
+            if (scancodes) {
+                sendScancodes(unstatedScancodes(scancodes), evt);
+            }
+        },
+        unicode: function(evt, text) {
+            sendUnicode(text, KeyAcquire, evt);
+            sendUnicode(text, KeyRelease, evt);
+        },
+    };
+
+    abortKeyUp = false;
     let onKeyEvent = kbdFunctions.keyToScancodeOrUnicode;
+    let onCompositeKeyEvent = kbdComposingFunctions.keyToScancodeOrUnicode;
     let realOnKeyEvent = onKeyEvent;
 
     const OSLeftSC = ScancodeByMod.OSLeft;
@@ -445,6 +514,19 @@ function run(openCb, closeCb)
 
     const onKeyUp = (evt) => { onKeyEvent(evt, KeyRelease); };
     const onKeyDown = (evt) => { onKeyEvent(evt, KeyAcquire); };
+    const onCompositeStart = (evt) => {
+        console.log(`CompositeStart: ${evt.data}`);
+        ecanvasFocus.value = '';
+    };
+    // const onCompositeUpdate = (evt) => {  };
+    const onCompositeEnd = (evt) => {
+        // event is fired before that input.value is updated
+        setTimeout(() => {
+            const text = evt.target.value;
+            console.log(`CompositeEnd: ${text}`);
+            if (text) onCompositeKeyEvent(evt, text);
+        }, 1);
+    };
 
     function sendMouseEvent(evt, flags)
     {
@@ -483,9 +565,12 @@ function run(openCb, closeCb)
         }
     };
 
-    const docEvents = {
+    const keyEvents = {
         keyup: onKeyUp,
         keydown: onKeyDown,
+        compositionstart: onCompositeStart,
+        // compositionupdate: onCompositeUpdate,
+        compositionend: onCompositeEnd,
     };
 
     const canvasEvents = {
@@ -506,7 +591,7 @@ function run(openCb, closeCb)
     };
 
     const eventTable = [
-        [document, docEvents],
+        [ecanvasFocus, keyEvents],
         [ecanvas, canvasEvents],
     ];
 
@@ -539,15 +624,15 @@ function run(openCb, closeCb)
         for (const a of eventTable) {
             removeEvents(a[0], a[1]);
         }
-        ecanvasFocus.onblur = () => {};
-        ecanvasFocus.onfocus = () => {};
-        ecanvas.onclick = () => {};
+        ecanvasFocus.onblur = null;
+        ecanvasFocus.onfocus = null;
+        ecanvas.onclick = null;
     }
 
     function canvasFocus(evt)
     {
         console.log('focus');
-        addEvents(document, docEvents);
+        addEvents(ecanvasFocus, keyEvents);
         ecanvas.onclick = (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -564,7 +649,7 @@ function run(openCb, closeCb)
     function canvasBlur()
     {
         console.log('blur');
-        removeEvents(document, docEvents);
+        removeEvents(ecanvasFocus, keyEvents);
         ecanvas.onclick = canvasEnableFocus;
     }
 
@@ -591,6 +676,7 @@ function run(openCb, closeCb)
         keymap.layout = layout;
 
         onKeyEvent = kbdFunctions[kbdMethod];
+        onCompositeKeyEvent = kbdComposingFunctions[kbdMethod];
         realOnKeyEvent = onKeyEvent;
         syncKbdMods();
     }
