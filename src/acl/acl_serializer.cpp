@@ -213,7 +213,7 @@ namespace
                     if (reader.is_ask()) {
                         field.ask();
                         LOG_IF(bool(verbose & Verbose::variable), LOG_INFO,
-                            "receiving ASK '%*s'", int(key.size()), key.data());
+                            "receiving ASK '%.*s'", int(key.size()), key.data());
                         // callback if the key is listened to for asks
                     }
                     else {

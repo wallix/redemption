@@ -553,7 +553,7 @@ private:
             this->to_send_index.insert(T::index);
         }
 
-        if constexpr (T::is_sesman_to_proxy) {
+        if constexpr (T::is_sesman_to_proxy || T::is_proxy_to_sesman) {
             this->asked_table.clear(T::index);
         }
     }
