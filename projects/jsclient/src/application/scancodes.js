@@ -4,7 +4,10 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
 // 0xE0 -> 0x0100
 // /!\ rotate digit code
-// Note: special code and key are same value (ControlLeft, ArrowDown, etc)
+// Note: special code has a same value that code (ControlLeft, ArrowDown, etc)
+//
+// test:
+// https://yari-demos.prod.mdn.mozit.cloud/en-US/docs/Web/API/KeyboardEvent/code/_sample_.Exercising_KeyboardEvent.html
 
 /// \return Number | undefined
 const keycodeToSingleScancode = function(code) {
@@ -275,8 +278,8 @@ const ScancodeByMod = Object.freeze({
     ShiftRight:   RShiftSC,
     AltLeft:      AltSC,
     AltRight:     AltGrSC,
-    OSLeft:       0x15B,
-    OSRight:      0x15C,
+    OSLeft:       LMetaSC,
+    OSRight:      RMetaSC,
     Kana:         0x70,
 });
 
@@ -292,28 +295,28 @@ const emptyReversedLayout = {
     accents: [],
 };
 
-remappingControlLefts = {
+remappingModByLeftMods = {
     OS:      'OSLeft',
     Meta:    'OSLeft',
     Shift:   'ShiftLeft',
     Control: 'ControlLeft',
 };
-remappingControlRights = {
+remappingModByRightMods = {
     OS:      'OSRight',
     Meta:    'OSRight',
     Shift:   'ShiftRight',
     Control: 'ControlRight',
 };
 // { code : { key: newcode } }
-remappingCodeByKey = {
-    OSLeft: remappingControlLefts,
-    MetaLeft: remappingControlLefts,
-    ShiftLeft: remappingControlLefts,
-    ControlLeft: remappingControlLefts,
-    OSRight: remappingControlRights,
-    MetaRight: remappingControlRights,
-    ShiftRight: remappingControlRights,
-    ControlRight: remappingControlRights,
+remappingCodeByKeys = {
+    OSLeft: remappingModByLeftMods,
+    MetaLeft: remappingModByLeftMods,
+    ShiftLeft: remappingModByLeftMods,
+    ControlLeft: remappingModByLeftMods,
+    OSRight: remappingModByRightMods,
+    MetaRight: remappingModByRightMods,
+    ShiftRight: remappingModByRightMods,
+    ControlRight: remappingModByRightMods,
 };
 
 
@@ -437,9 +440,8 @@ class ReversedKeymap
             return this._scancodeByModsToScancodes(scancodeByMods, flag);
         }
 
-        const dk = this._deadKeymap[key];
-
         // dead key
+        const dk = this._deadKeymap[key];
         if (dk) {
             const accu = this._scancodeByModsToScancodes(this._accentKeymap[dk[0]], flag);
             for (let i = 1; i < dk.length; ++i) {
@@ -448,13 +450,11 @@ class ReversedKeymap
             return accu;
         }
 
-        // special key (ex: alt is ctrl left)
-        const codeByKey = remappingCodeByKey[code];
-        if (codeByKey) {
-            key = codeByKey[key] || key;
-        }
-        // use key for special configuration such as Esc <-> CapsLock
-        return this._codeToScancodes(key, flag) || this._codeToScancodes(code, flag);
+        // use key before code for special configuration such as Esc <-> CapsLock
+        return this._modToScancode(key, flag) ||
+               this._modToScancode(code, flag) ||
+               // transform a named key to scancode. Do not use `code`.
+               codeToScancodes(key, flag);
     }
 
     _scancodeByModsToScancodes(scancodeByMods, flag) {
@@ -548,7 +548,7 @@ class ReversedKeymap
         return accu;
     }
 
-    _codeToScancodes(code, flag) {
+    _modToScancode(code, flag) {
         switch (code) {
             case "CapsLock":
                 if (flag === KeyAcquire) {
@@ -595,12 +595,8 @@ class ReversedKeymap
                 this._updateFlags(ShiftMod, RightShiftMod, ShiftMod | RightShiftMod, flag);
                 return [RShiftSC | flag];
 
-            // case "Dead":
-            // case "Compose":
-            //     return;
-
-            default:
-                return codeToScancodes(code, flag);
+            case "OSLeft": return [LMetaSC | flag];
+            case "OSRight": return [RMetaSC | flag];
         }
     }
 
