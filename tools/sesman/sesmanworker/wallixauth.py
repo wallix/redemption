@@ -1,23 +1,21 @@
 from logger import Logger
 
 try:
+    from wabengine.client.checker import Checker
     from wabengine.common.exception import (
-        AuthenticationFailed,
-        AuthenticationChallenged,
-        MultiFactorAuthentication,
-        AuthenticationUpdatePwd,
         LicenseException,
-        MustChangePassword,
-        AccountLocked,
-        SessionAlreadyStopped,
+    )
+    from wallixauthentication.api import (
+        AuthenticationFailed,
+        AuthenticationChallenge,
+        IdentificationFailed,
     )
     from wallixconst.authentication import (
         IDENTIFICATION_TYPES as IDENT,
         AUTHENTICATION_TYPES as AUTH,
     )
-    from wabengine.client.sync_client import SynClient
     from wabx509 import AuthX509
-except Exception as e:
+except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
@@ -26,13 +24,12 @@ except Exception as e:
             IDENTIFICATION_TYPES as IDENT,
             AUTHENTICATION_TYPES as AUTH,
         )
-    except Exception as e:
+    except Exception:
         Logger().info("Wabengine const LOADING FAILED %s" % tracelog)
 
 
 from .challenge import (
     Challenge,
-    wchallenge_to_challenge,
     mfa_to_challenge,
     ac_to_challenge,
 )
@@ -45,11 +42,22 @@ class AuthState(object):
     OTP = "OTP"
     SSH_KEY = "SSH_KEY"
     MOBILE_DEVICE = "MOBILE_DEVICE"
+    PASSTHROUGH = "PASSTHROUGH"
 
 
+# TODO: to remove
 if (not hasattr(AUTH, "MOBILE_DEVICE")
     and hasattr(AUTH, "PINGID")):
     AUTH.MOBILE_DEVICE = AUTH.PINGID
+
+# TODO: to remove
+if not hasattr(AUTH, "PASSTHROUGH"):
+    AUTH.PASSTHROUGH = "PASSTHROUGH"
+
+
+# TODO: to remove
+if not hasattr(IDENT, "PASSTHROUGH"):
+    IDENT.PASSTHROUGH = "PASSTHROUGH"
 
 
 COMPATIBILITY_PROXY = {
@@ -59,6 +67,7 @@ COMPATIBILITY_PROXY = {
     AuthState.PASSWORD: [AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.SSH_KEY: [AUTH.SSH_KEY, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.MOBILE_DEVICE: [AUTH.MOBILE_DEVICE, AUTH.PASSWORD],
+    AuthState.PASSTHROUGH: [AUTH.PASSTHROUGH],
 }
 
 EXPECTED_FIRST_COMPAT = {
@@ -68,6 +77,7 @@ EXPECTED_FIRST_COMPAT = {
     AuthState.PASSWORD: [AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.SSH_KEY: [AUTH.SSH_KEY],
     AuthState.MOBILE_DEVICE: [AUTH.MOBILE_DEVICE],
+    AuthState.PASSTHROUGH: [AUTH.PASSTHROUGH],
 }
 
 IDENT_PROXY = {
@@ -77,6 +87,7 @@ IDENT_PROXY = {
     AuthState.PASSWORD: IDENT.LOGIN,
     AuthState.SSH_KEY: IDENT.LOGIN,
     AuthState.MOBILE_DEVICE: IDENT.LOGIN,
+    AuthState.PASSTHROUGH: IDENT.PASSTHROUGH,
 }
 
 CHALLENGE_AUTH_STATE = {
@@ -92,14 +103,13 @@ def get_auth_priority(auth_state):
 
 class Authenticator(object):
     __slots__ = (
-        'synclient_port', 'client', 'auth_x509', 'challenge',
+        'synclient_port', 'checker', 'auth_x509', 'challenge',
         'auth_state', 'auth_key', 'auth_ident', 'auth_challenge',
-        'removed_auth_state'
+        'removed_auth_state',
     )
 
     def __init__(self, synclient_port):
         self.synclient_port = synclient_port
-        self.client = None
         self.auth_x509 = None
         self.challenge = None
         self.auth_state = None
@@ -107,9 +117,9 @@ class Authenticator(object):
         self.auth_ident = None
         self.auth_challenge = None
         self.removed_auth_state = set()
+        self.checker = None
 
     def reset(self):
-        self.client = None
         self.auth_x509 = None
         self.challenge = None
         self.auth_state = None
@@ -117,15 +127,13 @@ class Authenticator(object):
         self.auth_ident = None
         self.auth_challenge = None
         self.removed_auth_state = set()
+        self.checker = None
 
     def _init_client(self):
-        if self.client is None:
-            self.client = SynClient(
-                'localhost',
-                self.synclient_port
-            )
+        if self.checker is None:
+            self.checker = Checker()
 
-    def _reset_auth(self, remove_auth_state=None, cancel=False):
+    def _reset_auth(self, remove_auth_state=None, cancel=True):
         if remove_auth_state:
             Logger().debug(">> PA remove state %s" % remove_auth_state)
             # do not try this auth method again
@@ -134,8 +142,11 @@ class Authenticator(object):
         self.auth_state = None
         self.auth_challenge = None
         self.auth_ident = None
-        if cancel and self.auth_key and self.client:
-            self.client.wa_cancel(self.auth_key)
+        if cancel and self.auth_key and self.checker:
+            try:
+                self.checker.cancel(self.auth_key)
+            except Exception:
+                pass
         self.auth_key = None
 
     def _init_identify(self, ip_source, server_ip,
@@ -146,50 +157,57 @@ class Authenticator(object):
             # this auth method has been definitively banned
             Logger().debug(">> PA method %s banned" % auth_state)
             return False
+
         if self.auth_key and (self.auth_state == auth_state):
             # already identified for this kind of auth method
             return True
+
         Logger().debug(">> PA init_identify current:%s  asked:%s" %
                        (self.auth_key, auth_state))
         self.auth_state = auth_state
         self.auth_ident = IDENT_PROXY[auth_state]
         data = {}
-        if auth_state in [AuthState.PASSWORD,
+        if auth_state in (AuthState.PASSWORD,
                           AuthState.KERBEROS,
                           AuthState.SSH_KEY,
-                          AuthState.MOBILE_DEVICE]:
+                          AuthState.MOBILE_DEVICE,
+                          AuthState.PASSTHROUGH,):
             data = {
                 'login': login,
             }
-        elif auth_state in [AuthState.OTP]:
+        elif auth_state in (AuthState.OTP,):
             data = {
                 'token': login,
             }
+
         if not data:
             Logger().debug(">> PA init_identify unknown state %s" % auth_state)
             self._reset_auth()
             return False
+
         auth_type = None
         try:
-            Logger().debug("Call BEGIN wa_identify %s" % data)
-            self.auth_key = self.client.wa_identify(
+            Logger().debug("Call BEGIN identify %s" % data)
+            self.auth_key = self.checker.identify(
                 data=data,
                 identification=self.auth_ident,
                 ip_source=ip_source,
                 server_ip=server_ip,
                 client=client_name,
+                no_delay=(AuthState.PASSWORD != self.auth_state),
             )
-            # Logger().debug("Call END wa_identify %s" % self.auth_key)
-            Logger().debug("Call END wa_identify")
+            # Logger().debug("Call END identify %s" % self.auth_key)
+            Logger().debug("Call END identify")
             compatibility = COMPATIBILITY_PROXY[auth_state]
-            Logger().debug("Call BEGIN wa_compatibility (%s)" %
+            Logger().debug("Call BEGIN compatibility (%s)" %
                            compatibility)
-            self.auth_challenge = self.client.wa_compatibility(
+            self.auth_challenge = self.checker.compatibility(
                 key=self.auth_key,
                 compatibility=compatibility,
-                priority=get_auth_priority(auth_state)
+                priority=get_auth_priority(auth_state),
+                no_delay=(AuthState.PASSWORD != self.auth_state),
             )
-            Logger().debug("Call END wa_compatibility %s" %
+            Logger().debug("Call END compatibility %s" %
                            self.auth_challenge)
             auth_type = self.auth_challenge.get('auth_type')
             if (auth_type not in EXPECTED_FIRST_COMPAT[auth_state]):
@@ -200,13 +218,25 @@ class Authenticator(object):
                 )
                 remove_state = None
                 if auth_state in (AuthState.SSH_KEY, AuthState.KERBEROS):
+                    # if compatibility check on "automatic" method,
+                    # do not try it again
                     remove_state = auth_state
                 self._reset_auth(remove_auth_state=remove_state)
                 return False
-        except AuthenticationFailed as af:
-            Logger().debug(">> PA init_identify AuthenticationFailed")
-            self._reset_auth()
+        except AuthenticationFailed as a:
+            Logger().debug(">> PA init_identify AuthenticationFailed %s" % a)
+            self._reset_auth(cancel=False)
             return False
+        except IdentificationFailed as a:
+            Logger().debug(">> PA init_identify IdentificationFailed %s" % a)
+            remove_state = None
+            if auth_state in (AuthState.SSH_KEY, AuthState.KERBEROS):
+                # if identification failed on "automatic" method,
+                # do not try it again
+                remove_state = auth_state
+            self._reset_auth(remove_auth_state=remove_state, cancel=False)
+            return False
+
         if (auth_type == AUTH.SSH_KEY
             and not self.auth_challenge.get('ssh_keys')):
             # user does not have any key configured
@@ -214,37 +244,42 @@ class Authenticator(object):
             Logger().debug(">> PA init_identify No stored keys")
             self._reset_auth(remove_auth_state=AuthState.SSH_KEY)
             return False
+
         return True
 
-    def _authentify(self, enginei, data, debug_str="None"):
+    def _authentify(self, enginei, data, debug_str="None", no_delay=False):
         try:
-            Logger().debug("Call BEGIN wa_authenticate (%s)" %
+            Logger().debug("Call BEGIN authenticate (%s)" %
                            (debug_str))
-            enginei.wabengine = self.client.wa_authenticate(
+            enginei.wabengine = self.checker.authenticate(
                 key=self.auth_key,
                 data=data,
+                no_delay=no_delay
             )
-            Logger().debug("Call END wa_authenticate (%s)" % (debug_str))
+            Logger().debug("Call END authenticate (%s)" % (debug_str))
             self.challenge = None
             if enginei.wabengine is not None:
                 enginei._post_authentication()
                 return True
-        except AuthenticationChallenged as ac:
-            Logger().debug("AuthenticationChallenged %s" % ac.__dict__)
+        except AuthenticationChallenge as ac:
+            Logger().debug("AuthenticationChallenge %s" % ac.__dict__)
             self.set_challenge(ac.challenge)
             if self.auth_state == AuthState.MOBILE_DEVICE:
                 return self._authentify(
-                    enginei, {}, "mobile_device"
+                    enginei, {}, "mobile_device",
+                    no_delay=True
                 )
             # Logger().debug("Challenge %s" % self.challenge.__dict__)
             return False
         except AuthenticationFailed as exp:
             Logger().info("%s" % exp)
-        except Exception as a:
-            self._reset_auth()
+            self._reset_auth(cancel=False)
+            return False
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info(
-                "Engine wa_authenticate (%s) failed: "
+                "Engine authenticate (%s) failed: "
                 "(((%s)))" % (debug_str, traceback.format_exc()))
             raise
         self._reset_auth()
@@ -305,16 +340,6 @@ class Authenticator(object):
             if enginei.wabengine is not None:
                 enginei._post_authentication()
                 return True
-        except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(e.challenge)
-        except MultiFactorAuthentication as mfa:
-            self.challenge = mfa_to_challenge(mfa)
-            if self.challenge and self.challenge.recall:
-                return self.password_authenticate(
-                    enginei,
-                    self.challenge.username,
-                    ip_client, "", ip_server
-                )
         except AuthenticationFailed:
             self.challenge = None
         except LicenseException:
@@ -332,7 +357,7 @@ class Authenticator(object):
         data = {}
         auth_type = self.auth_challenge.get('auth_type')
         if auth_type == AUTH.TOKEN:
-            data['result'] = auth_type == self.auth_ident
+            data['result'] = True
         if data:
             return self._authentify(enginei, data, "otp")
         self._reset_auth()
@@ -353,9 +378,10 @@ class Authenticator(object):
             data = {}
             auth_type = self.auth_challenge.get('auth_type')
             if auth_type == AUTH.MOBILE_DEVICE:
-                return self._authentify(enginei, data, "mobile_device")
-        except Exception as a:
-            self._reset_auth()
+                return self._authentify(enginei, data, "mobile_device",
+                                        no_delay=True)
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine mobile_device_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
@@ -377,11 +403,12 @@ class Authenticator(object):
             if auth_type == AUTH.PASSWORD:
                 data['password'] = password
             if auth_type == AUTH.MOBILE_DEVICE:
-                return self._authentify(enginei, data, "mobile_device")
+                return self._authentify(enginei, data, "mobile_device",
+                                        no_delay=True)
             if data:
                 return self._authentify(enginei, data, "password")
-        except Exception as a:
-            self._reset_auth()
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine password_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
@@ -391,7 +418,24 @@ class Authenticator(object):
 
     def passthrough_authenticate(self, enginei, wab_login, ip_client,
                                  ip_server):
-        # self._init_identify(ip_client, ip_server, login=wab_login)
+        if not self._init_identify(ip_client, ip_server, login=wab_login,
+                                   auth_state=AuthState.PASSTHROUGH):
+            return False
+        try:
+            data = {}
+            auth_type = self.auth_challenge.get('auth_type')
+            if auth_type == AUTH.PASSTHROUGH:
+                data['result'] = True
+            if data:
+                return self._authentify(enginei, data, "passthrough",
+                                        no_delay=True)
+        except Exception as a:
+            self._reset_auth(cancel=False)
+            import traceback
+            Logger().info("Engine passthrough_authenticate failed: "
+                          "%s (%s)" % (a, traceback.format_exc()))
+            raise
+        self._reset_auth()
         return False
 
     def gssapi_authenticate(self, enginei, wab_login, ip_client, ip_server):
@@ -402,10 +446,11 @@ class Authenticator(object):
             data = {}
             auth_type = self.auth_challenge.get('auth_type')
             if auth_type == AUTH.KERBEROS:
-                data['result'] = auth_type == self.auth_ident
+                data['result'] = True
             if data:
-                return self._authentify(enginei, data, "gssapi")
-        except Exception as a:
+                return self._authentify(enginei, data, "gssapi",
+                                        no_delay=True)
+        except Exception:
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine gssapi_authenticate failed: "
@@ -431,9 +476,10 @@ class Authenticator(object):
                         data['result'] = True
                         break
             if data:
-                return self._authentify(enginei, data, "pubkey")
-        except Exception as a:
-            self._reset_auth()
+                return self._authentify(enginei, data, "pubkey",
+                                        no_delay=True)
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine pubkey_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())

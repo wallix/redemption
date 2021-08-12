@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import json
 from logger import Logger
+from .transaction import manage_transaction
 
 try:
     from wallixconst.approval import (
@@ -192,19 +194,21 @@ class CheckoutEngine(object):
         if request_ticket:
             try:
                 Logger().debug("** CALL request_approval")
-                status, infos = self.engine.request_approval(
-                    right=right,
-                    approval_fields=request_ticket
-                )
+                with manage_transaction(self.engine):
+                    status, infos = self.engine.request_approval(
+                        right=right,
+                        approval_fields=request_ticket
+                    )
                 Logger().debug("** END request_approval")
             except Exception as e:
                 Logger().info("Engine request_approval failed: %s" % e)
         try:
             Logger().debug("** CALL checkout_account")
-            status, infos = self.engine.checkout_account(
-                right=right,
-                session=True
-            )
+            with manage_transaction(self.engine):
+                status, infos = self.engine.checkout_account(
+                    right=right,
+                    session=True
+                )
             Logger().debug("** END checkout_account")
         except Exception as e:
             Logger().info("Engine checkout_account failed: %s" % e)
@@ -338,10 +342,10 @@ class CheckoutEngine(object):
             try:
                 Logger().debug("** CALL get_user_rights_by_type (%s)" %
                                account_type)
-                rights = self.engine.get_user_rights_by_type(
-                    'account',
-                    scenario=(account_type == 'scenario')
-                )
+                with manage_transaction(self.engine):
+                    rights = self.engine.get_user_rights_by_type(
+                        'account', scenario=(account_type == 'scenario')
+                    )
                 Logger().debug("** END get_user_rights_by_type")
                 if rights and (type(rights[0]) == str):
                     rights = list(map(json.loads, rights))
@@ -404,10 +408,11 @@ class CheckoutEngine(object):
         for right in matched_rights:
             try:
                 Logger().debug("** CALL checkout_account (%s)" % account_type)
-                status, infos = self.engine.checkout_account(
-                    right,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    status, infos = self.engine.checkout_account(
+                        right,
+                        session=True
+                    )
                 Logger().debug("** END checkout_account (%s)" % account_type)
             except Exception as e:
                 Logger().debug(
@@ -426,10 +431,11 @@ class CheckoutEngine(object):
             tright, creds = self.session_credentials.get(target_uid, ({}, {}))
             try:
                 Logger().debug("** CALL checkin_account")
-                self.engine.checkin_account(
-                    right=tright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=tright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account")
             except Exception as e:
                 Logger().debug("Engine checkin_account failed: %s" % e)
@@ -442,10 +448,11 @@ class CheckoutEngine(object):
             sright, creds = self.scenario_credentials.get(account)
             try:
                 Logger().debug("** CALL checkin_account (scenario)")
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=sright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account (scenario)")
             except Exception as e:
                 Logger().debug(
@@ -460,10 +467,11 @@ class CheckoutEngine(object):
             sright, creds = self.pm_credentials.get(account)
             try:
                 Logger().debug("** CALL checkin_account (pm)")
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=sright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account (pm)")
             except Exception as e:
                 Logger().debug(
@@ -481,10 +489,11 @@ class CheckoutEngine(object):
             sright, creds = table_creds.get(account)
             try:
                 Logger().debug("** CALL checkin_account (%s)" % account_type)
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=sright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account (%s)" % account_type)
             except Exception as e:
                 Logger().debug(
@@ -498,10 +507,11 @@ class CheckoutEngine(object):
             tright, creds = self.session_credentials.get(target_uid, ({}, {}))
             try:
                 Logger().debug("** CALL checkin_account")
-                self.engine.checkin_account(
-                    right=tright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=tright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account")
             except Exception as e:
                 Logger().debug("Engine checkin_account failed: %s" % e)
@@ -510,10 +520,11 @@ class CheckoutEngine(object):
             sright, creds = self.scenario_credentials.get(account)
             try:
                 Logger().debug("** CALL checkin_account (scenario)")
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=sright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account (scenario)")
             except Exception as e:
                 Logger().debug(
@@ -525,10 +536,11 @@ class CheckoutEngine(object):
             sright, creds = self.pm_credentials.get(account)
             try:
                 Logger().debug("** CALL checkin_account (pm)")
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
+                with manage_transaction(self.engine):
+                    self.engine.checkin_account(
+                        right=sright,
+                        session=True
+                    )
                 Logger().debug("** END checkin_account (pm)")
             except Exception as e:
                 Logger().debug(

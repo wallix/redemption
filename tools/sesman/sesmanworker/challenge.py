@@ -41,26 +41,6 @@ def ac_to_challenge(ac):
     )
 
 
-def wchallenge_to_challenge(challenge):
-    """ Convert Challenge from bastion to internal Challenge
-
-    param challenge: Challenge from bastion
-    param previous_token: token from previous MFA if needed
-    :rtype: Challenge
-    :return: a converted Challenge
-    """
-    return Challenge(
-        challenge_type="CHALLENGE",
-        title="= Challenge =",
-        message="",
-        fields=[challenge.message],
-        echos=[challenge.promptEcho],
-        username=challenge.username,
-        challenge=challenge,
-        token=getattr(challenge, "mfa_token", None)
-    )
-
-
 def mfa_to_challenge(mfa):
     """ Convert MFA from bastion to internal Challenge
 

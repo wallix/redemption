@@ -126,6 +126,12 @@ class RdpProxyLog(object):
 MAGICASK = (u'UNLIKELYVALUEMAGICASPICONSTANTS'
             u'3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED')
 
+KEEPALIVE_INTERVAL = 30
+KEEPALIVE_GRACEDELAY = 30
+KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL + KEEPALIVE_GRACEDELAY
+
+WORKFLOW_POLL_INTERVAL = 5
+
 
 def mundane(value):
     if value == MAGICASK:
@@ -557,8 +563,19 @@ class Sesman():
         self.proxy_conx.sendall(pack('>H', len(_list)))
         self.proxy_conx.sendall(_r_data)
 
+    def wait_read_proxy_conx(self):
+        self.proxy_conx.setblocking(False)
+        r = []
+        while True:
+            r, w, x = select([self.proxy_conx], [], [], KEEPALIVE_INTERVAL)
+            self.engine.keepalive(timeout=KEEPALIVE_TIMEOUT)
+            if self.proxy_conx in r:
+                break
+        self.proxy_conx.setblocking(True)
+        return r
+
     @logtime_function_pause
-    def receive_data(self, expected_list=None):
+    def receive_data(self, expected_list=None, blocking_call=True):
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded
         * Packet format:
         uint16                   request_count
@@ -583,6 +600,9 @@ class Sesman():
         uint are big-endian byte ordered
         """
 
+        if blocking_call:
+            _ = self.wait_read_proxy_conx()
+
         self._changed_keys = []
 
         def read_sck():
@@ -590,7 +610,7 @@ class Sesman():
                 d = self.proxy_conx.recv(65536)
                 if len(d):
                     if DEBUG:
-                        Logger().info(d)
+                        Logger().debug(d)
                     return d
 
             except Exception:
@@ -933,10 +953,10 @@ class Sesman():
                                                  self.target_service_name)
                 else:
                     target_info = u"%s@%s" % (target_login, target_device)
-            try:
-                target_info = target_info.encode('utf8')
-            except Exception:
-                target_info = None
+                try:
+                    target_info = target_info.encode('utf8')
+                except Exception:
+                    target_info = None
 
             # Check if X509 Authentication is active
             if self.engine.is_x509_connected(
@@ -1467,9 +1487,13 @@ class Sesman():
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                timeout = None if status != APPROVAL_PENDING else 5
                 logtimer.pause()
-                r, w, x = select([self.proxy_conx], [], [], timeout)
+                if status == APPROVAL_PENDING:
+                    # waiting for status update
+                    r, w, x = select([self.proxy_conx], [], [],
+                                     WORKFLOW_POLL_INTERVAL)
+                else:
+                    r = self.wait_read_proxy_conx()
                 logtimer.resume()
             except BastionSignal as e:
                 Logger().info("Got Signal %s" % e)
@@ -1482,7 +1506,7 @@ class Sesman():
                     Logger().info("<<<<%s>>>>" % traceback.format_exc())
                 raise
             if self.proxy_conx in r:
-                _status, _error = self.receive_data()
+                _status, _error = self.receive_data(blocking_call=False)
                 if self.shared.get(u'waitinforeturn') == "backselector":
                     # received back to selector
                     self.send_data({
@@ -1702,7 +1726,7 @@ class Sesman():
                     # [ SELECTOR ]
                     logtimer.start("FETCH_RIGHTS")
                     _status, _error = self.get_service()
-                    Logger().info("get service end :%s" % _status)
+                    Logger().info("get_service end :%s" % _status)
                     if not _status:
                         # logout or error in selector
                         self.engine.reset_proxy_rights()
@@ -1742,6 +1766,7 @@ class Sesman():
                     self.reset_target_session_vars()
                 self.engine.proxy_session_logout()
                 self.rdplog.log("LOGOUT")
+                self.engine.close_client()
 
         if tries <= 0:
             Logger().info(u"Too many login failures")
@@ -1926,10 +1951,11 @@ class Sesman():
                     kv.update(self.fetch_connectionpolicy(conn_opts))
 
                 if 'rdp' in conn_opts:
-                    krb_armoring_account = conn_opts['rdp'].get(u'krb_armoring_account', u'')
-                    krb_armoring_realm = conn_opts['rdp'].get(u'krb_armoring_realm', u'')
-                    krb_armoring_fallback_user = conn_opts['rdp'].get(u'krb_armoring_fallback_user', u'')
-                    krb_armoring_fallback_password = conn_opts['rdp'].get(u'krb_armoring_fallback_password', u'')
+                    rdp_opts = conn_opts.get('rdp', {})
+                    krb_armoring_account = rdp_opts.get('krb_armoring_account')
+                    krb_armoring_realm = rdp_opts.get('krb_armoring_realm')
+                    krb_armoring_fallback_user = rdp_opts.get('krb_armoring_fallback_user', '')
+                    krb_armoring_fallback_password = rdp_opts.get('krb_armoring_fallback_password', '')
 
                     if krb_armoring_account:
                         effective_krb_armoring_user = self.engine.get_scenario_account_field(
@@ -2138,7 +2164,8 @@ class Sesman():
                             r = []
                             got_signal = False
                             try:
-                                r, w, x = select([self.proxy_conx], [], [], 60)
+                                r, w, x = select([self.proxy_conx], [], [],
+                                                 KEEPALIVE_TIMEOUT)
                             except BastionSignal as e:
                                 Logger().info("Got Signal %s" % e)
                                 got_signal = True
@@ -2149,6 +2176,7 @@ class Sesman():
                                     Logger().info("<<<<%s>>>>" %
                                                   traceback.format_exc())
                                 raise
+                            self.engine.keepalive(timeout=KEEPALIVE_TIMEOUT)
                             current_time = time()
                             if self.check_session_parameters:
                                 self.update_session_parameters(current_time)
@@ -2156,7 +2184,8 @@ class Sesman():
                             self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data(
-                                    Sesman.EXPECTING_KEYS
+                                    Sesman.EXPECTING_KEYS,
+                                    blocking_call=False
                                 )
 
                                 if self._changed_keys:
