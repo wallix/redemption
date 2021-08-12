@@ -93,7 +93,7 @@ const keycodeToSingleScancode = function(code) {
     case "ShiftRight": return 0x36;
     case "KanaMode": return 0x70;
 
-    case "NumLock": return 0x145;
+    case "NumLock": return 0x45;
     case "Numpad0": return 0x52;
     case "Numpad1": return 0x4F;
     case "Numpad2": return 0x50;
@@ -205,7 +205,7 @@ const numpadCodeToScancode = function(key) {
     case "NumpadComma":     /*case ",": case "Separator":   */  return 0x7E;
     case "NumpadEnter":     /*case "Enter":                 */  return 0x11C;
     case "NumpadDivide":    /*case "/": case "Divide":      */  return 0x135;
-    case "NumLock":         /*                              */  return 0x145;
+    case "NumLock":         /*                              */  return 0x45;
     }
 };
 
@@ -243,7 +243,7 @@ const AltGrSC    = 0x138;
 const LMetaSC    = 0x15B;
 const RMetaSC    = 0x15C;
 const CapsLockSC = 0x3A;
-const NumLockSC  = 0x145;
+const NumLockSC  = 0x45;
 
 // key flags
 const KeyRelease = 0x8000;
