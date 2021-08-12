@@ -43,6 +43,8 @@ node test.js
 
     bjam -j7 toolset=clang js_client
 
+If there is a error: `attempt to link unsupport syscall`, add `-s ALLOW_UNIMPLEMENTED_SYSCALLS=1`.
+
 Debug mode:
 
     bjam -j7 toolset=clang debug js_client
