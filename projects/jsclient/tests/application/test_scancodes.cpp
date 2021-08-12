@@ -310,44 +310,63 @@ RED_JS_AUTO_TEST_CASE(
     TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
+    // Ctrl + a (ie. select all)
+    //@{
+    RED_CHECK(toScancodes2("Control", "ControlLeft", keyAcquire) == U16A(0x1D));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes("a", keyAcquire) == U16A(0x10));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes("a", keyRelease) == U16A(0x8010));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Control", "ControlLeft", keyRelease) == U16A(0x801D));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
     // Ctrl, Alt, AltGr
     //@{
     RED_CHECK(toScancodes2("Control", "ControlLeft", keyAcquire) == U16A(0x1D));
     TEST_HEX32(getModFlags() == CtrlMod);
-    TEST_HEX32(getVirtualModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == CtrlMod);
-    TEST_HEX32(getVirtualModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == CtrlMod);
-    TEST_HEX32(getVirtualModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
     RED_CHECK(toScancodes2("Alt", "AltLeft", keyAcquire) == U16A(0x38));
     TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
     TEST_HEX32(getVirtualModFlags() == AltGrMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
-    TEST_HEX32(getVirtualModFlags() == (CtrlMod | AltMod));
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == (CtrlMod | AltMod));
     TEST_HEX32(getVirtualModFlags() == AltGrMod);
 
     RED_CHECK(toScancodes2("Control", "ControlLeft", keyRelease) == U16A(0x801D));
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
     RED_CHECK(toScancodes2("AltGraph", "AltRight", keyAcquire) == U16A(0x138));
     TEST_HEX32(getModFlags() == (AltMod | AltGrMod));
     TEST_HEX32(getVirtualModFlags() == AltGrMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == (AltMod | AltGrMod));
-    TEST_HEX32(getVirtualModFlags() == (AltMod | AltGrMod));
+    TEST_HEX32(getVirtualModFlags() == AltGrMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == (AltMod | AltGrMod));
     TEST_HEX32(getVirtualModFlags() == AltGrMod);
@@ -368,33 +387,33 @@ RED_JS_AUTO_TEST_CASE(
 
     RED_CHECK(toScancodes2("Alt", "AltLeft", keyAcquire) == U16A(0x38));
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
     RED_CHECK(toScancodes2("Control", "ControlRight", keyAcquire) == U16A(0x11D));
     TEST_HEX32(getModFlags() == (RightCtrlMod | AltMod));
     TEST_HEX32(getVirtualModFlags() == AltGrMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == (RightCtrlMod | AltMod));
-    TEST_HEX32(getVirtualModFlags() == (CtrlMod | AltMod));
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == (RightCtrlMod | AltMod));
     TEST_HEX32(getVirtualModFlags() == AltGrMod);
 
     RED_CHECK(toScancodes2("Control", "ControlRight", keyRelease) == U16A(0x811D));
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", false);
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
     reversedKeymap.set("altGrIsCtrlAndAlt", true);
     TEST_HEX32(getModFlags() == AltMod);
-    TEST_HEX32(getVirtualModFlags() == AltMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
 
     RED_CHECK(toScancodes2("Alt", "AltLeft", keyRelease) == U16A(0x8038));
     TEST_HEX32(getModFlags() == NoMod);

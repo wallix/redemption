@@ -8,6 +8,7 @@
 //
 // test:
 // https://yari-demos.prod.mdn.mozit.cloud/en-US/docs/Web/API/KeyboardEvent/code/_sample_.Exercising_KeyboardEvent.html
+// https://w3c.github.io/uievents/tools/key-event-viewer.html
 
 /// \return Number | undefined
 const keycodeToSingleScancode = function(code) {
@@ -357,7 +358,7 @@ const scancodesForSynchronizedMods = function(syncFlags) {
 class ReversedKeymap
 {
     // _virtualModFlags:
-    //   - left controls
+    //   - contains left shift (for right and left shift), altgr and oem8
     //   - ctrl+alt = altgr when _altGrIsCtrlAndAlt
     //   - eom8 when _rctrlIsOem8 && (_modFlags & RightCtrlMod)
     // _modFlags: all controls
@@ -379,7 +380,7 @@ class ReversedKeymap
 
     set altGrIsCtrlAndAlt(altGrIsCtrlAndAlt) {
         this._altGrIsCtrlAndAlt = altGrIsCtrlAndAlt;
-        this._syncAltGrFlags();
+        this._updateVirtualMod();
     }
 
     get layout() {
@@ -392,37 +393,27 @@ class ReversedKeymap
         this._deadKeymap = reversedLayout.deadkeys;
         this._accentKeymap = reversedLayout.accents;
         this._rctrlIsOem8 = reversedLayout.ctrlRightIsOem8;
-        this._syncOEM8();
+        this._updateVirtualMod();
     }
 
     sync(syncFlags) {
-        let virtualModFlags = 0;
         let modFlags = 0;
 
-        const updateMods = (syncf, modf, vmodf) => {
-            if (syncFlags & syncf) {
-                virtualModFlags |= modf;
-                modFlags |= vmodf;
-            }
-        }
-
-        updateMods(SyncFlags.ShiftLeft, ShiftMod, ShiftMod);
-        updateMods(SyncFlags.ShiftRight, ShiftMod, RightShiftMod);
-        updateMods(SyncFlags.ControlLeft, CtrlMod, CtrlMod);
-        updateMods(SyncFlags.ControlRight, CtrlMod, RightCtrlMod);
-        updateMods(SyncFlags.AltLeft, AltMod, AltMod);
-        updateMods(SyncFlags.AltRight, AltGrMod, AltGrMod);
-        updateMods(SyncFlags.CapsLock, CapsLockMod, CapsLockMod);
-        updateMods(SyncFlags.NumLock, NumLockMod, NumLockMod);
-        // updateMods(SyncFlags.KanaLock, KanaLockMod, KanaLockMod);
-        // updateMods(SyncFlags.Kana, KanaMod, KanaMod);
+        modFlags |= (syncFlags & SyncFlags.ShiftLeft) ? ShiftMod : 0;
+        modFlags |= (syncFlags & SyncFlags.ShiftRight) ? RightShiftMod : 0;
+        modFlags |= (syncFlags & SyncFlags.ControlLeft) ? CtrlMod : 0;
+        modFlags |= (syncFlags & SyncFlags.ControlRight) ? RightCtrlMod : 0;
+        modFlags |= (syncFlags & SyncFlags.AltLeft) ? AltMod : 0;
+        modFlags |= (syncFlags & SyncFlags.AltRight) ? AltGrMod : 0;
+        modFlags |= (syncFlags & SyncFlags.CapsLock) ? CapsLockMod : 0;
+        modFlags |= (syncFlags & SyncFlags.NumLock) ? NumLockMod : 0;
+        // modFlags |= (syncFlags & SyncFlags.KanaLock) ? KanaLockMod : 0;
+        // modFlags |= (syncFlags & SyncFlags.Kana) ? KanaMod : 0;
         // ignore ScrollLock value
 
-        this._virtualModFlags = virtualModFlags;
         this._modFlags = modFlags;
 
-        this._syncOEM8();
-        this._syncAltGrFlags();
+        this._updateVirtualMod();
     }
 
     keyUp(key, code) {
@@ -498,15 +489,15 @@ class ReversedKeymap
         }
 
         // ctrl
-        if ((this._virtualModFlags ^ expectedModFlags) & CtrlMod) {
-            if (expectedModFlags & CtrlMod) {
-                accu.push(LCtrlSC | down);
-            }
-            else {
-                if (this._modFlags & CtrlMod) accu.push(LCtrlSC | release);
-                if ((this._modFlags & RightCtrlMod) && !this._rctrlIsOem8) accu.push(RCtrlSC | release);
-            }
-        }
+        // if ((this._virtualModFlags ^ expectedModFlags) & CtrlMod) {
+        //     if (expectedModFlags & CtrlMod) {
+        //         accu.push(LCtrlSC | down);
+        //     }
+        //     else {
+        //         if (this._modFlags & CtrlMod) accu.push(LCtrlSC | release);
+        //         if ((this._modFlags & RightCtrlMod) && !this._rctrlIsOem8) accu.push(RCtrlSC | release);
+        //     }
+        // }
 
         // oem8
         if ((this._virtualModFlags ^ expectedModFlags) & OEM8Mod) {
@@ -514,9 +505,9 @@ class ReversedKeymap
         }
 
         // alt
-        if ((this._virtualModFlags ^ expectedModFlags) & AltMod) {
-            accu.push(AltSC | ((expectedModFlags & AltMod) ? down : release));
-        }
+        // if ((this._virtualModFlags ^ expectedModFlags) & AltMod) {
+        //     accu.push(AltSC | ((expectedModFlags & AltMod) ? down : release));
+        // }
 
         // altGr
         if ((this._virtualModFlags ^ expectedModFlags) & AltGrMod) {
@@ -565,34 +556,29 @@ class ReversedKeymap
                 return [NumLockSC | flag];
 
             case "ControlLeft":
-                this._updateFlags(CtrlMod, CtrlMod, CtrlMod | RightCtrlMod, flag);
-                this._syncAltGrFlags();
+                this._updateFlags(CtrlMod, flag);
                 return [LCtrlSC | flag];
 
             case "ControlRight":
-                this._updateFlags(CtrlMod, RightCtrlMod, CtrlMod | RightCtrlMod, flag);
-                this._syncOEM8();
-                this._syncAltGrFlags();
+                this._updateFlags(RightCtrlMod, flag);
                 return [RCtrlSC | flag];
 
             case "AltGraph":
             case "AltRight":
-                this._updateFlags(AltGrMod, AltGrMod, AltGrMod, flag);
-                this._syncAltGrFlags();
+                this._updateFlags(AltGrMod, flag);
                 return [AltGrSC | flag];
 
             case "Alt":
             case "AltLeft":
-                this._updateFlags(AltMod, AltMod, AltMod, flag);
-                this._syncAltGrFlags();
+                this._updateFlags(AltMod, flag);
                 return [AltSC | flag];
 
             case "ShiftLeft":
-                this._updateFlags(ShiftMod, ShiftMod, ShiftMod | RightShiftMod, flag);
+                this._updateFlags(ShiftMod, flag);
                 return [LShiftSC | flag];
 
             case "ShiftRight":
-                this._updateFlags(ShiftMod, RightShiftMod, ShiftMod | RightShiftMod, flag);
+                this._updateFlags(RightShiftMod, flag);
                 return [RShiftSC | flag];
 
             case "OSLeft": return [LMetaSC | flag];
@@ -600,50 +586,24 @@ class ReversedKeymap
         }
     }
 
-    _updateFlags(modf, vmodf, vmodfMask, flag) {
+    _updateFlags(modf, flag) {
         if (flag === KeyRelease) {
-            this._modFlags &= ~vmodf;
-            this._virtualModFlags &= ~modf;
-            this._virtualModFlags |= (this._modFlags & vmodfMask) ? modf : 0;
+            this._modFlags &= ~modf;
         }
         else {
-            this._modFlags |= vmodf;
-            this._virtualModFlags |= modf;
+            this._modFlags |= modf;
         }
+        this._updateVirtualMod();
     }
 
-    _updateLock(lockFlags, lockMod, mod) {
-        if (lockFlags & lockMod) {
-            this._modFlags |= mod;
-            this._virtualModFlags |= mod;
-        }
-        else {
-            this._modFlags &= ~mod;
-            this._virtualModFlags &= ~mod;
-        }
-    }
-
-    _syncAltGrFlags() {
+    _updateVirtualMod() {
         const ctrl = this._rctrlIsOem8 ? CtrlMod : (CtrlMod | RightCtrlMod);
         const hasCtrl = this._modFlags & ctrl;
         const hasAlt = this._modFlags & AltMod;
-        const hasAltGr = this._modFlags & AltGrMod;
-        this._virtualModFlags &= ~(CtrlMod | AltMod | AltGrMod);
-        if (this._altGrIsCtrlAndAlt && ((hasCtrl && hasAlt) || hasAltGr)) {
-            this._virtualModFlags |= AltGrMod;
-        }
-        else {
-            this._virtualModFlags |= hasCtrl ? CtrlMod : 0;
-            this._virtualModFlags |= hasAlt | hasAltGr;
-        }
-    }
-
-    _syncOEM8() {
-        this._virtualModFlags &= ~OEM8Mod;
-        if (this._rctrlIsOem8 && (this._modFlags & RightCtrlMod)) {
-            this._virtualModFlags &= ~CtrlMod;
-            this._virtualModFlags |= OEM8Mod | (this._modFlags & CtrlMod);
-        }
+        this._virtualModFlags = this._modFlags & (AltGrMod | ShiftMod | CapsLockMod | NumLockMod);
+        this._virtualModFlags |= (this._modFlags & RightShiftMod) ? ShiftMod : 0;
+        this._virtualModFlags |= (this._altGrIsCtrlAndAlt && (hasCtrl && hasAlt)) ? AltGrMod : 0;
+        this._virtualModFlags |= (this._rctrlIsOem8 && (this._modFlags & RightCtrlMod)) ? OEM8Mod : 0;
     }
 };
 

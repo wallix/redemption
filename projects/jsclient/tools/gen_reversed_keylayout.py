@@ -149,9 +149,9 @@ char_to_char_table = {
 }
 
 codepoint_to_jskey = {
-    0x5E: 'Tab',
-    0x1C: 'Enter',
-    0x1B: 'Escape',
+    0x09: 'Tab',
+    0x0A: 'Enter',
+    0x5C: 'Escape',
     0x08: 'Backspace',
 }
 
@@ -162,7 +162,8 @@ def vk_mod_to_mod_flags(mods:str) -> int:
     # ctrl+alt to altgr
     if (mod_flags & ctrl_alt) == ctrl_alt:
         mod_flags = mod_flags & ~ctrl_alt | altgr
-    return mod_flags
+    # remove ctrl
+    return mod_flags & ~ctrl
 
 def key_to_scancode(key:Key) -> int:
     extended = 0x100 if key.is_extended() else 0
