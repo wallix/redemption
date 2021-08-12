@@ -977,9 +977,9 @@ private:
                         set_inactivity_timeout(inactivity, ini);
                     }
 
-                    if (has_field(cfg::video::rt_display())) {
+                    if (has_field(cfg::audit::rt_display())) {
                         const Capture::RTDisplayResult rt_status =
-                            front.set_rt_display(ini.get<cfg::video::rt_display>());
+                            front.set_rt_display(ini.get<cfg::audit::rt_display>());
 
                         if (ini.get<cfg::client::enable_osd_4_eyes>()
                          && rt_status == Capture::RTDisplayResult::Enabled

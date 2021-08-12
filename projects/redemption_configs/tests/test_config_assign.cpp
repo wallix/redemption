@@ -289,7 +289,8 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::video::record_tmp_path>(spath);
     ini.set<cfg::video::replay_path>(cpath);
     ini.set<cfg::video::replay_path>(spath);
-    ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth16);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::gzip);
+
+    ini.set<cfg::audit::rt_display>(1);
 }

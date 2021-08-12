@@ -20,17 +20,6 @@
               Jennifer Inthavong
 */
 
-#include <algorithm>
-#include <chrono>
-#include <string>
-#include <iterator>
-#include <type_traits>
-
-#include <ctime> // localtime_r
-#include <cstdio> // snprintf / sprintf
-#include <cerrno>
-#include <cassert>
-
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/window_constants.hpp"
@@ -64,6 +53,7 @@
 
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
+#include "capture/redis_writer.hpp"
 
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
@@ -80,6 +70,19 @@
 #include "capture/utils/match_finder.hpp"
 #include "utils/video_cropper.hpp"
 #include "utils/drawable_pointer.hpp"
+
+#include <algorithm>
+#include <chrono>
+#include <string>
+#include <vector>
+#include <iterator>
+#include <type_traits>
+
+#include <ctime> // localtime_r
+#include <cstdio> // snprintf / sprintf
+#include <cerrno>
+#include <cassert>
+
 
 #ifndef REDEMPTION_NO_FFMPEG
 # include "capture/video_capture.hpp"
@@ -323,6 +326,18 @@ inline time_t to_time_t(MonotonicTimePoint t, MonotonicTimeToRealTime monotonic_
     auto duration = monotonic_to_real.to_real_time_duration(t);
     return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 }
+
+struct FilesystemFullReporter
+{
+    SessionLogApi* session_log;
+
+    void operator()(const Error & error) const
+    {
+        if (session_log && error.errnum == ENOSPC) {
+            session_log->report("FILESYSTEM_FULL", "100|unknown");
+        }
+    }
+};
 
 } // anonymous namespace
 
@@ -644,224 +659,383 @@ private:
 };
 
 
-class Capture::PngCapture : public gdi::CaptureApi
+namespace
 {
-protected:
-    OutFilenameSequenceTransport trans;
-    Drawable & drawable;
-    DrawablePointer const & drawable_pointer;
-    MonotonicTimePoint last_time_capture;
-    const std::chrono::microseconds frame_interval;
 
-private:
-    const MonotonicTimeToRealTime monotonic_to_real;
-    const ScaledPng24 scaled_png;
-
-protected:
-    TimestampTracer timestamp_tracer;
-
-protected:
-    gdi::ImageFrameApi & image_frame_api;
-
-    explicit PngCapture(
+struct PngCaptureData
+{
+    PngCaptureData(
         const CaptureParams & capture_params, const PngParams & png_params,
         Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & imageFrameApi, WritableImageView const & image_view)
-    : trans(
-        capture_params.record_tmp_path,
-        png_params.real_basename,
-        ".png",
-        capture_params.groupid,
-        [session_log = capture_params.session_log](const Error & error){
-            if (session_log && error.errnum == ENOSPC) {
-                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                session_log->report("FILESYSTEM_FULL", "100|unknown");
-            }
-        })
+        gdi::ImageFrameApi & image_frame_api)
+    : image_frame_api(image_frame_api)
     , drawable(drawable)
     , drawable_pointer(drawable_pointer)
     , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , monotonic_to_real(capture_params.now, capture_params.real_now)
     , scaled_png{png_params.png_width, png_params.png_height}
-    , timestamp_tracer(image_view)
-    , image_frame_api(imageFrameApi)
+    , timestamp_tracer(image_frame_api.get_writable_image_view())
     {}
 
-    void resize(WritableImageView const & image_view) {
-        this->timestamp_tracer = TimestampTracer(image_view);
-    }
-
-public:
-    PngCapture(
-        const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & imageFrameApi)
-    : PngCapture(
-        capture_params, png_params, drawable, drawable_pointer,
-        imageFrameApi, imageFrameApi.get_writable_image_view())
-    {}
-
-    void resize(gdi::ImageFrameApi & imageFrameApi) {
-        this->resize(imageFrameApi.get_writable_image_view());
-    }
-
-    void dump()
+    MonotonicTimePoint::duration interval() const
     {
-        this->scaled_png.dump_png24(this->trans, this->image_frame_api, true);
+        return this->frame_interval;
     }
 
-     virtual void clear_old() {}
+    void resize(gdi::ImageFrameApi & image_frame_api)
+    {
+        this->timestamp_tracer = TimestampTracer(image_frame_api.get_writable_image_view());
+    }
 
-     void clear_png_interval(uint32_t num_start, uint32_t num_end) {
-        for(uint32_t num = num_start ; num < num_end ; num++) {
-            // unlink may fail, for instance if file does not exist, just don't care
-            ::unlink(this->trans.seqgen(num));
-        }
-     }
-
-    WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/
-    ) override {
+    template<class NextCaptureFn>
+    Capture::WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, Transport& trans, NextCaptureFn&& next_capture_fn)
+    {
         auto const duration = now - this->last_time_capture;
-        std::chrono::microseconds const interval = this->frame_interval;
+        auto const interval = this->frame_interval;
         if (duration >= interval) {
-             // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
+            // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
             if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
-                DrawablePointer::BufferSaver buffer_saver;
-                this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
-                tm ptm;
-                time_t t = to_time_t(now, this->monotonic_to_real);
-                localtime_r(&t, &ptm);
-                this->image_frame_api.prepare_image_frame();
-                this->timestamp_tracer.trace(ptm);
-
-                this->dump();
-                this->clear_old();
-                this->trans.next();
-
-                this->timestamp_tracer.clear();
                 this->last_time_capture = now;
-                this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
-
-                return WaitingTimeBeforeNextSnapshot(interval.count()
+                this->dump_png(to_time_t(now, this->monotonic_to_real), trans);
+                next_capture_fn();
+                return Capture::WaitingTimeBeforeNextSnapshot(interval.count()
                     ? interval - duration % interval
                     : interval);
             }
             // Wait 0.3 x frame_interval.
-            return WaitingTimeBeforeNextSnapshot(this->frame_interval / 3);
+            return Capture::WaitingTimeBeforeNextSnapshot(interval / 3);
         }
-        return WaitingTimeBeforeNextSnapshot(interval - duration);
+        return Capture::WaitingTimeBeforeNextSnapshot(interval - duration);
     }
+
+    void dump_png(time_t t, Transport& trans)
+    {
+        DrawablePointer::BufferSaver buffer_saver;
+        this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+        tm ptm;
+        localtime_r(&t, &ptm);
+        this->image_frame_api.prepare_image_frame();
+        this->timestamp_tracer.trace(ptm);
+
+        this->scaled_png.dump_png24(trans, this->image_frame_api, true);
+
+        this->timestamp_tracer.clear();
+        this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+    }
+
+    void visibility_rects_event(Rect rect)
+    {
+        if (rect.isempty())
+            return;
+
+        rect = rect.intersect(this->drawable.width(), this->drawable.height());
+
+        bool right         = true;
+        int  failure_count = 0;
+        while ((rect.cx & 3) && (failure_count < 2)) {
+            if (right) {
+                if (rect.x + rect.cx < this->drawable.width()) {
+                    rect.cx += 1;
+                    failure_count = 0;
+                }
+                else {
+                    failure_count++;
+                }
+
+                right = false;
+            }
+            else {
+                if (rect.x > 0) {
+                    rect.x -=1;
+                    rect.cx += 1;
+                    failure_count = 0;
+                }
+                else {
+                    failure_count++;
+                }
+
+                right = true;
+            }
+        }
+
+        if (rect.cx & 3) {
+            rect.cx &= ~3u;
+        }
+
+        if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
+            this->resize(this->image_frame_api);
+        }
+    }
+
+private:
+    gdi::ImageFrameApi & image_frame_api;
+    Drawable & drawable;
+    DrawablePointer const & drawable_pointer;
+    MonotonicTimePoint last_time_capture;
+    const MonotonicTimePoint::duration frame_interval;
+    const MonotonicTimeToRealTime monotonic_to_real;
+    const ScaledPng24 scaled_png;
+    TimestampTracer timestamp_tracer;
 };
 
-class Capture::PngCaptureRT : public PngCapture
+}
+
+class Capture::PngCapture final : public gdi::CaptureApi
 {
-    uint32_t num_start;
-    unsigned png_limit;
+public:
+    PngCapture(
+        const CaptureParams & capture_params, const PngParams & png_params,
+        Drawable & drawable, DrawablePointer const & drawable_pointer,
+        gdi::ImageFrameApi & image_frame_api)
+    : png_data(capture_params, png_params, drawable, drawable_pointer, image_frame_api)
+    , trans(
+        capture_params.record_tmp_path,
+        png_params.real_basename,
+        ".png",
+        capture_params.groupid,
+        FilesystemFullReporter{capture_params.session_log})
+    {}
 
-    bool enable_rt_display;
+    void resize(gdi::ImageFrameApi & image_frame_api)
+    {
+        this->png_data.resize(image_frame_api);
+    }
 
-    SmartVideoCropping smart_video_cropping;
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/
+    ) override
+    {
+        return this->png_data.periodic_snapshot(now, this->trans, [this]{
+            this->trans.next();
+        });
+    }
 
+private:
+    PngCaptureData png_data;
+    OutFilenameSequenceTransport trans;
+};
+
+class Capture::PngCaptureRT final : public gdi::CaptureApi
+{
 public:
     explicit PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
         Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & imageFrameApi)
-    : PngCapture(capture_params, png_params, drawable, drawable_pointer, imageFrameApi)
-    , num_start(this->trans.get_seqno())
-    , png_limit(png_params.png_limit)
+        gdi::ImageFrameApi & image_frame_api)
+    : png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
     , smart_video_cropping(capture_params.smart_video_cropping)
+    , png_data(capture_params, png_params, drawable, drawable_pointer, image_frame_api)
+    , trans(
+        capture_params.record_tmp_path,
+        png_params.real_basename,
+        ".png",
+        capture_params.groupid,
+        FilesystemFullReporter{capture_params.session_log})
     {}
 
-    ~PngCaptureRT() /*NOLINT*/
+    ~PngCaptureRT()
     {
-        this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
+        this->clear_png_interval();
     }
 
-    Capture::RTDisplayResult set_rt_display(bool enable_rt_display) {
+    void resize(gdi::ImageFrameApi & image_frame_api)
+    {
+        this->png_data.resize(image_frame_api);
+    }
+
+    RTDisplayResult set_rt_display(bool enable_rt_display)
+    {
         if (enable_rt_display != this->enable_rt_display){
             LOG(LOG_INFO, "PngCaptureRT::enable_rt_display=%d", enable_rt_display);
             this->enable_rt_display = enable_rt_display;
             // clear files if we go from RT to non-RT
             if (!this->enable_rt_display) {
-                this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
-                return Capture::RTDisplayResult::Disabled;
+                this->clear_png_interval();
+                return RTDisplayResult::Disabled;
             }
-            return Capture::RTDisplayResult::Enabled;
+            return RTDisplayResult::Enabled;
         }
 
-        return Capture::RTDisplayResult::Unchanged;
-    }
-
-    void clear_old() override {
-        if (this->trans.get_seqno() < this->png_limit) {
-            return;
-        }
-        uint32_t num_start = this->trans.get_seqno() - this->png_limit;
-        this->clear_png_interval(num_start, num_start + 1);
+        return RTDisplayResult::Unchanged;
     }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t x, uint16_t y
-    ) override {
-        if (this->enable_rt_display) {
-            return this->PngCapture::periodic_snapshot(now, x, y);
+        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/
+    ) override
+    {
+        if (!this->enable_rt_display) {
+            return WaitingTimeBeforeNextSnapshot(this->png_data.interval());
         }
-        auto const duration = now - this->last_time_capture;
-        return WaitingTimeBeforeNextSnapshot(this->frame_interval - duration % this->frame_interval);
+
+        return this->png_data.periodic_snapshot(now, this->trans, [this]{
+            this->trans.next();
+            if (this->trans.get_seqno() - this->num_start >= this->png_limit) {
+                ::unlink(this->trans.seqgen(this->num_start));
+                ++this->num_start;
+            }
+        });
     }
 
     void visibility_rects_event(Rect rect)
     {
-        if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect.isempty()) {
-            rect = rect.intersect(
-                {0, 0, this->drawable.width(), this->drawable.height()});
+        if (this->smart_video_cropping == SmartVideoCropping::disable)
+            return;
 
+        this->png_data.visibility_rects_event(rect);
+    }
 
-
-            bool     right         = true;
-            unsigned failure_count = 0;
-            while ((rect.cx & 3) && (failure_count < 2)) {
-                if (right) {
-                    if (rect.x + rect.cx < this->drawable.width()) {
-                        rect.cx += 1;
-
-                        failure_count = 0;
-                    }
-                    else {
-                        failure_count++;
-                    }
-
-                    right = false;
-                }
-                else {
-                    if (rect.x > 0) {
-                        rect.x -=1;
-                        rect.cx += 1;
-
-                        failure_count = 0;
-                    }
-                    else {
-                        failure_count++;
-                    }
-
-                    right = true;
-                }
-            }
-            if (rect.cx & 3) {
-                rect.cx &= ~ 3;
-            }
-
-
-
-            if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
-                this->timestamp_tracer = TimestampTracer(this->image_frame_api.get_writable_image_view());
-            }
+private:
+    void clear_png_interval()
+    {
+        uint32_t num_end = this->trans.get_seqno() + 1;
+        for(; this->num_start < num_end ; ++this->num_start) {
+            // unlink may fail, for instance if file does not exist, just don't care
+            ::unlink(this->trans.seqgen(this->num_start));
         }
     }
+
+    uint32_t num_start = 0;
+    uint32_t png_limit;
+
+    bool enable_rt_display;
+
+    SmartVideoCropping smart_video_cropping;
+
+    PngCaptureData png_data;
+    OutFilenameSequenceTransport trans;
+};
+
+
+class Capture::PngCaptureRTRedis final : public gdi::CaptureApi
+{
+public:
+    explicit PngCaptureRTRedis(
+        const CaptureParams & capture_params, const PngParams & png_params,
+        Drawable & drawable, DrawablePointer const & drawable_pointer,
+        gdi::ImageFrameApi & image_frame_api)
+    : enable_rt_display(png_params.rt_display)
+    , smart_video_cropping(capture_params.smart_video_cropping)
+    , png_data(capture_params, png_params, drawable, drawable_pointer, image_frame_api)
+    , redis_cmd(png_params.redis.key_name)
+    , redis_server(truncated_bounded_array_view(png_params.redis.address),
+                   png_params.redis.timeout,
+                   truncated_bounded_array_view(png_params.redis.password),
+                   png_params.redis.db)
+    {
+        if (this->enable_rt_display) {
+            this->connect_to_redis();
+        }
+    }
+
+    void resize(gdi::ImageFrameApi & image_frame_api)
+    {
+        this->png_data.resize(image_frame_api);
+    }
+
+    RTDisplayResult set_rt_display(bool enable_rt_display)
+    {
+        if (enable_rt_display != this->enable_rt_display) {
+            LOG(LOG_INFO, "PngCaptureRTRedis::enable_rt_display=%d", enable_rt_display);
+            this->enable_rt_display = enable_rt_display;
+
+            if (!this->enable_rt_display) {
+                this->redis_server.close();
+                return RTDisplayResult::Disabled;
+            }
+
+            this->connect_to_redis();
+
+            return RTDisplayResult::Enabled;
+        }
+
+        return RTDisplayResult::Unchanged;
+    }
+
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/
+    ) override
+    {
+        if (!this->enable_rt_display) {
+            return WaitingTimeBeforeNextSnapshot(this->png_data.interval());
+        }
+
+        struct BufTransport : Transport
+        {
+            RedisCmdSet* redis_cmd;
+
+            void do_send(const uint8_t * buffer, size_t len) override
+            {
+                redis_cmd->append({buffer, len});
+            }
+        };
+
+        BufTransport buf;
+        buf.redis_cmd = &this->redis_cmd;
+
+        return this->png_data.periodic_snapshot(now, buf, [this]{
+            auto cmd = this->redis_cmd.build_command();
+            auto result = this->redis_server.send(cmd);
+            this->redis_cmd.clear();
+
+            if (result != RedisWriter::IOResult::Ok) {
+                char const* errmsg = nullptr;
+                switch (result) {
+                    case RedisWriter::IOResult::Ok:
+                    case RedisWriter::IOResult::UnknownResponse:
+                        // already logged
+                        break;
+                    case RedisWriter::IOResult::ReadError:
+                        errmsg = "Read error";
+                        break;
+                    case RedisWriter::IOResult::WriteError:
+                        errmsg = "Write error";
+                        break;
+                    case RedisWriter::IOResult::ReadEventError:
+                        errmsg = "Read event error";
+                        break;
+                    case RedisWriter::IOResult::WriteEventError:
+                        errmsg = "Write event error";
+                        break;
+                    case RedisWriter::IOResult::Timeout:
+                        errmsg = "Timeout error";
+                        break;
+                }
+                if (errmsg) {
+                    LOG(LOG_ERR, "Redis: %s", errmsg);
+                }
+                throw Error(ERR_RECORDER_REDIS_RESPONSE, errno);
+            }
+        });
+    }
+
+    void visibility_rects_event(Rect rect)
+    {
+        if (this->smart_video_cropping == SmartVideoCropping::disable)
+            return;
+
+        this->png_data.visibility_rects_event(rect);
+    }
+
+private:
+    void connect_to_redis()
+    {
+        if (!this->redis_server.open()) {
+            int errnum = errno;
+            LOG(LOG_ERR, "Failed to connect to the Redis server");
+            throw Error(ERR_SOCKET_CONNECT_FAILED, errnum);
+        }
+    }
+
+    bool enable_rt_display;
+
+    SmartVideoCropping smart_video_cropping;
+
+    PngCaptureData png_data;
+    RedisCmdSet redis_cmd;
+    RedisWriter redis_server;
 };
 
 namespace {
@@ -1215,12 +1389,7 @@ public:
             throw error; /* NOLINT */
         }
         return fd;
-    }()}, [session_log = capture_params.session_log](const Error & error){
-        if (session_log && error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            session_log->report("FILESYSTEM_FULL", "100|unknown");
-        }
-    })
+    }()}, FilesystemFullReporter{capture_params.session_log})
     , meta(capture_params.now, capture_params.real_now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
     , session_log_agent(this->meta, meta_params)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
@@ -1428,12 +1597,23 @@ Capture::Capture(
 
                     image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
                 }
-                this->png_real_time_capture_obj =
-                    std::make_unique<PngCaptureRT>(capture_params,
-                                                   png_params,
-                                                   this->gd_drawable.impl(),
-                                                   *this->drawable_pointer,
-                                                   *image_frame_api_real_time_ptr);
+
+                if (!png_params.redis.address.empty()) {
+                    this->png_real_time_redis_capture_obj =
+                        std::make_unique<PngCaptureRTRedis>(capture_params,
+                                                            png_params,
+                                                            this->gd_drawable.impl(),
+                                                            *this->drawable_pointer,
+                                                            *image_frame_api_real_time_ptr);
+                }
+                else {
+                    this->png_real_time_capture_obj =
+                        std::make_unique<PngCaptureRT>(capture_params,
+                                                       png_params,
+                                                       this->gd_drawable.impl(),
+                                                       *this->drawable_pointer,
+                                                       *image_frame_api_real_time_ptr);
+                }
             }
             else {
                 this->png_capture_obj =
@@ -1512,6 +1692,10 @@ Capture::Capture(
             this->caps.emplace_back(*this->png_real_time_capture_obj);
         }
 
+        if (this->png_real_time_redis_capture_obj) {
+            this->caps.emplace_back(*this->png_real_time_redis_capture_obj);
+        }
+
         if (this->png_capture_obj) {
             this->caps.emplace_back(*this->png_capture_obj);
         }
@@ -1586,6 +1770,7 @@ Capture::~Capture()
     this->pattern_kbd_capture_obj.reset();
     this->png_capture_obj.reset();
     this->png_real_time_capture_obj.reset();
+    this->png_real_time_redis_capture_obj.reset();
     this->wrm_capture_obj.reset();
 
     if (this->sequenced_video_capture_obj) {
@@ -1678,7 +1863,7 @@ void Capture::resize(uint16_t width, uint16_t height)
         this->gd_drawable.resize(width, height);
     }
 
-    if (this->png_real_time_capture_obj) {
+    if (this->png_real_time_capture_obj || this->png_real_time_redis_capture_obj) {
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = &this->gd_drawable;
 
         if (this->video_cropper_real_time) {
@@ -1687,7 +1872,12 @@ void Capture::resize(uint16_t width, uint16_t height)
             image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
         }
 
-        this->png_real_time_capture_obj->resize(*image_frame_api_real_time_ptr);
+        if (this->png_real_time_capture_obj) {
+            this->png_real_time_capture_obj->resize(*image_frame_api_real_time_ptr);
+        }
+        else {
+            this->png_real_time_redis_capture_obj->resize(*image_frame_api_real_time_ptr);
+        }
     }
 
     if (this->png_capture_obj) {
@@ -1707,9 +1897,15 @@ void Capture::resize(uint16_t width, uint16_t height)
 
 Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
 {
-    return this->png_real_time_capture_obj
-        ? this->png_real_time_capture_obj->set_rt_display(enable_rt_display)
-        : Capture::RTDisplayResult::Unchanged;
+    if (this->png_real_time_capture_obj) {
+        return this->png_real_time_capture_obj->set_rt_display(enable_rt_display);
+    }
+
+    if (this->png_real_time_redis_capture_obj) {
+        return this->png_real_time_redis_capture_obj->set_rt_display(enable_rt_display);
+    }
+
+    return Capture::RTDisplayResult::Unchanged;
 }
 
 void Capture::set_row(size_t rownum, bytes_view data)
@@ -1785,6 +1981,10 @@ void Capture::visibility_rects_event(Rect rect) {
     if (this->png_real_time_capture_obj) {
         this->png_real_time_capture_obj->visibility_rects_event(rect);
     }
+    if (this->png_real_time_redis_capture_obj) {
+        this->png_real_time_redis_capture_obj->visibility_rects_event(rect);
+    }
+
     if (this->wrm_capture_obj) {
         this->wrm_capture_obj->visibility_rects_event(rect);
     }

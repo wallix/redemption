@@ -1022,9 +1022,6 @@ disable_clipboard_log = integer(min=0, max=7, default=1)
 #_hex
 disable_file_system_log = integer(min=0, max=7, default=1)
 
-#_hidden
-rt_display = boolean(default=False)
-
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
 #   0: 24-bit
 #   1: 16-bit
@@ -1076,9 +1073,20 @@ allow_rt_without_recording = boolean(default=False)
 #_hidden
 file_permissions = string(default='440')
 
-# Use only session id for basename
-#_hidden
-rt_basename_only_sid = boolean(default=False)
+[audit]
+
+use_redis = boolean(default=False)
+
+redis_address = string(default='')
+
+redis_password = string(default='')
+
+# (in milliseconds)
+redis_timeout = integer(min=0, default=500)
+
+redis_key_name = string(default='')
+
+redis_db = integer(min=0, default=0)
 
 [crypto]
 

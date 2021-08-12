@@ -130,6 +130,8 @@ sys_lib_assoc = dict((
     ('boost/stacktrace.hpp', Dep(
         linkflags=['$(BOOST_STACKTRACE_LINKFLAGS)'],
         cxxflags=['$(BOOST_STACKTRACE_CXXFLAGS)'])),
+    ('thread', Dep(
+        linkflags=['<linkflags>-pthread'])),
 ))
 sys_lib_prefix = (
     ('libavformat/', Dep(

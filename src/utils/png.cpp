@@ -211,16 +211,17 @@ struct NoExceptTransport
     void fail(png_structp png_ptr, char const* msg, char const* name, Error const* err) noexcept
     {
         this->has_error = true;
+        char const* errmsg = "";
+        char const* sep = "";
         if (err) {
             this->err = *err;
             if (this->err.id == NO_ERROR) {
                 this->err.id = ERR_RECORDER_SNAPSHOT_FAILED;
             }
-            LOG(LOG_ERR, "%s (%s): %s", name, msg, err->errmsg());
+            sep = ": ";
+            errmsg = this->err.errmsg().c_str();
         }
-        else {
-            LOG(LOG_ERR, "%s (%s)", name, msg);
-        }
+        LOG(LOG_ERR, "%s (%s)%s%s", name, msg, sep, err->errmsg());
         png_error(png_ptr, msg);
         REDEMPTION_UNREACHABLE();
     }
@@ -303,19 +304,11 @@ void dump_png24(std::FILE * file, ImageView const & image_view, bool bgr)
 {
     assert(BytesPerPixel{3} == image_view.bytes_per_pixel());
 
-    PngWriteStruct png;
-
-    // prepare png header
-    png_init_io(png.ppng, file);
-
-    dump_png24_impl(
-        png.ppng, png.pinfo,
+    dump_png24(
+        file,
         image_view.data(),
         image_view.width(), image_view.height(),
-        image_view.line_size(),
-        bgr, []{return true;}, DumpPng24Error{});
-
-    png_write_end(png.ppng, png.pinfo);
+        image_view.line_size(), bgr);
 }
 
 void dump_png24(const char * filename, ImageView const & image_view, bool bgr)

@@ -1099,6 +1099,7 @@ static inline int replay(
                             /*remote_program_session = */false,
                             /*rt_display = */false,
                             /*real_basename = */spath.basename.c_str(),
+                            PngParams::Redis{},
                         };
 
                         RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};

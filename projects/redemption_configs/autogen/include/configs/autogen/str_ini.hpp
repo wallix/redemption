@@ -1200,10 +1200,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hex
 #disable_file_system_log = 1
 
-# value: 0 or 1
-#_hidden
-#rt_display = 0
-
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
 # min = 0, max = 1
 #   0: 24-bit
@@ -1265,10 +1261,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #file_permissions = 440
 
-# Use only session id for basename
+[audit]
+
 # value: 0 or 1
-#_hidden
-#rt_basename_only_sid = 0
+#use_redis = 0
+
+#redis_address = 
+
+#redis_password = 
+
+# (in milliseconds)
+#redis_timeout = 500
+
+#redis_key_name = 
+
+# min = 0
+#redis_db = 0
 
 [crypto]
 

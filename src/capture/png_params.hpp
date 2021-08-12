@@ -20,9 +20,10 @@
 
 #pragma once
 
-//#include "configs/config_access.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <chrono>
+
 
 struct PngParams
 {
@@ -34,4 +35,15 @@ struct PngParams
     bool remote_program_session;
     bool rt_display;
     const char *real_basename;
+
+    struct Redis
+    {
+        chars_view address;
+        chars_view password;
+        chars_view key_name;
+        std::chrono::milliseconds timeout;
+        unsigned db;
+    };
+
+    Redis redis;
 };

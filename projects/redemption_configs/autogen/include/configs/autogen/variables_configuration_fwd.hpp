@@ -275,7 +275,6 @@ namespace cfg
         struct disable_keyboard_log;
         struct disable_clipboard_log;
         struct disable_file_system_log;
-        struct rt_display;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
         struct bogus_vlc_frame_rate;
@@ -287,7 +286,6 @@ namespace cfg
         struct play_video_with_corrupted_bitmap;
         struct allow_rt_without_recording;
         struct file_permissions;
-        struct rt_basename_only_sid;
     };
 
     struct capture {
@@ -295,6 +293,16 @@ namespace cfg
         struct record_subdirectory;
         struct fdx_path;
         struct disable_keyboard_log;
+    };
+
+    struct audit {
+        struct rt_display;
+        struct use_redis;
+        struct redis_address;
+        struct redis_password;
+        struct redis_timeout;
+        struct redis_key_name;
+        struct redis_db;
     };
 
     struct crypto {

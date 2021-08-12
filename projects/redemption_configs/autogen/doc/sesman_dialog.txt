@@ -308,7 +308,6 @@ cfg::mod_replay::replay_on_loop ⇐ replay_on_loop   [bool]
 cfg::video::hash_path ⇐ hash_path   [::configs::spec_types::directory_path]
 cfg::video::record_tmp_path ⇐ record_tmp_path   [::configs::spec_types::directory_path]
 cfg::video::record_path ⇐ record_path   [::configs::spec_types::directory_path]
-cfg::video::rt_display ⇐ rt_display   [bool]
 
 cfg::capture::record_filebase ⇐ record_filebase   [std::string]
     basename without extension
@@ -322,6 +321,14 @@ cfg::capture::disable_keyboard_log ⇐ capture:disable_keyboard_log   [KeyboardL
       0x1: disable keyboard log in syslog
       0x2: disable keyboard log in recorded sessions
     Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
+
+cfg::audit::rt_display ⇐ rt_display   [bool]
+cfg::audit::use_redis ⇐ use_redis   [bool]
+cfg::audit::redis_address ⇐ redis_address   [std::string]
+cfg::audit::redis_password ⇐ redis_password   [std::string]
+cfg::audit::redis_timeout ⇐ redis_timeout   [std::chrono::milliseconds]
+cfg::audit::redis_key_name ⇐ redis_key_name   [std::string]
+cfg::audit::redis_db ⇐ redis_db   [unsigned]
 
 cfg::crypto::encryption_key ⇐ encryption_key   [std::array<unsigned char, 32>]
 cfg::crypto::sign_key ⇐ sign_key   [std::array<unsigned char, 32>]

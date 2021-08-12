@@ -136,6 +136,7 @@ exe rdpproxy :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -469,6 +470,7 @@ lib libredrec :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/regions_capture.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -496,6 +498,7 @@ lib libredrec :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -775,6 +778,7 @@ test-run tests/capture/test_capture :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -799,6 +803,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -898,6 +903,18 @@ test-run tests/capture/test_rail_screen_computation :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/rail_screen_computation.cpp
   <covfile>src/capture/rail_screen_computation.hpp
+;
+test-run tests/capture/test_redis_writer :
+  $(REDEMPTION_TEST_PATH)/capture/test_redis_writer.cpp
+:
+  <library>src/capture/redis_writer.o
+  <library>src/core/error.o
+  <library>src/utils/netutils.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/capture/redis_writer.cpp
+  <covfile>src/capture/redis_writer.hpp
+  <linkflags>-pthread
 ;
 test-run tests/capture/test_session_update_buffer :
   $(REDEMPTION_TEST_PATH)/capture/test_session_update_buffer.cpp
@@ -2476,6 +2493,7 @@ test-run tests/core/test_mainloop :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -2650,6 +2668,7 @@ test-run tests/core/test_session :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -2812,6 +2831,7 @@ test-run tests/front/test_front :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -2864,6 +2884,7 @@ test-run tests/front/test_front :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2982,6 +3003,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/regions_capture.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -3010,6 +3032,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -5149,6 +5172,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -5183,6 +5207,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -5216,6 +5241,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -5250,6 +5276,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -5283,6 +5310,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/redis_writer.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -5317,6 +5345,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -6257,6 +6286,7 @@ obj src/capture/ocr/main/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/o
 obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp ;
 obj src/capture/rail_screen_computation.o : $(REDEMPTION_SRC_PATH)/capture/rail_screen_computation.cpp ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
+obj src/capture/redis_writer.o : $(REDEMPTION_SRC_PATH)/capture/redis_writer.cpp ;
 obj src/capture/regions_capture.o : $(REDEMPTION_SRC_PATH)/capture/regions_capture.cpp : <define>ZLIB_CONST ;
 obj src/capture/session_update_buffer.o : $(REDEMPTION_SRC_PATH)/capture/session_update_buffer.cpp ;
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
@@ -6434,6 +6464,7 @@ alias test_mwrm3 : tests/capture/test_mwrm3 ;
 alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
 alias test_rail_screen_computation : tests/capture/test_rail_screen_computation ;
+alias test_redis_writer : tests/capture/test_redis_writer ;
 alias test_session_update_buffer : tests/capture/test_session_update_buffer ;
 alias test_video_capture : tests/capture/test_video_capture ;
 alias test_wrm_capture : tests/capture/test_wrm_capture ;
@@ -6791,6 +6822,7 @@ alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
 alias test_fdx_capture.coverage : tests/capture/test_fdx_capture.coverage ;
 alias test_mwrm3.coverage : tests/capture/test_mwrm3.coverage ;
 alias test_rail_screen_computation.coverage : tests/capture/test_rail_screen_computation.coverage ;
+alias test_redis_writer.coverage : tests/capture/test_redis_writer.coverage ;
 alias test_session_update_buffer.coverage : tests/capture/test_session_update_buffer.coverage ;
 alias test_video_capture.coverage : tests/capture/test_video_capture.coverage ;
 alias test_wrm_capture.coverage : tests/capture/test_wrm_capture.coverage ;
@@ -7138,6 +7170,7 @@ alias tests/capture.norec :
   tests/capture/test_ocr
   tests/capture/test_ppocr
   tests/capture/test_rail_screen_computation
+  tests/capture/test_redis_writer
   tests/capture/test_session_update_buffer
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture

@@ -691,8 +691,6 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<FileSystemLogFlags>(), names{"disable_file_system_log"}, desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
 
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), names{"rt_display"}, set(false));
-
         W.member(advanced_in_gui, no_sesman, L, type_<ColorDepthSelectionStrategy>{}, names{"wrm_color_depth_selection_strategy"}, set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, L, type_<WrmCompressionAlgorithm>{}, names{"wrm_compression_algorithm"}, set(WrmCompressionAlgorithm::gzip));
 
@@ -714,8 +712,6 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"allow_rt_without_recording"}, desc { "Allow real-time view (4 eyes) without session recording enabled in the authorization" }, set(false));
 
         W.member(hidden_in_gui, no_sesman, L, type_<FilePermissions>(), names{"file_permissions"}, desc { "Allow to control permissions on recorded files with octal number" }, set(0440));
-
-        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"rt_basename_only_sid"}, desc{"Use only session id for basename"}, set(false));
     });
 
     W.section("capture", [&]
@@ -729,6 +725,21 @@ void config_spec_definition(Writer && W)
             "Disable keyboard log:\n"
             "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }, disable_prefix_val, set(KeyboardLogFlagsCP::syslog));
+    });
+
+    W.section("audit", [&]
+    {
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), names{"rt_display"}, set(false));
+
+        // TODO ini_and_gui -> no_ini_no_gui
+        //@{
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"use_redis"}, set(false));
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_address"});
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_password"});
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_key_name"});
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<types::unsigned_>(), names{"redis_db"}, set(0));
+        //@}
     });
 
     W.section("crypto", [&]

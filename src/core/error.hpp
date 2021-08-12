@@ -120,6 +120,7 @@
     fv(ERR_SESSION_UNKNOWN_BACKEND, 13000)                   \
                                                              \
     fv(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, 13006)       \
+    f(ERR_RECORDER_REDIS_RESPONSE)                           \
                                                              \
     fv(ERR_RECORDER_EMPTY_IMAGE, 13016)                      \
     fv(ERR_RECORDER_SNAPSHOT_FAILED, 13020)                  \

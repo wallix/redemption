@@ -41,7 +41,6 @@ namespace
     ssize_t socket_recv_all(int sck, char const * name, uint8_t * data, size_t const len,
         std::chrono::milliseconds recv_timeout);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
-    // ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
     ssize_t socket_send_partial(TLSContext* tls, int sck, const uint8_t * data, size_t len);
 }
 

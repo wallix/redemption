@@ -1134,10 +1134,15 @@ public:
                 : 0,
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>(),
-            ini.get<cfg::video::rt_basename_only_sid>()
-                ? ini.get<cfg::context::session_id>().c_str()
-                : record_filebase
+            ini.get<cfg::audit::rt_display>(),
+            record_filebase,
+            PngParams::Redis {
+              .address = ini.get<cfg::audit::redis_address>(),
+              .password = ini.get<cfg::audit::redis_password>(),
+              .key_name = ini.get<cfg::audit::redis_key_name>(),
+              .timeout = ini.get<cfg::audit::redis_timeout>(),
+              .db = ini.get<cfg::audit::redis_db>(),
+            }
         };
         bool const capture_png = bool(capture_flags & CaptureFlags::png)
                               && (png_params.png_limit > 0);
