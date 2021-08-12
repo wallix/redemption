@@ -177,7 +177,6 @@ error_messages = []
 # output = ['// keymap: { text: { mod_flags: [scancodes...] } }\n']
 output = [
     '// keymap: { text: { mod_flags: scancode } }\n',
-    '// actions: { name: scancode }\n',
     '// deadkeys: { text: [ idxAccent, idxKeymap, idxKeymap ? ]\n',
     '// accents: [ { mod_flags: scancode } ]\n',
     'const layouts = [\n'
@@ -186,7 +185,6 @@ output = [
 for layout in layouts:
     normal_rkeymap = {}
     special_rkeymap = {}
-    action_rkeymap = {}
     # text character and action
     for mods,keymap in layout.keymaps.items():
         mod_flags = vk_mod_to_mod_flags(mods)
@@ -209,8 +207,9 @@ for layout in layouts:
                         error_messages.append(f'Action key with control key ({key.vk} + {mods or "noMod"}) in {layout.display_name} (0x{layout.klid})')
                     else:
                         scancode = key_to_scancode(key)
-                        if key_and_scancode[1] != scancode and (key.vk, scancode) not in vk_actions_dup:
-                            action_rkeymap[key_and_scancode[0]] = scancode
+                        # not numpad
+                        if scancode < 0x47 and scancode > 0x53 and key_and_scancode[1] != scancode and (key.vk, scancode) not in vk_actions_dup:
+                            error_messages.append(f'Bad scancode for action key: {key_and_scancode[0]} (0x{scancode:x} instead of 0x{key_and_scancode[1]:x}) in {layout.display_name} (0x{layout.klid}), {str(key)} {mods}')
 
                 elif key.vk is not None and key.vk not in vk_unknowns:
                     if not (key.codepoint == 0 and mod_flags in (nomod, ctrl)):
@@ -255,11 +254,7 @@ for layout in layouts:
                 output.append(f"0x{mod_flags:x}: {rkeys[0]}")
             output.append("},\n")
 
-    output.append('  },\n  actions: {\n')
-    for name, scancode in action_rkeymap.items():
-        output.append(f"    {name}: 0x{scancode:x},\n")
-
-    output.append('  },\n  deadkeys: {\n')
+    output.append(f'  }},\n  deadkeys: {{\n')
 
     accents = dict()
     push_ref = lambda scancodes_by_mods: \
