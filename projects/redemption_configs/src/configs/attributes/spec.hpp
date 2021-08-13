@@ -85,6 +85,7 @@ struct names
     std::string ini {};
     std::string sesman {};
     std::string connpolicy {};
+    std::string display {};
 
     std::string const& cpp_name() const { assert(!cpp.empty()); return cpp; }
     std::string const& ini_name() const { return ini.empty() ? cpp : ini; }

@@ -222,6 +222,9 @@ namespace detail_
 
         if (has_connpolicy && !names.sesman.empty())
             throw std::runtime_error("names.sesman with connection_policy for " + names.cpp);
+
+        if (!(has_ini || has_connpolicy) && !names.display.empty())
+            throw std::runtime_error("names.display without ini or connection_policy for " + names.cpp);
     }
 }
 

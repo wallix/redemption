@@ -563,6 +563,10 @@ struct CppConfigWriterBase
                 this->out_member_ << "    /// sesmanName: " << sesman_name << " <br/>\n";
             }
 
+            if (!names.display.empty()) {
+                this->out_member_ << "    /// displayName: " << names.display << " <br/>\n";
+            }
+
             constexpr bool has_default = is_t_convertible_v<Pack, default_>;
             this->out_member_ << "    /// default: ";
             if constexpr (has_default) {

@@ -137,6 +137,13 @@ spec_internal_attr attr_hex_if_enum_flag(type_<T>, type_enumerations& enums)
     return attr;
 }
 
+inline void write_prefered_display_name(std::ostream& out, Names const& names)
+{
+    if (!names.display.empty()) {
+        out << "_display_name=" << names.display<< "\n";
+    }
+}
+
 inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
 {
     if (bool(attr & spec_internal_attr::iptables_in_gui)) out << "_iptables\n";
@@ -560,7 +567,6 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
         if constexpr (is_candidate_for_spec<Pack>) {
             Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
-            std::string const& member_name = names.ini_name();
 
             bool is_enum_parser = false;
             auto semantic_type = get_semantic_type(type, infos, &is_enum_parser);
@@ -578,9 +584,11 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
                 spec_attr_t(infos).value
               | attr_hex_if_enum_flag(semantic_type, enums));
 
+            write_prefered_display_name(comments, names);
+
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
-            write_member(this->out(), member_name);
+            write_member(this->out(), names.ini_name());
             write_type2(this->out(), enums, type, semantic_type, get_default(type, infos));
             this->out() << "\n\n";
         }

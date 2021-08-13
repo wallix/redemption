@@ -110,6 +110,8 @@ struct ConnectionPolicyWriterBase
                 comments << "_hex\n";
             }
 
+            python_spec_writer::write_prefered_display_name(comments, names);
+
             this->python_spec.out << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             this->python_spec.out << member_name << " = ";

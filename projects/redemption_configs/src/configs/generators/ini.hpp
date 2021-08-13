@@ -195,7 +195,6 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
         if constexpr (python_spec_writer::is_candidate_for_spec<Pack>) {
             Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
-            std::string const& member_name = names.ini_name();
 
             bool is_enum_parser = false;
             auto semantic_type = python_spec_writer::get_semantic_type(type, infos, &is_enum_parser);
@@ -250,9 +249,11 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
                 spec_attr_t(infos).value
               | python_spec_writer::attr_hex_if_enum_flag(semantic_type, enums));
 
+            python_spec_writer::write_prefered_display_name(comments, names);
+
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
-            python_spec_writer::write_member(this->out(), "#" + member_name);
+            python_spec_writer::write_member(this->out(), "#" + names.ini_name());
             const auto& default_value = get_default(type, infos);
             if constexpr (is_semantic_enum) {
                 if constexpr (std::is_same_v<etype, typename decltype(type)::type>) {
