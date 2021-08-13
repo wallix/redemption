@@ -126,6 +126,7 @@ enable_ipv6 = boolean(default=False)
 #   allow: Forward Console mode request from client to the target.
 #   force: Force Console mode on target regardless of client request.
 #   forbid: Block Console mode request from client.
+#_display_name=Console mode
 mode_console = option('allow', 'force', 'forbid', default='allow')
 
 #_advanced

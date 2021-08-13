@@ -2482,6 +2482,7 @@ namespace cfg
     /// type: RdpModeConsole <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:mode_console <br/>
+    /// displayName: Console mode <br/>
     /// default: RdpModeConsole::allow <br/>
     struct mod_rdp::mode_console {
         static constexpr bool is_sesman_to_proxy = true;
