@@ -1223,6 +1223,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Note: Useless with mpv, MPlayer or VLC v2.
 # value: 0 or 1
 #_advanced
+#_display_name=Bogus VLC frame rate
 #bogus_vlc_frame_rate = 1
 
 #_advanced
@@ -1231,6 +1232,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 1, max = 120
 # min = 0
 #_advanced
+#_display_name=Frame rate
 #framerate = 5
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264

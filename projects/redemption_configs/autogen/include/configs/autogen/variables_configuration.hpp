@@ -3227,6 +3227,7 @@ namespace cfg
     /// Needed to play a video with old ffplay or VLC v1. <br/>
     /// Note: Useless with mpv, MPlayer or VLC v2. <br/>
     /// type: bool <br/>
+    /// displayName: Bogus VLC frame rate <br/>
     /// default: true <br/>
     struct video::bogus_vlc_frame_rate {
         static constexpr bool is_sesman_to_proxy = false;
@@ -3247,6 +3248,7 @@ namespace cfg
         type value { "mp4" };
     };
     /// type: unsigned <br/>
+    /// displayName: Frame rate <br/>
     /// default: 5 <br/>
     struct video::framerate {
         static constexpr bool is_sesman_to_proxy = false;
