@@ -42,7 +42,6 @@
 #include "utils/hexdump.hpp"
 #include "utils/utf.hpp"
 #include "utils/png.hpp"
-#include <boost/hana/count.hpp>
 
 namespace
 {
