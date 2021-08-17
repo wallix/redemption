@@ -400,7 +400,7 @@ unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
 }
 
 
-unique_fd addr_connect_non_blocking(const char* addr, bool no_log_for_unix_socket)
+unique_fd addr_connect_blocking(const char* addr, bool no_log_for_unix_socket)
 {
     auto fd = addr_connect(addr, no_log_for_unix_socket);
     const auto sck = fd.fd();

@@ -1359,7 +1359,7 @@ public:
                 });
 
             if (is_connected) {
-                if (unique_fd client_sck = addr_connect_non_blocking(
+                if (unique_fd client_sck = addr_connect_blocking(
                     this->ini.get<cfg::globals::authfile>().c_str(),
                     source_is_localhost)
                 ) {
