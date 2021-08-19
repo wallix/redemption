@@ -38,6 +38,7 @@ struct PngParams
 
     struct Redis
     {
+        bool use_redis;
         chars_view address;
         chars_view password;
         chars_view key_name;

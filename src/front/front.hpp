@@ -1137,6 +1137,7 @@ public:
             ini.get<cfg::audit::rt_display>(),
             record_filebase,
             PngParams::Redis {
+              .use_redis = ini.get<cfg::audit::use_redis>(),
               .address = ini.get<cfg::audit::redis_address>(),
               .password = ini.get<cfg::audit::redis_password>(),
               .key_name = ini.get<cfg::audit::redis_key_name>(),
