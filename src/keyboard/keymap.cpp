@@ -70,7 +70,7 @@ namespace
     struct KEventKeymaps
     {
         using KEvent = Keymap::KEvent;
-        using KEventTable = KEvent[256];
+        using KEventTable = KEvent[256 * 2];
 
         static constexpr KEvent special = KEvent(0xff);
 
@@ -192,26 +192,29 @@ Keymap::DecodedKeys Keymap::event(uint16_t scancode_and_flags) noexcept
 
 Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
 {
-    assert(uint8_t(scancode) <= 0x7fu);
-
     _decoded_key = {kbdtypes::to_keycode(flags, scancode), flags, {}};
-    uint8_t keycode {underlying_cast(_decoded_key.keycode)};
 
-    switch (keycode)
+    auto set_mod = [&](KeyMods keyMod){
+        _key_flags &= ~(1u << unsigned(keyMod));
+        // 0x8000 (Release) -> 0x1
+        _key_flags |= ((~unsigned(flags) >> 15) & 1u) << unsigned(keyMod);
+    };
+
+    switch (underlying_cast(_decoded_key.keycode))
     {
         // Lock keys
 
-        case uint8_t(KeyCode::CapsLock):
+        case underlying_cast(KeyCode::CapsLock):
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
                 _key_flags ^= 1u << unsigned(KeyMods::CapsLock);
             }
             break;
-        case uint8_t(KeyCode::NumLock):
+        case underlying_cast(KeyCode::NumLock):
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
                 _key_flags ^= 1u << unsigned(KeyMods::NumLock);
             }
             break;
-        case uint8_t(KeyCode::ScrollLock):
+        case underlying_cast(KeyCode::ScrollLock):
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
                 _key_flags ^= 1u << unsigned(KeyMods::ScrollLock);
             }
@@ -219,34 +222,35 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
 
         // Modifier keys
 
-        case uint8_t(KeyCode::LCtrl):
-            if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Extended1))) {
-                _key_flags ^= 1u << unsigned(KeyMods::LCtrl);
-            }
-            break;
-        case uint8_t(KeyCode::RCtrl):  _key_flags ^= 1u << unsigned(KeyMods::RCtrl); break;
-        case uint8_t(KeyCode::LShift): _key_flags ^= 1u << unsigned(KeyMods::LShift); break;
-        case uint8_t(KeyCode::RShift): _key_flags ^= 1u << unsigned(KeyMods::RShift); break;
-        case uint8_t(KeyCode::LAlt):   _key_flags ^= 1u << unsigned(KeyMods::Alt); break;
-        case uint8_t(KeyCode::RAlt):   _key_flags ^= 1u << unsigned(KeyMods::AltGr); break;
+        case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMods::LCtrl); break;
+        case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMods::RCtrl); break;
+        case underlying_cast(KeyCode::LShift): set_mod(KeyMods::LShift); break;
+        case underlying_cast(KeyCode::RShift): set_mod(KeyMods::RShift); break;
+        case underlying_cast(KeyCode::LAlt):   set_mod(KeyMods::Alt); break;
+        case underlying_cast(KeyCode::RAlt):   set_mod(KeyMods::AltGr); break;
 
         default:
-            if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                auto unicode = _keymap[keycode];
+            if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))
+                // keycode with scancode <= 0x7f and with or without extended flag
+             && (uint16_t(_decoded_key.keycode) & uint16_t(~0x17fu)) == 0
+            ) {
+                const std::size_t keymap_index = (std::size_t(_decoded_key.keycode) & 0x7f)
+                                               | ((std::size_t(_decoded_key.keycode) & 0x100) >> 1);
+                auto unicode = _keymap[keymap_index];
 
                 if (REDEMPTION_UNLIKELY(_dkeys)) {
                     if (auto unicode2 = _dkeys.find_composition(unicode)) {
                         _decoded_key.uchars[0] = unicode2;
                     }
                     // Windows(c) behavior for backspace following a Deadkey
-                    else if (unicode && KeyCode(keycode) != KeyCode::Backspace) {
+                    else if (unicode && _decoded_key.keycode != KeyCode::Backspace) {
                         _decoded_key.uchars[0] = _dkeys.accent();
                         _decoded_key.uchars[1] = unicode_t(unicode & ~KeyLayout::DK);
                     }
                     _dkeys = {};
                 }
                 else if (REDEMPTION_UNLIKELY(unicode & KeyLayout::DK)) {
-                    _dkeys = _layout.dkeymap_by_mod[_imods][keycode];
+                    _dkeys = _layout.dkeymap_by_mod[_imods][keymap_index];
                 }
                 else {
                     _decoded_key.uchars[0] = unicode;
@@ -390,4 +394,9 @@ kbdtypes::KeyLocks Keymap::locks() const noexcept
     // flags |= (_key_flags & (1u << U(KeyMods::KanaLock))) ? U(KeyLocks::KanaLock) : 0;
     flags |= (_key_flags & (1u << U(KeyMods::ScrollLock))) ? U(KeyLocks::ScrollLock) : 0;
     return kbdtypes::KeyLocks(flags);
+}
+
+Keymap::KeyModFlags Keymap::mods() const noexcept
+{
+    return KeyModFlags(checked_cast<KeyModFlags::bitfield>(_key_flags));
 }

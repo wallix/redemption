@@ -192,34 +192,34 @@ namespace kbdtypes
 
 
     // Scancode + Extended
-    enum class KeyCode : uint8_t
+    enum class KeyCode : uint16_t
     {
         Esc = 0x01,
         F4 = 0x3E,
         F11 = 0x57,
         F12 = 0x58,
         LCtrl = 0x1D,
-        RCtrl = 0x1D | 0x80,
+        RCtrl = 0x1D | 0x100,
         LShift = 0x2A,
         RShift = 0x36,
         LAlt = 0x38,
-        RAlt = 0x38 | 0x80,
-        LWin = 0x5B | 0x80,
-        RWin = 0x5C | 0x80,
-        Apps = 0x5D | 0x80,
+        RAlt = 0x38 | 0x100,
+        LWin = 0x5B | 0x100,
+        RWin = 0x5C | 0x100,
+        Apps = 0x5D | 0x100,
         CapsLock = 0x3A,
         NumLock = 0x45,
         ScrollLock = 0x46,
-        UpArrow = 0x48 | 0x80,
-        LeftArrow = 0x4B | 0x80,
-        RightArrow = 0x4D | 0x80,
-        DownArrow = 0x50 | 0x80,
-        Home = 0x47 | 0x80,
-        End = 0x4F | 0x80,
-        PgUp = 0x49 | 0x80,
-        PgDown = 0x51 | 0x80,
-        Insert = 0x52 | 0x80,
-        Delete = 0x53 | 0x80,
+        UpArrow = 0x48 | 0x100,
+        LeftArrow = 0x4B | 0x100,
+        RightArrow = 0x4D | 0x100,
+        DownArrow = 0x50 | 0x100,
+        Home = 0x47 | 0x100,
+        End = 0x4F | 0x100,
+        PgUp = 0x49 | 0x100,
+        PgDown = 0x51 | 0x100,
+        Insert = 0x52 | 0x100,
+        Delete = 0x53 | 0x100,
         Enter = 0x1C,
         Tab = 0x0F,
         Backspace = 0x0E,
@@ -233,7 +233,7 @@ namespace kbdtypes
         Numpad3 = 0x51,
         NumpadInsert = 0x52,
         NumpadDelete = 0x53,
-        NumpadEnter = 0x1C | 0x80,
+        NumpadEnter = 0x1C | 0x100,
 
         Key_X = 0x2D,
         Key_C = 0x2E,
@@ -243,7 +243,7 @@ namespace kbdtypes
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
     constexpr KeyCode to_keycode(KbdFlags flags, Scancode scancode)
     {
-        return KeyCode(uint8_t(scancode) | ((uint16_t(flags) & 0x100u) >> 1u));
+        return KeyCode(underlying_cast(scancode) | underlying_cast(flags & KbdFlags::Extended));
     }
 
     constexpr Scancode pressed_scancode(KbdFlags flags, Scancode scancode)

@@ -234,7 +234,9 @@ public:
         //@}
         global_channel  = 0x0000'2000,
         sec_decrypted   = 0x0000'4000,
-        keymap          = 0x0000'8000,
+        keymap          = 0x0000'8004,
+
+        keymap_and_basic_trace3 = keymap | basic_trace3,
 
         // /!\ RDPSerializer
         // (verbose >> 16) & 0xffff
@@ -2391,7 +2393,7 @@ public:
                 {
                     FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
 
-                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                    LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
                         "Front::incoming: Received Fast-Path PDU, scancode eventFlags=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
                         ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
                     // Bug #14538
@@ -2469,7 +2471,7 @@ public:
                 {
                     FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
 
-                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                    LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
                         "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                         se.eventFlags);
 
@@ -4074,7 +4076,7 @@ private:
                         {
                             SlowPath::SynchronizeEvent_Recv se(ie.payload);
 
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                            LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
                                 "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
                                 ie.eventTime, se.toggleFlags);
 
@@ -4134,7 +4136,7 @@ private:
                         {
                             SlowPath::KeyboardEvent_Recv ke(ie.payload);
 
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                            LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
                                 "Front::process_data: Slow-Path INPUT_EVENT_SCANCODE eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
                                 ie.eventTime, ke.keyboardFlags, ke.keyCode);
 
@@ -5161,6 +5163,10 @@ private:
         Keymap::KbdFlags const kbdFlags = KeyboardFlags::get(ke);
 
         Keymap::DecodedKeys decoded_keys = this->keymap.event(kbdFlags, scancode);
+        LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
+            "Front::input_event_scancode: keycode=%02X flags=0x%04X uchars={0x%04X, 0x%04X} mods=%04X",
+            underlying_cast(decoded_keys.keycode), underlying_cast(decoded_keys.flags),
+            decoded_keys.uchars[0], decoded_keys.uchars[1], this->keymap.mods().as_uint());
 
         if (this->state == FRONT_UP_AND_RUNNING) {
             if (this->ini.get<cfg::client::disable_tsk_switch_shortcuts>() && this->keymap.is_tsk_switch_shortcut()) {

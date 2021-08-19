@@ -141,10 +141,7 @@ struct Keymap
 
     KeyLocks locks() const noexcept;
 
-    KeyModFlags mods() const noexcept
-    {
-        return KeyModFlags(_key_flags);
-    }
+    KeyModFlags mods() const noexcept;
 
 private:
     void _update_keymap() noexcept;
