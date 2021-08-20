@@ -918,7 +918,6 @@ test-run tests/capture/test_redis_writer :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/redis_writer.cpp
   <covfile>src/capture/redis_writer.hpp
-  <linkflags>-pthread
 ;
 test-run tests/capture/test_session_update_buffer :
   $(REDEMPTION_TEST_PATH)/capture/test_session_update_buffer.cpp

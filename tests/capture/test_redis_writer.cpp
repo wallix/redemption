@@ -23,8 +23,6 @@ Author(s): Proxies Team
 #include "capture/redis_writer.hpp"
 #include "core/listen.hpp"
 
-#include <thread>
-
 
 RED_AUTO_TEST_CASE(TestRedisSet)
 {
@@ -58,39 +56,6 @@ RED_AUTO_TEST_CASE(TestRedisServer)
 
     std::vector<uint8_t> message;
 
-    auto server_fn = [&]{
-        sockaddr s {};
-        socklen_t sin_size = sizeof(s);
-        int sck = accept(sck_server.fd(), &s, &sin_size);
-
-        auto recv = [&]{
-            char buff[100];
-            ssize_t r = ::recv(sck, buff, std::size_t(buff), 0);
-            if (r > 0) {
-                message.insert(message.end(), buff, buff + r);
-            }
-        };
-
-        auto send = [&](chars_view resp){
-            ::send(sck, resp.data(), resp.size(), 0);
-        };
-
-        // auth
-        // select
-        recv();
-        send("+OK\r\n"_av);
-        send("+OK\r\n"_av);
-        // first message
-        recv();
-        send("+OK\r\n"_av);
-        // second message
-        recv();
-        send("+OK\r\n"_av);
-        // third message -> error
-        recv();
-        send("-ERR\r\n"_av);
-    };
-
     using namespace std::chrono_literals;
 
     RedisWriter cmd(addr, 100ms, "admin"_sized_av, 0);
@@ -98,27 +63,50 @@ RED_AUTO_TEST_CASE(TestRedisServer)
     // open -> close -> open -> close
     for (int i = 0; i < 2; ++i) {
         RED_TEST_CONTEXT("i = " << i) {
-            std::thread t(server_fn);
-
-            // delay for thread creation
-            std::this_thread::sleep_for(50ms);
-
             RED_REQUIRE(cmd.open());
 
+            sockaddr s {};
+            socklen_t sin_size = sizeof(s);
+            int sck = accept(sck_server.fd(), &s, &sin_size);
+
+            RED_REQUIRE(sck != -1);
+
+            auto recv = [&]{
+                message.clear();
+                char buff[100];
+                ssize_t r = ::recv(sck, buff, std::size(buff), 0);
+                if (r > 0) {
+                    message.assign(buff, buff + r);
+                }
+                return bytes_view(message).as_chars();
+            };
+
+            auto send = [&](chars_view resp){
+                return ::send(sck, resp.data(), resp.size(), 0) == ssize_t(resp.size());
+            };
+
+            RED_REQUIRE(recv() ==
+                "*2\r\n$4\r\nAUTH\r\n$5\r\nadmin\r\n"
+                "*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"_av);
+            RED_REQUIRE(send("+OK\r\n"_av));
+            RED_REQUIRE(send("+OK\r\n"_av));
+
             RED_CHECK(cmd.send("bla bla"_av) == RedisWriter::IOResult::Ok);
+
+            RED_REQUIRE(recv() == "bla bla"_av);
+            RED_REQUIRE(send("+OK\r\n"_av));
             RED_CHECK(cmd.send("bla bla bla"_av) == RedisWriter::IOResult::Ok);
+
+            RED_REQUIRE(recv() == "bla bla bla"_av);
+            RED_REQUIRE(send("+OK\r\n"_av));
             RED_CHECK(cmd.send("bad"_av) == RedisWriter::IOResult::Ok);
+
+            RED_REQUIRE(recv() == "bad"_av);
+            RED_REQUIRE(send("-ERR\r\n"_av));
             RED_CHECK(cmd.send("receive response"_av) == RedisWriter::IOResult::UnknownResponse);
 
             cmd.close();
-
-            t.join();
-
-            RED_CHECK(message ==
-                "*2\r\n$4\r\nAUTH\r\n$5\r\nadmin\r\n"
-                "*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"
-                "bla blabla bla blabad"_av_ascii);
-            message.clear();
+            ::close(sck);
         }
     }
 }
