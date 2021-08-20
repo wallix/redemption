@@ -1553,7 +1553,7 @@ public:
         }
 
         flags |= (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL)
-            ? CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+            ? uint32_t(CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL)
             : uint32_t();
 
         if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {

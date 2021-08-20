@@ -221,7 +221,7 @@ struct NoExceptTransport
             sep = ": ";
             errmsg = this->err.errmsg().c_str();
         }
-        LOG(LOG_ERR, "%s (%s)%s%s", name, msg, sep, err->errmsg());
+        LOG(LOG_ERR, "%s (%s)%s%s", name, msg, sep, errmsg);
         png_error(png_ptr, msg);
         REDEMPTION_UNREACHABLE();
     }

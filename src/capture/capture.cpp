@@ -782,6 +782,8 @@ private:
 
 }
 
+REDEMPTION_DIAGNOSTIC_PUSH()
+REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
 class Capture::PngCapture final : public gdi::CaptureApi
 {
 public:
@@ -1037,6 +1039,7 @@ private:
     RedisCmdSet redis_cmd;
     RedisWriter redis_server;
 };
+REDEMPTION_DIAGNOSTIC_POP()
 
 namespace {
 

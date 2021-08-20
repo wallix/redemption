@@ -323,7 +323,7 @@ namespace kbdtypes
         unsigned mods = 0;
     };
 
-    constexpr KeyModFlags operator | (KeyMod mod1, KeyMod mod2) noexcept
+    inline KeyModFlags operator | (KeyMod mod1, KeyMod mod2) noexcept
     {
         KeyModFlags f;
         f.set(mod1);

@@ -113,11 +113,9 @@ namespace
             const char * host = char_ptr_cast(redir_info.host);
             const char * password = char_ptr_cast(redir_info.password);
             const char * username = char_ptr_cast(redir_info.username);
-            const char * change_user = "";
             if (redir_info.dont_store_username && username[0] != 0) {
                 LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
                 ini.set_acl<cfg::globals::target_user>(username);
-                change_user = username;
             }
             if (password[0] != 0) {
                 LOG(LOG_INFO, "SrvRedir: Change target password");
