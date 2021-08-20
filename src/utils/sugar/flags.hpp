@@ -134,9 +134,9 @@ public:
 private:
     constexpr static bitfield bit(E idx) noexcept
     {
-        auto i = bitfield(idx);
+        auto i = unsigned(idx);
         assert(i < max);
-        return bitfield{1} << i;
+        return bitfield(1u << i);
     }
 
     bitfield value = 0;

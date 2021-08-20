@@ -25,46 +25,45 @@
 #include "utils/sugar/cast.hpp"
 #include "cxx/cxx.hpp"
 
-
 namespace
 {
-    unsigned numlock_01u(unsigned key_flags) noexcept
+    using KeyMod = kbdtypes::KeyMod;
+
+    unsigned numlock_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return (key_flags >> unsigned(Keymap::KeyMods::NumLock)) & 0x1u;
+        return mods.test(KeyMod::NumLock);
     }
 
-    unsigned capslock_01u(unsigned key_flags) noexcept
+    unsigned capslock_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return (key_flags >> unsigned(Keymap::KeyMods::CapsLock)) & 0x1u;
+        return mods.test(KeyMod::CapsLock);
     }
 
-    unsigned ctrl_01u(unsigned key_flags, unsigned rctrl_is_ctrl) noexcept
+    unsigned ctrl_01u(kbdtypes::KeyModFlags mods, unsigned rctrl_is_ctrl) noexcept
     {
-        return ( (key_flags >> unsigned(Keymap::KeyMods::LCtrl))
-               | ((key_flags >> unsigned(Keymap::KeyMods::RCtrl)) & rctrl_is_ctrl)
-               ) & 0x1u;
+        return mods.test(KeyMod::LCtrl)
+             | (mods.test(KeyMod::RCtrl) & rctrl_is_ctrl);
     }
 
-    unsigned oem8_01u(unsigned key_flags, unsigned rctrl_is_ctrl) noexcept
+    unsigned oem8_01u(kbdtypes::KeyModFlags mods, unsigned rctrl_is_ctrl) noexcept
     {
-        return ((key_flags >> unsigned(Keymap::KeyMods::RCtrl)) & ~rctrl_is_ctrl) & 0x1u;
+        return mods.test(KeyMod::RCtrl) & ~rctrl_is_ctrl;
     }
 
-    unsigned alt_01u(unsigned key_flags) noexcept
+    unsigned alt_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return (key_flags >> unsigned(Keymap::KeyMods::Alt)) & 0x1u;
+        return mods.test(KeyMod::LAlt);
     }
 
-    unsigned altgr_01u(unsigned key_flags) noexcept
+    unsigned altgr_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return (key_flags >> unsigned(Keymap::KeyMods::AltGr)) & 0x1u;
+        return mods.test(KeyMod::RAlt);
     }
 
-    unsigned shift_01u(unsigned key_flags) noexcept
+    unsigned shift_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return ( (key_flags >> unsigned(Keymap::KeyMods::LShift))
-               | (key_flags >> unsigned(Keymap::KeyMods::RShift))
-               ) & 0x1u;
+        return mods.test(KeyMod::LShift)
+             | mods.test(KeyMod::RShift);
     }
 
     struct KEventKeymaps
@@ -165,15 +164,6 @@ namespace
 }
 
 
-// KeyLayout Keymap::default_layout() noexcept
-// {
-//     return *KeyLayout::find_layout_by_id(KeyLayout::KbdId(0x40C));
-// }
-
-// Keymap::Keymap() noexcept
-// : Keymap(default_layout())
-// {}
-
 Keymap::Keymap(KeyLayout layout) noexcept
 : _keymap(layout.keymap_by_mod[0])
 , _layout(layout)
@@ -194,10 +184,9 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
 {
     _decoded_key = {kbdtypes::to_keycode(flags, scancode), flags, {}};
 
-    auto set_mod = [&](KeyMods keyMod){
-        _key_flags &= ~(1u << unsigned(keyMod));
-        // 0x8000 (Release) -> 0x1
-        _key_flags |= ((~unsigned(flags) >> 15) & 1u) << unsigned(keyMod);
+    auto set_mod = [&](KeyMod keyMod){
+        _key_mods.update(flags, keyMod);
+        _update_keymap();
     };
 
     switch (underlying_cast(_decoded_key.keycode))
@@ -206,28 +195,31 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
 
         case underlying_cast(KeyCode::CapsLock):
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                _key_flags ^= 1u << unsigned(KeyMods::CapsLock);
+                _key_mods.flip(KeyMod::CapsLock);
+                _update_keymap();
             }
             break;
         case underlying_cast(KeyCode::NumLock):
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                _key_flags ^= 1u << unsigned(KeyMods::NumLock);
+                _key_mods.flip(KeyMod::NumLock);
+                _update_keymap();
             }
             break;
         case underlying_cast(KeyCode::ScrollLock):
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                _key_flags ^= 1u << unsigned(KeyMods::ScrollLock);
+                _key_mods.flip(KeyMod::ScrollLock);
+                _update_keymap();
             }
             return _decoded_key;
 
         // Modifier keys
 
-        case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMods::LCtrl); break;
-        case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMods::RCtrl); break;
-        case underlying_cast(KeyCode::LShift): set_mod(KeyMods::LShift); break;
-        case underlying_cast(KeyCode::RShift): set_mod(KeyMods::RShift); break;
-        case underlying_cast(KeyCode::LAlt):   set_mod(KeyMods::Alt); break;
-        case underlying_cast(KeyCode::RAlt):   set_mod(KeyMods::AltGr); break;
+        case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMod::LCtrl); break;
+        case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMod::RCtrl); break;
+        case underlying_cast(KeyCode::LShift): set_mod(KeyMod::LShift); break;
+        case underlying_cast(KeyCode::RShift): set_mod(KeyMod::RShift); break;
+        case underlying_cast(KeyCode::LAlt):   set_mod(KeyMod::LAlt); break;
+        case underlying_cast(KeyCode::RAlt):   set_mod(KeyMod::RAlt); break;
 
         default:
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))
@@ -259,8 +251,6 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
             return _decoded_key;
     }
 
-    _update_keymap();
-
     return _decoded_key;
 }
 
@@ -268,13 +258,13 @@ void Keymap::_update_keymap() noexcept
 {
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
 
-    auto numlock = numlock_01u(_key_flags);
-    auto capslock = capslock_01u(_key_flags);
-    auto ctrl = ctrl_01u(_key_flags, rctrl_is_ctrl);
-    auto altgr = altgr_01u(_key_flags) | ctrl;
-    auto oem8 = oem8_01u(_key_flags, rctrl_is_ctrl);
-    auto alt = alt_01u(_key_flags);
-    auto shift = shift_01u(_key_flags);
+    auto numlock = numlock_01u(_key_mods);
+    auto capslock = capslock_01u(_key_mods);
+    auto ctrl = ctrl_01u(_key_mods, rctrl_is_ctrl);
+    auto altgr = altgr_01u(_key_mods) | ctrl;
+    auto oem8 = oem8_01u(_key_mods, rctrl_is_ctrl);
+    auto alt = alt_01u(_key_mods);
+    auto shift = shift_01u(_key_mods);
 
     _imods = checked_int(0u
             | (shift << KeyLayout::Mods::Shift)
@@ -292,8 +282,8 @@ void Keymap::_update_keymap() noexcept
 
 Keymap::KEvent Keymap::last_kevent() const noexcept
 {
-    auto shift = shift_01u(_key_flags);
-    auto numlock = numlock_01u(_key_flags);
+    auto shift = shift_01u(_key_mods);
+    auto numlock = numlock_01u(_key_mods);
 
     auto down = ~(underlying_cast(_decoded_key.flags) >> 15) & 0x1u;
 
@@ -309,7 +299,7 @@ Keymap::KEvent Keymap::last_kevent() const noexcept
                     : KEvent::KeyDown;
 
             case underlying_cast(KeyCode::Tab):
-                return KEvent(unsigned(KEvent::Tab) + shift_01u(_key_flags));
+                return KEvent(unsigned(KEvent::Tab) + shift_01u(_key_mods));
         }
     }
     return kevent;
@@ -318,16 +308,16 @@ Keymap::KEvent Keymap::last_kevent() const noexcept
 bool Keymap::is_tsk_switch_shortcut() const noexcept
 {
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
-    auto ctrl = ctrl_01u(_key_flags, rctrl_is_ctrl);
+    auto ctrl = ctrl_01u(_key_mods, rctrl_is_ctrl);
 
     if (!ctrl) {
         return false;
     }
 
     // ctrl+alt+del or ctrl+shift+esc
-    return (alt_01u(_key_flags) && (_decoded_key.keycode == KeyCode::Delete
+    return (alt_01u(_key_mods) && (_decoded_key.keycode == KeyCode::Delete
                                  || _decoded_key.keycode == KeyCode::NumpadDelete))
-        || (shift_01u(_key_flags) && _decoded_key.keycode == KeyCode::Esc);
+        || (shift_01u(_key_mods) && _decoded_key.keycode == KeyCode::Esc);
 }
 
 bool Keymap::is_app_switching_shortcut() const noexcept
@@ -343,44 +333,41 @@ bool Keymap::is_app_switching_shortcut() const noexcept
 
     // alt+tab, ctrl+tab, ctrl+alt+tab
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
-    return alt_01u(_key_flags) || ctrl_01u(_key_flags, rctrl_is_ctrl);
+    return alt_01u(_key_mods) || ctrl_01u(_key_mods, rctrl_is_ctrl);
 }
 
 bool Keymap::is_alt_pressed() const noexcept
 {
-    return bool(alt_01u(_key_flags));
+    return bool(alt_01u(_key_mods));
 }
 
 bool Keymap::is_ctrl_pressed() const noexcept
 {
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
-    return bool(ctrl_01u(_key_flags, rctrl_is_ctrl));
+    return bool(ctrl_01u(_key_mods, rctrl_is_ctrl));
 }
 
 bool Keymap::is_shift_pressed() const noexcept
 {
-    return bool(shift_01u(_key_flags));
+    return bool(shift_01u(_key_mods));
 }
 
 void Keymap::reset_mods(KeyLocks locks) noexcept
 {
-    _key_flags = 0;
+    _key_mods.reset();
     set_locks(locks);
 }
 
 void Keymap::set_locks(KeyLocks locks) noexcept
 {
-    using U = unsigned;
-    U mask = (1u << U(KeyMods::NumLock))
-           | (1u << U(KeyMods::CapsLock))
-           // | (1u << U(KeyMods::KanaLock))
-           | (1u << U(KeyMods::ScrollLock))
-           ;
-    _key_flags &= ~mask;
-    _key_flags |= bool(locks & KeyLocks::NumLock) ? (1u << U(KeyMods::NumLock)) : U();
-    _key_flags |= bool(locks & KeyLocks::CapsLock) ? (1u << U(KeyMods::CapsLock)) : U();
-    // _key_flags |= bool(locks & KeyLocks::KanaLock) ? (1u << U(KeyMods::KanaLock)) : U();
-    _key_flags |= bool(locks & KeyLocks::ScrollLock) ? (1u << U(KeyMods::ScrollLock)) : U();
+    _key_mods.clear(KeyMod::NumLock);
+    _key_mods.clear(KeyMod::CapsLock);
+    // _key_mods.clear(KeyMod::KanaLock);
+    _key_mods.clear(KeyMod::ScrollLock);
+    _key_mods.set_if(bool(locks & KeyLocks::NumLock), KeyMod::NumLock);
+    _key_mods.set_if(bool(locks & KeyLocks::CapsLock), KeyMod::CapsLock);
+    // _key_mods.set_if(bool(locks & KeyLocks::KanaLock), KeyMod::KanaLock);
+    _key_mods.set_if(bool(locks & KeyLocks::ScrollLock), KeyMod::ScrollLock);
 
     _update_keymap();
 }
@@ -389,14 +376,14 @@ kbdtypes::KeyLocks Keymap::locks() const noexcept
 {
     using U = unsigned;
     U flags = 0;
-    flags |= (_key_flags & (1u << U(KeyMods::NumLock))) ? U(KeyLocks::NumLock) : 0;
-    flags |= (_key_flags & (1u << U(KeyMods::CapsLock))) ? U(KeyLocks::CapsLock) : 0;
-    // flags |= (_key_flags & (1u << U(KeyMods::KanaLock))) ? U(KeyLocks::KanaLock) : 0;
-    flags |= (_key_flags & (1u << U(KeyMods::ScrollLock))) ? U(KeyLocks::ScrollLock) : 0;
+    flags |= _key_mods.test(KeyMod::NumLock) ? U(KeyLocks::NumLock) : 0u;
+    flags |= _key_mods.test(KeyMod::CapsLock) ? U(KeyLocks::CapsLock) : 0u;
+    // flags |= _key_mods.test(KeyMod::KanaLock) ? U(KeyLocks::KanaLock) : 0u;
+    flags |= _key_mods.test(KeyMod::ScrollLock) ? U(KeyLocks::ScrollLock) : 0u;
     return kbdtypes::KeyLocks(flags);
 }
 
 Keymap::KeyModFlags Keymap::mods() const noexcept
 {
-    return KeyModFlags(checked_cast<KeyModFlags::bitfield>(_key_flags));
+    return _key_mods;
 }

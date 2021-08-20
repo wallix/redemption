@@ -253,4 +253,82 @@ namespace kbdtypes
             : scancode;
     }
 
+
+    enum class KeyMod : unsigned
+    {
+        LCtrl,
+        RCtrl,
+        LShift,
+        RShift,
+        LAlt,
+        RAlt,
+        LMeta,
+        RMeta,
+        NumLock,
+        CapsLock,
+        ScrollLock
+    };
+
+    struct KeyModFlags
+    {
+        KeyModFlags() = default;
+
+        KeyModFlags(KeyMod mod)
+        : mods(1u << unsigned(mod))
+        {}
+
+        bool test(KeyMod mod) const noexcept
+        {
+            return (mods >> unsigned(mod)) & 1u;
+        }
+
+        void set(KeyMod mod) noexcept
+        {
+            mods |= 1u << unsigned(mod);
+        }
+
+        void set_if(bool b, KeyMod mod) noexcept
+        {
+            mods |= b ? (1u << unsigned(mod)) : 0u;
+        }
+
+        void flip(KeyMod mod) noexcept
+        {
+            mods ^= 1u << unsigned(mod);
+        }
+
+        void clear(KeyMod mod) noexcept
+        {
+            mods &= ~(1u << unsigned(mod));
+        }
+
+        void update(KbdFlags flags, KeyMod mod) noexcept
+        {
+            clear(mod);
+            // 0x8000 (Release) -> 0x1
+            mods |= ((~unsigned(flags) >> 15) & 1u) << unsigned(mod);
+        }
+
+        unsigned as_uint() const noexcept
+        {
+            return mods;
+        }
+
+        void reset() noexcept
+        {
+            mods = 0;
+        }
+
+    private:
+        unsigned mods = 0;
+    };
+
+    constexpr KeyModFlags operator | (KeyMod mod1, KeyMod mod2) noexcept
+    {
+        KeyModFlags f;
+        f.set(mod1);
+        f.set(mod2);
+        return f;
+    }
+
 } // namespace kdbtypes

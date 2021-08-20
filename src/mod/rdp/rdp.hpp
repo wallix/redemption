@@ -429,13 +429,11 @@ public:
         }
     }
 
-    bool scancode_must_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
+    bool scancode_must_be_blocked(kbdtypes::KbdFlags keyboardFlags, kbdtypes::Scancode scancode)
     {
-        if (this->keyboard_shortcut_blocker_sp)
-        {
-            return this->keyboard_shortcut_blocker_sp->scancode_must_be_blocked(keyboardFlags, keyCode);
+        if (this->keyboard_shortcut_blocker_sp) {
+            return this->keyboard_shortcut_blocker_sp->scancode_must_be_blocked(keyboardFlags, scancode);
         }
-
         return false;
     }
 
@@ -2508,7 +2506,7 @@ private:
             }
 
 #ifndef __EMSCRIPTEN__
-            if (!this->channels.scancode_must_be_blocked(underlying_cast(flags), underlying_cast(scancode)))
+            if (!this->channels.scancode_must_be_blocked(flags, scancode))
             {
                 this->send_input(event_time, RDP_INPUT_SCANCODE, underlying_cast(flags), underlying_cast(scancode), 0);
             }

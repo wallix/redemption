@@ -25,33 +25,6 @@
 
 #include "keyboard/keylayout.hpp"
 #include "keyboard/kbdtypes.hpp"
-#include "utils/sugar/flags.hpp"
-
-
-namespace detail
-{
-    enum class  KeyModsIndex : unsigned
-    {
-        LCtrl,
-        RCtrl,
-        LShift,
-        RShift,
-        // LWin,
-        // RWin,
-        Alt,
-        AltGr,
-        NumLock,
-        CapsLock,
-        ScrollLock,
-        max_
-    };
-} // namespace detail
-
-template<>
-struct utils::enum_as_flag<detail::KeyModsIndex>
-{
-    static constexpr std::size_t max = std::size_t(detail::KeyModsIndex::max_);
-};
 
 struct Keymap
 {
@@ -59,6 +32,10 @@ struct Keymap
     using Scancode = kbdtypes::Scancode;
     using KeyCode = kbdtypes::KeyCode;
     using KeyLocks = kbdtypes::KeyLocks;
+
+    using KeyModFlags = kbdtypes::KeyModFlags;
+
+    using unicode_t = KeyLayout::unicode_t;
 
     enum class KEvent : uint8_t
     {
@@ -84,11 +61,6 @@ struct Keymap
         Copy,
         Paste,
     };
-
-    using KeyMods = detail::KeyModsIndex;
-    using KeyModFlags = utils::flags_t<KeyMods>;
-
-    using unicode_t = KeyLayout::unicode_t;
 
     struct DecodedKeys
     {
@@ -147,7 +119,7 @@ private:
     void _update_keymap() noexcept;
 
     DecodedKeys _decoded_key {};
-    unsigned _key_flags = 0;
+    KeyModFlags _key_mods {};
 
     sized_array_view<unicode_t, 256> _keymap;
     uint8_t _imods {};

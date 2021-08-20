@@ -105,9 +105,8 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     using KCode = Keymap::KeyCode;
 
-    using KeyModFlags = Keymap::KeyModFlags;
-    using KeyMods = Keymap::KeyMods;
-    using KeyModsIndex = detail::KeyModsIndex;
+    using KeyModFlags = kbdtypes::KeyModFlags;
+    using KeyMod = kbdtypes::KeyMod;
 
     auto event = [&](uint16_t scancode_and_flags){
         keymap.event(KFlags(scancode_and_flags & 0xff00u), Scancode(scancode_and_flags));
@@ -131,24 +130,24 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'a'}, KV::KeyDown)); // auto-repeat
     RED_CHECK_EQ(event(release | 0x10 /*a*/), values(KCode(0x10), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x36 /*right shift*/), values(KCode(0x36), KFlags(), {}, KV::None));
-    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMods::RShift).as_uint());
+    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMod::RShift).as_uint());
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'A'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x10 /*a*/), values(KCode(0x10), KFlags(0x8000), {}, KV::None));
     RED_CHECK(!keymap.is_ctrl_pressed());
     RED_CHECK_EQ(event(downnnn | 0x11d /*right ctrl*/), values(KCode(0x100 | 0x1d), KFlags(0x0100), {}, KV::None));
-    RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMods::RShift | KeyMods::RCtrl).as_uint());
+    RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMod::RShift | KeyMod::RCtrl).as_uint());
     RED_CHECK(keymap.is_ctrl_pressed());
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x11d /*right ctrl*/), values(KCode(0x100 | 0x1d), KFlags(0x8100), {}, KV::None));
-    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMods::RShift).as_uint());
+    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMod::RShift).as_uint());
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'A'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x10 /*a*/), values(KCode(0x10), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x02 /*&*/), values(KCode(0x02), KFlags(), {'1'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x02 /*&*/), values(KCode(0x02), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(), {}, KV::None));
-    RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMods::RShift | KeyMods::LShift).as_uint());
+    RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMod::RShift | KeyMod::LShift).as_uint());
     RED_CHECK_EQ(event(release | 0x36 /*right shift*/), values(KCode(0x36), KFlags(0x8000), {}, KV::None));
-    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMods::LShift).as_uint());
+    RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMod::LShift).as_uint());
     RED_CHECK_EQ(event(release | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(keymap.mods().as_uint(), 0);
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'a'}, KV::KeyDown));
@@ -300,9 +299,9 @@ RED_AUTO_TEST_CASE(TestKeymap)
     keymap.set_locks(KeyLocks::NoLocks);
     RED_CHECK(keymap.mods().as_uint() == KeyModFlags().as_uint());
     keymap.set_locks(KeyLocks::CapsLock);
-    RED_CHECK(keymap.mods().as_uint() == KeyModFlags(KeyModsIndex::CapsLock).as_uint());
+    RED_CHECK(keymap.mods().as_uint() == KeyModFlags(KeyMod::CapsLock).as_uint());
     keymap.set_locks(KeyLocks::CapsLock | KeyLocks::NumLock);
-    RED_CHECK(keymap.mods().as_uint() == (KeyModFlags(KeyModsIndex::CapsLock) | KeyModsIndex::NumLock).as_uint());
+    RED_CHECK(keymap.mods().as_uint() == (KeyMod::CapsLock | KeyMod::NumLock).as_uint());
     keymap.set_locks(KeyLocks::NoLocks);
     RED_CHECK(keymap.mods().as_uint() == KeyModFlags().as_uint());
 

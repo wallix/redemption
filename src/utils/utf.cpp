@@ -57,7 +57,7 @@ size_t UTF16ByteLen(bytes_view source) noexcept
 
 void UTF16Lower(uint8_t * source, size_t max_len) noexcept
 {
-    for (size_t i = 0 ; i < max_len ; i=i+2){
+    for (size_t i = 0 ; i < max_len ; i += 2){
         unsigned int wc = source[i];
         wc += source[i+1] << 8;
 
@@ -74,7 +74,7 @@ void UTF16Lower(uint8_t * source, size_t max_len) noexcept
 
 void UTF16Upper(uint8_t * source, size_t max_len) noexcept
 {
-    for (size_t i = 0 ; i < max_len ; i=i+2){
+    for (size_t i = 0 ; i < max_len ; i += 2){
         unsigned int wc = source[i];
         wc += source[i+1] << 8;
 

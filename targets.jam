@@ -91,6 +91,7 @@ exe headlessclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
@@ -247,6 +248,7 @@ exe rdpproxy :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/ip.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/load_theme.o
   <library>src/utils/local_err_msg.o
   <library>src/utils/log_siem.o
@@ -412,6 +414,7 @@ exe rdpclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
@@ -673,6 +676,7 @@ test-run tests/acl/test_license_api :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -1060,6 +1064,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -1160,6 +1165,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -1232,6 +1238,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -2603,6 +2610,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/ip.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/load_theme.o
   <library>src/utils/local_err_msg.o
   <library>src/utils/log_siem.o
@@ -2776,6 +2784,7 @@ test-run tests/core/test_session :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/load_theme.o
   <library>src/utils/local_err_msg.o
   <library>src/utils/log_siem.o
@@ -2884,6 +2893,7 @@ test-run tests/front/test_front :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
@@ -4849,6 +4859,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
@@ -6041,12 +6052,11 @@ test-run tests/utils/test_key_qvalue_pairs :
 test-run tests/utils/test_keyboard_shortcut_blocker :
   $(REDEMPTION_TEST_PATH)/utils/test_keyboard_shortcut_blocker.cpp
 :
-  <library>src/core/error.o
   <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
   <library>src/keyboard/scancode/unicode_to_scancode.o
-  <library>src/utils/stacktrace.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/utils/keyboard_shortcut_blocker.cpp
   <covfile>src/utils/keyboard_shortcut_blocker.hpp
 ;
 test-run tests/utils/test_line_equation :
@@ -6422,6 +6432,7 @@ obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/hexadecimal_string_to_buffer.o : $(REDEMPTION_SRC_PATH)/utils/hexadecimal_string_to_buffer.cpp ;
 obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj src/utils/ip.o : $(REDEMPTION_SRC_PATH)/utils/ip.cpp ;
+obj src/utils/keyboard_shortcut_blocker.o : $(REDEMPTION_SRC_PATH)/utils/keyboard_shortcut_blocker.cpp ;
 obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/local_err_msg.o : $(REDEMPTION_SRC_PATH)/utils/local_err_msg.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
