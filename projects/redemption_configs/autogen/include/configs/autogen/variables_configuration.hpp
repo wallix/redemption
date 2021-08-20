@@ -3605,7 +3605,6 @@ namespace cfg
     /// - global_channel  = 0x00002000 <br/>
     /// - sec_decrypted   = 0x00004000 <br/>
     /// - keymap          = 0x00008004 <br/>
-    /// - keymap_and_basic_trace3 = keymap | basic_trace3 <br/>
     ///  <br/>
     /// (Serializer) <br/>
     /// - pointer             = 0x00040000 <br/>

@@ -1164,7 +1164,6 @@ session = integer(min=0, default=0)
 # - global_channel  = 0x00002000
 # - sec_decrypted   = 0x00004000
 # - keymap          = 0x00008004
-# - keymap_and_basic_trace3 = keymap | basic_trace3
 # 
 # (Serializer)
 # - pointer             = 0x00040000

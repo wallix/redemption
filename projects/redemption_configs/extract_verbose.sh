@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")/../.."
 extract() {
-    sed -E '/REDEMPTION_VERBOSE_FLAGS/,/};/!d;/=/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/;s/'\'// "$@"
+    sed -E '/REDEMPTION_VERBOSE_FLAGS/,/};/!d;/= *[0-9]/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/;s/'\'// "$@"
 }
 
 rdp_serializer=$(extract src/core/RDP/RDPSerializerVerbose.hpp)
