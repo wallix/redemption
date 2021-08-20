@@ -1264,19 +1264,25 @@ R"gen_config_ini(## Config file for RDP proxy.
 [audit]
 
 # value: 0 or 1
+#_advanced
 #use_redis = 0
 
+#_advanced
 #redis_address = 
 
+#_advanced
 #redis_password = 
 
-# (in milliseconds)
-#redis_timeout = 500
-
+#_advanced
 #redis_key_name = 
 
 # min = 0
+#_advanced
 #redis_db = 0
+
+# (in milliseconds)
+#_advanced
+#redis_timeout = 500
 
 [crypto]
 
@@ -1352,7 +1358,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # - bmp_info        = 0x00000800
 # - global_channel  = 0x00002000
 # - sec_decrypted   = 0x00004000
-# - keymap          = 0x00008000
+# - keymap          = 0x00008004
+# - keymap_and_basic_trace3 = keymap | basic_trace3
 # 
 # (Serializer)
 # - pointer             = 0x00040000

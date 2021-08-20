@@ -300,9 +300,9 @@ namespace cfg
         struct use_redis;
         struct redis_address;
         struct redis_password;
-        struct redis_timeout;
         struct redis_key_name;
         struct redis_db;
+        struct redis_timeout;
     };
 
     struct crypto {

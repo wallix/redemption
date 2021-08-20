@@ -3430,20 +3430,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// type: std::chrono::milliseconds <br/>
-    /// sesman ⇒ proxy <br/>
-    /// default: 500 <br/>
-    struct audit::redis_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 4};
-        using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
-        type value { 500 };
-    };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
@@ -3452,7 +3438,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 5};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 4};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3466,11 +3452,25 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 6};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 5};
         using type = unsigned;
         using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value { 0 };
+    };
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman ⇒ proxy <br/>
+    /// default: 500 <br/>
+    struct audit::redis_timeout {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 6};
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = std::chrono::milliseconds;
+        using mapped_type = sesman_and_spec_type;
+        type value { 500 };
     };
 
     /// type: std::array&lt;unsigned char, 32> <br/>
@@ -3604,7 +3604,8 @@ namespace cfg
     /// - bmp_info        = 0x00000800 <br/>
     /// - global_channel  = 0x00002000 <br/>
     /// - sec_decrypted   = 0x00004000 <br/>
-    /// - keymap          = 0x00008000 <br/>
+    /// - keymap          = 0x00008004 <br/>
+    /// - keymap_and_basic_trace3 = keymap | basic_trace3 <br/>
     ///  <br/>
     /// (Serializer) <br/>
     /// - pointer             = 0x00040000 <br/>
@@ -5598,8 +5599,8 @@ struct capture
 struct audit
 : cfg::audit::redis_address
 , cfg::audit::redis_password
-, cfg::audit::redis_timeout
 , cfg::audit::redis_key_name
+, cfg::audit::redis_timeout
 , cfg::audit::rt_display
 , cfg::audit::use_redis
 , cfg::audit::redis_db
@@ -5918,9 +5919,9 @@ using VariablesAclPack = Pack<
 , cfg::audit::use_redis
 , cfg::audit::redis_address
 , cfg::audit::redis_password
-, cfg::audit::redis_timeout
 , cfg::audit::redis_key_name
 , cfg::audit::redis_db
+, cfg::audit::redis_timeout
 , cfg::crypto::encryption_key
 , cfg::crypto::sign_key
 , cfg::translation::language

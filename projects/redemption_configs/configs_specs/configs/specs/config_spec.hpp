@@ -731,15 +731,15 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), names{"rt_display"}, set(false));
 
-        // TODO ini_and_gui -> no_ini_no_gui
+        // TODO advanced_in_gui -> no_ini_no_gui
         //@{
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"use_redis"}, set(false));
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_address"});
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_password"});
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_key_name"});
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<types::unsigned_>(), names{"redis_db"}, set(0));
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"use_redis"}, set(false));
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_address"});
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_password"});
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_key_name"});
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::unsigned_>(), names{"redis_db"}, set(0));
         //@}
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));
     });
 
     W.section("crypto", [&]

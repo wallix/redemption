@@ -1075,18 +1075,24 @@ file_permissions = string(default='440')
 
 [audit]
 
+#_advanced
 use_redis = boolean(default=False)
 
+#_advanced
 redis_address = string(default='')
 
+#_advanced
 redis_password = string(default='')
 
-# (in milliseconds)
-redis_timeout = integer(min=0, default=500)
-
+#_advanced
 redis_key_name = string(default='')
 
+#_advanced
 redis_db = integer(min=0, default=0)
+
+# (in milliseconds)
+#_advanced
+redis_timeout = integer(min=0, default=500)
 
 [crypto]
 
@@ -1157,7 +1163,8 @@ session = integer(min=0, default=0)
 # - bmp_info        = 0x00000800
 # - global_channel  = 0x00002000
 # - sec_decrypted   = 0x00004000
-# - keymap          = 0x00008000
+# - keymap          = 0x00008004
+# - keymap_and_basic_trace3 = keymap | basic_trace3
 # 
 # (Serializer)
 # - pointer             = 0x00040000
