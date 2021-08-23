@@ -221,7 +221,7 @@ public:
 
         for (auto const& layout : keylayouts()) {
             this->_languageComboBox.addItem(
-                QString::fromLatin1(layout.locale_name.c_str(), layout.locale_name.size()),
+                QString::fromLatin1(layout.name.c_str(), layout.name.size()),
                 underlying_cast(layout.kbdid)
             );
         }
