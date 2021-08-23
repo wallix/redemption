@@ -78,11 +78,6 @@ void Bouncer2Mod::rdp_input_scancode(
     this->interaction();
 }
 
-void Bouncer2Mod::refresh(Rect clip)
-{
-    this->rdp_input_invalidate(clip);
-}
-
 int Bouncer2Mod::interaction()
 {
     // Get x% of the screen cx and cy

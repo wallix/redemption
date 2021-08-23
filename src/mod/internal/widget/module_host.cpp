@@ -635,11 +635,6 @@ void WidgetModuleHost::rdp_input_synchronize(KeyLocks locks)
 
 // Widget
 
-void WidgetModuleHost::refresh(Rect/* clip*/)
-{
-    this->update_rects(this->managed_mod->get_dim());
-}
-
 void WidgetModuleHost::begin_update()
 {
     this->drawable.begin_update();

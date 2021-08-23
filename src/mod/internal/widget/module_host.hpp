@@ -115,8 +115,6 @@ public:
 
     // Widget
 
-    void refresh(Rect/* clip*/) override;
-
     void begin_update() override;
 
     void end_update() override;

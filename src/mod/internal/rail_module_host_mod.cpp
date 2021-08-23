@@ -52,15 +52,6 @@ void RailModuleHostMod::rdp_input_scancode(
     }
 }
 
-void RailModuleHostMod::refresh(Rect r)
-{
-    this->screen.refresh(r);
-
-    if (this->rail_enabled) {
-        this->rail_client_execute.input_invalidate(r);
-    }
-}
-
 RailModuleHostMod::RailModuleHostMod(
     EventContainer& events,
     gdi::GraphicApi & drawable,

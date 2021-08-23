@@ -89,8 +89,6 @@ public:
         (void)locks;
     }
 
-    void refresh(Rect clip) override;
-
     [[nodiscard]] Dimension get_dim() const override;
 
 public:

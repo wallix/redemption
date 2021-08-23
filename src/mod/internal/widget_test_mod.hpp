@@ -50,7 +50,7 @@ public:
 
     void rdp_gdi_down() override {}
 
-    void rdp_input_invalidate(Rect /*rect*/) override;
+    void rdp_input_invalidate(Rect rect) override;
 
     void rdp_input_mouse(int /*device_flags*/, int x, int y) override;
 
@@ -59,8 +59,6 @@ public:
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
     void rdp_input_synchronize(KeyLocks locks) override;
-
-    void refresh(Rect clip) override;
 
     [[nodiscard]] bool is_up_and_running() const override
     {

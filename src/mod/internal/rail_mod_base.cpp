@@ -70,15 +70,6 @@ void RailModBase::rdp_input_invalidate(Rect r)
     }
 }
 
-void RailModBase::refresh(Rect r)
-{
-    this->screen.refresh(r);
-
-    if (this->rail_enabled) {
-        this->rail_client_execute.input_invalidate(r);
-    }
-}
-
 void RailModBase::rdp_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {

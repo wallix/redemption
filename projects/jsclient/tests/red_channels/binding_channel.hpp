@@ -400,7 +400,6 @@ struct TestBindingCallback : Callback
         KbdFlags /*flags*/, Scancode /*scancode*/,
         uint32_t /*event_time*/, Keymap const& /*keymap*/) override {}
     void rdp_input_synchronize(KeyLocks /*locks*/) override {}
-    void refresh(Rect /*unused*/) override {}
     void rdp_gdi_down() override {}
     void rdp_gdi_up_and_running() override {}
 

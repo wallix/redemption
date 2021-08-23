@@ -36,7 +36,6 @@ struct null_mod : public mod_api
     void rdp_input_scancode(KbdFlags, Scancode, uint32_t, Keymap const&) override {}
     void rdp_input_synchronize(KeyLocks) override {}
     void rdp_input_invalidate(const Rect rect) override { (void)rect; }
-    void refresh(const Rect rect) override { (void)rect; }
     bool is_up_and_running() const override { return true; }
 
     bool is_auto_reconnectable() const override { return false; }

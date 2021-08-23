@@ -63,8 +63,6 @@ namespace
             // Client Notify module that gdi is not up and running any more
             void rdp_gdi_down() override {}
 
-            void refresh(Rect /*clip*/) override {}
-
             F f;
         };
         return OSD(drawable, rect, f);

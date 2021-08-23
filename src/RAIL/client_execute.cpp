@@ -1378,7 +1378,7 @@ void ClientExecute::update_widget()
         this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
             widget_rect_new.cx, widget_rect_new.cy);
 
-        this->mod_->refresh(this->window_rect);
+        this->mod_->rdp_input_invalidate(this->window_rect);
     }
 }
 

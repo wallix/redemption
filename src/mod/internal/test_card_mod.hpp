@@ -71,9 +71,6 @@ public:
         (void)locks;
     }
 
-    void refresh(Rect /*rect*/) override
-    {}
-
     void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}

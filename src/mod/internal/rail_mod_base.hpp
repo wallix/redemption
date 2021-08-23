@@ -61,8 +61,6 @@ public:
         (void)locks;
     }
 
-    void refresh(Rect r) override;
-
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
     [[nodiscard]] Dimension get_dim() const override { return Dimension(this->front_width, this->front_height); }

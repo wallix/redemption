@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     delegated.set_xy(5, 5);
 
     screen.add_widget(&delegated);
-    screen.refresh(screen.get_rect());
+    screen.rdp_input_invalidate(screen.get_rect());
 
     RED_CHECK(notifier.last_event == 0);
     RED_CHECK(!notifier.last_widget);

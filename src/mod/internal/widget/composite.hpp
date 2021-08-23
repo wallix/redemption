@@ -117,8 +117,6 @@ public:
 
     virtual void invalidate_children(Rect clip);
 
-    virtual void refresh_children(Rect clip);
-
     virtual void draw_inner_free(Rect clip, Color bg_color);
 
     [[nodiscard]] virtual Color get_bg_color() const
@@ -141,7 +139,6 @@ public:
     Widget * widget_at_pos(int16_t x, int16_t y) override;
 
     void rdp_input_invalidate(Rect clip) override;
-    void refresh(Rect clip) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 

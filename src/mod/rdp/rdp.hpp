@@ -5815,10 +5815,6 @@ public:
             LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
     }
 
-    void refresh(Rect r) override {
-        this->rdp_input_invalidate(r);
-    }
-
     // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
     // ---------------------------------------------------------------

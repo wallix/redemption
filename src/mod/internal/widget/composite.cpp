@@ -296,23 +296,6 @@ void WidgetParent::invalidate_children(Rect clip)
     }
 }
 
-void WidgetParent::refresh_children(Rect clip)
-{
-    int index_w_current = this->impl->get_first();
-    while (index_w_current != -1) {
-        Widget * w = this->impl->get(index_w_current);
-        assert(w);
-
-        Rect newr = clip.intersect(w->get_rect());
-
-        if (!newr.isempty()) {
-            w->refresh(newr);
-        }
-
-        index_w_current = this->impl->get_next(index_w_current);
-    }
-}
-
 void WidgetParent::draw_inner_free(Rect clip, Color bg_color)
 {
     SubRegion region;
@@ -438,20 +421,6 @@ void WidgetParent::rdp_input_invalidate(Rect clip)
 
         this->draw_inner_free(rect_intersect, this->get_bg_color());
         this->invalidate_children(rect_intersect);
-
-        this->drawable.end_update();
-    }
-}
-
-void WidgetParent::refresh(Rect clip)
-{
-    Rect rect_intersect = clip.intersect(this->get_rect());
-
-    if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
-        this->draw_inner_free(rect_intersect, this->get_bg_color());
-        this->refresh_children(rect_intersect);
 
         this->drawable.end_update();
     }

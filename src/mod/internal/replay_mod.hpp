@@ -71,8 +71,6 @@ public:
 
     [[nodiscard]] Dimension get_dim() const override;
 
-    void refresh(Rect /*rect*/) override {}
-
     [[nodiscard]] bool is_up_and_running() const override { return true; }
 
     bool server_error_encountered() const override { return false; }

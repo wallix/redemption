@@ -59,11 +59,6 @@ struct TestRectMod : null_mod
             gdi::ColorCtx(gdi::Depth::depth24(), nullptr));
     }
 
-    void refresh(Rect clip) override
-    {
-        this->rdp_input_invalidate(clip);
-    }
-
     Dimension get_dim() const override
     {
         return {width, height};

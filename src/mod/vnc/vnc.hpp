@@ -798,11 +798,6 @@ private:
 public:
     void rdp_input_invalidate(Rect r) override;
 
-    void refresh(Rect r) override {
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Front::refresh");
-        this->rdp_input_invalidate(r);
-    }
-
 private:
 
 //   Encoding value |   Mnemonic     | Encoding Description

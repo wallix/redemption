@@ -726,7 +726,7 @@ public:
         else {
             LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize() callback to refresh()");
             // TODO: see if we could use UP_AND_RUNNING notification instead
-            cb.refresh(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
+            cb.rdp_input_invalidate(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
         }
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Clear Must Notify resize");
         this->front_must_notify_resize = false;

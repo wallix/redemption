@@ -56,8 +56,6 @@ public:
         this->screen.rdp_input_unicode(flag, unicode);
     }
 
-    void refresh(Rect r) override;
-
 private:
     FrontAPI & front;
 

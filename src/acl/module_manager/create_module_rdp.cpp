@@ -335,11 +335,6 @@ public:
         return this->mod.rdp_input_synchronize(locks);
     }
 
-    void refresh(Rect clip) override
-    {
-        return this->mod.refresh(clip);
-    }
-
     // from mod_api
     [[nodiscard]] bool is_up_and_running() const override { return false; }
 

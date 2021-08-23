@@ -121,11 +121,6 @@ void WidgetTestMod::rdp_input_synchronize(KeyLocks locks)
     (void)locks;
 }
 
-void WidgetTestMod::refresh(Rect clip)
-{
-    this->d->screen.refresh(clip);
-}
-
 void WidgetTestMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name,
     InStream & chunk, std::size_t /*length*/, uint32_t flags)
