@@ -233,7 +233,7 @@ void KeyboardShortcutBlocker::add_shortcut(uint32_t keyboardLayout, chars_view s
             *p = to_ascii_lower(c);
             ++p;
         }
-        std::string_view mod_name{buff, p};
+        std::string_view mod_name{buff, std::size_t(p - buff)};
 
         auto mod = find_mod(mod_name);
         if (mod != ModFlags()) {
