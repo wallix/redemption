@@ -55,8 +55,10 @@ exe headlessclient :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -211,8 +213,10 @@ exe rdpproxy :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/dsm.o
@@ -384,8 +388,10 @@ exe rdpclient :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -658,8 +664,10 @@ test-run tests/acl/test_license_api :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1045,8 +1053,10 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1146,8 +1156,10 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1219,8 +1231,10 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1512,7 +1526,6 @@ test-run tests/core/RDP/caches/test_brushcache :
 test-run tests/core/RDP/caches/test_glyphcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_glyphcache.cpp
 :
-  <library>src/core/font.o
   <covfile>src/core/RDP/caches/glyphcache.hpp
 ;
 test-run tests/core/RDP/caches/test_pointercache :
@@ -1892,11 +1905,6 @@ test-run tests/core/RDP/nla/test_nla :
 test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/orders/AlternateSecondaryWindowing.hpp
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersCommon :
@@ -2024,27 +2032,11 @@ test-run tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache :
 test-run tests/core/RDP/test_GraphicUpdatePDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_GraphicUpdatePDU.cpp
 :
-  <library>crypto
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/GraphicUpdatePDU.hpp
 ;
 test-run tests/core/RDP/test_PersistentKeyListPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_PersistentKeyListPDU.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/PersistentKeyListPDU.hpp
 ;
 test-run tests/core/RDP/test_RDPDrawable :
@@ -2124,10 +2116,6 @@ test-run tests/core/RDP/test_ServerRedirection :
 test-run tests/core/RDP/test_autoreconnect :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_autoreconnect.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/autoreconnect.hpp
 ;
 test-run tests/core/RDP/test_bitmapupdate :
@@ -2402,20 +2390,12 @@ test-run tests/core/test_channel_names :
 test-run tests/core/test_check_files :
   $(REDEMPTION_TEST_PATH)/core/test_check_files.cpp
 :
-  <library>app_path_test.o
-  <library>src/core/check_files.o
   <covfile>src/core/check_files.cpp
   <covfile>src/core/check_files.hpp
 ;
 test-run tests/core/test_client_info :
   $(REDEMPTION_TEST_PATH)/core/test_client_info.cpp
 :
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/client_info.hpp
 ;
 test-run tests/core/test_dynamic_channels_authorizations :
@@ -2473,160 +2453,6 @@ test-run tests/core/test_log_id :
 test-run tests/core/test_mainloop :
   $(REDEMPTION_TEST_PATH)/core/test_mainloop.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>ffmpeg
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>png
-  <library>ppocr
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/acl_serializer.o
-  <library>src/acl/kv_list_from_strings.o
-  <library>src/acl/module_manager/create_module_rail.o
-  <library>src/acl/module_manager/create_module_rdp.o
-  <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/session_inactivity.o
-  <library>src/acl/session_logfile.o
-  <library>src/capture/agent_data_extractor.o
-  <library>src/capture/capture.o
-  <library>src/capture/fdx_capture.o
-  <library>src/capture/file_to_graphic.o
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
-  <library>src/capture/rail_screen_computation.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/capture/redis_writer.o
-  <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/RDP/rlgr.o
-  <library>src/core/channels_authorizations.o
-  <library>src/core/dynamic_channels_authorizations.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/core/mainloop.o
-  <library>src/core/pid_file.o
-  <library>src/core/session.o
-  <library>src/core/session_events.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
-  <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/close_mod.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/dialog_mod.o
-  <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/login_mod.o
-  <library>src/mod/internal/rail_mod_base.o
-  <library>src/mod/internal/rail_module_host_mod.o
-  <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/selector_mod.o
-  <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/transition_mod.o
-  <library>src/mod/internal/wait_mod.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/delegated_copy.o
-  <library>src/mod/internal/widget/dialog.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/form.o
-  <library>src/mod/internal/widget/grid.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/interactive_target.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/login.o
-  <library>src/mod/internal/widget/module_host.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
-  <library>src/mod/internal/widget/selector.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/vertical_scroll_text.o
-  <library>src/mod/internal/widget/wab_close.o
-  <library>src/mod/internal/widget/wait.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/metrics.o
-  <library>src/mod/rdp/channels/cliprdr_channel.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/mod/vnc/dsm.o
-  <library>src/mod/vnc/encoder/copyrect.o
-  <library>src/mod/vnc/encoder/cursor.o
-  <library>src/mod/vnc/encoder/hextile.o
-  <library>src/mod/vnc/encoder/raw.o
-  <library>src/mod/vnc/encoder/rre.o
-  <library>src/mod/vnc/encoder/zrle.o
-  <library>src/mod/vnc/vnc.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_multi_crypto_transport.o
-  <library>src/transport/mwrm_file_data.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_filename_sequence_transport.o
-  <library>src/transport/out_meta_sequence_transport.o
-  <library>src/transport/snappy_compression_transport.o
-  <library>src/transport/socket_transport.o
-  <library>src/transport/ws_transport.o
-  <library>src/utils/base64.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/d3des.o
-  <library>src/utils/drawable.o
-  <library>src/utils/drawable_pointer.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/ip.o
-  <library>src/utils/keyboard_shortcut_blocker.o
-  <library>src/utils/load_theme.o
-  <library>src/utils/local_err_msg.o
-  <library>src/utils/log_siem.o
-  <library>src/utils/netutils.o
-  <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
-  <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
-  <library>src/utils/primitives/primitives_sse2.o
-  <library>src/utils/rle.o
-  <library>src/utils/scaled_image24.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  <library>z
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/mainloop.cpp
   <covfile>src/core/mainloop.hpp
 ;
@@ -2649,158 +2475,6 @@ test-run tests/core/test_server_notifier_api :
 test-run tests/core/test_session :
   $(REDEMPTION_TEST_PATH)/core/test_session.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>ffmpeg
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>png
-  <library>ppocr
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/acl_serializer.o
-  <library>src/acl/kv_list_from_strings.o
-  <library>src/acl/module_manager/create_module_rail.o
-  <library>src/acl/module_manager/create_module_rdp.o
-  <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/session_inactivity.o
-  <library>src/acl/session_logfile.o
-  <library>src/capture/agent_data_extractor.o
-  <library>src/capture/capture.o
-  <library>src/capture/fdx_capture.o
-  <library>src/capture/file_to_graphic.o
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
-  <library>src/capture/rail_screen_computation.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/capture/redis_writer.o
-  <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/RDP/rlgr.o
-  <library>src/core/channels_authorizations.o
-  <library>src/core/dynamic_channels_authorizations.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/core/pid_file.o
-  <library>src/core/session.o
-  <library>src/core/session_events.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
-  <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/close_mod.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/dialog_mod.o
-  <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/login_mod.o
-  <library>src/mod/internal/rail_mod_base.o
-  <library>src/mod/internal/rail_module_host_mod.o
-  <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/selector_mod.o
-  <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/transition_mod.o
-  <library>src/mod/internal/wait_mod.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/delegated_copy.o
-  <library>src/mod/internal/widget/dialog.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/form.o
-  <library>src/mod/internal/widget/grid.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/interactive_target.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/login.o
-  <library>src/mod/internal/widget/module_host.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
-  <library>src/mod/internal/widget/selector.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/vertical_scroll_text.o
-  <library>src/mod/internal/widget/wab_close.o
-  <library>src/mod/internal/widget/wait.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/metrics.o
-  <library>src/mod/rdp/channels/cliprdr_channel.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/mod/vnc/dsm.o
-  <library>src/mod/vnc/encoder/copyrect.o
-  <library>src/mod/vnc/encoder/cursor.o
-  <library>src/mod/vnc/encoder/hextile.o
-  <library>src/mod/vnc/encoder/raw.o
-  <library>src/mod/vnc/encoder/rre.o
-  <library>src/mod/vnc/encoder/zrle.o
-  <library>src/mod/vnc/vnc.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_multi_crypto_transport.o
-  <library>src/transport/mwrm_file_data.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_filename_sequence_transport.o
-  <library>src/transport/out_meta_sequence_transport.o
-  <library>src/transport/snappy_compression_transport.o
-  <library>src/transport/socket_transport.o
-  <library>src/transport/ws_transport.o
-  <library>src/utils/base64.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/d3des.o
-  <library>src/utils/drawable.o
-  <library>src/utils/drawable_pointer.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/keyboard_shortcut_blocker.o
-  <library>src/utils/load_theme.o
-  <library>src/utils/local_err_msg.o
-  <library>src/utils/log_siem.o
-  <library>src/utils/netutils.o
-  <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
-  <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
-  <library>src/utils/primitives/primitives_sse2.o
-  <library>src/utils/rle.o
-  <library>src/utils/scaled_image24.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  <library>z
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session.cpp
   <covfile>src/core/session.hpp
 ;
@@ -2869,8 +2543,10 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -3440,46 +3116,6 @@ test-run tests/mod/internal/test_replay_mod :
 test-run tests/mod/internal/test_selector_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_selector_mod.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/RAIL/client_execute.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/rail_mod_base.o
-  <library>src/mod/internal/selector_mod.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/grid.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/selector.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/selector_mod.cpp
   <covfile>src/mod/internal/selector_mod.hpp
 ;
@@ -3517,45 +3153,6 @@ test-run tests/mod/internal/test_test_card_mod :
 test-run tests/mod/internal/test_wait_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_wait_mod.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/RAIL/client_execute.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/rail_mod_base.o
-  <library>src/mod/internal/wait_mod.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/form.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/wait.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/wait_mod.cpp
   <covfile>src/mod/internal/wait_mod.hpp
 ;
@@ -4682,122 +4279,33 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
 test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_file_system_drive_manager.cpp
 :
-  <library>src/core/error.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_file_system_drive_manager.cpp
   <covfile>src/mod/rdp/channels/rdpdr_file_system_drive_manager.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_alternate_shell_based_launcher.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/kv_list_from_strings.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_channel.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/acl/kv_list_from_strings.o
-  <library>src/core/error.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/screen_functions.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_clipboard_based_launcher.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/acl/kv_list_from_strings.o
-  <library>src/capture/fdx_capture.o
-  <library>src/core/error.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/screen_functions.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/mod/rdp/channels/cliprdr_channel.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/rdp/channels/sespro_clipboard_based_launcher.cpp
   <covfile>src/mod/rdp/channels/sespro_clipboard_based_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_virtual_channel_data_sender :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_virtual_channel_data_sender.cpp
 :
-  <library>src/utils/hexdump.o
   <covfile>src/mod/rdp/channels/virtual_channel_data_sender.hpp
 ;
 test-run tests/mod/rdp/test_rdp :
@@ -4839,8 +4347,10 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -4925,21 +4435,6 @@ test-run tests/mod/rdp/test_rdp_negociation :
 test-run tests/mod/rdp/test_rdp_orders :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_orders.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/transport/file_transport.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_orders.hpp
 ;
 test-run tests/mod/rdp/test_rdp_params :
@@ -5438,12 +4933,6 @@ test-run tests/system/linux/system/test_ssl_sha512 :
 test-run tests/system/linux/system/test_tls_context :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_tls_context.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>openssl
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/system/linux/system/tls_context.hpp
 ;
 test-run tests/transport/test_crypto_transport :
@@ -5854,7 +5343,6 @@ test-run tests/utils/test_bitmap :
 test-run tests/utils/test_bitmap_data_allocator :
   $(REDEMPTION_TEST_PATH)/utils/test_bitmap_data_allocator.cpp
 :
-  <library>src/utils/bitmap_data_allocator.o
   <covfile>src/utils/bitmap_data_allocator.cpp
   <covfile>src/utils/bitmap_data_allocator.hpp
 ;
@@ -5940,7 +5428,6 @@ test-run tests/utils/test_contiguous_sub_rect_f :
 test-run tests/utils/test_d3des :
   $(REDEMPTION_TEST_PATH)/utils/test_d3des.cpp
 :
-  <library>src/utils/d3des.o
   <covfile>src/utils/d3des.cpp
   <covfile>src/utils/d3des.hpp
 ;
@@ -6388,8 +5875,10 @@ obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
+obj src/mod/rdp/channels/rdp_session_probe_wrapper.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdp_session_probe_wrapper.cpp ;
 obj src/mod/rdp/channels/rdpdr_file_system_drive_manager.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdpdr_file_system_drive_manager.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
+obj src/mod/rdp/channels/sespro_clipboard_based_launcher.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_clipboard_based_launcher.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;

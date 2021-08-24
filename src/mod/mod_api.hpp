@@ -21,7 +21,9 @@
 #pragma once
 
 #include "core/callback.hpp"
-#include "acl/acl_field_mask.hpp"
+
+
+class AclFieldMask;
 
 enum BackEvent_t
 {
@@ -58,11 +60,9 @@ public:
 
     virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
 
-    virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
-
     [[nodiscard]] virtual Dimension get_dim() const { return Dimension(); }
 
-    virtual void acl_update(AclFieldMask const& acl_fields) /*{ (void)acl_fields; }*/ = 0;
+    virtual void acl_update(AclFieldMask const& acl_fields) = 0;
 
     virtual void reset_keyboard_status() {}
 };

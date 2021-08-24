@@ -361,12 +361,6 @@ public:
     }
 
     // from mod_api
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) override
-    {
-        return this->mod.send_input(time, message_type, device_flags, param1, param2);
-    }
-
-    // from mod_api
     [[nodiscard]] Dimension get_dim() const override
     {
         return this->mod.get_dim();

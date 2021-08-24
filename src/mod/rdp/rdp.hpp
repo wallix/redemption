@@ -26,6 +26,9 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
+#include "acl/acl_field_mask.hpp"
+
+#include "core/channels_authorizations.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -133,7 +136,6 @@ struct FileValidatorService;
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/server_transport_context.hpp"
 
-#include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/keyboard_shortcut_blocker.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
@@ -146,6 +148,7 @@ struct FileValidatorService;
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 
+class RdpSessionProbeWrapper;
 
 class mod_rdp_channels
 {
@@ -448,7 +451,7 @@ public:
 
     void init_remote_program_and_session_probe(
         gdi::GraphicApi& gd,
-        mod_api & mod_rdp,
+        mod_rdp & mod_rdp,
         const ModRDPParams & mod_rdp_params,
         const ClientInfo & info,
         // TODO OutParam<...>
@@ -1325,7 +1328,7 @@ public:
 
 
     void init_no_remote_program_with_session_probe(
-        mod_api & mod_rdp,
+        mod_rdp & mod_rdp,
         const ClientInfo & info,
         const ApplicationParams & application_params,
         const ModRdpSessionProbeParams & session_probe_params,
@@ -5675,7 +5678,7 @@ public:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_fonts done");
     }
 
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) override
+    void send_input(int time, int message_type, int device_flags, int param1, int param2)
     {
         [[maybe_unused]] std::size_t channel_data_size = this->enable_fastpath_client_input_event
             ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
@@ -6492,6 +6495,8 @@ private:
 
         return channel_data_size;
     }
+
+    friend RdpSessionProbeWrapper;
 };
 
 #undef IF_ENABLE_METRICS
