@@ -137,6 +137,17 @@ RED_JS_AUTO_TEST_CASE(
     TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
+    // Enter
+    //@{
+    RED_CHECK(toScancodes2("Enter", "Enter", keyAcquire) == U16A(0x1C));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Enter", "Enter", keyRelease) == U16A(0x801C));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
     // A
     //@{
     RED_CHECK(toScancodes2("Shift", "ShiftLeft", keyAcquire) == U16A(0x2A));
