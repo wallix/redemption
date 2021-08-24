@@ -19,8 +19,6 @@
 
 */
 
-#include "core/session.hpp"
-
 // TEST missing
 int main()
 {}

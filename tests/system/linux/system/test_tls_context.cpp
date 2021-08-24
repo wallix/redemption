@@ -20,10 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "system/tls_context.hpp"
-
 // TEST missing
 int main()
 {
-    TLSContext();
 }

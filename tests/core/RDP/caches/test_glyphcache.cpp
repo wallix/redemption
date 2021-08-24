@@ -19,10 +19,7 @@
 
 */
 
-#include "core/RDP/caches/glyphcache.hpp"
-
 // TEST missing
 int main()
 {
-    GlyphCache();
 }

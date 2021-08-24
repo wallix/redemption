@@ -19,8 +19,6 @@
 
 */
 
-#include "core/RDP/GraphicUpdatePDU.hpp"
-
 // TEST missing
 int main()
 {}

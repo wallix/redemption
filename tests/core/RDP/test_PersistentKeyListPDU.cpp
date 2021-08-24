@@ -20,8 +20,6 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "core/RDP/PersistentKeyListPDU.hpp"
-
 // TEST missing
 int main()
 {}

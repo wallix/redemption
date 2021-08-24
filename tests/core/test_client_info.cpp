@@ -19,10 +19,7 @@
 
 */
 
-#include "core/client_info.hpp"
-
 // TEST missing
 int main()
 {
-    ClientInfo();
 }

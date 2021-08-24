@@ -19,8 +19,6 @@
 
 */
 
-#include "core/RDP/caches/brushcache.hpp"
-
 // TEST missing
 int main()
 {}

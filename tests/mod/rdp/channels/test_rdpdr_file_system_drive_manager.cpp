@@ -20,8 +20,6 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
-
 // TEST missing
 int main()
 {}

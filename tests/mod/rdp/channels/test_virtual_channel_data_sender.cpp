@@ -20,8 +20,6 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
-
 // TEST missing
 int main()
 {}

@@ -19,10 +19,7 @@
 
 */
 
-#include "mod/rdp/rdp_orders.hpp"
-
 // TEST missing
 int main()
 {
-    rdp_orders("", false, false, false, RDPVerbose::none, [](const Error & /*error*/){});
 }

@@ -19,8 +19,6 @@
 
 */
 
-#include "core/mainloop.hpp"
-
 // TEST missing
 int main()
 {}

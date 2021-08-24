@@ -20,8 +20,6 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "mod/rdp/channels/sespro_launcher.hpp"
-
 // TEST missing
 int main()
 {}

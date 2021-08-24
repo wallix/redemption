@@ -20,7 +20,5 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "mod/internal/selector_mod.hpp"
-
 // TEST missing
 int main(){}

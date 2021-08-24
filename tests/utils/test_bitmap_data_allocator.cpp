@@ -20,10 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "utils/bitmap_data_allocator.hpp"
-
 // TEST missing
 int main()
 {
-    aux_::BmpMemAlloc bmpMemAlloc;
 }

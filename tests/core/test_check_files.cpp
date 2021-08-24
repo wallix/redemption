@@ -19,8 +19,6 @@
 
 */
 
-#include "core/check_files.hpp"
-
 // TEST missing
 int main()
 {}

@@ -18,8 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
-
 // TEST missing
 int main()
 {
@@ -38,6 +36,4 @@ int main()
     RED_CHECK_EQUAL(wch_r.FieldsPresentFlags(), WINDOW_ORDER_TYPE_WINDOW);
     RED_CHECK_EQUAL(wch_r.WindowId(),           WindowId);
 */
-
-    RDP::RAIL::NewOrExistingWindow new_or_existing_window;
 }

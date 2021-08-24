@@ -19,8 +19,6 @@
 
 */
 
-//#include "mod/vnc/dsm.hpp"
-
 // TEST missing
 int main()
 {

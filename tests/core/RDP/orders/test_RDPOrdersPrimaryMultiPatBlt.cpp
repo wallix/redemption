@@ -21,10 +21,7 @@
     Using lib boost functions for testing
 */
 
-#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-
 // TEST missing
 int main()
 {
-    RDP::RDPMultiPatBlt();
 }
