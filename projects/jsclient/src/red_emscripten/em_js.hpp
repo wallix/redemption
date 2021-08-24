@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 
 #ifdef IN_IDE_PARSER
 # define RED_EM_JS(return_type, name, params, ...) return_type name params;
+# define RED_EM_ASYNC_JS(return_type, name, params, ...) return_type name params;
 #else
 # include <emscripten/emscripten.h> /* fix with 1.39.16 */
 # include <emscripten/em_js.h>
@@ -30,6 +31,11 @@ Author(s): Jonathan Poelen
     REDEMPTION_DIAGNOSTIC_PUSH()                               \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \
     EM_JS(return_type, name, params, __VA_ARGS__)              \
+    REDEMPTION_DIAGNOSTIC_POP()
+# define RED_EM_ASYNC_JS(return_type, name, params, ...)       \
+    REDEMPTION_DIAGNOSTIC_PUSH()                               \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \
+    EM_ASYNC_JS(return_type, name, params, __VA_ARGS__)        \
     REDEMPTION_DIAGNOSTIC_POP()
 #endif
 

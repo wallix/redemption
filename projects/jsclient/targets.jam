@@ -39,8 +39,6 @@ exe-js js_client :
   src/gdi/clip_from_cmd.bc
   src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
-  src/keyboard/scancode/autogen/all_LCIDs_scancodes.bc
-  src/keyboard/scancode/unicode_to_scancode.bc
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/mod/rdp/rdp_negociation_data.bc
@@ -83,7 +81,7 @@ exe-js js_player :
 
 
 test-run-js tests/application/test_scancodes :
-  tests/application/test_scancodes.cpp src/application/scancodes.js
+  tests/application/test_scancodes.cpp src/application/scancodes.js src/application/reversed_layouts.js
 :
 ;
 test-run-js tests/red_channels/test_clipboard :
@@ -155,10 +153,30 @@ test-run-js tests/redjs/test_transport :
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run-js tests/system/test_ssl_md4 :
+  tests/system/test_ssl_md4.cpp
+:
+;
+test-run-js tests/system/test_ssl_md5 :
+  tests/system/test_ssl_md5.cpp
+:
+;
 test-run-js tests/system/test_ssl_mod_exp :
   tests/system/test_ssl_mod_exp.cpp
 :
   src/system/ssl_mod_exp.bc
+;
+test-run-js tests/system/test_ssl_rc4 :
+  tests/system/test_ssl_rc4.cpp
+:
+;
+test-run-js tests/system/test_ssl_sha1 :
+  tests/system/test_ssl_sha1.cpp
+:
+;
+test-run-js tests/system/test_ssl_sha256 :
+  tests/system/test_ssl_sha256.cpp
+:
 ;
 
 objjs src/main/_dummy.bc : src/main/_dummy.cpp ;
@@ -185,8 +203,6 @@ objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 objjs src/gdi/clip_from_cmd.bc : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
-objjs src/keyboard/scancode/autogen/all_LCIDs_scancodes.bc : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
-objjs src/keyboard/scancode/unicode_to_scancode.bc : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/mod/rdp/rdp_negociation_data.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
@@ -210,7 +226,12 @@ alias test_front : tests/redjs/test_front ;
 alias test_graphics : tests/redjs/test_graphics ;
 alias test_image_conversions : tests/redjs/test_image_conversions ;
 alias test_transport : tests/redjs/test_transport ;
+alias test_ssl_md4 : tests/system/test_ssl_md4 ;
+alias test_ssl_md5 : tests/system/test_ssl_md5 ;
 alias test_ssl_mod_exp : tests/system/test_ssl_mod_exp ;
+alias test_ssl_rc4 : tests/system/test_ssl_rc4 ;
+alias test_ssl_sha1 : tests/system/test_ssl_sha1 ;
+alias test_ssl_sha256 : tests/system/test_ssl_sha256 ;
 alias tests/application.norec :
   tests/application/test_scancodes
 ;
@@ -225,7 +246,12 @@ alias tests/redjs.norec :
   tests/redjs/test_transport
 ;
 alias tests/system.norec :
+  tests/system/test_ssl_md4
+  tests/system/test_ssl_md5
   tests/system/test_ssl_mod_exp
+  tests/system/test_ssl_rc4
+  tests/system/test_ssl_sha1
+  tests/system/test_ssl_sha256
 ;
 alias tests/application :
   tests/application.norec
