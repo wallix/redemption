@@ -39,7 +39,7 @@ void RdpSessionProbeWrapper::send_cliprdr_message(bytes_view message)
 
 void RdpSessionProbeWrapper::send_scancode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode)
 {
-    rdp.send_input(0/*time*/, RDP_INPUT_SCANCODE, underlying_cast(flags), underlying_cast(scancode), 0/*param2*/);
+    rdp.send_input_scancode(0, flags, scancode);
 }
 
 void RdpSessionProbeWrapper::reset_keyboard_status()
