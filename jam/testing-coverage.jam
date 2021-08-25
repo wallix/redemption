@@ -26,7 +26,7 @@ actions cover
     raise () { echo "$1" ; rm *gcov ; exit 1 ; }
 
     COVERBIN=$(COVERBIN)
-    [ -z "$(COVERBIN)" ] && COVERBIN=gcov
+    [ -z "$COVERBIN" ] && COVERBIN=gcov
     COVER_PATH="$(<).dir"
     TAGS="$COVER_PATH/TAGS"
     mkdir -p "$COVER_PATH"
@@ -34,11 +34,14 @@ actions cover
     root=$(>:P)
     root=${root%%/tests/*}
 
+    # exuberant-ctags
     etags -o "$TAGS" $(COVERFILE) || raise 'etags failed'
 
-    echo > "$COVER_PATH"/report.coverage
+    :> "$COVER_PATH"/report.coverage
 
-    echo $(COVERFILE) | tr ' ' '\n' | while read f ; do
+    echo "$(COVERFILE)" | tr ' ' '\n' > "$(<)".coverfile
+
+    while read f ; do
         COVER_GCNO=''
         case ${f##*.} in
             h|hpp) COVER_GCNO=$(>:P)"/$(<:B).gcno" ;;
@@ -63,7 +66,7 @@ actions cover
         [ -e "$GCOV" ] || :> "$GCOV"
 
         mv "$GCOV" "$COVER_PATH" || raise 'gcov mv failed'
-    done
+    done <"$(<)".coverfile
 
     python3 tools/coverage.py $(<) "$TAGS" $COVER_PATH/*.gcov > "$COVER_PATH".report \
     || raise 'python tools/coverage.py failed'
