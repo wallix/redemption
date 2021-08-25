@@ -812,10 +812,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_advanced
-#experimental_fix_input_event_sync = 1
-
-# value: 0 or 1
-#_advanced
 #experimental_fix_too_long_cookie = 1
 
 # Force to split target domain and username with '@' separator.

@@ -152,7 +152,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
-    mod_rdp_params.experimental_fix_input_event_sync = false;
 
     TLSClientParams tls_client_params;
 

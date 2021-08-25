@@ -465,8 +465,6 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"log_only_relevant_clipboard_activities"}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_fix_input_event_sync"}, set(true));
-
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_fix_too_long_cookie"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"split_domain"}, desc{

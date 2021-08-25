@@ -1883,8 +1883,6 @@ class mod_rdp final : public mod_api, public rdp_api
 
     bool delayed_start_capture = false;
 
-    const bool experimental_fix_input_event_sync;
-
     const bool support_connection_redirection_during_recording;
 
     size_t recv_bmp_update = 0;
@@ -2058,7 +2056,6 @@ public:
                 return client_support - disabled_orders;
             }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
         // info.order_caps.orderSupport
-        , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , gd(gd)
@@ -2496,8 +2493,7 @@ private:
                      || this->channels.session_probe_virtual_channel->has_been_launched()
                     ) {
                         this->first_scancode = false;
-                        this->send_input(event_time, RDP_INPUT_SYNCHRONIZE, 0,
-                        underlying_cast(this->last_key_locks_sent), 0);
+                        this->send_input(event_time, RDP_INPUT_SYNCHRONIZE, 0, underlying_cast(this->last_key_locks_sent), 0);
                     }
                 }
                 else
@@ -3510,7 +3506,7 @@ public:
                                 }
 
                                 this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-                                    (this->experimental_fix_input_event_sync ? underlying_cast(this->key_locks) & 0x07 : 0), 0);
+                                    underlying_cast(this->key_locks) & 0x07, 0);
                             }
 }
 
@@ -5725,8 +5721,7 @@ public:
             this->send_fonts(2);
         }
 
-        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-            (this->experimental_fix_input_event_sync ? underlying_cast(this->last_key_locks_sent) : 0), 0);
+        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, underlying_cast(this->last_key_locks_sent) ,0);
     }
 
     void rdp_gdi_down() override {}

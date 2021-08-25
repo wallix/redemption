@@ -168,7 +168,6 @@ namespace
             //mod_rdp_params.certificate_change_action       = 0;
             //mod_rdp_params.extra_orders                    = "";
             mod_rdp_params.large_pointer_support             = false;
-            mod_rdp_params.experimental_fix_input_event_sync = false;
 
             mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
 

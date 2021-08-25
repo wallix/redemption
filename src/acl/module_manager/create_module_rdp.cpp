@@ -636,8 +636,6 @@ ModPack create_mod_rdp(
 
     // ======================= End Dynamic Channel Params ===================
 
-    mod_rdp_params.experimental_fix_input_event_sync =
-        ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.support_connection_redirection_during_recording =
         ini.get<cfg::globals::support_connection_redirection_during_recording>();
     mod_rdp_params.clipboard_params.log_only_relevant_activities =

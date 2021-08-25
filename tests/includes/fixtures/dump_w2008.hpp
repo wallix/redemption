@@ -612,9 +612,9 @@ const char outdata[] = /* NOLINT */
 // mod_rdp::send_input_slowpath: Synchronize Event toggleFlags=0x0 |
 // Sending on RDP W2008 Target (7) 60 bytes |
 /* 0000 */ "\x03\x00\x00\x3c\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x2e\x08\x00" // ...<...d....p... |
-/* 0010 */ "\x00\x00\x93\x51\x86\x1f\x1b\xab\x51\x9a\xf7\xe2\x83\xdc\x96\x93" // ...Q....Q....... |
+/* 0010 */ "\x00\x00\x0e\xd1\xa5\x1b\x44\x06\x8a\xaf\xf7\xe2\x83\xdc\x96\x93" // ...Q....Q....... |
 /* 0020 */ "\x46\x46\x74\xa4\x8a\xaa\x5f\x6f\x2b\xd0\x39\xf7\x06\xe4\xab\xbc" // FFt..._o+.9..... |
-/* 0030 */ "\xc4\xfc\xd7\xe7\x7c\xb5\x11\xb0\x82\x12\x21\xbd"                 // ....|.....!. |
+/* 0030 */ "\xc4\xfc\xd7\xe7\x7c\xb5\x11\xb0\x80\x12\x21\xbd"                 // ....|.....!. |
 // Sent dumped on RDP W2008 Target (7) 60 bytes |
 // Rdp::receiving the server-to-client Monitor Layout PDU MonitorLayoutPDU monitorCount=1 ((left=0, top=0, right=799, bottom=599, primary=yes(0x1))) |
 // is_up_and_running=No |
