@@ -1842,8 +1842,7 @@ class mod_rdp final : public mod_api, public rdp_api
 
     char client_name[128] = {};
 
-    kbdtypes::KeyLocks key_locks;
-    kbdtypes::KeyLocks last_key_locks_sent;
+    kbdtypes::KeyLocks last_key_locks;
     bool first_scancode = true;
 
     enum : uint8_t {
@@ -2030,8 +2029,7 @@ public:
                         session_log.report("FILESYSTEM_FULL", "100|unknown");
                     }
                 })
-        , key_locks(mod_rdp_params.key_locks)
-        , last_key_locks_sent(mod_rdp_params.key_locks)
+        , last_key_locks(mod_rdp_params.key_locks)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , license_store(license_store)
@@ -2493,20 +2491,19 @@ private:
                      || this->channels.session_probe_virtual_channel->has_been_launched()
                     ) {
                         this->first_scancode = false;
-                        this->send_input_synchronize(this->last_key_locks_sent);
+                        this->send_input_synchronize(this->last_key_locks);
                     }
                 }
                 else
 #endif
                 {
                         this->first_scancode = false;
-                        this->send_input_synchronize(this->last_key_locks_sent);
+                        this->send_input_synchronize(this->last_key_locks);
                 }
             }
 
 #ifndef __EMSCRIPTEN__
-            if (!this->channels.scancode_must_be_blocked(flags, scancode))
-            {
+            if (!this->channels.scancode_must_be_blocked(flags, scancode)) {
                 this->send_input_scancode(event_time, flags, scancode);
             }
 
@@ -3269,7 +3266,7 @@ public:
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
-                            rdp_input_synchronize(KeyLocks(underlying_cast(this->key_locks)));
+                            rdp_input_synchronize(this->last_key_locks);
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                 // sdata.log();
@@ -3503,7 +3500,7 @@ public:
                                     this->send_fonts(2);
                                 }
 
-                                this->send_input_synchronize(this->key_locks);
+                                this->send_input_synchronize(this->last_key_locks);
                             }
 
                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
@@ -5706,7 +5703,7 @@ public:
             this->send_fonts(2);
         }
 
-        this->send_input_synchronize(this->last_key_locks_sent);
+        this->send_input_synchronize(this->last_key_locks);
     }
 
     void rdp_gdi_down() override {}
@@ -6392,6 +6389,8 @@ private:
 
     void send_input_synchronize(KeyLocks locks)
     {
+        this->last_key_locks = locks;
+
         if (this->enable_fastpath_client_input_event) {
             this->send_input_fastpath([&](OutStream & stream) {
                 FastPath::SynchronizeEvent_Send(stream, underlying_cast(locks));
@@ -6400,8 +6399,6 @@ private:
         else {
             this->send_input_slowpath(0, RDP_INPUT_SYNCHRONIZE, 0, underlying_cast(locks), 0);
         }
-
-        this->last_key_locks_sent = locks;
     }
 
     void send_input_scancode(uint32_t event_time, KbdFlags keyboardFlags, Scancode scancode)
