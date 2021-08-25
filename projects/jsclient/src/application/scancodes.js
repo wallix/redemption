@@ -104,6 +104,7 @@ const keycodeToSingleScancode = function(code) {
     case "Numpad3": return 0x51;
     case "Numpad4": return 0x4B;
     case "Numpad5": return 0x4C;
+    case "NumpadClear": return 0x4C;
     case "Numpad6": return 0x4D;
     case "Numpad7": return 0x47;
     case "Numpad8": return 0x48;
@@ -198,6 +199,7 @@ const numpadCodeToScancode = function(key) {
     case "NumpadSubtract":  /*case "-": case "Subtract":    */  return 0x4A;
     case "Numpad4":         /*case "4": case "ArrowLeft":   */  return 0x4B;
     case "Numpad5":         /*case "5": case "Unidentified":*/  return 0x4C;
+    case "NumpadClear":                                         return 0x4C;
     case "Numpad6":         /*case "6": case "AltRight":    */  return 0x4D;
     case "NumpadAdd":       /*case "+": case "Add":         */  return 0x4E;
     case "Numpad1":         /*case "1": case "End":         */  return 0x4F;
