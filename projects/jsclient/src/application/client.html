@@ -352,6 +352,8 @@ function run(openCb, closeCb)
                 return false;
             case 'Dead':
             case 'Compose':
+            case 'Process':
+            // case 'Unidentified':
                 return true;
         }
         return evt.isComposing;
