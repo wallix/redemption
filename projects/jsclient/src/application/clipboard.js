@@ -1,4 +1,4 @@
-"strict";
+"use strict";
 
 // const maxPacketSize = 1600;
 // const headerSize = 8;

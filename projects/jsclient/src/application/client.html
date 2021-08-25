@@ -188,6 +188,8 @@ div, section, canvas{
 <script src="clipboard.js"></script>
 
 <script>
+"use strict";
+
 // new canvas whether new gdimpl
 let ecanvas = document.getElementById('canvas');
 const ecanvasFocus = document.getElementById('canvasFocus');
@@ -448,7 +450,6 @@ function run(openCb, closeCb)
         },
     };
 
-    abortKeyUp = false;
     let onKeyEvent = kbdFunctions.keyToScancodeOrUnicode;
     let onCompositeKeyEvent = kbdComposingFunctions.keyToScancodeOrUnicode;
     let realOnKeyEvent = onKeyEvent;
@@ -803,7 +804,7 @@ function run(openCb, closeCb)
 
 const url = new URL(window.location.href);
 
-urlparams = {};
+const urlparams = {};
 function updatePermalink()
 {
     let newurl = url.href.substr(0, url.href.length-url.search.length);

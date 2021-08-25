@@ -1,4 +1,4 @@
-"strict";
+"use strict";
 
 class OutStream
 {

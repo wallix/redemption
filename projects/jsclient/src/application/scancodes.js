@@ -1,4 +1,4 @@
-"strict";
+"use strict";
 
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
@@ -296,20 +296,20 @@ const emptyReversedLayout = {
     accents: [],
 };
 
-remappingModByLeftMods = {
+const remappingModByLeftMods = {
     OS:      'OSLeft',
     Meta:    'OSLeft',
     Shift:   'ShiftLeft',
     Control: 'ControlLeft',
 };
-remappingModByRightMods = {
+const remappingModByRightMods = {
     OS:      'OSRight',
     Meta:    'OSRight',
     Shift:   'ShiftRight',
     Control: 'ControlRight',
 };
 // { code : { key: newcode } }
-remappingCodeByKeys = {
+const remappingCodeByKeys = {
     OSLeft: remappingModByLeftMods,
     MetaLeft: remappingModByLeftMods,
     ShiftLeft: remappingModByLeftMods,

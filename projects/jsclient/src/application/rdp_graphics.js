@@ -1,4 +1,4 @@
-"strict";
+"use strict";
 
 const rgbToCss = function(color) {
     return '#'+color.toString(16).padStart(6, '0');
