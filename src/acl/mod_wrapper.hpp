@@ -38,7 +38,6 @@
 #include "core/callback.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/slowpath.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 

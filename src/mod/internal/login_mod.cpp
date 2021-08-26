@@ -22,9 +22,6 @@
 #include "configs/config.hpp"
 #include "mod/internal/login_mod.hpp"
 #include "main/version.hpp"
-#include "core/front_api.hpp"
-#include "core/RDP/slowpath.hpp"
-#include "RAIL/client_execute.hpp"
 #include "utils/strutils.hpp"
 
 #include <string>

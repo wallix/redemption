@@ -21,7 +21,6 @@ Author(s): Proxy Team
 #include "mod/internal/rail_mod_base.hpp"
 #include "RAIL/client_execute.hpp"
 #include "gdi/graphic_api.hpp"
-#include "core/RDP/slowpath.hpp"
 #include "keyboard/keymap.hpp"
 
 

@@ -22,7 +22,6 @@
 #include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/slowpath.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
