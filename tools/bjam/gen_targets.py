@@ -101,18 +101,6 @@ target_nosyslog = set((
     #'main_client_redemption',
 ))
 
-#coverage_requirements = dict((
-#))
-
-dir_nocoverage = set((
-    'tests/server',
-    'tests/system/common',
-    'tests/system/emscripten',
-    'tests/client_mods',
-    'tests/lib',
-))
-file_nocoverage = set(glob.glob('tests/*.cpp'))
-
 sys_lib_assoc = dict((
     ('png.h', Dep(
         linkflags=['<library>png'])),
@@ -187,7 +175,6 @@ class File:
         self.all_source_deps = None # then set()
         self.all_link_deps = None # then set()
         self.all_cxx_deps = None # then set()
-        self.have_coverage = False
         self.used = False #
 
 def HFile(d, f):
@@ -598,17 +585,8 @@ def generate(type, files, requirements, get_target_cb = get_target):
             deps += target_requirements[target]
 
         if type == 'test-run':
-            if f.root in dir_nocoverage or f.path in file_nocoverage:
-                deps.append('$(GCOV_NO_BUILD)')
-            else:
-                iright = len(f.root)
-                base = 'src/' + src[6:iright+1] + src[iright+6:-3]
-                for ext in ('hpp', 'cpp', 'h', 'c'):
-                    if base+ext in all_files:
-                        deps.append('<covfile>'+base+ext)
-                        f.have_coverage = True
-            #if src in coverage_requirements:
-                #deps.append(coverage_requirements[src])
+            iright = len(f.root)
+            base = 'src/' + src[6:iright+1] + src[iright+6:-3]
             src = inject_variable_prefix(f.path)
         elif type == 'exe':
             src = cpp_to_obj(f)
@@ -668,7 +646,7 @@ generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)],
          ['$(EXE_DEPENDENCIES)'])
 generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)],
          ['$(EXE_DEPENDENCIES_NO_SYSLOG)'])
-generate('exe', ocr_mains, ['$(GCOV_NO_BUILD)'])
+generate('exe', ocr_mains, [])
 print()
 
 generate('lib', libs, ['$(LIB_DEPENDENCIES)', '<library>log.o'], lambda f: 'lib'+get_target(f))
@@ -698,21 +676,11 @@ test_targets_counter = OrderedDict(test_targets)
 for t in test_targets:
     test_targets_counter[t[0]][0] += 1
 
-coverages = []
 for k,t in test_targets_counter.items():
     if t[0] == 1:
         f = t[1]
         unprefixed = unprefixed_file(f)
         print('alias', k, ':', unprefixed, ';')
-        if f.have_coverage:
-            coverages.append((k,unprefixed))
-
-if coverages:
-    print('if $(ENABLE_COVERAGE) = "on"')
-    print('{')
-    for t in coverages:
-        print('alias ', t[0]+'.coverage', ' : ', t[1]+'.coverage', ' ;', sep='')
-    print('}')
 
 # alias by directory
 dir_tests = OrderedDict()

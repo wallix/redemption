@@ -312,3 +312,10 @@ actions update_gettext_po
 }
 explicit update-po ;
 make update-po : : @update_gettext_po ;
+
+actions cwd
+{
+    echo "CWD: $(>[1]:D)"
+}
+make cwd : app_path_exe.o : @cwd ;
+explicit cwd ;

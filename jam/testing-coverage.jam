@@ -3,79 +3,7 @@ import testing ;
 import toolset ;
 import feature : feature ;
 
-feature.feature <covfile> : : free ;
-toolset.flags cover COVERFILE : <covfile> ;
-
-feature.feature <covflag> : : free ;
-toolset.flags cover COVERFLAG : <covflag> ;
-
-feature.feature <covbin> : : free ;
-toolset.flags cover COVERBIN : <covbin> ;
-
 feature.feature <noopstacktrace> : off on : incidental ;
-
-
-actions cover
-{
-    echo "Computing coverage for $(COVERFILE) "
-
-    # echo "COVERFILE = $(COVERFILE)"
-    # echo "source = $(>)"
-    # echo "target = $(<)"
-
-    raise () { echo "$1" ; rm *gcov ; exit 1 ; }
-
-    COVERBIN=$(COVERBIN)
-    [ -z "$COVERBIN" ] && COVERBIN=gcov
-    COVER_PATH="$(<).dir"
-    TAGS="$COVER_PATH/TAGS"
-    mkdir -p "$COVER_PATH"
-
-    root=$(>:P)
-    root=${root%%/tests/*}
-
-    # exuberant-ctags
-    etags -o "$TAGS" $(COVERFILE) || raise 'etags failed'
-
-    :> "$COVER_PATH"/report.coverage
-
-    echo "$(COVERFILE)" | tr ' ' '\n' > "$(<)".coverfile
-
-    while read f ; do
-        COVER_GCNO=''
-        case ${f##*.} in
-            h|hpp) COVER_GCNO=$(>:P)"/$(<:B).gcno" ;;
-            cpp) COVER_GCNO="$root/${f%cpp}gcno" ;;
-            c)   COVER_GCNO="$root/${f%c}gcno" ;;
-        esac
-        [ -e "$COVER_GCNO" ] || raise "coverage file \"$COVER_GCNO\" does not exist"
-
-        "$COVERBIN" \
-            --unconditional-branches \
-            --all-blocks \
-            --branch-count \
-            --branch-probabilities \
-            --function-summaries \
-            --demangled-names \
-            -o "$COVER_GCNO" \
-            "$(>:S=)" \
-            >> "$COVER_PATH"/report.coverage \
-        || raise 'gcov failed'
-
-        GCOV=${f##*/}.gcov
-        [ -e "$GCOV" ] || :> "$GCOV"
-
-        mv "$GCOV" "$COVER_PATH" || raise 'gcov mv failed'
-    done <"$(<)".coverfile
-
-    python3 tools/coverage.py $(<) "$TAGS" $COVER_PATH/*.gcov > "$COVER_PATH".report \
-    || raise 'python tools/coverage.py failed'
-    cat "$COVER_PATH".report
-
-    rm *gcov
-
-    : > $(<)
-}
 
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
@@ -149,14 +77,4 @@ rule test-run ( target : source : requirements * : )
     }
 
     unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) <define>RED_TEST_MODULE=$(source) ;
-
-    if $(ENABLE_COVERAGE) = "on" && ! <covflag>nocover in $(requirements)
-    {
-        local ps = [ property-set.create $(requirements) ] ;
-        local files = [ $(ps).get <covfile> ] ;
-        if $(files)
-        {
-            make $(target:S=.coverage) : $(target) : @cover : <covfile>$(files) ;
-        }
-    }
 }

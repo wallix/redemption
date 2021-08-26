@@ -188,7 +188,8 @@ show_duration $toolset_clang
 
 if [[ $fast -eq 0 ]]; then
     # debug with coverage
-    build $toolset_gcc debug -scoverage=on covbin=$gcovbin -s FAST_CHECK=1
+    mkdir -p bin/htmlcov
+    GCOV_BIN="$gcovbin" OUTPUT_DIR=bin/htmlcov/index.html ./tools/gcovr.sh -q $toolset_gcc debug -s FAST_CHECK=1
     rm -r bin/gcc*
 
     show_duration $toolset_gcc coverage
