@@ -22,7 +22,6 @@
 #include "test_only/transport/test_transport.hpp"
 
 
-// TEST missing
 int main()
 {
     auto payload =

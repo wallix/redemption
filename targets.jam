@@ -604,10 +604,6 @@ test-run tests/acl/test_acl_serializer :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/acl/test_auth_api :
-  $(REDEMPTION_TEST_PATH)/acl/test_auth_api.cpp
-:
-;
 test-run tests/acl/test_kv_list_from_strings :
   $(REDEMPTION_TEST_PATH)/acl/test_kv_list_from_strings.cpp
 :
@@ -1538,10 +1534,6 @@ test-run tests/core/RDP/capabilities/test_colcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_colcache.cpp
 :
 ;
-test-run tests/core/RDP/capabilities/test_common :
-  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_common.cpp
-:
-;
 test-run tests/core/RDP/capabilities/test_compdesk :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_compdesk.cpp
 :
@@ -1819,10 +1811,6 @@ test-run tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex :
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp
-:
-;
-test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt :
-  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp
 :
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt :
@@ -2174,10 +2162,6 @@ test-run tests/core/test_buf64k :
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/core/test_callback :
-  $(REDEMPTION_TEST_PATH)/core/test_callback.cpp
-:
-;
 test-run tests/core/test_channel_list :
   $(REDEMPTION_TEST_PATH)/core/test_channel_list.cpp
 :
@@ -2210,10 +2194,6 @@ test-run tests/core/test_font :
 :
   <library>src/core/font.o
 ;
-test-run tests/core/test_front_api :
-  $(REDEMPTION_TEST_PATH)/core/test_front_api.cpp
-:
-;
 test-run tests/core/test_glyph_to_24_bitmap :
   $(REDEMPTION_TEST_PATH)/core/test_glyph_to_24_bitmap.cpp
 :
@@ -2230,11 +2210,6 @@ test-run tests/core/test_pid_file :
   <library>src/core/pid_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
-;
-test-run tests/core/test_server_notifier_api :
-  $(REDEMPTION_TEST_PATH)/core/test_server_notifier_api.cpp
-:
-  <library>crypto
 ;
 test-run tests/core/test_session_events :
   $(REDEMPTION_TEST_PATH)/core/test_session_events.cpp
@@ -3432,10 +3407,6 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/mod/internal/widget/test_notify_api :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_notify_api.cpp
-:
-;
 test-run tests/mod/internal/widget/test_number_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_number_edit.cpp
 :
@@ -3772,10 +3743,6 @@ test-run tests/mod/internal/widget/test_wait :
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/mod/internal/widget/test_widget :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
-:
-;
 test-run tests/mod/internal/widget/test_widget_rect :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget_rect.cpp
 :
@@ -3808,15 +3775,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/mod/null/test_null :
-  $(REDEMPTION_TEST_PATH)/mod/null/test_null.cpp
-:
-;
-test-run tests/mod/rdp/channels/test_base_channel :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
-:
-  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
@@ -4006,19 +3964,6 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/mod/rdp/test_rdp_params :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_params.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/mod/test_file_validator_service :
   $(REDEMPTION_TEST_PATH)/mod/test_file_validator_service.cpp
 :
@@ -4038,10 +3983,6 @@ test-run tests/mod/test_metrics_hmac :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/mod/test_mod_api :
-  $(REDEMPTION_TEST_PATH)/mod/test_mod_api.cpp
-:
 ;
 test-run tests/mod/vnc/encoder/test_hextile :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_hextile.cpp
@@ -4181,24 +4122,12 @@ test-run tests/regex/test_regex :
   $(REDEMPTION_TEST_PATH)/regex/test_regex.cpp
 :
 ;
-test-run tests/regex/test_regex_automaton :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_automaton.cpp
-:
-;
-test-run tests/regex/test_regex_consumer :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_consumer.cpp
-:
-;
 test-run tests/regex/test_regex_parser :
   $(REDEMPTION_TEST_PATH)/regex/test_regex_parser.cpp
 :
 ;
 test-run tests/regex/test_regex_state :
   $(REDEMPTION_TEST_PATH)/regex/test_regex_state.cpp
-:
-;
-test-run tests/regex/test_regex_utils :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_utils.cpp
 :
 ;
 test-run tests/server/test_mstsc_client :
@@ -4624,13 +4553,6 @@ test-run tests/transport/test_test_transport :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/transport/test_transport :
-  $(REDEMPTION_TEST_PATH)/transport/test_transport.cpp
-:
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/transport/ws/test_ws_protocol :
   $(REDEMPTION_TEST_PATH)/transport/ws/test_ws_protocol.cpp
 :
@@ -4737,18 +4659,10 @@ test-run tests/utils/sugar/test_int_to_chars :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_int_to_chars.cpp
 :
 ;
-test-run tests/utils/sugar/test_movable_noncopyable :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_movable_noncopyable.cpp
-:
-;
 test-run tests/utils/sugar/test_multisz :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_multisz.cpp
 :
   <library>src/utils/sugar/multisz.o
-;
-test-run tests/utils/sugar/test_noncopyable :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_noncopyable.cpp
-:
 ;
 test-run tests/utils/sugar/test_range :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_range.cpp
@@ -5336,7 +5250,6 @@ obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH
 alias test_client_execute : tests/RAIL/test_client_execute ;
 alias test_acl_field_mask : tests/acl/test_acl_field_mask ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
-alias test_auth_api : tests/acl/test_auth_api ;
 alias test_kv_list_from_strings : tests/acl/test_kv_list_from_strings ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_mod_wrapper : tests/acl/test_mod_wrapper ;
@@ -5381,7 +5294,6 @@ alias test_cap_glyphcache : tests/core/RDP/capabilities/test_cap_glyphcache ;
 alias test_cap_share : tests/core/RDP/capabilities/test_cap_share ;
 alias test_cap_sound : tests/core/RDP/capabilities/test_cap_sound ;
 alias test_colcache : tests/core/RDP/capabilities/test_colcache ;
-alias test_common : tests/core/RDP/capabilities/test_common ;
 alias test_compdesk : tests/core/RDP/capabilities/test_compdesk ;
 alias test_control : tests/core/RDP/capabilities/test_control ;
 alias test_drawgdiplus : tests/core/RDP/capabilities/test_drawgdiplus ;
@@ -5424,7 +5336,6 @@ alias test_RDPOrdersPrimaryEllipseCB : tests/core/RDP/orders/test_RDPOrdersPrima
 alias test_RDPOrdersPrimaryEllipseSC : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC ;
 alias test_RDPOrdersPrimaryGlyphIndex : tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex ;
 alias test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo ;
-alias test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt ;
 alias test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt ;
 alias test_RDPOrdersPrimaryMultiDstBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt ;
 alias test_RDPOrdersPrimaryMultiOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect ;
@@ -5467,18 +5378,15 @@ alias test_audio_output : tests/core/RDPEA/test_audio_output ;
 alias test_MessageSyntax : tests/core/SMB2/test_MessageSyntax ;
 alias test_MetaFileFormat : tests/core/WMF/test_MetaFileFormat ;
 alias test_buf64k : tests/core/test_buf64k ;
-alias test_callback : tests/core/test_callback ;
 alias test_channel_list : tests/core/test_channel_list ;
 alias test_channel_names : tests/core/test_channel_names ;
 alias test_dynamic_channels_authorizations : tests/core/test_dynamic_channels_authorizations ;
 alias test_error : tests/core/test_error ;
 alias test_events : tests/core/test_events ;
 alias test_font : tests/core/test_font ;
-alias test_front_api : tests/core/test_front_api ;
 alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
 alias test_log_id : tests/core/test_log_id ;
 alias test_pid_file : tests/core/test_pid_file ;
-alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_session_events : tests/core/test_session_events ;
 alias test_front : tests/front/test_front ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
@@ -5514,7 +5422,6 @@ alias test_label : tests/mod/internal/widget/test_label ;
 alias test_labelgrid : tests/mod/internal/widget/test_labelgrid ;
 alias test_login : tests/mod/internal/widget/test_login ;
 alias test_multiline : tests/mod/internal/widget/test_multiline ;
-alias test_notify_api : tests/mod/internal/widget/test_notify_api ;
 alias test_number_edit : tests/mod/internal/widget/test_number_edit ;
 alias test_password : tests/mod/internal/widget/test_password ;
 alias test_screen : tests/mod/internal/widget/test_screen ;
@@ -5524,10 +5431,7 @@ alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
 alias test_vertical_scroll_text : tests/mod/internal/widget/test_vertical_scroll_text ;
 alias test_wab_close : tests/mod/internal/widget/test_wab_close ;
 alias test_wait : tests/mod/internal/widget/test_wait ;
-alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
-alias test_null : tests/mod/null/test_null ;
-alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
@@ -5536,10 +5440,8 @@ alias test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel ;
 alias test_rdp : tests/mod/rdp/test_rdp ;
 alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
 alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
-alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
 alias test_file_validator_service : tests/mod/test_file_validator_service ;
 alias test_metrics_hmac : tests/mod/test_metrics_hmac ;
-alias test_mod_api : tests/mod/test_mod_api ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
 alias test_pointer_loader_vnc : tests/mod/vnc/encoder/test_pointer_loader_vnc ;
 alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
@@ -5549,11 +5451,8 @@ alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
 alias test_extract_user_domain : tests/proxy_recorder/test_extract_user_domain ;
 alias test_proxy_recorder : tests/proxy_recorder/test_proxy_recorder ;
 alias test_regex : tests/regex/test_regex ;
-alias test_regex_automaton : tests/regex/test_regex_automaton ;
-alias test_regex_consumer : tests/regex/test_regex_consumer ;
 alias test_regex_parser : tests/regex/test_regex_parser ;
 alias test_regex_state : tests/regex/test_regex_state ;
-alias test_regex_utils : tests/regex/test_regex_utils ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
 alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
 alias test_rdesktop_client : tests/server/test_rdesktop_client ;
@@ -5577,7 +5476,6 @@ alias test_recorder_transport : tests/transport/test_recorder_transport ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
 alias test_test_transport : tests/transport/test_test_transport ;
-alias test_transport : tests/transport/test_transport ;
 alias test_ws_protocol : tests/transport/ws/test_ws_protocol ;
 alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
@@ -5601,9 +5499,7 @@ alias test_cast : tests/utils/sugar/test_cast ;
 alias test_checked_iterator : tests/utils/sugar/test_checked_iterator ;
 alias test_finally : tests/utils/sugar/test_finally ;
 alias test_int_to_chars : tests/utils/sugar/test_int_to_chars ;
-alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_multisz : tests/utils/sugar/test_multisz ;
-alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_range : tests/utils/sugar/test_range ;
 alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_static_array_to_hexadecimal_chars : tests/utils/sugar/test_static_array_to_hexadecimal_chars ;
@@ -5668,7 +5564,6 @@ alias tests/RAIL.norec :
 alias tests/acl.norec :
   tests/acl/test_acl_field_mask
   tests/acl/test_acl_serializer
-  tests/acl/test_auth_api
   tests/acl/test_kv_list_from_strings
   tests/acl/test_license_api
   tests/acl/test_mod_wrapper
@@ -5733,7 +5628,6 @@ alias tests/core/RDP/capabilities.norec :
   tests/core/RDP/capabilities/test_cap_share
   tests/core/RDP/capabilities/test_cap_sound
   tests/core/RDP/capabilities/test_colcache
-  tests/core/RDP/capabilities/test_common
   tests/core/RDP/capabilities/test_compdesk
   tests/core/RDP/capabilities/test_control
   tests/core/RDP/capabilities/test_drawgdiplus
@@ -5790,7 +5684,6 @@ alias tests/core/RDP/orders.norec :
   tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC
   tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex
   tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt
   tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt
   tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt
   tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect
@@ -5843,18 +5736,15 @@ alias tests/core/WMF.norec :
 ;
 alias tests/core.norec :
   tests/core/test_buf64k
-  tests/core/test_callback
   tests/core/test_channel_list
   tests/core/test_channel_names
   tests/core/test_dynamic_channels_authorizations
   tests/core/test_error
   tests/core/test_events
   tests/core/test_font
-  tests/core/test_front_api
   tests/core/test_glyph_to_24_bitmap
   tests/core/test_log_id
   tests/core/test_pid_file
-  tests/core/test_server_notifier_api
   tests/core/test_session_events
 ;
 alias tests/front.norec :
@@ -5904,7 +5794,6 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_labelgrid
   tests/mod/internal/widget/test_login
   tests/mod/internal/widget/test_multiline
-  tests/mod/internal/widget/test_notify_api
   tests/mod/internal/widget/test_number_edit
   tests/mod/internal/widget/test_password
   tests/mod/internal/widget/test_screen
@@ -5914,14 +5803,9 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_vertical_scroll_text
   tests/mod/internal/widget/test_wab_close
   tests/mod/internal/widget/test_wait
-  tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect
 ;
-alias tests/mod/null.norec :
-  tests/mod/null/test_null
-;
 alias tests/mod/rdp/channels.norec :
-  tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
@@ -5932,12 +5816,10 @@ alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp
   tests/mod/rdp/test_rdp_metrics
   tests/mod/rdp/test_rdp_negociation
-  tests/mod/rdp/test_rdp_params
 ;
 alias tests/mod.norec :
   tests/mod/test_file_validator_service
   tests/mod/test_metrics_hmac
-  tests/mod/test_mod_api
 ;
 alias tests/mod/vnc/encoder.norec :
   tests/mod/vnc/encoder/test_hextile
@@ -5955,11 +5837,8 @@ alias tests/proxy_recorder.norec :
 ;
 alias tests/regex.norec :
   tests/regex/test_regex
-  tests/regex/test_regex_automaton
-  tests/regex/test_regex_consumer
   tests/regex/test_regex_parser
   tests/regex/test_regex_state
-  tests/regex/test_regex_utils
 ;
 alias tests/server.norec :
   tests/server/test_mstsc_client
@@ -5989,7 +5868,6 @@ alias tests/transport.norec :
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport
   tests/transport/test_test_transport
-  tests/transport/test_transport
 ;
 alias tests/transport/ws.norec :
   tests/transport/ws/test_ws_protocol
@@ -6023,9 +5901,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_checked_iterator
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_int_to_chars
-  tests/utils/sugar/test_movable_noncopyable
   tests/utils/sugar/test_multisz
-  tests/utils/sugar/test_noncopyable
   tests/utils/sugar/test_range
   tests/utils/sugar/test_splitter
   tests/utils/sugar/test_static_array_to_hexadecimal_chars
@@ -6223,16 +6099,12 @@ alias tests/mod/internal :
 ;
 alias tests/mod :
   tests/mod/internal
-  tests/mod/null
   tests/mod/rdp
   tests/mod.norec
   tests/mod/vnc
 ;
 alias tests/mod/internal/widget :
   tests/mod/internal/widget.norec
-;
-alias tests/mod/null :
-  tests/mod/null.norec
 ;
 alias tests/mod/rdp/channels :
   tests/mod/rdp/channels.norec
@@ -6325,7 +6197,6 @@ explicit
   tests/lib.norec
   tests/mod/internal.norec
   tests/mod/internal/widget.norec
-  tests/mod/null.norec
   tests/mod/rdp/channels.norec
   tests/mod/rdp.norec
   tests/mod.norec
@@ -6380,7 +6251,6 @@ explicit
   tests/mod/internal
   tests/mod
   tests/mod/internal/widget
-  tests/mod/null
   tests/mod/rdp/channels
   tests/mod/rdp
   tests/mod/vnc/encoder
