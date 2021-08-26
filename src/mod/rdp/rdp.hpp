@@ -141,7 +141,7 @@ struct FileValidatorService;
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
-#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "mod/rdp/rdp_negociation.hpp"

@@ -24,7 +24,7 @@
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/string_c.hpp"
 #include "utils/hexadecimal_string_to_buffer.hpp"

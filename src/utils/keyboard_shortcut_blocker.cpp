@@ -24,7 +24,7 @@
 #include "keyboard/kbdtypes.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/utf.hpp"
 #include "utils/sugar/flags.hpp"

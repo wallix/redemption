@@ -4668,8 +4668,8 @@ test-run tests/utils/sugar/test_range :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_range.cpp
 :
 ;
-test-run tests/utils/sugar/test_splitter :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_splitter.cpp
+test-run tests/utils/sugar/test_split :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_split.cpp
 :
 ;
 test-run tests/utils/sugar/test_static_array_to_hexadecimal_chars :
@@ -5501,7 +5501,7 @@ alias test_finally : tests/utils/sugar/test_finally ;
 alias test_int_to_chars : tests/utils/sugar/test_int_to_chars ;
 alias test_multisz : tests/utils/sugar/test_multisz ;
 alias test_range : tests/utils/sugar/test_range ;
-alias test_splitter : tests/utils/sugar/test_splitter ;
+alias test_split : tests/utils/sugar/test_split ;
 alias test_static_array_to_hexadecimal_chars : tests/utils/sugar/test_static_array_to_hexadecimal_chars ;
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
@@ -5903,7 +5903,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_int_to_chars
   tests/utils/sugar/test_multisz
   tests/utils/sugar/test_range
-  tests/utils/sugar/test_splitter
+  tests/utils/sugar/test_split
   tests/utils/sugar/test_static_array_to_hexadecimal_chars
   tests/utils/sugar/test_static_vector
   tests/utils/sugar/test_unique_fd

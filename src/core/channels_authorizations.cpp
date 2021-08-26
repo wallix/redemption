@@ -21,7 +21,7 @@
 #include "core/channels_authorizations.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
-#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"

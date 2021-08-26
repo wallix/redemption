@@ -24,7 +24,7 @@
 #include "keyboard/keylayouts.hpp"
 #include "utils/log.hpp"
 #include "utils/theme.hpp"
-#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/sugar/algostring.hpp"
 
 
