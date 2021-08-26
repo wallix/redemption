@@ -353,7 +353,7 @@ msgstr "Certificat TLS est inaccessible!"
 
 #: ../../src/utils/translation.hpp:145
 msgid "VNC connection error!"
-msgstr "Error de connexion VNC!"
+msgstr "Erreur de connexion VNC!"
 
 #: ../../src/utils/translation.hpp:146
 msgid "Unsupported client display monitor layout!"
