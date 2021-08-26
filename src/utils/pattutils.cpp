@@ -61,7 +61,7 @@ PatternValue get_pattern_value(chars_view const pattern_rule)
         if (end_option_list != av.end() && end_option_list+1 != av.end()) {
             chars_view options(av.begin()+1, end_option_list);
             bool is_exact = false;
-            for (auto token_av : make_splitter(options, IsWordSeparator{})) {
+            for (auto token_av : split_with(options, IsWordSeparator{})) {
                 auto token = token_av.as<std::string_view>();
 
                 if (token == "exact") {
@@ -119,7 +119,7 @@ namespace
 {
     bool contains_pattern(chars_view soh_separated_patterns, bool check_kbd, bool check_ocr)
     {
-        for (auto rng : get_line(soh_separated_patterns, string_pattern_separator)) {
+        for (auto rng : get_lines(soh_separated_patterns, string_pattern_separator)) {
             PatternValue const pattern_value = get_pattern_value({rng.begin(), rng.end()});
             if (not pattern_value.pattern.empty()
              && ( (check_kbd && pattern_value.is_kbd)

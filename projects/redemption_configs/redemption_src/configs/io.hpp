@@ -314,7 +314,7 @@ parse_error parse_from_cfg(
 template<class IntOrigin>
 parse_error parse_integral_list(std::string & x, bytes_view value) {
     const auto chars = value.as_chars();
-    for (auto r : make_splitter(chars, ',')) {
+    for (auto r : get_lines(chars, ',')) {
         IntOrigin i;
         auto rng = trim(r);
         if (auto err = parse_integral<true>(

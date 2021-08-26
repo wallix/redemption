@@ -20,137 +20,120 @@
 
 #pragma once
 
-#include <iterator>
-
-#include "utils/sugar/range.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/array.hpp"
 
-template<class ForwardIterator,
-         class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
-class splitter
+#include <type_traits>
+
+
+template<class AV, class Sep = typename AV::value_type>
+struct GetLineView
 {
-    ForwardIterator first_;
-    ForwardIterator last_;
-    ForwardIterator cur_;
-    using value_type = ValueT;
-    value_type sep_;
-
-    using range = ::range<ForwardIterator>;
-
-public:
-    splitter(ForwardIterator first, ForwardIterator last, value_type const& sep)
-    : first_(first)
-    , last_(last)
-    , cur_(first)
-    , sep_(sep)
+    template<class TSep>
+    GetLineView(AV av, TSep&& sep)
+    : first(av.begin())
+    , last(av.end())
+    , sep(static_cast<TSep&&>(sep))
     {}
 
-    splitter(ForwardIterator first, ForwardIterator last, value_type&& sep)
-    : first_(first)
-    , last_(last)
-    , cur_(first)
-    , sep_(std::move(sep))
-    {}
-
-    range next() {
-        this->first_ = this->cur_;
-        while (this->cur_ != last_ && !bool(this->sep_ == *this->cur_)) {
-            ++this->cur_;
+    AV next()
+    {
+        first = cur;
+        while (cur != last && !bool(sep == *cur)) {
+            ++cur;
         }
-        range res{this->first_, this->cur_};
-        if (this->cur_ != this->last_ ) {
-            ++this->cur_;
+        AV res{first, cur};
+        if (cur != last) {
+            ++cur;
         }
         return res;
     }
 
     [[nodiscard]] bool empty() const {
-        return this->first_ == this->last_;
+        return first == last;
     }
 
-private:
-    class iterator {
-        splitter & splitter_;
-        range r_;
+    class iterator
+    {
+        GetLineView & lines;
+        AV av;
 
-        friend class splitter;
+        friend class GetLineView;
 
-        explicit iterator(splitter & s)
-        : splitter_(s)
-        , r_(s.next())
+        explicit iterator(GetLineView & s)
+        : lines(s)
+        , av(s.next())
         {}
 
-        explicit iterator(splitter & s, int /*unused*/)
-        : splitter_(s)
+        explicit iterator(GetLineView & s, int /*unused*/)
+        : lines(s)
         {}
 
     public:
-        iterator& operator++() {
-            this->r_ = this->splitter_.next();
+        iterator& operator++()
+        {
+            av = this->lines.next();
             return *this;
         }
 
-        const range & operator*() const {
-            return this->r_;
+        const AV& operator*() const
+        {
+            return av;
         }
 
-        const range* operator->() const {
-            return &this->r_;
+        const AV* operator->() const
+        {
+            return &av;
         }
 
-        bool operator==(iterator const & other) const noexcept {
-            return this->splitter_.first_ == other.splitter_.last_;
+        bool operator==(iterator const & other) const noexcept
+        {
+            return lines.first == other.lines.last;
         }
 
-        bool operator!=(iterator const & other) const noexcept {
-            return !this->operator==(other);
+        bool operator!=(iterator const & other) const noexcept
+        {
+            return !operator==(other);
         }
     };
 
-public:
-    iterator begin() {
+    iterator begin()
+    {
         return iterator(*this);
     }
 
-    iterator end() {
+    iterator end()
+    {
         return iterator(*this, 1);
     }
+
+private:
+    typename AV::iterator first;
+    typename AV::iterator last;
+    typename AV::iterator cur = first;
+    Sep sep;
 };
 
 
-template<class ForwardIterator, class T>
-splitter<ForwardIterator, typename std::decay<T>::type>
-make_splitter(ForwardIterator first, ForwardIterator last, T && sep)
+template<class Sep>
+auto split_with(chars_view s, Sep&& sep)
+-> GetLineView<chars_view, std::enable_if_t<sizeof(sep == 'a'), std::decay_t<Sep>>>
 {
-    return {first, last, std::forward<T>(sep)};
+    return {s, sep};
 }
 
-template<class Cont>
-struct container_traits
+template<class Sep>
+auto split_with(writable_chars_view s, Sep&& sep)
+-> GetLineView<writable_chars_view, std::enable_if_t<sizeof(sep == 'a'), std::decay_t<Sep>>>
 {
-    using iterator = decltype(utils::begin(std::declval<Cont>()));
-};
-
-template<class T> struct container_traits<T*> { using iterator = T*; };
-template<class T> struct container_traits<T*&> { using iterator = T*; };
-template<class T> struct container_traits<T*&&> { using iterator = T*; };
-template<class T, std::size_t n> struct container_traits<T[n]> { using iterator = T*; };
-template<class T, std::size_t n> struct container_traits<T(&)[n]> { using iterator = T*; };
-
-template<class Cont, class T>
-splitter<typename container_traits<Cont>::iterator, typename std::decay<T>::type>
-make_splitter(Cont && cont, T && sep)
-{
-    return {utils::begin(cont), utils::end(cont), std::forward<T>(sep)};
+    return {s, sep};
 }
 
-inline splitter<char const *> get_line(chars_view s, char sep = '\n') /*NOLINT*/
+inline GetLineView<chars_view> get_lines(chars_view s, char sep = '\n') /*NOLINT*/
 {
-    return {s.begin(), s.end(), sep};
+    return {s, sep};
 }
 
-inline splitter<char *> get_line(writable_chars_view s, char sep = '\n') /*NOLINT*/
+inline GetLineView<writable_chars_view> get_lines(writable_chars_view s, char sep = '\n') /*NOLINT*/
 {
-    return {s.begin(), s.end(), sep};
+    return {s, sep};
 }

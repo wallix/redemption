@@ -52,7 +52,7 @@ LanguageButton::LanguageButton(
 
     auto const layouts = keylayouts();
 
-    for (auto && r : make_splitter(enable_locales, ',')) {
+    for (auto && r : split_with(enable_locales, ',')) {
         auto trimmed = trim(r);
         auto const name = chars_view{begin(trimmed), end(trimmed)}
             .as<std::string_view>();

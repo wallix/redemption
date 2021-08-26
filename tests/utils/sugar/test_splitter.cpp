@@ -28,14 +28,22 @@ RED_AUTO_TEST_CASE(TestSplitter)
 {
     auto text = "abc,de,efg,h,ijk,lmn"_av;
     std::string s;
-    for (auto r : get_line(text, ',')) {
+    for (auto r : get_lines(text, ',')) {
         s.append(r.begin(), r.end()) += ':';
     }
     RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
 
+    struct Char
+    {
+        bool operator == (char c) const
+        {
+            return c == ',';
+        }
+    };
+
     s.clear();
     auto stest = text.as<std::string>();
-    for (auto r : make_splitter(stest, ',')) {
+    for (auto r : split_with(stest, Char())) {
         s.append(r.begin(), r.end()) += ':';
     }
     RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
@@ -46,7 +54,7 @@ RED_AUTO_TEST_CASE(TestSplitter2)
     auto drives = " export ,, , \t share \t ,"_av;
 
     std::string s;
-    for (auto r : get_line(drives, ',')) {
+    for (auto r : get_lines(drives, ',')) {
         auto trimmed_range = trim(r);
 
         if (trimmed_range.empty()) continue;

@@ -108,7 +108,7 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::stri
         std::vector<chars_view> & large_ids
     ) {
         bool all = false;
-        for (auto r : make_splitter(list, ',')) {
+        for (auto r : split_with(list, ',')) {
             auto trimmed = trim(r);
             if (trimmed.empty()) {
                 continue;

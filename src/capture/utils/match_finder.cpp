@@ -108,7 +108,7 @@ void MatchFinder::configure_regexes(
     Pattern  filters[64];
     unsigned filter_number = 0;
 
-    for (auto rng : get_line(writable_chars_view{tmp_filters}, string_pattern_separator)) {
+    for (auto rng : split_with(writable_chars_view{tmp_filters}, string_pattern_separator)) {
         writable_chars_view av{rng.begin(), rng.end()};
         av.data()[av.size()] = '\0';
 

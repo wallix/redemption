@@ -198,7 +198,7 @@ KeyboardShortcutBlocker::KeyboardShortcutBlocker(uint32_t keyboardLayout, chars_
             "KeyboardLayout=0x%X ConfigurationString=\"%.*s\"",
         keyboardLayout, int(configuration_string.size()), configuration_string.data());
 
-    for (auto r : make_splitter(configuration_string, ',')) {
+    for (auto r : split_with(configuration_string, ',')) {
         this->add_shortcut(keyboardLayout, {r.begin(), r.end()});
     }
 }
@@ -213,7 +213,7 @@ void KeyboardShortcutBlocker::add_shortcut(uint32_t keyboardLayout, chars_view s
 
     ModFlags mods {};
 
-    for (auto r : make_splitter(shortcut, '+')) {
+    for (auto r : split_with(shortcut, '+')) {
         auto trimmed = trim(r);
         if (trimmed.empty()) {
             continue;
