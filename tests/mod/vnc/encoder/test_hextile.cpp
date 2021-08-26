@@ -23,28 +23,6 @@
 #include "mod/vnc/encoder/hextile.cpp" /* NOLINT(bugprone-suspicious-include) */
 
 
-class BlockWrap
-{
-    bytes_view & t;
-    size_t pos;
-public:
-    BlockWrap(bytes_view & t) : t(t), pos(0) {}
-
-    size_t operator()(writable_byte_ptr buffer, size_t len)
-    {
-        const size_t available = this->t.size() - this->pos;
-        if (len >= available){
-            std::memcpy(&buffer[0], &this->t[this->pos], available);
-            this->pos += available;
-            return available;
-        }
-        std::memcpy(&buffer[0], &this->t[this->pos], len);
-        this->pos += len;
-        return len;
-    }
-};
-
-
 RED_AUTO_TEST_CASE(TestHextile1)
 {
     VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 44, 19}, VNCVerbose::basic_trace);
@@ -77,10 +55,6 @@ RED_AUTO_TEST_CASE(TestHextile2)
     RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(32, 16, 16, 3), encoder.current_tile());
     RED_CHECK(not encoder.next_tile());
-
-
-//    encoder->consume(buf, drawable);
-
 }
 
 
@@ -637,11 +611,29 @@ RED_AUTO_TEST_CASE(TestHextile2)
 //Rect=Rect(0 0 1920 34) Tile = Rect(64 0 16 16) cx_remain=1856, cy_remain=34
 
 
+
+class BlockWrap
+{
+    bytes_view t;
+    size_t pos = 0;
+
+public:
+    BlockWrap(bytes_view t) : t(t) {}
+
+    size_t operator()(writable_byte_ptr buffer, size_t len)
+    {
+        const size_t available = this->t.size() - this->pos;
+        len = std::min(available, len);
+        std::memcpy(&buffer[0], &this->t[this->pos], len);
+        this->pos += len;
+        return len;
+    }
+};
+
+
 RED_AUTO_TEST_CASE(TestHextile)
 {
-    // FakeGraphic drawable(16, 1308, 19, 20);
-
-    const uint8_t tile[] = {
+    const auto data =
 /* 000 */ "\x01\x04\x19\xc3\x10\xe4\x18\xc3\x10\x25\x21\xe4\x18\x46\x29\x86"
 /* 010 */ "\x29\x66\x29\xe8\x39\xc8\x39\x66\x29\x86\x29\xc7\x31\xc7\x31\xa7"
 /* 020 */ "\x31\x86\x29\x25\x21\x45\x21\x25\x21\x05\x21\xc3\x10\x25\x21\x66"
@@ -706,18 +698,74 @@ RED_AUTO_TEST_CASE(TestHextile)
 /* 3d0 */ "\x39\x08\x3a\x29\x42\x08\x3a\x49\x42\x6a\x4a\x8a\x4a\xcb\x5a\xec"
 /* 3e0 */ "\x5a\xcb\x5a\x01\xaa\x52\x4d\x6b\x0c\x5b\xf3\x9c\xf7\xbd\xbb\xd6"
 /* 03f0 */"\xba\xd6\x75\xad\xcf\x7b\x4d\x6b\x4d\x6b\x4d\x6b\x4d\x63\x4d\x63"
-    };
-    bytes_view datas[1] = {
-         make_array_view(tile),
-    };
-    BlockWrap bw(datas[0]);
+    ""_av;
+    BlockWrap bw(data);
 
     Buf64k buf;
     buf.read_with(bw);
 
+    RED_CHECK(buf.remaining() == data.size());
+
     VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 44, 19}, VNCVerbose::basic_trace);
 
-//    encoder->consume(buf, drawable);
+    struct Gd : gdi::NullGraphic
+    {
+        void draw(RDPMemBlt const & /*cmd*/, Rect clip, Bitmap const & bmp) override
+        {
+            static int i = 0;
+            switch (i) {
+            case 0: {
+                RED_CHECK(clip == Rect(0, 0, 16, 16));
+                Bitmap bmp24(BitsPerPixel(24), bmp);
+                RED_CHECK(bytes_view(bmp.data(), bmp.bmp_size()) ==
+                    "\xe4\x18\xc3\x10\x46\x29\x45\x21\x66\x29\x04\x19\x86\x29"
+                    "\x86\x29\x86\x29\x46\x29\x45\x21\x82\x08\xc3\x10\x66\x29"
+                    "\x25\x21\x25\x21\x66\x29\x66\x29\xa7\x31\x66\x29\x45\x21"
+                    "\x46\x29\xa7\x31\x66\x29\x66\x29\x04\x19\x25\x21\x45\x21"
+                    "\x66\x29\x66\x29\x25\x21\x25\x21\x09\x42\x29\x42\x29\x42"
+                    "\x08\x3a\xa7\x31\x08\x3a\xe8\x39\x66\x29\x04\x19\x25\x21"
+                    "\x45\x21\x66\x29\x66\x29\xa7\x31\xc7\x31\xc3\x10\xa7\x31"
+                    "\xa7\x31\xa7\x31\x29\x42\xe8\x39\x49\x42\xe8\x39\x86\x29"
+                    "\x25\x21\x25\x21\x05\x21\x66\x29\x66\x29\xe8\x39\x6a\x4a"
+                    "\x45\x21\x45\x21\x05\x21\x25\x21\x09\x42\x08\x3a\x6a\x4a"
+                    "\x09\x42\x08\x3a\xc7\x31\xe4\x18\xc3\x10\xc8\x39\xe8\x39"
+                    "\xc7\x31\x8a\x4a\x49\x42\xc7\x31\x45\x21\x25\x21\xa7\x31"
+                    "\xa7\x31\xc8\x39\xe8\x39\xe8\x39\x08\x3a\x66\x29\x45\x21"
+                    "\xe8\x39\xe8\x39\xe8\x39\x49\x42\x08\x3a\xc7\x31\x46\x29"
+                    "\x25\x21\xe4\x18\xe4\x18\xe4\x18\x25\x21\xe4\x18\x66\x29"
+                    "\xa7\x31\xc8\x39\x45\x21\x66\x29\x08\x3a\xe8\x39\x66\x29"
+                    "\x86\x29\x66\x29\x86\x29\xc3\x10\xc3\x10\xe4\x18\x25\x21"
+                    "\xa3\x10\xc3\x10\x04\x19\x86\x29\x04\x19\x45\x21\xe8\x39"
+                    "\xa7\x31\xe8\x39\xe8\x39\x25\x21\xe4\x18\xa3\x10\x25\x21"
+                    "\xe4\x18\x05\x21\x04\x19\xc3\x10\x66\x29\xc8\x39\xe8\x39"
+                    "\x66\x29\xe4\x18\x25\x21\x08\x3a\x08\x3a\xa7\x31\x45\x21"
+                    "\xc4\x18\xe4\x18\x25\x21\x86\x29\x25\x21\x04\x19\x05\x21"
+                    "\x86\x29\x08\x3a\xc8\x39\xe4\x18\xe4\x18\xe8\x39\x87\x31"
+                    "\x86\x29\x66\x29\x04\x19\x62\x08\x25\x21\x66\x29\xe4\x18"
+                    "\xa3\x10\xa3\x10\x05\x21\xe8\x39\x29\x42\x66\x29\x25\x21"
+                    "\xc7\x31\xa7\x31\xc7\x31\xe8\x39\xc7\x31\xa3\x10\x45\x21"
+                    "\x66\x29\xc4\x18\xa3\x10\x04\x19\x45\x21\xa7\x31\x29\x42"
+                    "\x08\x3a\x86\x29\x45\x21\x46\x29\x46\x29\xa7\x31\x09\x42"
+                    "\x04\x19\x46\x29\x86\x29\x45\x21\x04\x19\x45\x21\x45\x21"
+                    "\x86\x29\x09\x42\x29\x42\xc7\x31\x66\x29\x25\x21\xc4\x18"
+                    "\x25\x21\x86\x29\xe4\x18\xe4\x18\x45\x21\x86\x29\x86\x29"
+                    "\x45\x21\x05\x21\x66\x29\xe8\x39\xe8\x39\xc7\x31\x08\x3a"
+                    "\x86\x29\x25\x21\x45\x21\x25\x21\x05\x21\xc3\x10\x25\x21"
+                    "\x66\x29\xc7\x31\xa7\x31\x66\x29\x66\x29\xa7\x31\x86\x29"
+                    "\x86\x29\xc7\x31\x04\x19\xc3\x10\xe4\x18\xc3\x10\x25\x21"
+                    "\xe4\x18\x46\x29\x86\x29\x66\x29\xe8\x39\xc8\x39\x66\x29"
+                    "\x86\x29\xc7\x31\xc7\x31\xa7\x31"_av_hex);
+                break;
+            }
+            default:
+                RED_CHECK(false);
+            }
+            ++i;
+        }
+    };
 
+    Gd drawable;
+
+    encoder(buf, drawable);
 }
 
