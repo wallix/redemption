@@ -23,10 +23,10 @@
 #include "keyboard/scancode/unicode_to_scancode.hpp"
 #include "keyboard/kbdtypes.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/utf.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/split.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/utf.hpp"
 #include "utils/sugar/flags.hpp"
 
 

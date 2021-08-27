@@ -28,7 +28,6 @@
 #include "configs/enumeration.hpp"
 
 #include "configs/generators/python_spec.hpp"
-#include "utils/sugar/algostring.hpp"
 
 #include <array>
 #include <iostream>

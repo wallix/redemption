@@ -22,7 +22,6 @@
 
 #include "configs/attributes/spec.hpp"
 #include "configs/enumeration.hpp"
-#include "utils/sugar/algostring.hpp"
 
 #include <type_traits>
 #include <string>

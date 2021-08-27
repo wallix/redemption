@@ -25,7 +25,6 @@
 #include "configs/generators/utils/write_template.hpp"
 #include "configs/enumeration.hpp"
 
-#include "utils/sugar/algostring.hpp"
 #include "utils/file_permissions.hpp"
 
 #include <algorithm>

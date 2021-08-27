@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 
-#include "utils/sugar/algostring.hpp"
+#include "utils/strutils.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/unique_fd.hpp"
 

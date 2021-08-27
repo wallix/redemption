@@ -134,3 +134,25 @@ RED_AUTO_TEST_CASE(Test_str_assign)
     str_assign(s, "b\0xxx", "cd"_av, "e", cstr, std::string("h"), 'i');
     RED_CHECK_EQ(s, "bcdefghi");
 }
+
+RED_AUTO_TEST_CASE(TestTrim)
+{
+    char s[] = " \t abcd   ";
+    auto av = make_writable_array_view(s).drop_back(1);
+
+    RED_CHECK_EQUAL(ltrim(chars_view(av).last(0)), ""_av);
+    RED_CHECK_EQUAL(ltrim(chars_view(av).last(3)), ""_av);
+    RED_CHECK_EQUAL(rtrim(chars_view(av).last(0)), ""_av);
+    RED_CHECK_EQUAL(rtrim(chars_view(av).last(3)), ""_av);
+    RED_CHECK_EQUAL(ltrim(chars_view(av)), "abcd   "_av);
+    RED_CHECK_EQUAL(rtrim(chars_view(av)), " \t abcd"_av);
+    RED_CHECK_EQUAL(trim(chars_view(av)), "abcd"_av);
+
+    RED_CHECK_EQUAL(ltrim(av.last(0)), ""_av);
+    RED_CHECK_EQUAL(ltrim(av.last(3)), ""_av);
+    RED_CHECK_EQUAL(rtrim(av.last(0)), ""_av);
+    RED_CHECK_EQUAL(rtrim(av.last(3)), ""_av);
+    RED_CHECK_EQUAL(ltrim(av), "abcd   "_av);
+    RED_CHECK_EQUAL(rtrim(av), " \t abcd"_av);
+    RED_CHECK_EQUAL(trim(av), "abcd"_av);
+}

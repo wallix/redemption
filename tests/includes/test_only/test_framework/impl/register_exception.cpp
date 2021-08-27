@@ -26,7 +26,6 @@ Author(s): Jonathan Poelen
 #include "core/error.hpp"
 #include "cxx/compiler_version.hpp"
 #include "cxx/diagnostic.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/strutils.hpp"
 

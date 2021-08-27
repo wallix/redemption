@@ -973,6 +973,7 @@ test-run tests/capture/utils/test_match_finder :
 :
   <library>src/capture/utils/match_finder.o
   <library>src/utils/pattutils.o
+  <library>src/utils/strutils.o
 ;
 test-run tests/client_mods/test_rdp_client_large_pointer :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_large_pointer.cpp
@@ -2174,6 +2175,7 @@ test-run tests/core/test_dynamic_channels_authorizations :
   $(REDEMPTION_TEST_PATH)/core/test_dynamic_channels_authorizations.cpp
 :
   <library>src/core/dynamic_channels_authorizations.o
+  <library>src/utils/strutils.o
 ;
 test-run tests/core/test_error :
   $(REDEMPTION_TEST_PATH)/core/test_error.cpp
@@ -4619,10 +4621,6 @@ test-run tests/utils/sugar/numerics/test_safe_conversions :
   $(REDEMPTION_TEST_PATH)/utils/sugar/numerics/test_safe_conversions.cpp
 :
 ;
-test-run tests/utils/sugar/test_algostring :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_algostring.cpp
-:
-;
 test-run tests/utils/sugar/test_array_view :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_array_view.cpp
 :
@@ -4879,6 +4877,7 @@ test-run tests/utils/test_keyboard_shortcut_blocker :
   <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
   <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/utils/keyboard_shortcut_blocker.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
 ;
 test-run tests/utils/test_line_equation :
@@ -4925,6 +4924,7 @@ test-run tests/utils/test_pattutils :
   $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
 :
   <library>src/utils/pattutils.o
+  <library>src/utils/strutils.o
 ;
 test-run tests/utils/test_png :
   $(REDEMPTION_TEST_PATH)/utils/test_png.cpp
@@ -5489,7 +5489,6 @@ alias test_ssl_sha512_direct : tests/utils/crypto/test_ssl_sha512_direct ;
 alias test_ssl_sign : tests/utils/crypto/test_ssl_sign ;
 alias test_utf16 : tests/utils/literals/test_utf16 ;
 alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
-alias test_algostring : tests/utils/sugar/test_algostring ;
 alias test_array_view : tests/utils/sugar/test_array_view ;
 alias test_bounded_array_view : tests/utils/sugar/test_bounded_array_view ;
 alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
@@ -5891,7 +5890,6 @@ alias tests/utils/sugar/numerics.norec :
   tests/utils/sugar/numerics/test_safe_conversions
 ;
 alias tests/utils/sugar.norec :
-  tests/utils/sugar/test_algostring
   tests/utils/sugar/test_array_view
   tests/utils/sugar/test_bounded_array_view
   tests/utils/sugar/test_buf_maker
