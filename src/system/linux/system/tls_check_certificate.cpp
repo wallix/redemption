@@ -37,6 +37,7 @@
 #include <fcntl.h>
 
 #include "cxx/diagnostic.hpp"
+#include "cxx/cxx.hpp"
 
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
@@ -52,47 +53,92 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 namespace
 {
 
-// TODO we should be able to simplify that to just put expected value in a provided buffer
-std::unique_ptr<char[]> crypto_print_name(X509_NAME* name)
+struct BIOMem
 {
-    std::unique_ptr<char[]> buffer;
+    ~BIOMem()
+    {
+        BIO_free(outBIO);
+    }
+
+    operator BIO* () noexcept
+    {
+        return outBIO;
+    }
+
+private:
     BIO* outBIO = BIO_new(BIO_s_mem());
+};
 
-    if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
-    {
-        unsigned long size = BIO_number_written(outBIO);
-        buffer = std::make_unique<char[]>(size + 1);
-        memset(buffer.get(), 0, size + 1);
-        BIO_read(outBIO, buffer.get(), size);
-    }
-    BIO_free(outBIO);
-    return buffer;
-}
-
-// TODO we should be able to simplify that to just put expected value in a provided buffer
-std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
+struct ZStringName
 {
-    uint32_t fp_len;
-    uint8_t fp[EVP_MAX_MD_SIZE];
-
-    X509_digest(xcert, EVP_sha1(), fp, &fp_len);
-
-    auto fp_buffer = std::make_unique<char[]>(3 * fp_len);
-
-    bytes_view fp_view = {fp, fp_len};
-
-    char * p = fp_buffer.get();
-
-    for (uint8_t c : fp_view.drop_back(1))
+    // TODO we should be able to simplify that to just put expected value in a provided buffer
+    static ZStringName printable_name(X509_NAME* name)
     {
-        p = int_to_fixed_hexadecimal_upper_chars(p, c);
-        *p++ = ':';
-    }
-    p = int_to_fixed_hexadecimal_upper_chars(p, fp_view.back());
-    *p = '\0';
+        ZStringName result;
+        BIOMem outBIO;
 
-    return fp_buffer;
-}
+        if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
+        {
+            result.len = BIO_number_written(outBIO);
+            result.buffer = std::make_unique<char[]>(result.len + 1);
+            memset(result.buffer.get(), 0, result.len + 1);
+            BIO_read(outBIO, result.buffer.get(), result.len);
+            result.ptr = result.buffer.get();
+        }
+
+        return result;
+    }
+
+    // TODO we should be able to simplify that to just put expected value in a provided buffer
+    static ZStringName cert_fingerprint(X509 const* xcert)
+    {
+        ZStringName result;
+
+        uint32_t fp_len;
+        uint8_t fp[EVP_MAX_MD_SIZE];
+
+        X509_digest(xcert, EVP_sha1(), fp, &fp_len);
+
+        result.len = fp_len ? 3 * fp_len - 1 : 0;
+        result.buffer = std::make_unique<char[]>(3 * fp_len);
+        result.ptr = result.buffer.get();
+
+        bytes_view fp_view = {fp, fp_len};
+
+        char * p = result.buffer.get();
+
+        for (uint8_t c : fp_view.drop_back(1))
+        {
+            p = int_to_fixed_hexadecimal_upper_chars(p, c);
+            *p++ = ':';
+        }
+        p = int_to_fixed_hexadecimal_upper_chars(p, fp_view.back());
+        *p = '\0';
+
+        return result;
+    }
+
+    bool is_empty() const noexcept
+    {
+        return !bool(buffer);
+    }
+
+    std::string_view sv() const noexcept
+    {
+        return {c_str(), len};
+    }
+
+    REDEMPTION_ATTRIBUTE_RETURNS_NONNULL
+    char const* c_str() const noexcept
+    {
+        return ptr;
+    }
+
+private:
+    char const* ptr = "";
+    std::size_t len = 0;
+    std::unique_ptr<char[]> buffer;
+};
 
 } // anonymous namespace
 
@@ -192,17 +238,17 @@ std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                 certificate_matches = file_equals(filename, tmpfilename);
                 ::unlink(tmpfilename);
 
-                const std::unique_ptr<char[]> issuer_existing      = crypto_print_name(X509_get_issuer_name(px509Existing));
-                const std::unique_ptr<char[]> subject_existing     = crypto_print_name(X509_get_subject_name(px509Existing));
-                const std::unique_ptr<char[]> fingerprint_existing = crypto_cert_fingerprint(px509Existing);
+                const auto issuer_existing      = ZStringName::printable_name(X509_get_issuer_name(px509Existing));
+                const auto subject_existing     = ZStringName::printable_name(X509_get_subject_name(px509Existing));
+                const auto fingerprint_existing = ZStringName::cert_fingerprint(px509Existing);
 
-                LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing.get());
-                LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing.get());
-                LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing.get());
+                LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing);
+                LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
+                LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing);
 
-                const std::unique_ptr<char[]> issuer               = crypto_print_name(X509_get_issuer_name(px509));
-                const std::unique_ptr<char[]> subject              = crypto_print_name(X509_get_subject_name(px509));
-                const std::unique_ptr<char[]> fingerprint          = crypto_cert_fingerprint(px509);
+                const auto issuer               = ZStringName::printable_name(X509_get_issuer_name(px509));
+                const auto subject              = ZStringName::printable_name(X509_get_subject_name(px509));
+                const auto fingerprint          = ZStringName::cert_fingerprint(px509);
 
                 if (!certificate_matches
                     // Read certificate fields to ensure change is not irrelevant
@@ -212,12 +258,13 @@ std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                     // - fingerprint changed
                     // other changes are ignored (expiration date for instance,
                     //  and revocation list is not checked)
-                    && ((0 != strcmp(issuer_existing.get(), issuer.get()))
+                    && ((issuer_existing.sv() != issuer.sv())
                     // Only one of subject_existing and subject is null
-                    || ((!subject_existing || !subject) && (subject_existing != subject))
+                    || (subject_existing.is_empty() ^ subject.is_empty())
                     // All of subject_existing and subject are not null
-                    || (subject && (0 != strcmp(subject_existing.get(), subject.get())))
-                    || (0 != strcmp(fingerprint_existing.get(), fingerprint.get())))) {
+                    || (!subject.is_empty() && subject_existing.sv() != subject.sv())
+                    || (fingerprint_existing.sv() != fingerprint.sv()))
+                ) {
                     if (error_message) {
                         char buff[256];
                         snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
@@ -226,9 +273,9 @@ std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                     }
                     LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"",
                         ip_address, port,
-                        issuer_existing.get(), subject_existing.get(),
-                        fingerprint_existing.get(), issuer.get(),
-                        subject.get(), fingerprint.get());
+                        issuer_existing, subject_existing,
+                        fingerprint_existing, issuer,
+                        subject, fingerprint);
                     if (error_message) {
                         str_assign(*error_message, "The certificate has changed: \"", filename, "\"\n");
                     }
@@ -352,12 +399,12 @@ std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
         // void * subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
 
         X509_NAME * issuer_name = X509_get_issuer_name(xcert);
-        LOG(LOG_INFO, "TLS::X509::issuer=%s", crypto_print_name(issuer_name).get());
+        LOG(LOG_INFO, "TLS::X509::issuer=%s", ZStringName::printable_name(issuer_name));
 
         X509_NAME * subject_name = X509_get_subject_name(xcert);
-        LOG(LOG_INFO, "TLS::X509::subject=%s", crypto_print_name(subject_name).get());
+        LOG(LOG_INFO, "TLS::X509::subject=%s", ZStringName::printable_name(subject_name));
 
-        LOG(LOG_INFO, "TLS::X509::fingerprint=%s", crypto_cert_fingerprint(xcert).get());
+        LOG(LOG_INFO, "TLS::X509::fingerprint=%s", ZStringName::cert_fingerprint(xcert));
     }
     else {
         throw Error(checking_exception);
