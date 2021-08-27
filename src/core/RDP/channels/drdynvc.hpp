@@ -23,6 +23,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include <cstddef>
@@ -415,7 +416,7 @@ class DVCCreateRequestPDU
 
     uint32_t    ChannelId_  = 0;
 
-    std::string channel_name;
+    zstring_view channel_name = ""_zv;
 
 public:
     void receive(InStream & stream) {
@@ -450,9 +451,14 @@ public:
                 throw Error(ERR_RDP_PROTOCOL);
         }
 
-        this->channel_name = char_ptr_cast(stream.get_current());
-
-        stream.in_skip_bytes(this->channel_name.length() + 1);
+        auto p = char_ptr_cast(stream.get_current());
+        auto len = strnlen(p, stream.in_remain());
+        if (len == stream.in_remain()) {
+            LOG(LOG_ERR, "DVCCreateRequestPDU::receive missing null character");
+            throw Error(ERR_RDP_PROTOCOL);
+        }
+        this->channel_name = zstring_view::from_null_terminated(p, len);
+        stream.in_skip_bytes(len + 1u);
     }
 
     void emit(OutStream & stream) const {
@@ -482,15 +488,15 @@ public:
                 throw Error(ERR_RDP_PROTOCOL);
         }
 
-        stream.out_copy_bytes(this->channel_name.c_str(), this->channel_name.length() + 1);
+        stream.out_copy_bytes(this->channel_name.data(), this->channel_name.size() + 1);
     }
 
     uint32_t ChannelId() const {
         return this->ChannelId_;
     }
 
-    const char * ChannelName() const {
-        return this->channel_name.c_str();
+    zstring_view ChannelName() const {
+        return this->channel_name;
     }
 
 private:

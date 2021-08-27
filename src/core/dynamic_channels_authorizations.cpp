@@ -89,13 +89,9 @@ DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
            !this->all_denied);
 }
 
-bool DynamicChannelsAuthorizations::is_authorized(const char * name) const noexcept
+bool DynamicChannelsAuthorizations::is_authorized(std::string_view name) const noexcept
 {
-    if (this->all_allowed) {
-        return (std::find(this->denied_names.begin(), this->denied_names.end(), name) == this->denied_names.end());
-    }
-
-    assert(this->all_denied);
-
-    return (std::find(this->allowed_names.begin(), this->allowed_names.end(), name) != this->allowed_names.end());
+    auto& vec = this->all_allowed ? this->denied_names : this->allowed_names;
+    bool contains = (std::find(vec.begin(), vec.end(), name) != vec.end());
+    return (contains != this->all_allowed);
 }

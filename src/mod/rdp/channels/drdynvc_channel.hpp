@@ -166,9 +166,9 @@ public:
                         create_request.log(LOG_INFO);
                     }
 
-                    const char * channel_name = create_request.ChannelName();
+                    zstring_view channel_name = create_request.ChannelName();
 
-                    bool const is_authorized = this->dynamic_channels_authorizations.is_authorized(channel_name);
+                    bool const is_authorized = this->dynamic_channels_authorizations.is_authorized(channel_name.to_sv());
                     if (!is_authorized)
                     {
                         uint8_t message_buffer[1024];
@@ -195,7 +195,7 @@ public:
                     this->session_log.log6((is_authorized
                             ? LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED
                             : LogId::DYNAMIC_CHANNEL_CREATION_REJECTED),
-                        {KVLog("channel_name"_av, { channel_name, strlen(channel_name)})});
+                        {KVLog("channel_name"_av, channel_name)});
 
                     send_message_to_client = is_authorized;
                 }

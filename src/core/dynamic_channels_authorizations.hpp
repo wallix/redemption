@@ -23,6 +23,7 @@
 #include "utils/sugar/zstring_view.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 class DynamicChannelsAuthorizations
@@ -30,7 +31,7 @@ class DynamicChannelsAuthorizations
 public:
     DynamicChannelsAuthorizations(zstring_view allow, zstring_view deny);
 
-    [[nodiscard]] bool is_authorized(const char * name) const noexcept;
+    [[nodiscard]] bool is_authorized(std::string_view name) const noexcept;
 
 private:
     bool all_allowed = true;
