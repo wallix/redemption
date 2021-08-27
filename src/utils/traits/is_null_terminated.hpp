@@ -32,3 +32,6 @@ template<>
 struct is_null_terminated<std::string>
 : std::true_type
 {};
+
+template<class T>
+constexpr bool is_null_terminated_v = is_null_terminated<T>::value;

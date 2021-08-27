@@ -21,17 +21,41 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/split.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include <string>
 
-RED_AUTO_TEST_CASE(TestSplitter)
+template<class Splitter>
+void test_splitter(char const* ctx, Splitter&& splitter, chars_view result)
 {
-    auto text = "abc,de,efg,h,ijk,lmn"_av;
     std::string s;
-    for (auto r : get_lines(text, ',')) {
+    s.clear();
+    for (auto r : splitter) {
         s.append(r.begin(), r.end()) += ':';
     }
-    RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
+
+    RED_TEST_CONTEXT(ctx) {
+        RED_CHECK_EQUAL(s, result);
+    }
+}
+
+template<class Chars>
+void test_splitters(Chars& str, chars_view result)
+{
+    test_splitter<
+        detail::SplitterCView<detail::SplitterCViewDataStr<char const*>, chars_view>
+    >("char const*", split_with(static_cast<char const*>(str), ','), result);
+
+    test_splitter<
+        detail::SplitterCView<detail::SplitterCViewDataStr<char*>, writable_chars_view>
+    >("char*", split_with(str, ','), result);
+
+    test_splitter<
+        detail::SplitterCView<detail::SplitterCViewDataView<char const*>, chars_view>
+    >("zstring", split_with(zstring_view::from_null_terminated(str), ','), result);
+
+    test_splitter<
+        SplitterView<chars_view, char>
+    >("string_view", split_with(std::string_view(str), ','), result);
 
     struct Char
     {
@@ -41,25 +65,35 @@ RED_AUTO_TEST_CASE(TestSplitter)
         }
     };
 
-    s.clear();
-    auto stest = text.as<std::string>();
-    for (auto r : split_with(stest, Char())) {
-        s.append(r.begin(), r.end()) += ':';
-    }
-    RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
+    test_splitter<
+        SplitterView<chars_view, Char>
+    >("string_view + sep as Fn", split_with(std::string_view(str), Char()), result);
 }
 
-RED_AUTO_TEST_CASE(TestSplitter2)
+RED_AUTO_TEST_CASE(TestSplitter)
 {
-    auto drives = " export ,, , \t share \t ,"_av;
-
-    std::string s;
-    for (auto r : get_lines(drives, ',')) {
-        auto trimmed_range = trim(r);
-
-        if (trimmed_range.empty()) continue;
-
-        s.append(std::begin(trimmed_range), std::end(trimmed_range)) += ',';
+    {
+        char str[] = "abc,de,efg,h,,,ijk,lmn";
+        test_splitters(str, "abc:de:efg:h:::ijk:lmn:"_av);
     }
-    RED_CHECK_EQUAL(s, "export,share,");
+
+    {
+        char str[] = ",abc,de,";
+        test_splitters(str, ":abc:de:"_av);
+    }
+
+    {
+        char str[] = "";
+        test_splitters(str, ""_av);
+    }
+
+    {
+        char str[] = "a";
+        test_splitters(str, "a:"_av);
+    }
+
+    {
+        char str[] = ",";
+        test_splitters(str, ":"_av);
+    }
 }
