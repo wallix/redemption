@@ -24,9 +24,9 @@
 #include "mod/internal/widget/button.hpp"
 #include "keyboard/keylayout.hpp"
 #include "utils/ref.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <vector>
-#include <string_view>
 
 class FrontAPI;
 class Theme;
@@ -35,7 +35,7 @@ class LanguageButton : public WidgetButton
 {
 public:
     LanguageButton(
-        std::string_view enable_locales,
+        zstring_view enable_locales,
         Widget & parent,
         gdi::GraphicApi & drawable,
         FrontAPI & front,

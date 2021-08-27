@@ -26,7 +26,7 @@
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizations)
 {
-    ChannelsAuthorizations channels_authorizations("a,b,c", "b,d");
+    ChannelsAuthorizations channels_authorizations("a,b,c"_zv, "b,d"_zv);
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
     RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizations)
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizations2)
 {
-    ChannelsAuthorizations channels_authorizations("a, b   , c", "   b,d  ");
+    ChannelsAuthorizations channels_authorizations("a, b   , c"_zv, "   b,d  "_zv);
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
     RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizations2)
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllDeny)
 {
-    ChannelsAuthorizations channels_authorizations("a,b,c", "*");
+    ChannelsAuthorizations channels_authorizations("a,b,c"_zv, "*"_zv);
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
     RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
@@ -62,7 +62,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllDeny)
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllAllow)
 {
-    ChannelsAuthorizations channels_authorizations("*", "a,b,c");
+    ChannelsAuthorizations channels_authorizations("*"_zv, "a,b,c"_zv);
     RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
     RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
     RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
 {
     CHANNELS::ChannelNameId const d("d");
 
-    ChannelsAuthorizations channels_authorizations("cliprdr", "*");
+    ChannelsAuthorizations channels_authorizations("cliprdr"_zv, "*"_zv);
     RED_CHECK( channels_authorizations.is_authorized(cliprdr));
     RED_CHECK(!channels_authorizations.is_authorized(d));
 
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
     RED_CHECK(channels_authorizations.cliprdr_down_is_authorized());
     RED_CHECK(channels_authorizations.cliprdr_file_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("cliprdr_up,cliprdr_down", "*");
+    channels_authorizations = ChannelsAuthorizations("cliprdr_up,cliprdr_down"_zv, "*"_zv);
     RED_CHECK( channels_authorizations.is_authorized(cliprdr));
     RED_CHECK(!channels_authorizations.is_authorized(d));
 
@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
     RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
     RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("cliprdr_down", "*");
+    channels_authorizations = ChannelsAuthorizations("cliprdr_down"_zv, "*"_zv);
     RED_CHECK( channels_authorizations.is_authorized(cliprdr));
     RED_CHECK(!channels_authorizations.is_authorized(d));
 
@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
     RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
     RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("cliprdr_down", "cliprdr_up");
+    channels_authorizations = ChannelsAuthorizations("cliprdr_down"_zv, "cliprdr_up"_zv);
     RED_CHECK( channels_authorizations.is_authorized(cliprdr));
     RED_CHECK(!channels_authorizations.is_authorized(d));
 
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
     RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
     RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("*", "cliprdr_up");
+    channels_authorizations = ChannelsAuthorizations("*"_zv, "cliprdr_up"_zv);
     RED_CHECK( channels_authorizations.is_authorized(cliprdr));
     RED_CHECK( channels_authorizations.is_authorized(d));
 
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsRdpdr)
 {
-    ChannelsAuthorizations channels_authorizations("*", "rdpdr_printer");
+    ChannelsAuthorizations channels_authorizations("*"_zv, "rdpdr_printer"_zv);
     RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsRdpdr)
     RED_CHECK( channels_authorizations.rdpdr_drive_read_is_authorized());
     RED_CHECK( channels_authorizations.rdpdr_drive_write_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("rdpdr_port", "rdpdr_printer");
+    channels_authorizations = ChannelsAuthorizations("rdpdr_port"_zv, "rdpdr_printer"_zv);
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
     RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
@@ -145,7 +145,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsRdpdr)
     RED_CHECK(!channels_authorizations.rdpdr_drive_read_is_authorized());
     RED_CHECK(!channels_authorizations.rdpdr_drive_write_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("*", "");
+    channels_authorizations = ChannelsAuthorizations("*"_zv, ""_zv);
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
     RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
@@ -164,7 +164,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsRdpdr)
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllAll)
 {
-    ChannelsAuthorizations channels_authorizations("*", "*");
+    ChannelsAuthorizations channels_authorizations("*"_zv, "*"_zv);
     RED_CHECK(!channels_authorizations.is_authorized(rdpdrid));
     RED_CHECK(!channels_authorizations.is_authorized(cliprdr));
     RED_CHECK(!channels_authorizations.is_authorized(rdpsnd));
@@ -182,7 +182,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllAll)
     RED_CHECK(!channels_authorizations.rdpdr_drive_read_is_authorized());
     RED_CHECK(!channels_authorizations.rdpdr_drive_write_is_authorized());
 
-    channels_authorizations = ChannelsAuthorizations("*,drdynvc", "*");
+    channels_authorizations = ChannelsAuthorizations("*,drdynvc"_zv, "*"_zv);
     RED_CHECK(!channels_authorizations.is_authorized(rdpdrid));
     RED_CHECK(!channels_authorizations.is_authorized(cliprdr));
     RED_CHECK(!channels_authorizations.is_authorized(rdpsnd));

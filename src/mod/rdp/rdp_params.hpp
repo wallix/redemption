@@ -28,6 +28,7 @@
 #include "keyboard/kbdtypes.hpp"
 #include "mod/rdp/channels/validator_params.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "utils/log.hpp"
 #include "utils/ref.hpp"
 
@@ -196,8 +197,8 @@ struct ModRDPParams
 
     struct DynamicChannelsParams
     {
-        const char * allowed_channels = "*";
-        const char * denied_channels  = "";
+        zstring_view allowed_channels = "*"_zv;
+        zstring_view denied_channels  = ""_zv;
     };
 
     DynamicChannelsParams dynamic_channels_params;

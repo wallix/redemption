@@ -29,7 +29,7 @@
 
 
 LanguageButton::LanguageButton(
-    std::string_view enable_locales,
+    zstring_view enable_locales,
     Widget & parent,
     gdi::GraphicApi & drawable,
     FrontAPI & front,
@@ -52,11 +52,8 @@ LanguageButton::LanguageButton(
 
     auto const layouts = keylayouts();
 
-    for (auto && r : split_with(enable_locales, ',')) {
-        auto trimmed = trim(r);
-        auto const name = chars_view{begin(trimmed), end(trimmed)}
-            .as<std::string_view>();
-
+    for (auto locale : split_with(enable_locales, ',')) {
+        auto const name = trim(locale).as<std::string_view>();
         auto const it = std::find_if(begin(layouts), end(layouts), [&](KeyLayout const& k){
             return k.name.to_sv() == name;
         });

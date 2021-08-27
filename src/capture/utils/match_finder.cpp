@@ -103,24 +103,23 @@ void MatchFinder::configure_regexes(
     std::string tmp_filters = filters_list;
 
     using Cat = PatternValue::Cat;
-    struct Pattern { Cat cat; char const * filter; };
+    struct Pattern { Cat cat; zstring_view filter; };
 
     Pattern  filters[64];
     unsigned filter_number = 0;
 
-    for (auto rng : split_with(writable_chars_view{tmp_filters}, string_pattern_separator)) {
-        writable_chars_view av{rng.begin(), rng.end()};
-        av.data()[av.size()] = '\0';
+    for (auto pattern : split_with(writable_chars_view{tmp_filters}, string_pattern_separator)) {
+        pattern.data()[pattern.size()] = '\0';
 
-        LOG_IF(verbose, LOG_INFO, "filter=\"%s\"", av.data());
+        LOG_IF(verbose, LOG_INFO, "filter=\"%s\"", pattern.data());
 
-        PatternValue const pattern_value = get_pattern_value(av);
+        PatternValue const pattern_value = get_pattern_value(pattern);
         if (not pattern_value.pattern.empty() && (
             (pattern_value.is_ocr && conf_regex == ConfigureRegexes::OCR)
             || (pattern_value.is_kbd && conf_regex == ConfigureRegexes::KBD_INPUT)
         )) {
-            filters[filter_number++] = {pattern_value.cat, pattern_value.pattern.data()};
-            if (filter_number >= (sizeof(filters) / sizeof(filters[0]))) {
+            filters[filter_number++] = {pattern_value.cat, zstring_view::from_null_terminated(pattern_value.pattern)};
+            if (filter_number >= std::size(filters)) {
                 break;
             }
         }
@@ -136,7 +135,7 @@ void MatchFinder::configure_regexes(
             auto & filter = filters[i];
             LOG_IF(verbose, LOG_INFO, "Regex=\"%s\"", filter.filter);
 
-            pregex->name = filter.filter;
+            pregex->name = filter.filter.to_string();
             pregex->is_exact_search
                 = (conf_regex == ConfigureRegexes::OCR
                 && (filter.cat == Cat::is_exact_reg || filter.cat == Cat::is_exact_str));

@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     auto& events = event_manager.get_events();
     Inifile ini;
     NullSessionLog session_log;
-    const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+    const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output"_zv, ""_zv};
     ModRdpFactory mod_rdp_factory;
     gdi::NullOsd osd;
 

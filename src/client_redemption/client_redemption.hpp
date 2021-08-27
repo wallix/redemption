@@ -417,7 +417,7 @@ public:
                 tls_client_params.cipher_string                   = this->config.tls_client_params_data.cipher_string;
                 tls_client_params.show_common_cipher_list         = this->config.tls_client_params_data.show_common_cipher_list;
 
-                const ChannelsAuthorizations channels_authorizations("*", std::string{});
+                const ChannelsAuthorizations channels_authorizations("*"_zv, ""_zv);
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket

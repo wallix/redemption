@@ -294,7 +294,7 @@ int main(int argc, char** argv)
 
     bool const use_system_obj = record_output.empty() && !use_LCGRandom;
 
-    const ChannelsAuthorizations channels_authorizations("*", std::string{});
+    const ChannelsAuthorizations channels_authorizations("*"_zv, ""_zv);
     gdi::NullOsd osd;
 
     auto run_rdp = [&]{

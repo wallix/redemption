@@ -198,8 +198,8 @@ KeyboardShortcutBlocker::KeyboardShortcutBlocker(uint32_t keyboardLayout, chars_
             "KeyboardLayout=0x%X ConfigurationString=\"%.*s\"",
         keyboardLayout, int(configuration_string.size()), configuration_string.data());
 
-    for (auto r : split_with(configuration_string, ',')) {
-        this->add_shortcut(keyboardLayout, {r.begin(), r.end()});
+    for (auto shortcut : split_with(configuration_string, ',')) {
+        this->add_shortcut(keyboardLayout, shortcut);
     }
 }
 
@@ -243,7 +243,7 @@ void KeyboardShortcutBlocker::add_shortcut(uint32_t keyboardLayout, chars_view s
 
         kbdtypes::KeyCode keycode = (mod_name == enter)
             ? kbdtypes::KeyCode::Enter
-            : str_to_key_code(keyboardLayout, {trimmed.begin(), trimmed.end()});
+            : str_to_key_code(keyboardLayout, trimmed);
 
         if (bool(keycode)) {
             this->shortcuts.emplace_back(mods, keycode, this->verbose);

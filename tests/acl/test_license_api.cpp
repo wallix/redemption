@@ -175,7 +175,7 @@ namespace
         }
 
         gdi::NullOsd osd;
-        const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+        const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output"_zv, ""_zv};
         ModRdpFactory mod_rdp_factory;
         TLSClientParams tls_client_params;
         // To always get the same client random, in tests

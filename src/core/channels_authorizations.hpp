@@ -22,6 +22,7 @@
 
 #include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <vector>
 #include <string>
@@ -38,7 +39,7 @@ class ChannelsAuthorizations
 public:
     ChannelsAuthorizations() = default;
 
-    ChannelsAuthorizations(std::string_view allow, std::string_view deny);
+    ChannelsAuthorizations(zstring_view allow, zstring_view deny);
 
     [[nodiscard]] bool is_authorized(CHANNELS::ChannelNameId id) const noexcept;
 

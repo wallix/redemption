@@ -28,24 +28,24 @@
 #include <cassert>
 
 DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
-    std::string const & allow, std::string const & deny)
+    zstring_view allow, zstring_view deny)
 {
     auto extract = [](
-        chars_view list,
+        zstring_view list,
         std::vector<std::string> & names)
     {
         for (auto r : split_with(list, ',')) {
-            auto trimmed = trim(r);
-            if (trimmed.empty()) {
+            auto name = trim(r).as<std::string_view>();
+            if (name.empty()) {
                 continue;
             }
 
-            if ((trimmed[0] == '*') && (trimmed.size() == 1)) {
+            if (name == std::string_view("*")) {
                 names.clear();
                 return true;
             }
 
-            names.emplace_back(trimmed.begin(), trimmed.end());
+            names.emplace_back(name);
         }
 
         return false;

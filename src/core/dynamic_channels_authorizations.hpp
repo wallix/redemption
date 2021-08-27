@@ -20,13 +20,15 @@
 
 #pragma once
 
+#include "utils/sugar/zstring_view.hpp"
+
 #include <string>
 #include <vector>
 
 class DynamicChannelsAuthorizations
 {
 public:
-    DynamicChannelsAuthorizations(std::string const & allow, std::string const & deny);
+    DynamicChannelsAuthorizations(zstring_view allow, zstring_view deny);
 
     [[nodiscard]] bool is_authorized(const char * name) const noexcept;
 

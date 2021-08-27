@@ -53,8 +53,7 @@ PatternValue get_pattern_value(chars_view const pattern_rule)
     PatternValue pattern_value;
     constexpr PatternValue empty_pattern_value {};
 
-    auto av = chars_view{
-        ltrim(pattern_rule.begin(), pattern_rule.end()), pattern_rule.end()};
+    auto av = ltrim(pattern_rule);
 
     if (not av.empty() && av.front() == '$') {
         auto end_option_list = std::find(av.begin()+1, av.end(), ':');
@@ -64,26 +63,28 @@ PatternValue get_pattern_value(chars_view const pattern_rule)
             for (auto token_av : split_with(options, IsWordSeparator{})) {
                 auto token = token_av.as<std::string_view>();
 
-                if (token == "exact") {
+                using namespace std::string_view_literals;
+
+                if (token == "exact"sv) {
                     is_exact = true;
                 }
                 else {
-                    if (token == "ocr") {
+                    if (token == "ocr"sv) {
                         pattern_value.is_ocr = true;
                         if (is_exact) {
                             pattern_value.cat = Cat::is_exact_str;
                         }
                     }
-                    else if (token == "kbd") {
+                    else if (token == "kbd"sv) {
                         pattern_value.is_kbd = true;
                         if (is_exact) {
                             pattern_value.cat = Cat::is_exact_str;
                         }
                     }
-                    else if (token == "regex") {
+                    else if (token == "regex"sv) {
                         pattern_value.cat = is_exact ? Cat::is_exact_reg : Cat::is_reg;
                     }
-                    else if (token == "content") {
+                    else if (token == "content"sv) {
                         pattern_value.cat = is_exact ? Cat::is_exact_str : Cat::is_str;
                     }
                     else {
@@ -119,8 +120,8 @@ namespace
 {
     bool contains_pattern(chars_view soh_separated_patterns, bool check_kbd, bool check_ocr)
     {
-        for (auto rng : get_lines(soh_separated_patterns, string_pattern_separator)) {
-            PatternValue const pattern_value = get_pattern_value({rng.begin(), rng.end()});
+        for (auto pattern : get_lines(soh_separated_patterns, string_pattern_separator)) {
+            PatternValue const pattern_value = get_pattern_value(pattern);
             if (not pattern_value.pattern.empty()
              && ( (check_kbd && pattern_value.is_kbd)
                || (check_ocr && pattern_value.is_ocr)

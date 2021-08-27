@@ -29,8 +29,8 @@
 
 struct DynamicChannelVirtualChannelParam
 {
-    const char * allowed_channels = "*";
-    const char * denied_channels  = "";
+    zstring_view allowed_channels = "*"_zv;
+    zstring_view denied_channels  = ""_zv;
 };
 
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel

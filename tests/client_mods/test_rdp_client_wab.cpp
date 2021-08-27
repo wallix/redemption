@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullSessionLog session_log;
     RedirectionInfo redir_info;
 
-    const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+    const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output"_zv, ""_zv};
     ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;

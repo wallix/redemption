@@ -95,7 +95,7 @@ namespace
 } // namespace
 
 
-ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::string_view deny)
+ChannelsAuthorizations::ChannelsAuthorizations(zstring_view allow, zstring_view deny)
 {
     std::vector<CHANNELS::ChannelNameId> allow_ids;
     std::vector<CHANNELS::ChannelNameId> deny_ids;
@@ -103,31 +103,31 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::stri
     std::vector<chars_view> deny_large_ids;
 
     auto extract = [](
-        chars_view list,
+        zstring_view list,
         std::vector<CHANNELS::ChannelNameId> & ids,
         std::vector<chars_view> & large_ids
     ) {
         bool all = false;
-        for (auto r : split_with(list, ',')) {
-            auto trimmed = trim(r);
-            if (trimmed.empty()) {
+        for (auto name : split_with(list, ',')) {
+            name = trim(name);
+            if (name.empty()) {
                 continue;
             }
 
-            if (trimmed[0] == '*') {
+            if (name[0] == '*') {
                 all = true;
             }
             else {
-                switch (trimmed.size()) {
+                switch (name.size()) {
                     case 0: break;
-                    case 1: ids.emplace_back(c_array<1>(trimmed.begin())); break;
-                    case 2: ids.emplace_back(c_array<2>(trimmed.begin())); break;
-                    case 3: ids.emplace_back(c_array<3>(trimmed.begin())); break;
-                    case 4: ids.emplace_back(c_array<4>(trimmed.begin())); break;
-                    case 5: ids.emplace_back(c_array<5>(trimmed.begin())); break;
-                    case 6: ids.emplace_back(c_array<6>(trimmed.begin())); break;
-                    case 7: ids.emplace_back(c_array<7>(trimmed.begin())); break;
-                    default: large_ids.emplace_back(trimmed.begin(), trimmed.end());
+                    case 1: ids.emplace_back(c_array<1>(name.begin())); break;
+                    case 2: ids.emplace_back(c_array<2>(name.begin())); break;
+                    case 3: ids.emplace_back(c_array<3>(name.begin())); break;
+                    case 4: ids.emplace_back(c_array<4>(name.begin())); break;
+                    case 5: ids.emplace_back(c_array<5>(name.begin())); break;
+                    case 6: ids.emplace_back(c_array<6>(name.begin())); break;
+                    case 7: ids.emplace_back(c_array<7>(name.begin())); break;
+                    default: large_ids.emplace_back(name.begin(), name.end());
                 }
             }
         }

@@ -20,37 +20,78 @@
 
 #pragma once
 
-#include <iterator>
-#include <algorithm>
-
-#include "utils/sugar/range.hpp"
+#include "utils/sugar/array_view.hpp"
 
 struct is_blank_fn
 {
     bool operator()(char c) const noexcept
-    { return c == ' ' || c == '\t'; }
+    {
+        return c == ' ' || c == '\t';
+    }
 };
 
-template<class FwIt, class Pred = is_blank_fn>
-FwIt ltrim(FwIt first, FwIt last, Pred pred = Pred()) /*NOLINT*/ {
-    return std::find_if_not(first, last, pred);
+namespace detail
+{
+    template<class Pred>
+    const char* ltrim(const char* first, const char* last, Pred&& pred)
+    {
+        while (first != last && pred(*first)) {
+            ++first;
+        }
+        return first;
+    }
+
+    template<class Pred>
+    const char* rtrim(const char* first, const char* last, Pred&& pred)
+    {
+        while (first != last && pred(*(last - 1))) {
+            --last;
+        }
+        return last;
+    }
+
+    inline writable_chars_view chars_view_to_writable_chars_view(chars_view av) noexcept
+    {
+        char* first = const_cast<char*>(av.begin()); /*NOLINT*/
+        char* last = const_cast<char*>(av.end()); /*NOLINT*/
+        return writable_chars_view{first, last};
+    }
 }
 
-template<class BiIt, class Pred = is_blank_fn>
-BiIt rtrim(BiIt first, BiIt last, Pred pred = Pred()) /*NOLINT*/ {
-    using reverse_iterator = std::reverse_iterator<BiIt>;
-    return std::find_if_not(reverse_iterator(last), reverse_iterator(first), pred).base();
+template<class Pred = is_blank_fn>
+chars_view ltrim(chars_view chars, Pred&& pred = Pred()) /*NOLINT*/
+{
+    return {detail::ltrim(chars.begin(), chars.end(), pred), chars.end()};
 }
 
-template<class BiIt, class Pred = is_blank_fn>
-range<BiIt> trim(BiIt first, BiIt last, Pred pred = Pred()) /*NOLINT*/ {
-    first = ltrim(first, last, pred);
-    return {first, rtrim(first, last, pred)};
+template<class Pred = is_blank_fn>
+chars_view rtrim(chars_view chars, Pred&& pred = Pred()) /*NOLINT*/
+{
+    return {chars.begin(), detail::rtrim(chars.begin(), chars.end(), pred)};
 }
 
-template<class R, class Pred = is_blank_fn>
-auto trim(R & r, Pred pred = Pred()) /*NOLINT*/ -> range<decltype(r.begin())> {
-    using std::begin;
-    using std::end;
-    return trim(begin(r), end(r), pred);
+template<class Pred = is_blank_fn>
+chars_view trim(chars_view chars, Pred&& pred = Pred()) /*NOLINT*/
+{
+    auto first = detail::ltrim(chars.begin(), chars.end(), pred);
+    auto last = detail::rtrim(first, chars.end(), pred);
+    return {first, last};
+}
+
+template<class Pred = is_blank_fn>
+writable_chars_view ltrim(writable_chars_view chars, Pred&& pred = Pred()) /*NOLINT*/
+{
+    return detail::chars_view_to_writable_chars_view(ltrim(chars_view(chars), pred));
+}
+
+template<class Pred = is_blank_fn>
+writable_chars_view rtrim(writable_chars_view chars, Pred&& pred = Pred()) /*NOLINT*/
+{
+    return detail::chars_view_to_writable_chars_view(rtrim(chars_view(chars), pred));
+}
+
+template<class Pred = is_blank_fn>
+writable_chars_view trim(writable_chars_view chars, Pred&& pred = Pred()) /*NOLINT*/
+{
+    return detail::chars_view_to_writable_chars_view(trim(chars_view(chars), pred));
 }

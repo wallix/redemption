@@ -260,8 +260,8 @@ private:
 
     struct DynamicChannels
     {
-        const char * allowed_channels;
-        const char * denied_channels;
+        zstring_view allowed_channels;
+        zstring_view denied_channels;
 
         DynamicChannels(ModRDPParams::DynamicChannelsParams const& dynamic_channels_params)
         : allowed_channels(dynamic_channels_params.allowed_channels)
@@ -313,20 +313,18 @@ public:
                         drive_params.proxy_managed_drives);
                 }
 
-                // TODO proxy_managed_drives should be a std::string
-                for (auto r : split_with(std::string_view(drive_params.proxy_managed_drives), ',')) {
-                    auto const trimmed_range = trim(r);
+                for (auto name : split_with(drive_params.proxy_managed_drives, ',')) {
+                    name = trim(name).as<std::string_view>();
 
-                    if (trimmed_range.empty()) continue;
+                    if (name.empty()) continue;
 
                     if (bool(verbose & RDPVerbose::connection)) {
                         LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
-                            int(trimmed_range.size()), trimmed_range.begin());
+                            int(name.size()), name.data());
                     }
 
                     this->file_system_drive_manager.enable_drive(
-                        FileSystemDriveManager::DriveName(
-                            std::string_view{trimmed_range.begin(), trimmed_range.size()}),
+                        FileSystemDriveManager::DriveName(name),
                         this->proxy_managed_prefix);
                 }
             }

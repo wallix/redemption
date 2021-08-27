@@ -21,23 +21,26 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/algostring.hpp"
-#include <string>
+
 
 RED_AUTO_TEST_CASE(TestTrim)
 {
-    char const s[] = " \t abcd   ";
-    auto left_s = s+3;
-    auto right_s = s+7;
-    auto first = std::begin(s);
-    auto last = std::end(s) - 1;
+    char s[] = " \t abcd   ";
+    auto av = make_writable_array_view(s).drop_back(1);
 
-    RED_CHECK_EQUAL(ltrim(first, last), left_s);
-    RED_CHECK_EQUAL(rtrim(first, last), right_s);
+    RED_CHECK_EQUAL(ltrim(chars_view(av).last(0)), ""_av);
+    RED_CHECK_EQUAL(ltrim(chars_view(av).last(3)), ""_av);
+    RED_CHECK_EQUAL(rtrim(chars_view(av).last(0)), ""_av);
+    RED_CHECK_EQUAL(rtrim(chars_view(av).last(3)), ""_av);
+    RED_CHECK_EQUAL(ltrim(chars_view(av)), "abcd   "_av);
+    RED_CHECK_EQUAL(rtrim(chars_view(av)), " \t abcd"_av);
+    RED_CHECK_EQUAL(trim(chars_view(av)), "abcd"_av);
 
-    using range_type = range<char const *>;
-    range_type trimmed{left_s, right_s};
-    range_type r{first, last};
-
-    RED_CHECK(trim(first, last) == trimmed);
-    RED_CHECK(trim(r) == trimmed);
+    RED_CHECK_EQUAL(ltrim(av.last(0)), ""_av);
+    RED_CHECK_EQUAL(ltrim(av.last(3)), ""_av);
+    RED_CHECK_EQUAL(rtrim(av.last(0)), ""_av);
+    RED_CHECK_EQUAL(rtrim(av.last(3)), ""_av);
+    RED_CHECK_EQUAL(ltrim(av), "abcd   "_av);
+    RED_CHECK_EQUAL(rtrim(av), " \t abcd"_av);
+    RED_CHECK_EQUAL(trim(av), "abcd"_av);
 }

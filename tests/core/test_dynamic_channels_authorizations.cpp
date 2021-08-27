@@ -26,7 +26,7 @@
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        "", "");
+        ""_zv, ""_zv);
 
     RED_CHECK(!dynamic_channels_authorizations.is_authorized("a"));
 
@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations1)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        ", a, b ,, c", "");
+        ", a, b ,, c"_zv, ""_zv);
 
     RED_CHECK( dynamic_channels_authorizations.is_authorized("a"));
 
@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations1)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations2)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        " a ,b , c d  ", "*");
+        " a ,b , c d  "_zv, "*"_zv);
 
     RED_CHECK( dynamic_channels_authorizations.is_authorized("a"));
 
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations2)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations3)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        "*", "  a ,b, c");
+        "*"_zv, "  a ,b, c"_zv);
 
     RED_CHECK(!dynamic_channels_authorizations.is_authorized("a"));
 
@@ -83,7 +83,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations3)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations4)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        "*", "  *, ");
+        "*"_zv, "  *, "_zv);
 
     RED_CHECK(!dynamic_channels_authorizations.is_authorized("a"));
 
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations4)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations5)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        "*, b", "  a, *, ");
+        "*, b"_zv, "  a, *, "_zv);
 
     RED_CHECK(!dynamic_channels_authorizations.is_authorized("a"));
 
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations5)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations6)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        " a,b", "  c,d ");
+        " a,b"_zv, "  c,d "_zv);
 
     RED_CHECK( dynamic_channels_authorizations.is_authorized("a"));
 
@@ -123,7 +123,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations6)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations7)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        " * ", "  a,b ");
+        " * "_zv, "  a,b "_zv);
 
     RED_CHECK(!dynamic_channels_authorizations.is_authorized("a"));
 
@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations7)
 RED_AUTO_TEST_CASE(TestDynamicChannelsAuthorizations8)
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations(
-        "a,b", "*");
+        "a,b"_zv, "*"_zv);
 
     RED_CHECK( dynamic_channels_authorizations.is_authorized("a"));
 

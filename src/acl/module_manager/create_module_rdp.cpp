@@ -631,8 +631,8 @@ ModPack create_mod_rdp(
 
     // ======================= Dynamic Channel Params ===================
 
-    mod_rdp_params.dynamic_channels_params.allowed_channels = ini.get<cfg::mod_rdp::allowed_dynamic_channels>().c_str();
-    mod_rdp_params.dynamic_channels_params.denied_channels  = ini.get<cfg::mod_rdp::denied_dynamic_channels>().c_str();
+    mod_rdp_params.dynamic_channels_params.allowed_channels = ini.get<cfg::mod_rdp::allowed_dynamic_channels>();
+    mod_rdp_params.dynamic_channels_params.denied_channels  = ini.get<cfg::mod_rdp::denied_dynamic_channels>();
 
     // ======================= End Dynamic Channel Params ===================
 
