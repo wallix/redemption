@@ -26,12 +26,15 @@
 #include "utils/strutils.hpp"
 #include "utils/winpr/pattern.hpp"
 
+#include <string_view>
+#include <algorithm>
+
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
 
-#include <algorithm>
+using namespace std::string_view_literals;
 
 namespace
 {
@@ -1824,7 +1827,7 @@ void FileSystemDriveManager::process_server_create_drive_request(
     else {
         is_session_probe_image_flag =
             ((device_io_request.DeviceId() == this->session_probe_drive_id) &&
-                !::strcmp(device_create_request.Path().data(), "/BIN"));
+                device_create_request.Path().as<std::string_view>() == "/BIN"sv);
 
         managed_file_system_object = std::make_unique<ManagedFile>(
             this->async_task_container);

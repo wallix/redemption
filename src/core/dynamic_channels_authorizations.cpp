@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <cassert>
 
+using namespace std::string_view_literals;
+
 DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
     zstring_view allow, zstring_view deny)
 {
@@ -40,7 +42,7 @@ DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
                 continue;
             }
 
-            if (name == std::string_view("*")) {
+            if (name == "*"sv) {
                 names.clear();
                 return true;
             }

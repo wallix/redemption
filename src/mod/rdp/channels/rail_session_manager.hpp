@@ -325,13 +325,7 @@ public:
             this->graphics_update_disabled) {
             assert(!window_is_blocked);
 
-            const char*  blocked_window_title        = this->session_probe_window_title.c_str();
-            const size_t blocked_window_title_length = this->session_probe_window_title.length();
-
-            const size_t title_info_length = title_info.size();
-
-            if ((title_info_length >= blocked_window_title_length) &&
-                !::strcmp(title_info.c_str() + (title_info_length - blocked_window_title_length), blocked_window_title)) {
+            if (utils::ends_with(title_info, this->session_probe_window_title)) {
                 if (window_is_new) {
                     {
                         RAILPDUHeader rpduh;

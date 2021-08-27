@@ -2182,18 +2182,20 @@ public:
 
         bool access_ok = true;
 
+        using namespace std::string_view_literals;
+
         if (this->device_redirection_manager.is_known_device(
                 this->server_device_io_request.DeviceId())) {
             // Is a File system device.
             const uint32_t DesiredAccess =
                 device_create_request.DesiredAccess();
 
-            if (!this->param_file_system_read_authorized &&
-                smb2::read_access_is_required(DesiredAccess,
-                                              /* strict_check = */false) &&
-                !(device_create_request.CreateOptions() &
-                  smb2::FILE_DIRECTORY_FILE) &&
-                0 != ::strcmp(device_create_request.Path().data(), "/")) {
+            if (!this->param_file_system_read_authorized
+             && smb2::read_access_is_required(DesiredAccess,
+                                              /* strict_check = */false)
+             && !(device_create_request.CreateOptions() & smb2::FILE_DIRECTORY_FILE)
+             && device_create_request.Path().as<std::string_view>() != "/"sv
+            ) {
                 access_ok = false;
             }
             if (!this->param_file_system_write_authorized &&

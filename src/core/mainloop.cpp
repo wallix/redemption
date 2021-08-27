@@ -231,7 +231,8 @@ namespace
             const auto source_ip = source_ip_port.ip_address();
             const auto source_port = source_ip_port.port();
 
-            const bool source_is_localhost = (source_ip == "127.0.0.1" || source_ip == "::1");
+            using namespace std::string_view_literals;
+            const bool source_is_localhost = (source_ip.to_sv() == "127.0.0.1"sv || source_ip.to_sv() == "::1"sv);
             Inifile ini;
 
             ini.set<cfg::debug::config>(debug_config);
@@ -249,7 +250,11 @@ namespace
                 std::sprintf(psid, "%lld%d", sec, pid);
                 psid[sizeof(psid)-1] = '\0';
                 ini.set_acl<cfg::context::psid>(psid);
-                log_proxy::init(psid, source_ip, source_port);
+                log_proxy::set_psid(ini.get<cfg::context::psid>());
+            }
+
+            if (!source_is_localhost) {
+                log_proxy::incoming_connection(source_ip.to_sv(), source_port);
             }
 
             union

@@ -32,16 +32,18 @@ namespace
 
 namespace log_proxy
 {
-    void init(char const* psid, char const* source_ip, int source_port) noexcept
+    void set_psid(std::string_view psid) noexcept
     {
         utils::strlcpy(g_psid, psid);
-        if (0 != strcmp(source_ip, "127.0.0.1")) {
-            LOG_REDEMPTION_INTERNAL_IMPL(
-                LOG_INFO,
-                R"([rdpproxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%s" src_port="%d")",
-                g_psid, source_ip, source_port
-            );
-        }
+    }
+
+    void incoming_connection(std::string_view source_ip, int source_port) noexcept
+    {
+        LOG_REDEMPTION_INTERNAL_IMPL(
+            LOG_INFO,
+            R"([rdpproxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%.*s" src_port="%d")",
+            g_psid, int(source_ip.size()), source_ip.data(), source_port
+        );
     }
 
     void set_user(std::string_view username) noexcept

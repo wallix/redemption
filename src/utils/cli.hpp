@@ -737,10 +737,14 @@ namespace parsers
 
         Res operator()(ParseResult& pr) const
         {
-            bool const on = !pr.str || !strcmp(pr.str, "on") || !strcmp(pr.str, "1");
-            bool const off = !on && (!strcmp(pr.str, "off") || !strcmp(pr.str, "0"));
-            if (!on && !off) {
-                return Res::BadFormat;
+            bool on = !pr.str;
+            if (!on) {
+                using namespace std::string_view_literals;
+                std::string_view str = pr.str;
+                on = str == "on"sv || str == "1"sv;
+                if (!on && pr.str != "off"sv && pr.str != "0"sv) {
+                    return Res::BadFormat;
+                }
             }
 
             Res r = (this->act(on), Ok);

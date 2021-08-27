@@ -36,7 +36,8 @@ RED_AUTO_TEST_CASE(TestLogProxySiem)
 {
     tu::log_buffered log_buf;
     LOG_PROXY_SIEM("CAT", "test %s", "1");
-    log_proxy::init("L33t", "universe", 1234);
+    log_proxy::set_psid("L33t");
+    log_proxy::incoming_connection("universe", 1234);
     LOG_PROXY_SIEM("TAC", "test 2");
     log_proxy::set_user("Banana");
     LOG_PROXY_SIEM("ACT", "test 3");

@@ -1303,7 +1303,7 @@ private:
     }
 
 public:
-    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
+    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool source_is_localhost)
     : ini(ini)
     , pid_file(pid_file)
     {
@@ -1312,8 +1312,6 @@ public:
 
         EventManager event_manager;
         event_manager.set_time_base(current_time_base());
-
-        const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
         struct SessionFront final : Front
         {
@@ -1489,7 +1487,11 @@ void session_start_sck(
     MonotonicTimePoint sck_start_time, Inifile& ini,
     PidFile& pid_file, Font const& font, Args&&... args)
 {
-    auto const watchdog_verbosity = (ini.get<cfg::globals::host>() == "127.0.0.1")
+    using namespace std::string_view_literals;
+    const bool source_is_localhost = (ini.get<cfg::globals::host>() == "127.0.0.1"sv
+                                   || ini.get<cfg::globals::host>() == "::1"sv);
+
+    auto const watchdog_verbosity = source_is_localhost
         ? SocketTransport::Verbose::watchdog
         : SocketTransport::Verbose();
     auto const sck_verbosity = safe_cast<SocketTransport::Verbose>(
@@ -1500,7 +1502,7 @@ void session_start_sck(
             name, std::move(sck), ""_av, 0, ini.get<cfg::client::recv_timeout>(),
             static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
         ),
-        sck_start_time, ini, pid_file, font
+        sck_start_time, ini, pid_file, font, source_is_localhost
     );
 }
 
