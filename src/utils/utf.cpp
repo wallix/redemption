@@ -30,7 +30,7 @@
 
 #include <cassert>
 #include <cstring>
-#include <string>
+
 
 using std::size_t;
 
@@ -457,40 +457,6 @@ writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view
     }
     return utf8_target.first(i_t);
 }
-
-std::string UTF16toUTF8(bytes_view utf16_source) noexcept
-{
-    std::string utf8_target;
-    size_t i_t = 0;
-    const auto len = utf16_source.size() - (utf16_source.size() & 1u);
-    for (size_t i = 0 ; i < len; i += 2){
-        uint8_t lo = utf16_source[i];
-        uint8_t hi  = utf16_source[i+1];
-        if (lo == 0 && hi == 0){
-            break;
-        }
-
-        if (hi & 0xF8){
-            // 3 bytes
-            utf8_target.push_back(0xE0 | ((hi >> 4) & 0x0F));
-            utf8_target.push_back(0x80 | ((hi & 0x0F) << 2) | (lo >> 6));
-            utf8_target.push_back(0x80 | (lo & 0x3F));
-            i_t += 3;
-        }
-        else if (hi || (lo & 0x80)) {
-            // 2 bytes
-            utf8_target.push_back(0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3));
-            utf8_target.push_back(0x80 | (lo & 0x3F));
-            i_t += 2;
-        }
-        else {
-            utf8_target.push_back(lo);
-            i_t++;
-        }
-    }
-    return utf8_target;
-}
-
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0

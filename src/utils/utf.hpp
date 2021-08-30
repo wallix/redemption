@@ -29,7 +29,6 @@
 #include "utils/only_type.hpp"
 
 #include <cstdint>
-#include <string>
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -128,7 +127,6 @@ std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uin
 // do not write trailing 0
 writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view utf8_target) noexcept;
 writable_bytes_view UTF16toUTF8_buf(only_type<uint16_t> utf16_source, writable_bytes_view utf8_target) noexcept;
-std::string UTF16toUTF8(bytes_view utf16_source) noexcept;
 
 template<class ResizableArray>
 void UTF16toResizableUTF8(bytes_view utf16_source, ResizableArray& utf8_target)

@@ -429,10 +429,8 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     TimeBase time_base{MonotonicTimePoint{0x01d5754Es}, {}};
 
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av){
-            auto user_str = ::UTF16toUTF8(user_av);
-            auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_CHECK(user_str == "Christophe");
-            RED_CHECK(domain_str == "");
+            RED_CHECK(::UTF16toResizableUTF8<std::string>(user_av) == "Christophe"_av);
+            RED_CHECK(::UTF16toResizableUTF8<std::string>(domain_av) == ""_av);
             return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>("SecureLinux$42"_av))};
         };
 
@@ -581,10 +579,8 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
     TimeBase time_base{MonotonicTimePoint{0x01D57877s}, {}};
 
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4>{
-            auto user_str = ::UTF16toUTF8(user_av);
-            auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_CHECK(user_str == user);
-            RED_CHECK(domain_str == domain);
+            RED_CHECK(::UTF16toResizableUTF8<std::string>(user_av) == user);
+            RED_CHECK(::UTF16toResizableUTF8<std::string>(domain_av) == domain);
             return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>({pass, sizeof(pass)}))};
 
         };
@@ -731,8 +727,8 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 {
     RED_TEST_MESSAGE("==================== TestNlaserver2 ===================");
 
-    std::string user("hercule");
-    std::string domain("PROXYKDC");
+    auto user = "hercule"_av;
+    auto domain = "PROXYKDC"_av;
     uint8_t pass[] = "SecureLinux$42";
 
 //Time Stamp (1569948639, 973866)
@@ -750,10 +746,8 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)>
         get_password_hash =
         [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4> {
-            auto user_str = ::UTF16toUTF8(user_av);
-            auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_CHECK(user_str == user);
-            RED_CHECK(domain_str == domain);
+            RED_CHECK(::UTF16toResizableUTF8<std::string>(user_av) == user);
+            RED_CHECK(::UTF16toResizableUTF8<std::string>(domain_av) == domain);
             return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,::Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>(bytes_view{pass,sizeof(pass)}))};
         };
 
