@@ -610,27 +610,6 @@ RED_AUTO_TEST_CASE(TestHextile2)
 //Smalltile (15,15,1,1) done
 //Rect=Rect(0 0 1920 34) Tile = Rect(64 0 16 16) cx_remain=1856, cy_remain=34
 
-
-
-class BlockWrap
-{
-    bytes_view t;
-    size_t pos = 0;
-
-public:
-    BlockWrap(bytes_view t) : t(t) {}
-
-    size_t operator()(writable_byte_ptr buffer, size_t len)
-    {
-        const size_t available = this->t.size() - this->pos;
-        len = std::min(available, len);
-        std::memcpy(&buffer[0], &this->t[this->pos], len);
-        this->pos += len;
-        return len;
-    }
-};
-
-
 RED_AUTO_TEST_CASE(TestHextile)
 {
     const auto data =
@@ -699,10 +678,14 @@ RED_AUTO_TEST_CASE(TestHextile)
 /* 3e0 */ "\x5a\xcb\x5a\x01\xaa\x52\x4d\x6b\x0c\x5b\xf3\x9c\xf7\xbd\xbb\xd6"
 /* 03f0 */"\xba\xd6\x75\xad\xcf\x7b\x4d\x6b\x4d\x6b\x4d\x6b\x4d\x63\x4d\x63"
     ""_av;
-    BlockWrap bw(data);
 
     Buf64k buf;
-    buf.read_with(bw);
+    buf.read_with([&](writable_byte_ptr buffer, size_t len) {
+        RED_REQUIRE(data.size() <= len);
+        len = std::min(data.size(), len);
+        std::memcpy(&buffer[0], data.data(), len);
+        return len;
+    });
 
     RED_CHECK(buf.remaining() == data.size());
 
@@ -762,6 +745,8 @@ RED_AUTO_TEST_CASE(TestHextile)
             }
             ++i;
         }
+
+        using gdi::NullGraphic::draw;
     };
 
     Gd drawable;
