@@ -62,6 +62,14 @@ RED_AUTO_TEST_CASE(TestStaticString)
 
     s3.clear();
     RED_CHECK_EQUAL(s3, ""_av);
+
+    s3.delayed_build([](auto& array){
+        array[0] = 'a';
+        array[1] = 'b';
+        array[2] = 'c';
+        return checked_int(3u);
+    });
+    RED_CHECK_EQUAL(s3, "abc"_av);
 }
 
 RED_AUTO_TEST_CASE(TestStaticStringTruncated)
