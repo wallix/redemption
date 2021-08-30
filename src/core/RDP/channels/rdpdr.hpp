@@ -2498,12 +2498,12 @@ class ClientAnnounceReply {
 public:
     uint16_t VersionMajor = 0;
     uint16_t VersionMinor = 0;
-    uint16_t ClientId     = 0;
+    uint32_t ClientId     = 0;
 
 
     explicit ClientAnnounceReply() = default;
 
-    explicit ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint16_t ClientId)
+    explicit ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint32_t ClientId)
     : VersionMajor(VersionMajor)
     , VersionMinor(VersionMinor)
     , ClientId(ClientId) {}
