@@ -105,21 +105,21 @@ private:
 public:
     rdpClientNTLM(bytes_view user,
                bytes_view domain,
-               uint8_t * pass,
-               const char * hostname,
+               bytes_view pass,
+               bytes_view hostname,
                bytes_view public_key,
                const bool restricted_admin_mode,
                Random & rand,
                const TimeBase & time_base,
                const bool credssp_verbose,
                const bool verbose)
-        : PublicKey(public_key.data(), public_key.data()+public_key.size())
+        : PublicKey(public_key.begin(), public_key.end())
         , utf16_user(::UTF8toResizableUTF16<std::vector<uint8_t>>(user))
         , utf16_domain(::UTF8toResizableUTF16<std::vector<uint8_t>>(domain))
-        , identity_Password(::UTF8toResizableUTF16<std::vector<uint8_t>>({pass, strlen(reinterpret_cast<char*>(pass))}))
+        , identity_Password(::UTF8toResizableUTF16<std::vector<uint8_t>>(pass))
         , time_base(time_base)
         , rand(rand)
-        , Workstation(::UTF8toResizableUTF16<std::vector<uint8_t>>({hostname, strlen(hostname)}))
+        , Workstation(::UTF8toResizableUTF16<std::vector<uint8_t>>(hostname))
         , restricted_admin_mode(restricted_admin_mode)
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)

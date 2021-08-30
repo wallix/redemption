@@ -88,7 +88,7 @@ static inline std::vector<uint8_t> UTF16_to_upper(u8_array_view name)
 using array_challenge = std::array<uint8_t, 8>;
 
 using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
-static inline array_md4 Md4(u8_array_view data)
+static inline array_md4 Md4(bytes_view data)
 {
     array_md4 result;
     SslMd4 md4;

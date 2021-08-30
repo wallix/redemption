@@ -430,8 +430,8 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         try {
             this->NTLM = std::make_unique<rdpClientNTLM>(
                 this->user, this->domain,
-                this->current_password,
-                this->hostname.c_str(),
+                bytes_view{this->current_password, strlen(char_ptr_cast(this->current_password))},
+                this->hostname,
                 trans.get_transport().get_public_key(),
                 this->restricted_admin_mode,
                 this->rand, this->time_base,
