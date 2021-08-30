@@ -427,7 +427,7 @@ public:
 
         this->mod = new_mod_rdp(
             trans, gd, osd, event_manager.get_events(), session_log, front, client_info,
-            redir_info, js_rand, ChannelsAuthorizations("*", ""),
+            redir_info, js_rand, ChannelsAuthorizations("*"_zv, ""_zv),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
