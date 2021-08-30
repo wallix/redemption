@@ -386,8 +386,7 @@ void ClientRDPDRChannel::process_server_annnounce_request(InStream & chunk) {
         char username[LOGIN_NAME_MAX];
         gethostname(username, LOGIN_NAME_MAX);
 
-        rdpdr::ClientNameRequest clientNameRequest(username, rdpdr::UNICODE_CHAR);
-        clientNameRequest.emit(stream);
+        rdpdr::emit_client_name_request(stream, std::string_view(username), rdpdr::UNICODE_CHAR);
 
         int total_length(stream.get_offset());
         InStream chunk_to_send(stream.get_produced_bytes());

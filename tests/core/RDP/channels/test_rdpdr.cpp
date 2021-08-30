@@ -19,6 +19,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/log_buffered.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
 #include <string_view>
@@ -197,17 +198,15 @@ RED_AUTO_TEST_CASE(ClientNameRequest1)
         ;
     InStream in_stream(in_data);
 
-    rdpdr::ClientNameRequest client_name_request;
+    tu::log_buffered logbuf;
 
-    client_name_request.receive(in_stream);
+    rdpdr::receive_and_log_client_name_request(in_stream, LOG_INFO);
 
-    //client_name_request.log(LOG_INFO);
+    RED_CHECK(logbuf.buf() == "INFO -- ClientNameRequest: UnicodeFlag=0x1 CodePage=0 ComputerName=\"rzh\"\n"_av);
 
     StaticOutStream<1200> out_stream;
 
-    client_name_request.emit(out_stream);
-    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_produced_bytes())
+    rdpdr::emit_client_name_request(out_stream, "rzh"_av, 0x1);
 
     RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
@@ -221,17 +220,15 @@ RED_AUTO_TEST_CASE(ClientNameRequest2)
         ;
     InStream in_stream(in_data);
 
-    rdpdr::ClientNameRequest client_name_request;
+    tu::log_buffered logbuf;
 
-    client_name_request.receive(in_stream);
+    rdpdr::receive_and_log_client_name_request(in_stream, LOG_INFO);
 
-    //client_name_request.log(LOG_INFO);
+    RED_CHECK(logbuf.buf() == "INFO -- ClientNameRequest: UnicodeFlag=0x2D16624D CodePage=0 ComputerName=\"RDP-TEST\"\n"_av);
 
     StaticOutStream<1200> out_stream;
 
-    client_name_request.emit(out_stream);
-    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_produced_bytes())
+    rdpdr::emit_client_name_request(out_stream, "RDP-TEST"_av, 0x2D16624D);
 
     RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }

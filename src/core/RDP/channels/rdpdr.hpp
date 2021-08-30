@@ -30,6 +30,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "utils/static_string.hpp"
 #include "utils/utf.hpp"
 
 #include <algorithm>
@@ -2592,113 +2593,70 @@ enum {
 //  MUST be null-terminated. The protocol imposes no limitations on the
 //  characters used in this field.
 
-class ClientNameRequest {
-    uint32_t UnicodeFlag = 0x000007ff /* ComputerName is in Unicode characters. */;
+inline void emit_client_name_request(OutStream & stream, chars_view computer_name, uint32_t unicodeFlag)
+{
     uint32_t CodePage    = 0;
+    stream.out_uint32_le(unicodeFlag);
+    stream.out_uint32_le(CodePage);
 
-    size_t ComputerNameLen = 0;
+    if (unicodeFlag & 0x00000001) {
+        // ComputerName is in Unicode characters.
 
-    char ComputerName[500];
+        // The null-terminator is included.
+        uint8_t ComputerName_unicode_data[65536];
+        size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
+            computer_name,
+            make_writable_array_view(ComputerName_unicode_data).drop_back(2));
+        // Writes null terminator.
+        ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] = 0;
+        ComputerName_unicode_data[size_of_ComputerName_unicode_data + 1] = 0;
+        size_of_ComputerName_unicode_data += 2;
 
-public:
-    explicit ClientNameRequest() = default;
+        stream.out_uint32_le(size_of_ComputerName_unicode_data);
 
-    explicit ClientNameRequest(const char * computer_name)
-    {
-        // assert(this->ComputerNameLen <= 500)-1);
-        std::memcpy(this->ComputerName, computer_name,  500);
+        stream.out_copy_bytes(ComputerName_unicode_data, size_of_ComputerName_unicode_data);
+    } else {
+        // The null-terminator is included.
+        stream.out_uint32_le(computer_name.size() + 1u);
+        stream.out_copy_bytes(computer_name);
+        stream.out_uint8(0);
     }
+}
 
-    explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
-    : UnicodeFlag(unicodeFlag)
-    , ComputerNameLen(strlen(computer_name))
-    {
-        this->ComputerNameLen = std::min(this->ComputerNameLen, sizeof(ComputerName) - 1);
-        assert(this->ComputerNameLen == strlen(computer_name));
-        std::memcpy(this->ComputerName, computer_name, this->ComputerNameLen);
-        std::memset(this->ComputerName + this->ComputerNameLen, 0, sizeof(ComputerName)-this->ComputerNameLen);
-    }
+inline void receive_and_log_client_name_request(InStream & stream, int level)
+{
+    // UnicodeFlag(4) + CodePage(4) +  ComputerNameLen(4)
+    ::check_throw(stream, 12, "RDPDR::ClientNameRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
+    const auto UnicodeFlag = stream.in_uint32_le();
+    const auto CodePage    = stream.in_uint32_le();
+    const auto len         = stream.in_uint32_le();
 
-    void emit(OutStream & stream)  {
-        stream.out_uint32_le(this->UnicodeFlag);
-        stream.out_uint32_le(this->CodePage);
+    ::check_throw(stream, len, "RDPDR::ClientNameRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
 
-        if (this->UnicodeFlag & 0x00000001) {
+    uint8_t ComputerName_utf8_data[65536];
+    bytes_view ComputerName = ""_av;
+
+    if (len) {
+        // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
+        //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
+        //  contains inconsistent data.
+        if (UnicodeFlag & 0x00000001) {
             // ComputerName is in Unicode characters.
-
+            ComputerName = ::UTF16toUTF8_buf(
+                stream.in_skip_bytes(len),
+                make_writable_array_view(ComputerName_utf8_data).drop_back(1)).as_chars();
+            ComputerName_utf8_data[ComputerName.size()] = '\0';
+        }
+        else {
             // The null-terminator is included.
-            uint8_t ComputerName_unicode_data[65536];
-            size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
-                {this->ComputerName, this->ComputerNameLen},
-                ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
-            // Writes null terminator.
-            ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
-            ComputerName_unicode_data[size_of_ComputerName_unicode_data + 1] = 0;
-            size_of_ComputerName_unicode_data += 2;
-
-            stream.out_uint32_le(size_of_ComputerName_unicode_data);
-
-            stream.out_copy_bytes(ComputerName_unicode_data, size_of_ComputerName_unicode_data);
-        } else {
-            // The null-terminator is included.
-            this->ComputerName[this->ComputerNameLen] = '\0';
-            this->ComputerNameLen += 1;
-            stream.out_uint32_le(this->ComputerNameLen);
-            stream.out_copy_bytes(this->ComputerName, this->ComputerNameLen);
+            ComputerName = stream.in_skip_bytes(len).drop_back(1);
         }
     }
 
-    void receive(InStream & stream) {
-        // UnicodeFlag(4) + CodePage(4) +  ComputerNameLen(4)
-        ::check_throw(stream, 12, "RDPDR::ClientNameRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
-
-        this->UnicodeFlag = stream.in_uint32_le();
-        this->CodePage    = stream.in_uint32_le();
-
-        this->ComputerNameLen = stream.in_uint32_le();
-        if (this->ComputerNameLen) {
-            // ComputerName(variable)
-            ::check_throw(stream, ComputerNameLen, "RDPDR::ClientNameRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
-
-            // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
-            //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
-            //  contains inconsistent data.
-            if (this->UnicodeFlag & 0x00000001) {
-                // ComputerName is in Unicode characters.
-
-                uint8_t const * ComputerName_unicode_data = stream.get_current();
-
-                const size_t ComputerName_utf8_len = ::UTF16toUTF8(
-                    ComputerName_unicode_data,
-                    this->ComputerNameLen,
-                    byte_ptr_cast(this->ComputerName),
-                    sizeof(this->ComputerName));
-
-                this->ComputerName[ComputerName_utf8_len] = '\0';
-
-                stream.in_skip_bytes(ComputerNameLen);
-            } else {
-                // The null-terminator is included.
-                std::memcpy(this->ComputerName, stream.get_current(), this->ComputerNameLen);
-            }
-        }
-    }
-
-    void log(int level) const {
-        LOG(level, "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%s\"",
-            this->UnicodeFlag, this->CodePage, this->ComputerName);
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Client Name Request:");
-        LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
-        LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
-        LOG(LOG_INFO, "          * ComputerNameLen = %zu (4 bytes)", this->ComputerNameLen);
-        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%zu byte(s))", this->ComputerName, this->ComputerNameLen);
-    }
-
-};  // ClientNameRequest
+    LOG(level, "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%.*s\"",
+        UnicodeFlag, CodePage, int(ComputerName.size()), ComputerName.as_charp());
+}
 
 // [MS-RDPEFS] - 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET)
 // =================================================================
@@ -5118,9 +5076,7 @@ void streamLog(InStream & stream , RdpDrStatus & status)
 
                 case PacketId::PAKID_CORE_CLIENT_NAME:
                     {
-                        ClientNameRequest cnr;
-                        cnr.receive(s);
-                        cnr.log();
+                        receive_and_log_client_name_request(s, LOG_INFO);
                     }
                     break;
 

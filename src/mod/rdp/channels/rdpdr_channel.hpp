@@ -105,7 +105,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     bool device_capability_version_02_supported = false;
 
-    const char* const param_client_name;
+    const std::string_view param_client_name;
     const bool        param_file_system_read_authorized;
     const bool        param_file_system_write_authorized;
     const uint32_t    param_random_number;                  // For ClientId.
@@ -1852,17 +1852,7 @@ public:
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Name Request");
 
-                    rdpdr::ClientNameRequest client_name_request;
-
-                    //auto chunk_p = chunk.get_current();
-
-                    client_name_request.receive(chunk);
-
-                    //LOG(LOG_INFO, "ClientNameRequest: size=%u",
-                    //    (unsigned int)(chunk.get_current() - chunk_p));
-                    //hexdump(chunk_p, chunk.get_current() - chunk_p);
-
-                    client_name_request.log(LOG_INFO);
+                    rdpdr::receive_and_log_client_name_request(chunk, LOG_INFO);
                 }
             break;
 
@@ -1993,61 +1983,14 @@ public:
             return true;
         }
 
-        uint8_t message_buffer[1024];
-
-        {
-            OutStream out_stream(message_buffer);
-
-            rdpdr::SharedHeader clent_message_header(
-                rdpdr::Component::RDPDR_CTYP_CORE,
-                rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
-            clent_message_header.emit(out_stream);
-
-            rdpdr::ClientAnnounceReply client_announce_reply(
-                0x0001, // VersionMajor, MUST be set to 0x0001.
-                0x0006, // Windows XP SP3.
-                // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce
-                //     Reply Message.
-                ((server_announce_request.VersionMinor() >= 12) ?
-                 this->param_random_number :
-                 server_announce_request.ClientId()));
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_server_announce_request:");
-                client_announce_reply.log(LOG_INFO);
-            }
-            client_announce_reply.emit(out_stream);
-
-            this->send_message_to_server(
-                out_stream.get_offset(),
-                  CHANNELS::CHANNEL_FLAG_FIRST
-                | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_produced_bytes());
-        }
-
-        {
-            OutStream out_stream(message_buffer);
-
-            rdpdr::SharedHeader clent_message_header(
-                rdpdr::Component::RDPDR_CTYP_CORE,
-                rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
-            clent_message_header.emit(out_stream);
-
-            rdpdr::ClientNameRequest client_name_request(
-                this->param_client_name);
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_server_announce_request:");
-                client_name_request.log(LOG_INFO);
-            }
-            client_name_request.emit(out_stream);
-
-            this->send_message_to_server(
-                out_stream.get_offset(),
-                  CHANNELS::CHANNEL_FLAG_FIRST
-                | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_produced_bytes());
-        }
+        this->send_client_name(
+            "process_server_announce_request",
+            // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce
+            //     Reply Message.
+            (server_announce_request.VersionMinor() >= 12)
+                ? this->param_random_number
+                : server_announce_request.ClientId()
+        );
 
         return false;
     }   // process_server_announce_request
@@ -2828,8 +2771,27 @@ public:
     }
 
 private:
-    void process_event() {
+    void process_event()
+    {
         this->initialization_timeout_event.garbage();
+
+        this->send_client_name(
+            "process_event",
+            // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce
+            //     Reply Message.
+            (this->server_major_version_number >= 12)
+                ? this->param_random_number
+                : this->server_generated_client_id
+        );
+
+        LOG(LOG_INFO,
+            "FileSystemVirtualChannel::process_event:"
+                "Initialization timeout reached.");
+        this->disable_client_sender = true;
+    }
+
+    void send_client_name(char const* func_name, uint32_t ClientId)
+    {
         uint8_t message_buffer[1024];
 
         {
@@ -2843,14 +2805,9 @@ private:
             rdpdr::ClientAnnounceReply client_announce_reply(
                 0x0001, // VersionMajor, MUST be set to 0x0001.
                 0x0006, // Windows XP SP3.
-                // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce
-                //     Reply Message.
-                ((this->server_major_version_number >= 12) ?
-                 this->param_random_number :
-                 this->server_generated_client_id));
+                ClientId);
             if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_event:");
+                LOG(LOG_INFO, "FileSystemVirtualChannel::%s:", func_name);
                 client_announce_reply.log(LOG_INFO);
             }
             client_announce_reply.emit(out_stream);
@@ -2870,14 +2827,11 @@ private:
                 rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
             clent_message_header.emit(out_stream);
 
-            rdpdr::ClientNameRequest client_name_request(
-                this->param_client_name);
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_event:");
-                client_name_request.log(LOG_INFO);
-            }
-            client_name_request.emit(out_stream);
+            uint32_t unicodeFlag = 0x7FF;
+            rdpdr::emit_client_name_request(out_stream, this->param_client_name, unicodeFlag);
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "FileSystemVirtualChannel::%s: ClientNameRequest: UnicodeFlag=0x%X CodePage=0 ComputerName=\"%.*s\"",
+                func_name, unicodeFlag, int(this->param_client_name.size()), this->param_client_name.data());
 
             this->send_message_to_server(
                 out_stream.get_offset(),
@@ -2885,10 +2839,5 @@ private:
                 | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_produced_bytes());
         }
-
-        LOG(LOG_INFO,
-            "FileSystemVirtualChannel::process_event:"
-                "Initialization timeout reached.");
-        this->disable_client_sender = true;
     }
 };  // class FileSystemVirtualChannel
