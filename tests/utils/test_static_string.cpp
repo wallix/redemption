@@ -58,6 +58,10 @@ RED_AUTO_TEST_CASE(TestStaticString)
 
     s3 = s2;
     RED_CHECK_EQUAL(s3, "abcdx"_av);
+    RED_CHECK_EQUAL(s3.view_with_null_terminator(), "abcdx\0"_av);
+
+    s3.clear();
+    RED_CHECK_EQUAL(s3, ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestStaticStringTruncated)

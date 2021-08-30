@@ -54,6 +54,9 @@ namespace detail
 template<std::size_t N>
 struct static_string
 {
+    using size_type = std::size_t;
+    using msize_type = detail::select_minimal_size_t<N>;
+
     static_string() noexcept
     {
         m_str[0] = '\0';
@@ -92,6 +95,16 @@ struct static_string
         return *this;
     }
 
+    static std::size_t max_capacity() noexcept
+    {
+        return N;
+    }
+
+    bounded_chars_view<1, N+1> view_with_null_terminator() const noexcept
+    {
+        return bounded_chars_view<1, N+1>::assumed(data(), size() + 1);
+    }
+
     /// \pre i <= N
     char& operator[](std::size_t i) noexcept
     {
@@ -105,6 +118,11 @@ struct static_string
     }
 
     std::size_t size() const noexcept
+    {
+        return m_len;
+    }
+
+    msize_type msize() const noexcept
     {
         return m_len;
     }
@@ -149,10 +167,16 @@ struct static_string
         return data() + size();
     }
 
+    void clear() noexcept
+    {
+        m_len = 0;
+        m_str[0] = '\0';
+    }
+
 private:
     friend class detail::static_string_set_size;
 
-    detail::select_minimal_size_t<N> m_len = 0;
+    msize_type m_len = 0;
     std::array<char, N+1> m_str;
 };
 
