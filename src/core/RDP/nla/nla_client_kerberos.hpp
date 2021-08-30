@@ -108,7 +108,7 @@ private:
 
         void SetDomainFromUtf8(bytes_view domain)
         {
-            this->Domain = ::UTF8toUTF16(domain);
+            ::UTF8toResizableUTF16(domain, this->Domain);
         }
 
         void SetPasswordFromUtf8(const uint8_t * password)

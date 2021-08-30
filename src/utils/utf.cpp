@@ -185,56 +185,6 @@ bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_
     return true;
 }
 
-// TODO: this one truncate in case of UTF8 error, maybe should return error code ?
-std::vector<uint8_t> UTF8toUTF16(bytes_view source) noexcept
-{
-    std::vector<uint8_t> result;
-    const uint8_t * s = source.as_u8p();
-
-    uint32_t ucode = 0;
-    unsigned c = 0;
-    for (size_t i = 0; (i < source.size()) && (ucode = c = s[i]) != 0 ; i++){
-        switch (c >> 4){
-            case 0: // allows control characters, c always not 0 (catched in loop test)
-            case 1: case 2: case 3:
-            case 4: case 5: case 6: case 7:
-                ucode = c;
-            break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */
-            case 0xC: case 0xD:
-                if (i + 1 > source.size()){
-                    return result;
-                }
-                ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
-                i+=1;
-            break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
-            case 0xE:
-                if (i + 2 > source.size()){
-                    return result;
-                }
-                ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
-                i+=2;
-            break;
-            case 0xF:
-                if (i + 3 > source.size()){
-                    return result;
-                }
-// TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
-                ucode = ((c & 0x07) << 18)|((s[i+1] & 0x3F) << 12)|((s[i+2] & 0x3F) << 6)|(s[i+3] & 0x3F);
-                i+=3;
-            break;
-            case 8: case 9: case 0x0A: case 0x0B:
-                // should never happen on valid UTF8
-                return result;
-        }
-        result.push_back(ucode & 0xFF);
-        result.push_back((ucode >> 8) & 0xFF);
-    }
-    return result;
-}
-
-
 size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept
 {
     const uint8_t * s = source.as_u8p();

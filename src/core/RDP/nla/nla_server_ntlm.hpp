@@ -595,9 +595,8 @@ public:
         rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
 
 
-        auto target_name = ::UTF8toUTF16(this->TargetName);
         NTLMChallengeMessage challenge_message;
-        challenge_message.TargetName.buffer = target_name;
+        UTF8toResizableUTF16(this->TargetName, challenge_message.TargetName.buffer);
         challenge_message.serverChallenge = this->ServerChallenge;
 
         uint8_t ZeroTimestamp[8] = {};
@@ -635,7 +634,7 @@ public:
 
         // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
         // and set the matching flag accordingly
-        if (target_name.size() > 0){
+        if (challenge_message.TargetName.buffer.size() > 0){
             // forcing some flags
             negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
         }
@@ -664,36 +663,36 @@ public:
             case MsvAvNbDomainName:
             {
                 // NETBIOS Domain Name
-                std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
-                challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
+                challenge_message.AvPairList.push_back(AvPair({
+                    MsvAvNbDomainName, ::UTF8toResizableUTF16<std::vector<uint8_t>>(this->netbiosDomainName)}));
             }
             break;
             case MsvAvNbComputerName:
             {
                 // NETBIOS Computer Name
-                std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
-                challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
+                challenge_message.AvPairList.push_back(AvPair({
+                    MsvAvNbComputerName, ::UTF8toResizableUTF16<std::vector<uint8_t>>(this->netbiosComputerName)}));
             }
             break;
             case MsvAvDnsDomainName:
             {
                 // DNS Domain Name
-                auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
-                challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+                challenge_message.AvPairList.push_back(AvPair({
+                    MsvAvDnsDomainName, ::UTF8toResizableUTF16<std::vector<uint8_t>>(this->dnsDomainName)}));
             }
             break;
             case MsvAvDnsTreeName:
             {
                 // DNS Domain Name
-                auto dsn_tree_name_u16 = ::UTF8toUTF16(this->dnsTreeName);
-                challenge_message.AvPairList.push_back(AvPair({MsvAvDnsTreeName, dsn_tree_name_u16}));
+                challenge_message.AvPairList.push_back(AvPair({
+                    MsvAvDnsTreeName, ::UTF8toResizableUTF16<std::vector<uint8_t>>(this->dnsTreeName)}));
             }
             break;
             case MsvAvDnsComputerName:
             {
                 // DNS Computer Name
-                auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
-                challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
+                challenge_message.AvPairList.push_back(AvPair({
+                    MsvAvDnsComputerName, ::UTF8toResizableUTF16<std::vector<uint8_t>>(this->dnsComputerName)}));
             }
             break;
             case MsvAvTimestamp:
@@ -726,7 +725,9 @@ public:
             negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
         }
 
-        return emitNTLMChallengeMessage(target_name, challenge_message.serverChallenge, negoFlags, raw_ntlm_version, target_info);
+        return emitNTLMChallengeMessage(
+            challenge_message.TargetName.buffer,
+            challenge_message.serverChallenge, negoFlags, raw_ntlm_version, target_info);
     }
 
 };

@@ -433,7 +433,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
             auto domain_str = ::UTF16toUTF8(domain_av);
             RED_CHECK(user_str == "Christophe");
             RED_CHECK(domain_str == "");
-            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toUTF16("SecureLinux$42"_av))};
+            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>("SecureLinux$42"_av))};
         };
 
     auto public_key = std::vector<uint8_t>{
@@ -585,7 +585,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
             auto domain_str = ::UTF16toUTF8(domain_av);
             RED_CHECK(user_str == user);
             RED_CHECK(domain_str == domain);
-            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toUTF16({pass, sizeof(pass)}))};
+            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>({pass, sizeof(pass)}))};
 
         };
 
@@ -754,7 +754,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
             auto domain_str = ::UTF16toUTF8(domain_av);
             RED_CHECK(user_str == user);
             RED_CHECK(domain_str == domain);
-            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,::Md4(::UTF8toUTF16(bytes_view{pass,sizeof(pass)}))};
+            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,::Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>(bytes_view{pass,sizeof(pass)}))};
         };
 
     auto public_key = std::vector<uint8_t>{

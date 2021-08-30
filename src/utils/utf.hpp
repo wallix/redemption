@@ -61,8 +61,6 @@ bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_
 // UTF8toUTF16 never writes the trailing zero
 std::size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept;
 std::size_t UTF8toUTF16(bytes_view source, writable_bytes_view target) noexcept;
-//std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
-std::vector<uint8_t> UTF8toUTF16(bytes_view source) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 std::size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, std::size_t t_len) noexcept;

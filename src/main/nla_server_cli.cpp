@@ -89,11 +89,11 @@ class NLAServer
 
             if (user_match && domain_match){
                 LOG(LOG_INFO, "known identity");
-                return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->nla_password))};
+                return {PasswordCallback::Ok, Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>(this->nla_password))};
             }
         }
         else if (u8user == username && u8domain == domain){
-            return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->nla_password))};
+            return {PasswordCallback::Ok, Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>(this->nla_password))};
         }
 
         LOG(LOG_ERR, "Ntlm: unknwon identity");
