@@ -30,7 +30,7 @@
 
 namespace detail
 {
-    template<class SplitterView>
+    // template<class SplitterView>
     class end_iterator
     {};
 
@@ -43,6 +43,10 @@ namespace detail
         explicit iterator(SplitterView & s)
         : lines(&s)
         , av(s.next())
+        {}
+
+        explicit iterator(end_iterator)
+        : lines(nullptr)
         {}
 
         iterator& operator++()
@@ -61,8 +65,15 @@ namespace detail
             return &av;
         }
 
-        bool operator==(end_iterator<SplitterView> const & /*other*/) const
+        // should be operator==(end_iterator), but does not work with gcc-8.0
+        // bool operator==(end_iterator<SplitterView> const & /*other*/) const
+        // {
+        //     return lines->empty();
+        // }
+
+        bool operator==(iterator const & other) const
         {
+            assert(!other.lines && lines);
             return lines->empty();
         }
 
@@ -130,9 +141,10 @@ namespace detail
             return iterator<SplitterCView>(*this);
         }
 
-        end_iterator<SplitterCView> end()
+        // should be detail::end_iterator<SplitterView> end(), but does not work with gcc-8.0
+        iterator<SplitterCView> end()
         {
-            return {};
+            return iterator<SplitterCView>{detail::end_iterator()};
         }
 
     private:
@@ -202,9 +214,10 @@ struct SplitterView
         return detail::iterator<SplitterView>(*this);
     }
 
-    detail::end_iterator<SplitterView> end()
+    // should be detail::end_iterator<SplitterView> end(), but does not work with gcc-8.0
+    detail::iterator<SplitterView> end()
     {
-        return {};
+        return detail::iterator<SplitterView>{detail::end_iterator()};
     }
 
 private:
