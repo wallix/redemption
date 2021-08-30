@@ -177,10 +177,13 @@ done || if [[ $fast -eq 1 ]]; then
 fi
 set +o pipefail
 
+build_all() {
+    build "$@" -j3 ocr_tools
+    build "$@" $big_mem
+    build "$@" -j2
+}
 
-build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
-build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
-build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
+build_all $toolset_clang -sNO_FFMPEG=1 san -s FAST_CHECK=1
 rm -r bin/clang*
 
 show_duration $toolset_clang
@@ -188,11 +191,16 @@ show_duration $toolset_clang
 
 if [[ $fast -eq 0 ]]; then
     # debug with coverage
-    mkdir -p bin/htmlcov
-    GCOV_BIN="$gcovbin" OUTPUT_DIR=bin/htmlcov ./tools/gcovr.sh -q $toolset_gcc debug -s FAST_CHECK=1
+    # mkdir -p bin/htmlcov
+    # GCOV_BIN="$gcovbin" OUTPUT_DIR=bin/htmlcov ./tools/gcovr.sh -q $toolset_gcc debug -s FAST_CHECK=1
+    # rm -r bin/gcc*
+    # show_duration $toolset_gcc coverage
+
+    # debug
+    build_all $toolset_gcc debug -s FAST_CHECK=1
     rm -r bin/gcc*
 
-    show_duration $toolset_gcc coverage
+    show_duration $toolset_gcc debug
 
     # cppcheck
     # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
