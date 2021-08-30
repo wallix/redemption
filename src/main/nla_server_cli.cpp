@@ -71,17 +71,21 @@ class NLAServer
         LOG(LOG_INFO, "NTLM Check identity");
         hexdump_d(user_av);
 
-        auto bytes_to_zstring_view = [](std::vector<uint8_t>& cont){
-            cont.push_back(0);
-            return zstring_view::from_null_terminated(byte_ptr(cont.data()).as_charp(), cont.size());
+        auto encode_UTF16_to_UTF8 = [](bytes_view utf16_source){
+            std::vector<char> target;
+            target.resize(utf16_source.size() * 2 + 1);
+            auto len = UTF16toUTF8_buf(utf16_source, make_writable_array_view(target)).size();
+            target[len] = '\0';
+            target.resize(len + 1);
+            return target;
         };
 
         auto [username, domain] = extract_user_domain(this->nla_username);
         // from protocol
-        auto tmp_utf8_user = ::encode_UTF16_to_UTF8(user_av);
-        auto u8user = bytes_to_zstring_view(tmp_utf8_user);
-        auto tmp_utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
-        auto u8domain = bytes_to_zstring_view(tmp_utf8_domain);
+        auto tmp_utf8_user = encode_UTF16_to_UTF8(user_av);
+        auto u8user = zstring_view::from_null_terminated(tmp_utf8_user);
+        auto tmp_utf8_domain = encode_UTF16_to_UTF8(domain_av);
+        auto u8domain = zstring_view::from_null_terminated(tmp_utf8_domain);
 
         LOG(LOG_INFO, "NTML IDENTITY(message): identity.User=%s identity.Domain=%s username=%s, domain=%s",
             u8user, u8domain, username, domain);

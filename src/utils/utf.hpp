@@ -29,7 +29,7 @@
 #include "utils/only_type.hpp"
 
 #include <cstdint>
-#include <vector>
+#include <string>
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -89,41 +89,6 @@ private:
     const uint8_t * source;
     uint32_t ucode = 0;
 };
-
-
-// convert UTF16 input to UTF8 returns a new vector containing encoded data
-inline std::vector<uint8_t> encode_UTF16_to_UTF8(bytes_view utf16_source)
-{
-    // TODO: Fix that, it does not handle invalid UTF16 encodings.
-    // TODO: Also, we should do something for multiwords UTF16 codes
-    // TODO: also it stops if input string containes a 0x0000. Is it what we want ?
-    // shouldn't we rather stop when input is finished
-    std::vector<uint8_t> target;
-    const auto len = utf16_source.size() - (utf16_source.size() & 1u);
-    for (size_t i = 0 ; i < len; i += 2){
-        uint8_t lo = utf16_source[i];
-        uint8_t hi  = utf16_source[i+1];
-        if (lo == 0 && hi == 0){
-            break;
-        }
-        if (hi & 0xF8){
-            // 3 bytes
-            target.push_back(0xE0 | ((hi >> 4) & 0x0F));
-            target.push_back(0x80 | ((hi & 0x0F) << 2) | (lo >> 6));
-            target.push_back(0x80 | (lo & 0x3F));
-        }
-        else if (hi || (lo & 0x80)) {
-            // 2 bytes
-            target.push_back(0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3));
-            target.push_back(0x80 | (lo & 0x3F));
-        }
-        else {
-            target.push_back(lo);
-        }
-    }
-    return target;
-}
-
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
