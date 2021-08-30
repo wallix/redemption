@@ -404,6 +404,19 @@ RED_AUTO_TEST_CASE(TestUTF16ToUTF8)
     }
 }
 
+RED_AUTO_TEST_CASE(TestUTF16ToResizableUTF8)
+{
+    RED_CHECK(UTF16toResizableUTF8<std::vector<char>>("a\0b\0c\0"_av) == "abc"_av);
+    RED_CHECK(UTF16toResizableUTF8_zstring<std::vector<char>>("a\0b\0c\0"_av) == "abc\0"_av);
+
+    std::vector<char> result;
+    UTF16toResizableUTF8_zstring("a\0b\0c\0"_av, result);
+    RED_CHECK(result == "abc\0"_av);
+
+    UTF16toResizableUTF8("a\0b\0c\0"_av, result);
+    RED_CHECK(result == "abc"_av);
+}
+
 RED_AUTO_TEST_CASE(TestUTF8ToUTF16Limit)
 {
     uint8_t expected_target[]{ 'a', 0, 'b', 0, 'c', 0, 'd', 0 };
@@ -434,6 +447,19 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
     // Check result
     RED_CHECK_EQUAL(6u, nbbytes_utf16);      // 6
     RED_CHECK_EQUAL_RANGES(target, expected_target);    // "\x61\x00\x62\x00\x63\x00\x64\x00"
+}
+
+RED_AUTO_TEST_CASE(TestUTF8ToResizableUTF16)
+{
+    RED_CHECK(UTF8toResizableUTF16<std::vector<char>>("abc"_av) == "a\0b\0c\0"_av);
+    RED_CHECK(UTF8toResizableUTF16_zstring<std::vector<char>>("abc"_av) == "a\0b\0c\0\0\0"_av);
+
+    std::vector<char> result;
+    UTF8toResizableUTF16_zstring("abc"_av, result);
+    RED_CHECK(result == "a\0b\0c\0\0\0"_av);
+
+    UTF8toResizableUTF16("abc"_av, result);
+    RED_CHECK(result == "a\0b\0c\0"_av);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8StrLenInChar)

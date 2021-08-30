@@ -101,9 +101,9 @@ private:
             return this->Domain;
         }
 
-        void SetUserFromUtf8(const std::string & user)
+        void SetUserFromUtf8(chars_view user)
         {
-            this->User = ::UTF8toUTF16_asString(user);
+            ::UTF8toResizableUTF16(user, this->User);
         }
 
         void SetDomainFromUtf8(bytes_view domain)

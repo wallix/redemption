@@ -63,10 +63,43 @@ std::size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexc
 std::size_t UTF8toUTF16(bytes_view source, writable_bytes_view target) noexcept;
 //std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
 std::vector<uint8_t> UTF8toUTF16(bytes_view source) noexcept;
-std::string UTF8toUTF16_asString(bytes_view source) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 std::size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, std::size_t t_len) noexcept;
+
+template<class ResizableArray>
+void UTF8toResizableUTF16(bytes_view utf16_source, ResizableArray& utf8_target)
+{
+    utf8_target.resize(utf16_source.size() * 4);
+    auto len = UTF8toUTF16(utf16_source, make_writable_array_view(utf8_target));
+    utf8_target.resize(len);
+}
+
+template<class ResizableArray>
+ResizableArray UTF8toResizableUTF16(bytes_view utf16_source)
+{
+    ResizableArray utf8_target;
+    UTF8toResizableUTF16(utf16_source, utf8_target);
+    return utf8_target;
+}
+
+template<class ResizableArray>
+void UTF8toResizableUTF16_zstring(bytes_view utf16_source, ResizableArray& utf8_target)
+{
+    utf8_target.resize(utf16_source.size() * 4);
+    auto len = UTF8toUTF16(utf16_source, make_writable_array_view(utf8_target));
+    utf8_target[len    ] = '\0';
+    utf8_target[len + 1] = '\0';
+    utf8_target.resize(len + 2);
+}
+
+template<class ResizableArray>
+ResizableArray UTF8toResizableUTF16_zstring(bytes_view utf16_source)
+{
+    ResizableArray utf8_target;
+    UTF8toResizableUTF16_zstring(utf16_source, utf8_target);
+    return utf8_target;
+}
 
 
 class UTF8toUnicodeIterator
@@ -98,6 +131,39 @@ std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uin
 writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view utf8_target) noexcept;
 writable_bytes_view UTF16toUTF8_buf(only_type<uint16_t> utf16_source, writable_bytes_view utf8_target) noexcept;
 std::string UTF16toUTF8(bytes_view utf16_source) noexcept;
+
+template<class ResizableArray>
+void UTF16toResizableUTF8(bytes_view utf16_source, ResizableArray& utf8_target)
+{
+    utf8_target.resize(utf16_source.size() * 2);
+    auto len = UTF16toUTF8_buf(utf16_source, make_writable_array_view(utf8_target)).size();
+    utf8_target.resize(len);
+}
+
+template<class ResizableArray>
+ResizableArray UTF16toResizableUTF8(bytes_view utf16_source)
+{
+    ResizableArray utf8_target;
+    UTF16toResizableUTF8(utf16_source, utf8_target);
+    return utf8_target;
+}
+
+template<class ResizableArray>
+void UTF16toResizableUTF8_zstring(bytes_view utf16_source, ResizableArray& utf8_target)
+{
+    utf8_target.resize(utf16_source.size() * 2 + 1);
+    auto len = UTF16toUTF8_buf(utf16_source, make_writable_array_view(utf8_target)).size();
+    utf8_target[len] = '\0';
+    utf8_target.resize(len + 1);
+}
+
+template<class ResizableArray>
+ResizableArray UTF16toResizableUTF8_zstring(bytes_view utf16_source)
+{
+    ResizableArray utf8_target;
+    UTF16toResizableUTF8_zstring(utf16_source, utf8_target);
+    return utf8_target;
+}
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0

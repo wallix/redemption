@@ -185,14 +185,6 @@ bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_
     return true;
 }
 
-// TODO remove that
-std::string UTF8toUTF16_asString(bytes_view source) noexcept
-{
-    auto res = UTF8toUTF16(source);
-    return {res.data(), res.data()+res.size()};
-}
-
-
 // TODO: this one truncate in case of UTF8 error, maybe should return error code ?
 std::vector<uint8_t> UTF8toUTF16(bytes_view source) noexcept
 {
