@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     // RED_CHECK_EQUAL(config.
     RED_CHECK(config.rDPDiskConfig.enable_drive_type);
     RED_CHECK(config.rDPDiskConfig.enable_printer_type);
-    RED_CHECK(config.rDPDiskConfig.device_list[0].name == "home"sv);
+    RED_CHECK(config.rDPDiskConfig.device_list[0].name == "home\0\0\0\0"_av);
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].type, rdpdr::RDPDR_DTYP_FILESYSTEM);
 
     // RDPSND
@@ -312,7 +312,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     // RED_CHECK_EQUAL(config.
     RED_CHECK(config.rDPDiskConfig.enable_drive_type);
     RED_CHECK(config.rDPDiskConfig.enable_printer_type);
-    RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home"sv);
+    RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home\0\0\0\0"_av);
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].type, rdpdr::RDPDR_DTYP_FILESYSTEM);
 
     // RDPSND

@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <string>
+#include <array>
 #include <cstdint>
 
 
@@ -34,10 +35,8 @@ namespace rdpdr
 struct RDPDiskConfig
 {
     struct DeviceInfo {
-        char name[8];
+        std::array<char, 8> name;
         rdpdr::RDPDR_DTYP type;
-
-        DeviceInfo(const char * name, rdpdr::RDPDR_DTYP type) noexcept;
     };
 
     std::vector<DeviceInfo> device_list;

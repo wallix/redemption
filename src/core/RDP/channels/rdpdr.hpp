@@ -34,8 +34,10 @@
 #include "utils/utf.hpp"
 
 #include <algorithm>
-#include <cinttypes>
 #include <vector>
+#include <array>
+
+#include <cinttypes>
 
 namespace rdpdr {
 
@@ -662,21 +664,21 @@ class DeviceAnnounceHeader_Send {
     RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
     uint32_t DeviceId_   = 0;
 
-    uint8_t  PreferredDosName_[8 /* PreferredDosName(8) */ + 1] = { 0 };
+    std::array<char, 8> PreferredDosName_ = { 0 };
 
     struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
 
 public:
 
-    explicit DeviceAnnounceHeader_Send(RDPDR_DTYP DeviceType, uint32_t DeviceId,
-                                  const char * preferred_dos_name,
-                                  uint8_t const * device_data_p, size_t device_data_size)
+    explicit DeviceAnnounceHeader_Send(
+        RDPDR_DTYP DeviceType, uint32_t DeviceId,
+        std::array<char, 8> preferred_dos_name,
+        uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
-    , device_data{device_data_p, device_data_size} {
-        memcpy(this->PreferredDosName_, preferred_dos_name,
-            strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
-    }
+    , PreferredDosName_(preferred_dos_name)
+    , device_data{device_data_p, device_data_size}
+    {}
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader_Send);
 
@@ -684,7 +686,7 @@ public:
         stream.out_uint32_le(underlying_cast(this->DeviceType_));
         stream.out_uint32_le(this->DeviceId_);
 
-        stream.out_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
+        stream.out_copy_bytes(this->PreferredDosName_);
 
         stream.out_uint32_le(this->device_data.sz); // DeviceDataLength(4)
 
@@ -697,8 +699,8 @@ public:
 
     [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
 
-    [[nodiscard]] const char * PreferredDosName() const {
-        return ::char_ptr_cast(this->PreferredDosName_);
+    [[nodiscard]] std::array<char, 8> PreferredDosName() const {
+        return this->PreferredDosName_;
     }
 
     [[nodiscard]] const char * DeviceData() const {
@@ -718,21 +720,13 @@ public:
     }
 
     void log(int level) const {
-        LOG(level, "DeviceAnnounceHeader_Send: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
+        LOG(level, "DeviceAnnounceHeader_Send: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%.*s\"",
             get_DeviceType_name(this->DeviceType_),
-            this->DeviceType_, this->DeviceId_, this->PreferredDosName_);
+            this->DeviceType_, this->DeviceId_,
+            int(this->PreferredDosName_.size()), this->PreferredDosName_.data());
         if (level == LOG_INFO) {
             hexdump(this->device_data.p, this->device_data.sz);
         }
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Device Announce:");
-        LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
-        LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * PreferredDosName = \"%s\" (8 bytes)", this->PreferredDosName());
-        LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-        // LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader_Send
 

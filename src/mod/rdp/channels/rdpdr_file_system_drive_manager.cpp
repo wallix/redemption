@@ -1621,7 +1621,7 @@ void FileSystemDriveManager::announce_drive(
         rdpdr::DeviceAnnounceHeader_Send device_announce_header(
                 rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
                 managed_drive.device_id,
-                managed_drive.name.c_str(),     // PreferredDosName
+                managed_drive.name.array_,      // PreferredDosName
                 byte_ptr_cast(managed_drive.name.c_str()),
                 managed_drive.name.length() + 1
             );

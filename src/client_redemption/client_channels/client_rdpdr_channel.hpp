@@ -157,18 +157,9 @@ private:
 
 
     struct DeviceData {
-        char name[8] = {0};
+        std::array<char, 8> name = {0};
         uint32_t ID;
         rdpdr::RDPDR_DTYP type;
-
-        DeviceData(const char * name, uint32_t ID, rdpdr::RDPDR_DTYP type)
-        : ID(ID)
-        , type(type)
-        {
-            for (int i = 0; i < 8; i++) {
-                this->name[i] = name[i];
-            }
-        }
     };
 
     std::vector<DeviceData> device_list;

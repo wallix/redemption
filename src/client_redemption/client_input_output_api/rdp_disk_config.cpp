@@ -22,14 +22,6 @@
 #include "core/RDP/channels/rdpdr.hpp"
 
 
-RDPDiskConfig::DeviceInfo::DeviceInfo(const char * name, rdpdr::RDPDR_DTYP type) noexcept
-: type(type)
-{
-    for (int i = 0; i < 8; i++) {
-        this->name[i] = name[i];
-    }
-}
-
 RDPDiskConfig::RDPDiskConfig() noexcept
 : ioCode1(rdpdr::SUPPORT_ALL_REQUEST)
 , extendedPDU(
@@ -54,9 +46,7 @@ void RDPDiskConfig::add_drive(const std::string & name, rdpdr::RDPDR_DTYP type)
     if (size > 8) {
         size = 8;
     }
-    char final_name[8] = {0};
-    for (size_t i = 0; i < size; i++) {
-        final_name[i] = tmp[i];
-    }
-    this->device_list.emplace_back(final_name, type);
+    std::array<char, 8> final_name = {0};
+    memcpy(final_name.data(), tmp.data(), size);
+    this->device_list.emplace_back(DeviceInfo{final_name, type});
 }

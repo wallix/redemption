@@ -123,8 +123,7 @@ ClientRDPDRChannel::ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * ca
     this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE]      = config.enable_port_type;
 
     for (size_t i = 0; i < config.device_list.size(); i++) {
-        DeviceData hard1(config.device_list[i].name, i+1, config.device_list[i].type);
-        device_list.push_back(hard1);
+        device_list.push_back(DeviceData{config.device_list[i].name, uint32_t(i+1), config.device_list[i].type});
     }
 }
 
