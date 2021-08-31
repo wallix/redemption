@@ -132,9 +132,24 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         struct device_info_type
         {
+            struct Name
+            {
+                explicit Name(std::array<char, 8> name) noexcept
+                : array_(name)
+                , len_(checked_int(strnlen(name.data(), 8)))
+                {}
+
+                char const* data() const noexcept { return array_.data(); }
+                uint32_t size() const noexcept { return len_; }
+
+            private:
+                std::array<char, 8> array_;
+                uint8_t len_;
+            };
+
             uint32_t device_id;
             rdpdr::RDPDR_DTYP device_type;
-            std::string preferred_dos_name;
+            Name preferred_dos_name;
         };
         using device_info_inventory_type = std::vector<device_info_type>;
         device_info_inventory_type device_info_inventory;
@@ -255,25 +270,31 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }
 
     private:
-        bool add_known_device(uint32_t DeviceId, rdpdr::RDPDR_DTYP DeviceType, const char* PreferredDosName) {
+        bool add_known_device(uint32_t DeviceId, rdpdr::RDPDR_DTYP DeviceType, std::array<char, 8> PreferredDosName) {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
                     LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device:"
-                        " \"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") is already"
-                        " in the device list. Old=\"%s\" (DeviceType=%" PRIu32 ")",
-                        PreferredDosName, DeviceId, underlying_cast(DeviceType),
-                        info.preferred_dos_name.c_str(), underlying_cast(info.device_type));
+                        " \"%.*s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") is already"
+                        " in the device list. Old=\"%.*s\" (DeviceType=%" PRIu32 ")",
+                        int(PreferredDosName.size()), PreferredDosName.data(),
+                        DeviceId, underlying_cast(DeviceType),
+                        int(info.preferred_dos_name.size()),
+                        info.preferred_dos_name.data(),
+                        underlying_cast(info.device_type));
 
                     return false;
                 }
             }
 
-            this->device_info_inventory.push_back({ DeviceId, DeviceType, PreferredDosName });
+            this->device_info_inventory.push_back({
+                DeviceId, DeviceType, device_info_type::Name(PreferredDosName)
+            });
             LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
                 "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device:"
-                " Add \"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") to known device list.",
-                PreferredDosName, DeviceId, underlying_cast(DeviceType));
+                " Add \"%.*s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") to known device list.",
+                int(PreferredDosName.size()), PreferredDosName.data(),
+                DeviceId, underlying_cast(DeviceType));
 
             return true;
         }
@@ -305,7 +326,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }
 
     public:
-        std::string const * get_device_name(uint32_t DeviceId) {
+        device_info_type::Name const * get_device_name(uint32_t DeviceId) const {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
                     return &info.preferred_dos_name;
@@ -342,8 +363,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 if (iter->device_id == DeviceId) {
                     LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device:"
-                        " Remove \"%s\"(DeviceId=%" PRIu32 ") from known device list.",
-                        iter->preferred_dos_name, DeviceId);
+                        " Remove \"%.*s\"(DeviceId=%" PRIu32 ") from known device list.",
+                        int(iter->preferred_dos_name.size()),
+                        iter->preferred_dos_name.data(),
+                        DeviceId);
 
                     unordered_erase(this->device_info_inventory, iter);
 
@@ -1473,7 +1496,7 @@ public:
                 }
 
                 if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
-                    std::string const * p_device_name =
+                    auto const* p_device_name =
                         this->device_redirection_manager.get_device_name(
                             this->client_device_io_response.DeviceId());
 
@@ -1492,13 +1515,14 @@ public:
                             });
 
                             LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                "type=DRIVE_REDIRECTION_USE device_name=%s device_type=%s",
-                                device_name.data(), device_type_name.data());
+                                "type=DRIVE_REDIRECTION_USE device_name=%.*s device_type=%s",
+                                int(device_name.size()), device_name.data(),
+                                device_type_name);
                         }
                     }
 
                     if (p_device_name) {
-                        std::string target_file_name = *p_device_name + file_path;
+                        std::string target_file_name = str_concat(*p_device_name, file_path);
 
                         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
                             "FileSystemVirtualChannel::process_client_drive_io_response:"
@@ -2552,12 +2576,12 @@ public:
                             rdp_file_rename_information.log(LOG_INFO);
                         }
 
-                        std::string const * device_name =
+                        auto const* device_name =
                             this->device_redirection_manager.get_device_name(
                                 this->server_device_io_request.DeviceId());
                         if (device_name) {
-                            file_path =
-                                *device_name + rdp_file_rename_information.FileName();
+                            str_assign(file_path,
+                                *device_name, rdp_file_rename_information.FileName());
                             LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
                                 "FileSystemVirtualChannel::process_server_drive_io_request: "
                                     "FileName=\"%s\"",

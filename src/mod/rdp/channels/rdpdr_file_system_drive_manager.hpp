@@ -55,23 +55,24 @@ public:
 
     struct DriveName
     {
-        explicit DriveName() noexcept
+        struct UpperName
         {
-            this->name_[0] = 0;
-            this->upper_name_[0] = 0;
-        }
+            std::array<char, 8> array;
+            std::size_t len;
+        };
+
+        explicit DriveName() noexcept = default;
 
         DriveName(chars_view name, bool reserved = false) noexcept;
-        DriveName(std::string_view name, bool reserved = false) noexcept;
 
-        [[nodiscard]] std::array<char, 8> const& upper_name() const noexcept
+        [[nodiscard]] UpperName upper_name() const noexcept
         {
-            return this->upper_name_;
+            return UpperName{this->upper_name_, this->len_};
         }
 
-        [[nodiscard]] zstring_view name() const noexcept
+        [[nodiscard]] chars_view name() const noexcept
         {
-            return zstring_view::from_null_terminated(this->name_, this->len_);
+            return chars_view(this->name_).first(this->len_);
         }
 
         [[nodiscard]] bool is_valid() const noexcept
@@ -85,14 +86,13 @@ public:
         }
 
     private:
-        char name_[8];
+        std::array<char, 8> name_ {};
         std::array<char, 8> upper_name_ {};
         uint8_t len_ = 0;
-        bool read_only_;
+        bool read_only_ = false;
     };
 
 public:
-    bool enable_drive_client(DriveName drive_name, std::string_view directory_path);
     bool enable_drive(DriveName const& drive_name, std::string_view directory_drive_path);
     bool enable_session_probe_drive(std::string_view directory);
 

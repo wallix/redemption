@@ -503,41 +503,25 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
         cdlar.emit(out_stream);
 
         for (auto const& device : this->device_list) {
-
+            StaticOutStream<128> printer_data;
             if (device.type == rdpdr::RDPDR_DTYP_PRINT) {
-                // TODO: change code below to make a blob of printer specific data
-                // and get it's size in DeviceAnnounceHeader. It will help
-                // unify code. Also not sure it's ok to treat all devices
-                // as if as if there was no device data except for printer
-                rdpdr::DeviceAnnounceHeader_Send dah( device.type
-                                            , device.ID
-                                            , device.name
-                                            , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
-                dah.emit(out_stream);
-
                 rdpdr::DeviceAnnounceHeaderPrinterSpecificData_Send dahp(
                     rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
                     , 0
-                    , 4  // PnPNameLen
-                    , 2  // DriverNameLen
-                    , 8  // PrintNameLen
-                    , 0  // CachedFieldsLen
-                    , const_cast<char*>("\x00\x61\x00\x00") /*NOLINT*/ // nPName
-                    , const_cast<char*>("\x61\x00") /*NOLINT*/   // DriverName
-                    , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") /*NOLINT*/ // PrintName
+                    , "\x00\x61\x00\x00"_av // nPName
+                    , "\x61\x00"_av // DriverName
+                    , "\x00\x61\x00\x61\x00\x61\x00\x00"_av // PrintName
                     , nullptr
                     );
-                dahp.emit(out_stream);
-            } else {
-                rdpdr::DeviceAnnounceHeader_Send dah( device.type
-                                                , device.ID
-                                                , device.name
-                                                , nullptr, 0);
-                dah.emit(out_stream);
+                dahp.emit(printer_data);
             }
+            rdpdr::DeviceAnnounceHeader_Send dah(
+                device.type, device.ID, device.name,
+                printer_data.get_produced_bytes());
+            dah.emit(out_stream);
         }
 
-        int total_length(out_stream.get_offset());
+        uint32_t total_length(out_stream.get_offset());
         InStream chunk_to_send(out_stream.get_produced_bytes());
 
         this->callback->send_to_mod_channel( channel_names::rdpdr

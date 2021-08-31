@@ -314,7 +314,7 @@ public:
                 }
 
                 for (auto name : split_with(drive_params.proxy_managed_drives, ',')) {
-                    name = trim(name).as<std::string_view>();
+                    name = trim(name);
 
                     if (name.empty()) continue;
 

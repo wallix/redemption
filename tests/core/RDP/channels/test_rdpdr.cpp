@@ -371,10 +371,9 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeader_Send)
 
     {
         StaticOutStream<128> stream;
-        uint8_t device_data[1] {};
         rdpdr::DeviceAnnounceHeader_Send pdu(
             rdpdr::RDPDR_DTYP_SMARTCARD, 01,
-            {'S', 'C', 'A', 'R', 'D'}, device_data, 0);
+            "SCARD\0\0\0"_sized_av, {});
 
         pdu.emit(stream);
 
@@ -397,9 +396,8 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeader_Recv)
 
         RED_CHECK_EQUAL(pdu.DeviceType(), 0x00000020);
         RED_CHECK_EQUAL(pdu.DeviceId(), 01);
-        RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD"sv);
-        RED_CHECK_EQUAL(pdu.DeviceDataLength(), 0);
-//        RED_CHECK_EQUAL(pdu.DeviceData(), nullptr);
+        RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD\0\0\0"_av);
+        RED_CHECK_EQUAL(pdu.DeviceData(), ""_av);
     }
 }
 

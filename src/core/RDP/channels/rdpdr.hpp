@@ -582,24 +582,24 @@ static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
 //  set to zero. See [MS-RDPESC] for details about the smart card device
 //  type.
 
-inline static chars_view DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
+inline static zstring_view DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
     switch (DeviceType) {
-        case RDPDR_DTYP_SERIAL:     return "Serial port"_av;
-        case RDPDR_DTYP_PARALLEL:   return "Parallel port"_av;
-        case RDPDR_DTYP_PRINT:      return "Printer"_av;
-        case RDPDR_DTYP_FILESYSTEM: return "File system"_av;
-        case RDPDR_DTYP_SMARTCARD:  return "Smart card"_av;
+        case RDPDR_DTYP_SERIAL:     return "Serial port"_zv;
+        case RDPDR_DTYP_PARALLEL:   return "Parallel port"_zv;
+        case RDPDR_DTYP_PRINT:      return "Printer"_zv;
+        case RDPDR_DTYP_FILESYSTEM: return "File system"_zv;
+        case RDPDR_DTYP_SMARTCARD:  return "Smart card"_zv;
         case RDPDR_DTYP_UNSPECIFIED: break;
     }
 
-    return "<unknown>"_av;
+    return "<unknown>"_zv;
 }
 
 class DeviceAnnounceHeader_Recv {
     RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
     uint32_t DeviceId_   = 0;
-    uint8_t  PreferredDosName_[8 + 1] = { 0 };
-    struct { std::unique_ptr<uint8_t[]> p; std::size_t sz; } device_data = {nullptr, 0u};
+    std::array<char, 8> PreferredDosName_ = { 0 };
+    bytes_view device_data;
 
 public:
     explicit DeviceAnnounceHeader_Recv() = default;
@@ -612,87 +612,12 @@ public:
         this->DeviceType_ = RDPDR_DTYP(stream.in_uint32_le());
         this->DeviceId_   = stream.in_uint32_le();
 
-        stream.in_copy_bytes(this->PreferredDosName_, 8);
+        stream.in_copy_bytes(this->PreferredDosName_);
 
-        this->device_data.sz = stream.in_uint32_le();
-        ::check_throw(stream, this->device_data.sz, "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
+        auto device_data_sz = stream.in_uint32_le();
+        ::check_throw(stream, device_data_sz, "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
 
-        this->device_data.p = std::make_unique<uint8_t[]>(this->device_data.sz);
-        stream.in_copy_bytes(this->device_data.p.get(), this->device_data.sz);
-    }
-
-    [[nodiscard]] RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
-
-    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
-
-    [[nodiscard]] const char * PreferredDosName() const {
-        return ::char_ptr_cast(this->PreferredDosName_);
-    }
-
-    [[nodiscard]] size_t DeviceDataLength() const {
-        return this->device_data.sz /* DeviceData(variable) */
-            ;
-    }
-
-    [[nodiscard]] size_t size() const {
-        return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
-                    // DeviceDataLength(4)
-            this->device_data.sz /* DeviceData(variable) */
-            ;
-    }
-
-    void log(int level) const {
-        LOG(level, "DeviceAnnounceHeader_Recv: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
-            get_DeviceType_name(this->DeviceType_),
-            this->DeviceType_, this->DeviceId_, this->PreferredDosName_);
-        if (level == LOG_INFO) {
-            hexdump(this->device_data.p.get(), this->device_data.sz);
-        }
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Device Announce:");
-        LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
-        LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * PreferredDosName = \"%s\" (8 bytes)", this->PreferredDosName());
-        LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-//         LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
-    }
-};  // DeviceAnnounceHeader_Recv
-
-class DeviceAnnounceHeader_Send {
-    RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
-    uint32_t DeviceId_   = 0;
-
-    std::array<char, 8> PreferredDosName_ = { 0 };
-
-    struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
-
-public:
-
-    explicit DeviceAnnounceHeader_Send(
-        RDPDR_DTYP DeviceType, uint32_t DeviceId,
-        std::array<char, 8> preferred_dos_name,
-        uint8_t const * device_data_p, size_t device_data_size)
-    : DeviceType_(DeviceType)
-    , DeviceId_(DeviceId)
-    , PreferredDosName_(preferred_dos_name)
-    , device_data{device_data_p, device_data_size}
-    {}
-
-    REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader_Send);
-
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(underlying_cast(this->DeviceType_));
-        stream.out_uint32_le(this->DeviceId_);
-
-        stream.out_copy_bytes(this->PreferredDosName_);
-
-        stream.out_uint32_le(this->device_data.sz); // DeviceDataLength(4)
-
-        if (this->device_data.p) {
-            stream.out_copy_bytes(this->device_data.p, this->device_data.sz);
-        }
+        this->device_data = stream.in_skip_bytes(device_data_sz);
     }
 
     [[nodiscard]] RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
@@ -703,19 +628,81 @@ public:
         return this->PreferredDosName_;
     }
 
-    [[nodiscard]] const char * DeviceData() const {
-        return ::char_ptr_cast(this->device_data.p);
-    }
-
-    [[nodiscard]] size_t DeviceDataLength() const {
-        return this->device_data.sz /* DeviceData(variable) */
+    [[nodiscard]] bytes_view DeviceData() const {
+        return this->device_data /* DeviceData(variable) */
             ;
     }
 
     [[nodiscard]] size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
                     // DeviceDataLength(4)
-            this->device_data.sz /* DeviceData(variable) */
+            this->device_data.size() /* DeviceData(variable) */
+            ;
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Device Announce:");
+        LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
+        LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * PreferredDosName = \"%.*s\" (8 bytes)",
+            int(this->PreferredDosName_.size()), this->PreferredDosName_.data());
+        LOG(LOG_INFO, "          * DeviceDataLength = %zu (4 bytes)", this->device_data.size());
+        // LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+    }
+};  // DeviceAnnounceHeader_Recv
+
+class DeviceAnnounceHeader_Send {
+    RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
+    uint32_t DeviceId_   = 0;
+
+    std::array<char, 8> PreferredDosName_ = { 0 };
+
+    bytes_view device_data;
+
+public:
+    explicit DeviceAnnounceHeader_Send(
+        RDPDR_DTYP DeviceType, uint32_t DeviceId,
+        sized_chars_view<8> preferred_dos_name,
+        bytes_view device_data)
+    : DeviceType_(DeviceType)
+    , DeviceId_(DeviceId)
+    , PreferredDosName_{preferred_dos_name.as<std::array<char, 8>>()}
+    , device_data(device_data)
+    {}
+
+    REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader_Send);
+
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(underlying_cast(this->DeviceType_));
+        stream.out_uint32_le(this->DeviceId_);
+
+        stream.out_copy_bytes(this->PreferredDosName_);
+
+        stream.out_uint32_le(checked_int(this->device_data.size())); // DeviceDataLength(4)
+        stream.out_copy_bytes(this->device_data);
+    }
+
+    [[nodiscard]] RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
+
+    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
+
+    [[nodiscard]] std::array<char, 8> PreferredDosName() const {
+        return this->PreferredDosName_;
+    }
+
+    [[nodiscard]] bytes_view DeviceData() const {
+        return this->device_data;
+    }
+
+    [[nodiscard]] size_t DeviceDataLength() const {
+        return this->device_data.size() /* DeviceData(variable) */
+            ;
+    }
+
+    [[nodiscard]] size_t size() const {
+        return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
+                    // DeviceDataLength(4)
+            this->device_data.size() /* DeviceData(variable) */
             ;
     }
 
@@ -725,7 +712,7 @@ public:
             this->DeviceType_, this->DeviceId_,
             int(this->PreferredDosName_.size()), this->PreferredDosName_.data());
         if (level == LOG_INFO) {
-            hexdump(this->device_data.p, this->device_data.sz);
+            hexdump(this->device_data);
         }
     }
 };  // DeviceAnnounceHeader_Send
@@ -845,33 +832,20 @@ struct DeviceAnnounceHeaderPrinterSpecificData_Send {
     uint32_t Flags;
     uint32_t CodePage;
 
-    size_t PnPNameLen;
-    size_t DriverNameLen;
-    size_t PrintNameLen;
-    size_t CachedFieldsLen;
+    bytes_view PnPName;
+    bytes_view DriverName;
+    bytes_view PrinterName;
 
-    char * PnPName;
-    char * DriverName;
-    char * PrinterName;
-
-    uint8_t * CachedPrinterConfigData;
+    bytes_view CachedPrinterConfigData;
 
     explicit DeviceAnnounceHeaderPrinterSpecificData_Send(uint32_t Flags,
                                                      uint32_t CodePage,
-                                                     size_t PnPNameLen,
-                                                     size_t DriverNameLen,
-                                                     size_t PrintNameLen,
-                                                     size_t CachedFieldsLen,
-                                                     char * PnPName,
-                                                     char * DriverName,
-                                                     char * PrinterName,
-                                                     uint8_t * CachedPrinterConfigData)
+                                                     bytes_view PnPName,
+                                                     bytes_view DriverName,
+                                                     bytes_view PrinterName,
+                                                     bytes_view CachedPrinterConfigData)
         : Flags(Flags)
         , CodePage(CodePage)
-        , PnPNameLen(PnPNameLen)
-        , DriverNameLen(DriverNameLen)
-        , PrintNameLen(PrintNameLen)
-        , CachedFieldsLen(CachedFieldsLen)
         , PnPName(PnPName)
         , DriverName(DriverName)
         , PrinterName(PrinterName)
@@ -882,14 +856,14 @@ struct DeviceAnnounceHeaderPrinterSpecificData_Send {
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Flags);
         stream.out_uint32_le(this->CodePage);
-        stream.out_uint32_le(this->PnPNameLen);
-        stream.out_uint32_le(this->DriverNameLen);
-        stream.out_uint32_le(this->PrintNameLen);
-        stream.out_uint32_le(this->CachedFieldsLen);
-        stream.out_copy_bytes(this->PnPName, this->PnPNameLen);
-        stream.out_copy_bytes(this->DriverName, this->DriverNameLen);
-        stream.out_copy_bytes(this->PrinterName, this->PrintNameLen);
-        stream.out_copy_bytes(this->CachedPrinterConfigData, this->CachedFieldsLen);
+        stream.out_uint32_le(checked_int(this->PnPName.size()));
+        stream.out_uint32_le(checked_int(this->DriverName.size()));
+        stream.out_uint32_le(checked_int(this->PrinterName.size()));
+        stream.out_uint32_le(checked_int(this->CachedPrinterConfigData.size()));
+        stream.out_copy_bytes(this->PnPName);
+        stream.out_copy_bytes(this->DriverName);
+        stream.out_copy_bytes(this->PrinterName);
+        stream.out_copy_bytes(this->CachedPrinterConfigData);
     }
 
     void log() const {
@@ -904,16 +878,15 @@ struct DeviceAnnounceHeaderPrinterSpecificData_Send {
         );
 #undef ASTR
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
-        LOG(LOG_INFO, "          * PnPNameLen      = %zu (4 bytes)", this->PnPNameLen);
-        LOG(LOG_INFO, "          * DriverNameLen   = %zu (4 bytes)", this->DriverNameLen);
-        LOG(LOG_INFO, "          * PrintNameLen    = %zu (4 bytes)", this->PrintNameLen);
-        LOG(LOG_INFO, "          * CachedFieldsLen = %zu (4 bytes)", this->CachedFieldsLen);
-        LOG(LOG_INFO, "          * PnPName         = \"%s\" (%zu bytes)", this->PnPName, this->PnPNameLen);
-        LOG(LOG_INFO, "          * DriverName      = \"%s\" (%zu bytes)", this->DriverName, this->DriverNameLen);
-        LOG(LOG_INFO, "          * PrinterName     = \"%s\" (%zu bytes)", this->PrinterName, this->PrintNameLen);
-        LOG(LOG_INFO, "          * CachedPrinterConfigData Blob (%zu bytes)", this->CachedFieldsLen);
+        LOG(LOG_INFO, "          * PnPName         = \"%.*s\" (%zu bytes)",
+            int(this->PnPName.size()), this->PnPName.data(), this->PnPName.size());
+        LOG(LOG_INFO, "          * DriverName      = \"%.*s\" (%zu bytes)",
+            int(this->DriverName.size()), this->DriverName.data(), this->DriverName.size());
+        LOG(LOG_INFO, "          * PrinterName     = \"%.*s\" (%zu bytes)",
+            int(this->PrinterName.size()), this->PrinterName.data(), this->PrinterName.size());
+        LOG(LOG_INFO, "          * CachedPrinterConfigData Blob (%zu bytes):", this->CachedPrinterConfigData.size());
+        hexdump(this->CachedPrinterConfigData);
     }
-
 };
 
 // [MS-RDPEFS] - 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST)

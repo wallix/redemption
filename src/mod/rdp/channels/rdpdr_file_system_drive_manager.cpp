@@ -1569,17 +1569,32 @@ public:
 
 struct FileSystemDriveManager::managed_drive_type
 {
-    uint32_t device_id;
-    // copy from Drive::upper_name() and is zero-terminated
-    struct Name
+    struct ZName
     {
-        std::array<char, 8> array_;
-        std::size_t len_;
+        ZName(DriveName::UpperName name) noexcept
+        {
+            memcpy(zname.data(), name.array.data(), name.array.size());
+            zname.back() = '\0';
+            len = checked_int(strlen(zname.data()));
+        }
 
-        char const* c_str() const { return this->array_.data(); }
-        std::size_t length() const { return this->len_; }
+        sized_chars_view<8> raw_array() const
+        {
+            return sized_chars_view<8>::assumed(zname.data());
+        }
+
+        chars_view chars_with_null_terminator() const
+        {
+            return {zname.data(), len + 1u};
+        }
+
+    private:
+        std::array<char, 9> zname;
+        std::uint8_t len;
     };
-    Name name;
+
+    uint32_t device_id;
+    ZName name;
     std::string path;
     int access_mode;
 };
@@ -1619,12 +1634,11 @@ void FileSystemDriveManager::announce_drive(
             );
 
         rdpdr::DeviceAnnounceHeader_Send device_announce_header(
-                rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
-                managed_drive.device_id,
-                managed_drive.name.array_,      // PreferredDosName
-                byte_ptr_cast(managed_drive.name.c_str()),
-                managed_drive.name.length() + 1
-            );
+            rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
+            managed_drive.device_id,
+            managed_drive.name.raw_array(), // PreferredDosName
+            managed_drive.name.chars_with_null_terminator()
+        );
 
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrive");
@@ -1640,10 +1654,6 @@ void FileSystemDriveManager::announce_drive(
         virtual_channel_stream.rewind();
     }
 }
-
-FileSystemDriveManager::DriveName::DriveName(std::string_view name, bool reserved) noexcept
-: DriveName(chars_view{name}, reserved)
-{}
 
 namespace
 {
@@ -1664,7 +1674,6 @@ FileSystemDriveManager::DriveName::DriveName(chars_view name, bool reserved) noe
             "FileSystemDriveManager::enable_drive: "
                 "Drive name \"%.*s\" too long.",
             int(name.size()), name.data());
-        this->name_[0] = 0;
         return;
     }
 
@@ -1675,8 +1684,6 @@ FileSystemDriveManager::DriveName::DriveName(chars_view name, bool reserved) noe
             this->upper_name_[i] -= 0x20;
         }
     }
-    this->name_[name.size()] = 0;
-    this->upper_name_[name.size()] = 0;
     this->len_ = uint8_t(name.size());
 
     if (!reserved
@@ -1714,7 +1721,7 @@ uint32_t FileSystemDriveManager::enable_drive(
 
         this->managed_drives.push_back({
             drive_id,
-            managed_drive_type::Name{drive_name.upper_name(), drive_name.name().size()},
+            drive_name.upper_name(),
             std::move(directory_drive_path),
             read_only ? O_RDONLY : O_RDWR
         });
@@ -1727,13 +1734,6 @@ uint32_t FileSystemDriveManager::enable_drive(
     }
 
     return drive_id;
-}
-
-bool FileSystemDriveManager::enable_drive_client(
-    DriveName drive_name, std::string_view directory_path)
-{
-    return drive_name.is_valid()
-        && this->enable_drive(drive_name, directory_path, false);
 }
 
 bool FileSystemDriveManager::enable_drive(
@@ -1751,7 +1751,7 @@ bool FileSystemDriveManager::enable_session_probe_drive(std::string_view directo
 {
     if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
         this->session_probe_drive_id = this->enable_drive(
-            DriveName("sespro", true),
+            DriveName("sespro"_av, true),
             directory,
             true       // read-only
         );
