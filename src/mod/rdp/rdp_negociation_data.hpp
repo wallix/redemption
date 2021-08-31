@@ -28,6 +28,10 @@
 #include <climits>
 #include <string>
 
+#include "utils/static_string.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
+
+
 struct RdpNegociationResult
 {
     uint16_t front_width = 0;
@@ -40,16 +44,16 @@ struct RdpNegociationResult
 
 struct RdpLogonInfo
 {
-    RdpLogonInfo(char const* hostname, bool hide_client_name,
+    RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool hide_client_name,
                  char const* target_user, bool split_domain) noexcept;
 
-    [[nodiscard]] const std::string & username()  const noexcept { return this->_username; }
-    [[nodiscard]] const std::string & domain() const noexcept { return this->_domain; }
-    [[nodiscard]] char const* hostname()  const noexcept { return this->_hostname; }
+    [[nodiscard]] std::string const& username() const noexcept { return this->_username; }
+    [[nodiscard]] std::string const& domain() const noexcept { return this->_domain; }
+    [[nodiscard]] static_string<HOST_NAME_MAX> const& hostname() const noexcept { return this->_hostname; }
 
 private:
-    std::string _username = {};
+    std::string _username;
     std::string _domain;
-    char _hostname[HOST_NAME_MAX + 1] = {};
+    static_string<HOST_NAME_MAX> _hostname;
 };
 

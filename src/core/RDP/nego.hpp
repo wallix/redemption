@@ -133,7 +133,7 @@ public:
      * \param[in] service_password Service user password (may be set to null for specifying no delegate user).
      */
     void set_identity(bytes_view username, char const * password,
-        bytes_view domain, const std::string &hostname,
+        bytes_view domain, chars_view hostname,
         char const * service_username = nullptr,
         char const * service_password = nullptr);
 

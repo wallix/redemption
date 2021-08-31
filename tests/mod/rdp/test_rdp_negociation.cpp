@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestRdpLogonInfo)
         std::string_view username,
         bool split_domain
     ){
-        RdpLogonInfo logon_info(hostname.data(), false, target_user.data(), split_domain);
+        RdpLogonInfo logon_info(truncated_bounded_array_view(hostname), false, target_user.data(), split_domain);
         RED_CHECK(logon_info.domain() == domain);
         RED_CHECK(logon_info.username() == username);
     };

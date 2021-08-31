@@ -803,12 +803,10 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
 void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 {
-    char const* hostname = this->logon_info.hostname();
-
     /* Generic Conference Control (T.124) ConferenceCreateRequest */
     write_packets(
         this->trans,
-        [this, &hostname](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
+        [this](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
             // 216: optional parameters up to serverSelectedProtocol
             // 234: optional parameters up to deviceScaleFactor
             const uint16_t cs_core_length = (allow_scale_factor && this->device_scale_factor > 0)
@@ -855,10 +853,11 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 cs_core.earlyCapabilityFlags &= ~GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
             }
 
-            uint16_t hostlen = strlen(hostname);
+            auto const& hostname = this->logon_info.hostname();
+            uint16_t hostlen = hostname.msize();
             uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
             for (size_t i = 0; i < maxhostlen ; i++){
-                cs_core.clientName[i] = byte_ptr(hostname)[i];
+                cs_core.clientName[i] = byte_ptr(hostname.data())[i];
             }
             memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
 
@@ -1314,7 +1313,6 @@ bool RdpNegociation::get_license(InStream & stream)
     // validClientLicenseData (variable): The actual contents of the License Error
     // (Valid Client) PDU, as specified in section 2.2.1.12.1.
 
-    const char * hostname = this->logon_info.hostname();
     const char * username;
     char username_a_domain[512];
     if (this->logon_info.domain().c_str()[0]) {
@@ -1391,12 +1389,17 @@ bool RdpNegociation::get_license(InStream & stream)
 
             this->send_data_request(
                 GCC::MCS_GLOBAL_CHANNEL,
-                [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
+                [this, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                     if (this->lic_layer_license_size > 0) {
                         LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Client License Info");
                         uint8_t hwid[LIC::LICENSE_HWID_SIZE];
                         OutStream(hwid).out_uint32_le(2);
-                        memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+
+                        auto const& hostname = this->logon_info.hostname();
+                        std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
+                        std::size_t const slen = std::min(pktlen, hostname.size());
+                        memcpy(hwid + 4, hostname.data(), slen);
+                        memset(hwid + 4, 0, pktlen - slen);
 
                         /* Generate a signature for the HWID buffer */
                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
@@ -1430,7 +1433,7 @@ bool RdpNegociation::get_license(InStream & stream)
                         LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Client New License Request");
                         LIC::NewLicenseRequest_Send(
                             lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
-                            username, hostname
+                            username, this->logon_info.hostname().c_str()
                         );
                     }
                 },
@@ -1463,7 +1466,12 @@ bool RdpNegociation::get_license(InStream & stream)
 
                 /* Generate a signature for a buffer of token and HWID */
                 OutStream(hwid).out_uint32_le(2);
-                memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+
+                auto const& hostname = this->logon_info.hostname();
+                std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
+                std::size_t const slen = std::min(pktlen, hostname.size());
+                memcpy(hwid + 4, hostname.data(), slen);
+                memset(hwid + 4, 0, pktlen - slen);
 
                 uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                 memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);

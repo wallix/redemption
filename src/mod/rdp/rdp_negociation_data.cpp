@@ -26,21 +26,22 @@
 #include "utils/log.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 
-RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
+RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool hide_client_name,
                            char const* target_user, bool split_domain) noexcept
 {
-    if (::strlen(hostname) >= sizeof(this->_hostname)) {
-        LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(hostname), sizeof(this->_hostname));
-    }
     if (hide_client_name) {
-        ::gethostname(this->_hostname, sizeof(this->_hostname));
-        this->_hostname[sizeof(this->_hostname) - 1] = 0;
-        char* separator = strchr(this->_hostname, '.');
-        if (separator) *separator = 0;
+        this->_hostname.delayed_build([](auto& array) {
+            ::gethostname(array.data(), array.size());
+            array.back() = '\0';
+            char* separator = strchr(array.data(), '.');
+            if (!separator) {
+                separator = &array.back();
+            }
+            return checked_int(separator - array.data());
+        });
     }
     else{
-        ::strncpy(this->_hostname, hostname, sizeof(this->_hostname) - 1);
-        this->_hostname[sizeof(this->_hostname) - 1] = 0;
+        this->_hostname = hostname;
     }
 
     const char * domain_pos   = nullptr;

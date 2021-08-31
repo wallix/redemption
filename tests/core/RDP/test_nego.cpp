@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TestNego)
     auto user = "Ulysse"_av;
     auto domain = "Ithaque"_av;
     char pass[] = "Pénélope\x00";
-    char host[] = "Télémaque";
+    auto host = "Télémaque"_sized_av;
     LCGRandom rand;
     TimeBase time_base{MonotonicTimePoint{167426s + 178586us}, {}};
 

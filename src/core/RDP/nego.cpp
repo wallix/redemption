@@ -88,19 +88,19 @@ RdpNego::RdpNego(
 RdpNego::~RdpNego() = default;
 
 void RdpNego::set_identity(bytes_view username, char const * password,
-    bytes_view domain, const std::string & hostname,
+    bytes_view domain, chars_view hostname,
     char const * service_username, char const * service_password)
 {
     if (this->nla) {
-        this->user.assign(username.data(), username.data() + username.size());
-        this->domain = std::vector<uint8_t>{} << domain;
+        this->user.assign(username.begin(), username.end());
+        this->domain.assign(domain.begin(), domain.end());
 
         // Password is a multi-sz!
         // TODO sould be array_view<z?string_view> or vector<z?string_view>
         MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), password);
         this->current_password = this->password;
 
-        this->hostname = hostname;
+        this->hostname.assign(hostname.begin(), hostname.end());
 
         // set service username/password
         if (service_username && service_password)
