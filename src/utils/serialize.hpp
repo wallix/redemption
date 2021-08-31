@@ -22,6 +22,9 @@
 
 #pragma once
 
+#include <array>
+#include <vector>
+
 inline std::array<uint8_t, 2> out_uint16_le(unsigned int v)
 {
     return {uint8_t(v), uint8_t(v >> 8)};
