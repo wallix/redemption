@@ -425,7 +425,7 @@ namespace
     }
 
     unique_fd create_ws_server(
-        uint32_t s_addr, char const* ws_addr,
+        uint32_t s_addr, zstring_view ws_addr,
         EnableTransparentMode enable_transparent_mode,
         bool enable_ipv6)
     {
@@ -447,7 +447,7 @@ namespace
         // "addr:port"
         const char* ws_port = strchr(ws_addr, ':');
         if (ws_port) {
-            std::string listen_addr(ws_addr, ws_port);
+            std::string listen_addr(ws_addr.data(), ws_port);
             uint32_t ws_iaddr = inet_addr(listen_addr.c_str());
             REDEMPTION_DIAGNOSTIC_PUSH()
             REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
@@ -497,11 +497,11 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {
-        unique_fd sck2 = create_ws_server
-            (s_addr,
-             ini.get<cfg::websocket::listen_address>().c_str(),
-             enable_transparent_mode,
-             enable_ipv6);
+        unique_fd sck2 = create_ws_server(
+            s_addr,
+            ini.get<cfg::websocket::listen_address>(),
+            enable_transparent_mode,
+            enable_ipv6);
         const auto ws_sck = sck2.fd();
         const bool use_tls = ini.get<cfg::websocket::use_tls>();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)

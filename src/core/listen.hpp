@@ -38,6 +38,7 @@
 #include "utils/select.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "cxx/diagnostic.hpp"
 
 #include <chrono>
@@ -98,7 +99,7 @@ create_server_bind_sck(unique_fd fd_sck,
 }
 
 inline unique_fd
-create_unix_server(char const* sck_name,
+create_unix_server(zstring_view sck_name,
                    EnableTransparentMode enable_transparent_mode) noexcept
 {
     unique_fd sck {socket(AF_UNIX, SOCK_STREAM, 0)};
@@ -110,8 +111,8 @@ create_unix_server(char const* sck_name,
       sockaddr_storage ss;
     } u;
 
-    auto len = strnlen(sck_name, sizeof(u.s.sun_path)-1u);
-    memcpy(u.s.sun_path, sck_name, len);
+    auto len = std::min(sck_name.size(), sizeof(u.s.sun_path)-1u);
+    memcpy(u.s.sun_path, sck_name.data(), len);
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
