@@ -516,7 +516,7 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
                 dahp.emit(printer_data);
             }
             rdpdr::DeviceAnnounceHeader_Send dah(
-                device.type, device.ID, device.name,
+                device.type, device.ID, truncated_bounded_array_view(device.name),
                 printer_data.get_produced_bytes());
             dah.emit(out_stream);
         }

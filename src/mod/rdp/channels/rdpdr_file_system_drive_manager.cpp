@@ -28,6 +28,7 @@
 
 #include <string_view>
 #include <algorithm>
+#include <memory>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -1569,32 +1570,8 @@ public:
 
 struct FileSystemDriveManager::managed_drive_type
 {
-    struct ZName
-    {
-        ZName(DriveName::UpperName name) noexcept
-        {
-            memcpy(zname.data(), name.array.data(), name.array.size());
-            zname.back() = '\0';
-            len = checked_int(strlen(zname.data()));
-        }
-
-        sized_chars_view<8> raw_array() const
-        {
-            return sized_chars_view<8>::assumed(zname.data());
-        }
-
-        chars_view chars_with_null_terminator() const
-        {
-            return {zname.data(), len + 1u};
-        }
-
-    private:
-        std::array<char, 9> zname;
-        std::uint8_t len;
-    };
-
     uint32_t device_id;
-    ZName name;
+    DriveName::UpperName name;
     std::string path;
     int access_mode;
 };
@@ -1791,7 +1768,7 @@ void FileSystemDriveManager::process_server_create_drive_request(
 
     std::string full_path    = path;
     {
-        auto const  request_path = device_create_request.Path();
+        auto const request_path = device_create_request.Path();
         if ((full_path.back() != '/') && (request_path.data()[0] != '/')) {
             full_path += '/';
         }

@@ -373,7 +373,7 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeader_Send)
         StaticOutStream<128> stream;
         rdpdr::DeviceAnnounceHeader_Send pdu(
             rdpdr::RDPDR_DTYP_SMARTCARD, 01,
-            "SCARD\0\0\0"_sized_av, {});
+            "SCARD\0\0"_sized_av, {});
 
         pdu.emit(stream);
 

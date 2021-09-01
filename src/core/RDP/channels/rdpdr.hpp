@@ -552,11 +552,11 @@ static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
 //  device is removed by means of the Client Drive Device List Remove packet
 //  specified in section 2.2.3.2.
 
-// PreferredDosName (8 bytes): A string of ASCII characters with a maximum
-//  length of eight characters that represent the name of the device as it
-//  appears on the client. This field MUST not be null-terminated if the
-//  device name is 8 characters long. The following characters are considered
-//  invalid for the PreferredDosName field:
+// PreferredDosName (8 bytes): A string of ASCII characters (with a maximum
+//  length of eight characters) that represents the name of the device as it
+//  appears on the client. This field MUST be null-terminated, so the
+//  maximum device name is 7 characters long. The following characters are
+//  considered invalid for the PreferredDosName field
 
 //  <, >, ", /, \, |
 
@@ -613,6 +613,7 @@ public:
         this->DeviceId_   = stream.in_uint32_le();
 
         stream.in_copy_bytes(this->PreferredDosName_);
+        this->PreferredDosName_.back() = '\0';
 
         auto device_data_sz = stream.in_uint32_le();
         ::check_throw(stream, device_data_sz, "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
@@ -662,7 +663,7 @@ class DeviceAnnounceHeader_Send {
 public:
     explicit DeviceAnnounceHeader_Send(
         RDPDR_DTYP DeviceType, uint32_t DeviceId,
-        sized_chars_view<8> preferred_dos_name,
+        sized_chars_view<7> preferred_dos_name,
         bytes_view device_data)
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)

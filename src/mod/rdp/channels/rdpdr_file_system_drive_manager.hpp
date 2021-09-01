@@ -22,9 +22,9 @@
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
-#include <memory>
 #include <vector>
 #include <array>
 #include <string>
@@ -57,8 +57,24 @@ public:
     {
         struct UpperName
         {
-            std::array<char, 8> array;
-            std::size_t len;
+            UpperName(std::array<char, 8> array, std::uint8_t len) noexcept
+            : zname(array)
+            , len(len)
+            {}
+
+            sized_chars_view<7> raw_array() const
+            {
+                return sized_chars_view<7>::assumed(zname.data());
+            }
+
+            chars_view chars_with_null_terminator() const
+            {
+                return {zname.data(), len + 1u};
+            }
+
+        private:
+            std::array<char, 8> zname;
+            std::uint8_t len;
         };
 
         explicit DriveName() noexcept = default;

@@ -42,6 +42,6 @@ void RDPDiskConfig::add_drive(std::string_view name, rdpdr::RDPDR_DTYP type)
     }
 
     std::array<char, 8> final_name = {0};
-    memcpy(final_name.data(), tmp.data(), std::min(tmp.size(), final_name.size()));
+    memcpy(final_name.data(), tmp.data(), std::min(tmp.size(), std::size_t(7)));
     this->device_list.emplace_back(DeviceInfo{final_name, type});
 }
