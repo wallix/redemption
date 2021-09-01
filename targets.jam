@@ -4645,6 +4645,10 @@ test-run tests/utils/sugar/test_cast :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_cast.cpp
 :
 ;
+test-run tests/utils/sugar/test_chars_to_int :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_chars_to_int.cpp
+:
+;
 test-run tests/utils/sugar/test_checked_iterator :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_checked_iterator.cpp
 :
@@ -5495,6 +5499,7 @@ alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
 alias test_buffer_view : tests/utils/sugar/test_buffer_view ;
 alias test_bytes_view : tests/utils/sugar/test_bytes_view ;
 alias test_cast : tests/utils/sugar/test_cast ;
+alias test_chars_to_int : tests/utils/sugar/test_chars_to_int ;
 alias test_checked_iterator : tests/utils/sugar/test_checked_iterator ;
 alias test_finally : tests/utils/sugar/test_finally ;
 alias test_int_to_chars : tests/utils/sugar/test_int_to_chars ;
@@ -5896,6 +5901,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_buffer_view
   tests/utils/sugar/test_bytes_view
   tests/utils/sugar/test_cast
+  tests/utils/sugar/test_chars_to_int
   tests/utils/sugar/test_checked_iterator
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_int_to_chars

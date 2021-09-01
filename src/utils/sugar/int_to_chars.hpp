@@ -168,6 +168,10 @@ char* int_to_fixed_hexadecimal_lower_chars(char* out, T n) noexcept;
 //@}
 
 
+//
+// IMPLEMENTATION
+//
+
 namespace detail
 {
     inline constexpr char digit_pairs[][2] = {
