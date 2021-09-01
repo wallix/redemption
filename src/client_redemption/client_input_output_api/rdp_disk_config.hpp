@@ -21,7 +21,7 @@
 #pragma once
 
 #include <vector>
-#include <string>
+#include <string_view>
 #include <array>
 #include <cstdint>
 
@@ -43,7 +43,7 @@ struct RDPDiskConfig
 
     RDPDiskConfig() noexcept;
 
-    void add_drive(const std::string & name, rdpdr::RDPDR_DTYP type);
+    void add_drive(std::string_view name, rdpdr::RDPDR_DTYP type);
 
     bool enable_drive_type = true;
     bool enable_printer_type = true;

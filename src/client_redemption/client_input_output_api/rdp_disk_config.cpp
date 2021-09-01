@@ -33,20 +33,15 @@ RDPDiskConfig::RDPDiskConfig() noexcept
 , general_capability_version(rdpdr::GENERAL_CAPABILITY_VERSION_02)
 {}
 
-void RDPDiskConfig::add_drive(const std::string & name, rdpdr::RDPDR_DTYP type)
+void RDPDiskConfig::add_drive(std::string_view name, rdpdr::RDPDR_DTYP type)
 {
-    std::string tmp(name);
-    // TODO find_last_of + std::string_view
-    int pos(tmp.find('/'));
-    while (pos != -1) {
-        tmp = tmp.substr(pos+1, tmp.length());
-        pos = tmp.find('/');
+    auto pos = name.find_last_of('/');
+    chars_view tmp = name;
+    if (pos != std::string_view::npos) {
+        tmp = tmp.from_offset(pos + 1);
     }
-    size_t size(tmp.size());
-    if (size > 8) {
-        size = 8;
-    }
+
     std::array<char, 8> final_name = {0};
-    memcpy(final_name.data(), tmp.data(), size);
+    memcpy(final_name.data(), tmp.data(), std::min(tmp.size(), final_name.size()));
     this->device_list.emplace_back(DeviceInfo{final_name, type});
 }
