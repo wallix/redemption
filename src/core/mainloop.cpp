@@ -32,6 +32,7 @@
 #include "utils/strutils.hpp"
 #include "utils/ip.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 
 #include "configs/config.hpp"
 
@@ -431,15 +432,11 @@ namespace
     {
         // "[:]port"
         {
-            const unsigned pos = (ws_addr[0] == ':' ? 1 : 0);
-            char* end = nullptr;
-            long port = std::strtol(ws_addr + pos, &end, 10);
-
-            if (*end == '\0')
-            {
+            const std::ptrdiff_t pos = (ws_addr[0] == ':' ? 1 : 0);
+            if (auto port = parse_decimal_chars<int>(ws_addr + pos)) {
                 return interface_create_server(enable_ipv6,
                                                s_addr,
-                                               port,
+                                               port.value,
                                                enable_transparent_mode);
             }
         }
@@ -454,14 +451,11 @@ namespace
             REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wuseless-cast")
             if (ws_iaddr == INADDR_NONE) { ws_iaddr = INADDR_ANY; }
             REDEMPTION_DIAGNOSTIC_POP()
-            char* end = nullptr;
-            long port = std::strtol(ws_port + 1, &end, 10);
 
-            if (*end == '\0')
-            {
+            if (auto port = parse_decimal_chars<int>(ws_port + 1)) {
                 return interface_create_server(enable_ipv6,
                                                ws_iaddr,
-                                               port,
+                                               port.value,
                                                enable_transparent_mode);
             }
         }

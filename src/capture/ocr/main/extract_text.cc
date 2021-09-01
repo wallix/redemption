@@ -11,6 +11,9 @@
 #include "capture/ocr/image2dview.hpp"
 #include "capture/ocr/io_char_box.hpp"
 #include "capture/ocr/extract_text_classification.hh"
+#include "utils/sugar/chars_to_int.hpp"
+
+using namespace std::string_view_literals;
 
 typedef ocr::Image2dView<ocr::rgb8> ImageView;
 
@@ -147,14 +150,13 @@ int main(int argc, char** argv)
     bool display_char = false;
     if (argc == 3 || argc == 4 || argc == 5) {
         int iarg = 2;
-        const char * arg;
+        std::string_view arg = argv[iarg];
 
-        arg = argv[iarg];
-        if (strcmp(arg, "latin") == 0) {
+        if (arg == "latin"sv) {
             locale_id = ocr::fonts::LocaleId::latin;
             ++iarg;
         }
-        else if (strcmp(arg, "cyrillic") == 0) {
+        else if (arg == "cyrillic"sv) {
             locale_id = ocr::fonts::LocaleId::cyrillic;
             ++iarg;
         }
@@ -165,17 +167,12 @@ int main(int argc, char** argv)
                 display_char = true;
             }
             else {
-                char * str_end = nullptr;
-                const long int r = strtol(arg, &str_end, 10);
-                if (*str_end ? 0 == strcmp(arg, "all") : (r == -1)) {
-                    font_id = -1u;
-                }
-                else {
-                    font_id = unsigned(r);
-                    if (str_end == arg){
-                        font_id = ocr::fonts::font_id_by_name(locale_id, arg);
-                    }
-                    if (errno == ERANGE || font_id == -1u || font_id >= ocr::fonts::nfonts[locale_id]) {
+                if (arg != "all"sv && arg != "-1") {
+                    const auto n = parse_decimal_chars<int>(arg);
+                    font_id = n.has_value
+                        ? unsigned(n.value)
+                        : ocr::fonts::font_id_by_name(locale_id, arg);
+                    if (font_id == -1u || font_id >= ocr::fonts::nfonts[locale_id]) {
                         std::cerr << "error: invalid font_id\n";
                         usage(argv);
                         return 2;
@@ -183,8 +180,7 @@ int main(int argc, char** argv)
                 }
 
                 if (++iarg < argc) {
-                    arg = argv[iarg];
-                    if (!('d' == arg[0] && !arg[1])) {
+                    if (!('d' == argv[iarg][0] && !argv[iarg][1])) {
                         usage(argv);
                         return 3;
                     }

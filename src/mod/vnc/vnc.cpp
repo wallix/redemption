@@ -1414,7 +1414,7 @@ bool mod_vnc::draw_event_impl()
             bool support_cursor_pseudo_encoding = this->cursor_pseudo_encoding_supported;
 
             char const * p = this->encodings.c_str();
-            if (p && *p){
+            if (*p){
                 support_zrle_encoding          = false;
                 for (;;){
                     while (*p == ','){++p;}

@@ -21,15 +21,16 @@
 
 #pragma once
 
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <linux/hdreg.h>
-
 #include "utils/fileutils.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "core/FSCC/FileInformation.hpp"
+
+#include <sys/ioctl.h>
+#include <sys/statvfs.h>
+#include <linux/hdreg.h>
 
 
 class IODisk : public ClientIODiskAPI
@@ -156,7 +157,7 @@ public:
     uint32_t get_volume_serial_number(int device) override {
         struct hd_driveid hd;
         ioctl(device, HDIO_GET_IDENTITY, &hd);
-        return strtol(char_ptr_cast(hd.serial_no), nullptr, 16);
+        return hexadecimal_chars_to_int<uint32_t>(char_ptr_cast(hd.serial_no)).val;
     }
 
     bool write_file(const char * file_to_write, bytes_view data) override {

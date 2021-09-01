@@ -77,32 +77,21 @@ void ClientConfig::openWindowsData(ClientRedemptionConfig & config)  {
 
     if(file.is_open()) {
         config.windowsData.no_data = false;
-
-        std::string line;
-        std::string::size_type pos = 0;
-
-        read_line(file.fd(), line);
-        // TODO strtol
-        //@{
-        pos = line.find(' ');
-        line = line.substr(pos, line.length());
-        config.windowsData.form_x = std::stoi(line);
-
-        read_line(file.fd(), line);
-        pos = line.find(' ');
-        line = line.substr(pos, line.length());
-        config.windowsData.form_y = std::stoi(line);
-
-        read_line(file.fd(), line);
-        pos = line.find(' ');
-        line = line.substr(pos, line.length());
-        config.windowsData.screen_x = std::stoi(line);
-
-        read_line(file.fd(), line);
-        pos = line.find(' ');
-        line = line.substr(pos, line.length());
-        config.windowsData.screen_y = std::stoi(line);
-        //@}
+        std::array<char, 4096> buffer;
+        auto len = ::read(file.fd(), buffer.data(), buffer.size() - 1);
+        if (len > 0) {
+            buffer[std::size_t(len)] = 0;
+            char* s = buffer.data();
+            for (int* n : {
+                &config.windowsData.form_x,
+                &config.windowsData.form_y,
+                &config.windowsData.screen_x,
+                &config.windowsData.screen_y,
+            }) {
+                if (!(s = std::strchr(s, ' '))) return;
+                *n = std::strtol(s, &s, 10);
+            }
+        }
     }
 }
 
@@ -111,9 +100,9 @@ void ClientConfig::writeWindowsData(WindowsData & config)
     unique_fd fd(config.config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd.is_open()) {
         std::string info = str_concat(
-            "form_x ", int_to_decimal_chars(config.form_x), "\n"
-            "form_y ", int_to_decimal_chars(config.form_y), "\n"
-            "screen_x ", int_to_decimal_chars(config.screen_x), "\n"
+            "form_x ", int_to_decimal_chars(config.form_x), '\n',
+            "form_y ", int_to_decimal_chars(config.form_y), '\n',
+            "screen_x ", int_to_decimal_chars(config.screen_x), '\n',
             "screen_y ", int_to_decimal_chars(config.screen_y), '\n');
 
         ::write(fd.fd(), info.c_str(), info.length());
