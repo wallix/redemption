@@ -51,6 +51,13 @@ struct zstring_view
     , len(s.size())
     {}
 
+    template<class String,
+        class = std::enable_if_t<is_null_terminated_v<std::decay_t<String>>>>
+    zstring_view(String&& s) noexcept(noexcept(s.c_str()) && noexcept(s.size()))
+    : s(s.c_str())
+    , len(s.size())
+    {}
+
     static constexpr zstring_view from_null_terminated(char const* s, std::size_t n) noexcept
         REDEMPTION_ATTRIBUTE_NONNULL_ARGS
     {
