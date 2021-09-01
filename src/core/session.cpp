@@ -1358,7 +1358,7 @@ public:
 
             if (is_connected) {
                 if (unique_fd client_sck = addr_connect_blocking(
-                    this->ini.get<cfg::globals::authfile>().c_str(),
+                    this->ini.get<cfg::globals::authfile>(),
                     source_is_localhost)
                 ) {
                     auth_sck = client_sck.release();

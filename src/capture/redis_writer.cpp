@@ -112,7 +112,7 @@ RedisWriter::~RedisWriter()
 bool RedisWriter::open()
 {
     close();
-    fd = addr_connect_blocking(address.c_str(), true).release();
+    fd = addr_connect_blocking(address, true).release();
     if (fd == -1) {
         return false;
     }

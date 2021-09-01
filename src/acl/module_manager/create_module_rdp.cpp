@@ -703,15 +703,12 @@ ModPack create_mod_rdp(
         || ini.get<cfg::file_verification::enable_down>();
 
     std::unique_ptr<RdpData::FileValidator> file_validator;
-    int validator_fd = -1;
 
     if (enable_validator) {
         auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
         bool const no_log_for_unix_socket = false;
-        unique_fd ufd = addr_connect(socket_path.c_str(), no_log_for_unix_socket);
+        unique_fd ufd = addr_connect_blocking(socket_path, no_log_for_unix_socket);
         if (ufd) {
-            validator_fd = ufd.fd();
-            fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
             file_validator = std::make_unique<RdpData::FileValidator>(
                 std::move(ufd),
                 RdpData::FileValidator::CtxError{

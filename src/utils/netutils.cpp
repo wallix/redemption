@@ -27,6 +27,8 @@
 #include "utils/select.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 
+#include <charconv>
+
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
@@ -381,26 +383,26 @@ unique_fd local_connect(const char* sck_name, bool no_log)
 }
 
 
-unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
+unique_fd addr_connect(zstring_view addr, bool no_log_for_unix_socket)
 {
     const char* pos = strchr(addr, ':');
     if (!pos) {
         return local_connect(addr, no_log_for_unix_socket);
     }
 
-    char* end;
-    long port = std::strtol(pos + 1, &end, 10);
-    if (port > std::numeric_limits<int>::max()) {
-        LOG(LOG_ERR, "Connecting to %s failed: invalid port", pos + 1);
-        return unique_fd{-1};
+    int port;
+    auto r = std::from_chars(pos + 1, addr.end(), port);
+    if (r.ec == std::errc()) {
+        std::string ip(addr.data(), pos);
+        return ip_connect(ip.c_str(), port);
     }
 
-    std::string ip(addr, pos);
-    return ip_connect(ip.c_str(), int(port));
+    LOG(LOG_ERR, "Connecting to %s failed: invalid port", pos + 1);
+    return unique_fd{-1};
 }
 
 
-unique_fd addr_connect_blocking(const char* addr, bool no_log_for_unix_socket)
+unique_fd addr_connect_blocking(zstring_view addr, bool no_log_for_unix_socket)
 {
     auto fd = addr_connect(addr, no_log_for_unix_socket);
     const auto sck = fd.fd();
