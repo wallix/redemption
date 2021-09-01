@@ -405,8 +405,10 @@ unique_fd addr_connect(zstring_view addr, bool no_log_for_unix_socket)
 unique_fd addr_connect_blocking(zstring_view addr, bool no_log_for_unix_socket)
 {
     auto fd = addr_connect(addr, no_log_for_unix_socket);
-    const auto sck = fd.fd();
-    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+    if (fd) {
+        const auto sck = fd.fd();
+        fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+    }
     return fd;
 }
 
