@@ -73,6 +73,9 @@ chars_to_int_result<Int> decimal_chars_to_int(char const* s) noexcept;
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 chars_to_int_result<Int> decimal_chars_to_int(View&& av) noexcept;
 
+template<class Int>
+chars_to_int_result<Int> decimal_chars_to_int(chars_view av) noexcept;
+
 /// Same as std::from_chars()
 template<class Int>
 std::from_chars_result from_decimal_chars(char const* s, Int& value) noexcept;
@@ -80,6 +83,9 @@ std::from_chars_result from_decimal_chars(char const* s, Int& value) noexcept;
 /// Same as std::from_chars()
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 std::from_chars_result from_decimal_chars(View&& av, Int& value) noexcept;
+
+template<class Int>
+std::from_chars_result from_decimal_chars(chars_view av, Int& value) noexcept;
 
 /// Converts a string to a number.
 /// If \c s contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then parsed_chars_to_int_result::has_value = false and parsed_chars_to_int_result::value is unspecified.
@@ -91,6 +97,9 @@ parsed_chars_to_int_result<Int> parse_decimal_chars(char const* s) noexcept;
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 parsed_chars_to_int_result<Int> parse_decimal_chars(View&& av) noexcept;
 
+template<class Int>
+parsed_chars_to_int_result<Int> parse_decimal_chars(chars_view av) noexcept;
+
 /// Converts a string to a number.
 /// If \c av contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
 template<class Int>
@@ -100,6 +109,9 @@ Int parse_decimal_chars_or(char const* s, Int default_value) noexcept;
 /// If \c av contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 Int parse_decimal_chars_or(View&& av, Int default_value) noexcept;
+
+template<class Int>
+Int parse_decimal_chars_or(chars_view av, Int default_value) noexcept;
 //@}
 
 // from hexadecimal chars
@@ -116,6 +128,9 @@ chars_to_int_result<UInt> hexadecimal_chars_to_int(char const* s) noexcept;
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 chars_to_int_result<UInt> hexadecimal_chars_to_int(View&& av) noexcept;
 
+template<class UInt>
+chars_to_int_result<UInt> hexadecimal_chars_to_int(chars_view av) noexcept;
+
 /// Same as std::from_chars()
 template<class UInt>
 std::from_chars_result from_hexadecimal_chars(char const* s, UInt& value) noexcept;
@@ -123,6 +138,9 @@ std::from_chars_result from_hexadecimal_chars(char const* s, UInt& value) noexce
 /// Same as std::from_chars()
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 std::from_chars_result from_hexadecimal_chars(View&& av, UInt& value) noexcept;
+
+template<class UInt>
+std::from_chars_result from_hexadecimal_chars(chars_view av, UInt& value) noexcept;
 
 /// Converts a string to a number.
 /// If \c s contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then parsed_chars_to_int_result::has_value = false and parsed_chars_to_int_result::value is unspecified.
@@ -134,6 +152,9 @@ parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(char const* s) noexcept
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(View&& av) noexcept;
 
+template<class UInt>
+parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(chars_view av) noexcept;
+
 /// Converts a string to a number.
 /// If \c av contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
 template<class UInt>
@@ -143,6 +164,9 @@ UInt parse_hexadecimal_chars_or(char const* s, UInt default_value) noexcept;
 /// If \c av contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 UInt parse_hexadecimal_chars_or(View&& av, UInt default_value) noexcept;
+
+template<class UInt>
+UInt parse_hexadecimal_chars_or(chars_view av, UInt default_value) noexcept;
 //@}
 
 
@@ -359,16 +383,21 @@ inline chars_to_int_result<Int> decimal_chars_to_int(char const* s) noexcept
     return detail::decimal_chars_to_int_impl<integral_type>(s, detail::uncheck_char_iterator());
 }
 
+template<class Int>
+inline chars_to_int_result<Int> decimal_chars_to_int(chars_view av) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
+    return detail::decimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
+}
+
 template<class Int, class View, class>
 inline chars_to_int_result<Int> decimal_chars_to_int(View&& av) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        return detail::decimal_chars_to_int_impl<integral_type>(av.c_str(), detail::uncheck_char_iterator());
+        return decimal_chars_to_int<Int>(av.c_str());
     }
     else {
-        chars_view chars(av);
-        return detail::decimal_chars_to_int_impl<integral_type>(chars.begin(), chars.end());
+        return decimal_chars_to_int<Int>(chars_view(av));
     }
 }
 
@@ -379,16 +408,21 @@ inline std::from_chars_result from_decimal_chars(char const* s, Int& value) noex
     return detail::from_decimal_chars_impl<integral_type>(s, detail::uncheck_char_iterator(), value);
 }
 
+template<class Int>
+inline std::from_chars_result from_decimal_chars(chars_view av, Int& value) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
+    return detail::from_decimal_chars_impl<integral_type>(av.begin(), av.end(), value);
+}
+
 template<class Int, class View, class>
 inline std::from_chars_result from_decimal_chars(View&& av, Int& value) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        return detail::from_decimal_chars_impl<integral_type>(av.c_str(), detail::uncheck_char_iterator(), value);
+        return from_decimal_chars<Int>(av.c_str(), value);
     }
     else {
-        chars_view chars(av);
-        return detail::from_decimal_chars_impl<integral_type>(chars.begin(), chars.end(), value);
+        return from_decimal_chars<Int>(chars_view(av), value);
     }
 }
 
@@ -408,25 +442,30 @@ inline parsed_chars_to_int_result<Int> parse_decimal_chars(char const* s) noexce
     return result;
 }
 
+template<class Int>
+inline parsed_chars_to_int_result<Int> parse_decimal_chars(chars_view av) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
+    parsed_chars_to_int_result<Int> result;
+    auto r = detail::decimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
+    if (r.ec == std::errc() && r.ptr == av.end()) {
+        result.value = r.val;
+        result.has_value = true;
+    }
+    else {
+        result.has_value = false;
+    }
+    return result;
+}
+
 template<class Int, class View, class>
 inline parsed_chars_to_int_result<Int> parse_decimal_chars(View&& av) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        return parse_decimal_chars<integral_type>(av.c_str());
+        return parse_decimal_chars<Int>(av.c_str());
     }
     else {
-        chars_view chars(av);
-        parsed_chars_to_int_result<Int> result;
-        auto r = detail::decimal_chars_to_int_impl<integral_type>(chars.begin(), chars.end());
-        if (r.ec == std::errc() && r.ptr == av.end()) {
-            result.value = r.val;
-            result.has_value = true;
-        }
-        else {
-            result.has_value = false;
-        }
-        return result;
+        return parse_decimal_chars<Int>(chars_view(av));
     }
 }
 
@@ -438,19 +477,22 @@ inline Int parse_decimal_chars_or(char const* s, Int default_value) noexcept
     return (r.ec == std::errc() && !*r.ptr) ? r.val : default_value;
 }
 
+template<class Int>
+inline Int parse_decimal_chars_or(chars_view av, Int default_value) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
+    chars_to_int_result<Int> r = detail::decimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
+    return (r.ec == std::errc() && r.ptr == av.end()) ? r.val : default_value;
+}
+
 template<class Int, class View, class>
 inline Int parse_decimal_chars_or(View&& av, Int default_value) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
-    chars_to_int_result<Int> r;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        r = detail::decimal_chars_to_int_impl<integral_type>(av.c_str(), detail::uncheck_char_iterator());
-        return (r.ec == std::errc() && !*r.ptr) ? r.val : default_value;
+        return parse_decimal_chars_or(av.c_str(), default_value);
     }
     else {
-        chars_view chars(av);
-        r = detail::decimal_chars_to_int_impl<integral_type>(chars.begin(), chars.end());
-        return (r.ec == std::errc() && r.ptr == av.end()) ? r.val : default_value;
+        return parse_decimal_chars_or(chars_view(av), default_value);
     }
 }
 
@@ -462,16 +504,21 @@ inline chars_to_int_result<UInt> hexadecimal_chars_to_int(char const* s) noexcep
     return detail::hexadecimal_chars_to_int_impl<integral_type>(s, detail::uncheck_char_iterator());
 }
 
+template<class UInt>
+inline chars_to_int_result<UInt> hexadecimal_chars_to_int(chars_view av) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
+    return detail::hexadecimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
+}
+
 template<class UInt, class View, class>
 inline chars_to_int_result<UInt> hexadecimal_chars_to_int(View&& av) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        return detail::hexadecimal_chars_to_int_impl<integral_type>(av.c_str(), detail::uncheck_char_iterator());
+        return hexadecimal_chars_to_int<UInt>(av.c_str());
     }
     else {
-        chars_view chars(av);
-        return detail::hexadecimal_chars_to_int_impl<integral_type>(chars.begin(), chars.end());
+        return hexadecimal_chars_to_int<UInt>(chars_view(av));
     }
 }
 
@@ -482,16 +529,21 @@ inline std::from_chars_result from_hexadecimal_chars(char const* s, UInt& value)
     return detail::from_hexadecimal_chars_impl<integral_type>(s, detail::uncheck_char_iterator(), value);
 }
 
+template<class UInt>
+inline std::from_chars_result from_hexadecimal_chars(chars_view av, UInt& value) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
+    return detail::from_hexadecimal_chars_impl<integral_type>(av.begin(), av.end(), value);
+}
+
 template<class UInt, class View, class>
 inline std::from_chars_result from_hexadecimal_chars(View&& av, UInt& value) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        return detail::from_hexadecimal_chars_impl<integral_type>(av.c_str(), detail::uncheck_char_iterator(), value);
+        return from_hexadecimal_chars(av.c_str(), value);
     }
     else {
-        chars_view chars(av);
-        return detail::from_hexadecimal_chars_impl<integral_type>(chars.begin(), chars.end(), value);
+        return from_hexadecimal_chars(chars_view(av), value);
     }
 }
 
@@ -511,25 +563,30 @@ inline parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(char const* s) n
     return result;
 }
 
+template<class UInt>
+inline parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(chars_view av) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
+    parsed_chars_to_int_result<UInt> result;
+    auto r = detail::hexadecimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
+    if (r.ec == std::errc() && r.ptr == av.end()) {
+        result.value = r.val;
+        result.has_value = true;
+    }
+    else {
+        result.has_value = false;
+    }
+    return result;
+}
+
 template<class UInt, class View, class>
 inline parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(View&& av) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        return parse_hexadecimal_chars<integral_type>(av.c_str());
+        return parse_hexadecimal_chars<UInt>(av.c_str());
     }
     else {
-        chars_view chars(av);
-        parsed_chars_to_int_result<UInt> result;
-        auto r = detail::hexadecimal_chars_to_int_impl<integral_type>(chars.begin(), chars.end());
-        if (r.ec == std::errc() && r.ptr == av.end()) {
-            result.value = r.val;
-            result.has_value = true;
-        }
-        else {
-            result.has_value = false;
-        }
-        return result;
+        return parse_hexadecimal_chars<UInt>(chars_view(av));
     }
 }
 
@@ -541,18 +598,21 @@ inline UInt parse_hexadecimal_chars_or(char const* s, UInt default_value) noexce
     return (r.ec == std::errc() && !*r.ptr) ? r.val : default_value;
 }
 
+template<class UInt>
+inline UInt parse_hexadecimal_chars_or(chars_view av, UInt default_value) noexcept
+{
+    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
+    chars_to_int_result<UInt> r = detail::hexadecimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
+    return (r.ec == std::errc() && r.ptr == av.end()) ? r.val : default_value;
+}
+
 template<class UInt, class View, class>
 inline UInt parse_hexadecimal_chars_or(View&& av, UInt default_value) noexcept
 {
-    using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
-    chars_to_int_result<UInt> r;
     if constexpr (is_null_terminated_v<std::decay_t<View>>) {
-        r = detail::hexadecimal_chars_to_int_impl<integral_type>(av.c_str(), detail::uncheck_char_iterator());
-        return (r.ec == std::errc() && !*r.ptr) ? r.val : default_value;
+        return parse_hexadecimal_chars_or(av.c_str(), default_value);
     }
     else {
-        chars_view chars(av);
-        r = detail::hexadecimal_chars_to_int_impl<integral_type>(chars.begin(), chars.end());
-        return (r.ec == std::errc() && r.ptr == av.end()) ? r.val : default_value;
+        return parse_hexadecimal_chars_or(chars_view(av), default_value);
     }
 }

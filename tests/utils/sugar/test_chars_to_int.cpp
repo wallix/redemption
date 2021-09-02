@@ -340,3 +340,17 @@ RED_AUTO_TEST_CASE(TestFromHexadecimalChars)
     RED_CHECK(from_hexadecimal_chars(std::string_view(s), u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
     RED_CHECK(u == 42);
 }
+
+RED_AUTO_TEST_CASE(TestCharsToIntFromInitializerList)
+{
+    unsigned i;
+    char const* s = "1";
+    decimal_chars_to_int<unsigned>({s, s+1});
+    from_decimal_chars({s, s+1}, i);
+    parse_decimal_chars<unsigned>({s, s+1});
+    parse_decimal_chars_or({s, s+1}, 0u);
+    hexadecimal_chars_to_int<unsigned>({s, s+1});
+    from_hexadecimal_chars({s, s+1}, i);
+    parse_hexadecimal_chars<unsigned>({s, s+1});
+    parse_hexadecimal_chars_or({s, s+1}, 0u);
+}
