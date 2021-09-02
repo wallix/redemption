@@ -182,10 +182,16 @@ RED_AUTO_TEST_CASE(TestParseHexadecimalCharsOr)
 RED_AUTO_TEST_CASE(TestDecimalCharsToInt)
 {
     char const* s;
+    int i = 42;
 
     s = "";
     RED_CHECK(decimal_chars_to_int<int>(s) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, s}));
     RED_CHECK(decimal_chars_to_int<int>(std::string_view(s)) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, s}));
+
+    RED_CHECK(decimal_chars_to_int(s, i) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, s}));
+    RED_CHECK(i == 42);
+    RED_CHECK(decimal_chars_to_int(std::string_view(s), i) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, s}));
+    RED_CHECK(i == 42);
 
     s = "-";
     RED_CHECK(decimal_chars_to_int<int>(s) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, s}));
@@ -194,6 +200,11 @@ RED_AUTO_TEST_CASE(TestDecimalCharsToInt)
     s = "12345";
     RED_CHECK(decimal_chars_to_int<int>(s) == (chars_to_int_result<int>{std::errc(), 12345, s+5}));
     RED_CHECK(decimal_chars_to_int<int>(std::string_view(s)) == (chars_to_int_result<int>{std::errc(), 12345, s+5}));
+    RED_CHECK(decimal_chars_to_int(s, i) == (chars_to_int_result<int>{std::errc(), 12345, s+5}));
+    RED_CHECK(i == 12345);
+    i = 42;
+    RED_CHECK(decimal_chars_to_int(std::string_view(s), i) == (chars_to_int_result<int>{std::errc(), 12345, s+5}));
+    RED_CHECK(i == 12345);
 
     s = "-12345";
     RED_CHECK(decimal_chars_to_int<int>(s) == (chars_to_int_result<int>{std::errc(), -12345, s+6}));
@@ -211,10 +222,15 @@ RED_AUTO_TEST_CASE(TestDecimalCharsToInt)
 RED_AUTO_TEST_CASE(TestHexadecimalCharsToInt)
 {
     char const* s;
+    unsigned i = 42;
 
     s = "";
     RED_CHECK(hexadecimal_chars_to_int<uint32_t>(s) == (chars_to_int_result<uint32_t>{std::errc::invalid_argument, 0, s}));
     RED_CHECK(hexadecimal_chars_to_int<uint32_t>(std::string_view(s)) == (chars_to_int_result<uint32_t>{std::errc::invalid_argument, 0, s}));
+    RED_CHECK(hexadecimal_chars_to_int(s, i) == (chars_to_int_result<uint32_t>{std::errc::invalid_argument, 0, s}));
+    RED_CHECK(i == 42);
+    RED_CHECK(hexadecimal_chars_to_int(std::string_view(s), i) == (chars_to_int_result<uint32_t>{std::errc::invalid_argument, 0, s}));
+    RED_CHECK(i == 42);
 
     s = "-";
     RED_CHECK(hexadecimal_chars_to_int<uint32_t>(s) == (chars_to_int_result<uint32_t>{std::errc::invalid_argument, 0, s}));
@@ -223,6 +239,11 @@ RED_AUTO_TEST_CASE(TestHexadecimalCharsToInt)
     s = "12345";
     RED_CHECK(hexadecimal_chars_to_int<uint32_t>(s) == (chars_to_int_result<uint32_t>{std::errc(), 0x12345, s+5}));
     RED_CHECK(hexadecimal_chars_to_int<uint32_t>(std::string_view(s)) == (chars_to_int_result<uint32_t>{std::errc(), 0x12345, s+5}));
+    RED_CHECK(hexadecimal_chars_to_int(std::string_view(s), i) == (chars_to_int_result<uint32_t>{std::errc(), 0x12345, s+5}));
+    RED_CHECK(i == 0x12345);
+    i = 42;
+    RED_CHECK(hexadecimal_chars_to_int(s, i) == (chars_to_int_result<uint32_t>{std::errc(), 0x12345, s+5}));
+    RED_CHECK(i == 0x12345);
 
     s = "-12345";
     RED_CHECK(hexadecimal_chars_to_int<uint32_t>(s) == (chars_to_int_result<uint32_t>{std::errc::invalid_argument, 0, s}));
@@ -346,10 +367,13 @@ RED_AUTO_TEST_CASE(TestCharsToIntFromInitializerList)
     unsigned i;
     char const* s = "1";
     decimal_chars_to_int<unsigned>({s, s+1});
+    decimal_chars_to_int({s, s+1}, i);
     from_decimal_chars({s, s+1}, i);
     parse_decimal_chars<unsigned>({s, s+1});
     parse_decimal_chars_or({s, s+1}, 0u);
+
     hexadecimal_chars_to_int<unsigned>({s, s+1});
+    hexadecimal_chars_to_int({s, s+1}, i);
     from_hexadecimal_chars({s, s+1}, i);
     parse_hexadecimal_chars<unsigned>({s, s+1});
     parse_hexadecimal_chars_or({s, s+1}, 0u);
