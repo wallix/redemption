@@ -969,7 +969,8 @@ private:
                     if (has_field(cfg::context::rejected())) {
                         this->ini.set<cfg::context::auth_error_message>(
                             this->ini.get<cfg::context::rejected>());
-                        back_event = BACK_EVENT_STOP;
+                        next_module = ModuleName::close;
+                        back_event = BACK_EVENT_NEXT;
                     }
                     else if (has_field(cfg::context::disconnect_reason())) {
                         this->ini.set<cfg::context::auth_error_message>(
