@@ -320,7 +320,7 @@ namespace detail
                 if (s[1]) {
                     pr.str = s + ((s[1] == '=') ? 2 : 1);
                 }
-                else if (pr.opti < pr.argc) {
+                else if (pr.opti + 1 < pr.argc) {
                     pr.str = pr.argv[pr.opti+1];
                     ++inc;
                 }
@@ -382,7 +382,7 @@ namespace detail
                 if (!*s) {
                     int inc = 1;
                     if constexpr (parsers::is_required_value<decltype(opt._parser)>) {
-                        if (pr.opti < pr.argc) {
+                        if (pr.opti + 1 < pr.argc) {
                             ++inc;
                             pr.str = pr.argv[pr.opti+1];
                         }
