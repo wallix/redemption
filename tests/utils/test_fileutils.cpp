@@ -115,43 +115,6 @@ RED_AUTO_TEST_CASE(CanonicalPath)
     }
 }
 
-RED_AUTO_TEST_CASE(TestParsePath)
-{
-    struct Data
-    {
-        char const* filename;
-        std::string_view directory;
-        std::string_view basename;
-        std::string_view extension;
-    };
-    RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
-        Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
-        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
-        Data{"/etc/rdpproxy/",              "/etc/rdpproxy/",   "yyy",          "zzz"},
-        Data{"rdpproxy.ini",                "xxx",              "rdpproxy",     ".ini"},
-        Data{"rdpproxy.",                   "xxx",              "rdpproxy",     "."},
-        Data{"rdpproxy",                    "xxx",              "rdpproxy",     "zzz"},
-        Data{".rdpproxy",                   "xxx",              ".rdpproxy",    "zzz"},
-        Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
-        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
-        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
-        Data{"rdpproxy.ini",                "xxx",              "rdpproxy",     ".ini"},
-        Data{"rdpproxy",                    "xxx",              "rdpproxy",     "zzz"},
-        Data{".rdpproxy.ini",               "xxx",              ".rdpproxy",    ".ini"},
-        Data{"a",                           "xxx",              "a"     ,       "zzz"},
-        Data{"",                            "xxx",              "yyy",          "zzz"}
-    })
-    {
-        std::string directory = "xxx";
-        std::string basename = "yyy";
-        std::string extension = "zzz";
-        ParsePath(data.filename, directory, basename, extension);
-        RED_CHECK(data.directory == directory);
-        RED_CHECK(data.basename == basename);
-        RED_CHECK(data.extension == extension);
-    }
-}
-
 
 RED_AUTO_TEST_CASE(TestParsePath2)
 {

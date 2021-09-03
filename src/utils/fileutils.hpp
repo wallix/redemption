@@ -65,9 +65,6 @@ bool file_equals(char const* filename1, char const* filename2);
 
 SplitedPath ParsePath(const std::string & fullpath);
 
-void ParsePath(const char * fullpath, std::string & directory,
-               std::string & filename, std::string & extension);
-
 void MakePath(std::string & fullpath, const char * directory,
               const char * filename, const char * extension);
 

@@ -68,9 +68,8 @@ char* basename(char* path) noexcept
 const char * basename_len(const char * path, size_t & len) noexcept
 {
     const char * tmp = strrchr(path, '/');
-    if (tmp){
-        len = strlen(tmp+1);
-        return tmp+1;
+    if (tmp) {
+        path = tmp + 1;
     }
     len = strlen(path);
     return path;
@@ -152,35 +151,6 @@ bool file_equals(char const* filename1, char const* filename2)
         if (is_eof1 || is_eof2 || f1.has_error() || f2.has_error()) {
             return false;
         }
-    }
-}
-
-void ParsePath(const char * fullpath, std::string & directory,
-               std::string & filename, std::string & extension)
-{
-    const char * end_of_directory = strrchr(fullpath, '/');
-    if (end_of_directory > fullpath) {
-        directory.assign(fullpath, end_of_directory - fullpath + 1);
-    }
-
-    const char * begin_of_filename =
-        (end_of_directory ? end_of_directory + 1 : fullpath);
-    const char * end_of_filename   =
-        [begin_of_filename] () {
-            const char * dot = strrchr(begin_of_filename, '.');
-            if (!dot || (dot == begin_of_filename)) {
-                return begin_of_filename + strlen(begin_of_filename) - 1;
-            }
-            return dot - 1;
-        } ();
-
-    if (end_of_filename >= begin_of_filename) {
-        filename.assign(begin_of_filename,
-            end_of_filename - begin_of_filename + 1);
-    }
-
-    if (*(end_of_filename + 1)) {
-        extension = end_of_filename + 1;
     }
 }
 
