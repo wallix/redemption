@@ -1564,9 +1564,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     GeneratorTransport in_wrm_trans(trans.data());
 
-    MonotonicTimePoint begin_capture {};
-    MonotonicTimePoint end_capture {};
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
+    FileToGraphic player(in_wrm_trans, false, FileToGraphic::Verbose(0));
     RDPDrawable drawable(player.get_wrm_info().width, player.get_wrm_info().height);
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
@@ -2218,11 +2216,7 @@ RED_AUTO_TEST_CASE(TestReload)
 
         {
             GeneratorTransport in_wrm_trans(test.data);
-            MonotonicTimePoint begin_capture {};
-            MonotonicTimePoint end_capture {};
-            FileToGraphic player(
-                in_wrm_trans, begin_capture, end_capture,
-                false, FileToGraphic::Verbose(0));
+            FileToGraphic player(in_wrm_trans, false, FileToGraphic::Verbose(0));
             RDPDrawable drawable(player.get_wrm_info().width, player.get_wrm_info().height);
             player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
             while (player.next_order()){
@@ -2388,9 +2382,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     RED_REQUIRE_NE(fd, -1);
 
     InFileTransport in_wrm_trans(unique_fd{fd});
-    MonotonicTimePoint begin_capture {};
-    MonotonicTimePoint end_capture {};
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
+    FileToGraphic player(in_wrm_trans, false, FileToGraphic::Verbose(0));
 
     auto const& info = player.get_wrm_info();
     RDPDrawable drawable(info.width, info.height);
@@ -2399,7 +2391,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     bool requested_to_stop = false;
 
     RED_CHECK(1352304810 == to_time_t(player.get_monotonic_time()));
-    player.play(requested_to_stop);
+    player.play(requested_to_stop, MonotonicTimePoint(), MonotonicTimePoint::max());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "/sample0.png");
 
