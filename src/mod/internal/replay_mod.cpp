@@ -74,12 +74,7 @@ struct ReplayMod::Reader
         }(),
         this->cctx,
         InCryptoTransport::EncryptionMode::NotEncrypted)
-    , reader(
-        this->in_trans,
-        MonotonicTimePoint{},
-        MonotonicTimePoint{},
-        play_video_with_corrupted_bitmap,
-        debug_capture)
+    , reader(this->in_trans, play_video_with_corrupted_bitmap, debug_capture)
     {
         this->start_time_replay = this->reader.get_monotonic_time();
     }

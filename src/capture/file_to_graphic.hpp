@@ -133,9 +133,6 @@ private:
     uint16_t mouse_x;
     uint16_t mouse_y;
 
-    const MonotonicTimePoint begin_capture;
-    const MonotonicTimePoint end_capture;
-
     WrmMetaChunk info {};
 
 public:
@@ -198,9 +195,6 @@ private:
 public:
     FileToGraphic(
         Transport & trans,
-        // TODO monotonic_clock or real_clock ?
-        MonotonicTimePoint begin_capture,
-        MonotonicTimePoint end_capture,
         bool play_video_with_corrupted_bitmap,
         Verbose verbose);
 
@@ -250,10 +244,10 @@ public:
     void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/
                                     , uint32_t FieldsPresentFlags);
 
-    void play(bool const & requested_to_stop);
+    void play(bool const & requested_to_stop, MonotonicTimePoint begin_capture, MonotonicTimePoint end_capture);
 
     template<class CbUpdateProgress>
-    void play(CbUpdateProgress update_progess, bool const & requested_to_stop)
+    void play(CbUpdateProgress update_progess, bool const & requested_to_stop, MonotonicTimePoint begin_capture, MonotonicTimePoint end_capture)
     {
         MonotonicTimePoint last_sent_record_now {};
         this->privplay([&](MonotonicTimePoint record_now) {
@@ -261,7 +255,7 @@ public:
                 update_progess(record_now);
                 last_sent_record_now = record_now;
             }
-        }, requested_to_stop);
+        }, requested_to_stop, begin_capture, end_capture);
     }
 
 private:
@@ -269,19 +263,21 @@ private:
     void log_play() const;
 
     template<class CbUpdateProgress>
-    void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop)
+    void privplay(
+        CbUpdateProgress update_progess, bool const & requested_to_stop,
+        MonotonicTimePoint begin_capture, MonotonicTimePoint end_capture)
     {
         while (!requested_to_stop && this->next_order()) {
             this->log_play();
 
             this->interpret_order();
 
-            if (this->begin_capture <= this->record_now) {
+            if (begin_capture <= this->record_now) {
                 this->snapshot_play();
                 update_progess(this->record_now);
             }
 
-            if (this->end_capture < this->record_now) {
+            if (end_capture < this->record_now) {
                 break;
             }
         }

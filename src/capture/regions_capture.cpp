@@ -99,9 +99,7 @@ RegionsCapture RegionsCapture::compute_regions(
 {
     RegionsCapture ret;
 
-    FileToGraphic reader(
-        trans, MonotonicTimePoint(), end_capture,
-        play_video_with_corrupted_bitmap, verbose);
+    FileToGraphic reader(trans, play_video_with_corrupted_bitmap, verbose);
 
     UpdatableFrameMarkerEndGraphics updatable_frame_end{
         interval_time_for_frame_maker_end, reader};
@@ -216,9 +214,7 @@ RegionsCapture RegionsCapture::compute_regions(
             auto t = reader.get_monotonic_time();
             while (!requested_to_shutdown && t <= end_capture) {
                 trans.next();
-                FileToGraphic reader(
-                    trans, MonotonicTimePoint(), end_capture,
-                    play_video_with_corrupted_bitmap, verbose);
+                FileToGraphic reader(trans, play_video_with_corrupted_bitmap, verbose);
                 set_max_dim(ret.max_screen_dim, reader.max_screen_dim);
                 t = reader.get_monotonic_time();
             }

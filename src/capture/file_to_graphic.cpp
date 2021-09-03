@@ -59,8 +59,6 @@ namespace
 
 FileToGraphic::FileToGraphic(
     Transport & trans,
-    MonotonicTimePoint begin_capture,
-    MonotonicTimePoint end_capture,
     bool play_video_with_corrupted_bitmap,
     Verbose verbose
 )
@@ -80,8 +78,6 @@ FileToGraphic::FileToGraphic(
     , timestamp_ok(false)
     , mouse_x(0)
     , mouse_y(0)
-    , begin_capture(begin_capture)
-    , end_capture(end_capture == MonotonicTimePoint{} ? MonotonicTimePoint::max() : end_capture)
     , statistics()
     , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
     , verbose(verbose)
@@ -1099,9 +1095,9 @@ void FileToGraphic::process_desktop_information(
     }
 }
 
-void FileToGraphic::play(bool const & requested_to_stop)
+void FileToGraphic::play(bool const & requested_to_stop, MonotonicTimePoint begin_capture, MonotonicTimePoint end_capture)
 {
-    this->privplay([](MonotonicTimePoint /*t*/){}, requested_to_stop);
+    this->privplay([](MonotonicTimePoint /*t*/){}, requested_to_stop, begin_capture, end_capture);
 }
 
 void FileToGraphic::snapshot_play()

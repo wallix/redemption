@@ -1032,8 +1032,6 @@ static inline int replay(
             LOG(LOG_INFO, "player begin_capture = %ld", capture_times.begin_cap.count());
             FileToGraphic player(
                 in_wrm_trans,
-                MonotonicTimePoint{capture_times.begin_cap},
-                MonotonicTimePoint{capture_times.end_cap},
                 rp.play_video_with_corrupted_bitmap,
                 safe_cast<FileToGraphic::Verbose>(rp.verbosity));
 
@@ -1046,6 +1044,25 @@ static inline int replay(
                 result = 0;
             }
             else {
+                const auto deferred_duration = (capture_times.begin_cap != 0s)
+                    ? std::max(capture_times.begin_cap - begin_record, Seconds())
+                    : Seconds();
+
+                const auto progress_delay = (capture_times.end_cap != 0s)
+                    ? (capture_times.end_cap - begin_record)
+                    : (end_record - begin_record);
+
+                const auto progress_start_time = player.get_monotonic_time() + deferred_duration;
+                const auto progress_stop_time = player.get_monotonic_time() + progress_delay;
+
+                const auto video_start_time = (capture_times.begin_cap != 0s)
+                    ? progress_start_time
+                    : MonotonicTimePoint();
+
+                const auto video_stop_time = (capture_times.begin_cap != 0s)
+                    ? progress_stop_time
+                    : MonotonicTimePoint::max();
+
                 int return_code = 0;
 
                 if (not rp.output_filename.empty()) {
@@ -1065,14 +1082,10 @@ static inline int replay(
                         char progress_filename[4096];
                         std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
                                      , outfile.directory.c_str(), outfile.basename.c_str());
-                        UpdateProgressData update_progress_data(
-                            progress_filename,
-                            MonotonicTimePoint(capture_times.begin_cap != 0s
-                                                ? capture_times.begin_cap
-                                                : begin_record),
-                            MonotonicTimePoint(capture_times.end_cap != 0s
-                                                ? capture_times.end_cap
-                                                : end_record));
+
+                        UpdateProgressData update_progress_data(progress_filename,
+                                                                progress_start_time,
+                                                                progress_stop_time);
 
                         const char * record_tmp_path = outfile.directory.c_str();
                         const char * record_path = record_tmp_path;
@@ -1180,10 +1193,10 @@ static inline int replay(
                         {
                             void external_breakpoint() override {}
 
-                            // old format starts with timestamp (real tune = monotonic_time)
+                            // old format starts with timestamp (real_time = monotonic_time)
                             void external_monotonic_time_point(MonotonicTimePoint now) override
                             {
-                                if (this->old_format_begin_capture > now) {
+                                if (this->begin_capture > now) {
                                     return;
                                 }
 
@@ -1193,11 +1206,13 @@ static inline int replay(
                             // new format starts with time_points
                             void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override
                             {
-                                if (this->new_format_begin_capture > monotonic_delay) {
+                                auto begin_capture = this->begin_capture.time_since_epoch();
+
+                                if (begin_capture > monotonic_delay) {
                                     return;
                                 }
 
-                                auto elapsed = monotonic_delay - this->new_format_begin_capture;
+                                auto elapsed = monotonic_delay - begin_capture;
                                 this->load_capture(
                                     MonotonicTimePoint(monotonic_delay - elapsed),
                                     real_time - elapsed
@@ -1212,29 +1227,21 @@ static inline int replay(
                             explicit CaptureMaker(
                                 decltype(set_capture_consumer) & load_capture,
                                 std::optional<Capture> & retarded_capture,
-                                MonotonicTimePoint old_format_begin_capture,
-                                MonotonicTimePoint::duration new_format_begin_capture)
-                            : old_format_begin_capture(old_format_begin_capture)
-                            , new_format_begin_capture(new_format_begin_capture)
+                                MonotonicTimePoint begin_capture)
+                            : begin_capture(begin_capture)
                             , load_capture(load_capture)
                             , retarded_capture(retarded_capture)
                             {}
 
                         private:
-                            MonotonicTimePoint old_format_begin_capture;
-                            MonotonicTimePoint::duration new_format_begin_capture;
+                            MonotonicTimePoint begin_capture;
                             decltype(set_capture_consumer) & load_capture;
                             std::optional<Capture> & retarded_capture;
                         };
 
-                        CaptureMaker capture_maker(
-                            set_capture_consumer,
-                            retarded_capture,
-                            MonotonicTimePoint(capture_times.begin_cap),
-                            MonotonicTimePoint::duration(
-                                capture_times.begin_cap - Seconds(wrm_lines.front().start_time)
-                            )
-                        );
+                        CaptureMaker capture_maker(set_capture_consumer,
+                                                   retarded_capture,
+                                                   video_start_time);
 
                         if (capture_times.begin_cap.count()) {
                             player.add_consumer(
@@ -1248,7 +1255,10 @@ static inline int replay(
 
                         if (update_progress_data.is_valid()) {
                             try {
-                                player.play(std::ref(update_progress_data), program_requested_to_shutdown);
+                                player.play(std::ref(update_progress_data),
+                                            program_requested_to_shutdown,
+                                            video_start_time,
+                                            video_stop_time);
 
                                 if (program_requested_to_shutdown) {
                                     update_progress_data.raise_error(
@@ -1286,7 +1296,7 @@ static inline int replay(
                 }
                 else {
                     try {
-                        player.play(program_requested_to_shutdown);
+                        player.play(program_requested_to_shutdown, video_start_time, video_stop_time);
                     }
                     catch (Error const &) {
                         return_code = -1;
@@ -1930,7 +1940,7 @@ extern "C" {
                 auto r = RegionsCapture::compute_regions(
                     trans,
                     rp.smart_video_cropping,
-                    rp.full_video || bool(rp.capture_flags & CaptureFlags::video)
+                    (rp.full_video || bool(rp.capture_flags & CaptureFlags::video))
                         ? std::chrono::microseconds(1000000L / rp.video_params.frame_rate)
                         : MonotonicTimePoint::duration(),
                     MonotonicTimePoint(capture_times.begin_cap),
