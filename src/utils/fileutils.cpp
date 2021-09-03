@@ -166,21 +166,18 @@ SplitedPath ParsePath(const std::string & fullpath)
     const char * begin_of_filename =
         (end_of_directory ? end_of_directory + 1 : fullpath.c_str());
     const char * end_of_filename   =
-        [begin_of_filename] () {
+        [&] () {
             const char * dot = strrchr(begin_of_filename, '.');
             if (!dot || (dot == begin_of_filename)) {
-                return begin_of_filename + strlen(begin_of_filename) - 1;
+                return fullpath.c_str() + fullpath.size();
             }
-            return dot - 1;
+            return dot;
         } ();
 
-    if (end_of_filename >= begin_of_filename) {
-        result.basename.assign(begin_of_filename,
-            end_of_filename - begin_of_filename + 1);
-    }
+    result.basename.assign(begin_of_filename, end_of_filename);
 
-    if (*(end_of_filename + 1)) {
-        result.extension = end_of_filename + 1;
+    if (*end_of_filename) {
+        result.extension = end_of_filename;
     }
     return result;
 }
