@@ -57,8 +57,8 @@ namespace kbdtypes
         Delete = 0x53,
         F12 = 0x58,
         R = 0x13,
-        C = 0x46,
-        V = 0x47,
+        C = 0x2E,
+        V = 0x2F,
     };
 
 
