@@ -730,13 +730,19 @@ class Sesman():
                 target_info = target_info.encode('utf8')
             except Exception as e:
                 target_info = None
-            #Check if X509 Authentication is active
-            if self.engine.is_x509_connected(
+
+            # Check if we are using OTP
+            # before trying any authentification method
+            is_otp = wab_login.startswith('_OTP_')
+
+            # Check if X509 Authentication is active
+            if (not is_otp
+                and self.engine.is_x509_connected(
                         wab_login,
                         self.shared.get(u'ip_client'),
                         u"RDP",
                         target_info,
-                        self.shared.get(u'ip_target')):
+                        self.shared.get(u'ip_target'))):
                 method = "X509"
                 self.rdplog.log("AUTHENTICATION_TRY", method=method)
                 # Prompt the user in proxy window
@@ -762,7 +768,6 @@ class Sesman():
             else:
                 # PASSWORD based Authentication
                 is_magic_password = self.shared.get(u'password') == MAGICASK
-                is_otp = wab_login.startswith('_OTP_')
                 method = ((is_otp and "OTP") or
                           (self.engine.get_challenge() and "Challenge") or
                           "Password")
