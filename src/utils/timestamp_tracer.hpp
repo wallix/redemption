@@ -43,7 +43,7 @@ class TimestampTracer
     uint8_t timestamp_save[ts_width * ts_height * /*DrawableImplPrivate::bytes_per_pixel*/4];
     uint8_t timestamp_data[ts_width * ts_height * /*DrawableImplPrivate::bytes_per_pixel*/4];
     char previous_timestamp[size_str_timestamp];
-    uint8_t previous_timestamp_length;
+    unsigned previous_timestamp_length;
 
     unsigned int width;
     unsigned int height;
@@ -626,13 +626,14 @@ public:
     void trace(const tm & now)
     {
         const char* timezone = (daylight ? tzname[1] : tzname[0]);
-        const uint8_t timestamp_length = 20 + strlen(timezone);
         char rawdate[size_str_timestamp] {};
         REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wformat-truncation")
-        snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
-            now.tm_year + 1900, now.tm_mon + 1, now.tm_mday,
-            now.tm_hour, now.tm_min, now.tm_sec, timezone);
+        const unsigned timestamp_length = unsigned(std::max(0,
+            snprintf(rawdate, size_str_timestamp - 1,
+                "%4d-%02d-%02d %02d:%02d:%02d %s",
+                now.tm_year + 1900, now.tm_mon + 1, now.tm_mday,
+                now.tm_hour, now.tm_min, now.tm_sec, timezone)));
         REDEMPTION_DIAGNOSTIC_POP()
         this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp - 1, rawdate,
             this->previous_timestamp);
