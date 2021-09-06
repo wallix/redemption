@@ -64,15 +64,13 @@ struct parsed_chars_to_int_result
 /// Same as std::from_chars(), but chars_to_int_result::ptr points at the last
 /// character parsed. Which means that unlike std::from_chars(), a
 /// std::errc::result_out_of_range error does not consume the whole pattern.
+/// @{
 template<class Int>
 chars_to_int_result<Int> decimal_chars_to_int(char const* s) noexcept;
 
 template<class Int>
 chars_to_int_result<Int> decimal_chars_to_int(char const* s, Int& value) noexcept;
 
-/// Same as std::from_chars(), but chars_to_int_result::ptr points at the last
-/// character parsed. Which means that unlike std::from_chars(), a
-/// std::errc::result_out_of_range error does not consume the whole pattern.
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 chars_to_int_result<Int> decimal_chars_to_int(View&& av) noexcept;
 
@@ -84,43 +82,45 @@ chars_to_int_result<Int> decimal_chars_to_int(chars_view av) noexcept;
 
 template<class Int>
 chars_to_int_result<Int> decimal_chars_to_int(chars_view av, Int& value) noexcept;
+/// @}
 
 /// Same as std::from_chars()
+/// @{
 template<class Int>
 std::from_chars_result from_decimal_chars(char const* s, Int& value) noexcept;
 
-/// Same as std::from_chars()
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 std::from_chars_result from_decimal_chars(View&& av, Int& value) noexcept;
 
 template<class Int>
 std::from_chars_result from_decimal_chars(chars_view av, Int& value) noexcept;
+/// @}
 
 /// Converts a string to a number.
 /// If \c s contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then parsed_chars_to_int_result::has_value = false and parsed_chars_to_int_result::value is unspecified.
+/// @{
 template<class Int>
 parsed_chars_to_int_result<Int> parse_decimal_chars(char const* s) noexcept;
 
-/// Converts a string to a number.
-/// If \c av contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then parsed_chars_to_int_result::has_value = false and parsed_chars_to_int_result::value is unspecified.
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 parsed_chars_to_int_result<Int> parse_decimal_chars(View&& av) noexcept;
 
 template<class Int>
 parsed_chars_to_int_result<Int> parse_decimal_chars(chars_view av) noexcept;
+/// @}
 
 /// Converts a string to a number.
 /// If \c av contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
+/// @{
 template<class Int>
 Int parse_decimal_chars_or(char const* s, Int default_value) noexcept;
 
-/// Converts a string to a number.
-/// If \c av contains anything other than decimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
 template<class Int, class View, class = decltype(chars_view(std::declval<View>()))>
 Int parse_decimal_chars_or(View&& av, Int default_value) noexcept;
 
 template<class Int>
 Int parse_decimal_chars_or(chars_view av, Int default_value) noexcept;
+/// @}
 //@}
 
 // from hexadecimal chars
@@ -128,15 +128,13 @@ Int parse_decimal_chars_or(chars_view av, Int default_value) noexcept;
 /// Same as std::from_chars(), but chars_to_int_result::ptr points at the last
 /// character parsed. Which means that unlike std::from_chars(), a
 /// std::errc::result_out_of_range error does not consume the whole pattern.
+/// @{
 template<class UInt>
 chars_to_int_result<UInt> hexadecimal_chars_to_int(char const* s) noexcept;
 
 template<class UInt>
 chars_to_int_result<UInt> hexadecimal_chars_to_int(char const* s, UInt& value) noexcept;
 
-/// Same as std::from_chars(), but chars_to_int_result::ptr points at the last
-/// character parsed. Which means that unlike std::from_chars(), a
-/// std::errc::result_out_of_range error does not consume the whole pattern.
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 chars_to_int_result<UInt> hexadecimal_chars_to_int(View&& av) noexcept;
 
@@ -148,43 +146,45 @@ chars_to_int_result<UInt> hexadecimal_chars_to_int(chars_view av) noexcept;
 
 template<class UInt>
 chars_to_int_result<UInt> hexadecimal_chars_to_int(chars_view av, UInt& value) noexcept;
+/// @}
 
 /// Same as std::from_chars()
+/// @{
 template<class UInt>
 std::from_chars_result from_hexadecimal_chars(char const* s, UInt& value) noexcept;
 
-/// Same as std::from_chars()
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 std::from_chars_result from_hexadecimal_chars(View&& av, UInt& value) noexcept;
 
 template<class UInt>
 std::from_chars_result from_hexadecimal_chars(chars_view av, UInt& value) noexcept;
+/// @}
 
 /// Converts a string to a number.
 /// If \c s contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then parsed_chars_to_int_result::has_value = false and parsed_chars_to_int_result::value is unspecified.
+/// @{
 template<class UInt>
 parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(char const* s) noexcept;
 
-/// Converts a string to a number.
-/// If \c av contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then parsed_chars_to_int_result::has_value = false and parsed_chars_to_int_result::value is unspecified.
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(View&& av) noexcept;
 
 template<class UInt>
 parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(chars_view av) noexcept;
+/// @}
 
 /// Converts a string to a number.
 /// If \c av contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
+/// @{
 template<class UInt>
 UInt parse_hexadecimal_chars_or(char const* s, UInt default_value) noexcept;
 
-/// Converts a string to a number.
-/// If \c av contains anything other than hexadecimal values or if the parsed value is not in the range represented by the value type, then default_value is returned.
 template<class UInt, class View, class = decltype(chars_view(std::declval<View>()))>
 UInt parse_hexadecimal_chars_or(View&& av, UInt default_value) noexcept;
 
 template<class UInt>
 UInt parse_hexadecimal_chars_or(chars_view av, UInt default_value) noexcept;
+/// @}
 //@}
 
 
