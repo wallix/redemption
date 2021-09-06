@@ -368,6 +368,16 @@ RED_AUTO_TEST_CASE(TestFromHexadecimalChars)
     RED_CHECK(u == 42);
 }
 
+RED_AUTO_TEST_CASE(TestUncheckCharsToInt)
+{
+    RED_CHECK(int(unchecked_decimal_chars_to_int("123456")) == 123456);
+    RED_CHECK(int(unchecked_decimal_chars_to_int("123456"_av)) == 123456);
+    RED_CHECK(int(unchecked_decimal_chars_to_int(std::string_view("123456"))) == 123456);
+    RED_CHECK(unsigned(unchecked_hexadecimal_chars_to_int("123456")) == 0x123456);
+    RED_CHECK(unsigned(unchecked_hexadecimal_chars_to_int("123456"_av)) == 0x123456);
+    RED_CHECK(unsigned(unchecked_hexadecimal_chars_to_int(std::string_view("123456"))) == 0x123456);
+}
+
 RED_AUTO_TEST_CASE(TestCharsToIntFromInitializerList)
 {
     unsigned i;
