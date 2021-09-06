@@ -4920,6 +4920,14 @@ test-run tests/utils/test_parse :
   $(REDEMPTION_TEST_PATH)/utils/test_parse.cpp
 :
 ;
+test-run tests/utils/test_parse_primary_drawing_orders :
+  $(REDEMPTION_TEST_PATH)/utils/test_parse_primary_drawing_orders.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/parse_primary_drawing_orders.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/utils/test_parse_server_message :
   $(REDEMPTION_TEST_PATH)/utils/test_parse_server_message.cpp
 :
@@ -5542,6 +5550,7 @@ alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
 alias test_netutils : tests/utils/test_netutils ;
 alias test_parse : tests/utils/test_parse ;
+alias test_parse_primary_drawing_orders : tests/utils/test_parse_primary_drawing_orders ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
 alias test_pattutils : tests/utils/test_pattutils ;
 alias test_png : tests/utils/test_png ;
@@ -5946,6 +5955,7 @@ alias tests/utils.norec :
   tests/utils/test_log_siem
   tests/utils/test_netutils
   tests/utils/test_parse
+  tests/utils/test_parse_primary_drawing_orders
   tests/utils/test_parse_server_message
   tests/utils/test_pattutils
   tests/utils/test_png
