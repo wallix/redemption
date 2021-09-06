@@ -246,7 +246,7 @@ chars_to_int_result<Int> decimal_chars_to_int_impl(char const* first, EndIterato
         return {std::errc::invalid_argument, {}, start};
     }
 
-    // fast-path
+    // fast-path (noticeable only with clang)
     if (x < max_safe) {
         if constexpr (std::is_signed_v<Int>) {
             return {std::errc(), Int(x * sign), first};
@@ -273,6 +273,10 @@ chars_to_int_result<Int> decimal_chars_to_int_impl(char const* first, EndIterato
         }
 
         ++first;
+        if (first != last && '0' <= *first && *first <= '9') {
+            return {std::errc::result_out_of_range, {}, first};
+        }
+
         return {std::errc(), result, first};
     }
 
@@ -361,7 +365,7 @@ chars_to_int_result<UInt> hexadecimal_chars_to_int_impl(char const* first, EndIt
         return {std::errc::invalid_argument, {}, first};
     }
 
-    // fast-path
+    // fast-path (noticeable only with clang)
     if (x <= max_safe) {
         return {std::errc(), UInt(x), first};
     }

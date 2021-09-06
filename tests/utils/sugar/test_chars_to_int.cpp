@@ -50,7 +50,7 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<chars_to_int_result<T>>
         chars_to_int_result<T> const& value
     ) const
     {
-        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << value.val << ", " << value.ptr << "}";
+        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << +value.val << ", " << value.ptr << "}";
     }
 };
 
@@ -219,6 +219,10 @@ RED_AUTO_TEST_CASE(TestDecimalCharsToInt)
     s = "1234567890987654321";
     RED_CHECK(decimal_chars_to_int<int32_t>(s) == (chars_to_int_result<int32_t>{std::errc::result_out_of_range, 0, s+10}));
     RED_CHECK(decimal_chars_to_int<int32_t>(std::string_view(s)) == (chars_to_int_result<int32_t>{std::errc::result_out_of_range, 0, s+10}));
+
+    s = "2555";
+    RED_CHECK(decimal_chars_to_int<uint8_t>(s) == (chars_to_int_result<uint8_t>{std::errc::result_out_of_range, 0, s+3}));
+    RED_CHECK(decimal_chars_to_int<uint8_t>(std::string_view(s)) == (chars_to_int_result<uint8_t>{std::errc::result_out_of_range, 0, s+3}));
 }
 
 RED_AUTO_TEST_CASE(TestHexadecimalCharsToInt)
