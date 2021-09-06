@@ -19,6 +19,7 @@ Author(s): Proxies Team
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/compare_collection.hpp"
 
 #include "utils/sugar/chars_to_int.hpp"
 
@@ -53,17 +54,18 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<chars_to_int_result<T>>
     }
 };
 
-template<>
-struct RED_TEST_PRINT_TYPE_STRUCT_NAME<std::from_chars_result>
+// std::from_chars_result == std::from_chars_result only from C++20
+static ut::assertion_result from_chars_result_EQ(std::from_chars_result a, std::from_chars_result b)
 {
-    void operator()(
-        REDEMPTION_UT_UNUSED_STREAM std::ostream& out,
-        std::from_chars_result const& value
-    ) const
-    {
-        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << value.ptr << "}";
-    }
-};
+    return ut::create_assertion_result(
+        (a.ptr == b.ptr && a.ec == b.ec), a, " != ", b,
+        [](std::ostream& out, std::from_chars_result r){
+            REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << r.ec << ", " << r.ptr << "}";
+        }
+    );
+}
+
+RED_TEST_DISPATCH_COMPARISON_EQ((), (std::from_chars_result), (std::from_chars_result), ::from_chars_result_EQ)
 #endif
 
 RED_AUTO_TEST_CASE(TestParseDecimalChars)
