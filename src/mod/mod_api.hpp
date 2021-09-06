@@ -34,14 +34,15 @@ enum BackEvent_t
 
 class mod_api : public Callback
 {
-public:
     BackEvent_t mod_signal = BACK_EVENT_NONE;
 
+protected:
     void set_mod_signal(BackEvent_t signal)
     {
         this->mod_signal = signal;
     }
 
+public:
     BackEvent_t get_mod_signal() const
     {
         return this->mod_signal;
