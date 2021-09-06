@@ -44,6 +44,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/uninit_checked.hpp"
 #include "utils/translation.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 
 #include <chrono>
 #include <memory>
@@ -948,10 +949,10 @@ public:
         }
         else if (!::strcasecmp(order_.c_str(), "ExecuteResult") && (4 <= parameters_.size())) {
             this->rdp.sespro_rail_exec_result(
-                    ::atoi(parameters_[3].c_str()), /*NOLINT*/
+                    unchecked_decimal_chars_to_int(parameters_[3].c_str()),
                     parameters_[0].c_str(),
-                    ::atoi(parameters_[1].c_str()), /*NOLINT*/
-                    ::atoi(parameters_[2].c_str())  /*NOLINT*/
+                    unchecked_decimal_chars_to_int(parameters_[1].c_str()),
+                    unchecked_decimal_chars_to_int(parameters_[2].c_str())
                 );
         }
         else if (!::strcasecmp(order_.c_str(), "ExtraInfo") && !parameters_.empty()) {
@@ -1423,7 +1424,7 @@ public:
                             KVLog("window"_av, parameters_[0]),
                             KVLog("checkbox"_av, parameters_[1]),
                             KVLog("state"_av,
-                                ::button_state_to_string(::atoi(parameters_[2].c_str()))),
+                                ::button_state_to_string(unchecked_decimal_chars_to_int(parameters_[2].c_str()))),
                         });
                     }
                     else {

@@ -23,6 +23,7 @@
 #include "gdi/text_metrics.hpp"
 #include "keyboard/keymap.hpp"
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 
 
 namespace
@@ -96,8 +97,8 @@ SelectorMod::SelectorMod(
             : int_to_decimal_zchars(ini.get<cfg::context::selector_number_of_pages>()).c_str(),
         &this->language_button, this->selector_params, font, theme, language(ini), true)
 
-    , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
-    , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
+    , current_page(unchecked_decimal_chars_to_int(this->selector.current_page.get_text()))
+    , number_page(unchecked_decimal_chars_to_int(this->selector.number_page.get_text()+1))
     , copy_paste(ini.get<cfg::debug::mod_internal>() != 0)
 {
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
@@ -202,7 +203,7 @@ void SelectorMod::notify(Widget& widget, notify_event_t event)
             }
         }
         else if (&widget == &this->selector.current_page) {
-            int page = atoi(this->selector.current_page.get_text()); /*NOLINT*/
+            int page = unchecked_decimal_chars_to_int(this->selector.current_page.get_text());
             if (page != this->current_page) {
                 this->current_page = page;
                 this->ask_page();

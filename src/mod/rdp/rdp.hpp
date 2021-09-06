@@ -1011,7 +1011,7 @@ public:
                     KVLog("window"_av, parameters[0]),
                     KVLog("checkbox"_av, parameters[1]),
                     KVLog("state"_av,
-                        ::button_state_to_string(::atoi(parameters[2].c_str()))),
+                        ::button_state_to_string(unchecked_decimal_chars_to_int(parameters[2].c_str()))),
                 });
             }
         }
