@@ -30,7 +30,9 @@ void test_splitter(char const* ctx, Splitter&& splitter, chars_view result)
     std::string s;
     s.clear();
     for (auto r : splitter) {
-        s.append(r.begin(), r.end()) += ':';
+        s += '[';
+        s.append(r.begin(), r.end());
+        s += ']';
     }
 
     RED_TEST_CONTEXT(ctx) {
@@ -41,45 +43,47 @@ void test_splitter(char const* ctx, Splitter&& splitter, chars_view result)
 template<class Chars>
 void test_splitters(Chars& str, chars_view result)
 {
-    test_splitter<
-        detail::SplitterCView<detail::SplitterCViewDataStr<char const*>, chars_view>
-    >("char const*", split_with(static_cast<char const*>(str), ','), result);
+    RED_TEST_CONTEXT(str) {
+        test_splitter<
+            detail::SplitterCView<detail::SplitterCViewDataStr<char const*>, chars_view>
+        >("char const*", split_with(static_cast<char const*>(str), ','), result);
 
-    test_splitter<
-        detail::SplitterCView<detail::SplitterCViewDataStr<char*>, writable_chars_view>
-    >("char*", split_with(str, ','), result);
+        test_splitter<
+            detail::SplitterCView<detail::SplitterCViewDataStr<char*>, writable_chars_view>
+        >("char*", split_with(str, ','), result);
 
-    test_splitter<
-        detail::SplitterCView<detail::SplitterCViewDataView<char const*>, chars_view>
-    >("zstring", split_with(zstring_view::from_null_terminated(str), ','), result);
+        test_splitter<
+            detail::SplitterCView<detail::SplitterCViewDataView<char const*>, chars_view>
+        >("zstring", split_with(zstring_view::from_null_terminated(str), ','), result);
 
-    test_splitter<
-        SplitterView<chars_view, char>
-    >("string_view", split_with(std::string_view(str), ','), result);
+        test_splitter<
+            SplitterView<chars_view, char>
+        >("string_view", split_with(std::string_view(str), ','), result);
 
-    struct Char
-    {
-        bool operator == (char c) const
+        struct Char
         {
-            return c == ',';
-        }
-    };
+            bool operator == (char c) const
+            {
+                return c == ',';
+            }
+        };
 
-    test_splitter<
-        SplitterView<chars_view, Char>
-    >("string_view + sep as Fn", split_with(std::string_view(str), Char()), result);
+        test_splitter<
+            SplitterView<chars_view, Char>
+        >("string_view + sep as Fn", split_with(std::string_view(str), Char()), result);
+    }
 }
 
 RED_AUTO_TEST_CASE(TestSplitter)
 {
     {
         char str[] = "abc,de,efg,h,,,ijk,lmn";
-        test_splitters(str, "abc:de:efg:h:::ijk:lmn:"_av);
+        test_splitters(str, "[abc][de][efg][h][][][ijk][lmn]"_av);
     }
 
     {
         char str[] = ",abc,de,";
-        test_splitters(str, ":abc:de:"_av);
+        test_splitters(str, "[][abc][de][]"_av);
     }
 
     {
@@ -89,11 +93,11 @@ RED_AUTO_TEST_CASE(TestSplitter)
 
     {
         char str[] = "a";
-        test_splitters(str, "a:"_av);
+        test_splitters(str, "[a]"_av);
     }
 
     {
         char str[] = ",";
-        test_splitters(str, ":"_av);
+        test_splitters(str, "[][]"_av);
     }
 }

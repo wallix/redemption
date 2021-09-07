@@ -31,60 +31,66 @@
 namespace detail
 {
     // template<class SplitterView>
-    class end_iterator
+    class split_view_end_iterator
     {};
 
     template<class SplitterView>
-    struct iterator
+    struct split_view_iterator
     {
     public:
-        using element_view = typename SplitterView::element_view;
+        using value_type = typename SplitterView::value_type;
 
-        explicit iterator(SplitterView & s)
-        : lines(&s)
-        , av(s.next())
-        {}
-
-        explicit iterator(end_iterator)
-        : lines(nullptr)
-        {}
-
-        iterator& operator++()
+        explicit split_view_iterator(SplitterView & splitter)
+        : splitter(&splitter)
+        , has_value(splitter.next())
         {
-            av = this->lines->next();
+            if (has_value) {
+                av = splitter.value();
+            }
+        }
+
+        explicit split_view_iterator(split_view_end_iterator)
+        : splitter(nullptr)
+        {}
+
+        split_view_iterator& operator++()
+        {
+            has_value = this->splitter->next();
+            av = this->splitter->value();
             return *this;
         }
 
-        const element_view& operator*() const
+        const value_type& operator*() const
         {
             return av;
         }
 
-        const element_view* operator->() const
+        const value_type* operator->() const
         {
             return &av;
         }
 
-        // should be operator==(end_iterator), but does not work with gcc-8.0
-        // bool operator==(end_iterator<SplitterView> const & /*other*/) const
+        // should be operator==(split_view_end_iterator), but does not work with gcc-8.0
+        // bool operator==(split_view_end_iterator<SplitterView> const & /*other*/) const
         // {
-        //     return lines->empty();
+        //     return splitter->empty();
         // }
 
-        bool operator==(iterator const & other) const
+        bool operator==(split_view_iterator const & other) const
         {
-            assert(!other.lines && lines);
-            return lines->empty();
+            assert(!other.splitter && splitter);
+            return !has_value;
         }
 
-        bool operator!=(iterator const & other) const
+        bool operator!=(split_view_iterator const & other) const
         {
             return !operator==(other);
         }
 
     private:
-        SplitterView* lines;
-        element_view av;
+        SplitterView* splitter;
+        bool has_value;
+        value_type av;
     };
 
     inline char* strchr_impl(char* s, int c) noexcept
@@ -110,47 +116,56 @@ namespace detail
     template<class Data, class AV>
     struct SplitterCView
     {
-        using element_view = AV;
+        using value_type = AV;
 
         SplitterCView(Data data, int sep) noexcept
-        : data(data)
-        , sep(sep)
+        : data_(data)
+        , has_value_(*data.str)
+        , sep_(sep)
         {}
 
-        AV next() noexcept
+        bool next() noexcept
         {
-            data.str = cur;
-            cur = strchr_impl(cur, sep);
-            if (cur) {
-                AV res{data.str, cur};
-                ++cur;
-                return res;
+            if (REDEMPTION_UNLIKELY(!has_value_)) {
+                return false;
             }
-            AV res{data.str, data.end_ptr()};
-            cur = res.end();
-            return res;
+
+            data_.str = cur_;
+            cur_ = strchr_impl(cur_, sep_);
+            if (cur_) {
+                end_av_ = cur_;
+                ++cur_;
+            }
+            else {
+                has_value_ = false;
+                cur_ = data_.end_ptr();
+                end_av_ = cur_;
+            }
+            return true;
         }
 
-        [[nodiscard]] bool empty() const noexcept
+        value_type value() const
         {
-            return !*data.str;
+            return AV{data_.str, end_av_};
         }
 
-        iterator<SplitterCView> begin()
+        split_view_iterator<SplitterCView> begin()
         {
-            return iterator<SplitterCView>(*this);
+            return split_view_iterator<SplitterCView>(*this);
         }
 
-        // should be detail::end_iterator<SplitterView> end(), but does not work with gcc-8.0
-        iterator<SplitterCView> end()
+        // should be detail::split_view_end_iterator<SplitterView> end(), but does not work with gcc-8.0
+        split_view_iterator<SplitterCView> end()
         {
-            return iterator<SplitterCView>{detail::end_iterator()};
+            return split_view_iterator<SplitterCView>{detail::split_view_end_iterator()};
         }
 
     private:
-        Data data;
-        typename Data::pointer cur = data.str;
-        int sep;
+        Data data_;
+        typename Data::pointer cur_ = data_.str;
+        typename Data::pointer end_av_;
+        bool has_value_;
+        int sep_;
     };
 
     template<class Ptr>
@@ -182,49 +197,61 @@ namespace detail
 template<class AV, class Sep = typename AV::value_type, bool = is_null_terminated_v<AV>>
 struct SplitterView
 {
-    using element_view = AV;
+    using value_type = AV;
 
     template<class TSep>
     SplitterView(AV av, TSep&& sep)
-    : first(av.begin())
-    , last(av.end())
-    , sep(static_cast<TSep&&>(sep))
+    : cur_(av.begin())
+    , last_(av.end())
+    , has_value_(cur_ != last_)
+    , sep_(static_cast<TSep&&>(sep))
     {}
 
-    AV next()
+    bool next()
     {
-        first = cur;
-        while (cur != last && !bool(sep == *cur)) {
-            ++cur;
+        if (REDEMPTION_UNLIKELY(!has_value_)) {
+            return false;
         }
-        AV res{first, cur};
-        if (cur != last) {
-            ++cur;
+
+        auto first = cur_;
+        while (cur_ != last_ && !bool(sep_ == *cur_)) {
+            ++cur_;
         }
-        return res;
+
+        av_ = AV{first, cur_};
+
+        if (cur_ != last_) {
+            ++cur_;
+        }
+        else {
+            has_value_ = false;
+        }
+
+        return true;
     }
 
-    [[nodiscard]] bool empty() const
+    value_type value() const
     {
-        return first == last;
+        return av_;
     }
 
-    detail::iterator<SplitterView> begin()
+    detail::split_view_iterator<SplitterView> begin()
     {
-        return detail::iterator<SplitterView>(*this);
+        return detail::split_view_iterator<SplitterView>(*this);
     }
 
-    // should be detail::end_iterator<SplitterView> end(), but does not work with gcc-8.0
-    detail::iterator<SplitterView> end()
+    // should be detail::split_view_end_iterator<SplitterView> end(), but does not work with gcc-8.0
+    detail::split_view_iterator<SplitterView> end()
     {
-        return detail::iterator<SplitterView>{detail::end_iterator()};
+        return detail::split_view_iterator<SplitterView>{detail::split_view_end_iterator()};
     }
 
 private:
-    typename AV::iterator first;
-    typename AV::iterator last;
-    typename AV::iterator cur = first;
-    Sep sep;
+    typename AV::iterator cur_;
+    typename AV::iterator last_;
+    AV av_;
+    bool has_value_;
+    Sep sep_;
 };
 
 
