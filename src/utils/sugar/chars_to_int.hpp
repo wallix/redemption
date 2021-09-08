@@ -287,43 +287,41 @@ chars_to_int_result<Int> decimal_chars_to_int_impl(char const* first, EndIterato
     }
 
     // '+' allows to promote char/short to int
-    auto x = +Int();
-    constexpr auto max_safe = +std::numeric_limits<Int>::max() / 10;
+    auto n = +Int();
+    constexpr auto risky_value = +std::numeric_limits<Int>::max() / 10;
 
     if (first != last && '0' <= *first && *first <= '9') {
         do {
             auto c = static_cast<unsigned char>(*first - '0');
-            x = (x * 10) + c;
+            n = (n * 10) + c;
             ++first;
-        } while (x < max_safe && first != last && '0' <= *first && *first <= '9');
+        } while (n < risky_value && first != last && '0' <= *first && *first <= '9');
     }
     else {
         return {std::errc::invalid_argument, {}, start};
     }
 
     // fast-path (noticeable only with clang)
-    if (x < max_safe) {
+    if (n < risky_value) {
         if constexpr (std::is_signed_v<Int>) {
-            return {std::errc(), Int(x * sign), first};
+            return {std::errc(), Int(n * sign), first};
         }
         else {
-            return {std::errc(), Int(x), first};
+            return {std::errc(), Int(n), first};
         }
     }
 
     if (first != last && '0' <= *first && *first <= '9') {
-        Int result;
         int base = 10;
         int c = *first - '0';
+        int max_last_digit = std::numeric_limits<Int>::max() % 10;
 
         if constexpr (std::is_signed_v<Int>) {
-            base *= sign;
-            c *= sign;
+            static_assert(std::numeric_limits<Int>::max() % 10 + 1 == -(std::numeric_limits<Int>::min() % 10));
+            max_last_digit += (sign == -1);
         }
 
-        if (__builtin_mul_overflow(x, base, &result)
-         || __builtin_add_overflow(result, c, &result)
-        ) {
+        if (n > risky_value || c > max_last_digit) {
             return {std::errc::result_out_of_range, {}, first};
         }
 
@@ -332,14 +330,19 @@ chars_to_int_result<Int> decimal_chars_to_int_impl(char const* first, EndIterato
             return {std::errc::result_out_of_range, {}, first};
         }
 
-        return {std::errc(), result, first};
+        if constexpr (std::is_signed_v<Int>) {
+            base *= sign;
+            c *= sign;
+        }
+
+        return {std::errc(), Int(n * base + c), first};
     }
 
     if constexpr (std::is_signed_v<Int>) {
-        return {std::errc(), Int(x * sign), first};
+        return {std::errc(), Int(n * sign), first};
     }
     else {
-        return {std::errc(), Int(x), first};
+        return {std::errc(), Int(n), first};
     }
 }
 
@@ -407,21 +410,21 @@ chars_to_int_result<UInt> hexadecimal_chars_to_int_impl(char const* first, EndIt
 
     // '+' allows to promote char/short to int
     auto x = +UInt();
-    constexpr auto max_safe = +std::numeric_limits<UInt>::max() / 16;
+    constexpr auto risky_value = +std::numeric_limits<UInt>::max() / 16;
 
     unsigned char c;
     if (first != last && 0xff != (c = hexadecimal_char_to_int(*first))) {
         do {
             x = (x * 16) + c;
             ++first;
-        } while (x <= max_safe && first != last && 0xff != (c = hexadecimal_char_to_int(*first)));
+        } while (x <= risky_value && first != last && 0xff != (c = hexadecimal_char_to_int(*first)));
     }
     else {
         return {std::errc::invalid_argument, {}, first};
     }
 
     // fast-path (noticeable only with clang)
-    if (x <= max_safe) {
+    if (x <= risky_value) {
         return {std::errc(), UInt(x), first};
     }
 

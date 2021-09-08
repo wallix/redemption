@@ -84,8 +84,12 @@ RED_AUTO_TEST_CASE(TestParseDecimalChars)
     RED_CHECK(parse_decimal_chars<int>("83351") == (parsed_chars_to_int_result<int>{83351, true}));
     RED_CHECK(parse_decimal_chars<int>("-83351") == (parsed_chars_to_int_result<int>{-83351, true}));
     RED_CHECK(parse_decimal_chars<uint32_t>("4294967295") == (parsed_chars_to_int_result<uint32_t>{4294967295, true}));
+    RED_CHECK(parse_decimal_chars<int32_t>("2147483646") == (parsed_chars_to_int_result<int32_t>{2147483646, true}));
     RED_CHECK(parse_decimal_chars<int32_t>("2147483647") == (parsed_chars_to_int_result<int32_t>{2147483647, true}));
+    RED_CHECK(parse_decimal_chars<int32_t>("2147483648") == (parsed_chars_to_int_result<int32_t>{0, false}));
+    RED_CHECK(parse_decimal_chars<int32_t>("-2147483647") == (parsed_chars_to_int_result<int32_t>{-2147483647, true}));
     RED_CHECK(parse_decimal_chars<int32_t>("-2147483648") == (parsed_chars_to_int_result<int32_t>{-2147483648, true}));
+    RED_CHECK(parse_decimal_chars<int32_t>("-2147483649") == (parsed_chars_to_int_result<int32_t>{0, false}));
     RED_CHECK(parse_decimal_chars<int32_t>("1147483647") == (parsed_chars_to_int_result<int32_t>{1147483647, true}));
     RED_CHECK(parse_decimal_chars<int32_t>("-1147483648") == (parsed_chars_to_int_result<int32_t>{-1147483648, true}));
     RED_CHECK(parse_decimal_chars<int32_t>("1147483649") == (parsed_chars_to_int_result<int32_t>{1147483649, true}));
