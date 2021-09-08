@@ -89,7 +89,7 @@ struct zstring_view
 
     constexpr char operator[](std::size_t i) const noexcept
     {
-        assert(i < len);
+        assert(i <= len);
         return s[i];
     }
 

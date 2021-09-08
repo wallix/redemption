@@ -4693,6 +4693,10 @@ test-run tests/utils/sugar/unordered_erase :
   $(REDEMPTION_TEST_PATH)/utils/sugar/unordered_erase.cpp
 :
 ;
+test-run tests/utils/test_ascii :
+  $(REDEMPTION_TEST_PATH)/utils/test_ascii.cpp
+:
+;
 test-run tests/utils/test_base64 :
   $(REDEMPTION_TEST_PATH)/utils/test_base64.cpp
 :
@@ -5518,6 +5522,7 @@ alias test_static_array_to_hexadecimal_chars : tests/utils/sugar/test_static_arr
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias unordered_erase : tests/utils/sugar/unordered_erase ;
+alias test_ascii : tests/utils/test_ascii ;
 alias test_base64 : tests/utils/test_base64 ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitmap : tests/utils/test_bitmap ;
@@ -5923,6 +5928,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/unordered_erase
 ;
 alias tests/utils.norec :
+  tests/utils/test_ascii
   tests/utils/test_base64
   tests/utils/test_bitfu
   tests/utils/test_bitmap

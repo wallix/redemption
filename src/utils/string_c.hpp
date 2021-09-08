@@ -41,6 +41,11 @@ namespace jln
             return zstring_view::from_null_terminated(value, sizeof...(cs));
         }
 
+        static constexpr std::string_view sv() noexcept
+        {
+            return std::string_view(value, sizeof...(cs));
+        }
+
         template<char... cs2>
         constexpr string_c<cs..., cs2...> operator+(string_c<cs2...> /*unused*/) const
         {
