@@ -606,10 +606,10 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<ColorDepthSelectionStrategy>{}, "wrm_color_depth_selection_strategy", set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, L, type_<WrmCompressionAlgorithm>{}, "wrm_compression_algorithm", set(WrmCompressionAlgorithm::gzip));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_vlc_frame_rate", desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_vlc_frame_rate", display::name{"Bogus VLC frame rate"}, desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("mp4"));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::range<unsigned, 1, 120>>(), "framerate", set(5));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::range<unsigned, 1, 120>>(), "framerate", display::name{"Frame rate"}, set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{
             "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
             "/!\\ Some browsers and video decoders don't support crf=0"
