@@ -20,38 +20,98 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
+#include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/split.hpp"
+#include "utils/ascii.hpp"
+#include "acl/auth_api.hpp"
 
-#include <cstring>
+#include <type_traits>
 
 
-inline bool parse_server_message(const char * svr_msg, std::string & order_ref, std::vector<std::string> & parameters_ref) {
-    order_ref.clear();
-    parameters_ref.clear();
+struct ParseServerMessage
+{
+    static const std::size_t max_arity = 16;
+    static const std::size_t max_order_len = 32;
 
-    const char * separator = strchr(svr_msg, '=');
+    StringArray<126, UpperTag> upper_order() const noexcept
+    {
+        return ascii_to_limited_upper<126>(order_);
+    }
 
-    if (separator) {
-        order_ref.assign(svr_msg, separator - svr_msg);
+    array_view<std::string_view> parameters() const noexcept
+    {
+        return array_view(parameters_).first(parameters_size_);
+    }
 
-        const char * params = (separator + 1);
+    bool parse(zstring_view msg)
+    {
+        order_ = {};
+        parameters_size_ = {};
 
-        /** TODO
-         * for (r : get_split(separator, this->server_message.c_str() + this->server_message.size(), '\ x01')) {
-         *     parameters.push_back({r.begin(), r.end()});
-         * }
-         */
-        while ((separator = ::strchr(params, '\x01')) != nullptr) {
-            parameters_ref.emplace_back(params, separator - params);
+        const char * separator = strchr(msg, '=');
 
-            params = (separator + 1);
+        if (separator) {
+            order_ = {msg, std::size_t(separator - msg)};
+
+            for (auto param : split_with(separator + 1, '\x01')) {
+                if (parameters_size_ == max_arity) {
+                    return false;
+                }
+                parameters_[parameters_size_] = param.as<std::string_view>();
+                ++parameters_size_;
+            }
+
+            return true;
         }
-        parameters_ref.emplace_back(params);
-    }
-    else {
-        order_ref.assign(svr_msg);
+        else {
+            order_ = msg.to_sv();
+        }
+
+        return true;
     }
 
-    return order_ref.length();
+private:
+    std::string_view order_ {};
+    std::size_t parameters_size_ {};
+    std::array<std::string_view, max_arity> parameters_;
+};
+
+template<std::size_t N>
+struct ExecutableLog6IfCtx
+{
+    static constexpr std::size_t nb_key = N;
+
+    TaggedString<UpperTag> order;
+    LogId logid;
+    std::array<chars_view, N> keys;
+};
+
+template<class... AV>
+ExecutableLog6IfCtx<sizeof...(AV)>
+executable_log6_if(TaggedString<UpperTag> order, LogId logid, AV... av) noexcept
+{
+    return {order, logid, {av...}};
+}
+
+#define EXECUTABLE_LOG6_ID_AND_NAME(name) #name ""_ascii_upper, LogId::name
+
+template<class Fn, class... Executables>
+bool execute_log6_if(
+    TaggedString<UpperTag> order, array_view<std::string_view> parameters,
+    Fn&& fn, Executables&&... executables)
+{
+    auto exec = [&](auto& executable){
+        constexpr std::size_t nb_key = std::remove_reference_t<decltype(executable)>::nb_key;
+        if (nb_key != parameters.size() || order != executable.order) {
+            return false;
+        }
+        std::array<KVLog, nb_key> kvlogs;
+        for (std::size_t i = 0; i < nb_key; ++i) {
+            kvlogs[i].key = executable.keys[i];
+            kvlogs[i].value = parameters[i];
+        }
+        fn(executable.logid, KVLogList{kvlogs});
+        return true;
+    };
+    return (... || exec(executables));
 }

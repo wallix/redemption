@@ -1427,15 +1427,15 @@ public:
         this->send_message_to_client(length, flags_, out_s.get_produced_bytes());
     }
 
-    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
+    void sespro_rail_exec_result(uint16_t flags, chars_view exe_or_file,
         uint16_t exec_result, uint32_t raw_result) override {
         LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
             "RemoteProgramsVirtualChannel::sespro_rail_exec_result: "
                 "exec_result=%u "
                 "raw_result=%u "
-                "exe_or_file=\"%s\" "
+                "exe_or_file=\"%.*s\" "
                 "flags=%u",
-            exec_result, raw_result, exe_or_file, flags);
+            exec_result, raw_result, int(exe_or_file.size()), exe_or_file.data(), flags);
 
         StaticOutStream<1024> out_s;
         RAILPDUHeader header;
@@ -1446,7 +1446,7 @@ public:
         serpdu.Flags(flags);
         serpdu.ExecResult(exec_result);
         serpdu.RawResult(raw_result);
-        serpdu.ExeOrFile(exe_or_file);
+        serpdu.ExeOrFile(exe_or_file.as<std::string>());
 
         serpdu.emit(out_s);
 

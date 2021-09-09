@@ -76,12 +76,40 @@ constexpr inline char ascii_to_upper(char c) noexcept
     return detail::ascii_to_upper_table[static_cast<unsigned char>(c)];
 }
 
+template<class Tag>
+struct TaggedString
+{
+    constexpr std::string_view sv() const noexcept
+    {
+        return av;
+    }
+
+    template<class Tag2, class U>
+    friend constexpr detail::enable_if_same_tag_t<U, Tag2, bool>
+    operator==(TaggedString<Tag2> const& a, U const& b) noexcept
+    {
+        return a.sv() == b.sv();
+    }
+
+    std::string_view av;
+};
+
 template<std::size_t N, class Tag>
 struct StringArray
 {
     constexpr std::string_view sv() const noexcept
     {
         return std::string_view(_buffer.data(), _len);
+    }
+
+    constexpr TaggedString<Tag> tagged_sv() const noexcept
+    {
+        return TaggedString<Tag>{sv()};
+    }
+
+    constexpr operator TaggedString<Tag> () const noexcept
+    {
+        return TaggedString<Tag>{sv()};
     }
 
     template<class U>
@@ -110,6 +138,16 @@ struct ZStringArray
         return std::string_view(_buffer.data(), _len);
     }
 
+    constexpr TaggedString<Tag> tagged_sv() const noexcept
+    {
+        return TaggedString<Tag>{sv()};
+    }
+
+    constexpr operator TaggedString<Tag> () const noexcept
+    {
+        return TaggedString<Tag>{sv()};
+    }
+
     constexpr zstring_view zsv() const noexcept
     {
         return zstring_view::from_null_terminated(_buffer.data(), _len);
@@ -126,24 +164,6 @@ private:
     friend detail::StringArrayAccess;
     std::array<char, N+1> _buffer;
     std::size_t _len = 0;
-};
-
-template<class Tag>
-struct TaggedString
-{
-    constexpr std::string_view sv() const noexcept
-    {
-        return av;
-    }
-
-    template<class Tag2, class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag2, bool>
-    operator==(TaggedString<Tag2> const& a, U const& b) noexcept
-    {
-        return a.sv() == b.sv();
-    }
-
-    std::string_view av;
 };
 
 namespace detail
@@ -232,3 +252,17 @@ constexpr TaggedString<UpperTag> operator "" _ascii_upper() noexcept
     return {jln::string_c<ascii_to_upper(cs)...>::sv()};
 }
 REDEMPTION_DIAGNOSTIC_POP()
+
+inline bool insensitive_eq(chars_view sv, TaggedString<UpperTag> upper)
+{
+    if (sv.size() != upper.sv().size()) {
+        return false;
+    }
+
+    for (std::size_t i = 0; i < upper.sv().size(); ++i) {
+        if (upper.sv()[i] != ascii_to_upper(sv[i])) {
+            return false;
+        }
+    }
+    return true;
+};

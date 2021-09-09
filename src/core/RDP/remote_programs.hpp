@@ -994,7 +994,7 @@ public:
 
     [[nodiscard]] std::string const& ExeOrFile() const { return this->exe_or_file; }
 
-    void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
+    void ExeOrFile(std::string ExeOrFile_) { this->exe_or_file = std::move(ExeOrFile_); }
 
     [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)

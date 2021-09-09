@@ -34,4 +34,9 @@ RED_AUTO_TEST_CASE(TestUpper)
     RED_CHECK(ascii_to_limited_zupper<50>("abcdefghijklmnopqrstuvwxyz"_av).zsv()[26] == '\0');
     RED_CHECK("abcdefghijklmnopqrstuvwxyz"_ascii_upper.sv() == "ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av);
     RED_CHECK((ascii_to_limited_upper<50>("abcdefghijklmnopqrstuvwxyz"_av) == "abcdefghijklmnopqrstuvwxyz"_ascii_upper));
+    RED_CHECK(insensitive_eq("abC"_av, "abc"_ascii_upper));
+    RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_upper));
+    RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_upper));
+    RED_CHECK(!insensitive_eq("axc"_av, "abc"_ascii_upper));
+    RED_CHECK(!insensitive_eq("ab"_av, "abc"_ascii_upper));
 }

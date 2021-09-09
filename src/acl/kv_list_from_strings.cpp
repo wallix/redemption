@@ -23,7 +23,7 @@ Author(s): Proxies Team
 #include <cassert>
 
 
-KVListFromStrings::KVListFromStrings(array_view<std::string> str_paires) noexcept
+KVListFromStrings::KVListFromStrings(array_view<std::string_view> str_paires) noexcept
 : strings(str_paires)
 {
     assert(strings.size() % 2 == 0);

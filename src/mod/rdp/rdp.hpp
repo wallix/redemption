@@ -162,7 +162,7 @@ public:
     const CHANNELS::ChannelNameId auth_channel;
     const CHANNELS::ChannelNameId checkout_channel;
 #ifndef __EMSCRIPTEN__
-    int auth_channel_flags      = 0;
+    uint32_t auth_channel_flags = 0;
     int auth_channel_chanid     = 0;
     int checkout_channel_flags  = 0;
     int checkout_channel_chanid = 0;
@@ -920,9 +920,8 @@ public:
         (void)chunk_size;
         assert(stream.in_remain() == chunk_size);
 
-        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
-            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
-        {
+        uint32_t first_and_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        if ((flags & first_and_last) != first_and_last) {
             LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
             return;
         }
@@ -932,12 +931,13 @@ public:
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
-        std::string              order;
-        std::vector<std::string> parameters;
-        ::parse_server_message(auth_channel_message.c_str(), order, parameters);
+        ParseServerMessage parse_server_message_result;
+        parse_server_message_result.parse(auth_channel_message);
+        auto const upper_order = parse_server_message_result.upper_order();
+        auto const parameters = parse_server_message_result.parameters();
 
-        if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
-            if (::strcasecmp(parameters[0].c_str(), "Enable") != 0){
+        if (upper_order == "Input"_ascii_upper && !parameters.empty()) {
+            if (!insensitive_eq(parameters[0], "Enable"_ascii_upper)) {
                 this->callbacks.disable_input_event();
             }
             else {
@@ -945,73 +945,53 @@ public:
             }
             this->callbacks.enable_graphics_update();
         }
-        else if (!::strcasecmp(order.c_str(), "DisableNavigatorShortcuts") && !parameters.empty() &&
+        else if (upper_order == "DisableNavigatorShortcuts"_ascii_upper && !parameters.empty() &&
                  !this->keyboard_shortcut_blocker_sp)
         {
             this->keyboard_shortcut_blocker_sp = std::make_unique<KeyboardShortcutBlocker>(
                 this->keylayout, parameters[0], bool(this->verbose & RDPVerbose::basic_trace));
         }
-        else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
-            LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
-        }
-        else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
+        else if (upper_order == "Log"_ascii_upper) {
+            if (!parameters.empty()) {
+                LOG(LOG_INFO, "WABLauncher: %.*s", int(parameters[0].size()), parameters[0].data());
+            }
+            else {
+                if (!this->file_system_virtual_channel) {
+                    this->create_file_system_virtual_channel(front, stc, client_general_caps, client_name);
+                }
 
-            if (!this->file_system_virtual_channel) {
-                this->create_file_system_virtual_channel(front, stc, client_general_caps, client_name);
-            }
+                FileSystemVirtualChannel& rdpdr_channel = *this->file_system_virtual_channel;
 
-            FileSystemVirtualChannel& rdpdr_channel = *this->file_system_virtual_channel;
-
-            rdpdr_channel.disable_session_probe_drive();
-        }
-        else if (!::strcasecmp(order.c_str(), "WEB_NAVIGATION")) {
-            if (parameters.size() == 1) {
-                this->log6(LogId::WEB_NAVIGATION, {
-                    KVLog("url"_av, parameters[0]),
-                });
+                rdpdr_channel.disable_session_probe_drive();
             }
         }
-        else if (!::strcasecmp(order.c_str(), "EDIT_CHANGED")) {
-            if (parameters.size() == 2) {
-                this->log6(LogId::EDIT_CHANGED, {
-                    KVLog("window"_av, parameters[0]),
-                    KVLog("edit"_av, parameters[1]),
-                });
-            }
+        else if (execute_log6_if(upper_order, parameters,
+            [this](LogId logid, KVLogList kvlist) { this->log6(logid, kvlist); },
+            executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(WEB_NAVIGATION),
+                "url"_av),
+            executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(EDIT_CHANGED),
+                "window"_av,
+                "edit"_av),
+            executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(EDIT_CHANGED_2),
+                "window"_av,
+                "edit"_av,
+                "value"_av),
+            executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(SELECT_CHANGED),
+                "window"_av,
+                "edit"_av,
+                "value"_av),
+            executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(BUTTON_CLICKED),
+                "window"_av,
+                "button"_av)
+        )) {
         }
-        else if (!::strcasecmp(order.c_str(), "EDIT_CHANGED_2")) {
-            if (parameters.size() == 3) {
-                this->log6(LogId::EDIT_CHANGED_2, {
-                    KVLog("window"_av, parameters[0]),
-                    KVLog("edit"_av, parameters[1]),
-                    KVLog("value"_av, parameters[2]),
-                });
-            }
-        }
-        else if (!::strcasecmp(order.c_str(), "SELECT_CHANGED")) {
-            if (parameters.size() == 3) {
-                this->log6(LogId::SELECT_CHANGED, {
-                    KVLog("window"_av, parameters[0]),
-                    KVLog("edit"_av, parameters[1]),
-                    KVLog("value"_av, parameters[2]),
-                });
-            }
-        }
-        else if (!::strcasecmp(order.c_str(), "BUTTON_CLICKED")) {
-            if (parameters.size() == 2) {
-                this->log6(LogId::BUTTON_CLICKED, {
-                    KVLog("window"_av, parameters[0]),
-                    KVLog("button"_av, parameters[1]),
-                });
-            }
-        }
-        else if (!::strcasecmp(order.c_str(), "CHECKBOX_CLICKED")) {
+        else if (upper_order == "CHECKBOX_CLICKED"_ascii_upper) {
             if (parameters.size() == 3) {
                 this->log6(LogId::CHECKBOX_CLICKED, {
                     KVLog("window"_av, parameters[0]),
                     KVLog("checkbox"_av, parameters[1]),
                     KVLog("state"_av,
-                        ::button_state_to_string(unchecked_decimal_chars_to_int(parameters[2].c_str()))),
+                        ::button_state_to_string(unchecked_decimal_chars_to_int(parameters[2]))),
                 });
             }
         }
@@ -1764,7 +1744,7 @@ public:
     }
 
     void sespro_rail_exec_result(
-        uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result,
+        uint16_t flags, chars_view exe_or_file, uint16_t exec_result, uint32_t raw_result,
         FrontAPI& front,
         ServerTransportContext & stc,
         ModRdpVariables vars,
@@ -6298,7 +6278,7 @@ public:
 #endif
     }
 
-    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result) override {
+    void sespro_rail_exec_result(uint16_t flags, chars_view exe_or_file, uint16_t exec_result, uint32_t raw_result) override {
 #ifndef __EMSCRIPTEN__
         ServerTransportContext stc{
             this->trans, this->encrypt, this->negociation_result};

@@ -23,12 +23,12 @@ Author(s): Proxies Team
 #include "utils/sugar/array_view.hpp"
 #include "acl/auth_api.hpp"
 
-#include <string>
+#include <string_view>
 
 
 struct KVListFromStrings
 {
-    KVListFromStrings(array_view<std::string> str_paires) noexcept;
+    KVListFromStrings(array_view<std::string_view> str_paires) noexcept;
 
     struct Next : array_view<KVLog>
     {
@@ -38,6 +38,6 @@ struct KVListFromStrings
     Next next() noexcept;
 
 private:
-    array_view<std::string> strings;
+    array_view<std::string_view> strings;
     KVLog kv_buf[255];
 };

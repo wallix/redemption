@@ -48,7 +48,7 @@ bool ends_with(chars_view str, chars_view suffix) noexcept;
 bool ends_case_with(chars_view str, chars_view suffix) noexcept;
 
 /**
- * \resume copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
+ * Copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
  * \return total length of the string they tried to create.
  * @{
  */
@@ -72,7 +72,7 @@ inline std::size_t strlcpy(char (&dest)[N], char const* src) noexcept
 
 
 /**
- * \resume copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
+ * Copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
  * \return false if \c src is too long
  * @{
  */

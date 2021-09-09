@@ -38,7 +38,7 @@ namespace
 
     const auto mk_array = [](auto... strs){
         return [](auto... strs2){
-            return std::array<std::string, sizeof...(strs2)>{strs2...};
+            return std::array<std::string_view, sizeof...(strs2)>{strs2...};
         }(
             strs..., strs..., strs..., strs..., strs...,
             strs..., strs..., strs..., strs..., strs...,
@@ -49,7 +49,7 @@ namespace
 
 RED_AUTO_TEST_CASE(TestKVListFromStrings)
 {
-    std::string strings[]{
+    std::string_view strings[]{
         "Operation", "201",
         "LogType", "BLOCKED",
         "ProductName", "SBS",
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(TestKVListFromStringsManyKV)
 {
     auto mk_array = [](auto... strs){
         return [](auto... strs2){
-            return std::array<std::string, sizeof...(strs2)>{strs2...};
+            return std::array<std::string_view, sizeof...(strs2)>{strs2...};
         }(
             strs..., strs..., strs..., strs..., strs...,
             strs..., strs..., strs..., strs..., strs...,

@@ -130,8 +130,8 @@ namespace trkeys
     TR_KV(device, "Device");
     TR_KV(disable_osd, "Press \"Insert\" key or left-click to hide this message.");
     TR_KV(disconnected_by_otherconnection, "Another user connected to the resource, so your connection was lost.");
-    TR_KV_FMT(process_interrupted_security_policies, "The process '%s' was interrupted in accordance with security policies.");
-    TR_KV_FMT(account_manipulation_blocked_security_policies, "The account manipulation initiated by process '%s' was rejected in accordance with security policies.");
+    TR_KV_FMT(process_interrupted_security_policies, "The process '%.*s' was interrupted in accordance with security policies.");
+    TR_KV_FMT(account_manipulation_blocked_security_policies, "The account manipulation initiated by process '%.*s' was rejected in accordance with security policies.");
     TR_KV(session_logoff_in_progress, "Session logoff in progress.");
     TR_KV(starting_remoteapp, "Starting RemoteApp ...");
     TR_KV(closing_remoteapp, "All RemoteApp windows are closed.");
