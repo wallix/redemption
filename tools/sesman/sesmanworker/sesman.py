@@ -1822,13 +1822,15 @@ class Sesman():
             uname = self.effective_login or target_login_info.account_login
 
             # Add connection to the observer
-            session_id, start_time = self.engine.start_session(
+            session_id, start_time, error_msg = self.engine.start_session(
                 selected_target,
                 self.pid,
                 self.effective_login
             )
             if session_id is None:
-                _status, _error = False, TR(u"start_session_failed")
+                _status, _error = False, \
+                    TR(u"start_session_failed") + " (" + error_msg + ")"
+
 
         if _status:
             record_warning = SESMANCONF[u'sesman'].get('record_warning', True)

@@ -1161,6 +1161,7 @@ class Engine(object):
 
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
+        error_msg = ""
         try:
             with manage_transaction(self.wabengine):
                 self.session_id, self.start_time = self.wabengine.start_session(
@@ -1170,16 +1171,20 @@ class Engine(object):
                     **kwargs
                 )
                 self.failed_secondary_set = False
-        except LicenseException:
+                if self.session_id is None:
+                    return None, None, "SESSION_ID_IS_NONE"
+        except LicenseException as e:
             Logger().info("Engine start_session failed: License Exception")
-            self.session_id, self.start_time = None, None
-        except Exception:
+            self.session_id, self.start_time, error_msg = \
+                None, None, e.__class__.__name__
+        except Exception as e:
             import traceback
-            self.session_id, self.start_time = None, None
+            self.session_id, self.start_time, error_msg = \
+                None, None, e.__class__.__name__
             Logger().info("Engine start_session failed: (((%s)))" %
                           (traceback.format_exc()))
         Logger().debug("**** END wabengine START SESSION ")
-        return self.session_id, self.start_time
+        return self.session_id, self.start_time, error_msg
 
     def start_session_ssh(self, target, target_user, hname, host, client_addr,
                           pid, subproto, kill_handler, effective_login=None):
