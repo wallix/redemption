@@ -5,6 +5,11 @@ from itertools import chain
 import sys
 
 
+rename_display_name_map = {
+    '00000409': 'United States - English',
+    '0000041a': 'Croatian',
+}
+
 # key = (accent, with_key)
 DeadKeysType = dict[tuple[str,str], 'DeadKey']
 
@@ -313,7 +318,7 @@ def parse_xml_layout(filename, log=verbose_print):
             if k:
                 numlock_keymap[i] = k
 
-    return KeyLayout(klid, locale_name, display_name,
+    return KeyLayout(klid, locale_name, rename_display_name_map.get(klid, display_name),
                      display_name_to_proxy_name.get(display_name, None),
                      keymaps, extra_scancodes,
                      right_ctrl_like_oem8)

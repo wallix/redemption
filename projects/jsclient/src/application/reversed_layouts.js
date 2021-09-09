@@ -819,7 +819,7 @@ const layouts = [
 {
   klid: 0x00000409,
   localeName: "en-US",
-  displayName: "US",
+  displayName: "United States - English",
   ctrlRightIsOem8: false,
   keymap: {
     '\x1b': { 0x0: 0x1, 0x1: 0x1, },
@@ -2913,7 +2913,7 @@ const layouts = [
 {
   klid: 0x0000041a,
   localeName: "hr-HR",
-  displayName: "Standard",
+  displayName: "Croatian",
   ctrlRightIsOem8: false,
   keymap: {
     '\x1b': { 0x0: 0x1, 0x1: 0x1, },
