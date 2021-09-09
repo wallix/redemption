@@ -326,7 +326,6 @@ cfg::audit::rt_display ⇐ rt_display   [bool]
 cfg::audit::use_redis ⇐ use_redis   [bool]
 cfg::audit::redis_address ⇐ redis_address   [std::string]
 cfg::audit::redis_password ⇐ redis_password   [std::string]
-cfg::audit::redis_key_name ⇐ redis_key_name   [std::string]
 cfg::audit::redis_db ⇐ redis_db   [unsigned]
 cfg::audit::redis_timeout ⇐ redis_timeout   [std::chrono::milliseconds]
 

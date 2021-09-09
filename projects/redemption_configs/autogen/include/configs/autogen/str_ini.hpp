@@ -1269,9 +1269,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #redis_password = 
 
-#_advanced
-#redis_key_name = 
-
 # min = 0
 #_advanced
 #redis_db = 0

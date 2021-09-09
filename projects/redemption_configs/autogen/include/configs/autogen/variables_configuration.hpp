@@ -30,14 +30,14 @@ namespace configs
         inline constexpr int section12 = 115; /* video */
         inline constexpr int section13 = 118; /* capture */
         inline constexpr int section14 = 122; /* audit */
-        inline constexpr int section15 = 129; /* crypto */
-        // inline constexpr int section16 = 131; /* websocket */
-        // inline constexpr int section17 = 131; /* debug */
-        // inline constexpr int section18 = 131; /* remote_program */
-        inline constexpr int section19 = 131; /* translation */
-        // inline constexpr int section20 = 133; /* internal_mod */
-        inline constexpr int section21 = 133; /* context */
-        // inline constexpr int section22 = 215; /* theme */
+        inline constexpr int section15 = 128; /* crypto */
+        // inline constexpr int section16 = 130; /* websocket */
+        // inline constexpr int section17 = 130; /* debug */
+        // inline constexpr int section18 = 130; /* remote_program */
+        inline constexpr int section19 = 130; /* translation */
+        // inline constexpr int section20 = 132; /* internal_mod */
+        inline constexpr int section21 = 132; /* context */
+        // inline constexpr int section22 = 214; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -3420,20 +3420,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// type: std::string <br/>
-    /// sesman ⇒ proxy <br/>
-    /// default: {} <br/>
-    struct audit::redis_key_name {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 4};
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value {  };
-    };
     /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
@@ -3442,7 +3428,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 5};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 4};
         using type = unsigned;
         using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
@@ -3456,7 +3442,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 6};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 5};
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -5587,7 +5573,6 @@ struct capture
 struct audit
 : cfg::audit::redis_address
 , cfg::audit::redis_password
-, cfg::audit::redis_key_name
 , cfg::audit::redis_timeout
 , cfg::audit::rt_display
 , cfg::audit::use_redis
@@ -5907,7 +5892,6 @@ using VariablesAclPack = Pack<
 , cfg::audit::use_redis
 , cfg::audit::redis_address
 , cfg::audit::redis_password
-, cfg::audit::redis_key_name
 , cfg::audit::redis_db
 , cfg::audit::redis_timeout
 , cfg::crypto::encryption_key
@@ -6002,13 +5986,13 @@ using VariablesAclPack = Pack<
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
 , 0b1111111111111111111111111111111011111111111111111111111111111111
-, 0b1111111111111111111111111111111111111101101111101111111111111001
-, 0b0000000000000000000000000000000000000000011111111111111111101111
+, 0b1111111111111111111111111111111111111110110111110111111111111100
+, 0b0000000000000000000000000000000000000000001111111111111111110111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000010000000000000000000000000
+, 0b0000000000000000000000000000000000000001000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

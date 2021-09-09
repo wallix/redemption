@@ -734,7 +734,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"use_redis"}, set(false));
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_address"});
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_password"});
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_key_name"});
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::unsigned_>(), names{"redis_db"}, set(0));
         //@}
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));

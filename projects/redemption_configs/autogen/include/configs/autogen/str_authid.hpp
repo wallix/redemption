@@ -136,7 +136,6 @@ namespace configs
         "use_redis"_zv,
         "redis_address"_zv,
         "redis_password"_zv,
-        "redis_key_name"_zv,
         "redis_db"_zv,
         "redis_timeout"_zv,
         "encryption_key"_zv,

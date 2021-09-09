@@ -1082,9 +1082,6 @@ redis_address = string(default='')
 redis_password = string(default='')
 
 #_advanced
-redis_key_name = string(default='')
-
-#_advanced
 redis_db = integer(min=0, default=0)
 
 # (in milliseconds)

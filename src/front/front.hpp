@@ -1128,6 +1128,7 @@ public:
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
+        std::string redis_key_name = str_concat("session:image:", ini.get<cfg::context::session_id>());
         PngParams const png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
@@ -1142,7 +1143,7 @@ public:
               .use_redis = ini.get<cfg::audit::use_redis>(),
               .address = ini.get<cfg::audit::redis_address>(),
               .password = ini.get<cfg::audit::redis_password>(),
-              .key_name = ini.get<cfg::audit::redis_key_name>(),
+              .key_name = redis_key_name,
               .timeout = ini.get<cfg::audit::redis_timeout>(),
               .db = ini.get<cfg::audit::redis_db>(),
             }

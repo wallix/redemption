@@ -1964,14 +1964,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "redis_key_name"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::audit::redis_key_name&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
         else if (key == "redis_db"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
