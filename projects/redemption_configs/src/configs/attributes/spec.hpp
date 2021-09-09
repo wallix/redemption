@@ -364,12 +364,18 @@ namespace detail
     };
 }
 
+namespace display
+{
+    struct name { std::string name; };
+}
+
 using names = detail::names<
     name_,
     cpp::name,
     spec::name,
     sesman::name,
-    connpolicy::name
+    connpolicy::name,
+    display::name
 >;
 
 }
