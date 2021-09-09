@@ -964,7 +964,7 @@ void config_spec_definition(Writer && W)
             return BGRColor(BGRasRGBColor(color)).as_u32();
         };
 
-        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"bgcolor"}, set(to_rgb(DARK_BLUE_BIS)));
+        W.member(ini_and_gui | restart_service, no_sesman, L, type_<types::rgb>(), names{"bgcolor"}, set(to_rgb(DARK_BLUE_BIS)));
         W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"fgcolor"}, set(to_rgb(WHITE)));
         W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"separator_color"}, set(to_rgb(LIGHT_BLUE)));
         W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"focus_color"}, set(to_rgb(WINBLUE)));

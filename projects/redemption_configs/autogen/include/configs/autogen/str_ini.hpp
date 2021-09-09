@@ -1524,6 +1524,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
 
 # (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#_adminkit
 #bgcolor = #081F60
 
 # (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
