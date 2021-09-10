@@ -12,6 +12,7 @@ do
     local Cp = peg.Cp()
     local After = peg.After
     local Until = peg.Until
+    local ws0 = peg.ws0
 
     local logid = P'LogId::'
     local idname = C(peg.word)
@@ -22,10 +23,24 @@ do
     local KVArgs = kvlog * '("' * C((1-P'"')^1) * WithinBalanced
 
     Log6 = P{
-        Ct(Ct( After('log6') * Cp * '('
-             * Ct((Until(logid+kvlog) * LogId)^0)
-             * Ct((Until(kvlog+';') * KVArgs)^0)
-             )^0),
+        Ct((
+            Until(P'log6(' + 'executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(')
+          * (
+            -- log6(LogId::{ID}, KVLogList{KVLog({key}, value), ...})
+            -- log6(cond ? LogId::{ID} : LogId::{ID}, KVLogList{KVLog({key}, value), ...})
+              'log6('
+              * Ct( Cp
+                  * Ct((Until(logid+kvlog+';') * LogId)^1)
+                  * Ct((Until(kvlog+';') * KVArgs)^0))
+            -- executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME({ID}), {key}, ...)
+            + 'executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME'
+              * Ct( Cp
+                  * '(' * Ct(idname) * ')'
+                  * Ct((',' * ws0 * '"' * idname * '"_av')^0))
+            -- no match
+            + 1
+          )
+        )^0),
         Balanced = Balanced,
     }
 
@@ -120,15 +135,10 @@ function terminate()
 
     -- add not extracted id
     for _,id in ipairs({
-        "CERTIFICATE_CHECK_SUCCESS",
-        "SERVER_CERTIFICATE_NEW",
-        "SERVER_CERTIFICATE_MATCH_SUCCESS",
-        "SERVER_CERTIFICATE_MATCH_FAILURE",
-        "SERVER_CERTIFICATE_ERROR",
         "PROBE_STATUS",
     }) do
         if ids[id] ~= 0 then
-            print_error(id .. ' is already used, please update script\n')
+            utils.print_error(id .. ' is already used, please update script\n')
             errcount = errcount + 1
         else
             ids[id] = 1
@@ -137,7 +147,7 @@ function terminate()
 
     for k,v in pairs(ids) do
         if v ~= 1 then
-            print_error('LogId::' .. k .. ' not used\n')
+            utils.print_error('LogId::' .. k .. ' not used\n')
             errcount = errcount + 1
         end
     end
