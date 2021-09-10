@@ -151,7 +151,7 @@ char_to_char_table = {
 codepoint_to_jskey = {
     0x09: 'Tab',
     0x0A: 'Enter',
-    0x5C: 'Escape',
+    0x1B: 'Escape',
     0x08: 'Backspace',
 }
 
