@@ -50,7 +50,7 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<chars_to_int_result<T>>
         chars_to_int_result<T> const& value
     ) const
     {
-        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << +value.val << ", " << value.ptr << "}";
+        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << +value.val << ", \"" << value.ptr << "\"}";
     }
 };
 
@@ -389,6 +389,73 @@ RED_AUTO_TEST_CASE(TestUncheckCharsToInt)
     RED_CHECK(unsigned(unchecked_hexadecimal_chars_with_prefix_to_int("0X123456")) == 0x123456);
     RED_CHECK(unsigned(unchecked_hexadecimal_chars_with_prefix_to_int("0X123456"_av)) == 0x123456);
     RED_CHECK(unsigned(unchecked_hexadecimal_chars_with_prefix_to_int(std::string_view("0X123456"))) == 0x123456);
+}
+
+RED_AUTO_TEST_CASE(TestStringToInt)
+{
+    auto str_i = "  123354"_av;
+    auto str_hex = "  0x23002"_av;
+    auto str_neg = "  -123354"_av;
+    auto str_neg_hex = "  -0x23002"_av;
+    auto str_fake_hex = "  -0xY"_av;
+    auto str_i_long = "  111111111111111111111111111111111111111111111111  "_av;
+    auto str_hex_long = "  111111111111111111111111111111111111111111111111  "_av;
+
+    RED_CHECK(string_to_int<int>(str_i) == (chars_to_int_result<int>{std::errc(), 123354, str_i.end()}));
+    RED_CHECK(string_to_int<int>(str_i.data()) == (chars_to_int_result<int>{std::errc(), 123354, str_i.end()}));
+
+    RED_CHECK(string_to_int<unsigned>(str_i) == (chars_to_int_result<unsigned>{std::errc(), 123354, str_i.end()}));
+    RED_CHECK(string_to_int<unsigned>(str_i.data()) == (chars_to_int_result<unsigned>{std::errc(), 123354, str_i.end()}));
+
+    RED_CHECK(string_to_int<int>(str_hex) == (chars_to_int_result<int>{std::errc(), 0x23002, str_hex.end()}));
+    RED_CHECK(string_to_int<int>(str_hex.data()) == (chars_to_int_result<int>{std::errc(), 0x23002, str_hex.end()}));
+
+    RED_CHECK(string_to_int<unsigned>(str_hex) == (chars_to_int_result<unsigned>{std::errc(), 0x23002, str_hex.end()}));
+    RED_CHECK(string_to_int<unsigned>(str_hex.data()) == (chars_to_int_result<unsigned>{std::errc(), 0x23002, str_hex.end()}));
+
+    RED_CHECK(string_to_int<int>(str_neg) == (chars_to_int_result<int>{std::errc(), -123354, str_neg.end()}));
+    RED_CHECK(string_to_int<int>(str_neg.data()) == (chars_to_int_result<int>{std::errc(), -123354, str_neg.end()}));
+
+    RED_CHECK(string_to_int<unsigned>(str_neg) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str_neg.begin() + 2}));
+    RED_CHECK(string_to_int<unsigned>(str_neg.data()) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str_neg.begin() + 2}));
+
+    RED_CHECK(string_to_int<int>(str_neg_hex) == (chars_to_int_result<int>{std::errc(), -0x23002, str_neg_hex.end()}));
+    RED_CHECK(string_to_int<int>(str_neg_hex.data()) == (chars_to_int_result<int>{std::errc(), -0x23002, str_neg_hex.end()}));
+
+    RED_CHECK(string_to_int<unsigned>(str_neg_hex) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str_neg_hex.begin() + 2}));
+    RED_CHECK(string_to_int<unsigned>(str_neg_hex.data()) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str_neg_hex.begin() + 2}));
+
+    RED_CHECK(string_to_int<int>(str_fake_hex) == (chars_to_int_result<int>{std::errc(), 0, str_fake_hex.begin() + 4}));
+    RED_CHECK(string_to_int<int>(str_fake_hex.data()) == (chars_to_int_result<int>{std::errc(), 0, str_fake_hex.begin() + 4}));
+
+    RED_CHECK(string_to_int<unsigned>(str_fake_hex) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str_fake_hex.begin() + 2}));
+    RED_CHECK(string_to_int<unsigned>(str_fake_hex.data()) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str_fake_hex.begin() + 2}));
+
+    RED_CHECK(string_to_int<int>(str_i_long) == (chars_to_int_result<int>{std::errc::result_out_of_range, 0, str_i_long.end() - 2}));
+    RED_CHECK(string_to_int<int>(str_i_long.data()) == (chars_to_int_result<int>{std::errc::result_out_of_range, 0, str_i_long.end() - 2}));
+
+    RED_CHECK(string_to_int<int>(str_hex_long) == (chars_to_int_result<int>{std::errc::result_out_of_range, 0, str_hex_long.end() - 2}));
+    RED_CHECK(string_to_int<int>(str_hex_long.data()) == (chars_to_int_result<int>{std::errc::result_out_of_range, 0, str_hex_long.end() - 2}));
+
+    auto str = ""_av;
+    RED_CHECK(string_to_int<int>(str) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, str.end()}));
+    str = "   "_av;
+    RED_CHECK(string_to_int<int>(str) == (chars_to_int_result<int>{std::errc::invalid_argument, 0, str.end()}));
+
+    str = " -123"_av;
+    RED_CHECK(string_to_int<unsigned>(str) == (chars_to_int_result<unsigned>{std::errc::invalid_argument, 0, str.begin()+1}));
+
+    str = "-0xffff"_av;
+    RED_CHECK(string_to_int<int16_t>(str) == (chars_to_int_result<int16_t>{std::errc::result_out_of_range, 0, str.end()}));
+
+    str = "-0x7fff"_av;
+    RED_CHECK(string_to_int<int16_t>(str) == (chars_to_int_result<int16_t>{std::errc(), -0x7fff, str.end()}));
+
+    str = "-0x8000"_av;
+    RED_CHECK(string_to_int<int16_t>(str) == (chars_to_int_result<int16_t>{std::errc(), -0x8000, str.end()}));
+
+    str = "-0x8001"_av;
+    RED_CHECK(string_to_int<int16_t>(str) == (chars_to_int_result<int16_t>{std::errc::result_out_of_range, 0, str.end()}));
 }
 
 RED_AUTO_TEST_CASE(TestCharsToIntFromInitializerList)
