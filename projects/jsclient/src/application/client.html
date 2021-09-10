@@ -121,9 +121,7 @@ div, section, canvas{
             <legend>Keyboard</legend>
             <label for="kbdmethod">Method: <select name="kbdmethod" id="kbdmethod">
                 <option value="codeToScancode">KeyboardEvent.code -> Scancode</option>
-                <option value="keyToScancodeOrUnicode">KeyboardEvent.key -> Scancode or Unicode</option>
-                <option value="keyToScancode">KeyboardEvent.key -> Scancode</option>
-                <option value="unicode" selected="selected">Unicode</option>
+                <option value="emulateScancode">KeyboardEvent.key -> Scancode or Unicode</option>
             </select></label>
             <label for="kbdAltGrIsCtrlAndAlt"><input type="checkbox" id="kbdAltGrIsCtrlAndAlt" name="kbdAltGrIsCtrlAndAlt" checked="checked"/>Ctrl + Alt = AltGr</label>
             <fieldset>
@@ -365,169 +363,236 @@ function run(openCb, closeCb)
         return layout;
     }
 
-    const keymap = new ReversedKeymap(currentLayout());
+    class Keyboard
+    {
+        // driver = class {
+        //  sendScancodes(scancodes:Array[Number], evt:KeyEvent);
+        //  syncKbdLocks(syncFlags:Number)
+        // }
+        constructor(keymap, driver) {
+            this._driver = driver;
+            this._keymap = keymap;
+            this._syncState = 0;
+            // on window, when left + right shift are pressed, onkeyup is only triggered for the last one
+            this._shiftDown = 0;
+        }
 
-    const kbdFunctions = {
-        codeToScancode: function(evt, flag) {
+        copyInternalStateFrom(other) {
+            this._syncState = other._syncState;
+            this._shiftDown = other._shiftDown;
+            this._keymap = other._keymap;
+        }
+
+        activeModsSync() {
+            this._syncState = 1;
+        }
+
+        keyup(evt) {
+            if (!this._syncState && evt.key === 'Shift') {
+                this._shiftDown &= ~this._codeToShiftMod(evt.code);
+
+                // shift is released but one of the sides is still considered pressed
+                if (this._shiftDown && !evt.getModifierState('Shift')) {
+                    const scancodes = [];
+                    if (this._shiftDown & SyncFlags.ShiftRight) {
+                        scancodes.push(ScancodeByMod.ShiftRight | KeyRelease);
+                    }
+                    if (this._shiftDown & SyncFlags.ShiftLeft) {
+                        scancodes.push(ScancodeByMod.ShiftLeft | KeyRelease);
+                    }
+                    this._shiftDown = 0;
+                    this._driver.sendScancodes(scancodes, evt);
+                    return;
+                }
+            }
+            this._keyEvent(evt, KeyRelease);
+        }
+
+        keydown(evt) {
+            if (!this._syncState && evt.key === 'Shift') {
+                this._shiftDown |= this._codeToShiftMod(evt.code);
+            }
+            this._keyEvent(evt, KeyAcquire);
+        }
+
+        _keyEvent(evt, flag) {
+            if (!this._preprocessKeyEvent(evt, flag)) return;
+
+            // numpad
             if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
                 const scancode = numpadCodeToScancode(evt.code);
-                sendScancodes([scancode | flag], evt);
-            }
-            else {
-                // use key for special configuration such as Esc <-> CapsLock
-                sendScancodes(codeToScancodes(evt.key, flag) || codeToScancodes(evt.code, flag), evt);
-            }
-        },
-        keyToScancodeOrUnicode: function(evt, flag) {
-            if (isComposing(evt)) return;
-
-            if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
-                const scancode = numpadCodeToScancode(evt.code);
-                sendScancodes([scancode | flag], evt);
+                this._driver.sendScancodes([scancode | flag], evt);
                 return;
             }
 
-            const scancodes = keymap.toScancodesAndFlags(evt.key, evt.code, flag);
+            const scancodes = codeToScancodes(evt.key, flag) || codeToScancodes(evt.code, flag);
             if (scancodes) {
-                sendScancodes(scancodes, evt);
-            }
-            else {
-                sendUnicode(evt.key, flag, evt);
-            }
-        },
-        keyToScancode: function(evt, flag) {
-            if (isComposing(evt)) return;
-
-            const scancodes = keymap.toScancodesAndFlags(evt.key, evt.code, flag);
-            sendScancodes(scancodes, evt);
-        },
-        unicode: function(evt, flag) {
-            if (isComposing(evt)) return;
-
-            sendUnicode(evt.key, flag, evt);
-        },
-    };
-
-    const unstatedScancodes = function(scancodes) {
-        const set = new Set();
-        for (const scancode of scancodes) {
-            if (scancode & KeyRelease)
-                set.delete(scancode & ~KeyRelease);
-            else
-                set.add(scancode);
-        }
-
-        const len = scancodes.length;
-        for (let i = 0; i < len; ++i) {
-            const scancode = scancodes[i];
-            if (!(scancode & KeyRelease) && set.has(scancode)) {
-                scancodes.push(scancode & KeyRelease);
+                this._driver.sendScancodes(scancodes, evt);
             }
         }
 
-        return scancodes;
-    };
-
-    const kbdComposingFunctions = {
-        codeToScancode: function(evt, text) {},
-        keyToScancodeOrUnicode: function(evt, text) {
-            const scancodes = keymap.toScancodesAndFlags(text, text, KeyAcquire);
-            if (scancodes) {
-                sendScancodes(unstatedScancodes(scancodes), evt);
-            }
-            else {
-                sendUnicode(text, KeyAcquire, evt);
-                sendUnicode(text, KeyRelease, evt);
-            }
-        },
-        keyToScancode: function(evt, text) {
-            const scancodes = keymap.toScancodesAndFlags(text, text, KeyAcquire);
-            if (scancodes) {
-                sendScancodes(unstatedScancodes(scancodes), evt);
-            }
-        },
-        unicode: function(evt, text) {
-            sendUnicode(text, KeyAcquire, evt);
-            sendUnicode(text, KeyRelease, evt);
-        },
-    };
-
-    let onKeyEvent = kbdFunctions.keyToScancodeOrUnicode;
-    let onCompositeKeyEvent = kbdComposingFunctions.keyToScancodeOrUnicode;
-    let realOnKeyEvent = onKeyEvent;
-
-    const OSLeftSC = ScancodeByMod.OSLeft;
-    const OSRightSC = ScancodeByMod.OSRight;
-    const AltLeftSC = ScancodeByMod.AltLeft;
-    const AltRightSC = ScancodeByMod.AltRight;
-    const ShiftLeftSC = ScancodeByMod.ShiftLeft;
-    const ShiftRightSC = ScancodeByMod.ShiftRight;
-    const ControlLeftSC = ScancodeByMod.ControlLeft;
-    const ControlRightSC = ScancodeByMod.ControlRight;
-
-
-    const syncKbdMods = function() {
-        let sendLocks = true;
-        onKeyEvent = (evt, flag) => {
-            console.log('syncKbdMods');
+        /// \return false when key processing should stop
+        _preprocessKeyEvent(evt, flag) {
+            if (!this._syncState) return true;
 
             let syncFlags = 0;
 
-            // lock
+            // locks
             if (evt.getModifierState("NumLock")) syncFlags |= SyncFlags.NumLock;
             if (evt.getModifierState("CapsLock")) syncFlags |= SyncFlags.CapsLock;
             if (evt.getModifierState("KanaLock")) syncFlags |= SyncFlags.KanaLock;
             if (evt.getModifierState("ScrollLock")) syncFlags |= SyncFlags.ScrollLock;
 
-            if (sendLocks) {
-                rdpclient.syncKbdLocks(syncFlags);
-                sendLocks = false;
+            // locks are always properly synchronized and only need to be sent once
+            if (this._syncState === 1) {
+                this._driver.syncKbdLocks(syncFlags);
+                this._syncState = 2;
             }
 
-            if (evt.altKey) syncFlags |= SyncFlags.AltLeft
+            if (evt.altKey) syncFlags |= SyncFlags.AltLeft;
             if (evt.getModifierState("AltGraph")) syncFlags |= SyncFlags.AltRight;
 
+            // ambiguously mods
             let leftOrRight = 0;
             if (evt.metaKey) leftOrRight |= (evt.code === 'OSRight' && flag === KeyAcquire) ? SyncFlags.OSRight : SyncFlags.OSLeft;
             if (evt.ctrlKey) leftOrRight |= (evt.code === 'ControlRight' && flag === KeyAcquire) ? SyncFlags.ControlRight : SyncFlags.ControlLeft;
             if (evt.shiftKey) leftOrRight |= (evt.code === 'ShiftRight' && flag === KeyAcquire) ? SyncFlags.ShiftRight : SyncFlags.ShiftLeft;
 
             syncFlags |= leftOrRight;
-            sendScancodes(scancodesForSynchronizedMods(syncFlags), evt);
+            this._driver.sendScancodes(scancodesForSynchronizedMods(syncFlags), evt);
 
-            keymap.sync(syncFlags);
+            this._keymap.sync(syncFlags);
+            this._shiftDown = leftOrRight & (SyncFlags.ShiftRight | SyncFlags.ShiftLeft);
+
+            // mods are unambiguously synchronized
+            if (!leftOrRight) {
+                this._syncState = 0;
+            }
 
             switch (evt.code) {
+                // mods are already processed, no need to continue
                 case "OSLeft":
                 case "OSRight":
                 case "ShiftLeft":
                 case "ShiftRight":
                 case "ControlLeft":
                 case "ControlRight":
-                    break;
-                default:
-                    realOnKeyEvent(evt, flag);
+                    return false;
             }
 
-            if (!leftOrRight) {
-                onKeyEvent = realOnKeyEvent;
+            return true;
+        }
+
+        _codeToShiftMod(code) {
+            if (code === 'ShiftRight') return SyncFlags.ShiftRight;
+            if (code === 'ShiftLeft') return SyncFlags.ShiftLeft;
+            return 0;
+        }
+    }
+
+    class EmulatedKeyboard extends Keyboard
+    {
+        // driver = class {
+        // sendUnicode(unicode:String, flag:Number, evt:KeyEvent)
+        //  sendScancodes(scancodes:Array[Number], evt:KeyEvent);
+        //  syncKbdLocks(syncFlags:Number)
+        // }
+        constructor(keymap, driver) {
+            super(keymap, driver)
+            this._hasUnicodeSupport = false;
+        }
+
+        setUnicodeSupport(enable) {
+            this._hasUnicodeSupport = enable;
+        }
+
+        compositeKeyEvent(evt, text) {
+            if (!this._preprocessKeyEvent(evt, flag)) return;
+
+            const scancodes = this._keymap.toScancodesAndFlags(text, text, KeyAcquire);
+            if (scancodes) {
+                this._driver.sendScancodes(unstatedScancodes(scancodes), evt);
+            }
+            else if (this._hasUnicodeSupport) {
+                this._driver.sendUnicode(text, KeyAcquire, evt);
+                this._driver.sendUnicode(text, KeyRelease, evt);
             }
         }
+
+        // release pressed keys and press released keys
+        _unstatedScancodes(scancodes) {
+            const set = new Set();
+            for (const scancode of scancodes) {
+                if (scancode & KeyRelease)
+                    set.delete(scancode & ~KeyRelease);
+                else
+                    set.add(scancode);
+            }
+
+            const len = scancodes.length;
+            for (let i = 0; i < len; ++i) {
+                const scancode = scancodes[i];
+                if (!(scancode & KeyRelease) && set.has(scancode)) {
+                    scancodes.push(scancode & KeyRelease);
+                }
+            }
+
+            return scancodes;
+        }
+
+        _keyEvent(evt, flag) {
+            if (!this._preprocessKeyEvent(evt, flag)) return;
+
+            if (isComposing(evt)) {
+                return;
+            }
+
+            // numpad
+            if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
+                const scancode = numpadCodeToScancode(evt.code);
+                this._driver.sendScancodes([scancode | flag], evt);
+                return;
+            }
+
+            const scancodes = this._keymap.toScancodesAndFlags(evt.key, evt.code, flag);
+            if (scancodes) {
+                this._driver.sendScancodes(scancodes, evt);
+            }
+            else if (this._hasUnicodeSupport) {
+                this._driver.sendUnicode(evt.key, flag, evt);
+            }
+        }
+    }
+
+    const keyboardDriver = {
+        sendUnicode,
+        sendScancodes,
+        syncKbdLocks: function(syncFlags) {
+            rdpclient.syncKbdLocks(syncFlags);
+        },
     };
 
-    const onKeyUp = (evt) => { onKeyEvent(evt, KeyRelease); };
-    const onKeyDown = (evt) => { onKeyEvent(evt, KeyAcquire); };
+    const keymap = new ReversedKeymap(currentLayout());
+
+    const scancodeKeyboard = new Keyboard(keymap, keyboardDriver);
+    const emulatedKeyboard = new EmulatedKeyboard(keymap, keyboardDriver);
+    let keyboardForEvent = scancodeKeyboard;
+
+    const onKeyUp = (evt) => { keyboardForEvent.keyup(evt); };
+    const onKeyDown = (evt) => { keyboardForEvent.keydown(evt); };
     const onCompositeStart = (evt) => {
+        if (keyboardForEvent !== emulatedKeyboard) return;
         console.log(`CompositeStart: ${evt.data}`);
         ecanvasFocus.value = '';
     };
     // const onCompositeUpdate = (evt) => {  };
     const onCompositeEnd = (evt) => {
+        if (keyboardForEvent !== emulatedKeyboard) return;
         // event is fired before that input.value is updated
         setTimeout(() => {
             const text = evt.target.value;
             console.log(`CompositeEnd: ${text}`);
-            if (text) onCompositeKeyEvent(evt, text);
+            if (text) emulatedKeyboard.compositeKeyEvent(evt, text);
         }, 1);
     };
 
@@ -640,7 +705,7 @@ function run(openCb, closeCb)
             e.preventDefault();
             e.stopImmediatePropagation();
         };
-        syncKbdMods();
+        keyboardForEvent.activeModsSync();
     }
 
     function canvasEnableFocus()
@@ -662,14 +727,11 @@ function run(openCb, closeCb)
     {
         const kbdMethodId = kbdmethod_input.selectedIndex;
         const altGrIsCtrlAndAlt = kbdAltGrIsCtrlAndAlt_input.checked;
-        const isUnicode = kbdmethod_input[kbdMethodId].value.endsWith(/*[uU]*/"nicode");
-        if (isUnicode && !(inputFlags & InputFlags.Unicode)) {
-            console.warning('don\'t support unicode');
-            --kbdMethodId;
-        }
         const kbdMethod = kbdmethod_input[kbdMethodId].value;
+        const hasUnicode = !!(inputFlags & InputFlags.Unicode);
         const layout = currentLayout();
         console.group('keyboard');
+        console.log(`unicode support: ${hasUnicode}`);
         console.log(`method: (${kbdMethodId}) ${kbdMethod}`);
         console.log(`layout: (0x${layout.klid.toString(16)}) ${layout.name}`);
         console.log(`AltGr = Ctrl + Alt: ${altGrIsCtrlAndAlt}`);
@@ -678,10 +740,12 @@ function run(openCb, closeCb)
         keymap.altGrIsCtrlAndAlt = altGrIsCtrlAndAlt;
         keymap.layout = layout;
 
-        onKeyEvent = kbdFunctions[kbdMethod];
-        onCompositeKeyEvent = kbdComposingFunctions[kbdMethod];
-        realOnKeyEvent = onKeyEvent;
-        syncKbdMods();
+        emulatedKeyboard.setUnicodeSupport(hasUnicode);
+
+        const newKeyboardForEvent = (kbdMethod === 'emulateScancode') ? emulatedKeyboard : scancodeKeyboard;
+        newKeyboardForEvent.copyInternalStateFrom(keyboardForEvent);
+        keyboardForEvent = newKeyboardForEvent;
+        keyboardForEvent.activeModsSync();
     }
 
     function updateInput()
