@@ -21,11 +21,14 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/log_buffered.hpp"
 
+#include "utils/parse_primary_drawing_orders.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestPrimaryDrawaingOrders)
 {
+    ut::log_buffered log_buf;
     auto orders = parse_primary_drawing_orders("4  25 0X8,,0xf 666 2", false);
     RED_CHECK(orders.as_uint() == (
         OrdersIndexes::TS_NEG_SCRBLT_INDEX
@@ -34,4 +37,5 @@ RED_AUTO_TEST_CASE(TestPrimaryDrawaingOrders)
       | OrdersIndexes::TS_NEG_MULTIDSTBLT_INDEX
       | OrdersIndexes::TS_NEG_ELLIPSE_SC_INDEX
     ).as_uint());
+    RED_CHECK(log_buf.buf() == "WARNING -- Unknown RDP PrimaryDrawingOrder=666\n");
 }

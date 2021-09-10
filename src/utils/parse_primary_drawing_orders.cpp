@@ -19,6 +19,8 @@ Author(s): Jonathan Poelen
 */
 
 #include "utils/parse_primary_drawing_orders.hpp"
+#include "utils/sugar/chars_to_int.hpp"
+
 
 PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog) noexcept
 {
@@ -26,97 +28,53 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
 
     LOG_IF(bEnableLog, LOG_INFO, "RDP PrimaryDrawingOrders=\"%s\"", orders);
 
-    char * end;
-    char const * p = orders;
-    for (long order_number = std::strtol(p, &end, 0);
-        p != end;
-        order_number = std::strtol(p, &end, 0))
-    {
-        LOG_IF(bEnableLog, LOG_INFO, "RDP OrderNumber=%ld", order_number);
+    char const* p = orders;
 
-        switch (order_number)
-        {
-        case TS_NEG_DSTBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=DstBlt");
-
-            primary_orders.set(TS_NEG_DSTBLT_INDEX);
-            break;
-        case TS_NEG_PATBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=PatBlt");
-
-            primary_orders.set(TS_NEG_PATBLT_INDEX);
-            break;
-        case TS_NEG_SCRBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=ScrBlt");
-
-            primary_orders.set(TS_NEG_SCRBLT_INDEX);
-            break;
-        case TS_NEG_MEMBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MemBlt");
-
-            primary_orders.set(TS_NEG_MEMBLT_INDEX);
-            break;
-        case TS_NEG_MEM3BLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=Mem3Blt");
-
-            primary_orders.set(TS_NEG_MEM3BLT_INDEX);
-            break;
-        case TS_NEG_LINETO_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=LineTo");
-
-            primary_orders.set(TS_NEG_LINETO_INDEX);
-            break;
-
-        case TS_NEG_MULTIDSTBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiDstBlt");
-
-            primary_orders.set(TS_NEG_MULTIDSTBLT_INDEX);
-            break;
-        case TS_NEG_MULTIPATBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiPatBlt");
-
-            primary_orders.set(TS_NEG_MULTIPATBLT_INDEX);
-            break;
-        case TS_NEG_MULTISCRBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiScrBlt");
-
-            primary_orders.set(TS_NEG_MULTISCRBLT_INDEX);
-            break;
-        case TS_NEG_MULTIOPAQUERECT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiOpaqueRect");
-
-            primary_orders.set(TS_NEG_MULTIOPAQUERECT_INDEX);
-            break;
-        case TS_NEG_POLYGON_SC_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=PolygonSC");
-
-            primary_orders.set(TS_NEG_POLYGON_SC_INDEX);
-            break;
-        case TS_NEG_POLYGON_CB_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=PolygonCB");
-
-            primary_orders.set(TS_NEG_POLYGON_CB_INDEX);
-            break;
-        case TS_NEG_POLYLINE_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=Polyline");
-
-            primary_orders.set(TS_NEG_POLYLINE_INDEX);
-            break;
-        case TS_NEG_ELLIPSE_SC_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=EllipseSC");
-
-            primary_orders.set(TS_NEG_ELLIPSE_SC_INDEX);
-            break;
-        case TS_NEG_ELLIPSE_CB_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=EllipseCB");
-
-            primary_orders.set(TS_NEG_ELLIPSE_SC_INDEX);
-            break;
-        default:
-            LOG(LOG_WARNING, "Unknown RDP PrimaryDrawingOrder=%ld", order_number);
+    chars_to_int_result<int> result;
+    while (p != (result = string_to_int<int>(p)).ptr) {
+        if (REDEMPTION_UNLIKELY(result.ec != std::errc())) {
+            result.val = 0xffff; // invalid value
         }
 
-        p = end;
+        LOG_IF(bEnableLog, LOG_INFO, "RDP OrderNumber=%d", result.val);
+        char const* type = nullptr;
+
+        switch (result.val)
+        {
+#define CASE(TS, Name)          \
+    case TS:                    \
+        type = Name;            \
+        primary_orders.set(TS); \
+        break
+
+        CASE(TS_NEG_DSTBLT_INDEX, "DstBlt");
+        CASE(TS_NEG_PATBLT_INDEX, "PatBlt");
+        CASE(TS_NEG_SCRBLT_INDEX, "ScrBlt");
+        CASE(TS_NEG_MEMBLT_INDEX, "MemBlt");
+        CASE(TS_NEG_MEM3BLT_INDEX, "Mem3Blt");
+        CASE(TS_NEG_LINETO_INDEX, "LineTo");
+        CASE(TS_NEG_MULTIDSTBLT_INDEX, "MultiDstBlt");
+        CASE(TS_NEG_MULTIPATBLT_INDEX, "MultiPatBlt");
+        CASE(TS_NEG_MULTISCRBLT_INDEX, "MultiScrBlt");
+        CASE(TS_NEG_MULTIOPAQUERECT_INDEX, "MultiOpaqueRect");
+        CASE(TS_NEG_POLYGON_SC_INDEX, "PolygonSC");
+        CASE(TS_NEG_POLYGON_CB_INDEX, "PolygonCB");
+        CASE(TS_NEG_POLYLINE_INDEX, "Polyline");
+        CASE(TS_NEG_ELLIPSE_SC_INDEX, "EllipseSC");
+        CASE(TS_NEG_ELLIPSE_CB_INDEX, "EllipseCB");
+#undef CASE
+        default:;
+        }
+
+        if (type) {
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=%s", type);
+        }
+        else {
+            LOG(LOG_WARNING, "Unknown RDP PrimaryDrawingOrder=%.*s",
+                int(result.ptr - p), p);
+        }
+
+        p = result.ptr;
         while (*p == ' ' || *p == '\t' || *p == ',') {
             ++p;
         }
