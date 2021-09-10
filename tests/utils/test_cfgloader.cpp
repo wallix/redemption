@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE_WF(TestCfgloaderError, wf)
 
     Cfg cfg(funcs, PUSH_F(SectionOrKeyValue()));
     file.close();
-    tu::log_buffered log;
+    ut::log_buffered log;
     RED_CHECK(!configuration_load(cfg, wf.c_str()));
     RED_CHECK(0 == cfg.funcs.end() - cfg.f);
     RED_CHECK(array_view(log.buf()) == str_concat(

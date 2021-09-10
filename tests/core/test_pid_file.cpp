@@ -44,28 +44,28 @@ RED_AUTO_TEST_CASE(TestPidFile)
     auto filename = str_concat(dirname, "/session_", s_pid, ".pid");
 
     {
-        RED_TEST(!tu::fexists(filename));
+        RED_TEST(!ut::fexists(filename));
         PidFile pid_file(pid);
         RED_TEST(pid_file.is_open());
-        RED_TEST(tu::fexists(filename));
+        RED_TEST(ut::fexists(filename));
     }
 
     {
-        RED_TEST(!tu::fexists(filename));
+        RED_TEST(!ut::fexists(filename));
         PidFile pid_file(pid);
         RED_TEST(pid_file.is_open());
-        RED_TEST(tu::fexists(filename));
+        RED_TEST(ut::fexists(filename));
 
         auto new_filename = str_concat(dirname, "/session_abc.pid");
         pid_file.rename("abc"_av);
-        RED_TEST(!tu::fexists(filename));
-        RED_TEST(tu::fexists(new_filename));
+        RED_TEST(!ut::fexists(filename));
+        RED_TEST(ut::fexists(new_filename));
 
         filename = str_concat(dirname, "/session_xyz.pid");
         pid_file.rename("xyz"_av);
-        RED_TEST(!tu::fexists(new_filename));
-        RED_TEST(tu::fexists(filename));
+        RED_TEST(!ut::fexists(new_filename));
+        RED_TEST(ut::fexists(filename));
     }
 
-    RED_TEST(!tu::fexists(filename));
+    RED_TEST(!ut::fexists(filename));
 }

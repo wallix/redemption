@@ -244,7 +244,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     AclSerializer acl(ini, trans);
 
     {
-        tu::log_buffered logbuf;
+        ut::log_buffered logbuf;
         acl.incoming();
         RED_CHECK(logbuf.buf() ==
             "WARNING -- Unexpected receive 'abcd' - 'something'\n"

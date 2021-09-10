@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     log_file.open_session_log();
 
     {
-        tu::log_buffered logbuf;
+        ut::log_buffered logbuf;
         const time_t now = 0;
 
         log_file.log6(now, LogId::INPUT_LANGUAGE, {
@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     }
 
     {
-        tu::log_buffered logbuf;
+        ut::log_buffered logbuf;
         const time_t now = 10;
 
         log_file.log6(now, LogId::CONNECTION_FAILED, {
@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     }
 
     {
-        tu::log_buffered logbuf;
+        ut::log_buffered logbuf;
         const time_t now = 3033;
 
         siem_logger.log_syslog_format(LogId::DRIVE_REDIRECTION_RENAME, {

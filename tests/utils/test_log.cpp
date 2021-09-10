@@ -26,7 +26,7 @@
 
 RED_AUTO_TEST_CASE(TestLog)
 {
-    tu::log_buffered log_buf;
+    ut::log_buffered log_buf;
     LOG(LOG_INFO, "test %s", "1");
     RED_CHECK(log_buf.buf() == "INFO -- test 1\n");
 }

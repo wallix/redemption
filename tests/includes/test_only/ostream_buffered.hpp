@@ -23,7 +23,7 @@ Author(s): Jonathan Poelen
 #include <iostream>
 #include <sstream>
 
-namespace tu
+namespace ut
 {
 
 struct ostream_buffered
@@ -50,4 +50,4 @@ private:
     std::streambuf * oldbuf;
 };
 
-} // namespace tu
+} // namespace ut

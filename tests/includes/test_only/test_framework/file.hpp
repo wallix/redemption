@@ -57,7 +57,7 @@ namespace redemption_unit_test_
     };
 } // namespace redemption_unit_test_
 
-namespace tu
+namespace ut
 {
     using ::append_file_contents;
 
@@ -75,15 +75,15 @@ namespace tu
 
     inline int int_(int n) { return n; }
     inline redemption_unit_test_::int_variation int_(redemption_unit_test_::int_variation n) { return n; }
-} // namespace tu
+} // namespace ut
 
-#define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len))
-#define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len))
+#define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::ut::fsize(filename) == ::ut::int_(len))
+#define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::ut::fsize(filename) == ::ut::int_(len))
 
 # define RED_TEST_GET_FILE_CONTENTS(lvl, filename) [](auto&& filename_){                \
     std::string s;                                                                      \
     RED_TEST_CONTEXT("filename: " << filename_) {                                       \
-        RED_##lvl(::tu::append_file_contents(filename_, s) == FileContentsError::None); \
+        RED_##lvl(::ut::append_file_contents(filename_, s) == FileContentsError::None); \
     }                                                                                   \
     return s;                                                                           \
 }(filename)
@@ -97,7 +97,7 @@ namespace tu
         "\n    filename: " << filename_ << "\n    content: "                          \
     << std::string_view(strctx.data(), strctx.size() > 40 ? 40 : strctx.size())       \
     << (strctx.size() > 40 ? "[...]" : "")) {                                         \
-        RED_##lvl1(::tu::append_file_contents(filename_,                              \
+        RED_##lvl1(::ut::append_file_contents(filename_,                              \
             file_contents_) == FileContentsError::None);                              \
         if (current_count_error == ::redemption_unit_test_::current_count_error()) { \
             RED_##lvl1(file_contents_ == expected_);                                  \

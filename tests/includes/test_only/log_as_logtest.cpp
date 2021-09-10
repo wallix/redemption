@@ -104,23 +104,23 @@ namespace
 } // namespace
 
 
-tu::log_buffered::log_buffered()
+ut::log_buffered::log_buffered()
 {
     log_buf.clear();
     enable_buf_log = true;
 }
 
-tu::log_buffered::~log_buffered()
+ut::log_buffered::~log_buffered()
 {
     enable_buf_log = false;
 }
 
-std::string const& tu::log_buffered::buf() const noexcept
+std::string const& ut::log_buffered::buf() const noexcept
 {
     return log_buf;
 }
 
-void tu::log_buffered::clear()
+void ut::log_buffered::clear()
 {
     log_buf.clear();
 }

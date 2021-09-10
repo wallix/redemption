@@ -27,14 +27,14 @@
 
 RED_AUTO_TEST_CASE(TestLogSiem)
 {
-    tu::log_buffered log_buf;
+    ut::log_buffered log_buf;
     LOG_SIEM("test %s", "1");
     RED_CHECK(log_buf.buf() == "test 1\n");
 }
 
 RED_AUTO_TEST_CASE(TestLogProxySiem)
 {
-    tu::log_buffered log_buf;
+    ut::log_buffered log_buf;
     LOG_PROXY_SIEM("CAT", "test %s", "1");
     log_proxy::set_psid("L33t");
     log_proxy::incoming_connection("universe", 1234);

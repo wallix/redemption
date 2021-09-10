@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(ClientNameRequest1)
         ;
     InStream in_stream(in_data);
 
-    tu::log_buffered logbuf;
+    ut::log_buffered logbuf;
 
     rdpdr::receive_and_log_client_name_request(in_stream, LOG_INFO);
 
@@ -220,7 +220,7 @@ RED_AUTO_TEST_CASE(ClientNameRequest2)
         ;
     InStream in_stream(in_data);
 
-    tu::log_buffered logbuf;
+    ut::log_buffered logbuf;
 
     rdpdr::receive_and_log_client_name_request(in_stream, LOG_INFO);
 

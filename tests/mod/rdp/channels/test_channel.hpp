@@ -55,7 +55,7 @@ public:
 using TestToClientSender = TestSender<0>;
 using TestToServerSender = TestSender<1>;
 
-namespace tu
+namespace ut
 {
 
 inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
@@ -101,6 +101,6 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
     }
 }
 
-#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(tu::test_channel(t, virtual_channel));
+#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(ut::test_channel(t, virtual_channel));
 
-} // namespace tu
+} // namespace ut

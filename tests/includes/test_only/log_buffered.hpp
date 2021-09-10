@@ -23,7 +23,7 @@ Author(s): Jonathan Poelen
 #include <string>
 
 
-namespace tu
+namespace ut
 {
 
 struct log_buffered
@@ -34,4 +34,4 @@ struct log_buffered
     void clear();
 };
 
-} // namespace tu
+} // namespace ut
