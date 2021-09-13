@@ -75,7 +75,7 @@ cp_spec = {
             'force_smartcard_authentication', False
         ),
         u'mod_rdp:enable_ipv6': (
-            'enable_ipv6', False
+            'enable_ipv6', True
         ),
         u'mod_rdp:mode_console': (
             'mode_console', 'allow'
@@ -252,7 +252,7 @@ cp_spec = {
             'support_cursor_pseudo_encoding', True
         ),
         u'mod_vnc:enable_ipv6': (
-            'enable_ipv6', False
+            'enable_ipv6', True
         ),
     },
     'file_verification': {

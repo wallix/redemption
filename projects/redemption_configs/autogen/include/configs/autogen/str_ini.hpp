@@ -143,10 +143,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (in milliseconds)
 #rdp_keepalive_connection_interval = 0
 
-# Enable primary connection on ipv6
+# Enable primary connection on ipv6.
+# Warning: Service need to be manually restarted to take changes into account
 # value: 0 or 1
-#_hidden
-#enable_ipv6 = 0
+#enable_ipv6 = 1
 
 [session_log]
 
@@ -860,7 +860,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enable target connection on ipv6
 # value: 0 or 1
 #_hidden
-#enable_ipv6 = 0
+#enable_ipv6 = 1
 
 # value: 0 or 1
 #_hidden
@@ -922,7 +922,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enable target connection on ipv6
 # value: 0 or 1
 #_hidden
-#enable_ipv6 = 0
+#enable_ipv6 = 1
 
 [metrics]
 

@@ -583,16 +583,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 0 };
     };
-    /// Enable primary connection on ipv6 <br/>
+    /// Enable primary connection on ipv6. <br/>
+    /// Warning: Service need to be manually restarted to take changes into account <br/>
     /// type: bool <br/>
-    /// default: false <br/>
+    /// default: true <br/>
     struct globals::enable_ipv6 {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value { false };
+        type value { true };
     };
 
     /// type: bool <br/>
@@ -2457,7 +2458,7 @@ namespace cfg
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:enable_ipv6 <br/>
-    /// default: false <br/>
+    /// default: true <br/>
     struct mod_rdp::enable_ipv6 {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2467,7 +2468,7 @@ namespace cfg
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value { false };
+        type value { true };
     };
     /// Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option) <br/>
     /// type: RdpModeConsole <br/>
@@ -2690,7 +2691,7 @@ namespace cfg
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_vnc:enable_ipv6 <br/>
-    /// default: false <br/>
+    /// default: true <br/>
     struct mod_vnc::enable_ipv6 {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2700,7 +2701,7 @@ namespace cfg
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value { false };
+        type value { true };
     };
 
     /// type: bool <br/>

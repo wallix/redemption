@@ -116,7 +116,7 @@ enable_restricted_admin_mode = boolean(default=False)
 force_smartcard_authentication = boolean(default=False)
 
 # Enable target connection on ipv6
-enable_ipv6 = boolean(default=False)
+enable_ipv6 = boolean(default=True)
 
 # Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
 #   allow: Forward Console mode request from client to the target.

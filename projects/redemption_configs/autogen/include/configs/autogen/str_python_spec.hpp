@@ -122,9 +122,9 @@ support_connection_redirection_during_recording = boolean(default=True)
 # (in milliseconds)
 rdp_keepalive_connection_interval = integer(min=0, default=0)
 
-# Enable primary connection on ipv6
-#_hidden
-enable_ipv6 = boolean(default=False)
+# Enable primary connection on ipv6.
+# Warning: Service need to be manually restarted to take changes into account
+enable_ipv6 = boolean(default=True)
 
 [session_log]
 
@@ -731,7 +731,7 @@ force_smartcard_authentication = boolean(default=False)
 
 # Enable target connection on ipv6
 #_hidden
-enable_ipv6 = boolean(default=False)
+enable_ipv6 = boolean(default=True)
 
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
@@ -783,7 +783,7 @@ support_cursor_pseudo_encoding = boolean(default=True)
 
 # Enable target connection on ipv6
 #_hidden
-enable_ipv6 = boolean(default=False)
+enable_ipv6 = boolean(default=True)
 
 [metrics]
 

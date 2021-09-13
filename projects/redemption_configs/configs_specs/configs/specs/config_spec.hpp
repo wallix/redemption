@@ -185,7 +185,7 @@ void config_spec_definition(Writer && W)
             "Set to 0 to disable this feature."
         }, set(0));
 
-        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable primary connection on ipv6" }, set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable primary connection on ipv6.\nWarning: Service need to be manually restarted to take changes into account" }, set(true));
     });
 
     W.section("session_log", [&]
@@ -501,7 +501,7 @@ void config_spec_definition(Writer && W)
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(true));
 
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), spec::type_<std::string>(), names{"mode_console", .display="Console mode"}, set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
 
@@ -582,7 +582,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"support_cursor_pseudo_encoding"}, set(true));
 
-        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(false));
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(true));
     });
 
     W.section("metrics", [&]
