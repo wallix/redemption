@@ -219,8 +219,56 @@ void KeyboardShortcutBlocker::add_shortcut(uint32_t keyboardLayout, chars_view s
             continue;
         }
 
-        constexpr std::string_view enter = "enter";
-        constexpr std::size_t buff_size = std::max(max_mod_name_size, enter.size());
+        constexpr std::string_view backspace = "backspace";
+        constexpr std::string_view del       = "del";
+        constexpr std::string_view end       = "end";
+        constexpr std::string_view enter     = "enter";
+        constexpr std::string_view esc       = "esc";
+        constexpr std::string_view f1        = "f1";
+        constexpr std::string_view f2        = "f2";
+        constexpr std::string_view f3        = "f3";
+        constexpr std::string_view f4        = "f4";
+        constexpr std::string_view f5        = "f5";
+        constexpr std::string_view f6        = "f6";
+        constexpr std::string_view f7        = "f7";
+        constexpr std::string_view f8        = "f8";
+        constexpr std::string_view f9        = "f9";
+        constexpr std::string_view f10       = "f10";
+        constexpr std::string_view f11       = "f11";
+        constexpr std::string_view f12       = "f12";
+        constexpr std::string_view home      = "home";
+        constexpr std::string_view insert    = "insert";
+        constexpr std::string_view pgdown    = "pgdown";
+        constexpr std::string_view pgup      = "pgup";
+        constexpr std::string_view space     = "space";
+        constexpr std::string_view tab       = "tab";
+
+        const std::size_t buff_size = std::max({
+                max_mod_name_size,
+                backspace.size(),
+                del.size(),
+                end.size(),
+                enter.size(),
+                esc.size(),
+                f1.size(),
+                f2.size(),
+                f3.size(),
+                f4.size(),
+                f5.size(),
+                f6.size(),
+                f7.size(),
+                f8.size(),
+                f9.size(),
+                f10.size(),
+                f11.size(),
+                f12.size(),
+                home.size(),
+                insert.size(),
+                pgdown.size(),
+                pgup.size(),
+                space.size(),
+                tab.size()
+            });
 
         if (trimmed.size() > buff_size) {
             break;
@@ -241,9 +289,105 @@ void KeyboardShortcutBlocker::add_shortcut(uint32_t keyboardLayout, chars_view s
             continue;
         }
 
-        kbdtypes::KeyCode keycode = (mod_name == enter)
-            ? kbdtypes::KeyCode::Enter
-            : str_to_key_code(keyboardLayout, trimmed);
+        kbdtypes::KeyCode keycode = [=]() {
+                if (mod_name == backspace)
+                {
+                    return kbdtypes::KeyCode::Backspace;
+                }
+                else if (mod_name == del)
+                {
+                    return kbdtypes::KeyCode::Delete;
+                }
+                else if (mod_name == end)
+                {
+                    return kbdtypes::KeyCode::End;
+                }
+                else if (mod_name == enter)
+                {
+                    return kbdtypes::KeyCode::Enter;
+                }
+                else if (mod_name == esc)
+                {
+                    return kbdtypes::KeyCode::Esc;
+                }
+                else if (mod_name == f1)
+                {
+                    return kbdtypes::KeyCode::F1;
+                }
+                else if (mod_name == f2)
+                {
+                    return kbdtypes::KeyCode::F2;
+                }
+                else if (mod_name == f3)
+                {
+                    return kbdtypes::KeyCode::F3;
+                }
+                else if (mod_name == f4)
+                {
+                    return kbdtypes::KeyCode::F4;
+                }
+                else if (mod_name == f5)
+                {
+                    return kbdtypes::KeyCode::F5;
+                }
+                else if (mod_name == f6)
+                {
+                    return kbdtypes::KeyCode::F6;
+                }
+                else if (mod_name == f7)
+                {
+                    return kbdtypes::KeyCode::F7;
+                }
+                else if (mod_name == f8)
+                {
+                    return kbdtypes::KeyCode::F8;
+                }
+                else if (mod_name == f9)
+                {
+                    return kbdtypes::KeyCode::F9;
+                }
+                else if (mod_name == f10)
+                {
+                    return kbdtypes::KeyCode::F10;
+                }
+                else if (mod_name == f11)
+                {
+                    return kbdtypes::KeyCode::F11;
+                }
+                else if (mod_name == f12)
+                {
+                    return kbdtypes::KeyCode::F12;
+                }
+                else if (mod_name == home)
+                {
+                    return kbdtypes::KeyCode::Home;
+                }
+                else if (mod_name == insert)
+                {
+                    return kbdtypes::KeyCode::Insert;
+                }
+                else if (mod_name == pgdown)
+                {
+                    return kbdtypes::KeyCode::PgDown;
+                }
+                else if (mod_name == pgup)
+                {
+                    return kbdtypes::KeyCode::PgUp;
+                }
+                else if (mod_name == space)
+                {
+                    return kbdtypes::KeyCode::Space;
+                }
+                else if (mod_name == tab)
+                {
+                    return kbdtypes::KeyCode::Tab;
+                }
+
+                else
+                {
+                    return str_to_key_code(keyboardLayout, trimmed);
+                }
+            }();
 
         if (bool(keycode)) {
             this->shortcuts.emplace_back(mods, keycode, this->verbose);
