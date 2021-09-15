@@ -100,9 +100,97 @@ class KeyboardShortcutBlocker
 
         void setup_final_key(uint32_t keyboardLayout)
         {
-            if (!::strcasecmp(this->final_key_str.c_str(), "enter"))
+            if (!::strcasecmp(this->final_key_str.c_str(), "backspace"))
             {
-                this->final_key_code = 43;
+                this->final_key_code = 0x0E;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "del"))
+            {
+                this->final_key_code = 0x53;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "end"))
+            {
+                this->final_key_code = 0x4F;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "enter"))
+            {
+                this->final_key_code = 0x1C;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "esc"))
+            {
+                this->final_key_code = 0x01;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f1"))
+            {
+                this->final_key_code = 0x3B;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f2"))
+            {
+                this->final_key_code = 0x3C;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f3"))
+            {
+                this->final_key_code = 0x3D;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f4"))
+            {
+                this->final_key_code = 0x3E;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f5"))
+            {
+                this->final_key_code = 0x3F;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f6"))
+            {
+                this->final_key_code = 0x40;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f7"))
+            {
+                this->final_key_code = 0x41;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f8"))
+            {
+                this->final_key_code = 0x42;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f9"))
+            {
+                this->final_key_code = 0x43;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f10"))
+            {
+                this->final_key_code = 0x44;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f11"))
+            {
+                this->final_key_code = 0x57;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "f12"))
+            {
+                this->final_key_code = 0x58;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "home"))
+            {
+                this->final_key_code = 0x47;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "insert"))
+            {
+                this->final_key_code = 0x52;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "pgdown"))
+            {
+                this->final_key_code = 0x51;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "pgup"))
+            {
+                this->final_key_code = 0x49;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "space"))
+            {
+                this->final_key_code = 0x39;
+            }
+            else if (!::strcasecmp(this->final_key_str.c_str(), "tab"))
+            {
+                this->final_key_code = 0x0F;
             }
             else
             {

@@ -431,11 +431,13 @@ public:
 
     bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
     {
-        LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::rdp_input_scancode: device_flags=0x%04X keyCode=0x%X", keyboardFlags, keyCode);
+        LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::scancode_mast_be_blocked: device_flags=0x%04X keyCode=0x%X", keyboardFlags, keyCode);
 
         if (this->keyboard_shortcut_blocker_sp)
         {
-            return this->keyboard_shortcut_blocker_sp->scancode_mast_be_blocked(keyboardFlags, keyCode);
+            bool const ret_val = this->keyboard_shortcut_blocker_sp->scancode_mast_be_blocked(keyboardFlags, keyCode);
+            LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::scancode_mast_be_blocked: scancode_mast_be_blocked=%s", (ret_val ? "Yes" : "No"));
+            return ret_val;
         }
 
         return false;
@@ -952,7 +954,7 @@ public:
                  !this->keyboard_shortcut_blocker_sp)
         {
             this->keyboard_shortcut_blocker_sp = std::make_unique<KeyboardShortcutBlocker>(
-                this->keylayout, parameters[0], bool(this->verbose & RDPVerbose::basic_trace));
+                this->keylayout, parameters[0], true);
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
