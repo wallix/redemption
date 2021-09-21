@@ -2074,8 +2074,8 @@ public:
             LOG(LOG_INFO, "RemoteFX enabled on proxy");
         }
 
+        LOG(LOG_INFO, "Creation of new mod 'RDP'");
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "Creation of new mod 'RDP'");
             mod_rdp_params.log();
         }
 
@@ -3122,11 +3122,11 @@ public:
                     //sctrl.log();
                     next_packet += sctrl.totalLength;
 
-                    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_WARNING, "LOOPING on PDUs: %u", unsigned(sctrl.totalLength));
+                    //LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_WARNING, "LOOPING on PDUs: %u", unsigned(sctrl.totalLength));
 
                     switch (sctrl.pduType) {
                     case PDUTYPE_DATAPDU:
-                        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_WARNING, "PDUTYPE_DATAPDU");
+                        //LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_WARNING, "PDUTYPE_DATAPDU");
                         switch (this->connection_finalization_state){
                         case EARLY:
                         {
@@ -3302,8 +3302,9 @@ public:
                                 switch (sdata.pdutype2) {
                                 case PDUTYPE2_UPDATE:
                                     {
-                                        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                                            LOG_INFO, "PDUTYPE2_UPDATE");
+                                        // LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
+                                        //     LOG_INFO, "PDUTYPE2_UPDATE");
+
                                         // MS-RDPBCGR: 1.3.6
                                         // -----------------
                                         // The most fundamental output that a server can send to a connected client
@@ -6077,8 +6078,7 @@ public:
 
     void disconnect() override {
         if (this->is_up_and_running()) {
-            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                LOG_INFO, "mod_rdp::disconnect()");
+            LOG(LOG_INFO, "mod_rdp::disconnect()");
             this->session_log.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
             // this->send_shutdown_request();
             // this->draw_event(time(nullptr));
