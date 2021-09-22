@@ -2457,7 +2457,7 @@ class Sesman():
             update_args = {}
             update_args["event_level"] = event_level
             update_args["event_id"] = event_id
-            update_args["event_level"] = event_level
+            update_args["event_details"] = event_details
             self.engine.update_session(**update_args)
 
             if u'FATAL' == update_args["event_level"]:
