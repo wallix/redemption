@@ -135,6 +135,10 @@ class SesmanConfig(object):
                     u"Une reconnexion de Session Probe non autorisée est "
                     u"détectée."
                 ),
+                u'application_fatal_error': (
+                    u"Une erreur fatale s'est produite et cette application a "
+                    u"été interrompue."
+                ),
             },
             u'en': {
                 u'session_closed_at %s': u"Your session will close at %s.",
@@ -221,6 +225,10 @@ class SesmanConfig(object):
                 ),
                 u'session_probe_reconnection': (
                     u"Unauthorized Session Probe reconnection is detected."
+                ),
+                u'application_fatal_error': (
+                    u"A fatal error has occurred and this application has been "
+                    u"terminated."
                 ),
             }
         }

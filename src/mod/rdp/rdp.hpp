@@ -927,6 +927,8 @@ public:
         }
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+            "mod_rdp::process_auth_event: AuthChannelMessage=\"%s\"", auth_channel_message);
 
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
@@ -995,8 +997,26 @@ public:
                 });
             }
         }
+        else if (upper_order == "EVENT"_ascii_upper) {
+            if (parameters.size() == 3)
+            {
+                this->log6(LogId::SESSION_EVENT, {
+                    KVLog("level"_av, parameters[0]),
+                    KVLog("id"_av, parameters[1]),
+                    KVLog("details"_av, parameters[2])
+                });
+            }
+
+            std::string message(parameters[0].data(), parameters[0].size());
+            message += " : ";
+            message.append(parameters[1].data(), parameters[1].size());
+            message += " : ";
+            message.append(parameters[2].data(), parameters[2].size());
+            this->session_log.report("SESSION_EVENT", message.c_str());
+        }
         else {
-            LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
+            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+                "mod_rdp::process_auth_event: AuthChannelTarget=\"%s\"", auth_channel_message);
             vars.set_acl<cfg::context::auth_channel_target>(auth_channel_message);
         }
     }

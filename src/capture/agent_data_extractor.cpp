@@ -427,6 +427,9 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
             case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
                 return line_with_1_var("channel_name"_av);
 
+            case LogId::SESSION_EVENT:
+                return line_with_3_var("level"_av, "id"_av, "details"_av);
+
             default:
                 LOG(LOG_WARNING,
                     "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
@@ -515,6 +518,7 @@ bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
         case LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED:
         case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
         case LogId::FILE_BLOCKED:
+        case LogId::SESSION_EVENT:
             ;
     }
     return true;

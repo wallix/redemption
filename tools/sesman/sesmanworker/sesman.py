@@ -2451,6 +2451,29 @@ class Sesman():
             self.send_data({
                 u'disconnect_reason': TR(u"session_probe_reconnection")
             })
+        elif _reporting_reason == u'SESSION_EVENT':
+            (event_level, event_id, event_details) = \
+                _reporting_message.split(" : ", 2)
+            update_args = {}
+            update_args["event_level"] = event_level
+            update_args["event_id"] = event_id
+            update_args["event_level"] = event_level
+            self.engine.update_session(**update_args)
+
+            if u'FATAL' == update_args["event_level"]:
+                Logger().info(
+                    u'RDP connection terminated. Reason: Application '
+                    u'fatal error'
+                )
+                release_reason = (
+                    u'Interrupt: Application fatal error'
+                )
+                self.engine.set_session_status(
+                    result=False, diag=release_reason
+                )
+                self.send_data({
+                    u'disconnect_reason': TR(u"application_fatal_error")
+                })
         return True
 
     def process_target_connection_time(self):
@@ -2563,6 +2586,8 @@ class Sesman():
                 'service': self.target_service_name
             }
             self.engine.notify_find_process_rdp(**notify_params)
+        elif reason == u'SESSION_EVENT':
+            pass
         else:
             Logger().info(
                 u"Unexpected reporting reason: "

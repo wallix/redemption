@@ -126,7 +126,8 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(FILE_BLOCKED, FileVerification)                            \
     f(SESSION_LOCKED, Session)                                   \
     f(EDIT_CHANGED_2, Widget)                                    \
-    f(SELECT_CHANGED, Widget)
+    f(SELECT_CHANGED, Widget)                                    \
+    f(SESSION_EVENT, Session)
 
 
 enum class LogId : unsigned
