@@ -91,6 +91,13 @@ struct TaggedString
         return a.sv() == b.sv();
     }
 
+    template<class Tag2, class U>
+    friend constexpr detail::enable_if_same_tag_t<U, Tag2, bool>
+    operator!=(TaggedString<Tag2> const& a, U const& b) noexcept
+    {
+        return a.sv() != b.sv();
+    }
+
     std::string_view av;
 };
 
@@ -117,6 +124,13 @@ struct StringArray
     operator==(StringArray<N, Tag> const& a, U const& b) noexcept
     {
         return a.sv() == b.sv();
+    }
+
+    template<class U>
+    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
+    operator!=(StringArray<N, Tag> const& a, U const& b) noexcept
+    {
+        return a.sv() != b.sv();
     }
 
 private:
@@ -158,6 +172,13 @@ struct ZStringArray
     operator==(ZStringArray<N, Tag> const& a, U const& b) noexcept
     {
         return a.sv() == b.sv();
+    }
+
+    template<class U>
+    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
+    operator!=(ZStringArray<N, Tag> const& a, U const& b) noexcept
+    {
+        return a.sv() != b.sv();
     }
 
 private:
