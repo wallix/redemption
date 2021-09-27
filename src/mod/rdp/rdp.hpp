@@ -998,8 +998,7 @@ public:
             }
         }
         else if (upper_order == "EVENT"_ascii_upper) {
-            if (parameters.size() == 3)
-            {
+            if (parameters.size() == 3) {
                 this->log6(LogId::SESSION_EVENT, {
                     KVLog("level"_av, parameters[0]),
                     KVLog("id"_av, parameters[1]),
@@ -1007,11 +1006,7 @@ public:
                 });
             }
 
-            std::string message(parameters[0].data(), parameters[0].size());
-            message += " : ";
-            message.append(parameters[1].data(), parameters[1].size());
-            message += " : ";
-            message.append(parameters[2].data(), parameters[2].size());
+            std::string message = str_concat(parameters[0], " : ", parameters[1], " : ", parameters[2]);
             this->session_log.report("SESSION_EVENT", message.c_str());
         }
         else {
