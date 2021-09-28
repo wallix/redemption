@@ -488,6 +488,25 @@ RED_JS_AUTO_TEST_CASE(
     TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
+    // Backspace with Ctrl
+    //@{
+    RED_CHECK(toScancodes2("Control", "ControlLeft", keyAcquire) == U16A(0x1D));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Backspace", "Backspace", keyAcquire) == U16A(0x0e));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Backspace", "Backspace", keyRelease) == U16A(0x800e));
+    TEST_HEX32(getModFlags() == CtrlMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Control", "ControlLeft", keyRelease) == U16A(0x801D));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
     // sync
     //@{
     // const uint32_t ScrollLock   = 0x01;

@@ -148,13 +148,6 @@ char_to_char_table = {
     '\'': '\\\'',
 }
 
-codepoint_to_jskey = {
-    0x09: 'Tab',
-    0x0A: 'Enter',
-    0x1B: 'Escape',
-    0x08: 'Backspace',
-}
-
 def vk_mod_to_mod_flags(mods:str) -> int:
     mod_flags = 0
     for m in mods.split(' '):
@@ -184,7 +177,6 @@ output = [
 
 for layout in layouts:
     normal_rkeymap = {}
-    special_rkeymap = {}
     # text character and action
     for mods,keymap in layout.keymaps.items():
         mod_flags = vk_mod_to_mod_flags(mods)
@@ -198,9 +190,6 @@ for layout in layouts:
                     map:dict = normal_rkeymap.setdefault((key.text, key.codepoint), {})
                     scancodes:list = map.setdefault(mod_flags, [])
                     scancodes.append(f'0x{key_to_scancode(key):x}, ')
-
-                    if text := codepoint_to_jskey.get(key.codepoint, None):
-                        special_rkeymap[(text, key.codepoint)] = map
 
                 elif key_and_scancode := vk_actions.get(key.vk, None):
                     if mod_flags != nomod:
@@ -245,14 +234,13 @@ for layout in layouts:
 
     output.append(f'{{\n  klid: 0x{layout.klid},\n  localeName: "{layout.locale_name}",\n  displayName: "{layout.display_name}",\n  ctrlRightIsOem8: {"true" if layout.has_right_ctrl_like_oem8 else "false"},\n  keymap: {{\n')
 
-    for rkeymap in (normal_rkeymap, special_rkeymap):
-        for (text, codepoint), scancodes_by_mods in rkeymap.items():
-            k = char_to_char_table.get(text) or (text if text.isprintable() else f'\\x{codepoint:02x}')
-            output.append(f"    '{k}': {{ ")
-            for mod_flags, rkeys in scancodes_by_mods.items():
-                # output.append(f"      0x{mod_flags:x}: [{''.join(rkeys)}], \n")
-                output.append(f"0x{mod_flags:x}: {rkeys[0]}")
-            output.append("},\n")
+    for (text, codepoint), scancodes_by_mods in normal_rkeymap.items():
+        k = char_to_char_table.get(text) or (text if text.isprintable() else f'\\x{codepoint:02x}')
+        output.append(f"    '{k}': {{ ")
+        for mod_flags, rkeys in scancodes_by_mods.items():
+            # output.append(f"      0x{mod_flags:x}: [{''.join(rkeys)}], \n")
+            output.append(f"0x{mod_flags:x}: {rkeys[0]}")
+        output.append("},\n")
 
     output.append(f'  }},\n  deadkeys: {{\n')
 
