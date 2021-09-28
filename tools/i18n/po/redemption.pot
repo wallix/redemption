@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-08 15:44+0200\n"
+"POT-Creation-Date: 2021-09-28 10:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -286,13 +286,14 @@ msgstr ""
 
 #: ../../src/utils/translation.hpp:133
 #, c-format
-msgid "The process '%s' was interrupted in accordance with security policies."
+msgid ""
+"The process '%.*s' was interrupted in accordance with security policies."
 msgstr ""
 
 #: ../../src/utils/translation.hpp:134
 #, c-format
 msgid ""
-"The account manipulation initiated by process '%s' was rejected in "
+"The account manipulation initiated by process '%.*s' was rejected in "
 "accordance with security policies."
 msgstr ""
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-08 15:36+0200\n"
+"POT-Creation-Date: 2021-09-28 10:24+0200\n"
 "PO-Revision-Date: 2021-03-01 15:52+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -302,13 +302,13 @@ msgid "Another user connected to the resource, so your connection was lost."
 msgstr "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."
 
 #: ../../src/utils/translation.hpp:133
-#, c-format
-msgid "The process '%s' was interrupted in accordance with security policies."
+#, fuzzy, c-format
+msgid "The process '%.*s' was interrupted in accordance with security policies."
 msgstr "Le processus '%s' a été interrompu conformément aux politiques de sécurité."
 
 #: ../../src/utils/translation.hpp:134
-#, c-format
-msgid "The account manipulation initiated by process '%s' was rejected in accordance with security policies."
+#, fuzzy, c-format
+msgid "The account manipulation initiated by process '%.*s' was rejected in accordance with security policies."
 msgstr "L'édition de compte d'utilisateur effectuée via le processus '%s' a été rejeté conformément aux politiques de sécurité."
 
 #: ../../src/utils/translation.hpp:135
