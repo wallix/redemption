@@ -17,7 +17,7 @@ namespace
     class FrenchLocaleFixture
     {
       protected :
-        static constexpr int LCID = 0x0000040c;
+        static constexpr KeyLayout::KbdId LCID {0x0000040c};
     };
 }
 

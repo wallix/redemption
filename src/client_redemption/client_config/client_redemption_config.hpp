@@ -89,7 +89,7 @@ struct ModVNCParamsData
     WindowListCaps windowListCaps;
     std::string vnc_encodings = "5,16,0,1,-239";
     std::vector<UserProfil> userProfils;
-    int keylayout = 0x040C;
+    KeyLayout::KbdId keylayout {0x040C};
     int width = 800;
     int height = 600;
     int current_user_profil = 0;

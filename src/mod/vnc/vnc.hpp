@@ -309,7 +309,7 @@ public:
            // TODO: front width and front height should be provided through info
            , uint16_t front_width
            , uint16_t front_height
-           , int keylayout
+           , KeyLayout::KbdId keylayout
            , kbdtypes::KeyLocks key_locks
            , bool clipboard_up
            , bool clipboard_down

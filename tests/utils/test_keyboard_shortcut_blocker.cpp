@@ -31,7 +31,7 @@ constexpr auto downnnn = KbdFlags();
 
 RED_AUTO_TEST_CASE(Test_KeyboardShortcutBlocker_0)
 {
-    KeyboardShortcutBlocker keyboard_shortcut_blocker(0x40c, "Ctrl+S"_av, true);
+    KeyboardShortcutBlocker keyboard_shortcut_blocker(KeyLayout::KbdId(0x40c), "Ctrl+S"_av, true);
 
     RED_CHECK(!keyboard_shortcut_blocker.scancode_must_be_blocked(downnnn, Scancode(0x1D)));
     RED_CHECK(!keyboard_shortcut_blocker.scancode_must_be_blocked(downnnn, Scancode(0x0A)));
@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(Test_KeyboardShortcutBlocker_0)
 
 RED_AUTO_TEST_CASE(Test_KeyboardShortcutBlocker_1)
 {
-    KeyboardShortcutBlocker keyboard_shortcut_blocker(0x40c, "Ctrl+Enter"_av, true);
+    KeyboardShortcutBlocker keyboard_shortcut_blocker(KeyLayout::KbdId(0x40c), "Ctrl+Enter"_av, true);
 
     RED_CHECK(!keyboard_shortcut_blocker.scancode_must_be_blocked(downnnn, Scancode(0x1D)));
     RED_CHECK( keyboard_shortcut_blocker.scancode_must_be_blocked(downnnn, Scancode(0x1C)));

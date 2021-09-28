@@ -110,7 +110,7 @@ namespace
 
     constexpr ascii_lower_convertor to_ascii_lower {};
 
-    kbdtypes::KeyCode str_to_key_code(uint32_t keyboardLayout, chars_view str)
+    kbdtypes::KeyCode str_to_key_code(KeyLayout::KbdId keyboardLayout, chars_view str)
     {
         uint16_t final_key_u16;
         writable_bytes_view final_key_u16_as_u8{reinterpret_cast<uint8_t*>(&final_key_u16), sizeof(final_key_u16)};
@@ -190,7 +190,7 @@ public:
     }
 };
 
-KeyboardShortcutBlocker::KeyboardShortcutBlocker(uint32_t keyboardLayout, chars_view configuration_string, bool verbose)
+KeyboardShortcutBlocker::KeyboardShortcutBlocker(KeyLayout::KbdId keyboardLayout, chars_view configuration_string, bool verbose)
     : verbose(verbose)
 {
     LOG_IF(this->verbose, LOG_INFO,
@@ -205,11 +205,11 @@ KeyboardShortcutBlocker::KeyboardShortcutBlocker(uint32_t keyboardLayout, chars_
 
 KeyboardShortcutBlocker::~KeyboardShortcutBlocker() = default;
 
-void KeyboardShortcutBlocker::add_shortcut(uint32_t keyboardLayout, chars_view shortcut)
+void KeyboardShortcutBlocker::add_shortcut(KeyLayout::KbdId keyboardLayout, chars_view shortcut)
 {
     LOG_IF(this->verbose, LOG_INFO,
         "KeyboardShortcutBlocker::add_shortcut(): KeyboardLayout=0x%X Shortcut=\"%.*s\"",
-        keyboardLayout, int(shortcut.size()), shortcut.data());
+        underlying_cast(keyboardLayout), int(shortcut.size()), shortcut.data());
 
     ModFlags mods {};
 

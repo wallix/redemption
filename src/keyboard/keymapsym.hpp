@@ -25,6 +25,7 @@
 #include <cstdint>
 
 #include "keyboard/kbdtypes.hpp"
+#include "keyboard/keylayout.hpp"
 
 enum KS_Symbols {
 
@@ -996,7 +997,7 @@ enum KS_Symbols {
 //    hebrew_shin                       3321     0x0cf9
 //    hebrew_taf                        3322     0x0cfa
 
-#define FICTITIOUS_MACOS_EN_US 0xf409
+constexpr KeyLayout::KbdId FICTITIOUS_MACOS_EN_US {0xf409};
 
 struct KeymapSym
 {
@@ -1088,7 +1089,7 @@ private:
         DEADKEY_TILDE
     };
 
-    int keylayout;
+    KeyLayout::KbdId keylayout;
     bool is_unix;
     bool is_apple;
     // TODO should be a Verbose enum class
@@ -1104,7 +1105,7 @@ private:
     KeyLayout_t keylayout_WORK_shiftcapslock_sym;
 
 public:
-    explicit KeymapSym(int keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, int verbose);
+    explicit KeymapSym(KeyLayout::KbdId keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, uint32_t verbose);
 
     void synchronize(kbdtypes::KeyLocks locks);
 
@@ -1183,10 +1184,10 @@ public:
 
     [[nodiscard]] bool is_alt_pressed() const;
 
-    [[nodiscard]] int get_keylayout() const noexcept;
+    [[nodiscard]] KeyLayout::KbdId get_keylayout() const noexcept;
 
 private:
-    void init_layout_sym(int keyb);
+    void init_layout_sym(KeyLayout::KbdId keyb);
 
     const KeyLayout_t * select_layout();
 

@@ -252,7 +252,7 @@ public:
     	this->_recordingCB.setChecked(this->config->is_recording);
 
         // Keyboard tab
-        int indexLanguage = this->_languageComboBox.findData(this->config->info.keylayout);
+        int indexLanguage = this->_languageComboBox.findData(underlying_cast(this->config->info.keylayout));
         if ( indexLanguage != -1 ) {
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
@@ -264,7 +264,7 @@ public:
         this->config->is_recording = this->_recordingCB.isChecked();
 
         // Keyboard tab
-        this->config->modVNCParamsData.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->config->modVNCParamsData.keylayout = KeyLayout::KbdId(this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt());
     }
 
 public Q_SLOTS:
@@ -576,8 +576,8 @@ public:
         } else {
             this->config->current_user_profil = this->profilComboBox.currentIndex();
         }
-        this->config->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-//         this->config->update_keylayout();
+        this->config->info.keylayout = KeyLayout::KbdId(this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt());
+        // this->config->update_keylayout();
         this->config->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
         this->config->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
         this->config->info.console_session = this->_consoleBox.isChecked();

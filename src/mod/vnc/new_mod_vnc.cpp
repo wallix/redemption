@@ -32,7 +32,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     FrontAPI& front,
     uint16_t front_width,
     uint16_t front_height,
-    int keylayout,
+    KeyLayout::KbdId keylayout,
     kbdtypes::KeyLocks key_locks,
     bool clipboard_up,
     bool clipboard_down,

@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <charconv>
+#include "utils/sugar/chars_to_int.hpp"
 
 
 namespace cli
@@ -543,10 +543,14 @@ T operator, (T x, Ok_ /*unused*/)
 namespace detail
 {
     template<class T>
-    Res arg_parse_int(T& result, std::string_view s)
+    Res arg_parse_int(T& result, char const * s)
     {
-        auto [p, ec] = std::from_chars(s.begin(), s.end(), result);
-        return (ec == std::errc()) ? Res::Ok : Res::BadFormat;
+        auto r = decimal_chars_to_int<T>(s);
+        if (r.ec == std::errc() && !*r.ptr) {
+            result = r.val;
+            return Res::Ok;
+        }
+        return Res::BadFormat;
     }
 }
 
@@ -606,6 +610,15 @@ namespace arg_parsers
         static Res parse(T& result, char const* s)
         {
             return arg_parse(result, s);
+        }
+    };
+
+    template<class T>
+    struct arg_parse_traits<T, std::enable_if_t<std::is_enum_v<T>>>
+    {
+        static Res parse(T& result, char const* s)
+        {
+            return detail::arg_parse_int(result, s);
         }
     };
 } // namespace arg_parsers

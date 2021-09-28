@@ -1587,7 +1587,7 @@ public:
 
                         this->client_info.screen_info.width     = cs_core.desktopWidth;
                         this->client_info.screen_info.height    = cs_core.desktopHeight;
-                        this->client_info.keylayout = cs_core.keyboardLayout;
+                        this->client_info.keylayout = safe_int(cs_core.keyboardLayout);
                         this->client_info.build     = cs_core.clientBuild;
                         for (size_t i = 0; i < 15 ; i++) {
                             this->client_info.hostname[i] = cs_core.clientName[i];
@@ -2155,11 +2155,11 @@ public:
                 sec.payload.in_remain());
         }
 
-        if (auto* layout = find_layout_by_id(KeyLayout::KbdId(this->client_info.keylayout))) {
+        if (auto* layout = find_layout_by_id(this->client_info.keylayout)) {
             this->keymap.set_layout(*layout);
         }
         LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
-        this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
+        this->ini.set_acl<cfg::client::keyboard_layout>(safe_int(this->client_info.keylayout));
 
         if (bool(this->verbose & Verbose::channel)) {
             LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");

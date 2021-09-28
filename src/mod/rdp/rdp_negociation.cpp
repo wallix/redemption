@@ -835,7 +835,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             cs_core.highColorDepth = ((this->front_bpp == BitsPerPixel{32})
                 ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP)
                 : safe_cast<uint16_t>(this->front_bpp));
-            cs_core.keyboardLayout = this->keylayout;
+            cs_core.keyboardLayout = underlying_cast(this->keylayout);
             if (this->front_bpp == BitsPerPixel{32}) {
                 LOG(LOG_INFO, "Asking for 32 bits to server");
                 cs_core.supportedColorDepths = GCC::UserData::RNS_UD_24BPP_SUPPORT

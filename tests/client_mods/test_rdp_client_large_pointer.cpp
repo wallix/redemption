@@ -62,7 +62,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x040C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};
@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x040C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};

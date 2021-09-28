@@ -28,7 +28,7 @@
 
 // using namespace std;
 
-KeymapSym::KeymapSym(int keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, int verbose)
+KeymapSym::KeymapSym(KeyLayout::KbdId keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, uint32_t verbose)
 // Initial state of keys (at least lock keys) is copied from Keymap2
 : keys_down{}
 , key_flags(int(key_locks))
@@ -833,7 +833,7 @@ bool KeymapSym::is_altgr_pressed() const
     return ((this->is_ctrl_pressed() && this->is_left_alt_pressed()) || (this->is_right_alt_pressed()));
 }
 
-int KeymapSym::get_keylayout() const noexcept
+KeyLayout::KbdId KeymapSym::get_keylayout() const noexcept
 {
     return this->keylayout;
 }

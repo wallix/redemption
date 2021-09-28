@@ -1,9 +1,10 @@
 #pragma once
 
-# include <cstdint>
-# include <array>
+#include <cstdint>
+#include <array>
 
-# include "utils/sugar/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "keyboard/keylayout.hpp"
 
 namespace scancode
 {
@@ -27,5 +28,5 @@ namespace scancode
 
 
     [[nodiscard]]
-    ScancodeSeq unicode_to_scancode(int LCID, std::uint16_t unicode);
+    ScancodeSeq unicode_to_scancode(KeyLayout::KbdId LCID, std::uint16_t unicode);
 } // namespace scancode

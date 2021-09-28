@@ -46,7 +46,7 @@ struct check_key_events {
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {
-    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
+    KeymapSym keymap(KeyLayout::KbdId(0x040C), kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
     using KbdFlags = kbdtypes::KbdFlags;
@@ -156,7 +156,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
 RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
 {
-    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
+    KeymapSym keymap(KeyLayout::KbdId(0x040C), kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
     using KbdFlags = kbdtypes::KbdFlags;
@@ -248,7 +248,7 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
 
 RED_AUTO_TEST_CASE(TestKeymapSymEuro)
 {
-    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
+    KeymapSym keymap(KeyLayout::KbdId(0x040C), kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
     using KbdFlags = kbdtypes::KbdFlags;
@@ -309,7 +309,7 @@ RED_AUTO_TEST_CASE(TestKeymapSymEuro)
 
 RED_AUTO_TEST_CASE(TestKeymapSymUpUp)
 {
-    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
+    KeymapSym keymap(KeyLayout::KbdId(0x040C), kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
     using KbdFlags = kbdtypes::KbdFlags;
@@ -327,7 +327,7 @@ RED_AUTO_TEST_CASE(TestKeymapSymUpUp)
 
 RED_AUTO_TEST_CASE(TestKeymapSymDownDown)
 {
-    KeymapSym keymap(0x040C, kbdtypes::KeyLocks::NoLocks, false, false, 0);
+    KeymapSym keymap(KeyLayout::KbdId(0x040C), kbdtypes::KeyLocks::NoLocks, false, false, 0);
     uint8_t downflag = 0;
 
     using KbdFlags = kbdtypes::KbdFlags;

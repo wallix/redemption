@@ -85,8 +85,8 @@ public:
         this->replay_mod = replay_mod;
     }
 
-    void init_layout(int kbdid) {
-        if (auto* layout = find_layout_by_id(KeyLayout::KbdId(kbdid))) {
+    void init_layout(KeyLayout::KbdId kbdid) {
+        if (auto* layout = find_layout_by_id(kbdid)) {
             this->keymap.set_layout(*layout);
         }
     }

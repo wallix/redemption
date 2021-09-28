@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     ClientInfo info;
     info.build = 2600;
-    info.keylayout = 0x04C;
+    info.keylayout = KeyLayout::KbdId(0x04C);
     info.console_session = false;
     info.brush_cache_code = 0;
     info.screen_info.bpp = BitsPerPixel{24};

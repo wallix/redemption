@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x040C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};

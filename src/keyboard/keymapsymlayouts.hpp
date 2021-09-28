@@ -36,7 +36,7 @@
 // |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
 // +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
 
-void KeymapSym::init_layout_sym(int keyb)
+void KeymapSym::init_layout_sym(KeyLayout::KbdId keyb)
 {
     // %s/^[^"]*"[^"]*"[^"]*"\([^:]*\):.*$/\1/
 
@@ -147,11 +147,9 @@ void KeymapSym::init_layout_sym(int keyb)
         keylayout_WORK_shiftcapslock_sym[i] = DEFAULT_shiftcapslock_sym[i] ;
     }
 
-    // US keyboard by default
-    this->keylayout = 0x0409;
+    this->keylayout = keyb;
 
-
-    switch (keyb){
+    switch (underlying_cast(keyb)){
 
         case 0x0407: // GERMAN
         {
@@ -264,7 +262,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0407;
             break;
 
         case 0x0409: // United States
@@ -378,10 +375,9 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0409;
             break;
 
-        case FICTITIOUS_MACOS_EN_US: // United States - macOS
+        case underlying_cast(FICTITIOUS_MACOS_EN_US): // United States - macOS
         {
         const KeyLayout_t xf409_noshift_sym = {
         0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -492,7 +488,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = FICTITIOUS_MACOS_EN_US;
             break;
 
         case 0x040c: // French
@@ -607,7 +602,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x040c;
             break;
 
         case 0x0410: // Italian
@@ -721,7 +715,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0410;
             break;
 
         case 0x0419: // Russian
@@ -835,7 +828,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0419;
             break;
 
         case 0x041d: // Swedish
@@ -949,7 +941,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x041d;
             break;
 
         case 0x046e: // Luxemburgish
@@ -1063,7 +1054,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x046e;
             break;
 
         case 0x0807: // German Swizerland
@@ -1177,7 +1167,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0807;
             break;
 
         case 0x0809: // English UK
@@ -1291,7 +1280,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0809;
             break;
 
         case 0x080c: // French Belgium
@@ -1405,7 +1393,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x080c;
             break;
 
         case 0x0813: // Dutch Belgium
@@ -1519,7 +1506,6 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x0813;
             break;
 
         case 0x100c: // French Swizerland
@@ -1633,10 +1619,11 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
-            this->keylayout = 0x100c;
             break;
 
         default:
+            // US keyboard by default
+            this->keylayout = KeyLayout::KbdId(0x0409);
             break;
     }
 

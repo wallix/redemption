@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     // CLIENT INFO
     RED_CHECK_EQUAL(config.info.screen_info.width, 800);
     RED_CHECK_EQUAL(config.info.screen_info.height, 600);
-    RED_CHECK_EQUAL(config.info.keylayout, 0x040C);
+    RED_CHECK_EQUAL(config.info.keylayout, KeyLayout::KbdId(0x040C));
     RED_CHECK(not config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 0);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{24});
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     // VNC
     RED_CHECK(not config.modVNCParamsData.is_apple);
     RED_CHECK(config.modVNCParamsData.vnc_encodings == "5,16,0,1,-239"sv);
-    RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
+    RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, KeyLayout::KbdId(0x040C));
     RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
     RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
     RED_CHECK(not config.modVNCParamsData.enable_tls);
@@ -275,7 +275,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     // CLIENT INFO
     RED_CHECK_EQUAL(config.info.screen_info.width, 800);
     RED_CHECK_EQUAL(config.info.screen_info.height, 600);
-    RED_CHECK_EQUAL(config.info.keylayout, 0x040C);
+    RED_CHECK_EQUAL(config.info.keylayout, KeyLayout::KbdId(0x040C));
     RED_CHECK(not config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 0);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{24});
@@ -336,7 +336,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     // VNC
     RED_CHECK(not config.modVNCParamsData.is_apple);
     RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239"sv);
-    RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
+    RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, KeyLayout::KbdId(0x040C));
     RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
     RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
     RED_CHECK(not config.modVNCParamsData.enable_tls);
@@ -559,7 +559,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 
     RED_CHECK_EQUAL(config.rdp_width, 1600);
     RED_CHECK_EQUAL(config.rdp_height, 900);
-    RED_CHECK_EQUAL(config.info.keylayout, 0x040D);
+    RED_CHECK_EQUAL(config.info.keylayout, KeyLayout::KbdId(0x040D));
     RED_CHECK(config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 2);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{16});

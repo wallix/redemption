@@ -377,7 +377,7 @@ private:
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
 
-    const uint32_t keylayout;
+    const KeyLayout::KbdId keylayout;
 
     std::unique_ptr<KeyboardShortcutBlocker> keyboard_shortcut_blocker_sp;
 
@@ -391,7 +391,8 @@ public:
         SessionLogApi& session_log,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
-        SessionProbeVirtualChannel::Callbacks & callbacks, uint32_t keylayout)
+        SessionProbeVirtualChannel::Callbacks & callbacks,
+        KeyLayout::KbdId keylayout)
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)

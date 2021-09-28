@@ -25,6 +25,7 @@
 #include <cstdint>
 
 #include "keyboard/kbdtypes.hpp"
+#include "keyboard/keylayout.hpp"
 #include "utils/sugar/array_view.hpp"
 
 
@@ -34,13 +35,13 @@ public:
     using Scancode = kbdtypes::Scancode;
     using KbdFlags = kbdtypes::KbdFlags;
 
-    KeyboardShortcutBlocker(uint32_t keyboardLayout, chars_view configuration_string, bool verbose);
+    KeyboardShortcutBlocker(KeyLayout::KbdId keyboardLayout, chars_view configuration_string, bool verbose);
     ~KeyboardShortcutBlocker();
 
     bool scancode_must_be_blocked(KbdFlags keyboardFlags, Scancode scancode);
 
 private:
-    void add_shortcut(uint32_t keyboardLayout, chars_view shortcut);
+    void add_shortcut(KeyLayout::KbdId keyboardLayout, chars_view shortcut);
 
     class Shortcut;
 

@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 #include "mod/vnc/vnc_verbose.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
+#include "keyboard/keylayout.hpp"
 
 #include <memory>
 
@@ -49,7 +50,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     FrontAPI& front,
     uint16_t front_width,
     uint16_t front_height,
-    int keylayout,
+    KeyLayout::KbdId keylayout,
     kbdtypes::KeyLocks key_flags,
     bool clipboard_up,
     bool clipboard_down,

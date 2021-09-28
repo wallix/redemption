@@ -86,7 +86,7 @@ mod_vnc::mod_vnc( Transport & t
            // TODO: front width and front height should be provided through info
            , uint16_t front_width
            , uint16_t front_height
-           , int keylayout
+           , KeyLayout::KbdId keylayout
            , kbdtypes::KeyLocks key_locks
            , bool clipboard_up
            , bool clipboard_down
@@ -108,7 +108,7 @@ mod_vnc::mod_vnc( Transport & t
     , width(front_width)
     , height(front_height)
     , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
-    , keymapSym(keylayout, key_locks, server_is_unix, server_is_macos, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
+    , keymapSym(keylayout, key_locks, server_is_unix, server_is_macos, underlying_cast(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)

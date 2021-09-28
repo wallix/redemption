@@ -45,6 +45,7 @@
 #include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "keyboard/keylayout.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/sugar/cast.hpp"
@@ -82,7 +83,7 @@ struct ClientInfo
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
     int build = 0;
-    uint32_t keylayout = 0;
+    KeyLayout::KbdId keylayout {};
     char username[257] = {0};
     char password[257] = {0};
     char domain[257] = {0};

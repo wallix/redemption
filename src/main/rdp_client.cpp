@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     client_info.screen_info.bpp = BitsPerPixel{24};
     client_info.build = 420;
     if (is_vnc) {
-        client_info.keylayout = 0x04C;
+        client_info.keylayout = KeyLayout::KbdId(0x04C);
         client_info.console_session = false;
         client_info.brush_cache_code = 0;
     }
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
               , front
               , 800
               , 600
-              , 0x04C         /* keylayout */
+              , KeyLayout::KbdId(0x040C)
               , kbdtypes::KeyLocks::NoLocks
               , true          /* clipboard */
               , true          /* clipboard */
