@@ -469,6 +469,25 @@ RED_JS_AUTO_TEST_CASE(
     TEST_HEX32(getVirtualModFlags() == NoMod);
     //@}
 
+    // Meta (is OS)
+    //@{
+    RED_CHECK(toScancodes2("Meta", "MetaLeft", keyAcquire) == U16A(0x15b));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Meta", "MetaRight", keyAcquire) == U16A(0x15c));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Meta", "MetaLeft", keyRelease) == U16A(0x815b));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+
+    RED_CHECK(toScancodes2("Meta", "MetaRight", keyRelease) == U16A(0x815c));
+    TEST_HEX32(getModFlags() == NoMod);
+    TEST_HEX32(getVirtualModFlags() == NoMod);
+    //@}
+
     // sync
     //@{
     // const uint32_t ScrollLock   = 0x01;

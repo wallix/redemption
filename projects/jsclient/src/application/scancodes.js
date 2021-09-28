@@ -583,8 +583,13 @@ class ReversedKeymap
                 this._updateFlags(RightShiftMod, flag);
                 return [RShiftSC | flag];
 
-            case "OSLeft": return [LMetaSC | flag];
-            case "OSRight": return [RMetaSC | flag];
+            case "OSLeft":
+            case "MetaLeft":
+                return [LMetaSC | flag];
+
+            case "OSRight":
+            case "MetaRight":
+                return [RMetaSC | flag];
         }
     }
 
