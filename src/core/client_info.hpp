@@ -82,7 +82,7 @@ struct ClientInfo
     //uint32_t desktop_cache = 0;
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
-    int build = 0;
+    uint32_t build = 0;
     KeyLayout::KbdId keylayout {};
     char username[257] = {0};
     char password[257] = {0};
