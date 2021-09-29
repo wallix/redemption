@@ -274,6 +274,11 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
         REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (this->id) {
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // !!!!! This function is only used for the old data format !!!!!
+            // !!!!!           Please do not add cases                  !!!!!
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
             case LogId::UAC_PROMPT_BECOME_VISIBLE:
             case LogId::SESSION_LOCKED:
@@ -427,8 +432,10 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
             case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
                 return line_with_1_var("channel_name"_av);
 
-            case LogId::SESSION_EVENT:
-                return line_with_3_var("level"_av, "id"_av, "details"_av);
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // !!!!! This function is only used for the old data format !!!!!
+            // !!!!!           Please do not add cases                  !!!!!
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             default:
                 LOG(LOG_WARNING,
