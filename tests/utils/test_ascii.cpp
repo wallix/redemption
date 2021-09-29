@@ -34,11 +34,33 @@ RED_AUTO_TEST_CASE(TestUpper)
     RED_CHECK(ascii_to_limited_zupper<50>("abcdefghijklmnopqrstuvwxyz"_av).zsv()[26] == '\0');
     RED_CHECK("abcdefghijklmnopqrstuvwxyz"_ascii_upper.sv() == "ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av);
     RED_CHECK((ascii_to_limited_upper<50>("abcdefghijklmnopqrstuvwxyz"_av) == "abcdefghijklmnopqrstuvwxyz"_ascii_upper));
+    RED_CHECK(ascii_to_limited_upper<100>("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv()
+        == "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"_av);
     RED_CHECK(insensitive_eq("abC"_av, "abc"_ascii_upper));
     RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_upper));
     RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_upper));
     RED_CHECK(!insensitive_eq("axc"_av, "abc"_ascii_upper));
     RED_CHECK(!insensitive_eq("ab"_av, "abc"_ascii_upper));
+}
+
+RED_AUTO_TEST_CASE(TestLower)
+{
+    RED_CHECK(ascii_to_limited_lower<3>("1A."_av).sv() == "1a."_av);
+    RED_CHECK(ascii_to_limited_lower<3>("1A.."_av).sv() == ""_av);
+    RED_CHECK(ascii_to_limited_lower<50>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv() == "abcdefghijklmnopqrstuvwxyz"_av);
+    RED_CHECK(ascii_to_limited_lower<5>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv() == ""_av);
+    RED_CHECK(ascii_to_limited_zlower<50>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv() == "abcdefghijklmnopqrstuvwxyz"_av);
+    RED_CHECK(ascii_to_limited_zlower<5>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv() == ""_av);
+    RED_CHECK(ascii_to_limited_zlower<50>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).zsv()[26] == '\0');
+    RED_CHECK("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_ascii_lower.sv() == "abcdefghijklmnopqrstuvwxyz"_av);
+    RED_CHECK((ascii_to_limited_lower<50>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av) == "abcdefghijklmnopqrstuvwxyz"_ascii_lower));
+    RED_CHECK(ascii_to_limited_lower<100>("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv()
+        == "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"_av);
+    RED_CHECK(insensitive_eq("abC"_av, "abc"_ascii_lower));
+    RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_lower));
+    RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_lower));
+    RED_CHECK(!insensitive_eq("axc"_av, "abc"_ascii_lower));
+    RED_CHECK(!insensitive_eq("ab"_av, "abc"_ascii_lower));
 }
 
 
