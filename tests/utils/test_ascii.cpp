@@ -40,3 +40,12 @@ RED_AUTO_TEST_CASE(TestUpper)
     RED_CHECK(!insensitive_eq("axc"_av, "abc"_ascii_upper));
     RED_CHECK(!insensitive_eq("ab"_av, "abc"_ascii_upper));
 }
+
+
+std::true_type to_tagged_string_view(TaggedStringView<UpperTag>);
+
+// check if convertible
+static_assert(decltype(to_tagged_string_view(TaggedStringView<UpperTag>()))());
+static_assert(decltype(to_tagged_string_view(TaggedString<UpperTag, std::string>()))());
+static_assert(decltype(to_tagged_string_view(TaggedStringArray<UpperTag, 16>()))());
+static_assert(decltype(to_tagged_string_view(TaggedZStringArray<UpperTag, 16>()))());

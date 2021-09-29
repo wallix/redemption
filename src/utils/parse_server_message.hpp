@@ -33,7 +33,7 @@ struct ParseServerMessage
     static const std::size_t max_arity = 16;
     static const std::size_t max_order_len = 32;
 
-    StringArray<126, UpperTag> upper_order() const noexcept
+    TaggedStringArray<UpperTag, 126> upper_order() const noexcept
     {
         return ascii_to_limited_upper<126>(order_);
     }
@@ -79,14 +79,14 @@ struct ExecutableLog6IfCtx
 {
     static constexpr std::size_t nb_key = N;
 
-    TaggedString<UpperTag> order;
+    TaggedStringView<UpperTag> order;
     LogId logid;
     std::array<chars_view, N> keys;
 };
 
 template<class... AV>
 ExecutableLog6IfCtx<sizeof...(AV)>
-executable_log6_if(TaggedString<UpperTag> order, LogId logid, AV... av) noexcept
+executable_log6_if(TaggedStringView<UpperTag> order, LogId logid, AV... av) noexcept
 {
     return {order, logid, {av...}};
 }
@@ -95,7 +95,7 @@ executable_log6_if(TaggedString<UpperTag> order, LogId logid, AV... av) noexcept
 
 template<class Fn, class... Executables>
 bool execute_log6_if(
-    TaggedString<UpperTag> order, array_view<std::string_view> parameters,
+    TaggedStringView<UpperTag> order, array_view<std::string_view> parameters,
     Fn&& fn, Executables&&... executables)
 {
     auto exec = [&](auto& executable){

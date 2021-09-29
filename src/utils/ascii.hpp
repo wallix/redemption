@@ -22,6 +22,7 @@ Author(s): Proxies Team
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/zstring_view.hpp"
+#include "utils/static_string.hpp"
 #include "utils/string_c.hpp"
 
 namespace detail
@@ -56,7 +57,7 @@ namespace detail
     };
     static_assert(sizeof(ascii_to_upper_table) == 255);
 
-    struct StringArrayAccess;
+    struct StringAsArrayAccess;
 
     template<class>
     struct extract_string_tag
@@ -68,7 +69,30 @@ namespace detail
     >::value, R>;
 
     constexpr std::size_t unsafe_ascii_to_upper(char* dest, chars_view src) noexcept;
-} // anonymous namespace
+
+
+    struct StringAsArrayAccess
+    {
+        template<class SA>
+        constexpr static auto& internal(SA& sa) noexcept
+        {
+            return sa.data;
+        }
+    };
+
+    template<std::size_t N>
+    struct StringAsArray
+    {
+    private:
+        friend class StringAsArrayAccess;
+        struct Data
+        {
+            std::array<char, N> buffer;
+            std::size_t len = 0;
+        };
+        Data data;
+    };
+} // namespace detail
 
 
 constexpr inline char ascii_to_upper(char c) noexcept
@@ -76,141 +100,123 @@ constexpr inline char ascii_to_upper(char c) noexcept
     return detail::ascii_to_upper_table[static_cast<unsigned char>(c)];
 }
 
-template<class Tag>
+template<class String>
+struct TaggedStringTraits
+{
+    constexpr static std::string_view sv(String const& str) noexcept
+    {
+        return std::string_view(str);
+    }
+};
+
+template<std::size_t N>
+struct TaggedStringTraits<detail::StringAsArray<N>>
+{
+    constexpr static std::string_view sv(detail::StringAsArray<N> const& str) noexcept
+    {
+        auto& array = detail::StringAsArrayAccess::internal(str);
+        return std::string_view(array.buffer.data(), array.len);
+    }
+};
+
+template<std::size_t N>
+struct TaggedStringTraits<static_string<N>>
+{
+    constexpr static std::string_view sv(static_string<N> const& str) noexcept
+    {
+        return chars_view(str).as<std::string_view>();
+    }
+};
+
+
+template<class Tag, class String>
 struct TaggedString
 {
+    String str;
+
     constexpr std::string_view sv() const noexcept
     {
-        return av;
+        return TaggedStringTraits<String>::sv(str);
     }
 
-    template<class Tag2, class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag2, bool>
-    operator==(TaggedString<Tag2> const& a, U const& b) noexcept
+    constexpr TaggedString<Tag, std::string_view> tagged_sv() const noexcept
+    {
+        return TaggedString<Tag, std::string_view>{sv()};
+    }
+
+    template<class TaggedView = TaggedString<Tag, std::string_view>>
+    constexpr operator std::enable_if_t<
+        !std::is_same_v<String, std::string_view>,
+        TaggedView
+    > () const noexcept
+    {
+        return TaggedString<Tag, std::string_view>{sv()};
+    }
+
+    template<class U>
+    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
+    operator==(TaggedString const& a, U const& b) noexcept
     {
         return a.sv() == b.sv();
     }
 
-    template<class Tag2, class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag2, bool>
-    operator!=(TaggedString<Tag2> const& a, U const& b) noexcept
+    template<class U>
+    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
+    operator !=(TaggedString const& a, U const& b) noexcept
     {
         return a.sv() != b.sv();
     }
-
-    std::string_view av;
 };
 
-template<std::size_t N, class Tag>
-struct StringArray
+template<class Tag>
+using TaggedStringView = TaggedString<Tag, std::string_view>;
+
+template<class Tag, std::size_t N>
+struct TaggedStringArray : TaggedString<Tag, detail::StringAsArray<N>>
 {
-    constexpr std::string_view sv() const noexcept
-    {
-        return std::string_view(_buffer.data(), _len);
-    }
-
-    constexpr TaggedString<Tag> tagged_sv() const noexcept
-    {
-        return TaggedString<Tag>{sv()};
-    }
-
-    constexpr operator TaggedString<Tag> () const noexcept
-    {
-        return TaggedString<Tag>{sv()};
-    }
-
-    template<class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
-    operator==(StringArray<N, Tag> const& a, U const& b) noexcept
-    {
-        return a.sv() == b.sv();
-    }
-
-    template<class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
-    operator!=(StringArray<N, Tag> const& a, U const& b) noexcept
-    {
-        return a.sv() != b.sv();
-    }
-
-private:
-    friend detail::StringArrayAccess;
-    std::array<char, N> _buffer;
-    std::size_t _len = 0;
 };
 
-template<std::size_t N, class Tag>
-struct ZStringArray
+// C++20: merged c_str() / zsv() into TaggedString
+template<class Tag, std::size_t N>
+struct TaggedZStringArray : TaggedString<Tag, static_string<N>>
 {
     constexpr char const* c_str() const noexcept
     {
-        return _buffer;
-    }
-
-    constexpr std::string_view sv() const noexcept
-    {
-        return std::string_view(_buffer.data(), _len);
-    }
-
-    constexpr TaggedString<Tag> tagged_sv() const noexcept
-    {
-        return TaggedString<Tag>{sv()};
-    }
-
-    constexpr operator TaggedString<Tag> () const noexcept
-    {
-        return TaggedString<Tag>{sv()};
+        return this->str.c_str();
     }
 
     constexpr zstring_view zsv() const noexcept
     {
-        return zstring_view::from_null_terminated(_buffer.data(), _len);
+        return zstring_view(this->str);
     }
-
-    template<class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
-    operator==(ZStringArray<N, Tag> const& a, U const& b) noexcept
-    {
-        return a.sv() == b.sv();
-    }
-
-    template<class U>
-    friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
-    operator!=(ZStringArray<N, Tag> const& a, U const& b) noexcept
-    {
-        return a.sv() != b.sv();
-    }
-
-private:
-    friend detail::StringArrayAccess;
-    std::array<char, N+1> _buffer;
-    std::size_t _len = 0;
 };
 
-namespace detail
-{
-    template<std::size_t N, class Tag>
-    struct extract_string_tag<StringArray<N, Tag>>
-    {
-        using type = Tag;
-    };
-
-    template<std::size_t N, class Tag>
-    struct extract_string_tag<ZStringArray<N, Tag>>
-    {
-        using type = Tag;
-    };
-
-    template<class Tag>
-    struct extract_string_tag<TaggedString<Tag>>
-    {
-        using type = Tag;
-    };
-}
-
+template<class Tag, std::size_t N>
+struct is_null_terminated<TaggedZStringArray<Tag, N>>
+: std::true_type
+{};
 
 namespace detail
 {
+    template<class Tag, std::size_t N>
+    struct extract_string_tag<TaggedStringArray<Tag, N>>
+    {
+        using type = Tag;
+    };
+
+    template<class Tag, std::size_t N>
+    struct extract_string_tag<TaggedZStringArray<Tag, N>>
+    {
+        using type = Tag;
+    };
+
+    template<class Tag, class String>
+    struct extract_string_tag<TaggedString<Tag, String>>
+    {
+        using type = Tag;
+    };
+
+
     constexpr inline std::size_t unsafe_ascii_to_upper(char* dest, chars_view src) noexcept
     {
         auto* start = dest;
@@ -219,48 +225,33 @@ namespace detail
         }
         return std::size_t(dest - start);
     }
-
-    struct StringArrayAccess
-    {
-        template<class SA>
-        constexpr static std::size_t& len(SA& sa) noexcept
-        {
-            return sa._len;
-        }
-
-        template<class SA>
-        constexpr static auto& buffer(SA& sa) noexcept
-        {
-            return sa._buffer;
-        }
-    };
-} // anonymous namespace
+} // namespace detail
 
 
 class UpperTag {};
 // class LowerTag {};
 
 template<std::size_t N>
-constexpr StringArray<N, UpperTag> ascii_to_limited_upper(chars_view str) noexcept
+constexpr TaggedStringArray<UpperTag, N> ascii_to_limited_upper(chars_view str) noexcept
 {
-    StringArray<N, UpperTag> upper;
+    TaggedStringArray<UpperTag, N> upper;
     if (str.size() <= N) {
-        auto* p = detail::StringArrayAccess::buffer(upper).data();
-        detail::StringArrayAccess::len(upper) = detail::unsafe_ascii_to_upper(p, str);
+        auto& array = detail::StringAsArrayAccess::internal(upper.str);
+        auto* p = array.buffer.data();
+        array.len = detail::unsafe_ascii_to_upper(p, str);
     }
     return upper;
 }
 
 template<std::size_t N>
-constexpr ZStringArray<N, UpperTag> ascii_to_limited_zupper(chars_view str) noexcept
+constexpr TaggedZStringArray<UpperTag, N> ascii_to_limited_zupper(chars_view str) noexcept
 {
-    ZStringArray<N, UpperTag> upper;
-    auto* p = detail::StringArrayAccess::buffer(upper).data();
-    auto& len = detail::StringArrayAccess::len(upper);
+    TaggedZStringArray<UpperTag, N> upper;
     if (str.size() <= N) {
-         len = detail::unsafe_ascii_to_upper(p, str);
+        upper.str.delayed_build([str](auto& array){
+            return detail::unsafe_ascii_to_upper(array.data(), str);
+        });
     }
-    p[len] = '\0';
     return upper;
 }
 
@@ -268,13 +259,13 @@ REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
 template<class C, C... cs>
-constexpr TaggedString<UpperTag> operator "" _ascii_upper() noexcept
+constexpr TaggedStringView<UpperTag> operator "" _ascii_upper() noexcept
 {
     return {jln::string_c<ascii_to_upper(cs)...>::sv()};
 }
 REDEMPTION_DIAGNOSTIC_POP()
 
-inline bool insensitive_eq(chars_view sv, TaggedString<UpperTag> upper)
+inline bool insensitive_eq(chars_view sv, TaggedStringView<UpperTag> upper)
 {
     if (sv.size() != upper.sv().size()) {
         return false;
