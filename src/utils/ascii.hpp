@@ -286,4 +286,4 @@ inline bool insensitive_eq(chars_view sv, TaggedString<UpperTag> upper)
         }
     }
     return true;
-};
+}

@@ -615,23 +615,23 @@ public:
                     uint32_t options = 0;
 
                     options |= this->sespro_params.ignore_ui_less_processes_during_end_of_session_check
-                        ? OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK
+                        ? uint32_t(OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK)
                         : uint32_t();
 
                     options |= this->sespro_params.update_disabled_features
-                        ? OPTION_UPDATE_DISABLED_FEATURES
+                        ? uint32_t(OPTION_UPDATE_DISABLED_FEATURES)
                         : uint32_t();
 
                     options |= this->sespro_params.launch_application_driver_then_terminate
-                        ? OPTION_LAUNCH_APPLICATION_THEN_TERMINATE
+                        ? uint32_t(OPTION_LAUNCH_APPLICATION_THEN_TERMINATE)
                         : uint32_t();
 
                     options |= this->sespro_params.enable_self_cleaner
-                        ? OPTION_ENABLE_SELF_CLEANER
+                        ? uint32_t(OPTION_ENABLE_SELF_CLEANER)
                         : uint32_t();
 
                     options |= this->param_disconnect_session_instead_of_logoff_session
-                        ? OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION
+                        ? uint32_t(OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION)
                         : uint32_t();
 
                     if (options)

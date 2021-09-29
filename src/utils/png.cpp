@@ -45,9 +45,9 @@ namespace
         png_info * pinfo = nullptr;
 
         PngWriteStruct()
+            : ppng(png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr))
+            , pinfo(png_create_info_struct(ppng))
         {
-            ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-            pinfo = png_create_info_struct(ppng);
         }
 
         ~PngWriteStruct()
@@ -62,9 +62,9 @@ namespace
         png_info * pinfo = nullptr;
 
         PngReadStruct()
+            : ppng(png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr))
+            , pinfo(png_create_info_struct(ppng))
         {
-            ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-            pinfo = png_create_info_struct(ppng);
         }
 
         ~PngReadStruct()

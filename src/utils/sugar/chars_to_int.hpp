@@ -455,6 +455,11 @@ inline constexpr unsigned char hex_digit_table[] = {
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255
 };
 
+constexpr unsigned char hexadecimal_char_to_int(unsigned char c) noexcept
+{
+    return hex_digit_table[c];
+}
+
 constexpr unsigned char hexadecimal_char_to_int(char c) noexcept
 {
     return hex_digit_table[static_cast<unsigned char>(c)];

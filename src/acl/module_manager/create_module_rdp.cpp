@@ -103,9 +103,7 @@ struct RdpData
                 size_t r = FileTransport::do_partial_read(buffer, len);
                 if (r == 0) {
                     LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
-                    Error error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-                    this->notify_error(error);
-                    throw error;
+                    this->throw_error(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
                 }
                 return r;
             }

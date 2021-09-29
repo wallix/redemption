@@ -27,9 +27,7 @@ void FileTransport::seek(int64_t offset, int whence)
 {
     if (lseek64(this->file.fd(), offset, whence) == static_cast<off_t>(-1)) {
         LOG(LOG_ERR, "FileTransport::seek: Failed to reposition file offset!");
-        Error error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        this->notify_error(error);
-        throw error;
+        this->throw_error(Error(ERR_TRANSPORT_SEEK_FAILED, errno));
     }
 }
 
@@ -42,9 +40,7 @@ void FileTransport::do_send(const uint8_t * data, size_t len)
             if (errno == EINTR) {
                 continue;
             }
-            Error error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            this->notify_error(error);
-            throw error;
+            this->throw_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
         }
         total_sent += ret;
     }
@@ -62,17 +58,14 @@ Transport::Read FileTransport::do_atomic_read(uint8_t * buffer, size_t len)
             if (res != 0 && errno == EINTR){
                 continue;
             }
-            Error error(ERR_TRANSPORT_READ_FAILED, res);
-            this->notify_error(error);
-            throw error;
+            this->throw_error(Error(ERR_TRANSPORT_READ_FAILED, res));
         }
         remaining_len -= res;
     }
     if (remaining_len != 0){
         LOG(LOG_ERR, "FileTransport::do_atomic_read: No more data to read!");
         Error error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        this->notify_error(error);
-        throw error;
+        this->throw_error(error);
     }
     return Read::Ok;
 }
@@ -89,15 +82,14 @@ size_t FileTransport::do_partial_read(uint8_t * buffer, size_t len)
     } while (res == 0 && errno == EINTR);
 
     if (res < 0) {
-        Error error(ERR_TRANSPORT_READ_FAILED, errno);
-        this->notify_error(error);
-        throw error;
+        this->throw_error(Error(ERR_TRANSPORT_READ_FAILED, errno));
     }
 
     return static_cast<size_t>(res);
 }
 
-void FileTransport::notify_error(const Error & error)
+void FileTransport::throw_error(const Error & error)
 {
     this->_notify_error(error);
+    throw Error(error);
 }

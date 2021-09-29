@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestIntToDecimalChars)
     RED_CHECK(int_to_decimal_zchars(-2147483647 - 1) == "-2147483648"_av);
     RED_CHECK(int_to_decimal_zchars(9223372036854775807) == "9223372036854775807"_av);
     RED_CHECK(int_to_decimal_zchars(-9223372036854775807) == "-9223372036854775807"_av);
-    RED_CHECK(int_to_decimal_zchars(-9223372036854775807ll - 1) == "-9223372036854775808"_av);
+    RED_CHECK(int_to_decimal_zchars(-9223372036854775807LL - 1) == "-9223372036854775808"_av);
     RED_CHECK(int_to_decimal_zchars(18446744073709551615ull) == "18446744073709551615"_av);
 
     auto d = int_to_decimal_zchars(18446744073709551615ull);

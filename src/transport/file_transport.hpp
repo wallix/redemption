@@ -66,7 +66,7 @@ protected:
     Read do_atomic_read(uint8_t * buffer, size_t len) override;
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
-    void notify_error(const Error & error);
+    [[noreturn]] void throw_error(const Error & error);
 
 private:
     unique_fd file;

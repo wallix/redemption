@@ -39,8 +39,8 @@ namespace ut
         dump = 'd',
     };
 
-    extern PatternView default_pattern_view;
-    extern unsigned default_ascii_min_len;
+    extern PatternView default_pattern_view; /*NOLINT*/
+    extern unsigned default_ascii_min_len; /*NOLINT*/
 
     struct flagged_bytes_view
     {

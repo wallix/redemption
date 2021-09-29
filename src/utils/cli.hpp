@@ -552,7 +552,7 @@ namespace detail
         }
         return Res::BadFormat;
     }
-}
+} // namespace detail
 
 namespace arg_parsers
 {

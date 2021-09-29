@@ -60,8 +60,6 @@ struct ParseServerMessage
                 parameters_[parameters_size_] = param.as<std::string_view>();
                 ++parameters_size_;
             }
-
-            return true;
         }
         else {
             order_ = msg.to_sv();

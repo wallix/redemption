@@ -27,12 +27,12 @@ struct SessionUpdateBuffer::Event::Access
 {
     static KVLog* kv_logs(SessionUpdateBuffer::Event* ev)
     {
-        return reinterpret_cast<KVLog*>(ptr_kv_logs(ev));
+        return reinterpret_cast<KVLog*>(ptr_kv_logs(ev)); /*NOLINT*/
     }
 
     static int* string_sizes(SessionUpdateBuffer::Event* ev)
     {
-        return reinterpret_cast<int*>(ptr_sizes(ev));
+        return reinterpret_cast<int*>(ptr_sizes(ev)); /*NOLINT*/
     }
 
     static char* keys_values(SessionUpdateBuffer::Event* ev)
@@ -43,7 +43,7 @@ struct SessionUpdateBuffer::Event::Access
 private:
     static char* ptr_kv_logs(SessionUpdateBuffer::Event* ev)
     {
-        return reinterpret_cast<char*>(ev) + sizeof(*ev) + sizeof(Event) % sizeof(KVLog);
+        return reinterpret_cast<char*>(ev) + sizeof(*ev) + sizeof(Event) % sizeof(KVLog); /*NOLINT*/
     }
 
     static char* ptr_sizes(SessionUpdateBuffer::Event* ev)

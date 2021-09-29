@@ -170,15 +170,13 @@ namespace
         , tile(Rect(this->r.x, this->r.y,
             std::min<size_t>(this->r.cx, 16),
             std::min<size_t>(this->r.cy, 16)))
-        , cx_remain{0}
-        , cy_remain{0}
+        // remaining part of rect to draw, including current tile
+        , cx_remain{this->r.cx}
+        , cy_remain{this->r.cy}
         , fgPixel{0}
         , bgPixel{0}
         , verbose(verbose)
         {
-            // remaining part of rect to draw, including current tile
-            this->cx_remain = this->r.cx;
-            this->cy_remain = this->r.cy;
         }
 
         // return is EncoderState::Exit if the Encoder has finished working (can be reset or deleted),

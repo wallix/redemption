@@ -19,46 +19,27 @@ Author(s): Proxies Team
 */
 
 #include "utils/hexadecimal_string_to_buffer.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 
-#include <array>
 #include <cassert>
 
-namespace
-{
-    inline constexpr unsigned char hex_error_mask = 0xffu;
-
-    inline constexpr auto hex_to_u8_table = []{
-        using u8 = unsigned char;
-        std::array<u8, 256> a {};
-        for (u8& i : a)
-            i = hex_error_mask;
-        for (std::size_t i = '0' ; i <= '9'; ++i)
-            a[i] = u8(i - '0');
-        for (std::size_t i = 'a' ; i <= 'f'; ++i)
-            a[i] = u8(i - 'a' + 10);
-        for (std::size_t i = 'A' ; i <= 'F'; ++i)
-            a[i] = u8(i - 'A' + 10);
-        return a;
-    }();
-} // namespace anonymous
-
-bool hexadecimal_string_to_buffer(chars_view in, writable_bytes_view out)
+bool hexadecimal_string_to_buffer(chars_view in, writable_bytes_view out) noexcept
 {
     assert(in.size() <= out.size() * 2);
     assert(in.size() % 2 == 0);
 
-    int err = 0;
+    unsigned err = 0;
     uint8_t const* p = bytes_view{in}.data();
     for (uint8_t& outc : out) {
-        unsigned c1 = hex_to_u8_table[*p++];
-        unsigned c2 = hex_to_u8_table[*p++];
+        uint8_t c1 = detail::hexadecimal_char_to_int(*p++);
+        uint8_t c2 = detail::hexadecimal_char_to_int(*p++);
         err |= c1 | c2;
         outc = uint8_t((c1 << 4) | c2);
     }
     return err != 0xff;
 }
 
-bool hexadecimal_string_to_buffer(chars_view in, uint8_t* out)
+bool hexadecimal_string_to_buffer(chars_view in, uint8_t* out) noexcept
 {
     return hexadecimal_string_to_buffer(in, {out, in.size() / 2});
 }

@@ -76,7 +76,7 @@ namespace detail
         //     return splitter->empty();
         // }
 
-        bool operator==(split_view_iterator const & other) const
+        bool operator==([[maybe_unused]] split_view_iterator const & other) const
         {
             assert(!other.splitter && splitter);
             return !has_value;

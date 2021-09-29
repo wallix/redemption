@@ -24,5 +24,5 @@ Author(s): Proxies Team
 
 /// \post in.size() <= out.size() * 2
 /// \post in.size() % 2 == 0
-bool hexadecimal_string_to_buffer(chars_view in, writable_bytes_view out);
-bool hexadecimal_string_to_buffer(chars_view in, uint8_t* out);
+bool hexadecimal_string_to_buffer(chars_view in, writable_bytes_view out) noexcept;
+bool hexadecimal_string_to_buffer(chars_view in, uint8_t* out) noexcept;

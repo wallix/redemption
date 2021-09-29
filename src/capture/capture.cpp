@@ -727,8 +727,9 @@ struct PngCaptureData
 
     void visibility_rects_event(Rect rect)
     {
-        if (rect.isempty())
+        if (rect.isempty()) {
             return;
+        }
 
         rect = rect.intersect(this->drawable.width(), this->drawable.height());
 
@@ -883,8 +884,9 @@ public:
 
     void visibility_rects_event(Rect rect)
     {
-        if (this->smart_video_cropping == SmartVideoCropping::disable)
+        if (this->smart_video_cropping == SmartVideoCropping::disable) {
             return;
+        }
 
         this->png_data.visibility_rects_event(rect);
     }

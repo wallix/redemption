@@ -223,7 +223,7 @@ namespace
             mask
         );
     }
-} // namespace anonymous
+} // anonymous namespace
 
 RdpPointerView pointer_loader_new(BitsPerPixel data_bpp, InStream& stream)
 {
@@ -651,7 +651,7 @@ constexpr auto system_normal_pointer_v = predefined_pointer(32, 32,
     , 10, 10
 );
 
-} // namespace anonymous
+} // anonymous namespace
 
 RdpPointer const& normal_pointer() noexcept { return normal_pointer_v; }
 RdpPointer const& edit_pointer() noexcept { return edit_pointer_v; }

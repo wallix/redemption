@@ -102,7 +102,7 @@ namespace
 
         char operator()(char c) const
         {
-            return table[int(c)];
+            return table[static_cast<unsigned char>(c)];
         }
 
         char table[256] {};
