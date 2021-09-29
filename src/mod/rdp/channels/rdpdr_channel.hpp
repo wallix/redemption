@@ -2182,8 +2182,9 @@ public:
 
         bool access_ok = true;
 
-        if (this->device_redirection_manager.is_known_device(
-                this->server_device_io_request.DeviceId())) {
+        if (this->device_redirection_manager.get_device_type(
+                this->server_device_io_request.DeviceId()) ==
+            rdpdr::RDPDR_DTYP_FILESYSTEM) {
             // Is a File system device.
             const uint32_t DesiredAccess =
                 device_create_request.DesiredAccess();
@@ -2205,6 +2206,11 @@ public:
 
         if (!access_ok)
         {
+            LOG(LOG_INFO,
+                "FileSystemVirtualChannel::process_server_create_drive_request:"
+                    "Access is rejected by the RDP Proxy according the "
+                        "Proxy Options enabled for this connection.");
+
             StaticOutStream<1024> out_stream;
 
             const rdpdr::SharedHeader clent_message_header(
