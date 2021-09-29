@@ -28,6 +28,7 @@
 #include "utils/sugar/split.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/flags.hpp"
+#include "utils/ascii.hpp"
 
 
 namespace
@@ -120,38 +121,18 @@ namespace
         return ret;
     }();
 
-    struct ascii_lower_convertor
-    {
-        constexpr ascii_lower_convertor()
-        {
-            for (std::size_t i = 0; i < std::size(table); ++i) {
-                table[i] = char(i);
-            }
-            for (int i = 'A'; i < 'Z'; ++i) {
-                table[i] = char(i - 'A' + 'a');
-            }
-        }
-
-        char operator()(char c) const
-        {
-            return table[static_cast<unsigned char>(c)];
-        }
-
-        char table[256] {};
-    };
-
-    constexpr ascii_lower_convertor to_ascii_lower {};
-
     kbdtypes::KeyCode str_to_key_code(KeyLayout::KbdId keyboardLayout, chars_view str)
     {
         uint16_t final_key_u16;
         writable_bytes_view final_key_u16_as_u8{reinterpret_cast<uint8_t*>(&final_key_u16), sizeof(final_key_u16)};
 
+        // is ascii
         if (str.size() == 1 && str[0] < 127) {
-            final_key_u16 = static_cast<uint8_t>(to_ascii_lower(str[0]));
+            final_key_u16 = static_cast<uint8_t>(ascii_to_lower(str[0]));
         }
+        // TODO use UTF8toUnicodeIterator and UTF32ToUTF16(UTF32Tolower(uint32_t))
         else if (const std::size_t n = UTF8toUTF16(str, final_key_u16_as_u8); n == 2) {
-            UTF16Lower(final_key_u16_as_u8.data(), n);
+            UTF16Lower(final_key_u16_as_u8.data(), 2);
         }
         else {
             LOG(LOG_ERR, "KeyboardShortcutBlocker::Shortcut::Shortcut(): Failed to convert UTF-8 string to UTF-16 string!");
@@ -255,16 +236,9 @@ void KeyboardShortcutBlocker::add_shortcut(KeyLayout::KbdId keyboardLayout, char
             break;
         }
 
-        // convert to lower case
-        char buff[max_name_size];
-        char *p = buff;
-        for (char c : trimmed) {
-            *p = to_ascii_lower(c);
-            ++p;
-        }
-        std::string_view mod_name{buff, std::size_t(p - buff)};
+        auto mod_name = ascii_to_limited_lower<max_name_size>(trimmed);
 
-        auto mod = find_mod(mod_name);
+        auto mod = find_mod(mod_name.sv());
         if (mod != ModFlags()) {
             mods |= mod;
             continue;
@@ -272,7 +246,7 @@ void KeyboardShortcutBlocker::add_shortcut(KeyLayout::KbdId keyboardLayout, char
 
         kbdtypes::KeyCode keycode = [&]() {
             for (KeyNameAndKeyCode const& key : key_name_and_codes) {
-                if (mod_name == key.name) {
+                if (mod_name.sv() == key.name) {
                     return key.code;
                 }
             }
