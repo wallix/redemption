@@ -2396,6 +2396,8 @@ test-run tests/keyboard/test_keymap :
 test-run tests/keyboard/test_keymapsym :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymapsym.cpp
 :
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
 ;
 test-run tests/lib/test_do_recorder :
@@ -4060,6 +4062,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
   <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
   <library>src/keyboard/scancode/unicode_to_scancode.o

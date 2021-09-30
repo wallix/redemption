@@ -45,6 +45,7 @@
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
 #include "gdi/osd_api.hpp"
+#include "keyboard/keylayouts.hpp"
 
 #include <iostream>
 #include <string>
@@ -242,11 +243,11 @@ int main(int argc, char** argv)
               , front
               , 800
               , 600
-              , KeyLayout::KbdId(0x040C)
-              , kbdtypes::KeyLocks::NoLocks
               , true          /* clipboard */
               , true          /* clipboard */
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+              , *find_layout_by_id(KeyLayout::KbdId(0x040C))
+              , kbdtypes::KeyLocks::NoLocks
               , false
               , false          /*remove_server_alt_state_for_char*/
               , true           /* support Cursor Pseudo-Encoding */

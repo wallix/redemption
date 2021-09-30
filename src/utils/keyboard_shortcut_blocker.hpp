@@ -25,6 +25,7 @@
 #include <cstdint>
 
 #include "keyboard/kbdtypes.hpp"
+#include "keyboard/key_mod_flags.hpp"
 #include "keyboard/keylayout.hpp"
 #include "utils/sugar/array_view.hpp"
 

@@ -59,7 +59,7 @@ class VNCMetrics;
 class ClientExecute;
 
 // got extracts of VNC documentation from
-// http://tigervnc.sourceforge.net/cgi-bin/rfbproto
+// https://github.com/rfbproto/rfbproto
 
 
 class mod_vnc final : public mod_api
@@ -178,7 +178,7 @@ private:
     uint16_t height;
     BitsPerPixel bpp {};
     // TODO BytesPerPixel ?
-    uint8_t  depth = 0;
+    uint8_t depth = 0;
 
     uint8_t endianess;
     uint8_t true_color_flag;
@@ -191,12 +191,9 @@ private:
     uint8_t green_shift;
     uint8_t blue_shift;
 
-public:
     VNCVerbose verbose;
 
-
-private:
-    KeymapSym  keymapSym;
+    KeymapSym keymapSym;
 
     StaticOutStream<MAX_CLIPBOARD_DATA_SIZE> to_vnc_clipboard_data;
     uint32_t to_vnc_clipboard_data_size = 0;
@@ -309,13 +306,13 @@ public:
            // TODO: front width and front height should be provided through info
            , uint16_t front_width
            , uint16_t front_height
-           , KeyLayout::KbdId keylayout
-           , kbdtypes::KeyLocks key_locks
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
+           , KeyLayout const& layout
+           , kbdtypes::KeyLocks locks
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
@@ -783,10 +780,9 @@ public:
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    void send_keyevent(uint8_t down_flag, uint32_t key);
+    void send_keyevents(KeymapSym::Keys keys);
 
 private:
-    void input_keycode(KbdFlags flags, uint16_t scancode);
     void rdp_input_clip_data(bytes_view data);
 
 public:

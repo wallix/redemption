@@ -25,6 +25,9 @@
 
 #include "keyboard/keylayout.hpp"
 #include "keyboard/kbdtypes.hpp"
+#include "keyboard/key_mod_flags.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
+
 
 struct Keymap
 {
@@ -89,6 +92,11 @@ struct Keymap
     DecodedKeys last_decoded_keys() const noexcept
     {
         return _decoded_key;
+    }
+
+    KeyLayout::DKeyTable current_dkeys_table() const noexcept
+    {
+        return _dkeys;
     }
 
     KEvent last_kevent() const noexcept;

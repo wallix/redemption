@@ -86,13 +86,13 @@ mod_vnc::mod_vnc( Transport & t
            // TODO: front width and front height should be provided through info
            , uint16_t front_width
            , uint16_t front_height
-           , KeyLayout::KbdId keylayout
-           , kbdtypes::KeyLocks key_locks
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
+           , KeyLayout const& layout
+           , kbdtypes::KeyLocks locks
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
@@ -107,8 +107,11 @@ mod_vnc::mod_vnc( Transport & t
     , dsmEncryption(false)
     , width(front_width)
     , height(front_height)
-    , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
-    , keymapSym(keylayout, key_locks, server_is_unix, server_is_macos, underlying_cast(verbose & VNCVerbose::keymap))
+    , verbose(verbose)
+    , keymapSym(layout, locks,
+                KeymapSym::IsApple(server_is_macos),
+                KeymapSym::IsUnix(server_is_unix),
+                bool(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
@@ -130,8 +133,6 @@ mod_vnc::mod_vnc( Transport & t
     , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
-
-    // TODO init layout sym with macos layout
 
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
@@ -327,81 +328,48 @@ void mod_vnc::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t eve
     (void)event_time;
     (void)keymap;
 
-    this->input_keycode(flags, uint16_t(scancode));
+    if (this->state != UP_AND_RUNNING) {
+        return;
+    }
+
+    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
+        "mod_vnc::rdp_input_scancode(device_flags=%u, keycode=%u)",
+        unsigned(flags), unsigned(scancode));
+
+    this->send_keyevents(this->keymapSym.scancode_to_keysyms(flags, scancode));
 }
 
-void mod_vnc::input_keycode(KbdFlags flags, uint16_t keycode)
+void mod_vnc::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     if (this->state != UP_AND_RUNNING) {
         return;
     }
 
-    // AltGr or Alt are catched by Mac OS
-
     LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-        "mod_vnc::rdp_input_scancode(device_flags=%u, keycode=%u)",
-        unsigned(flags), unsigned(keycode));
+        "mod_vnc::rdp_input_unicode(device_flag=%u, unicode16=%u)",
+        unsigned(flag), unsigned(unicode));
 
-    IF_ENABLE_METRICS(key_pressed());
-
-    keymapSym.event(flags, keycode);
-
-
-    //#define ORIGINAL_KEY 0x71   // 'a'
-    //static uint16_t option_key = ORIGINAL_KEY;
-
-    uint8_t downflag = 0;
-    while (uint32_t key = this->keymapSym.get_sym(downflag)){
-        LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-            "keyloop::key=%u (%x) %s param1=%u nbsym=%u",
-            key, key, downflag?"DOWN":"UP",
-            static_cast<unsigned>(keycode),
-            this->keymapSym.nb_sym_available());
-        //LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(): key=0x%X (1)", key);
-        //if (key == ORIGINAL_KEY) key = option_key;
-        //else if (key == 0xFFE3 && (device_flags & 0x8000)) option_key -= 1;
-        //else if (key == 0xFFE4 && (device_flags & 0x8000)) option_key += 1;
-        //LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(): key=0x%X (2) downflag=0x%X", key, downflag);
-        this->send_keyevent(downflag, key);
-    }
+    this->send_keyevents(this->keymapSym.utf16_to_keysyms(flag, unicode));
 }
 
-void mod_vnc::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
+void mod_vnc::send_keyevents(KeymapSym::Keys keys)
 {
-    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-           "mod_vnc::rdp_input_unicode(unicode=%d, flag=%u)",
-           unicode, unsigned(flag));
+    StaticOutStream<8 * KeymapSym::Keys::max_capacity> stream;
 
-    using namespace scancode;
+    for (auto key : keys) {
+        LOG_IF(bool(verbose & VNCVerbose::keymap_stack), LOG_INFO,
+            "keyloop::ksym=%u (0x%x) %s",
+            key.keysym, key.keysym, bool(key.down_flag == KeymapSym::VncDownFlag::Up) ? "UP" : "DOWN");
 
-    ScancodeSeq scancode_seq =
-        unicode_to_scancode(this->keymapSym.get_keylayout(), unicode);
-    array_view<Scancode16bits> scancodes =
-        scancode_seq.scancodes();
-
-    if (scancodes.empty())
-    {
-        LOG(LOG_ERR, "mod_vnc::rdp_input_unicode: No scancode sequence for unicode=%d", unicode);
-        return;
+        stream.out_uint8(4);
+        stream.out_uint8(underlying_cast(key.down_flag));
+        stream.out_clear_bytes(2);
+        stream.out_uint32_be(key.keysym);
     }
 
-    for (auto scancode : scancodes)
-    {
-        this->input_keycode(flag, scancode);
-    }
-}
-
-void mod_vnc::send_keyevent(uint8_t down_flag, uint32_t key) {
-    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-        "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
-    StaticOutStream<8> stream;
-    stream.out_uint8(4);
-    stream.out_uint8(down_flag); /* down/up flag */
-    stream.out_clear_bytes(2);
-    stream.out_uint32_be(key);
     this->t.send(stream.get_produced_bytes());
+    IF_ENABLE_METRICS(key_pressed());
     IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
-
 }
 
 void mod_vnc::rdp_input_clip_data(bytes_view data)
@@ -480,10 +448,11 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
 
 void mod_vnc::rdp_input_synchronize(KeyLocks locks)
 {
-    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+    (void)locks;
+    LOG_IF(bool(this->verbose & VNCVerbose::keymap), LOG_INFO,
         "KeymapSym::synchronize(param1=%04x",
         underlying_cast(locks));
-    this->keymapSym.synchronize(locks);
+    this->keymapSym.set_locks(locks);
 }
 
 void mod_vnc::update_screen(Rect r, uint8_t incr) {

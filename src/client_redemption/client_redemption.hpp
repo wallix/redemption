@@ -451,6 +451,7 @@ public:
             }
 
             case ClientRedemptionConfig::MOD_VNC:
+                auto* layout = find_layout_by_id(this->config.modVNCParamsData.keylayout);
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , *this
@@ -461,11 +462,11 @@ public:
                   , *this
                   , this->config.modVNCParamsData.width
                   , this->config.modVNCParamsData.height
-                  , this->config.modVNCParamsData.keylayout
-                  , kbdtypes::KeyLocks::NoLocks
                   , true
                   , true
                   , this->config.modVNCParamsData.vnc_encodings.c_str()
+                  , layout ? *layout : default_layout()
+                  , kbdtypes::KeyLocks::NoLocks
                   , this->config.modVNCParamsData.is_apple
                   , true                                    // alt server unix
                   , true                                    // support Cursor Pseudo-encoding

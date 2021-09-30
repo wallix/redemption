@@ -406,6 +406,7 @@ public:
             this->ini,
             this->front, this->client_info,
             this->rail_client_execute,
+            this->keymap.layout(),
             this->keymap.locks(),
             this->glyphs, this->theme,
             this->events,

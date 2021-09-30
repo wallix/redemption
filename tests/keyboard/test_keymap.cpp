@@ -19,7 +19,6 @@ Author(s): Proxies Team
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/compare_collection.hpp"
 
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
@@ -46,6 +45,7 @@ struct DecodedKeyAndKEvent
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 # include "utils/sugar/int_to_chars.hpp"
+# include "test_only/test_framework/compare_collection.hpp"
 
 namespace
 {
@@ -234,6 +234,14 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(release | 0x4b /*numpad4*/), values(KCode(0x4b), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x53 /*numpad.*/), values(KCode(0x53), KFlags(), {'.'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x53 /*numpad.*/), values(KCode(0x53), KFlags(0x8000), {}, KV::None));
+
+
+    // altgr+e = é
+    RED_CHECK_EQ(event(downnnn | 0x138 /*altgr*/), values(KCode(0x138), KFlags(0x100), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x12 /*e*/), values(KCode(0x12), KFlags(), {0x20AC}, KV::KeyDown));
+    RED_CHECK_EQ(event(release | 0x12 /*e*/), values(KCode(0x12), KFlags(0x8000), {}, KV::None));
+    RED_CHECK_EQ(event(release | 0x138 /*altgr*/), values(KCode(0x138), KFlags(0x8100), {}, KV::None));
+
 
     // shortcut for task manager
     // ctrl+alt+del

@@ -21,821 +21,591 @@
 */
 
 #include "keyboard/keymapsym.hpp"
+#include "keyboard/keylayout.hpp"
+#include "keyboard/keymap.hpp"
 #include "utils/log.hpp"
-#include <cstring>
-#include <cstdio>
-#include <stdlib.h>
 
-// using namespace std;
 
-KeymapSym::KeymapSym(KeyLayout::KbdId keylayout, kbdtypes::KeyLocks key_locks, bool is_unix, bool is_apple, uint32_t verbose)
-// Initial state of keys (at least lock keys) is copied from Keymap2
-: keys_down{}
-, key_flags(int(key_locks))
-, ibuf_sym(0)
-, nbuf_sym(0)
-, dead_key(DEADKEY_NONE)
-, is_unix(is_unix)
-, is_apple(is_apple)
-, verbose(verbose)
-, keylayout_WORK_noshift_sym{}
-, keylayout_WORK_shift_sym{}
-, keylayout_WORK_altgr_sym{}
-, keylayout_WORK_capslock_sym{}
-, keylayout_WORK_shiftcapslock_sym{}
+// see /usr/include/X11/keysymdef.h
+namespace
 {
-    if (is_apple) {
-        this->init_layout_sym(FICTITIOUS_MACOS_EN_US);
-    } else {
-        this->init_layout_sym(keylayout);
+
+inline uint32_t unicode_to_ksym(uint32_t uc) noexcept
+{
+    // is latin1 and visible
+    if (0x20 <= uc && uc <= 0xFF) {
+        return uc;
     }
+    // legacy (unicode) keysym
+    // if (0x0100 <= uc && uc <= 0x20ff) {
+    //     return uc;
+    // }
+    // unicode: 0x01000100 to 0x0110ffff
+    return uc | 0x01000000;
 }
 
-// TODO: synchronize is not called, we currently have a direct change of key_flags from vnc
-void KeymapSym::synchronize(kbdtypes::KeyLocks locks)
+inline uint32_t keycode_to_sym(kbdtypes::KeyCode keycode, kbdtypes::KeyModFlags mods) noexcept
 {
-    this->key_flags = int(locks);
-    // non sticky keys are forced to be UP
-    this->keys_down[LEFT_SHIFT] = 0;
-    this->keys_down[RIGHT_SHIFT] = 0;
-    this->keys_down[LEFT_CTRL] = 0;
-    this->keys_down[RIGHT_CTRL] = 0;
-    this->keys_down[LEFT_ALT] = 0;
-    this->keys_down[RIGHT_ALT] = 0;
-}
+    using kbdtypes::KeyCode;
+    using kbdtypes::KeyMod;
 
-const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
-{
-    // pick the LAYOUT to use (depending on current keyboard state)
-    //----------------------------------------
-    // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
-    if ((this->is_ctrl_pressed() && this->is_left_alt_pressed())
-    || (this->is_right_alt_pressed())) {
-        LOG_IF(this->verbose & 2, LOG_INFO, "Altgr Layout");
-        return &this->keylayout_WORK_altgr_sym;
-    }
-
-    if (this->is_shift_pressed() && this->is_caps_locked()){
-        LOG_IF(this->verbose & 2, LOG_INFO, "Shift Capslock Layout");
-        return &this->keylayout_WORK_shiftcapslock_sym;
-    }
-
-    if (this->is_shift_pressed()){
-        LOG_IF(this->verbose & 2, LOG_INFO, "Shift Layout");
-        return &this->keylayout_WORK_shift_sym;
-    }
-
-    if (this->is_caps_locked()) {
-        LOG_IF(this->verbose & 2, LOG_INFO, "Capslock Layout");
-        return &this->keylayout_WORK_capslock_sym;
-    }
-
-    LOG_IF(this->verbose & 2, LOG_INFO, "Plain Layout");
-    return &this->keylayout_WORK_noshift_sym;
-}
-
-// The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
-// 8.18.2). RDP keyboard input is restricted to keyboard scancodes, unlike the code-point or virtual
-// codes supported in T.128 (a scancode is an 8-bit value specifying a key location on the keyboard).
-// The server accepts a scancode value and translates it into the correct character depending on the
-// language locale and keyboard layout used in the session.
-
-// keyboardFlags (2 bytes): A 16-bit, unsigned integer. The flags describing the keyboard event.
-
-// +--------------------------+------------------------------------------------+
-// | 0x0100 KBDFLAGS_EXTENDED | The keystroke message contains an extended     |
-// |                          | scancode. For enhanced 101-key and 102-key     |
-// |                          | keyboards, extended keys include "he right     |
-// |                          | ALT and right CTRL keys on the main section    |
-// |                          | of the keyboard; the INS, DEL, HOME, END,      |
-// |                          | PAGE UP, PAGE DOWN and ARROW keys in the       |
-// |                          | clusters to the left of the numeric keypad;    |
-// |                          | and the Divide ("/") and ENTER keys in the     |
-// |                          | numeric keypad.                                |
-// +--------------------------+------------------------------------------------+
-// | 0x4000 KBDFLAGS_DOWN     | Indicates that the key was down prior to this  |
-// |                          | event.                                         |
-// +--------------------------+------------------------------------------------+
-// | 0x8000 KBDFLAGS_RELEASE  | The absence of this flag indicates a key-down  |
-// |                          | event, while its presence indicates a          |
-// |                          | key-release event.                             |
-// +--------------------------+------------------------------------------------+
-
-// keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
-// triggered the event.
-
-
-void KeymapSym::event(kbdtypes::KbdFlags flags, uint16_t keycode)
-{
-     LOG_IF(this->verbose & 2, LOG_INFO,
-        "KeymapSym::event(keyboardFlags=%04x (%s%s), keycode=%04x flags=%04x (%s %s %s %s %s %s %s))",
-        static_cast<unsigned>(flags),
-        bool(flags & kbdtypes::KbdFlags::Release) ? "UP" : "DOWN",
-        bool(flags & kbdtypes::KbdFlags::Extended) ? " EXT": "",
-        static_cast<unsigned>(keycode),
-        static_cast<unsigned>(this->key_flags),
-        (this->key_flags & SCROLLLOCK) ? "SCR " : "",
-        (this->key_flags & NUMLOCK) ? "NUM " : "",
-        (this->key_flags & CAPSLOCK) ? "CAPS " : "",
-        (this->key_flags & FLG_SHIFT) ? "SHIFT " : "",
-        (this->key_flags & FLG_ALT) ? "ALT " : "",
-        (this->key_flags & FLG_WINDOWS) ? "WIN " : "",
-        (this->key_flags & FLG_ALTGR) ? "ALTGR " : "");
-
-    if (this->is_apple) {
-        this->apple_keyboard_translation(flags, keycode);
-    } else {
-        this->key_event(flags, keycode);
-    }
-}
-
-void KeymapSym::remove_modifiers()
-{
-    if (!this->is_apple)
+    switch (keycode)
     {
-        // KS_Alt_L = 0xffe9,
-        if (this->is_left_alt_pressed()){
-            this->push_sym(KeySym(0xffe9, 0));
-        }
-        // KS_Alt_R = 0xffea,
-        if (this->is_right_alt_pressed()){
-            this->push_sym(KeySym(0xffea, 0));
-        }
-        // KS_Control_R = 0xffe4,
-        if (this->is_right_ctrl_pressed()){
-            this->push_sym(KeySym(0xffe4, 0));
-        }
-        // KS_Control_L = 0xffe3,
-        if (this->is_left_ctrl_pressed()){
-            this->push_sym(KeySym(0xffe3, 0));
-        }
-        // KS_Shift_L = 0xffe1,
-        if (this->is_left_shift_pressed()){
-            this->push_sym(KeySym(0xffe1, 0));
-        }
-        // KS_Shift_R = 0xffe2,
-        if (this->is_right_shift_pressed()){
-            this->push_sym(KeySym(0xffe2, 0));
-        }
-    }
-}
+        case KeyCode::Esc: return 0xff1b;
+        case KeyCode::F1: return 0xff91;
+        case KeyCode::F2: return 0xff92;
+        case KeyCode::F3: return 0xff93;
+        case KeyCode::F4: return 0xff94;
+        case KeyCode::F5: return 0xffc2;
+        case KeyCode::F6: return 0xffc3;
+        case KeyCode::F7: return 0xffc4;
+        case KeyCode::F8: return 0xffc5;
+        case KeyCode::F9: return 0xffc6;
+        case KeyCode::F10: return 0xffc7;
+        case KeyCode::F11: return 0xffc8;
+        case KeyCode::F12: return 0xffc9;
+        case KeyCode::F13: return 0xffca;
+        case KeyCode::F14: return 0xffcb;
+        case KeyCode::F15: return 0xffcc;
+        case KeyCode::F16: return 0xffcd;
+        case KeyCode::F17: return 0xffce;
+        case KeyCode::F18: return 0xffcf;
+        case KeyCode::F19: return 0xffd0;
+        case KeyCode::F20: return 0xffd1;
+        case KeyCode::F21: return 0xffd2;
+        case KeyCode::F22: return 0xffd3;
+        case KeyCode::F23: return 0xffd4;
+        case KeyCode::F24: return 0xffd5;
 
-void KeymapSym::putback_modifiers()
-{
-    if (!this->is_apple)
-    {
-        // KS_Alt_L = 0xffe9,
-        if (this->is_left_alt_pressed()){
-            this->push_sym(KeySym(0xffe9, 1));
-        }
-        // KS_Alt_R = 0xffea,
-        if (this->is_right_alt_pressed()){
-            this->push_sym(KeySym(0xffea, 1));
-        }
-        // KS_Control_R = 0xffe4,
-        if (this->is_right_ctrl_pressed()){
-            this->push_sym(KeySym(0xffe4, 1));
-        }
-        // KS_Control_L = 0xffe3,
-        if (this->is_left_ctrl_pressed()){
-            this->push_sym(KeySym(0xffe3, 1));
-        }
-        // KS_Shift_L = 0xffe1,
-        if (this->is_left_shift_pressed()){
-            this->push_sym(KeySym(0xffe1, 1));
-        }
-        // KS_Shift_R = 0xffe2,
-        if (this->is_right_shift_pressed()){
-            this->push_sym(KeySym(0xffe2, 1));
-        }
-    }
-}
+        case KeyCode::PrintScreen: return 0xfd1d;
+        case KeyCode::PauseFirstPart: return 0xff13;
 
+        case KeyCode::LCtrl: return 0xffe3;
+        case KeyCode::RCtrl: return 0xffe4;
+        case KeyCode::LShift: return 0xffe1;
+        case KeyCode::RShift: return 0xffe2;
+        case KeyCode::LAlt: return 0xffe9;
+        case KeyCode::RAlt: return 0xffea;
+        case KeyCode::LWin: return 0xffe7;
+        case KeyCode::RWin: return 0xffe8;
+        case KeyCode::ContextMenu: return 0xff67;
 
-void KeymapSym::key_event(kbdtypes::KbdFlags flags, uint16_t keycode) {
+        case KeyCode::CapsLock: return 0xffe5;
+        case KeyCode::ScrollLock: return 0xff14;
+        case KeyCode::NumLock: return 0xff7f;
 
-    KeySym ks = this->get_key(flags, keycode);
-    uint32_t key = ks.sym;
-    uint8_t downflag = ks.down;
+        case KeyCode::UpArrow: return 0xff52;
+        case KeyCode::LeftArrow: return 0xff51;
+        case KeyCode::RightArrow: return 0xff53;
+        case KeyCode::DownArrow: return 0xff54;
+        case KeyCode::Home: return 0xff50;
+        case KeyCode::End: return 0xff57;
+        case KeyCode::PgUp: return 0xff55;
+        case KeyCode::PgDown: return 0xff56;
+        case KeyCode::Insert: return 0xff63;
+        case KeyCode::Delete: return 0xffff;
+        case KeyCode::Enter: return 0xff0d;
+        case KeyCode::Tab: return 0xff09;
+        case KeyCode::Backspace: return 0xff08;
 
-    if (this->is_unix
-    && this->is_altgr_pressed()
-    && (key == 0x65))
-    {
-        this->remove_modifiers();
-        switch (key){
-        default:
-        case 0x65:
-            this->push_sym(KeySym(0x20AC, downflag));
+        case KeyCode::Paste: return 0x1008ff6d;
+        case KeyCode::Copy: return 0x1008ff57;
+        case KeyCode::Cut: return 0x1008ff58;
+
+        case KeyCode::AudioVolumeDown: return 0x1008ff11;
+        case KeyCode::AudioVolumeMute: return 0x1008ff12;
+        case KeyCode::AudioVolumeUp: return 0x1008ff13;
+        case KeyCode::MediaPlayPause: return 0x1008ff14;
+        case KeyCode::MediaStop: return 0x1008ff15;
+        case KeyCode::MediaTrackNext: return 0x1008FF17;
+        case KeyCode::MediaTrackPrevious: return 0x1008FF16;
+
+        case KeyCode::Undo: return 0xff65;
+        // case KeyCode::Redo: return 0xff66;
+
+        case KeyCode::Numpad7: return mods.test(KeyMod::NumLock) ? 0xffb7 : 0xff95;
+        case KeyCode::Numpad8: return mods.test(KeyMod::NumLock) ? 0xffb8 : 0xff97;
+        case KeyCode::Numpad9: return mods.test(KeyMod::NumLock) ? 0xffb9 : 0xff9a;
+        case KeyCode::Numpad4: return mods.test(KeyMod::NumLock) ? 0xffb4 : 0xff96;
+        case KeyCode::Numpad5: return mods.test(KeyMod::NumLock) ? 0xffb5 : 0xff9d;
+        case KeyCode::Numpad6: return mods.test(KeyMod::NumLock) ? 0xffb6 : 0xff98;
+        case KeyCode::Numpad1: return mods.test(KeyMod::NumLock) ? 0xffb1 : 0xff9c;
+        case KeyCode::Numpad2: return mods.test(KeyMod::NumLock) ? 0xffb2 : 0xff99;
+        case KeyCode::Numpad3: return mods.test(KeyMod::NumLock) ? 0xffb3 : 0xff9b;
+        case KeyCode::Numpad0: return mods.test(KeyMod::NumLock) ? 0xffb0 : 0xff9e;
+        case KeyCode::NumpadDecimal: return mods.test(KeyMod::NumLock) ? 0xffae : 0xff9f;
+        case KeyCode::NumpadDivide: return 0xffaf;
+        case KeyCode::NumpadMultiply: return 0xffaa;
+        case KeyCode::NumpadSubtract: return 0xffad;
+        case KeyCode::NumpadAdd: return 0xffab;
+        case KeyCode::NumpadEnter: return 0xff8d;
+
+        case KeyCode::Key_X:
+        case KeyCode::Key_C:
+        case KeyCode::Key_V:
+        case KeyCode::Space:
             break;
-        }
-        this->putback_modifiers();
-    }
-    else if (!this->is_unix
-    && this->is_altgr_pressed()
-    && (key == 0x65))
-    {
-        if (downflag == 1){
-            this->remove_modifiers();
-            switch (key){
-            default:
-                break;
-            case 0x65:
-                if (!this->is_apple)
-                {
-                    this->push_sym(KeySym(0xffe3, 1));
-                    this->push_sym(KeySym(0xffe9, 1));
-                }
-                this->push_sym(KeySym(0x65, downflag));
-                if (!this->is_apple)
-                {
-                    this->push_sym(KeySym(0xffe3, 0));
-                    this->push_sym(KeySym(0xffe9, 0));
-                }
-                break;
-            }
-            this->putback_modifiers();
-        }
-    }
-    else
-    if (this->is_altgr_pressed()
-    // this is plain ascii: trust our decoder
-    && (key >= 0x20 && key <= 0x7e)){
-        this->remove_modifiers();
-        this->push_sym(KeySym(key, downflag));
-        this->putback_modifiers();
-    }
-    else {
-        this->push_sym(KeySym(key, downflag));
-    }
-}
-
-void KeymapSym::apple_keyboard_translation(kbdtypes::KbdFlags flags, uint16_t keycode) {
-
-    uint8_t downflag = !bool(flags & kbdtypes::KbdFlags::Release);
-
-    switch (this->keylayout) {
-        case FICTITIOUS_MACOS_EN_US:                    // United States - macOS
-            switch (keycode) {
-
-                case 0x56:
-                    if (this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0x7e, downflag)); /* > */
-                    } else {
-                        this->push_sym(KeySym(0x60, downflag)); /* < */
-                    }
-                    break;
-
-                default:
-                    this->key_event(flags, keycode);
-                    break;
-            }
-            break;
-
-/*
-        case 0x040c:                                    // French
-            switch (keycode) {
-
-                case 0x0b:
-                    if (this->is_alt_pressed()) {
-                        this->push_sym(KeySym(0xffe9, 0));
-                        this->push_sym(KeySym(0xa4, downflag)); // @
-                        this->push_sym(KeySym(0xffe9, 1));
-                    } else {
-                        this->key_event(flags, keycode);
-                    }
-                    break;
-
-                case 0x04:
-                    if (this->is_alt_pressed()) {
-                        this->push_sym(KeySym(0xffe9, 0));
-                        this->push_sym(KeySym(0xffe2, 1));
-                        this->push_sym(KeySym(0xa4, downflag)); // #
-                        this->push_sym(KeySym(0xffe2, 0));
-                        this->push_sym(KeySym(0xffe9, 1));
-                    } else {
-                        this->key_event(flags, keycode);
-                    }
-                    break;
-
-                case 0x35:
-                    if (this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0xffe2, 0));
-                        this->push_sym(KeySym(0x36, downflag)); // §
-                        this->push_sym(KeySym(0xffe2, 1));
-                    } else {
-                        if (bool(flags & kbdtypes::KbdFlags::Extended)) {
-                            this->push_sym(KeySym(0xffe2, 1));
-                            this->push_sym(KeySym(0x3e, downflag)); // /
-                            this->push_sym(KeySym(0xffe2, 0));
-                        } else {
-                            this->push_sym(KeySym(0x38, downflag)); // !
-                        }
-                    }
-                    break;
-
-                case 0x07: // -
-                    if (!this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0xffe2, 1));
-                        this->push_sym(KeySym(0x3d, downflag));
-                        this->push_sym(KeySym(0xffe2, 0));
-                    } else {
-                        this->key_event(flags, keycode);
-                    }
-                    break;
-
-                case 0x2b: // *
-                    this->push_sym(KeySym(0xffe2, 1));
-                    this->push_sym(KeySym(0x2a, downflag));
-                    this->push_sym(KeySym(0xffe2, 0));
-                    break;
-
-                case 0x1b: // £
-                    if (this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0x5c, downflag));
-                    } else {
-                        this->key_event(flags, keycode);
-                    }
-                    break;
-
-                case 0x09: // _
-                    if (!this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0xffe2, 1));
-                        this->push_sym(KeySym(0xad, downflag));
-                        this->push_sym(KeySym(0xffe2, 0));
-                    } else {
-                        this->push_sym(KeySym(0x38, downflag)); // 8
-                    }
-                    break;
-
-                case 0x56:
-                    if (this->is_shift_pressed()) {
-                        this->push_sym(KeySym(0x7e, downflag)); // >
-                    } else {
-                        this->push_sym(KeySym(0xffe2, 1));
-                        this->push_sym(KeySym(0x60, downflag)); // <
-                        this->push_sym(KeySym(0xffe2, 0));
-                    }
-                    break;
-
-                case 0x0d: // =
-                    this->push_sym(KeySym(0x2f, downflag));
-                    break;
-
-                default:
-                    this->key_event(flags, keycode);
-                    break;
-            }
-            break;
-*/
-
-        // Note: specialize and treat special case if need arise.
-        // (like french keyboard above)
-        // -----------------------------------------------------------------
-
-//            case 0x100c: // French Swizerland
-//            case 0x0813: // Dutch Belgium
-//            case 0x080c: // French Belgium
-//            case 0x0809: // English UK
-//            case 0x0807: // German Swizerland
-//            case 0x046e: // Luxemburgish
-//            case 0x041d: // Swedish
-//            case 0x0419: // Russian
-//            case 0x0410: // Italian
-//            case 0x0409: // United States
-//            case 0x0407: // GERMAN
-        default:
-           this->key_event(flags, keycode);
-           break;
-    }
-}
-
-
-KeymapSym::KeySym KeymapSym::get_key(kbdtypes::KbdFlags keyboardFlags, const uint16_t keyCode)
-{
-    enum {
-           SCROLLLOCK  = 0x01
-         , NUMLOCK     = 0x02
-         , CAPSLOCK    = 0x04
-         , FLG_SHIFT   = 0x08
-         , FLG_CTRL    = 0x10
-         , FLG_ALT     = 0x20
-         , FLG_WINDOWS = 0x40
-         , FLG_ALTGR   = 0x80
-    };
-
-    // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
-
-//    uint16_t keyboardFlags_pos = keyboardFlags;
-//    if (keyboardFlags_pos & KBDFLAGS_EXTENDED) {
-//        keyboardFlags_pos -=  KBDFLAGS_EXTENDED;
-//    }
-//    uint8_t extendedKeyCode = keyCode|((keyboardFlags_pos >> 1)&0x80);
-
-    // Commented code above is disabling all extended codes, putting them back
-    uint8_t extendedKeyCode = keyCode|((underlying_cast(keyboardFlags) >> 1)&0x80);
-
-
-    // TODO: see how it interacts with autorepeat
-    // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
-
-    if (bool(keyboardFlags & kbdtypes::KbdFlags::Release)){ // up or down and released
-       // Down and key released
-       this->keys_down[extendedKeyCode] = 0; // up
-    }
-    else {
-        this->keys_down[extendedKeyCode] = 1; // down
-    }
-    uint8_t downflag = this->keys_down[extendedKeyCode];
-
-    // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-    if (is_ctrl_pressed() && is_alt_pressed()
-    && ((extendedKeyCode == 0xCF)||(extendedKeyCode == 0x53))){
-    //    Delete                           65535     0xffff
-        extendedKeyCode = 0xD3;
-    }
-
-    switch (extendedKeyCode){
-    //----------------
-    // Lock keys
-    //----------------
-        // These keys are managed internally by proxy and never
-        // transmitted to target system
-        case 0x3A: // capslock
-            if (this->keys_down[extendedKeyCode]){
-                this->key_flags ^= CAPSLOCK;
-            }
-            return KeySym(0, downflag);
-        case 0x45: // numlock
-            if (this->keys_down[extendedKeyCode]){
-                this->key_flags ^= NUMLOCK;
-            }
-            return KeySym(0, downflag);
-        case 0x46: // scrolllock
-            if (this->keys_down[extendedKeyCode]){
-                this->key_flags ^= SCROLLLOCK;
-            }
-            return KeySym(0, downflag);
-
-    //--------------------------------------------------------
-    // KEYPAD : Keypad keys whose meaning depends on Numlock
-    //          are handled apart by the code below
-    //          47 48 49 4B 4C 4D 4F 50 51 52 53
-    //--------------------------------------------------------
-        /* KP_4 or KEYPAD LEFT ARROW */
-        case 0x4b: return KeySym((this->key_flags & NUMLOCK)?KS_KP_4:KS_Left, downflag);
-        /* KP_8 or kEYPAD UP ARROW */
-        case 0x48: return KeySym((this->key_flags & NUMLOCK)?KS_KP_8:KS_Up, downflag);
-        /* KP_6 or KEYPAD RIGHT ARROW */
-        case 0x4d: return KeySym((this->key_flags & NUMLOCK)?KS_KP_6:KS_Right, downflag);
-        /* KP_2 or KEYPAD DOWN ARROW */
-        case 0x50: return KeySym((this->key_flags & NUMLOCK)?KS_KP_2:KS_Down, downflag);
-        /* Kp_9 or KEYPAD PGUP */
-        case 0x49: return KeySym((this->key_flags & NUMLOCK)?KS_KP_9:KS_Prior, downflag);
-        /* KP_3 or kEYPAD PGDOWN */
-        case 0x51: return KeySym((this->key_flags & NUMLOCK)?KS_KP_3:KS_Next, downflag);
-        /* KP_1 or KEYPAD END */
-        case 0x4F: return KeySym((this->key_flags & NUMLOCK)?KS_KP_1:KS_End, downflag);
-        /* kEYPAD EMPTY 5 */
-        case 0x4c: return KeySym((this->key_flags & NUMLOCK)?KS_KP_5:0, downflag);
-        /* kEYPAD HOME */
-        case 0x47: return KeySym((this->key_flags & NUMLOCK)?KS_KP_7:KS_Home, downflag);
-        /* KP_0 or kEYPAD INSER */
-        case 0x52: return KeySym((this->key_flags & NUMLOCK)?/*'0'*/KS_KP_0:0xFF63, downflag);
-
-    //----------------
-    // All other keys
-    //----------------
-        default:
-        {
-            // This table translates the RDP scancodes to X11 scancodes :
-            //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
-            //  - the second block (128-255) give codes for the extended keys that have a meaningful one
-            // as in this code extended bit is cleared: it won't work
-
-            uint8_t map[256] =  {
-                0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x00 - 0x07
-                0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x08 - 0x0f
-                0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, // 0x10 - 0x17
-                0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, // 0x18 - 0x1f
-                0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, // 0x20 - 0x27
-                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, // 0x28 - 0x2f
-                0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, // 0x30 - 0x37
-                0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, // 0x38 - 0x3f
-                0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, // 0x40 - 0x47
-                0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, // 0x48 - 0x4f
-                0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, // 0x50 - 0x57
-                0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67, // 0x58 - 0x5f
-                0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, // 0x60 - 0x67
-                0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // 0x68 - 0x6f
-                0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, // 0x70 - 0x77
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x78 - 0x7f
-
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x80 - 0x87
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x88 - 0x8f
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x90 - 0x97
-                0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00, // 0x98 - 0x9f
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa0 - 0xa7
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa8 - 0xaf
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f, // 0xb0 - 0xb7
-                0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xb8 - 0xbf
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61, // 0xc0 - 0xc7
-                0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67, // 0xc8 - 0xcf
-                0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00, // 0xd0 - 0xd7
-                0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00, // 0xd8 - 0xdf
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe0 - 0xe7
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe8 - 0xef
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf0 - 0xf7
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
-            } ;
-
-            // Maps RDP Scancode to X11 code syms matrix
-            // -----------------------------------------
-            // The actual code to use will be looked-up in keyboard mapping tables
-
-// KEYBOARD MAP WITH RDP SCANCODES
-// -------------------------------
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +-----+----+-------+
-// | 01 |  | 3B | 3C | 3D | 3E |  | 3F | 40 | 41 | 42 |  | 43 | 44 | 57 | 58 |  | 37x | 46 | 1D+45 |
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +-----+----+-------+
-//                                     ***  keycodes suffixed by 'x' are extended ***
-// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
-// | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E   |  | 52x| 47x| 49x|  | 45 | 35x| 37 | 4A  |
-// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
-// |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |      |  | 53x| 4Fx| 51x|  | 47 | 48 | 49 |     |
-// +------------------------------------------------------------------+  1C  |  +----+----+----+  +----+----+----| 4E  |
-// |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |     |                    | 4B | 4C | 4D |     |
-// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
-// |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |     36     |       | 48x|       | 4F | 50 | 51 |     |
-// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 1Cx |
-// |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
-// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
-
-// KEYBOARD MAP WITH X KSYM LAYOUT SCANCODES
-// -----------------------------------------
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-// | 09 |  | 43 | 44 | 45 | 46 |  | 47 | 48 | 49 | 4A |  | 4B | 4C | 5F | 60 |  | 37 | 4E | 6DX   |
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-//                                     ***  keycodes suffixed by 'x' are extended ***
-// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
-// | 31 | 0A | 0B | 0C | 0D | 0E | 0F | 10 | 11 | 12 | 13 | 14 | 15 |   16   |  | 6AX| 61X| 63X|  | 4D | 70X| 3F | 52  |
-// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
-// |  17  | 18 | 19 | 1A | 1B | 1C | 1D | 1E | 1F | 20 | 21 | 22 | 23 |      |  | 6BX| 67X| 69X|  | 4F | 50 | 51 |     |
-// +------------------------------------------------------------------+  24  |  +----+----+----+  +----+----+----| 56  |
-// |  42   | 26 | 27 | 28 | 29 | 2A | 2B | 2C | 2D | 2E | 2F | 30 | 33 |     |                    | 53 | 54 | 55 |     |
-// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
-// |  32 | 56 | 34 | 35 | 36 | 37 | 38 | 39 | 3A | 3B | 3C | 3D |     3E     |       | 62X|       | 57 | 58 | 59 |     |
-// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 6CX |
-// |  25  |  73X | 40 |           41           |  71X  |  74X |  75X |  6DX  |  | 64X| 68X| 66X|  |    5A   | 5B |     |
-// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
-
-            const KeyLayout_t * layout = this->select_layout();
-
-            /* KP_ POINT or kEYPAD DELETE */
-            if (extendedKeyCode == 0x53){
-                if (this->key_flags & NUMLOCK){
-                    // This one has to be localized
-                    layout = &this->keylayout_WORK_shift_sym;
-                    uint8_t sym = map[extendedKeyCode];
-                    uint32_t ksym = (*layout)[sym];
-                    return KeySym(ksym, downflag);
-                }
-                return KeySym(0xFFFF, downflag);
-            }
-
-            LOG_IF(this->verbose, LOG_INFO, "Use KEYLAYOUT WORK no shift");
-
-            // Translate the scancode to a KeySym
-            //----------------------------------------
-            uint8_t sym = map[extendedKeyCode];
-            uint32_t ksym = (*layout)[sym];
-            LOG_IF(this->verbose, LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-
-            if ((ksym == 0xFE52 ) // DEADKEYS
-            || (ksym == 0xFE57)
-            || (ksym == 0x60)
-            || (ksym == 0x7E)) {
-
-                LOG_IF(this->verbose, LOG_INFO, "deadkey=0x%X", ksym);
-
-                //-------------------------------------------------
-                // ksym is NOT in Printable unicode character range
-                //-------------------------------------------------
-                // That is, A dead key (0xFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
-                // The flag is set accordingly
-                switch (extendedKeyCode){
-                    case 0x1A:
-                        this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
-                        break;
-                    case 0x08:
-                        this->dead_key = DEADKEY_GRAVE;
-                        break;
-                    case 0x03:
-                        this->dead_key = DEADKEY_TILDE;
-                        break;
-                    default:
-                        break;
-                } // Switch extendedKeyCode
-                return KeySym(0, 0);
-            }
-
-            //-------------------------------------------------
-            // ksym is in Printable character range.
-            //-------------------------------------------------
-            if (this->dead_key != DEADKEY_NONE) {
-                uint32_t current_dead_key = this->dead_key;
-                // if releasing next key after key: disable dead_key mode for following keys
-                if (this->keys_down[extendedKeyCode])
-                {
-                    this->dead_key = DEADKEY_NONE;
-                }
-                switch (current_dead_key) {
-                    case DEADKEY_CIRC:
-                        switch (ksym){
-                            case 'a': return KeySym(0xE2, downflag); // unicode for â (acirc)
-                            case 'A': return KeySym(0xC2, downflag); // unicode for Â (Acirc)
-                            case 'e': return KeySym(0xEA, downflag); // unicode for ê (ecirc)
-                            case 'E': return KeySym(0xCA, downflag); // unicode for Ê (Ecirc)
-                            case 'i': return KeySym(0xEE, downflag); // unicode for î (icirc)
-                            case 'I': return KeySym(0xCE, downflag); // unicode for Î (Icirc)
-                            case 'o': return KeySym(0xF4, downflag); // unicode for ô (ocirc)
-                            case 'O': return KeySym(0xD4, downflag); // unicode for Ô (Ocirc)
-                            case 'u': return KeySym(0xFB, downflag); // unicode for û (ucirc)
-                            case 'U': return KeySym(0xDB, downflag); // unicode for Û (Ucirc)
-                            case ' ': return KeySym(0x5E, downflag); // unicode for ^ (caret)
-                            default: return KeySym(ksym, downflag); // unmodified unicode
-                        }
-
-                    case DEADKEY_UML:
-                        switch (ksym){
-                            case 'a': return KeySym(0xE4, downflag); // unicode for ä (auml)
-                            case 'A': return KeySym(0xC4, downflag); // unicode for Ä (Auml)
-                            case 'e': return KeySym(0xEB, downflag); // unicode for ë (euml)
-                            case 'E': return KeySym(0xCB, downflag); // unicode for Ë (Euml)
-                            case 'i': return KeySym(0xEF, downflag); // unicode for ï (iuml)
-                            case 'I': return KeySym(0xCF, downflag); // unicode for Ï (Iuml)
-                            case 'o': return KeySym(0xF6, downflag); // unicode for ö (ouml)
-                            case 'O': return KeySym(0xD6, downflag); // unicode for Ö (Ouml)
-                            case 'u': return KeySym(0xFC, downflag); // unicode for ü (uuml)
-                            case 'U': return KeySym(0xDC, downflag); // unicode for Ü (Uuml)
-                            case ' ': return KeySym(0xA8, downflag); // unicode for " (umlaut)
-                            default: return KeySym(ksym, downflag); // unmodified unicode
-                        }
-
-                    case DEADKEY_GRAVE:
-                        switch (ksym){
-                            case 'a': return KeySym(0xE0, downflag); // unicode for à (agrave)
-                            case 'A': return KeySym(0xC0, downflag); // unicode for À (Agrave)
-                            case 'e': return KeySym(0xE8, downflag); // unicode for è (egrave)
-                            case 'E': return KeySym(0xC8, downflag); // unicode for È (Egrave)
-                            case 'i': return KeySym(0xEC, downflag); // unicode for ì (igrave)
-                            case 'I': return KeySym(0xCC, downflag); // unicode for Ì (Igrave)
-                            case 'o': return KeySym(0xF2, downflag); // unicode for ò (ograve)
-                            case 'O': return KeySym(0xD2, downflag); // unicode for Ò (Ograve)
-                            case 'u': return KeySym(0xF9, downflag); // unicode for ù (ugrave)
-                            case 'U': return KeySym(0xD9, downflag); // unicode for Ù (Ugrave)
-                            case ' ': return KeySym(0x60, downflag); // unicode for ` (backquote)
-                            default: return KeySym(ksym, downflag); // unmodified unicode
-                        }
-
-                    case DEADKEY_TILDE:
-                        switch (ksym){
-                            case 'n': return KeySym(0xF1, downflag); // unicode for ~n (ntilde)
-                            case 'N': return KeySym(0xD1, downflag); // unicode for ~N (Ntilde)
-                            case ' ': return KeySym(0x7E, downflag); // unicode for ~ (tilde)
-                            default: return KeySym(ksym, downflag); // unmodified unicode
-                        }
-
-                    default:
-                        return KeySym(ksym, downflag); // unmodified unicode
-                } // Switch DEAD_KEY
-            } // Is a dead Key
-
-            // If previous key wasn't a dead key, simply return it
-            return KeySym(ksym, downflag);
-        } // END if KEYPAD specific / else
-    } // END SWITCH : ExtendedKeyCode
-} // END FUNCT : get_key
-
-
-// Push only sym
-void KeymapSym::push_sym(KeySym sym)
-{
-    LOG_IF(this->verbose & 2, LOG_INFO,
-        "KeymapSym::push_sym(sym=%08x) nbuf_sym=%u", sym.sym, this->nbuf_sym);
-
-    if (sym.sym == 0) {
-        return;
-    }
-
-    if (this->nbuf_sym < SIZE_KEYBUF_SYM) {
-        this->buffer_sym[this->ibuf_sym] = sym;
-        this->ibuf_sym++;
-        if (this->ibuf_sym >= SIZE_KEYBUF_SYM){
-            this->ibuf_sym = 0;
-        }
-        this->nbuf_sym++;
-    }
-}
-
-uint32_t KeymapSym::get_sym(uint8_t & downflag)
-{
-    if (this->nbuf_sym > 0){
-        auto & s = this->buffer_sym[(SIZE_KEYBUF_SYM + this->ibuf_sym - this->nbuf_sym) % SIZE_KEYBUF_SYM];
-        uint32_t res = s.sym;
-        downflag = s.down;
-
-        if (this->nbuf_sym > 0){
-            this->nbuf_sym--;
-            if (this->nbuf_sym == 0){
-                this->ibuf_sym = 0;
-            }
-        }
-        return res;
     }
     return 0;
 }
 
-uint32_t KeymapSym::nb_sym_available() const
+const uint16_t macos_noshift[] = {
+    0x0000, 0xff1b,    '1',    '2',    '3',    '4',    '5',    '6', // 0x00 - 0x07
+       '7',    '8',    '9',    '0',    '-',    '=', 0xff08, 0xff09, // 0x08 - 0x0f
+       'q',    'w',    'e',    'r',    't',    'y',    'u',    'i', // 0x10 - 0x17
+       'o',    'p',    '[',    ']', 0xff0d, 0xffe3,    'a',    's', // 0x18 - 0x1f
+       'd',    'f',    'g',    'h',    'j',    'k',    'l',    ';', // 0x20 - 0x27
+      '\'', 0x00a4, 0xffe1,   '\\',    'z',    'x',    'c',    'v', // 0x28 - 0x2f
+       'b',    'n',    'm',    ',',    '.',    '/', 0xffe2, 0xffaa, // 0x30 - 0x37
+    0xffe7,    ' ', 0xffe5, 0xffbe, 0xffbf, 0xffc0, 0xffc1, 0xffc2, // 0x38 - 0x3f
+    0xffc3, 0xffc4, 0xffc5, 0xffc6, 0xffc7, 0xff7f, 0xff14, 0xff95, // 0x40 - 0x47
+    0xff97, 0xff9a, 0xffad, 0xff96, 0xff9d, 0xff98, 0xffab, 0xff9c, // 0x48 - 0x4f
+    0xff99, 0xff9b, 0xff9e, 0xff9f, 0x0000, 0xff7e,    '<', 0xffc8, // 0x50 - 0x57
+    0xffc9, 0xff50, 0xff52, 0x0000, 0x0000, 0x0000, 0xff53, 0xff57, // 0x58 - 0x5f
+    0xff54, 0xff56, 0xff63, 0xffff, 0xff8d, 0xffe4, 0xff13, 0xff61, // 0x60 - 0x67
+    0xffaf, 0xffe8, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0x68 - 0x6f
+    0x0000, 0x0000, 0x0000, 0x0000, 0xfe03, 0x0000, 0xffbd, 0x0000, // 0x70 - 0x77
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x78 - 0x7f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x80 - 0x87
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x88 - 0x8f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x90 - 0x97
+    0x0000, 0x0000, 0x0000, 0x0000, 0xff8d, 0xffe4, 0x0000, 0x0000, // 0x98 - 0x9f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa0 - 0xa7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa8 - 0xaf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffaf, 0x0000, 0xff61, // 0xb0 - 0xb7
+    0xffe8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xb8 - 0xbf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xff50, // 0xc0 - 0xc7
+    0xff52, 0xff55, 0x0000, 0xff51, 0x0000, 0xff53, 0x0000, 0xff57, // 0xc8 - 0xcf
+    0xff54, 0xff56, 0xff63, 0xffff, 0x0000, 0x0000, 0x0000, 0x0000, // 0xd0 - 0xd7
+    0x0000, 0x0000, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0xd8 - 0xdf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe0 - 0xe7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe8 - 0xef
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf0 - 0xf7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf8 - 0xff
+};
+static_assert(sizeof(macos_noshift) == 256 * 2);
+
+const uint16_t macos_shift[] = {
+    0x0000, 0xff1b,    '!',    '@',    '#',    '$',    '%',    '^', // 0x00 - 0x07
+       '&',    '8',    '(',    ')',    '_',    '+', 0xff08, 0xfe20, // 0x08 - 0x0f
+       'Q',    'W',    'E',    'R',    'T',    'Y',    'U',    'I', // 0x10 - 0x17
+       'O',    'P',    '{',    '}', 0xff0d, 0xffe3,    'A',    'S', // 0x18 - 0x1f
+       'D',    'F',    'G',    'H',    'J',    'K',    'L',    ':', // 0x20 - 0x27
+       '"',    '~', 0xffe1,    '|',    'Z',    'X',    'C',    'V', // 0x28 - 0x2f
+       'B',    'N',    'M',    '<',    '>',    '?', 0xffe2, 0xffaa, // 0x30 - 0x37
+    0xffe7,    ' ', 0xffe5, 0xffbe, 0xffbf, 0xffc0, 0xffc1, 0xffc2, // 0x38 - 0x3f
+    0xffc3, 0xffc4, 0xffc5, 0xffc6, 0xffc7, 0xfef9, 0xff14, 0xffb7, // 0x40 - 0x47
+    0xffb8, 0xffb9, 0xffad, 0xffb4, 0xffb5, 0xffb6, 0xffab, 0xffb1, // 0x48 - 0x4f
+    0xffb2, 0xffb3, 0xffb0, 0xffae, 0x0000, 0xff7e,    '>', 0xffc8, // 0x50 - 0x57
+    0xffc9, 0xff50, 0xff52, 0x0000, 0x0000, 0x0000, 0xff53, 0xff57, // 0x58 - 0x5f
+    0xff54, 0xff56, 0xff63, 0xffff, 0xff8d, 0xffe4, 0xff13, 0xff61, // 0x60 - 0x67
+    0xffaf, 0xffe8, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0x68 - 0x6f
+    0x0000, 0x0000, 0x0000, 0x0000, 0xfe03, 0xffe9, 0xffbd, 0xffeb, // 0x70 - 0x77
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x78 - 0x7f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x80 - 0x87
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x88 - 0x8f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x90 - 0x97
+    0x0000, 0x0000, 0x0000, 0x0000, 0xff8d, 0xffe4, 0x0000, 0x0000, // 0x98 - 0x9f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa0 - 0xa7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa8 - 0xaf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffaf, 0x0000, 0xff61, // 0xb0 - 0xb7
+    0xffe8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xb8 - 0xbf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xff50, // 0xc0 - 0xc7
+    0xff52, 0xff55, 0x0000, 0xff51, 0x0000, 0xff53, 0x0000, 0xff57, // 0xc8 - 0xcf
+    0xff54, 0xff56, 0xff63, 0xffff, 0x0000, 0x0000, 0x0000, 0x0000, // 0xd0 - 0xd7
+    0x0000, 0x0000, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0xd8 - 0xdf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe0 - 0xe7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe8 - 0xef
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf0 - 0xf7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf8 - 0xff
+};
+static_assert(sizeof(macos_shift) == 256 * 2);
+
+const uint16_t macos_altgr[] = {
+    0x0000, 0xff1b,    '1',    '2',    '3',    '4',    '5',    '6', // 0x00 - 0x07
+       '7',    '8',    '9',    '0',    '-',    '=', 0xff08, 0xff09, // 0x08 - 0x0f
+       'q',    'w',    'e',    'r',    't',    'y',    'u',    'i', // 0x10 - 0x17
+       'o',    'p',    '[',    ']', 0xff0d, 0xffe3,    'a',    's', // 0x18 - 0x1f
+       'd',    'f',    'g',    'h',    'j',    'k',    'l',    ';', // 0x20 - 0x27
+      '\'',    '`', 0xffe1,   '\\',    'z',    'x',    'c',    'v', // 0x28 - 0x2f
+       'b',    'n',    'm',    ',',    '.',    '/', 0xffe2, 0xffaa, // 0x30 - 0x37
+    0xffe7,    ' ', 0xffe5, 0xffbe, 0xffbf, 0xffc0, 0xffc1, 0xffc2, // 0x38 - 0x3f
+    0xffc3, 0xffc4, 0xffc5, 0xffc6, 0xffc7, 0xff7f, 0xff14, 0xff95, // 0x40 - 0x47
+    0xff97, 0xff9a, 0xffad, 0xff96, 0xff9d, 0xff98, 0xffab, 0xff9c, // 0x48 - 0x4f
+    0xff99, 0xff9b, 0xff9e, 0xff9f, 0x0000, 0xff7e,    '<', 0xffc8, // 0x50 - 0x57
+    0xffc9, 0xff50, 0xff52, 0x0000, 0x0000, 0x0000, 0xff53, 0xff57, // 0x58 - 0x5f
+    0xff54, 0xff56, 0xff63, 0xffff, 0xff8d, 0xffe4, 0xff13, 0x0000, // 0x60 - 0x67
+    0xffaf, 0xffe8, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0x68 - 0x6f
+    0x0000, 0x0000, 0x0000, 0x0000, 0xfe03, 0x0000, 0xffbd, 0x0000, // 0x70 - 0x77
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x78 - 0x7f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x80 - 0x87
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x88 - 0x8f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x90 - 0x97
+    0x0000, 0x0000, 0x0000, 0x0000, 0xff8d, 0xffe4, 0x0000, 0x0000, // 0x98 - 0x9f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa0 - 0xa7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa8 - 0xaf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffaf, 0x0000, 0x0000, // 0xb0 - 0xb7
+    0xffe8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xb8 - 0xbf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xff50, // 0xc0 - 0xc7
+    0xff52, 0xff55, 0x0000, 0xff51, 0x0000, 0xff53, 0x0000, 0xff57, // 0xc8 - 0xcf
+    0xff54, 0xff56, 0xff63, 0xffff, 0x0000, 0x0000, 0x0000, 0x0000, // 0xd0 - 0xd7
+    0x0000, 0x0000, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0xd8 - 0xdf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe0 - 0xe7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe8 - 0xef
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf0 - 0xf7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf8 - 0xff
+};
+static_assert(sizeof(macos_altgr) == 256 * 2);
+
+const uint16_t macos_capslock[] = {
+    0x0000, 0xff1b,    '1',    '2',    '3',    '4',    '5',    '6', // 0x00 - 0x07
+       '7',    '8',    '9',    '0',    '-',    '=', 0xff08, 0xff09, // 0x08 - 0x0f
+       'Q',    'W',    'E',    'R',    'T',    'Y',    'U',    'I', // 0x10 - 0x17
+       'O',    'P',    '[',    ']', 0xff0d, 0xffe3,    'A',    'S', // 0x18 - 0x1f
+       'D',    'F',    'G',    'H',    'J',    'K',    'L',    ';', // 0x20 - 0x27
+      '\'',    '`', 0xffe1,   '\\',    'Z',    'X',    'C',    'V', // 0x28 - 0x2f
+       'B',    'N',    'M',    ',',    '.',    '/', 0xffe2, 0xffaa, // 0x30 - 0x37
+    0xffe7,    ' ', 0xffe5, 0xffbe, 0xffbf, 0xffc0, 0xffc1, 0xffc2, // 0x38 - 0x3f
+    0xffc3, 0xffc4, 0xffc5, 0xffc6, 0xffc7, 0xff7f, 0xff14, 0xff95, // 0x40 - 0x47
+    0xff97, 0xff9a, 0xffad, 0xff96, 0xff9d, 0xff98, 0xffab, 0xff9c, // 0x48 - 0x4f
+    0xff99, 0xff9b, 0xff9e, 0xff9f, 0x0000, 0xff7e,    '<', 0xffc8, // 0x50 - 0x57
+    0xffc9, 0xff50, 0xff52, 0x0000, 0x0000, 0x0000, 0xff53, 0xff57, // 0x58 - 0x5f
+    0xff54, 0xff56, 0xff63, 0xffff, 0xff8d, 0xffe4, 0xff13, 0xff61, // 0x60 - 0x67
+    0xffaf, 0xffe8, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0x68 - 0x6f
+    0x0000, 0x0000, 0x0000, 0x0000, 0xfe03, 0x0000, 0xffbd, 0x0000, // 0x70 - 0x77
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x78 - 0x7f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x80 - 0x87
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x88 - 0x8f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x90 - 0x97
+    0x0000, 0x0000, 0x0000, 0x0000, 0xff8d, 0xffe4, 0x0000, 0x0000, // 0x98 - 0x9f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa0 - 0xa7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa8 - 0xaf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffaf, 0x0000, 0xff61, // 0xb0 - 0xb7
+    0xffe8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xb8 - 0xbf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xff50, // 0xc0 - 0xc7
+    0xff52, 0xff55, 0x0000, 0xff51, 0x0000, 0xff53, 0x0000, 0xff57, // 0xc8 - 0xcf
+    0xff54, 0xff56, 0xff63, 0xffff, 0x0000, 0x0000, 0x0000, 0x0000, // 0xd0 - 0xd7
+    0x0000, 0x0000, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0xd8 - 0xdf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe0 - 0xe7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe8 - 0xef
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf0 - 0xf7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf8 - 0xff
+};
+static_assert(sizeof(macos_capslock) == 256 * 2);
+
+const uint16_t macos_shift_capslock[] = {
+    0x0000, 0xff1b,    '!',    '@',    '#',    '$',    '%',    '^', // 0x00 - 0x07
+       '&',    '*',    '(',    ')',    '_',    '+', 0xff08, 0xfe20, // 0x08 - 0x0f
+       'q',    'w',    'e',    'r',    't',    'y',    'u',    'i', // 0x10 - 0x17
+       'o',    'p',    '{',    '}', 0xff0d, 0xffe3,    'a',    's', // 0x18 - 0x1f
+       'd',    'f',    'g',    'h',    'j',    'k',    'l',    ':', // 0x20 - 0x27
+       '"',    '~', 0xffe1,    '|',    'z',    'x',    'c',    'v', // 0x28 - 0x2f
+       'b',    'n',    'm',    '<',    '>',    '?', 0xffe2, 0xffaa, // 0x30 - 0x37
+    0xffe7,    ' ', 0xffe5, 0xffbe, 0xffbf, 0xffc0, 0xffc1, 0xffc2, // 0x38 - 0x3f
+    0xffc3, 0xffc4, 0xffc5, 0xffc6, 0xffc7, 0xfef9, 0xff14, 0xffb7, // 0x40 - 0x47
+    0xffb8, 0xffb9, 0xffad, 0xffb4, 0xffb5, 0xffb6, 0xffab, 0xffb1, // 0x48 - 0x4f
+    0xffb2, 0xffb3, 0xffb0, 0xffae, 0x0000, 0xff7e,    '<', 0xffc8, // 0x50 - 0x57
+    0xffc9, 0xff50, 0xff52, 0x0000, 0x0000, 0x0000, 0xff53, 0xff57, // 0x58 - 0x5f
+    0xff54, 0xff56, 0xff63, 0xffff, 0xff8d, 0xffe4, 0xff13, 0xff61, // 0x60 - 0x67
+    0xffaf, 0xffe8, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0x68 - 0x6f
+    0x0000, 0x0000, 0x0000, 0x0000, 0xfe03, 0xffe9, 0xffbd, 0xffeb, // 0x70 - 0x77
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x78 - 0x7f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x80 - 0x87
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x88 - 0x8f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0x90 - 0x97
+    0x0000, 0x0000, 0x0000, 0x0000, 0xff8d, 0xffe4, 0x0000, 0x0000, // 0x98 - 0x9f
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa0 - 0xa7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xa8 - 0xaf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffaf, 0x0000, 0xff61, // 0xb0 - 0xb7
+    0xffe8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xb8 - 0xbf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xff50, // 0xc0 - 0xc7
+    0xff52, 0xff55, 0x0000, 0xff51, 0x0000, 0xff53, 0x0000, 0xff57, // 0xc8 - 0xcf
+    0xff54, 0xff56, 0xff63, 0xffff, 0x0000, 0x0000, 0x0000, 0x0000, // 0xd0 - 0xd7
+    0x0000, 0x0000, 0x0000, 0xffeb, 0xffec, 0xff67, 0x0000, 0x0000, // 0xd8 - 0xdf
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe0 - 0xe7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xe8 - 0xef
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf0 - 0xf7
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // 0xf8 - 0xff
+};
+static_assert(sizeof(macos_shift_capslock) == 256 * 2);
+
+sized_array_view<KeyLayout::unicode_t, 256> macos_layout_for(kbdtypes::KeyModFlags mods, bool verbose) noexcept
 {
-    return this->nbuf_sym;
+    using kbdtypes::KeyMod;
+
+    char const* mod_name = "PLain layout";
+    sized_array_view<KeyLayout::unicode_t, 256> layout = macos_noshift;
+
+    // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
+    if (((mods.test(KeyMod::LCtrl) || mods.test(KeyMod::RCtrl)) && mods.test(KeyMod::LAlt))
+     || mods.test(KeyMod::RAlt)
+    ) {
+        mod_name = "Altgr Layout";
+        layout = macos_altgr;
+    }
+    else if (mods.test(KeyMod::LShift) || mods.test(KeyMod::RShift)) {
+        if (mods.test(KeyMod::CapsLock)) {
+            mod_name = "Shift Capslock Layout";
+            layout = macos_shift_capslock;
+        }
+        else {
+            mod_name = "Shift Layout";
+            layout = macos_shift;
+        }
+    }
+    else if (mods.test(KeyMod::CapsLock)) {
+        mod_name = "CapsLock Layout";
+        layout = macos_capslock;
+    }
+
+    LOG_IF(verbose, LOG_INFO, "Plain Layout");
+    return layout;
 }
 
-bool KeymapSym::is_caps_locked() const
+void push_alt_gr_state(
+    KeymapSym::Keys& keys, kbdtypes::KeyModFlags mods,
+    KeymapSym::VncDownFlag down_flag, bool is_win) noexcept
 {
-    return this->key_flags & CAPSLOCK;
-}
+    using kbdtypes::KeyMod;
+    using kbdtypes::KeyCode;
 
-bool KeymapSym::is_scroll_locked() const
-{
-    return this->key_flags & SCROLLLOCK;
-}
+    if (REDEMPTION_UNLIKELY(mods.test(KeyMod::RAlt))) {
+        keys.push({keycode_to_sym(KeyCode::RAlt, mods), down_flag});
+    }
 
-bool KeymapSym::is_num_locked() const
-{
-    return this->key_flags & NUMLOCK;
-}
-
-void KeymapSym::toggle_num_lock(bool on)
-{
-    if (((this->key_flags & NUMLOCK) == NUMLOCK) != on) {
-        this->key_flags ^= NUMLOCK;
+    // on window ctrl+alt = altgr
+    if (REDEMPTION_UNLIKELY(is_win && mods.test(KeyMod::LAlt))) {
+        if (mods.test(KeyMod::LCtrl) || mods.test(KeyMod::RCtrl)) {
+            keys.push({keycode_to_sym(KeyCode::LAlt, mods), down_flag});
+            if (mods.test(KeyMod::RCtrl)) {
+                keys.push({keycode_to_sym(KeyCode::RCtrl, mods), down_flag});
+            }
+            if (mods.test(KeyMod::LCtrl)) {
+                keys.push({keycode_to_sym(KeyCode::LCtrl, mods), down_flag});
+            }
+        }
     }
 }
 
-bool KeymapSym::is_left_shift_pressed() const
+bool is_ctrl_alt(kbdtypes::KeyModFlags mods) noexcept
 {
-    return this->keys_down[LEFT_SHIFT];
+    using kbdtypes::KeyMod;
+    auto ctrl_alt = mods & (KeyMod::LCtrl | KeyMod::RCtrl | KeyMod::LAlt);
+    ctrl_alt.clear(KeyMod::LAlt);
+    return ctrl_alt.as_uint();
 }
 
-bool KeymapSym::is_right_shift_pressed() const
+KeymapSym::VncDownFlag to_vnc_flag(kbdtypes::KbdFlags flags) noexcept
 {
-    return this->keys_down[RIGHT_SHIFT];
+    return bool(flags & kbdtypes::KbdFlags::Release)
+        ? KeymapSym::VncDownFlag::Up
+        : KeymapSym::VncDownFlag::Down;
 }
 
-bool KeymapSym::is_shift_pressed() const
+void push_key(KeymapSym::Keys& keys, uint32_t uc, KeymapSym::VncDownFlag down_flag, kbdtypes::KeyModFlags mods, bool is_win) noexcept
 {
-    return this->is_left_shift_pressed() || this->is_right_shift_pressed();
+    const auto ksym = unicode_to_ksym(uc);
+    push_alt_gr_state(keys, mods, KeymapSym::VncDownFlag::Up, is_win);
+    keys.push({ksym, down_flag});
+    push_alt_gr_state(keys, mods, KeymapSym::VncDownFlag::Down, is_win);
 }
 
-bool KeymapSym::is_left_ctrl_pressed() const
-{
-    return this->keys_down[LEFT_CTRL];
+using kbdtypes::KeyMod;
+using kbdtypes::KeyCode;
+
 }
 
-bool KeymapSym::is_right_ctrl_pressed() const
+KeymapSym::KeymapSym(KeyLayout layout, kbdtypes::KeyLocks locks, IsApple is_apple, IsUnix is_unix, bool verbose) noexcept
+: layout_(layout)
+, keymap_(macos_noshift)
+, mods_(locks)
+, is_win_(!bool(is_unix))
+, is_apple_(bool(is_apple))
+, verbose_(verbose)
 {
-    return this->keys_down[RIGHT_CTRL];
+    _update_keymap();
 }
 
-bool KeymapSym::is_ctrl_pressed() const
+KeymapSym::Keys KeymapSym::scancode_to_keysyms(KbdFlags flags, Scancode scancode) noexcept
 {
-    return is_right_ctrl_pressed() || is_left_ctrl_pressed();
+    Keys keys;
+
+    const auto keycode = kbdtypes::to_keycode(flags, scancode);
+    const auto down_flag = to_vnc_flag(flags);
+
+    auto set_mod = [&](KeyMod mod){
+        keys.push({keycode_to_sym(keycode, mods_), down_flag});
+        mods_.update(flags, mod);
+        _update_keymap();
+    };
+
+    auto set_locks_mod = [&](KeyMod mod){
+        keys.push({keycode_to_sym(keycode, mods_), down_flag});
+        if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
+            mods_.flip(mod);
+            _update_keymap();
+        }
+    };
+
+    switch (underlying_cast(keycode))
+    {
+        // Lock keys
+        case underlying_cast(KeyCode::CapsLock):   set_locks_mod(KeyMod::CapsLock); break;
+        case underlying_cast(KeyCode::NumLock):    set_locks_mod(KeyMod::NumLock); break;
+        case underlying_cast(KeyCode::ScrollLock): set_locks_mod(KeyMod::ScrollLock); break;
+
+        // Modifier keys
+        case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMod::LCtrl); break;
+        case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMod::RCtrl); break;
+        case underlying_cast(KeyCode::LShift): set_mod(KeyMod::LShift); break;
+        case underlying_cast(KeyCode::RShift): set_mod(KeyMod::RShift); break;
+        case underlying_cast(KeyCode::LAlt):   set_mod(KeyMod::LAlt); break;
+        case underlying_cast(KeyCode::RAlt):   set_mod(KeyMod::RAlt); break;
+
+        // ctrl+alt+fin as ctrl+alt+del
+        case underlying_cast(KeyCode::End):  {
+            const auto ksym = is_ctrl_alt(mods_)
+                ? keycode_to_sym(KeyCode::Delete, mods_)
+                : keycode_to_sym(KeyCode::End, mods_);
+            keys.push({ksym, down_flag});
+            break;
+        }
+
+        default:
+            if (auto ksym = keycode_to_sym(keycode, mods_)) {
+                keys.push({ksym, down_flag});
+            }
+            else if (REDEMPTION_UNLIKELY(!keycode_is_compressable_to_byte(keycode))) {
+                // unknown value
+            }
+            // MacOs (old version) considers keysyms to be keycodes
+            else if (REDEMPTION_UNLIKELY(is_apple_)) {
+                auto keymap_index = keycode_to_byte_index(keycode);
+                keys.push({keymap_[keymap_index], down_flag});
+            }
+            else {
+                const std::size_t keymap_index = keycode_to_byte_index(keycode);
+                auto unicode = keymap_[keymap_index];
+
+                if (REDEMPTION_UNLIKELY(!unicode)) {
+                    break;
+                }
+
+                auto push1 = [&](uint32_t uc){
+                    push_key(keys, uc, down_flag, mods_, is_win_);
+                };
+
+                if (underlying_cast(flags) & underlying_cast(KbdFlags::Release)) {
+                    if (!dkeys_) {
+                        if (!(unicode & KeyLayout::DK)) {
+                            push1(unicode);
+                        }
+                        else {
+                            push1(layout_.dkeymap_by_mod[imods_][keymap_index].accent());
+                        }
+                    }
+                }
+                else if (REDEMPTION_UNLIKELY(dkeys_)) {
+                    if (auto unicode2 = dkeys_.find_composition(unicode)) {
+                        push1(unicode2);
+                    }
+                    // Windows(c) behavior for backspace following a Deadkey
+                    else if (keycode != KeyCode::Backspace) {
+                        const auto ksym1 = unicode_to_ksym(dkeys_.accent());
+                        const auto ksym2 = unicode_to_ksym(unicode & ~KeyLayout::DK);
+                        push_alt_gr_state(keys, mods_, VncDownFlag::Up, is_win_);
+                        keys.push({ksym1, VncDownFlag::Down});
+                        keys.push({ksym1, VncDownFlag::Up});
+                        keys.push({ksym2, VncDownFlag::Down});
+                        push_alt_gr_state(keys, mods_, VncDownFlag::Down, is_win_);
+                    }
+                    dkeys_ = {};
+                }
+                else if (REDEMPTION_UNLIKELY(unicode & KeyLayout::DK)) {
+                    dkeys_ = layout_.dkeymap_by_mod[imods_][keymap_index];
+                }
+                else {
+                    push1(unicode);
+                }
+            }
+    }
+
+    return keys;
 }
 
-bool KeymapSym::is_left_alt_pressed() const
+void KeymapSym::set_locks(KeyLocks locks) noexcept
 {
-    return this->keys_down[LEFT_ALT];
+    mods_.sync_locks(locks);
+    _update_keymap();
 }
 
-bool KeymapSym::is_right_alt_pressed() const // altgr
+void KeymapSym::_update_keymap() noexcept
 {
-    return this->keys_down[RIGHT_ALT];
+    if (REDEMPTION_UNLIKELY(is_apple_)) {
+        keymap_ = macos_layout_for(mods_, verbose_);
+        return ;
+    }
+
+    auto rctrl_is_ctrl = unsigned(layout_.right_ctrl_is_ctrl);
+
+    unsigned numlock = mods_.test(KeyMod::NumLock);
+    unsigned capslock = mods_.test(KeyMod::CapsLock);
+    unsigned ctrl = mods_.test(KeyMod::LCtrl)
+                  | (mods_.test(KeyMod::RCtrl) & rctrl_is_ctrl);
+    unsigned oem8 = mods_.test(KeyMod::RCtrl) & ~rctrl_is_ctrl;
+    unsigned alt = mods_.test(KeyMod::LAlt);
+    unsigned shift = mods_.test(KeyMod::LShift)
+                   | mods_.test(KeyMod::RShift);
+    // enable Ctrl and Alt when AltGr
+    unsigned altgr = mods_.test(KeyMod::RAlt) | (ctrl & alt);
+
+    imods_ = checked_int(0u
+           | (shift << KeyLayout::Mods::Shift)
+           | (altgr << KeyLayout::Mods::Control)
+           | (altgr << KeyLayout::Mods::Menu)
+           | (oem8 << KeyLayout::Mods::OEM_8)
+           | (numlock << KeyLayout::Mods::NumLock)
+           | (capslock << KeyLayout::Mods::CapsLock)
+           );
+    keymap_ = layout_.keymap_by_mod[imods_];
 }
 
-bool KeymapSym::is_alt_pressed() const
+KeymapSym::Keys KeymapSym::utf16_to_keysyms(KbdFlags flag, uint16_t utf16) noexcept
 {
-    return is_right_alt_pressed() || is_left_alt_pressed();
-}
+    auto is_surrogate = [](uint16_t uc) noexcept { return (uc - 0xd800u) < 2048u; };
+    auto is_high_surrogate = [](uint16_t uc) noexcept { return (uc & 0xfffffc00) == 0xd800; };
+    auto is_low_surrogate = [](uint16_t uc) noexcept { return (uc & 0xfffffc00) == 0xdc00; };
+    auto surrogate_to_utf32 = [](uint32_t high, uint32_t low) noexcept { return (high << 10) + low - 0x35fdc00; };
 
-bool KeymapSym::is_altgr_pressed() const
-{
-    return ((this->is_ctrl_pressed() && this->is_left_alt_pressed()) || (this->is_right_alt_pressed()));
-}
+    const auto unicode = [&]() -> uint32_t {
+        if (REDEMPTION_UNLIKELY(previous_unicode16_)) {
+            if (is_low_surrogate(utf16)) {
+                auto uc = surrogate_to_utf32(previous_unicode16_, utf16);
+                previous_unicode16_ = 0;
+                return uc;
+            }
+            // else {
+            //     // error
+            // }
+            previous_unicode16_ = 0;
+        }
 
-KeyLayout::KbdId KeymapSym::get_keylayout() const noexcept
-{
-    return this->keylayout;
-}
+        if (!is_surrogate(utf16)) {
+            return utf16;
+        }
 
-#include "keyboard/keymapsymlayouts.hpp"
+        if (is_high_surrogate(utf16)) {
+            previous_unicode16_ = utf16;
+        }
+
+        return 0;
+    }();
+
+    Keys keys;
+
+    if (unicode) {
+        push_key(keys, unicode, to_vnc_flag(flag), mods_, is_win_);
+    }
+
+    return keys;
+}

@@ -266,19 +266,19 @@ void KeyboardShortcutBlocker::add_shortcut(KeyLayout::KbdId keyboardLayout, char
 
 bool KeyboardShortcutBlocker::scancode_must_be_blocked(KbdFlags keyboardFlags, Scancode scancode)
 {
-    using KeyMod = kbdtypes::KeyMod;
+    using KeyMods = kbdtypes::KeyMod;
 
-    auto set_mod = [&](KeyMod mod){
+    auto set_mod = [&](KeyMods mod){
         this->mods.update(keyboardFlags, mod);
         this->virtual_mods = 0;
-        this->virtual_mods |= this->mods.test(KeyMod::LCtrl) << unsigned(Mods::Ctrl);
-        this->virtual_mods |= this->mods.test(KeyMod::RCtrl) << unsigned(Mods::Ctrl);
-        this->virtual_mods |= this->mods.test(KeyMod::LShift) << unsigned(Mods::Shift);
-        this->virtual_mods |= this->mods.test(KeyMod::RShift) << unsigned(Mods::Shift);
-        this->virtual_mods |= this->mods.test(KeyMod::LAlt) << unsigned(Mods::Alt);
-        this->virtual_mods |= this->mods.test(KeyMod::RAlt) << unsigned(Mods::AltGr);
-        this->virtual_mods |= this->mods.test(KeyMod::LMeta) << unsigned(Mods::Meta);
-        this->virtual_mods |= this->mods.test(KeyMod::RMeta) << unsigned(Mods::Meta);
+        this->virtual_mods |= this->mods.test(KeyMods::LCtrl) << unsigned(Mods::Ctrl);
+        this->virtual_mods |= this->mods.test(KeyMods::RCtrl) << unsigned(Mods::Ctrl);
+        this->virtual_mods |= this->mods.test(KeyMods::LShift) << unsigned(Mods::Shift);
+        this->virtual_mods |= this->mods.test(KeyMods::RShift) << unsigned(Mods::Shift);
+        this->virtual_mods |= this->mods.test(KeyMods::LAlt) << unsigned(Mods::Alt);
+        this->virtual_mods |= this->mods.test(KeyMods::RAlt) << unsigned(Mods::AltGr);
+        this->virtual_mods |= this->mods.test(KeyMods::LMeta) << unsigned(Mods::Meta);
+        this->virtual_mods |= this->mods.test(KeyMods::RMeta) << unsigned(Mods::Meta);
     };
 
     using KeyCode = kbdtypes::KeyCode;
@@ -287,14 +287,14 @@ bool KeyboardShortcutBlocker::scancode_must_be_blocked(KbdFlags keyboardFlags, S
 
     switch (underlying_cast(keycode))
     {
-        case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMod::LCtrl); break;
-        case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMod::RCtrl); break;
-        case underlying_cast(KeyCode::LShift): set_mod(KeyMod::LShift); break;
-        case underlying_cast(KeyCode::RShift): set_mod(KeyMod::RShift); break;
-        case underlying_cast(KeyCode::LAlt):   set_mod(KeyMod::LAlt); break;
-        case underlying_cast(KeyCode::RAlt):   set_mod(KeyMod::RAlt); break;
-        case underlying_cast(KeyCode::LWin):   set_mod(KeyMod::LMeta); break;
-        case underlying_cast(KeyCode::RWin):   set_mod(KeyMod::RMeta); break;
+        case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMods::LCtrl); break;
+        case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMods::RCtrl); break;
+        case underlying_cast(KeyCode::LShift): set_mod(KeyMods::LShift); break;
+        case underlying_cast(KeyCode::RShift): set_mod(KeyMods::RShift); break;
+        case underlying_cast(KeyCode::LAlt):   set_mod(KeyMods::LAlt); break;
+        case underlying_cast(KeyCode::RAlt):   set_mod(KeyMods::RAlt); break;
+        case underlying_cast(KeyCode::LWin):   set_mod(KeyMods::LMeta); break;
+        case underlying_cast(KeyCode::RWin):   set_mod(KeyMods::RMeta); break;
         default: {
             ModFlags mods(this->virtual_mods);
 
