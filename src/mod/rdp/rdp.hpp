@@ -1197,22 +1197,23 @@ public:
         channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }
 
-    // TODO free function
-    static void replace(std::string & text_with_tags, std::string_view marker, std::string_view replacement){
-        size_t pos = 0;
-        while ((pos = text_with_tags.find(marker, pos)) != std::string::npos) {
-            text_with_tags.replace(pos, marker.size(), replacement.data(), replacement.size());
-            pos += replacement.size();
-        }
-    }
-
     static void replace_shell_arguments(
         std::string & text_with_tags,
         ApplicationParams const& application_params
     ){
-        mod_rdp_channels::replace(text_with_tags, "${APPID}", application_params.target_application);
-        mod_rdp_channels::replace(text_with_tags, "${USER}", application_params.target_application_account);
-        mod_rdp_channels::replace(text_with_tags, "${PASSWORD}", application_params.target_application_password);
+        utils::replace_substr_on_tag(
+                 text_with_tags,
+                 "${APPID}",
+                 application_params.target_application);
+        utils::replace_substr_on_tag(
+                 text_with_tags,
+                 "${USER}",
+                 application_params.target_application_account);
+        utils::replace_substr_on_tag(
+                 text_with_tags,
+                 "${PASSWORD}",
+                 application_params.target_application_password,
+                 "\x03");
     }
 
     static std::string get_shell_arguments(
@@ -1223,15 +1224,20 @@ public:
         return shell_arguments;
     }
 
-    static void replace_probe_arguments(std::string & text_with_tags,
-                                        std::string_view marker1, std::string_view replacement1,
-                                        std::string_view marker2, std::string_view replacement2,
-                                        std::string_view marker3, std::string_view replacement3,
-                                        std::string_view marker4, std::string_view replacement4){
-        mod_rdp_channels::replace(text_with_tags, marker1, replacement1);
-        mod_rdp_channels::replace(text_with_tags, marker2, replacement2);
-        mod_rdp_channels::replace(text_with_tags, marker3, replacement3);
-        mod_rdp_channels::replace(text_with_tags, marker4, replacement4);
+    static void replace_probe_arguments(std::string& text_with_tags,
+                                        std::string_view marker1,
+                                        std::string_view replacement1,
+                                        std::string_view marker2,
+                                        std::string_view replacement2,
+                                        std::string_view marker3,
+                                        std::string_view replacement3,
+                                        std::string_view marker4,
+                                        std::string_view replacement4)
+    {
+        utils::replace_substr_on_tag(text_with_tags, marker1, replacement1);
+        utils::replace_substr_on_tag(text_with_tags, marker2, replacement2);
+        utils::replace_substr_on_tag(text_with_tags, marker3, replacement3);
+        utils::replace_substr_on_tag(text_with_tags, marker4, replacement4);
     }
 
     void init_remote_program_with_session_probe(
