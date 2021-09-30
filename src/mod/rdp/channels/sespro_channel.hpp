@@ -55,6 +55,8 @@
 #include <cinttypes> // PRId64, ...
 #include <cstring>
 
+using namespace std::string_view_literals;
+
 enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
 };
@@ -98,6 +100,9 @@ public:
     };
 
 private:
+    static constexpr auto REPLACEMENT_HIDE = "********"sv;
+    static constexpr auto TAG_HIDE = "\x03"sv;
+
     bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
@@ -1151,8 +1156,16 @@ public:
                 }
                 else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN"_ascii_upper) {
                     if (parameters_.size() == 2) {
+                        std::string transformed_app_name(parameters_[0].data(),
+                                                         parameters_[0].size());
+
+                        utils::replace_substr_between_tags(
+                                       transformed_app_name,
+                                       REPLACEMENT_HIDE,
+                                       TAG_HIDE);
+
                         this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
-                            //KVLog("application_name"_av, parameters_[0]),
+                            KVLog("application_name"_av, transformed_app_name),
                             KVLog("raw_result"_av,       parameters_[1]),
                         });
 
@@ -1170,9 +1183,17 @@ public:
                 }
                 else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN_2"_ascii_upper) {
                     if (parameters_.size() == 3) {
+                        std::string transformed_app_name(parameters_[0].data(),
+                                                         parameters_[0].size());
+
+                        utils::replace_substr_between_tags(
+                                       transformed_app_name,
+                                       REPLACEMENT_HIDE,
+                                       TAG_HIDE);
+
                         this->log6(
                             LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {
-                            //KVLog("application_name"_av,   parameters_[0]),
+                            KVLog("application_name"_av,   transformed_app_name),
                             KVLog("raw_result"_av,         parameters_[1]),
                             KVLog("raw_result_message"_av, parameters_[2]),
                         });

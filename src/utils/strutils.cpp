@@ -22,6 +22,79 @@
 
 #include <cstring>
 
+namespace
+{
+
+// For replace_substr_between_tags() function
+bool check_tags_syntax_validity(std::string_view str,
+                                std::string_view opening_tag,
+                                std::string_view closure_tag)
+{
+    assert(!opening_tag.empty() && !closure_tag.empty());
+
+    bool unique_tag = (opening_tag == closure_tag);
+    bool reversed_tag = false;
+    size_t nb_tags_reached = 0;
+    size_t current_pos = 0;
+
+    while (1)
+    {
+        size_t opening_tag_pos = str.find(opening_tag, current_pos);
+
+        if (opening_tag_pos == std::string_view::npos)
+        {
+            if (unique_tag)
+            {
+                break;
+            }
+        }
+        else
+        {
+            ++nb_tags_reached;
+        }
+
+        size_t closure_tag_pos = 0;
+
+        if (unique_tag)
+        {
+            closure_tag_pos = str.find(closure_tag,
+                                       opening_tag_pos + opening_tag.size());
+            if (closure_tag_pos == std::string_view::npos)
+            {
+                break;
+            }
+
+            ++nb_tags_reached;
+        }
+        else
+        {
+            closure_tag_pos = str.find(closure_tag, current_pos);
+            if (closure_tag_pos == std::string_view::npos)
+            {
+                break;
+            }
+
+            ++nb_tags_reached;
+
+            if (opening_tag_pos == std::string_view::npos)
+            {
+                break;
+            }
+            else if (closure_tag_pos < opening_tag_pos)
+            {
+                reversed_tag = true;
+                break;
+            }
+        }
+
+        current_pos = closure_tag_pos + closure_tag.size();
+    }
+
+    return !reversed_tag && nb_tags_reached % 2 == 0;
+}
+
+} // namespace
+
 
 namespace utils
 {
@@ -59,6 +132,98 @@ std::size_t strlcpy(char* dest, chars_view src, std::size_t n) noexcept
 std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept
 {
     return strlcpy(dest, chars_view{src, strlen(src)}, n);
+}
+
+
+void replace_substr_on_tag(std::string& str,
+                           std::string_view tag,
+                           std::string_view replacement)
+{
+    assert(!str.empty() && !tag.empty());
+
+    size_t pos = 0;
+
+    while ((pos = str.find(tag, pos)) != std::string::npos)
+    {
+        str.replace(pos, tag.size(), replacement.data(), replacement.size());
+
+        pos += replacement.size();
+    }
+}
+
+void replace_substr_on_tag(std::string& str,
+                           std::string_view tag,
+                           std::string_view replacement,
+                           std::string_view decorator)
+{
+    assert(!str.empty() && !tag.empty());
+
+    size_t pos = 0;
+
+    while ((pos = str.find(tag, pos)) != std::string::npos)
+    {
+        str.insert(pos,
+                   decorator.data(),
+                   decorator.size());
+        str.replace(pos + decorator.size(),
+                    tag.size(),
+                    replacement.data(),
+                    replacement.size());
+        str.insert(pos + decorator.size() + replacement.size(),
+                   decorator.data(),
+                   decorator.size());
+
+        pos += replacement.size() + decorator.size() * 2;
+    }
+}
+
+void replace_substr_between_tags(std::string& str,
+                                 std::string_view replacement,
+                                 std::string_view opening_tag,
+                                 std::string_view closure_tag)
+{
+    assert(!str.empty());
+
+    if (!check_tags_syntax_validity(str, opening_tag, closure_tag))
+    {
+        return;
+    }
+
+    size_t current_pos = 0;
+
+    while (1)
+    {
+        size_t opening_tag_pos = str.find(opening_tag, current_pos);
+
+        if (opening_tag_pos == std::string_view::npos)
+        {
+            break;
+        }
+
+        str.replace(opening_tag_pos, opening_tag.size(), "");
+
+        size_t closure_tag_pos = str.find(closure_tag, opening_tag_pos);
+
+        assert(closure_tag_pos != std::string_view::npos);
+
+        str.replace(opening_tag_pos,
+                    closure_tag_pos - opening_tag_pos,
+                    replacement.data(),
+                    replacement.size());
+
+        str.replace(opening_tag_pos + replacement.size(),
+                    closure_tag.size(),
+                    "");
+
+        current_pos = opening_tag_pos + replacement.size();
+    }
+}
+
+void replace_substr_between_tags(std::string& str,
+                                 std::string_view replacement,
+                                 std::string_view tag)
+{
+    replace_substr_between_tags(str, replacement, tag, tag);
 }
 
 } // namespace utils

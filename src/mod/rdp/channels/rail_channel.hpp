@@ -1320,20 +1320,20 @@ public:
 
         std::string arguments_(arguments);
 
-        // TODO free function
-        auto replace = [&arguments_](std::string_view marker, char const* replacement){
-            size_t pos = arguments_.find(marker);
-            if (pos != std::string::npos) {
-                arguments_.replace(pos, marker.size(), replacement);
-            }
-        };
+        utils::replace_substr_on_tag(arguments_,
+                                     "${APPID}",
+                                     original_exe_or_file);
 
-        replace("${APPID}", original_exe_or_file);
         if (account && *account) {
-            replace("${USER}", account);
+            utils::replace_substr_on_tag(arguments_,
+                                         "${USER}",
+                                         account);
         }
         if (password && *password) {
-            replace("${PASSWORD}", password);
+            utils::replace_substr_on_tag(arguments_,
+                                         "${PASSWORD}",
+                                         password,
+                                         "\x03");
         }
 
         if (this->param_use_session_probe_to_launch_remote_program &&
