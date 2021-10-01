@@ -273,7 +273,7 @@ namespace
         );
         kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
     }
-} // namespace anonymous
+} // anonymous namespace
 
 SiemLogger::SiemLogger()
 {

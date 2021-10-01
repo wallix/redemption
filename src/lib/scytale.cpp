@@ -433,7 +433,7 @@ namespace
         hash_to_hashhex(hash.hash, hash_hex.data());
         return 0;
     }
-} // namespace anonymous
+} // anonymous namespace
 
 int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * filename)
 {

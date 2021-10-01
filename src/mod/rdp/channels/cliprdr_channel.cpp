@@ -421,7 +421,7 @@ bytes_view ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
     }
     else {
         if (!this->requested_buffer.buf) {
-            this->requested_buffer.buf.reset(new uint8_t[requested_len_max]);
+            this->requested_buffer.buf.reset(new uint8_t[requested_len_max]); /* NOLINT */
         }
 
         if (this->requested_buffer.remaining() >= n) {
@@ -468,7 +468,7 @@ namespace
             throw Error(ERR_UNEXPECTED, errnum);
         }
     }
-} // namespace anonymous
+} // anonymous namespace
 
 void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
 ::set_offset(uint64_t offset)
@@ -863,7 +863,7 @@ namespace
         }
         sender(response_size, send_last_flags, bytes_view(zeros_buf, remaining));
     }
-} // namespace anonymous
+} // anonymous namespace
 
 struct ClipboardVirtualChannel::ClipCtx::D
 {
@@ -1963,7 +1963,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
         auto new_tfl = [&]{
             return self.fdx_capture
-                ? std::unique_ptr<FileContentsRange::TflFile>(new FileContentsRange::TflFile{
+                ? std::unique_ptr<FileContentsRange::TflFile>(new FileContentsRange::TflFile{ /* NOLINT */
                     self.fdx_capture->new_tfl((&clip == &self.server_ctx)
                         ? Mwrm3::Direction::ServerToClient
                         : Mwrm3::Direction::ClientToServer

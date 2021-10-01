@@ -236,7 +236,7 @@ namespace
                 }
         }
     }
-} // namespace anonymous
+} // anonymous namespace
 
 bool configuration_load(
     ConfigurationHolder & configuration_holder, char const* filename)

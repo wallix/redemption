@@ -96,7 +96,7 @@ namespace
         DrawablePointer const & drawable_pointer;
         DrawablePointer::BufferSaver buffer_saver;
     };
-} // namespace anonymous
+} // anonymous namespace
 
 
 using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnapshot;

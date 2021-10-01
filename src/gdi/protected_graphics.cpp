@@ -120,7 +120,7 @@ inline void draw_impl(
     }
 }
 
-} // namespace anonymous
+} // anonymous namespace
 
 
 void gdi::ProtectedGraphics::draw(RDPDstBlt const& cmd, Rect clip)

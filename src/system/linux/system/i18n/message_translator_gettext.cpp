@@ -77,7 +77,7 @@ namespace
         }
         return true;
     }
-} // namespace anonymous
+} // anonymous namespace
 
 namespace i18n
 {

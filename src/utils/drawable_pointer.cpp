@@ -46,7 +46,7 @@ namespace
             &BGRPalette::classic_332()
         );
     }
-} // namespace anonymous
+} // anonymous namespace
 
 DrawablePointer::DrawablePointer() :
     image_data_view_data(create_img(0,

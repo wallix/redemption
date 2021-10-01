@@ -85,7 +85,7 @@ struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics
     bool first_frame = true;
 };
 
-} // namespace anonymous
+} // anonymous namespace
 
 RegionsCapture RegionsCapture::compute_regions(
     Transport & trans,

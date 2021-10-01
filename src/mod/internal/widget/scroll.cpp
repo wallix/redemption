@@ -35,7 +35,7 @@ namespace
 
         return dim;
     }
-} // namespace anonymous
+} // anonymous namespace
 
 WidgetScrollBar::WidgetScrollBar(
     gdi::GraphicApi & drawable, Widget& parent,

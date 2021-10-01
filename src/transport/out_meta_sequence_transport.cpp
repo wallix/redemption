@@ -84,7 +84,7 @@ namespace
             }
         };
     }
-} // namespace anonymous
+} // anonymous namespace
 
 OutMetaSequenceTransport::OutMetaSequenceTransport(
     CryptoContext & cctx,

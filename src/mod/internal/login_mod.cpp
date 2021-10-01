@@ -55,7 +55,7 @@ namespace
         char sep = (sep_pos != std::string::npos) ? target[sep_pos] : ':';
         return str_concat(target, sep, login);
     }
-} // namespace anonymous
+} // anonymous namespace
 
 LoginMod::LoginMod(
     LoginModVariables vars,

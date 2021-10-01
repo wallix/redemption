@@ -217,7 +217,7 @@ public:
     }
 };
 
-} // namespace anonymous
+} // anonymous namespace
 
 ModPack create_mod_vnc(
     gdi::GraphicApi & drawable,

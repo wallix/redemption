@@ -59,7 +59,7 @@ LanguageButton::LanguageButton(
         });
         if (it != end(layouts)) {
             if (it->kbdid != front_layout.kbdid) {
-                this->locales.push_back(*it);
+                this->locales.emplace_back(*it);
             }
         }
         else {
