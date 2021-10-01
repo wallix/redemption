@@ -39,7 +39,7 @@ namespace
 
         let result = BigInt(1);
         while (exponent) {
-            if ((exponent % int2) == int1) {
+            if ((exponent % int2) === int1) {
                 result = (result * base) % modulus;
             }
             base = (base * base) % modulus;
