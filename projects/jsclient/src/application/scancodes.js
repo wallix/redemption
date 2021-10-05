@@ -614,12 +614,12 @@ class ReversedKeymap
     }
 };
 
-const scancodeFromscancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff; };
+const scancodeFromScancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff; };
 const flagsFromScancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff00; };
 
 try {
     module.exports.scancodesForSynchronizedMods = scancodesForSynchronizedMods;
-    module.exports.scancodeFromscancodeAndFlags = scancodeFromscancodeAndFlags;
+    module.exports.scancodeFromScancodeAndFlags = scancodeFromScancodeAndFlags;
     module.exports.flagsFromScancodeAndFlags = flagsFromScancodeAndFlags;
     module.exports.keycodeToSingleScancode = keycodeToSingleScancode;
     module.exports.numpadCodeToScancode = numpadCodeToScancode;
