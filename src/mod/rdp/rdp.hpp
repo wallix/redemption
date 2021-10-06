@@ -908,32 +908,21 @@ public:
     }   // process_cliprdr_event
 
 
-    void process_auth_event(
+    void process_auth_event_single(
         ModRdpVariables vars,
-        const CHANNELS::ChannelDef & auth_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+        std::string const& auth_channel_message,
         FrontAPI& front,
         ServerTransportContext & stc,
         GeneralCaps const & client_general_caps,
         const char (& client_name)[128]
     ) {
-        (void)length;
-        (void)chunk_size;
-        assert(stream.in_remain() == chunk_size);
-
-        uint32_t first_and_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        if ((flags & first_and_last) != first_and_last) {
-            LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
+        if (auth_channel_message.empty())
+        {
             return;
         }
 
-        std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
-            "mod_rdp::process_auth_event: AuthChannelMessage=\"%s\"", auth_channel_message);
-
-        this->auth_channel_flags  = flags;
-        this->auth_channel_chanid = auth_channel.chanid;
-
+            "mod_rdp::process_auth_event_single: AuthEvent=\"%s\"", auth_channel_message.c_str());
         ParseServerMessage parse_server_message_result;
         parse_server_message_result.parse(auth_channel_message);
         auto const upper_order = parse_server_message_result.upper_order();
@@ -1012,11 +1001,41 @@ public:
         }
         else {
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
-                "mod_rdp::process_auth_event: AuthChannelTarget=\"%s\"", auth_channel_message);
+                "mod_rdp::process_auth_event_single: AuthChannelTarget=\"%s\"", auth_channel_message);
             vars.set_acl<cfg::context::auth_channel_target>(auth_channel_message);
         }
     }
 
+    void process_auth_event(
+        ModRdpVariables vars,
+        const CHANNELS::ChannelDef & auth_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+        FrontAPI& front,
+        ServerTransportContext & stc,
+        GeneralCaps const & client_general_caps,
+        const char (& client_name)[128]
+    ) {
+        (void)length;
+        (void)chunk_size;
+        assert(stream.in_remain() == chunk_size);
+
+        uint32_t first_and_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        if ((flags & first_and_last) != first_and_last) {
+            LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
+            return;
+        }
+
+        std::string const auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+            "mod_rdp::process_auth_event: AuthChannelMessage=\"%s\"", auth_channel_message);
+
+        this->auth_channel_flags  = flags;
+        this->auth_channel_chanid = auth_channel.chanid;
+
+        for (auto param : split_with(auth_channel_message, '\x02')) {
+            process_auth_event_single(vars, param.as<std::string>(), front, stc, client_general_caps, client_name);
+        }
+    }
 
 
     void process_checkout_event(

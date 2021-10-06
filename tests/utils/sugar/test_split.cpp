@@ -101,3 +101,38 @@ RED_AUTO_TEST_CASE(TestSplitter)
         test_splitters(str, "[][]"_av);
     }
 }
+
+
+RED_AUTO_TEST_CASE(TestSplitter2)
+{
+    {
+        std::string auth_channel_message { "\x02Order=Param1\x01Param2" };
+
+        std::vector<std::string> items;
+
+        for (auto param : split_with(auth_channel_message, '\x02')) {
+            items.emplace_back(std::move(param.as<std::string>()));
+        }
+
+        RED_CHECK_EQUAL(items.size(), 2);
+
+        RED_CHECK_EQUAL(items[0].length(), 0);
+        RED_CHECK_EQUAL(items[1], "Order=Param1\x01Param2");
+    }
+
+    {
+        std::string auth_channel_message { "\x02\x02" };
+
+        std::vector<std::string> items;
+
+        for (auto param : split_with(auth_channel_message, '\x02')) {
+            items.emplace_back(std::move(param.as<std::string>()));
+        }
+
+        RED_CHECK_EQUAL(items.size(), 3);
+
+        RED_CHECK_EQUAL(items[0].length(), 0);
+        RED_CHECK_EQUAL(items[1].length(), 0);
+        RED_CHECK_EQUAL(items[2].length(), 0);
+    }
+}
