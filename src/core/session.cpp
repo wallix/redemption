@@ -967,9 +967,11 @@ private:
                     }
 
                     if (has_field(cfg::context::rejected())) {
+                        LOG(LOG_ERR, "Connection is rejected by Authentifier! Reason: %s",
+                            this->ini.get<cfg::context::rejected>().c_str());
                         this->ini.set<cfg::context::auth_error_message>(
                             this->ini.get<cfg::context::rejected>());
-                        next_module = ModuleName::close;
+                         next_module = ModuleName::close;
                         back_event = BACK_EVENT_NEXT;
                     }
                     else if (has_field(cfg::context::disconnect_reason())) {
