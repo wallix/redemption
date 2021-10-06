@@ -136,7 +136,7 @@ struct CSMonitorEx {
         assert((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
 
         stream.out_uint16_le(this->userDataType);
-        this->length = 4 + 4 + 4 + this->monitorCount * 20; // header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
+        this->length = 4 + 4 + 4 + 4 + this->monitorCount * 20; // header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
         stream.out_uint16_le(this->length);
 
         stream.out_uint32_le(this->flags);
