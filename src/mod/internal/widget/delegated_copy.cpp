@@ -30,7 +30,7 @@
 WidgetDelegatedCopy::WidgetDelegatedCopy(
     gdi::GraphicApi & drawable, Widget& delegated, NotifyApi& notifier,
     Color fgcolor, Color bgcolor, Color activecolor,
-    Font const & font, int xicon, int yicon
+    Font const & font, int xicon, int yicon, MouseButton copy_buttons
 )
     : Widget(drawable, delegated, &notifier, delegated.group_id)
     , bg_color(bgcolor)
@@ -39,6 +39,7 @@ WidgetDelegatedCopy::WidgetDelegatedCopy(
     , optimal_glyph_dim(get_optimal_dim(font, xicon, yicon))
     , x_icon(xicon)
     , y_icon(yicon)
+    , copy_buttons(copy_buttons)
 {
     this->tab_flag = IGNORE_TAB;
     this->focus_flag = IGNORE_FOCUS;
@@ -113,9 +114,22 @@ void WidgetDelegatedCopy::set_color(Color bg_color, Color fg_color)
     this->fg_color = fg_color;
 }
 
+static bool operator&(WidgetDelegatedCopy::MouseButton a,
+                      WidgetDelegatedCopy::MouseButton b)
+{
+    return underlying_cast(a) & underlying_cast(b);
+}
+
 void WidgetDelegatedCopy::rdp_input_mouse(int device_flags, int /*x*/, int /*y*/)
 {
-    if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && !this->is_active) {
+    uint32_t mouse_match = (
+      ((this->copy_buttons & MouseButton::Left)  ? MOUSE_FLAG_BUTTON1 : 0)
+    | ((this->copy_buttons & MouseButton::Right) ? MOUSE_FLAG_BUTTON2 : 0)
+    );
+    if ((device_flags & mouse_match)
+     && (device_flags & MOUSE_FLAG_DOWN)
+     && !this->is_active
+    ) {
         this->draw(
             this->get_rect(), this->get_rect(), this->drawable,
             this->active_color, this->bg_color, this->x_icon, this->y_icon
@@ -123,7 +137,7 @@ void WidgetDelegatedCopy::rdp_input_mouse(int device_flags, int /*x*/, int /*y*/
         this->is_active = true;
         this->send_notify(this->parent, NOTIFY_COPY);
     }
-    else if (device_flags == MOUSE_FLAG_BUTTON1 && this->is_active) {
+    else if ((device_flags & mouse_match) && this->is_active) {
         this->draw(
             this->get_rect(), this->get_rect(), this->drawable,
             this->fg_color, this->bg_color, this->x_icon, this->y_icon

@@ -28,10 +28,18 @@ class Font;
 class WidgetDelegatedCopy : public Widget
 {
 public:
+    enum class MouseButton : uint8_t
+    {
+        Right = 1 << 0,
+        Left  = 1 << 1,
+        Both  = Right | Left,
+    };
+
     WidgetDelegatedCopy(
         gdi::GraphicApi & drawable, Widget& delegated, NotifyApi& notifier,
         Color fgcolor, Color bgcolor, Color activecolor,
-        Font const & font, int xicon, int yicon);
+        Font const & font, int xicon, int yicon,
+        MouseButton copy_buttons);
 
     Dimension get_optimal_dim() const override;
 
@@ -55,6 +63,8 @@ private:
     Dimension optimal_glyph_dim;
     int x_icon;
     int y_icon;
+
+    MouseButton copy_buttons;
 
     bool is_active = false;
 };

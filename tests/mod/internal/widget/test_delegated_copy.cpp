@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
 
     NotifyTrace notifier;
     WidgetReceiveEvent dummy_widget(gd, screen);
-    WidgetDelegatedCopy delegated(gd, dummy_widget, notifier, fg_color, bg_color, focus_color, font, 2, 2);
+    WidgetDelegatedCopy delegated(gd, dummy_widget, notifier, fg_color, bg_color, focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Left);
 
     delegated.set_wh(delegated.get_optimal_dim());
     delegated.set_xy(5, 5);
