@@ -402,6 +402,11 @@ try:
             raise Exception('Target architecture (%s) does not match current device architecture (%s)' % (opts.config["%ARCHI%"], device_archi))
         opts.config["%ARCHI%"] = archi_to_control_archi(device_archi)
 
+        # write redemption.preinst file
+        copy_and_replace_dict_file("%s/redemption.preinst" % opts.packagetemp,
+                                   opts.config,
+                                   "debian/redemption.preinst")
+
         # write redemption.install file
         copy_and_replace_dict_file("%s/redemption.install" % opts.packagetemp,
                                    opts.config,
