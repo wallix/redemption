@@ -105,18 +105,13 @@ def decode_rawtext_data(data):
 
 
 class Engine(object):
-    def __init__(self, legacy_auth=False):
+    def __init__(self):
         self.wabengine = None
         self.checkout = None
         self.user_cn = None
         self.user_lang = None
         self.wabengine_conf = Config('wabengine')
-        self.authenticator = Authenticator(
-            self.wabengine_conf.get(
-                'port',
-                'unix:/run/wabengine/wabengine.sock'
-            )
-        )
+        self.authenticator = Authenticator()
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
@@ -151,6 +146,8 @@ class Engine(object):
 
         self.avatar_id = None
 
+        self.authenticated = False
+
     def keepalive(self, timeout, close=True):
         if self.avatar_id:
             self.wabengine.save_session(self.avatar_id, timeout=timeout)
@@ -162,6 +159,7 @@ class Engine(object):
         self.avatar_id = self.wabengine.connect(timeout=60)
         self.update_user()
         self.checkout = CheckoutEngine(self.wabengine)
+        self.authenticated = True
 
     def update_user(self):
         if not self.wabengine:
@@ -371,6 +369,19 @@ class Engine(object):
 
     def mobile_device_authenticate(self):
         return self.authenticator.mobile_device_authenticate(self)
+
+    def check_url_redirect(self, wab_login, ip_client, ip_server):
+        return self.authenticator.check_url_redirect(
+            wab_login, ip_client, ip_server
+        )
+
+    def url_redirect_authenticate(self):
+        return self.authenticator.url_redirect_authenticate(self)
+
+    def check_kbdint_auth(self, wab_login, ip_client, ip_server):
+        return self.authenticator.check_kbdint_authenticate(
+            self, wab_login, ip_client, ip_server
+        )
 
     def password_authenticate(self, wab_login, ip_client, password, ip_server):
         return self.authenticator.password_authenticate(
@@ -723,6 +734,7 @@ class Engine(object):
             self.authenticator.reset()
         self.close_client()
         self.user_cn = None
+        self.authenticated = False
 
     def close_client(self):
         if self.wabengine:

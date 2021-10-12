@@ -30,8 +30,9 @@ except Exception:
 
 from .challenge import (
     Challenge,
-    mfa_to_challenge,
+    md_to_challenge,
     ac_to_challenge,
+    ur_to_challenge,
 )
 from collections import namedtuple
 
@@ -43,12 +44,18 @@ class AuthState(object):
     SSH_KEY = "SSH_KEY"
     MOBILE_DEVICE = "MOBILE_DEVICE"
     PASSTHROUGH = "PASSTHROUGH"
+    URL_REDIRECT = "URL_REDIRECT"
+    KBDINT_CHECK = "KBDINT_CHECK"
 
 
 # TODO: to remove
 if (not hasattr(AUTH, "MOBILE_DEVICE")
     and hasattr(AUTH, "PINGID")):
     AUTH.MOBILE_DEVICE = AUTH.PINGID
+
+# TODO: to remove
+if not hasattr(AUTH, "URL_REDIRECT"):
+    AUTH.URL_REDIRECT = "URL_REDIRECT"
 
 # TODO: to remove
 if not hasattr(AUTH, "PASSTHROUGH"):
@@ -68,6 +75,9 @@ COMPATIBILITY_PROXY = {
     AuthState.SSH_KEY: [AUTH.SSH_KEY, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.MOBILE_DEVICE: [AUTH.MOBILE_DEVICE, AUTH.PASSWORD],
     AuthState.PASSTHROUGH: [AUTH.PASSTHROUGH],
+    AuthState.URL_REDIRECT: [AUTH.URL_REDIRECT],
+    AuthState.KBDINT_CHECK: [AUTH.URL_REDIRECT, AUTH.PASSWORD,
+                             AUTH.MOBILE_DEVICE],
 }
 
 EXPECTED_FIRST_COMPAT = {
@@ -78,6 +88,9 @@ EXPECTED_FIRST_COMPAT = {
     AuthState.SSH_KEY: [AUTH.SSH_KEY],
     AuthState.MOBILE_DEVICE: [AUTH.MOBILE_DEVICE],
     AuthState.PASSTHROUGH: [AUTH.PASSTHROUGH],
+    AuthState.URL_REDIRECT: [AUTH.URL_REDIRECT],
+    AuthState.KBDINT_CHECK: [AUTH.PASSWORD, AUTH.URL_REDIRECT,
+                             AUTH.MOBILE_DEVICE],
 }
 
 IDENT_PROXY = {
@@ -88,34 +101,48 @@ IDENT_PROXY = {
     AuthState.SSH_KEY: IDENT.LOGIN,
     AuthState.MOBILE_DEVICE: IDENT.LOGIN,
     AuthState.PASSTHROUGH: IDENT.PASSTHROUGH,
+    AuthState.URL_REDIRECT: IDENT.LOGIN,
+    AuthState.KBDINT_CHECK: IDENT.LOGIN,
 }
 
 CHALLENGE_AUTH_STATE = {
     AUTH.PASSWORD: AuthState.PASSWORD,
     AUTH.MOBILE_DEVICE: AuthState.MOBILE_DEVICE,
+    AUTH.URL_REDIRECT: AuthState.URL_REDIRECT,
+}
+
+KBDINT_PENDING_STATUS = {
+    AuthState.PASSWORD: "password",
+    AuthState.MOBILE_DEVICE: "mobile_device",
+    AuthState.URL_REDIRECT: "url_redirect",
 }
 
 
+BANNABLE_STATES = (AuthState.SSH_KEY, AuthState.KERBEROS)
+
+
 def get_auth_priority(auth_state):
+    if auth_state == AuthState.KBDINT_CHECK:
+        return None
     expected = EXPECTED_FIRST_COMPAT.get(auth_state)
     return expected[0] if expected else None
 
 
 class Authenticator(object):
     __slots__ = (
-        'synclient_port', 'checker', 'auth_x509', 'challenge',
+        'checker', 'auth_x509', 'challenge',
         'auth_state', 'auth_key', 'auth_ident', 'auth_challenge',
-        'removed_auth_state',
+        'removed_auth_state', 'current_login',
     )
 
-    def __init__(self, synclient_port):
-        self.synclient_port = synclient_port
+    def __init__(self):
         self.auth_x509 = None
         self.challenge = None
         self.auth_state = None
         self.auth_key = None
         self.auth_ident = None
         self.auth_challenge = None
+        self.current_login = None
         self.removed_auth_state = set()
         self.checker = None
 
@@ -126,6 +153,7 @@ class Authenticator(object):
         self.auth_key = None
         self.auth_ident = None
         self.auth_challenge = None
+        self.current_login = None
         self.removed_auth_state = set()
         self.checker = None
 
@@ -153,25 +181,47 @@ class Authenticator(object):
                        login=None, auth_state=None,
                        client_name="PROXY"):
         self._init_client()
+
+        # Conditions to continue
+
+        if (self.current_login is not None
+            and login is not None
+            and login != self.current_login):
+            # login changed
+            self._reset_auth()
+
+        if self.auth_key and (self.auth_state == auth_state):
+            # already identified and state are consistent
+            return True
+
+        if self.auth_key:
+            # already identified but state not compatible
+            if auth_state == AuthState.KBDINT_CHECK:
+                # Check State: return false
+                return False
+            # reset pending auth and continue
+            self._reset_auth()
+
         if auth_state in self.removed_auth_state:
             # this auth method has been definitively banned
             Logger().debug(">> PA method %s banned" % auth_state)
             return False
-
-        if self.auth_key and (self.auth_state == auth_state):
-            # already identified for this kind of auth method
-            return True
 
         Logger().debug(">> PA init_identify current:%s  asked:%s" %
                        (self.auth_key, auth_state))
         self.auth_state = auth_state
         self.auth_ident = IDENT_PROXY[auth_state]
         data = {}
-        if auth_state in (AuthState.PASSWORD,
-                          AuthState.KERBEROS,
-                          AuthState.SSH_KEY,
-                          AuthState.MOBILE_DEVICE,
-                          AuthState.PASSTHROUGH,):
+        if auth_state in (
+            AuthState.PASSWORD,
+            AuthState.KERBEROS,
+            AuthState.SSH_KEY,
+            AuthState.MOBILE_DEVICE,
+            AuthState.PASSTHROUGH,
+            AuthState.URL_REDIRECT,
+            AuthState.KBDINT_CHECK,
+        ):
+            self.current_login = login
             data = {
                 'login': login,
             }
@@ -217,7 +267,7 @@ class Authenticator(object):
                     (auth_type, auth_state)
                 )
                 remove_state = None
-                if auth_state in (AuthState.SSH_KEY, AuthState.KERBEROS):
+                if auth_state in BANNABLE_STATES:
                     # if compatibility check on "automatic" method,
                     # do not try it again
                     remove_state = auth_state
@@ -225,12 +275,20 @@ class Authenticator(object):
                 return False
         except AuthenticationFailed as a:
             Logger().debug(">> PA init_identify AuthenticationFailed %s" % a)
-            self._reset_auth(cancel=False)
+            remove_state = None
+            if auth_state in BANNABLE_STATES:
+                # if identification failed on "automatic" method,
+                # do not try it again
+                remove_state = auth_state
+            self._reset_auth(remove_auth_state=remove_state,
+                             cancel=(auth_state in (AuthState.SSH_KEY,
+                                                    AuthState.URL_REDIRECT,
+                                                    AuthState.KBDINT_CHECK)))
             return False
         except IdentificationFailed as a:
             Logger().debug(">> PA init_identify IdentificationFailed %s" % a)
             remove_state = None
-            if auth_state in (AuthState.SSH_KEY, AuthState.KERBEROS):
+            if auth_state in BANNABLE_STATES:
                 # if identification failed on "automatic" method,
                 # do not try it again
                 remove_state = auth_state
@@ -285,15 +343,20 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def set_challenge(self, challenge):
+    def set_challenge(self, challenge, check_state=False):
         auth_type = challenge.get("auth_type")
         self.auth_state = CHALLENGE_AUTH_STATE.get(auth_type)
         if self.auth_state is None:
-            # Challenge only work for "PASSWORD" and MOBILE_DEVICE
+            # Challenge only work for "PASSWORD", MOBILE_DEVICE and URL_REDIRECT
             self._reset_auth()
             return
         self.auth_challenge = challenge
-        self.challenge = ac_to_challenge(challenge)
+        if auth_type == AUTH.URL_REDIRECT:
+            self.challenge = ur_to_challenge(challenge)
+        elif auth_type == AUTH.MOBILE_DEVICE:
+            self.challenge = md_to_challenge(challenge)
+        else:
+            self.challenge = ac_to_challenge(challenge, check_state)
         return
 
     def get_challenge(self):
@@ -333,6 +396,20 @@ class Authenticator(object):
             Logger().info("Engine is_x509_validated failed: (((%s)))" %
                           traceback.format_exc())
         return result
+
+    def check_kbdint_authenticate(self, enginei, login, ip_client, ip_server):
+        if self.auth_key and login == self.current_login:
+            return KBDINT_PENDING_STATUS.get(self.auth_state)
+        if not self._init_identify(ip_client, ip_server, login=login,
+                                   auth_state=AuthState.KBDINT_CHECK):
+            return False
+        self.set_challenge(self.auth_challenge, check_state=True)
+        if self.auth_state == AuthState.MOBILE_DEVICE:
+            return self._authentify(
+                enginei, {}, "mobile_device",
+                no_delay=True
+            )
+        return KBDINT_PENDING_STATUS.get(self.auth_state)
 
     def x509_authenticate(self, enginei, ip_client=None, ip_server=None):
         try:
@@ -384,6 +461,33 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine mobile_device_authenticate failed: "
+                          "(((%s)))" % traceback.format_exc())
+            raise
+        self._reset_auth()
+        return False
+
+    def check_url_redirect(self, wab_login, ip_client, ip_server):
+        if not self._init_identify(ip_client, ip_server, login=wab_login,
+                                   auth_state=AuthState.URL_REDIRECT):
+            return False
+        auth_type = self.auth_challenge.get('auth_type')
+        self.challenge = ur_to_challenge(self.auth_challenge)
+        return auth_type == AUTH.URL_REDIRECT
+
+    def url_redirect_authenticate(self, enginei):
+        if self.auth_state != AuthState.URL_REDIRECT:
+            self._reset_auth()
+            return False
+        try:
+            data = {}
+            auth_type = self.auth_challenge.get('auth_type')
+            if auth_type == AUTH.URL_REDIRECT:
+                return self._authentify(enginei, data, "url_redirect",
+                                        no_delay=True)
+        except Exception:
+            self._reset_auth(cancel=False)
+            import traceback
+            Logger().info("Engine url_redirect_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
             raise
         self._reset_auth()
