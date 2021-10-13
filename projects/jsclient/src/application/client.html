@@ -733,7 +733,7 @@ function run(openCb, closeCb)
         console.group('keyboard');
         console.log(`unicode support: ${hasUnicode}`);
         console.log(`method: (${kbdMethodId}) ${kbdMethod}`);
-        console.log(`layout: (0x${layout.klid.toString(16)}) ${layout.name}`);
+        console.log(`layout: (0x${layout.klid.toString(16)}) ${layout.displayName}`);
         console.log(`AltGr = Ctrl + Alt: ${altGrIsCtrlAndAlt}`);
         console.groupEnd();
 
@@ -796,6 +796,7 @@ function run(openCb, closeCb)
             password: pass_input.value,
             // getRandomValues: (data) => crypto.getRandomValues(data),
             verbosity: Number(verbosity_input.value) || 0/*0x04000000*/,
+            keylayout: currentLayout().klid,
         }, JSON.parse(jsonConfig_input.value || '{}'));
 
         console.table(config);
