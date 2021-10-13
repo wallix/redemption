@@ -48,6 +48,7 @@ inline const char * get_module_name(ModuleName module_id) noexcept
         case ModuleName::login:                 return "MODULE_INTERNAL_LOGIN";
         case ModuleName::card:                  return "MODULE_INTERNAL_CARD";
         case ModuleName::confirm:               return "MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE";
+        case ModuleName::link_confirm:          return "MODULE_INTERNAL_DIALOG_LINK_MESSAGE";
         case ModuleName::valid:                 return "MODULE_INTERNAL_DIALOG_VALID_MESSAGE";
         case ModuleName::challenge:             return "MODULE_INTERNAL_DIALOG_CHALLENGE";
         case ModuleName::interactive_target:    return "MODULE_INTERNAL_TARGET";

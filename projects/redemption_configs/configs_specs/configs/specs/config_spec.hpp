@@ -850,6 +850,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"message"});
 
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"display_link"});
+
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), names{"accept_message"});
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), names{"display_message"});
 

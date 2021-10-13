@@ -10,6 +10,7 @@ back_to_selector_default_sent = {
     u'banner_message': u'',
     u'banner_type': 0,
     u'device_id': u'',
+    u'display_link': u'',
     u'duration_max': 0,
     u'formflag': 0,
     u'is_rec': False,

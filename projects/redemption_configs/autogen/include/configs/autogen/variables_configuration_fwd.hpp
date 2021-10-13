@@ -372,6 +372,7 @@ namespace cfg
         struct auth_channel_answer;
         struct auth_channel_target;
         struct message;
+        struct display_link;
         struct accept_message;
         struct display_message;
         struct rejected;
