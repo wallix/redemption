@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -122,6 +122,7 @@ div, section, canvas{
             <label for="kbdmethod">Method: <select name="kbdmethod" id="kbdmethod">
                 <option value="codeToScancode">KeyboardEvent.code -> Scancode</option>
                 <option value="emulateScancode">KeyboardEvent.key -> Scancode or Unicode</option>
+                <option value="unicode">KeyboardEvent.key -> Unicode</option>
             </select></label>
             <label for="kbdAltGrIsCtrlAndAlt"><input type="checkbox" id="kbdAltGrIsCtrlAndAlt" name="kbdAltGrIsCtrlAndAlt" checked="checked"/>Ctrl + Alt = AltGr</label>
             <fieldset>
@@ -330,7 +331,7 @@ function run(openCb, closeCb)
             evt.stopImmediatePropagation();
             for (let i = 0; i < unicode.length; ++i) {
                 const code = unicode.charCodeAt(i);
-                console.log('Unicode: send', code, '0x'+code.toString(16));
+                console.log('Unicode: send', code, `(0x${code.toString(16)})`, 'flag:', flag, `(0x${flag.toString(16)})`);
                 rdpclient.writeUnicodeEvent(code, flag);
             }
             sendData();
@@ -564,6 +565,36 @@ function run(openCb, closeCb)
         }
     }
 
+    class UnicodeKeyboard extends Keyboard
+    {
+        // driver = class {
+        // sendUnicode(unicode:String, flag:Number, evt:KeyEvent)
+        //  sendScancodes(scancodes:Array[Number], evt:KeyEvent);
+        //  syncKbdLocks(syncFlags:Number)
+        // }
+        constructor(keymap, driver) {
+            super(keymap, driver)
+        }
+
+        _keyEvent(evt, flag) {
+            if (!this._preprocessKeyEvent(evt, flag)) return;
+
+            if (isComposing(evt)) {
+                return;
+            }
+
+            if (evt.key.length === 1 || evt.key.charCodeAt(0) > 127) {
+                this._driver.sendUnicode(evt.key, flag, evt);
+            }
+            else {
+                const scancodes = codeToScancodes(evt.key, flag) || codeToScancodes(evt.code, flag);
+                if (scancodes) {
+                    this._driver.sendScancodes(scancodes, evt);
+                }
+            }
+        }
+    }
+
     const keyboardDriver = {
         sendUnicode,
         sendScancodes,
@@ -576,6 +607,7 @@ function run(openCb, closeCb)
 
     const scancodeKeyboard = new Keyboard(keymap, keyboardDriver);
     const emulatedKeyboard = new EmulatedKeyboard(keymap, keyboardDriver);
+    const unicodeKeyboard = new UnicodeKeyboard(keymap, keyboardDriver);
     let keyboardForEvent = scancodeKeyboard;
 
     const onKeyUp = (evt) => { keyboardForEvent.keyup(evt); };
@@ -590,7 +622,7 @@ function run(openCb, closeCb)
         if (keyboardForEvent !== emulatedKeyboard) return;
         // event is fired before that input.value is updated
         setTimeout(() => {
-            const text = evt.target.value;
+            const text = ecanvasFocus.value;
             console.log(`CompositeEnd: ${text}`);
             if (text) emulatedKeyboard.compositeKeyEvent(evt, text);
         }, 1);
@@ -742,7 +774,9 @@ function run(openCb, closeCb)
 
         emulatedKeyboard.setUnicodeSupport(hasUnicode);
 
-        const newKeyboardForEvent = (kbdMethod === 'emulateScancode') ? emulatedKeyboard : scancodeKeyboard;
+        const newKeyboardForEvent = (kbdMethod === 'emulateScancode') ? emulatedKeyboard
+                                  : (kbdMethod === 'unicode') ? unicodeKeyboard
+                                  : scancodeKeyboard;
         newKeyboardForEvent.copyInternalStateFrom(keyboardForEvent);
         keyboardForEvent = newKeyboardForEvent;
         keyboardForEvent.activeModsSync();
