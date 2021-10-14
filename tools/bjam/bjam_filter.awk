@@ -66,6 +66,16 @@ BEGINFILE {
     i=int($2)
     next
   }
+  else if (/^    LD_LIBRARY_PATH=/)
+  {
+    getline
+    getline
+    getline
+    print
+    getline
+    getline
+    next
+  }
 
   if (/^\.\.\.updating/)
   {
