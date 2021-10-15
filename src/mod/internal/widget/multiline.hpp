@@ -48,8 +48,8 @@ public:
     }
 
 private:
-    static const size_t buffer_size = 1024;
-    static const size_t max_line = 50;
+    static const size_t buffer_size = 1024 * 20;
+    static const size_t max_line = 1024;
 
     struct line_t
     {
