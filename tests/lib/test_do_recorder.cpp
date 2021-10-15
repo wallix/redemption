@@ -1042,7 +1042,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk-meta.meta"), "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n"_av);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 385000 +- 7_percent);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.png"), 15353 /*+- 0_v*/);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 580000 +- 7_percent);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 580000 +- 10_percent);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.png"), 40151 /*+- 0_v*/);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta.pgs"),        37 /*+- 0_v*/);
 }

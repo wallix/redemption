@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
     RED_TEST_FILE_SIZE(wd.add_file("video-000002.png"), 3107);
     RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 23267 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000003.png"), 3099);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 24767 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 24767 +- 3000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000004.png"), 3098);
     RED_TEST_FILE_SIZE(wd.add_file("video-000004.mp4"), 23044 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000005.png"), 3098);
@@ -204,9 +204,9 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.png"), 3099);
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 13584 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000001.png"), 3099);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 15175 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 15175 +- 3000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000002.png"), 3104);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15299 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15299 +- 3000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000003.png"), 3101);
     RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 13576 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000004.png"), 3107);
