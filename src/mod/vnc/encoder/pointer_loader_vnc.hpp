@@ -66,36 +66,42 @@ struct PointerLoaderVnc
 
         // LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
         for (size_t y = 0; y < minheight; ++y) {
-            for (size_t x = 0; x < minwidth; ++x) {
-                const size_t target_offset = target_offset_line + x*3;
-                const size_t source_offset = source_offset_line + x*underlying_cast(Bpp);
-                unsigned pixel = 0;
-                if (x < width) {
-                    for(size_t i = 0 ; i < underlying_cast(Bpp); ++i) {
-                        pixel |= unsigned(vncdata[source_offset+i]) << (i*8);
-                    }
-                }
-                const unsigned red   = (pixel >> red_shift  ) & red_max;
-                const unsigned green = (pixel >> green_shift) & green_max;
-                const unsigned blue  = (pixel >> blue_shift ) & blue_max;
-                // LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
-                this->data[target_offset  ] = uint8_t((red   << 3) | (red   >> 2));
-                this->data[target_offset+1] = uint8_t((green << 2) | (green >> 4));
-                this->data[target_offset+2] = uint8_t((blue  << 3) | (blue  >> 2));
-            }
-
-            for (size_t xx = 0; xx < ::nbbytes(minwidth); ++xx) {
+            for (size_t x = 0; x < ::nbbytes(minwidth); ++x) {
                 // LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
-                if (xx < ::nbbytes(width)){
-                    this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
+                if (x < ::nbbytes(width)){
+                    this->and_mask[target_mask_offset_line+x] = 0xFF ^ vncmask[source_mask_offset_line+x];
                 }
                 else {
-                    this->mask[target_mask_offset_line+xx] = 0xFF;
+                    this->and_mask[target_mask_offset_line+x] = 0xFF;
                 }
             }
 
             if (minwidth % 8) {
-                this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
+                this->and_mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
+            }
+
+            size_t source_offset = source_offset_line;
+            for (size_t x = 0; x < minwidth; ++x, source_offset += underlying_cast(Bpp)) {
+                const size_t target_offset = target_offset_line + x*3;
+                // don't use vncdata for hidden pixel because should be random initialized
+                if (x >= width || (this->and_mask[target_mask_offset_line+x/8] & (0x80 >> (x % 8)))) {
+                    this->xor_mask[target_offset  ] = 0;
+                    this->xor_mask[target_offset+1] = 0;
+                    this->xor_mask[target_offset+2] = 0;
+                }
+                else {
+                    unsigned pixel = 0;
+                    for(size_t i = 0 ; i < underlying_cast(Bpp); ++i) {
+                        pixel |= unsigned(vncdata[source_offset+i]) << (i*8);
+                    }
+                    const unsigned red   = (pixel >> red_shift  ) & red_max;
+                    const unsigned green = (pixel >> green_shift) & green_max;
+                    const unsigned blue  = (pixel >> blue_shift ) & blue_max;
+                    // LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
+                    this->xor_mask[target_offset  ] = uint8_t((red   << 3) | (red   >> 2));
+                    this->xor_mask[target_offset+1] = uint8_t((green << 2) | (green >> 4));
+                    this->xor_mask[target_offset+2] = uint8_t((blue  << 3) | (blue  >> 2));
+                }
             }
 
             target_offset_line += minwidth*3;
@@ -113,15 +119,16 @@ struct PointerLoaderVnc
             this->dimensions,
             this->hotspot,
             BitsPerPixel{24},
-            data, mask);
+            this->xor_mask,
+            this->and_mask);
     }
 
 private:
-    CursorSize dimensions {32,32};
+    CursorSize dimensions {32, 32};
     Hotspot hotspot {0, 0};
 
-    uint8_t data[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3];
-    uint8_t mask[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT / 8];
+    uint8_t xor_mask[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3];
+    uint8_t and_mask[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT / 8];
 };
 
 } // namespace VNC
