@@ -525,7 +525,14 @@ private:
 
         case ModuleName::link_confirm:
             log_proxy::set_user("");
-            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            if (auto timeout = this->ini.get<cfg::context::mod_timeout>()
+                ; timeout.count() != 0
+            ) {
+                inactivity.start(timeout);
+            }
+            else {
+                inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            }
             mod_pack = mod_factory.create_display_link_mod();
             break;
 
