@@ -174,6 +174,7 @@ exe rdpproxy :
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
+  <library>src/mod/internal/dialog_mod2.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_mod_base.o
@@ -187,6 +188,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/dialog.o
+  <library>src/mod/internal/widget/dialog2.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/form.o
@@ -5166,6 +5168,7 @@ obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bounce
 obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod.cpp ;
+obj src/mod/internal/dialog_mod2.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod2.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
 obj src/mod/internal/login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/login_mod.cpp ;
 obj src/mod/internal/rail_mod_base.o : $(REDEMPTION_SRC_PATH)/mod/internal/rail_mod_base.cpp ;
@@ -5179,6 +5182,7 @@ obj src/mod/internal/widget/button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widge
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
 obj src/mod/internal/widget/delegated_copy.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/delegated_copy.cpp ;
 obj src/mod/internal/widget/dialog.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/dialog.cpp ;
+obj src/mod/internal/widget/dialog2.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/dialog2.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;
 obj src/mod/internal/widget/form.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/form.cpp ;

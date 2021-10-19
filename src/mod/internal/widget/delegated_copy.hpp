@@ -36,8 +36,8 @@ public:
     };
 
     WidgetDelegatedCopy(
-        gdi::GraphicApi & drawable, Widget& delegated, NotifyApi& notifier,
-        Color fgcolor, Color bgcolor, Color activecolor,
+        gdi::GraphicApi & drawable, Widget & parent, NotifyApi& notifier,
+        int group_id, Color fgcolor, Color bgcolor, Color activecolor,
         Font const & font, int xicon, int yicon,
         MouseButton copy_buttons);
 

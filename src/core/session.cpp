@@ -523,6 +523,12 @@ private:
             mod_pack = mod_factory.create_display_message_mod();
             break;
 
+        case ModuleName::link_confirm:
+            log_proxy::set_user("");
+            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            mod_pack = mod_factory.create_display_link_mod();
+            break;
+
         case ModuleName::valid:
             log_proxy::set_user("");
             inactivity.start(this->ini.get<cfg::globals::session_timeout>());

@@ -773,11 +773,9 @@ class Sesman():
             u'password': u'url_redirect',
             u"mod_timeout": timeout,
             u'display_link': link,
-            u'module': u'confirm',
+            u'module': u'link_confirm',
             u'display_message': MAGICASK,
         })
-
-        Logger().debug(f">>>>> {link}")
 
         self.send_data(data_to_send)
 

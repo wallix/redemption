@@ -41,7 +41,7 @@ struct WidgetTestMod::WidgetTestModPrivate : NotifyApi
     , copy_paste(true)
     , label(gd, this->screen, nullptr, "bla bla", -11, theme.global.fgcolor, theme.global.bgcolor, font)
     , delegated_copy(
-        gd, this->label, *this, theme.global.fgcolor, theme.global.bgcolor,
+        gd, this->label, *this, -12, theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
     {
         this->screen.add_widget(&this->label);
