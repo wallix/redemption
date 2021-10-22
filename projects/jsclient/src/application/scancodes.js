@@ -578,7 +578,6 @@ class ReversedKeymap
             case "NumLock":
                 if (flag === KeyAcquire) {
                     this._modFlags ^= NumLockMod;
-                    this._virtualModFlags ^= NumLockMod;
                 }
                 return [NumLockSC | flag];
 
@@ -632,7 +631,7 @@ class ReversedKeymap
         const ctrl = this._rctrlIsOem8 ? CtrlMod : (CtrlMod | RightCtrlMod);
         const hasCtrl = this._modFlags & ctrl;
         const hasAlt = this._modFlags & AltMod;
-        this._virtualModFlags = this._modFlags & (AltGrMod | ShiftMod | CapsLockMod | NumLockMod);
+        this._virtualModFlags = this._modFlags & (AltGrMod | ShiftMod | CapsLockMod);
         this._virtualModFlags |= (this._modFlags & RightShiftMod) ? ShiftMod : 0;
         this._virtualModFlags |= (this._altGrIsCtrlAndAlt && (hasCtrl && hasAlt)) ? AltGrMod : 0;
         this._virtualModFlags |= (this._rctrlIsOem8 && (this._modFlags & RightCtrlMod)) ? OEM8Mod : 0;
