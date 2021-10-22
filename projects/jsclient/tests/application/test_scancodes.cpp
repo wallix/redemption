@@ -71,11 +71,13 @@ RED_JS_AUTO_TEST_CASE(
     TestUnicodeToScancode,
     (emscripten::val reversedKeymap),
     (() => {
-        const ReversedKeymap = require("src/application/scancodes").ReversedKeymap;
+        const mod = require("src/application/scancodes");
         const layouts = require("src/application/reversed_layouts").layouts;
         for (const layout of layouts) {
             if (layout.localeName === "fr-FR") {
-                return new ReversedKeymap(layout);
+                const rkeymap = new mod.ReversedKeymap(layout);
+                rkeymap.toHumanReadableMods = mod.toHumanReadableMods;
+                return rkeymap;
             }
         }
     })()
@@ -94,6 +96,10 @@ RED_JS_AUTO_TEST_CASE(
 
     auto getModFlags = [&reversedKeymap]{
         return reversedKeymap.call<uint32_t>("getModFlags");
+    };
+
+    auto toHumanReadableMods = [&reversedKeymap](uint32_t mods){
+        return reversedKeymap.call<std::string>("toHumanReadableMods", mods);
     };
 
     const unsigned keyAcquire = 0;
@@ -573,5 +579,51 @@ RED_JS_AUTO_TEST_CASE(
         sync(NumLock | AltLeft | ControlRight);
         TEST_HEX32(getModFlags() == (AltMod | NumLockMod | RightCtrlMod));
         TEST_HEX32(getVirtualModFlags() == (AltGrMod | NumLockMod));
+    }();
+
+    // to readable mods
+    [&]{
+        RED_CHECK(toHumanReadableMods(0x000) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x001) ==
+            "ShiftLeft: 1\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x002) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 1\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x004) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 1\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x008) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 1\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x010) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 1\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x020) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 1\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x040) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 1\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x080) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 1"_av);
+        RED_CHECK(toHumanReadableMods(0x100) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 1\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x200) ==
+            "ShiftLeft: 0\nShiftRight: 1\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x400) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 1\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x800) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0xfff) ==
+            "ShiftLeft: 1\nShiftRight: 1\nCtrlLeft: 1\nCtrlRight: 1\nAlt: 1\nAltGr: 1\n"
+            "OEM8: 1\nKana: 1\nCapsLock: 1\nNumLock: 1\nKanaLock: 1"_av);
     }();
 }
