@@ -293,6 +293,41 @@ RED_JS_AUTO_TEST_CASE(
         TEST_HEX32(getModFlags() == CapsLockMod);
         TEST_HEX32(getVirtualModFlags() == CapsLockMod);
 
+        RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+        TEST_HEX32(getModFlags() == NoMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+        TEST_HEX32(getModFlags() == NoMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+    }();
+
+    // CapsLock + a
+    [&]{
+        RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("a", keyAcquire) == U16A(0x3a, 0x803a, 0x10, 0x3a, 0x803a));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("a", keyRelease) == U16A(0x8010));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
         RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
         TEST_HEX32(getModFlags() == NoMod);
         TEST_HEX32(getVirtualModFlags() == NoMod);

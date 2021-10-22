@@ -517,8 +517,10 @@ class ReversedKeymap
         }
 
         // CapsLock
-        if ((this._virtualModFlags ^ expectedModFlags) & CapsLockMod) {
-            accu.push(CapsLockSC | ((expectedModFlags & CapsLockMod) ? down : release));
+        const hasCapLock = (this._virtualModFlags ^ expectedModFlags) & CapsLockMod;
+        if (hasCapLock) {
+            accu.push(CapsLockSC | down);
+            accu.push(CapsLockSC | release);
         }
 
         // // KanaMod
@@ -531,11 +533,21 @@ class ReversedKeymap
         //     accu.push(KanaLockSC | ((expectedModFlags & KanaLockMod) ? down : release));
         // }
 
-        const accuLen = accu.length;
+        let accuLen = accu.length;
+        if (hasCapLock) {
+            accuLen -= 2;
+        }
+
         accu.push(scancode);
+
         // reset emulated keys
         for (let i = 0; i < accuLen; ++i) {
             accu.push(accu[i] ^ KeyRelease);
+        }
+
+        if (hasCapLock) {
+            accu.push(CapsLockSC | down);
+            accu.push(CapsLockSC | release);
         }
 
         return accu;
