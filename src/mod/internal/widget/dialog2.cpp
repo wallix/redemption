@@ -38,8 +38,8 @@ WidgetDialog2::WidgetDialog2(
     Widget & parent, NotifyApi & notifier,
     const char* caption, const char * text,
     const char * link_value, const char * link_label,
-    WidgetButton * extra_button, CopyPaste & copy_paste,
-    Theme const & theme, Font const & font, const char * ok_text
+    CopyPaste & copy_paste, Theme const & theme,
+    Font const & font, const char * ok_text
 )
     : WidgetParent(drawable, parent, &notifier)
     , title(drawable, *this, nullptr, caption, -9,
@@ -59,7 +59,6 @@ WidgetDialog2::WidgetDialog2(
           nullptr,
           theme.global.bgcolor,
           -8)
-    , extra_button(extra_button)
     , link_label(drawable, *this, nullptr, link_label, -16, theme.global.fgcolor, theme.global.bgcolor, font)
     , link_value(link_value)
     , link_show(drawable, *this, nullptr, -10, link_value,

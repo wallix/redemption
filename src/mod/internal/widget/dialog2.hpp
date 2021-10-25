@@ -59,8 +59,8 @@ public:
                   Widget & parent, NotifyApi & notifier,
                   const char* caption, const char * text,
                   const char * link_value, const char * link_label,
-                  WidgetButton * extra_button, CopyPaste & copy_paste,
-                  Theme const & theme, Font const & font, const char * ok_text = "Ok" /*NOLINT*/); /*NOLINT*/
+                  CopyPaste & copy_paste, Theme const & theme,
+                  Font const & font, const char * ok_text = "Ok" /*NOLINT*/);
 
     ~WidgetDialog2() override;
 

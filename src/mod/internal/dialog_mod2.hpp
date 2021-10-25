@@ -25,7 +25,6 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/dialog2.hpp"
-#include "mod/internal/widget/language_button.hpp"
 
 
 using DialogMod2Variables = vcfg::variables<
@@ -68,7 +67,6 @@ private:
 
     void refused();
 
-    LanguageButton language_button;
     WidgetDialog2 dialog_widget;
 
     DialogMod2Variables vars;

@@ -35,14 +35,10 @@ DialogMod2::DialogMod2(
     Font const& font, Theme const& theme
 )
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
-    , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
-        drawable, front, font, theme)
     , dialog_widget(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, *this, caption, message, link_value, link_label,
-        &this->language_button, this->copy_paste, theme, font,
-        TR(trkeys::OK, language(vars)))
+        this->copy_paste, theme, font, TR(trkeys::OK, language(vars)))
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
