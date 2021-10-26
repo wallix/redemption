@@ -212,8 +212,8 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
-    int nbretry = 3;
-    int retry_delai_ms = 1000;
+    int nbretry = 10;
+    int retry_delai_ms = 7000;
     bool const no_log = false;
     return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
 }
