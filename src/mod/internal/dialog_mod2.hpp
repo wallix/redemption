@@ -28,7 +28,6 @@
 
 
 using DialogMod2Variables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
