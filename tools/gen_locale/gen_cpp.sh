@@ -14,4 +14,4 @@ fi
 
 source "$KEYBOARD_JS_PATH"/tools/keylayout_list.sh
 
-PYTHONPATH="$KEYBOARD_JS_PATH/tools/:$PYTHONPATH" ./gen_cpp.py "${KBDLAYOUT_LAYOUTS[@]}" > "$d"/../../src/keyboard/keylayouts.cpp
+PYTHONPATH="$KEYBOARD_JS_PATH/tools/:$PYTHONPATH" "$d"/gen_cpp.py "${KBDLAYOUT_LAYOUTS[@]}" > "$d"/../../src/keyboard/keylayouts.cpp
