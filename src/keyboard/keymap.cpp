@@ -190,7 +190,7 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
     };
 
     auto set_locks_mod = [&](KeyMod mod){
-        if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
+        if (!bool(flags & KbdFlags::Release)) {
             _key_mods.flip(mod);
             _update_keymap();
         }

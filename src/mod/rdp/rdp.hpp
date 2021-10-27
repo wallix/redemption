@@ -379,7 +379,7 @@ private:
 
     const KeyLayout::KbdId keylayout;
 
-    std::unique_ptr<KeyboardShortcutBlocker> keyboard_shortcut_blocker_sp;
+    KeyboardShortcutBlocker keyboard_shortcut_blocker;
 
 public:
     mod_rdp_channels(
@@ -416,6 +416,7 @@ public:
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
     , keylayout(keylayout)
+    , keyboard_shortcut_blocker(bool(verbose & RDPVerbose::basic_trace))
     {}
 
     void log6(LogId id, KVLogList kv_list)
@@ -433,10 +434,7 @@ public:
 
     bool scancode_must_be_blocked(kbdtypes::KbdFlags keyboardFlags, kbdtypes::Scancode scancode)
     {
-        if (this->keyboard_shortcut_blocker_sp) {
-            return this->keyboard_shortcut_blocker_sp->scancode_must_be_blocked(keyboardFlags, scancode);
-        }
-        return false;
+        return this->keyboard_shortcut_blocker.scancode_must_be_blocked(keyboardFlags, scancode);
     }
 
 #ifndef __EMSCRIPTEN__
@@ -938,10 +936,9 @@ public:
             this->callbacks.enable_graphics_update();
         }
         else if (upper_order == "DisableNavigatorShortcuts"_ascii_upper && !parameters.empty() &&
-                 !this->keyboard_shortcut_blocker_sp)
+                 !this->keyboard_shortcut_blocker.has_shortcut())
         {
-            this->keyboard_shortcut_blocker_sp = std::make_unique<KeyboardShortcutBlocker>(
-                this->keylayout, parameters[0], bool(this->verbose & RDPVerbose::basic_trace));
+            this->keyboard_shortcut_blocker.set_shortcuts(this->keylayout, parameters[0]);
         }
         else if (upper_order == "Log"_ascii_upper) {
             if (!parameters.empty()) {
