@@ -86,8 +86,8 @@ inline uint32_t keycode_to_sym(kbdtypes::KeyCode keycode, kbdtypes::KeyModFlags 
         case KeyCode::RShift: return 0xffe2;
         case KeyCode::LAlt: return 0xffe9;
         case KeyCode::RAlt: return 0xffea;
-        case KeyCode::LWin: return 0xffe7;
-        case KeyCode::RWin: return 0xffe8;
+        case KeyCode::LWin: return 0xffeb;
+        case KeyCode::RWin: return 0xffec;
         case KeyCode::ContextMenu: return 0xff67;
 
         case KeyCode::CapsLock: return 0xffe5;
