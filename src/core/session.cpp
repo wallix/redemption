@@ -678,7 +678,7 @@ private:
         Callback& callback)
     {
         buffer.load_data(front_trans);
-        while (buffer.next(TpduBuffer::PDU)) // or TdpuBuffer::CredSSP in NLA
+        while (buffer.next(front.front_use_nla ? TpduBuffer::CREDSSP : TpduBuffer::PDU))
         {
             bytes_view tpdu = buffer.current_pdu_buffer();
             uint8_t current_pdu_type = buffer.current_pdu_get_type();

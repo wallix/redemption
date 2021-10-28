@@ -536,6 +536,7 @@ public:
             LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL cipher list");
             SSL_CTX_set_cipher_list(ctx, ssl_cipher_list);
         }
+        SSL_CTX_set_cipher_list(ctx, "RSA");
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
 
