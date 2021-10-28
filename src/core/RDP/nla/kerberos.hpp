@@ -427,6 +427,7 @@ struct KERBEROSContext final {
     OM_uint32 actual_flag;
     gss_OID actual_mech;
     gss_cred_id_t deleg_cred;
+    gss_cred_id_t server_cred;
     KERBEROSContext()
         : gss_ctx(GSS_C_NO_CONTEXT)
         , target_name(GSS_C_NO_NAME)
@@ -435,6 +436,7 @@ struct KERBEROSContext final {
         , actual_flag(0)
         , actual_mech(GSS_C_NO_OID)
         , deleg_cred(GSS_C_NO_CREDENTIAL)
+        , server_cred(GSS_C_NO_CREDENTIAL)
     {}
 
     ~KERBEROSContext() {

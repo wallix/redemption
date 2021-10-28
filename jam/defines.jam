@@ -15,7 +15,7 @@ rule setvar ( env : default )
     }
 }
 
-INSTALLDIR_DEFAULT ?= "" ;
+INSTALLDIR_DEFAULT ?= "/tmp" ;
 PREFIX_DEFAULT ?= /usr/local ;
 ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
 VAR_PREFIX_DEFAULT ?= /var/rdpproxy ;
@@ -34,14 +34,15 @@ constant RECORD_PREFIX : [ setvar RECORD_PREFIX : $(RECORD_PREFIX_DEFAULT) ] ;
 BIN_PREFIX_DEFAULT ?= $(PREFIX)/bin ;
 LIB_PREFIX_DEFAULT ?= $(PREFIX)/lib ;
 SHARE_PREFIX_DEFAULT ?= $(PREFIX)/share/rdpproxy ;
-METRICS_PATH_DEFAULT ?= $(RECORD_PREFIX)/metrics ;
-RECORD_PATH_DEFAULT ?= $(RECORD_PREFIX)/rdp ;
-RECORD_TMP_PATH_DEFAULT ?= $(VAR_PREFIX)/tmp ;
-CERT_PREFIX_DEFAULT ?= $(ETC_PREFIX)/cert ;
-HASH_PATH_DEFAULT ?= $(VAR_PREFIX)/hash ;
-PERSISTENT_PATH_DEFAULT ?= /var/lib/redemption/cache ;
-DRIVE_REDIRECTION_PATH_DEFAULT ?= $(VAR_PREFIX)/drive_redirection ;
-PID_PATH_DEFAULT ?= /var/run ;
+METRICS_PATH_DEFAULT ?= /tmp/var/rdpproxy/recorded/metrics ;
+RECORD_PATH_DEFAULT ?= /tmp/var/rdpproxy/recorded/rdp ;
+RECORD_TMP_PATH_DEFAULT ?= /tmp/var/rdpproxy/tmp ;
+ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
+CERT_PREFIX_DEFAULT ?= /etc/rdpproxy/cert ;
+HASH_PATH_DEFAULT ?= /tmp/var/rdpproxy/hash ;
+PERSISTENT_PATH_DEFAULT ?= /tmp/var/lib/redemption/cache ;
+DRIVE_REDIRECTION_PATH_DEFAULT ?= /tmp/var/rdpproxy/drive_redirection ;
+PID_PATH_DEFAULT ?= /tmp/var/run ;
 
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(BIN_PREFIX_DEFAULT) ] ;
 constant LIB_PREFIX : [ setvar LIB_PREFIX : $(LIB_PREFIX_DEFAULT) ] ;

@@ -44,7 +44,8 @@ class rdpCredsspServerKerberos final
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
-    writable_u8_array_view public_key;
+    //writable_u8_array_view public_key;
+    std::vector<uint8_t> public_key;
     std::string& extra_message;
     Language lang;
     const bool credssp_verbose;
@@ -649,12 +650,12 @@ public:
     }
 
 public:
-    rdpCredsspServerKerberos(writable_u8_array_view key,
+    rdpCredsspServerKerberos(bytes_view key, /*writable_u8_array_view key,*/
                std::string& extra_message,
                Language lang,
                const bool credssp_verbose,
                const bool verbose)
-        : public_key(key)
+        : public_key(key.data(), key.data() + key.size())
         , extra_message(extra_message)
         , lang(lang)
         , credssp_verbose(credssp_verbose)
@@ -693,6 +694,16 @@ public:
     }
 
 public:
+    std::vector<uint8_t> authenticate_next(bytes_view in_data)
+    {
+        std::vector<uint8_t> buffer;
+        buffer.resize(4096);
+
+        OutStream out({buffer.data(), buffer.size()});
+        credssp::State st = authenticate_next(in_data, out);
+        return buffer;
+    }
+
     credssp::State authenticate_next(bytes_view in_data, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::authenticate_next");
@@ -728,21 +739,23 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
+        std::vector<uint8_t> check_key;
         if (version >= 5) {
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_server_to_client();
-            this->public_key = make_writable_array_view(this->ServerClientHash);
+            // this->public_key = /*make_writable_array_view(*/this->ServerClientHash/*)*/;
+            check_key = this->ServerClientHash;
         }
         else {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            ::ap_integer_increment_le(this->public_key);
+            check_key.assign(this->public_key.data(), this->public_key.data() + this->public_key.size());
+            ::ap_integer_increment_le(make_writable_array_view(check_key));
         }
 
-        return this->table.EncryptMessage(
-            public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
+        return this->table.EncryptMessage(check_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -771,7 +784,7 @@ private:
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_client_to_server();
-            this->public_key = make_writable_array_view(this->ClientServerHash);
+            this->public_key = this->ClientServerHash;
         }
 
         writable_u8_array_view public_key2 {Buffer};
@@ -785,7 +798,7 @@ private:
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
             LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
-            hexdump_c(public_key);
+            hexdump_c(public_key.data(), public_key.size());
 
             LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
             hexdump_c(public_key2);

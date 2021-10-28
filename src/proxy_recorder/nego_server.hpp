@@ -25,21 +25,25 @@
 #include "utils/utf.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"
-
+#include "core/RDP/nla/nla_server_kerberos.hpp"
+#include "core/RDP/nla/nla_server.hpp"
 
 class NegoServer
 {
     FixedRandom rand;
 public:
-    NtlmServer credssp;
-
+    NtlmServer credssp/*_ntlm*/;
+    //rdpCredsspServerKerberos credssp;
+    NlaServer nlaServer;
 public:
     NegoServer(bytes_view key, const TimeBase & time_base, uint64_t verbosity)
-    : credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key,
+    : credssp/*_ntlm*/(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key,
         {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
         rand, time_base, 6,
         NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
         false, verbosity, verbosity)
+    //, credssp(key, "", Language::en, verbosity, verbosity)
+    , nlaServer(rand, time_base, 6, verbosity, verbosity)
     {
     }
 };

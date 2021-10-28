@@ -396,10 +396,29 @@ namespace BER {
 
         size_t len;
         bytes_view queue;
-        if (!peek_length(s.drop_front(1), verbose, message, len, queue))
+        if (!BER::peek_length(s.drop_front(1), verbose, message, len, queue))
             return false;
 
         body = bytes_view(queue.data(), len);
+        return true;
+    }
+
+
+    inline bool peek_construct_tag(bytes_view s, uint8_t & tag, bool verbose, const char * message, bytes_view & queue) {
+        if (s.empty()) {
+            if (verbose)
+                LOG(LOG_ERR, "%s: Ber data truncated", message);
+            return false;
+        }
+
+        tag = s[0] & TAG_MASK;
+        bytes_view tmp = s.drop_front(1);
+
+        size_t len;
+        if (!peek_length(tmp, true, message, len, queue))
+            return false;
+
+        queue = queue.first(len);
         return true;
     }
 
@@ -470,6 +489,7 @@ namespace BER {
         return {in_s.in_uint32_be(), queue.drop_front(4)};
     }
 
+
     inline std::pair<int, bytes_view> pop_integer_field(bytes_view s, uint8_t tag, const char * message, error_type eid)
     {
         auto [length, queue] = pop_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
@@ -497,6 +517,50 @@ namespace BER {
             return read_mandatory_integer(stream, tag, message, eid);
         }
         return 0;
+    }
+
+    inline std::pair<int, bytes_view> pop_enumerated(bytes_view s, const char * message, error_type eid)
+    {
+        auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_ENUMERATED, message, eid);
+
+        if ((byte < 1) || (byte > 4)){
+            LOG(LOG_ERR, "%s: Ber unexpected enumerated length %zu", message, byte);
+            throw Error(eid);
+        }
+        // Now bytes contains length of integer value
+        if (queue.size() < byte) {
+            LOG(LOG_ERR, "%s: Ber enumerated data truncated %zu", message, byte);
+            throw Error(eid);
+        }
+        InStream in_s(queue);
+        switch (byte) {
+        default:
+            break;
+        case 3:
+            return {in_s.in_uint24_be(), queue.drop_front(3)};
+        case 2:
+            return {in_s.in_uint16_be(), queue.drop_front(2)};
+        case 1:
+            return {in_s.in_uint8(), queue.drop_front(1)};
+        }
+        return {in_s.in_uint32_be(), queue.drop_front(4)};
+    }
+
+    inline int read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message, error_type eid)
+    {
+        auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+        stream.in_skip_bytes(stream.in_remain()-queue1.size());
+        (void)length1;
+
+        auto [ret, queue2] = BER::pop_enumerated(stream.remaining_bytes(), message, eid);
+        stream.in_skip_bytes(stream.in_remain()-queue2.size());
+        return ret;
+    }
+
+    inline void read_optional_enumerated(InStream & stream, uint8_t tag, int & ret, const char * message, error_type eid)
+    {
+        if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag))
+            ret = read_mandatory_enumerated(stream, tag, message, eid);
     }
 
 
@@ -1464,6 +1528,7 @@ inline std::vector<uint8_t> emitTSCredentialsSmartCard(
     return result;
 }
 
+/** @brief an identified OID */
 enum KnownOid {
     OID_UNKNOWN,
     OID_NTLM,
@@ -1476,14 +1541,15 @@ enum KnownOid {
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
+/** @brief operations on known OIDs */
 class KnownOidHelper {
 public:
     static constexpr uint8_t spNegoOid[] = { 0x2B, 0x06, 0x01, 0x05, 0x05, 0x02 };
     static constexpr uint8_t kileOid[] = { 0x2A, 0x86, 0x48, 0x82, 0xF7, 0x12, 0x01, 0x02, 0x02 };
     static constexpr uint8_t krb5Oid[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x12, 0x01, 0x02, 0x02 };
-    static constexpr uint8_t spnegoexOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x1E };
-    static constexpr uint8_t ntlmOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x0A };
     static constexpr uint8_t user2userOid[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x12, 0x01, 0x02, 0x02, 0x03 };
+        static constexpr uint8_t spnegoexOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x1E };
+    static constexpr uint8_t ntlmOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x0A };
     struct KnownOidDef {
         const uint8_t *oid;
         size_t oidLen;
@@ -1545,9 +1611,14 @@ inline bool check_sp_nego(bytes_view data, bool verbose, bytes_view & body)
 
     switch (KnownOidHelper::resolve(oid)) {
     case OID_SPNEGO:
-    //TODO : case OID_SPNEGOEX: ?
         return true;
-    default:
+
+    case OID_SPNEGOEX: // TODO: handle it ?
+    case OID_UNKNOWN:
+    case OID_NTLM:
+    case OID_KRB5:
+    case OID_KRB5_KILE:
+    case OID_KRB5_U2U:
         return false;
     }
 }
@@ -1572,7 +1643,11 @@ inline KnownOid guessAuthTokenType(bytes_view data)
             case OID_KRB5_KILE:
             case OID_KRB5_U2U:
                 return r;
-            default:
+
+            case OID_SPNEGO:
+            case OID_SPNEGOEX:
+            case OID_NTLM:
+            case OID_UNKNOWN:
                 break;
             }
         }
@@ -1604,7 +1679,6 @@ struct SpNegoMech {
             return ret;
 
         case OID_KRB5_U2U:
-        default:
             return OID_UNKNOWN;
         }
     }
@@ -1673,6 +1747,70 @@ enum SpNegoNegstate {
     SPNEGO_STATE_INVALID = -1
 };
 
+/** @brief SPNEGO negTokenResp packet */
+struct SpNegoTokenResp final {
+    SpNegoNegstate negState;
+    std::vector<uint8_t> supportedMech;
+    std::vector<uint8_t> responseToken;
+    std::vector<uint8_t> mechListMic;
+};
+
+
+inline SpNegoTokenResp recvSpNegoTokenResp(bytes_view data, bool verbose) {
+    InStream stream(data);
+    SpNegoTokenResp self;
+
+    /* NegTokenResp ::= SEQUENCE { */
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "NegTokenResp", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue1.size());
+    (void)length1;
+
+    /* negState       [0] ENUMERATED {
+              accept-completed    (0),
+              accept-incomplete   (1),
+              reject              (2),
+              request-mic         (3)
+          }                                 OPTIONAL,
+    */
+    BER::read_optional_enumerated(stream, 0, (int &)self.negState, "NegTokenInit::negState", ERR_CREDSSP_TS_REQUEST);
+
+    /* supportedMech   [1] MechType      OPTIONAL, */
+    self.supportedMech = BER::read_optional_octet_string(stream, 1, "NegTokenInit::mechToken", ERR_CREDSSP_TS_REQUEST);
+
+    /* mechToken [2] OCTET STRING  OPTIONAL, */
+    self.responseToken = BER::read_optional_octet_string(stream, 2, "NegTokenInit::responseToken", ERR_CREDSSP_TS_REQUEST);
+
+    /* mechListMIC [3] OCTET STRING  OPTIONAL, */
+    self.mechListMic = BER::read_optional_octet_string(stream, 3, "NegTokenInit::mechListMIC", ERR_CREDSSP_TS_REQUEST);
+
+    /* } */
+    return self;
+}
+
+
+inline std::vector<uint8_t> emitMechTokensEnvelop(const std::vector<uint8_t> & mechTokens) {
+    size_t cumulatedSize = mechTokens.size();
+    std::vector<uint8_t> octetStringHeader = BER::mkOctetStringHeader(cumulatedSize);
+
+    cumulatedSize += octetStringHeader.size();
+    std::vector<uint8_t> innerCtxHeader = BER::mkContextualFieldHeader(cumulatedSize, 0);
+
+    cumulatedSize += innerCtxHeader.size();
+    std::vector<uint8_t> innerSeqHeader = BER::mkSequenceHeader(cumulatedSize);
+
+    cumulatedSize += innerSeqHeader.size();
+    std::vector<uint8_t> topSeqHeader = BER::mkSequenceHeader(cumulatedSize);
+
+    std::vector<uint8_t> ret;
+    ret << topSeqHeader
+            << innerSeqHeader
+               << innerCtxHeader
+               << octetStringHeader << mechTokens;
+
+    return ret;
+}
+
+
 inline std::vector<uint8_t> emitNegTokenResp(
         SpNegoNegstate negState,
         KnownOid supportedMech,
@@ -1714,14 +1852,8 @@ inline std::vector<uint8_t> emitNegTokenResp(
 
     auto ctxt_header = BER::mkContextualFieldHeader(sequence_header.size() + inner_size, 1);
 
-    auto spnegoOid = BER::mkOid(KnownOidHelper::oidData(OID_SPNEGO));
-
-    auto app_header = BER::mkAppHeader(spnegoOid.size() + ctxt_header.size() +
-            sequence_header.size() + inner_size, 0);
-
-    std::vector<uint8_t> result = std::move(app_header);
-    result << spnegoOid
-            << ctxt_header
+    std::vector<uint8_t> result;
+    result  << ctxt_header
             << sequence_header
             << ber_negState
             << ber_supportedMech
@@ -1740,27 +1872,42 @@ inline std::vector<uint8_t> emitNegTokenResp(
 
 struct SpNegoToken {
     bool isInit;
+    bool isError;
     SpNegoTokenInit negTokenInit;
+    SpNegoTokenResp negTokenResp;
 };
 
 inline SpNegoToken recvSpNego(bytes_view data, bool verbose) {
     SpNegoToken ret;
+    bytes_view appBody;
+    uint8_t tag;
 
-    auto [len1, appBody] = BER::pop_app_tag(data, 0, "", ERR_CREDSSP_TS_REQUEST);
+    if (!BER::peek_construct_tag(data, tag, verbose, "NegotiationToken", appBody))
+        return ret;
 
-    auto [spNegoOid, queue] = BER::pop_oid(appBody, "", ERR_CREDSSP_TS_REQUEST);
+    ret.isError = false;
+    if (tag == 0) {
+        /* NegTokenInit */
+        ret.isInit = true;
 
+        auto [spNegoOid, queue] = BER::pop_oid(appBody, "oid", ERR_CREDSSP_TS_REQUEST);
 
-    if (BER::check_ber_ctxt_tag(queue, 0)) {
+        if (!BER::check_ber_ctxt_tag(queue, 0)) {
+            ret.isError = true;
+            return ret;
+        }
+
         auto [len, body] = BER::pop_tag_length(queue, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "NegTokenInit", ERR_CREDSSP_TS_REQUEST);
         ret.isInit = true;
         ret.negTokenInit = recvSpNegoTokenInit(body, verbose);
-        return ret;
-    }
 
-    if (BER::check_ber_ctxt_tag(data, 1)) {
+    } else if (tag == 1) {
         /* NegTokenResp */
-        //return true;
+        ret.isInit = false;
+        ret.negTokenResp = recvSpNegoTokenResp(appBody, verbose);
+
+    } else {
+        ret.isError = true;
     }
 
     return ret;

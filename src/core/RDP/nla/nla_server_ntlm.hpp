@@ -198,6 +198,7 @@ public:
         , public_key(key.data(),key.data()+key.size())
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)
+        , password_res(PasswordCallback::Wait)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
 

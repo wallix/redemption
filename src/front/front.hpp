@@ -692,6 +692,7 @@ private:
 
 public:
     bool front_must_notify_resize = false;
+    bool front_use_nla = false;
 
 private:
     bool palette_sent = false;
@@ -1478,12 +1479,13 @@ public:
             uint8_t rdp_neg_flags = /*0*/X224::CC_TPDU_EXTENDED_CLIENT_DATA_SUPPORTED;
             uint32_t rdp_neg_code = 0;
             if (this->tls_client_active) {
-                LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled nla=%s", enable_nla?"true":"false");
+                LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled nla=%s", enable_nla ? "true" : "false");
                 if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
                     LOG(LOG_INFO, "Enable NLA");
                     rdp_neg_type = X224::RDP_NEG_RSP;
                     rdp_neg_code = X224::PROTOCOL_HYBRID;
                     this->encryptionLevel = 0;
+                    this->front_use_nla = true;
                 }
                 else if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                     LOG(LOG_INFO, "Enable TLS");
@@ -2849,7 +2851,7 @@ public:
         LOG(LOG_INFO, "starting NLA NegoServer");
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
 
-        std::vector<uint8_t> result = this->nego_server->credssp.authenticate_next(data);
+        std::vector<uint8_t> result = this->nego_server->nlaServer.authenticate_next(data);
 
         if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
             bytes_view username_utf16 = this->nego_server->credssp.authenticate.UserName.buffer;

@@ -133,12 +133,17 @@ void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn,
 }
 
 void ProxyRecorder::front_nla(Transport & frontConn)
-{
-    LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
+{    LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
 
     TpduBuffer & buffer = this->frontBuffer;
     std::vector<uint8_t> result;
     credssp::State st = credssp::State::Cont;
+
+    while (buffer.next(TpduBuffer::CREDSSP)) {
+        result << this->nlaServer.authenticate_next(buffer.current_pdu_buffer());
+        frontConn.send(result);
+    }
+
     while ((this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD
                 || buffer.next(TpduBuffer::CREDSSP))
             && credssp::State::Cont == st) {
