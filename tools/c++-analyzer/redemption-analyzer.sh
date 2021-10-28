@@ -3,7 +3,8 @@
 cd "$(realpath -m "$0"/../../..)"
 source=`luarocks path` || {
     echo 'apt install lua luarocks
-luarocks --local install lpeg argparse
+luarocks --local install argparse
+luarocks --local install lpeg
 lua >= 5.0'
     exit 1
 }
