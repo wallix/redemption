@@ -193,14 +193,17 @@ public:
 private:
     void save_persistent_disk_bitmap_cache() const
     {
-      ::save_persistent_disk_bitmap_cache(
-          *this->bmp_cache,
-          app_path(AppPath::PersistentRdp),
-          this->target_host.c_str(),
-          this->bmp_cache->bpp,
-          this->notify_error,
-          safe_cast<BmpCachePersister::Verbose>(this->verbose)
-      );
+        if (persist_bitmap_cache_on_disk)
+        {
+            ::save_persistent_disk_bitmap_cache(
+                *this->bmp_cache,
+                app_path(AppPath::PersistentRdp),
+                this->target_host.c_str(),
+                this->bmp_cache->bpp,
+                this->notify_error,
+                safe_cast<BmpCachePersister::Verbose>(this->verbose)
+            );
+        }
     }
 #endif
 
