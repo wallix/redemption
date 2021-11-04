@@ -48,8 +48,6 @@ exe headlessclient :
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/button.o
@@ -170,8 +168,6 @@ exe rdpproxy :
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
@@ -387,8 +383,6 @@ exe rdpclient :
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -2381,12 +2375,6 @@ test-run tests/gdi/test_text_metrics :
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/keyboard/scancode/test_unicode_to_scancode :
-  $(REDEMPTION_TEST_PATH)/keyboard/scancode/test_unicode_to_scancode.cpp
-:
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
-;
 test-run tests/keyboard/test_keymap :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymap.cpp
 :
@@ -4063,8 +4051,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/metrics.o
   <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
@@ -5149,8 +5135,6 @@ obj src/keyboard/keyboard_shortcut_layout.o : $(REDEMPTION_SRC_PATH)/keyboard/ke
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
-obj src/keyboard/scancode/autogen/all_LCIDs_scancodes.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
-obj src/keyboard/scancode/unicode_to_scancode.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
@@ -5423,7 +5407,6 @@ alias test_front : tests/front/test_front ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
-alias test_unicode_to_scancode : tests/keyboard/scancode/test_unicode_to_scancode ;
 alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
@@ -5788,9 +5771,6 @@ alias tests/gdi.norec :
   tests/gdi/test_protected_graphics
   tests/gdi/test_text_metrics
 ;
-alias tests/keyboard/scancode.norec :
-  tests/keyboard/scancode/test_unicode_to_scancode
-;
 alias tests/keyboard.norec :
   tests/keyboard/test_keymap
   tests/keyboard/test_keymapsym
@@ -6118,11 +6098,7 @@ alias tests/front :
 alias tests/gdi :
   tests/gdi.norec
 ;
-alias tests/keyboard/scancode :
-  tests/keyboard/scancode.norec
-;
 alias tests/keyboard :
-  tests/keyboard/scancode
   tests/keyboard.norec
 ;
 alias tests/lib :
@@ -6227,7 +6203,6 @@ explicit
   tests/core.norec
   tests/front.norec
   tests/gdi.norec
-  tests/keyboard/scancode.norec
   tests/keyboard.norec
   tests/lib.norec
   tests/mod/internal.norec
@@ -6280,7 +6255,6 @@ explicit
   tests/core/WMF
   tests/front
   tests/gdi
-  tests/keyboard/scancode
   tests/keyboard
   tests/lib
   tests/mod/internal

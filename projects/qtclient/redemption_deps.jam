@@ -30,8 +30,6 @@ add_obj src/keyboard/keyboard_shortcut_layout.o : $(REDEMPTION_SRC_PATH)/keyboar
 add_obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 add_obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 add_obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
-add_obj src/keyboard/scancode/autogen/all_LCIDs_scancodes.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
-add_obj src/keyboard/scancode/unicode_to_scancode.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 add_obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
 add_obj src/mod/internal/widget/button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/button.cpp ;
@@ -129,8 +127,6 @@ requirement_list += <library>src/keyboard/keyboard_shortcut_layout.o ;
 requirement_list += <library>src/keyboard/keylayouts.o ;
 requirement_list += <library>src/keyboard/keymap.o ;
 requirement_list += <library>src/keyboard/keymapsym.o ;
-requirement_list += <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o ;
-requirement_list += <library>src/keyboard/scancode/unicode_to_scancode.o ;
 requirement_list += <library>src/mod/internal/copy_paste.o ;
 requirement_list += <library>src/mod/internal/replay_mod.o ;
 requirement_list += <library>src/mod/internal/widget/button.o ;

@@ -36,7 +36,6 @@
 #include "utils/d3des.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
-#include "keyboard/scancode/unicode_to_scancode.hpp"
 
 #include <openssl/tls1.h>
 
