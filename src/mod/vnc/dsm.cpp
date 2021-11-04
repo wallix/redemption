@@ -25,6 +25,8 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
+namespace
+{
 #define SCOPED_EVP_CONTEXT(TYPENAME, T, INIT, DESTROY) \
     struct TYPENAME { \
         TYPENAME() : ctx(INIT()) { } \
@@ -34,6 +36,7 @@
 
 SCOPED_EVP_CONTEXT(ScopedEvpMd, EVP_MD_CTX, EVP_MD_CTX_new, EVP_MD_CTX_free);
 SCOPED_EVP_CONTEXT(ScopedEvpCipher, EVP_CIPHER_CTX, EVP_CIPHER_CTX_new, EVP_CIPHER_CTX_free);
+} // anonymous namespace
 
 static void cipherDelete(EVP_CIPHER_CTX **pctx) {
     EVP_CIPHER_CTX *ctx = *pctx;
@@ -272,14 +275,10 @@ static EVP_CIPHER_CTX *initCipher(const EVP_CIPHER* cipher, bool encrypt, int ke
 }
 
 
-UltraDSM::~UltraDSM() {
-    reset();
-}
-
-void UltraDSM::reset() {
+UltraDSM::~UltraDSM()
+{
     if (m_rsa) {
         RSA_free(m_rsa);
-        m_rsa = nullptr;
     }
 
     cipherDelete(&m_contextVS1);
@@ -370,7 +369,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
     int keySize = 0;
     unsigned int messageDigestLength = 0;
 
-    const EVP_CIPHER* cipher = nullptr;
+    const EVP_CIPHER* cipher;
     if (m_challengeFlags & svncLowKey) {
         cipher = EVP_bf_ofb();
         keySize = 56 / 8;
@@ -397,7 +396,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
         0xD5, 0x64, 0x5D, 0xF5, 0xE2, 0x37, 0x02, 0x70
     };
 
-    uint8_t *blobInitialKey = new uint8_t[keySize]();
+    uint8_t blobInitialKey[EVP_MAX_KEY_LENGTH] {};
     size_t passwdLen;
     char *passwd;
 

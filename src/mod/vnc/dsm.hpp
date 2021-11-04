@@ -71,7 +71,6 @@ public:
 
     ~UltraDSM();
 
-    void reset();
     bool handleChallenge(InStream &instream, uint16_t &challengeLen, uint8_t &passphraseused);
     bool getResponse(OutStream &out);
     bool encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out);
