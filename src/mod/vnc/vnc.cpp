@@ -333,8 +333,8 @@ void mod_vnc::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t eve
     }
 
     LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-        "mod_vnc::rdp_input_scancode(device_flags=%u, keycode=%u)",
-        unsigned(flags), unsigned(scancode));
+        "mod_vnc::rdp_input_scancode(device_flags=0x%x, keycode=0x%x)",
+        underlying_cast(flags), underlying_cast(scancode));
 
     this->send_keyevents(this->keymapSym.scancode_to_keysyms(flags, scancode));
 }
@@ -346,8 +346,8 @@ void mod_vnc::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
     }
 
     LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-        "mod_vnc::rdp_input_unicode(device_flag=%u, unicode16=%u)",
-        unsigned(flag), unsigned(unicode));
+        "mod_vnc::rdp_input_unicode(device_flag=0x%x, unicode16=0x%x)",
+        underlying_cast(flag), unicode);
 
     this->send_keyevents(this->keymapSym.utf16_to_keysyms(flag, unicode));
 }
