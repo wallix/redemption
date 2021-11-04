@@ -1183,14 +1183,14 @@ bool mod_vnc::draw_event_impl()
         }
 
     case WAIT_SECURITY_ULTRA_CHALLENGE: {
-        uint8_t passPhraseUsed;
         if (!this->dsm){
-            dsm = new UltraDSM(/*this->password*/);
+            this->dsm = std::make_unique<UltraDSM>(/*this->password*/);
         }
 
         InStream challenge(this->server_data_buf.av());
         uint16_t challengeLen;
-        if (!dsm->handleChallenge(challenge, challengeLen, passPhraseUsed)){
+        uint8_t passPhraseUsed;
+        if (!this->dsm->handleChallenge(challenge, challengeLen, passPhraseUsed)){
             return false;
         }
 
@@ -1199,7 +1199,7 @@ bool mod_vnc::draw_event_impl()
         StaticOutStream<2> lenStream;
         StaticOutReservedStreamHelper<2, 65535> out;
         OutStream &outPacket = out.get_data_stream();
-        dsm->getResponse(outPacket);
+        this->dsm->getResponse(outPacket);
 
         lenStream.out_uint16_le(outPacket.get_offset());
         out.copy_to_head(lenStream.get_produced_bytes());

@@ -171,7 +171,7 @@ public:
 
 private:
     VncTransport t;
-    UltraDSM *dsm;
+    std::unique_ptr<UltraDSM> dsm;
     bool dsmEncryption;
 
     uint16_t width;
