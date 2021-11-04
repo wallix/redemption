@@ -140,9 +140,55 @@ inline uint32_t keycode_to_sym(kbdtypes::KeyCode keycode, kbdtypes::KeyModFlags 
         case KeyCode::NumpadAdd: return 0xffab;
         case KeyCode::NumpadEnter: return 0xff8d;
 
-        case KeyCode::Key_X:
+        // locale dependent
+        case KeyCode::Key_A:
+        case KeyCode::Key_B:
         case KeyCode::Key_C:
+        case KeyCode::Key_D:
+        case KeyCode::Key_E:
+        case KeyCode::Key_F:
+        case KeyCode::Key_G:
+        case KeyCode::Key_H:
+        case KeyCode::Key_I:
+        case KeyCode::Key_J:
+        case KeyCode::Key_K:
+        case KeyCode::Key_L:
+        case KeyCode::Key_M:
+        case KeyCode::Key_N:
+        case KeyCode::Key_O:
+        case KeyCode::Key_P:
+        case KeyCode::Key_Q:
+        case KeyCode::Key_R:
+        case KeyCode::Key_S:
+        case KeyCode::Key_T:
+        case KeyCode::Key_U:
         case KeyCode::Key_V:
+        case KeyCode::Key_W:
+        case KeyCode::Key_X:
+        case KeyCode::Key_Y:
+        case KeyCode::Key_Z:
+        case KeyCode::IntlBackslash:
+        case KeyCode::BracketLeft:
+        case KeyCode::BracketRight:
+        case KeyCode::Semicolon:
+        case KeyCode::Quote:
+        case KeyCode::Backslash:
+        case KeyCode::Comma:
+        case KeyCode::Period:
+        case KeyCode::Slash:
+        case KeyCode::Backquote:
+        case KeyCode::Digit1:
+        case KeyCode::Digit2:
+        case KeyCode::Digit3:
+        case KeyCode::Digit4:
+        case KeyCode::Digit5:
+        case KeyCode::Digit6:
+        case KeyCode::Digit7:
+        case KeyCode::Digit8:
+        case KeyCode::Digit9:
+        case KeyCode::Digit0:
+        case KeyCode::Minus:
+        case KeyCode::Equal:
         case KeyCode::Space:
             break;
     }

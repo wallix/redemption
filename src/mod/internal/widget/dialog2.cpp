@@ -34,7 +34,7 @@ enum {
 };
 
 WidgetDialog2::WidgetDialog2(
-    gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    gdi::GraphicApi & drawable, Rect const widget_rect,
     Widget & parent, NotifyApi & notifier,
     const char* caption, const char * text,
     const char * link_value, const char * link_label,
@@ -83,7 +83,7 @@ WidgetDialog2::WidgetDialog2(
 
     this->add_widget(&this->ok);
 
-    this->move_size_widget(left, top, width, height);
+    this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 
     this->set_widget_focus(&this->ok, focus_reason_tabkey);
 }
@@ -123,8 +123,8 @@ void WidgetDialog2::move_size_widget(int16_t left, int16_t top, uint16_t width, 
         }
     }
 
-    const int total_width = std::max(std::max(this->dialog.cx(), this->title.cx()),
-                                     this->link_show.cx());
+    const auto total_width = std::max(std::max(this->dialog.cx(), this->title.cx()),
+                                      this->link_show.cx());
     // const int total_width = std::max(this->dialog.cx(), this->title.cx());
 
     this->separator.set_wh(total_width, 2);

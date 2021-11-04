@@ -41,10 +41,9 @@ class WidgetDialog2 : public WidgetParent
     WidgetVerticalScrollText dialog;
 
 public:
-    WidgetButton   ok;
+    WidgetButton ok;
 private:
-    WidgetImage        img;
-    WidgetButton * extra_button;
+    WidgetImage img;
     WidgetLabel link_label;
     std::string link_value;
     WidgetVerticalScrollText link_show;
@@ -55,7 +54,7 @@ private:
 
 public:
     WidgetDialog2(gdi::GraphicApi & drawable,
-                  int16_t left, int16_t top, int16_t width, int16_t height,
+                  Rect const widget_rect,
                   Widget & parent, NotifyApi & notifier,
                   const char* caption, const char * text,
                   const char * link_value, const char * link_label,

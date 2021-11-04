@@ -36,7 +36,7 @@ DialogMod2::DialogMod2(
 )
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , dialog_widget(
-        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        drawable, widget_rect,
         this->screen, *this, caption, message, link_value, link_label,
         this->copy_paste, theme, font, TR(trkeys::OK, language(vars)))
     , vars(vars)
@@ -46,7 +46,6 @@ DialogMod2::DialogMod2(
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
     this->screen.set_widget_focus(&this->dialog_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
-
 }
 
 DialogMod2::~DialogMod2() = default;

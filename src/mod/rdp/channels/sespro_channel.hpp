@@ -55,8 +55,6 @@
 #include <cinttypes> // PRId64, ...
 #include <cstring>
 
-using namespace std::string_view_literals;
-
 enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
 };
@@ -100,8 +98,9 @@ public:
     };
 
 private:
-    static constexpr auto REPLACEMENT_HIDE = "********"sv;
-    static constexpr auto TAG_HIDE = "\x03"sv;
+    static constexpr std::string_view REPLACEMENT_HIDE = "********";
+    // TODO should be a char
+    static constexpr std::string_view TAG_HIDE = "\x03";
 
     bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
