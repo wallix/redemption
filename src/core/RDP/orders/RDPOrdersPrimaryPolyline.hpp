@@ -200,13 +200,14 @@ public:
     RDPPolyline() = default;
 
     RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, RDPColor PenColor,
-        uint8_t NumDeltaEntries, InStream & deltaEncodedPoints) {
-        this->xStart          = xStart;
-        this->yStart          = yStart;
-        this->bRop2           = bRop2;
-        this->BrushCacheEntry = BrushCacheEntry;
-        this->PenColor        = PenColor;
-        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaEncodedPoints) / sizeof(this->deltaEncodedPoints[0]));
+        uint8_t NumDeltaEntries, InStream & deltaEncodedPoints)
+    : xStart         (xStart)
+    , yStart         (yStart)
+    , bRop2          (bRop2)
+    , BrushCacheEntry(BrushCacheEntry)
+    , PenColor       (PenColor)
+    , NumDeltaEntries(std::min<uint8_t>(NumDeltaEntries, std::size(this->deltaEncodedPoints)))
+    {
         for (int i = 0; i < this->NumDeltaEntries; i++) {
             this->deltaEncodedPoints[i].xDelta = deltaEncodedPoints.in_sint16_le();
             this->deltaEncodedPoints[i].yDelta = deltaEncodedPoints.in_sint16_le();

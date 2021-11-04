@@ -182,9 +182,7 @@ void WidgetScreen::redo_mouse_pointer_change(int x, int y)
                     this->drawable.cached_pointer(*cache_index);
                     break;
                 }
-                else {
-                    [[fallthrough]];
-                }
+                [[fallthrough]];
             }
             case PointerType::Normal:
                 this->drawable.cached_pointer(PredefinedPointer::Normal);

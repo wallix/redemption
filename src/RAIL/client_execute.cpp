@@ -1649,7 +1649,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             break;
 
         case EventAction::Close: {
-            resized = true;
+            // resized = true;
             draw_button_close(
                 this->drawable_, this->font_, event.rect,
                 ButtonStyle::Normal, event.rect);

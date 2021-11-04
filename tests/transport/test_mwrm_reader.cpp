@@ -272,7 +272,7 @@ namespace
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }
-} // namespace anonymous
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 {

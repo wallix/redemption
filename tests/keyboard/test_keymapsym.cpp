@@ -101,13 +101,9 @@ namespace
 {
     constexpr uint16_t eacute = 0xa9c3 /* é */;
 
-    using KeyCode = kbdtypes::KeyCode;
     using Scancode = kbdtypes::Scancode;
     using KbdFlags = kbdtypes::KbdFlags;
-    using Mod = kbdtypes::KeyMod;
-    using Mods = kbdtypes::KeyModFlags;
     using KeyLocks = kbdtypes::KeyLocks;
-    using DecodedKeys = Keymap::DecodedKeys;
 
     const auto down = kbdtypes::KbdFlags();
     const auto release = kbdtypes::KbdFlags::Release;
@@ -123,7 +119,7 @@ namespace
         KeymapSym::Keys keys;
         (..., keys.push(key));
         return {keys};
-    };
+    }
 
     auto* layout_fr = find_layout_by_id(KeyLayout::KbdId(0x040C));
 }

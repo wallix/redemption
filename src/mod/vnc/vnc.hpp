@@ -1030,7 +1030,7 @@ public:
 private:
     static const char *securityTypeString(int32_t t);
 
-    void updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
+    static void updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
 
     bool readSecurityResult(InStream &s, uint32_t &status, bool &haveReason, std::string &reason, size_t &skipLen) const;
 
@@ -1053,21 +1053,12 @@ private:
 
         using Result = BasicResult<State>;
 
-        VNC::Encoder::EncoderState last;
+        VNC::Encoder::EncoderState last = VNC::Encoder::EncoderState::Ready;
 
         FrameBufferUpdateCtx(Zdecompressor<> & zd, VNCVerbose verbose)
-          : bpp(BitsPerPixel::BitsPP32)
-          , state(State::Header)
-          , num_recs(0)
-          , x(0)
-          , y(0)
-          , cx(0)
-          , cy(0)
-          , encoding(0)
-          , zd{zd}
+          : zd{zd}
           , verbose(verbose)
         {
-            this->last = VNC::Encoder::EncoderState::Ready;
         }
 
         void start(BitsPerPixel bpp, BytesPerPixel Bpp)
@@ -1259,18 +1250,18 @@ private:
         }
 
     private:
-        BitsPerPixel bpp;
-        BytesPerPixel Bpp;
+        BitsPerPixel bpp = BitsPerPixel::BitsPP32;
+        BytesPerPixel Bpp = BytesPerPixel(4);
 
-        State state;
+        State state = State::Header;
 
-        uint16_t num_recs;
+        uint16_t num_recs = 0;
 
-        uint16_t x;
-        uint16_t y;
-        uint16_t cx;
-        uint16_t cy;
-        int32_t encoding;
+        uint16_t x = 0;
+        uint16_t y = 0;
+        uint16_t cx = 0;
+        uint16_t cy = 0;
+        int32_t encoding = 0;
 
         VNC::Encoder::Encoder encoder;
 

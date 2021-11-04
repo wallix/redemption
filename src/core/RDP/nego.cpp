@@ -374,12 +374,14 @@ inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, cons
 {
     switch (trans.enable_client_tls(notifier, tls_client_params))
     {
-        case Transport::TlsResult::WaitExternalEvent: return false;
-        case Transport::TlsResult::Want: return false;
+        case Transport::TlsResult::WaitExternalEvent:
+        case Transport::TlsResult::Want:
+            return false;
         case Transport::TlsResult::Fail:
             LOG(LOG_ERR, "enable_client_tls fail");
-            [[fallthrough]];
-        case Transport::TlsResult::Ok: break;
+            break;
+        case Transport::TlsResult::Ok:
+            break;
     }
     return true;
 }

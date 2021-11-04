@@ -483,7 +483,7 @@ namespace redemption_unit_test_
     ::make_datas_ctx([](auto f) { return f datas; })
 
 # define RED_TEST_UNUSED_IDENT2_II(a, b) \
-    [[maybe_unused]] inline int a##b = 0
+    [[maybe_unused]] inline const int a##b = 0
 # define RED_TEST_UNUSED_IDENT2_I(a, b) \
     RED_TEST_UNUSED_IDENT2_II(a, b)
 

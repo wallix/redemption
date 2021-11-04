@@ -147,102 +147,120 @@ const EVP_CIPHER* UltraDSM::getCipher(uint32_t dwFlags, int &nKeyLength) {
         if (dwFlags & svncKey256) {
             nKeyLength = 256 / 8;
             return EVP_aes_256_cfb8();
-        } else if (dwFlags & svncKey192) {
+        }
+        if (dwFlags & svncKey192) {
             nKeyLength = 192 / 8;
             return EVP_aes_192_cfb8();
-        } else if (dwFlags & svncKey128) {
+        }
+        if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_aes_128_cfb8();
-        } else {
-            return nullptr;
         }
-    } else if (dwFlags & svncCipherAESCFB) {
+        return nullptr;
+    }
+
+    if (dwFlags & svncCipherAESCFB) {
         if (dwFlags & svncKey256) {
             nKeyLength = 256 / 8;
             return EVP_aes_256_cfb8();
-        } else if (dwFlags & svncKey192) {
+        }
+        if (dwFlags & svncKey192) {
             nKeyLength = 192 / 8;
             return EVP_aes_192_cfb8();
-        } else if (dwFlags & svncKey128) {
+        }
+        if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_aes_128_cfb8();
-        } else {
-            LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return nullptr;
         }
-    } else if (dwFlags & svncCipherAES) {
+        LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
+        return nullptr;
+    }
+
+    if (dwFlags & svncCipherAES) {
         if (dwFlags & svncKey256) {
             nKeyLength = 256 / 8;
             return EVP_aes_256_ofb();
-        } else if (dwFlags & svncKey192) {
+        }
+        if (dwFlags & svncKey192) {
             nKeyLength = 192 / 8;
             return EVP_aes_192_ofb();
-        } else if (dwFlags & svncKey128) {
+        }
+        if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_aes_128_ofb();
-        } else {
-            LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return nullptr;
         }
-    } else if (dwFlags & svncCipherBlowfish) {
+        LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
+        return nullptr;
+    }
+
+    if (dwFlags & svncCipherBlowfish) {
         if (dwFlags & svncKey448) {
             nKeyLength = 448 / 8;
             return EVP_bf_ofb();
-        } else if (dwFlags & svncKey256) {
+        }
+        if (dwFlags & svncKey256) {
             nKeyLength = 256 / 8;
             return EVP_bf_ofb();
-        } else if (dwFlags & svncKey192) {
+        }
+        if (dwFlags & svncKey192) {
             nKeyLength = 192 / 8;
             return EVP_bf_ofb();
-        } else if (dwFlags & svncKey128) {
+        }
+        if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_bf_ofb();
-        } else {
-            LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return nullptr;
         }
+        LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
+        return nullptr;
+    }
+
 #ifndef OPENSSL_NO_IDEA
-    } else if (dwFlags & svncCipherIDEA) {
+    if (dwFlags & svncCipherIDEA) {
         if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_idea_ofb();
-        } else {
-            LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return nullptr;
         }
+        LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
+        return nullptr;
+    }
 #endif
-    } else if (dwFlags & svncCipherCAST5) {
+
+    if (dwFlags & svncCipherCAST5) {
         if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_cast5_ofb();
-        } else if (dwFlags & svncKey56) {
+        }
+        if (dwFlags & svncKey56) {
             nKeyLength = 56 / 8;
             return EVP_cast5_ofb();
-        } else {
-            LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return nullptr;
         }
-    } else if (dwFlags & svncCipherARC4) {
+        LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
+        return nullptr;
+    }
+
+    if (dwFlags & svncCipherARC4) {
         if (dwFlags & svncKey256) {
             nKeyLength = 256 / 8;
             return EVP_rc4();
-        } else if (dwFlags & svncKey192) {
+        }
+        if (dwFlags & svncKey192) {
             nKeyLength = 192 / 8;
             return EVP_rc4();
-        } else if (dwFlags & svncKey128) {
+        }
+        if (dwFlags & svncKey128) {
             nKeyLength = 128 / 8;
             return EVP_rc4();
-        } else if (dwFlags & svncKey56) {
+        }
+        if (dwFlags & svncKey56) {
             nKeyLength = 56 / 8;
             return EVP_rc4();
-        } else {
-            LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return nullptr;
         }
-    } else {
-        LOG(LOG_ERR, "Invalid cipher (flags 0x%08x).", dwFlags);
+        LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
         return nullptr;
     }
+
+    LOG(LOG_ERR, "Invalid cipher (flags 0x%08x).", dwFlags);
+    return nullptr;
 }
 
 static EVP_CIPHER_CTX *initCipher(const EVP_CIPHER* cipher, bool encrypt, int keyLen) {
@@ -253,21 +271,6 @@ static EVP_CIPHER_CTX *initCipher(const EVP_CIPHER* cipher, bool encrypt, int ke
     return ret;
 }
 
-
-UltraDSM::UltraDSM()
-    : m_rsa(nullptr)
-    , m_nRSASize(0)
-    , m_challengeFlags(0)
-    , m_responseFlags(0)
-    , m_contextVS1(nullptr)
-    , m_contextSV1(nullptr)
-    , m_contextVS2(nullptr)
-    , m_contextSV2(nullptr)
-    , m_contextVS3(nullptr)
-    , m_contextSV3(nullptr)
-    , m_bTriple(false)
-{
-}
 
 UltraDSM::~UltraDSM() {
     reset();

@@ -1431,8 +1431,8 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
 
     // PAYLOAD
     // Ensure payload is available
-    size_t maxp = std::accumulate(l.begin(), l.end(), 0,
-        [](size_t a, const TmpNtlmField tmp) {
+    size_t maxp = std::accumulate(l.begin(), l.end(), size_t(),
+        [](size_t a, TmpNtlmField const& tmp) {
              return std::max(a, size_t(tmp.f->bufferOffset + tmp.len));
     });
     if (maxp > raw_message.size()) {

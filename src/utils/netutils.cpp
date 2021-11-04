@@ -621,8 +621,8 @@ namespace
             return false;
         };
     }
-} // namespace minpeg
 } // anonymous namespace
+} // namespace minpeg
 
 zstring_view parse_ip_conntrack(
     int fd, const char * source, const char * dest, int sport, int dport,

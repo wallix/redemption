@@ -164,7 +164,8 @@ namespace
                 LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (2)");
                 throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
             }
-            else if (bool(this->verbose)) {
+
+            if (bool(this->verbose)) {
                 LOG_IF(bool(this->verbose & Verbose::buffer), LOG_INFO,
                     "ACL SERIALIZER : Data size (receive) = %zu", n);
                 if (bool(this->verbose & Verbose::dump)) {

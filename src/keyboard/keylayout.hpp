@@ -199,7 +199,7 @@ namespace detail
         detail::null_layout_unicode_by_mods,
         detail::null_layout_keytable_by_mods
     };
-}
+} // namespace detail
 
 inline KeyLayout const& KeyLayout::null_layout() noexcept
 {

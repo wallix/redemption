@@ -57,7 +57,7 @@ ModPack create_mod_rdp(
     FrontAPI & front,
     ClientInfo client_info /* /!\ modified */,
     ClientExecute & rail_client_execute,
-    kbdtypes::KeyLocks key_lock_flags,
+    kbdtypes::KeyLocks key_locks,
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,

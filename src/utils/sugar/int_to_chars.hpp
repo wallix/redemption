@@ -225,7 +225,7 @@ namespace detail
 
         if constexpr (std::is_signed_v<Int>) {
             using UInt = std::conditional_t<(sizeof(Int) < sizeof(int)), unsigned, std::make_unsigned_t<Int>>;
-            auto abs_value = static_cast<UInt>(value); /* NOLINT(bugprone-signed-char-misuse) */
+            auto abs_value = static_cast<UInt>(value); /* NOLINT(bugprone-signed-char-misuse, cert-str34-c) */
             bool negative = (value < 0);
             if (negative) abs_value = 0 - abs_value;
             char* begin = to_decimal_chars_impl(end, abs_value);

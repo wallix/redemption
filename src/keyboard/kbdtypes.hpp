@@ -389,4 +389,4 @@ namespace kbdtypes
         return (std::size_t(keycode) & 0x7f)
              | ((std::size_t(keycode) & 0x100) >> 1);
     }
-} // namespace kdbtypes
+} // namespace kbdtypes

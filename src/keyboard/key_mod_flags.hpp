@@ -133,4 +133,4 @@ inline KeyModFlags operator | (KeyMod mod1, KeyMod mod2) noexcept
     return f;
 }
 
-} // namespace kdbtypes
+} // namespace kbdtypes

@@ -37,7 +37,7 @@ bool check_tags_syntax_validity(std::string_view str,
     size_t nb_tags_reached = 0;
     size_t current_pos = 0;
 
-    while (1)
+    for (;;)
     {
         size_t opening_tag_pos = str.find(opening_tag, current_pos);
 
@@ -80,7 +80,8 @@ bool check_tags_syntax_validity(std::string_view str,
             {
                 break;
             }
-            else if (closure_tag_pos < opening_tag_pos)
+
+            if (closure_tag_pos < opening_tag_pos)
             {
                 reversed_tag = true;
                 break;
@@ -93,7 +94,7 @@ bool check_tags_syntax_validity(std::string_view str,
     return !reversed_tag && nb_tags_reached % 2 == 0;
 }
 
-} // namespace
+} // anonymous namespace
 
 
 namespace utils
@@ -191,7 +192,7 @@ void replace_substr_between_tags(std::string& str,
 
     size_t current_pos = 0;
 
-    while (1)
+    for (;;)
     {
         size_t opening_tag_pos = str.find(opening_tag, current_pos);
 

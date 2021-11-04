@@ -245,7 +245,7 @@ namespace detail
         char* last = const_cast<char*>(av.end()); /*NOLINT*/
         return writable_chars_view{first, last};
     }
-}
+} // namespace detail
 
 template<class Pred = is_blank_fn>
 chars_view ltrim(chars_view chars, Pred&& pred = Pred()) /*NOLINT*/

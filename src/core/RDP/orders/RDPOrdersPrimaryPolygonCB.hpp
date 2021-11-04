@@ -229,7 +229,6 @@ public:
         , backColor(backColor)
         , foreColor(foreColor)
         , brush(brush)
-        , NumDeltaEntries(0)
     {
         this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaPoints) / sizeof(this->deltaPoints[0]));
         for (int i = 0; i < this->NumDeltaEntries; i++) {

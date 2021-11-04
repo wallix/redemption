@@ -31,7 +31,7 @@
 WidgetButton::WidgetButton(
     gdi::GraphicApi & drawable, Widget& parent,
     NotifyApi* notifier, const char * text,
-    int group_id, Color fgcolor, Color bgcolor, Color focuscolor,
+    int group_id, Color fg_color, Color bg_color, Color focus_color,
     unsigned border_width, Font const & font, int xtext, int ytext,
     bool logo/*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
 : Widget(drawable, parent, notifier, group_id)
@@ -40,9 +40,9 @@ WidgetButton::WidgetButton(
 , y_text(ytext)
 , border_width(border_width)
 , state(State::Normal)
-, fg_color(fgcolor)
-, bg_color(bgcolor)
-, focus_color(focuscolor)
+, fg_color(fg_color)
+, bg_color(bg_color)
+, focus_color(focus_color)
 , logo(logo)
 , font(font)
 {

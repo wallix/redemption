@@ -677,9 +677,10 @@ class GeneralCapabilitySet {
 public:
     GeneralCapabilitySet() = default;
 
-    GeneralCapabilitySet(uint32_t version, uint32_t generalFlags) {
-        this->version_      = version;
-        this->generalFlags_ = generalFlags;
+    GeneralCapabilitySet(uint32_t version, uint32_t generalFlags)
+    : version_(version)
+    , generalFlags_(generalFlags)
+    {
     }
 
     void emit(OutStream & stream) const {

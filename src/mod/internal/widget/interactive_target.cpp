@@ -63,18 +63,14 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
                     theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
     , extra_button(extra_button)
-    , last_interactive((ask_login || ask_password)?&this->password_edit:&this->device_edit)
+    , last_interactive((ask_login || ask_password) ? &this->password_edit : &this->device_edit)
     , fgcolor(theme.global.fgcolor)
     , bgcolor(theme.global.bgcolor)
     , ask_device(ask_device)
     , ask_login(ask_login)
-    , ask_password(ask_password)
+    , ask_password(ask_login || ask_password)
 {
     this->impl = &composite_array;
-
-    ask_password = (ask_login || ask_password);
-
-    this->ask_password = ask_password;
 
     Widget * device_show = &this->device;
     if (ask_device) {
@@ -85,7 +81,7 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
         login_show = &this->login_edit;
     }
     Widget * password_show = nullptr;
-    if (ask_password) {
+    if (this->ask_password) {
         password_show = &this->password_edit;
     }
 

@@ -404,7 +404,7 @@ sized_array_view<KeyLayout::unicode_t, 256> macos_layout_for(kbdtypes::KeyModFla
         layout = macos_capslock;
     }
 
-    LOG_IF(verbose, LOG_INFO, "Plain Layout");
+    LOG_IF(verbose, LOG_INFO, "KeymapSym::_update_keymap(): %s", mod_name);
     return layout;
 }
 

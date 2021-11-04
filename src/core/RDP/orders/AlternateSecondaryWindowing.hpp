@@ -78,11 +78,12 @@ class Rectangle {
 public:
     explicit Rectangle() = default;
 
-    explicit Rectangle(uint16_t Left_,  uint16_t Top_,  uint16_t Right_, uint16_t Bottom_) {
-        this->Left_   = Left_;
-        this->Top_    = Top_;
-        this->Right_  = Right_;
-        this->Bottom_ = Bottom_;
+    explicit Rectangle(uint16_t left,  uint16_t top,  uint16_t right, uint16_t bottom)
+    : Left_(left)
+    , Top_(top)
+    , Right_(right)
+    , Bottom_(bottom)
+    {
     }
 
     void emit(OutStream & stream) const {

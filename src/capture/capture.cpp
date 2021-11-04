@@ -781,7 +781,7 @@ private:
     TimestampTracer timestamp_tracer;
 };
 
-}
+} // anonymous namespace
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
@@ -1017,8 +1017,9 @@ public:
 
     void visibility_rects_event(Rect rect)
     {
-        if (this->smart_video_cropping == SmartVideoCropping::disable)
+        if (this->smart_video_cropping == SmartVideoCropping::disable) {
             return;
+        }
 
         this->png_data.visibility_rects_event(rect);
     }

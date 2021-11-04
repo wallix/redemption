@@ -56,8 +56,9 @@ struct AclFieldMask
 
     void clear() noexcept
     {
-        for (auto& bits : bits_)
+        for (auto& bits : bits_) {
             bits = 0;
+        }
     }
 
     void clear(configs::authid_t i) noexcept

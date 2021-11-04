@@ -194,7 +194,7 @@ namespace
             }
         }
     }
-}
+} // anonymous namespace
 
 RedisWriter::IOResult RedisWriter::send(bytes_view data)
 {

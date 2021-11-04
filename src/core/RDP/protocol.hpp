@@ -186,8 +186,9 @@ struct OrdersUpdate_Recv {
 struct DrawingOrder_RecvFactory {
     uint8_t control_flags;
 
-    explicit DrawingOrder_RecvFactory(InStream & stream) {
-        this->control_flags = stream.in_uint8();
+    explicit DrawingOrder_RecvFactory(InStream & stream)
+    : control_flags(stream.in_uint8())
+    {
     }
 };
 

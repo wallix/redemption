@@ -65,8 +65,8 @@ private:
         explicit cache_lite_element() = default;
 
         explicit cache_lite_element(const uint8_t (& sha1_)[SslSha1::DIGEST_LENGTH])
-        : stamp(0)
-        , is_valid(true) {
+        : is_valid(true)
+        {
             memcpy(this->sha1, sha1_, sizeof(this->sha1));
         }
 
@@ -99,8 +99,6 @@ private:
 
         explicit cache_element(Bitmap bmp)
         : bmp(std::move(bmp))
-        , stamp(0)
-
         {}
 
         cache_element(cache_element const &) = delete;

@@ -81,10 +81,6 @@ namespace
 
 namespace i18n
 {
-    MessageTranslatorGettext::MessageTranslatorGettext() :
-        _clearable_context(false)
-    { }
-
     MessageTranslatorGettext::~MessageTranslatorGettext()
     {
         clear_context();

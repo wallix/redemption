@@ -54,7 +54,7 @@ public:
         this->strans.send(buffer, len);
     }
 
-    [[nodiscard]] int get_fd() const override final
+    [[nodiscard]] int get_fd() const final
     {
         return this->strans.get_fd();
     }

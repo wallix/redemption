@@ -1594,7 +1594,7 @@ namespace
 
     constexpr chars_view zeros
         = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"_av;
-} // namespace anonymous
+} // anonymous namespace
 
 RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d, d, {
     //                       always

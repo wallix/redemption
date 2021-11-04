@@ -1639,7 +1639,6 @@ namespace
 }
 
 FileSystemDriveManager::DriveName::DriveName(chars_view name, bool reserved) noexcept
-: read_only_(false)
 {
     if (!name.empty() && name[0] == '*') {
         name = name.from_offset(1);

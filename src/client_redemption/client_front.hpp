@@ -185,8 +185,9 @@ inline int wait_for_screenshot(
 
         switch (execute_events(type, event_manager, std::min(max_time - elapsed, inactivity_time)))
         {
-            case ExecuteEventResult::Error: return 1;
-            case ExecuteEventResult::Retry: return 0;
+            case ExecuteEventResult::Error:
+                return 1;
+            case ExecuteEventResult::Retry:
             case ExecuteEventResult::Ok:
             case ExecuteEventResult::Timeout:
                 return 0;

@@ -960,7 +960,7 @@ namespace detail
 
         return out;
     }
-} // namespace cli::detail
+} // namespace detail
 
 template<class Opt>
 void print_help(std::ostream& out, Opt const& opt, int pad)

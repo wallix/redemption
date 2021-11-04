@@ -44,7 +44,7 @@ namespace
         NumLock,
         max_,
     };
-}
+} // anonymous namespace
 
 template<>
 struct utils::enum_as_flag<Mod>
@@ -359,7 +359,7 @@ namespace
         vmods.set_if(mods.test(KeyMods::NumLock), Mod::NumLock);
         return vmods.as_uint();
     }
-}
+} // anonymous namespace
 
 
 class KeyboardShortcutBlocker::Shortcut

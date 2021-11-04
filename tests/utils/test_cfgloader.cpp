@@ -117,7 +117,7 @@ struct Cfg : ConfigurationHolder
     func_t funknown;
 };
 
-} // namespace anonymous
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE_WF(TestCfgloader, wf)
 {

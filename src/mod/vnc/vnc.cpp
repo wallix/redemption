@@ -359,7 +359,7 @@ void mod_vnc::send_keyevents(KeymapSym::Keys keys)
     for (auto key : keys) {
         LOG_IF(bool(verbose & VNCVerbose::keymap_stack), LOG_INFO,
             "keyloop::ksym=%u (0x%x) %s",
-            key.keysym, key.keysym, bool(key.down_flag == KeymapSym::VncDownFlag::Up) ? "UP" : "DOWN");
+            key.keysym, key.keysym, (key.down_flag == KeymapSym::VncDownFlag::Up) ? "UP" : "DOWN");
 
         stream.out_uint8(4);
         stream.out_uint8(underlying_cast(key.down_flag));
@@ -618,7 +618,8 @@ const char *mod_vnc::securityTypeString(int32_t t) {
     }
 }
 
-void mod_vnc::updatePreferedAuth (int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
+void mod_vnc::updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex)
+{
     static VncAuthType preferedAuthTypes[] = {
         VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
         VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,
@@ -627,7 +628,7 @@ void mod_vnc::updatePreferedAuth (int32_t authId, VncAuthType &preferedAuth, siz
         VNC_AUTH_ULTRA_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
     };
 
-    const size_t nauths = sizeof(preferedAuthTypes) / sizeof(preferedAuthTypes[0]);
+    const size_t nauths = std::size(preferedAuthTypes);
     for (size_t i = 0; i < std::min(nauths, preferedAuthIndex); i++) {
         if (preferedAuthTypes[i] == authId) {
             preferedAuth = static_cast<VncAuthType>(authId);

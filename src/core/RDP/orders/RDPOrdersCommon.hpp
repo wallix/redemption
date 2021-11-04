@@ -515,11 +515,10 @@ struct AltsecDrawingOrderHeader
     {}
 
     explicit AltsecDrawingOrderHeader(uint8_t controlFlags)
+    : controlFlags(controlFlags)
+    , class_(controlFlags & 0x03)
+    , orderType(AltsecDrawingOrderType(controlFlags >> 2))
     {
-        this->controlFlags = controlFlags;
-
-        this->class_    = (this->controlFlags & 0x03);
-        this->orderType = AltsecDrawingOrderType(this->controlFlags >> 2);
     }
 
     AltsecDrawingOrderHeader(uint8_t class_, AltsecDrawingOrderType orderType)
@@ -1226,10 +1225,11 @@ class RDPSecondaryOrderHeader {
     unsigned flags;
     unsigned type;
 
-    explicit RDPSecondaryOrderHeader(InStream & stream) {
-        this->order_length = stream.in_uint16_le();
-        this->flags        = stream.in_uint16_le();
-        this->type         = stream.in_uint8();
+    explicit RDPSecondaryOrderHeader(InStream & stream)
+    : order_length(stream.in_uint16_le())
+    , flags       (stream.in_uint16_le())
+    , type        (stream.in_uint8())
+    {
     }
 
     RDPSecondaryOrderHeader(uint16_t order_length, unsigned flags, unsigned type):

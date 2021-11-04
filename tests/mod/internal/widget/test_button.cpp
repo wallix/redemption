@@ -63,8 +63,8 @@ struct ButtonContextTest
     )
     : drawable(w, h)
     , parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}}
-    , wbutton{drawable, parent, /*notifier=*/nullptr, text, /*id=*/0,
-              /*fg_color=*/RED, /*bg_color=*/YELLOW, /*fc_color=*/WINBLUE,
+    , wbutton{drawable, parent, /*notifier=*/nullptr, text, /*group_id=*/0,
+              /*fg_color=*/RED, /*bg_color=*/YELLOW, /*focus_color=*/WINBLUE,
               border_width, global_font_deja_vu_14(), xtext, ytext}
     {
         Dimension dim = wbutton.get_optimal_dim();
@@ -80,7 +80,7 @@ struct ButtonContextTest
         ));
     }
 };
-}
+} // anonymous namespace
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/button/"
 

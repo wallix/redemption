@@ -27,7 +27,7 @@ namespace i18n
     class MessageTranslatorGettext
     {
     public :
-        MessageTranslatorGettext();
+        MessageTranslatorGettext() = default;
         ~MessageTranslatorGettext();
         void clear_context();
         void set_context(zstring_view locale_name);
@@ -36,6 +36,6 @@ namespace i18n
         zstring_view get_translated_text(zstring_view text) const noexcept;
 
     private :
-        bool _clearable_context;
+        bool _clearable_context = false;
     };
 } // namespace i18n
