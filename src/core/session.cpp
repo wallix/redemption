@@ -172,12 +172,13 @@ class Session
 
         void log6(LogId id, KVLogList kv_list) override
         {
-            timeval tv;
-            gettimeofday(&tv, nullptr);
-            this->log_file.log6(tv.tv_sec, id, kv_list);
+            timespec tp;
+            clock_gettime(CLOCK_REALTIME, &tp);
+
+            this->log_file.log6(tp.tv_sec, id, kv_list);
             /* Log to SIEM (redirected syslog) */
             this->siem_logger.log_syslog_format(id, kv_list, this->ini, this->session_type);
-            this->siem_logger.log_arcsight_format(tv.tv_sec, id, kv_list, this->ini, this->session_type);
+            this->siem_logger.log_arcsight_format(tp.tv_sec, id, kv_list, this->ini, this->session_type);
 
             if (this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
                 return ;
