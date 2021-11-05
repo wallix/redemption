@@ -1066,7 +1066,7 @@ namespace cfg
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:disabled_orders <br/>
-    /// default: "" <br/>
+    /// default: {} <br/>
     struct mod_rdp::disabled_orders {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1076,7 +1076,7 @@ namespace cfg
         using type = std::string;
         using sesman_and_spec_type = ::configs::spec_types::list<unsigned>;
         using mapped_type = sesman_and_spec_type;
-        type value { "" };
+        type value {  };
     };
     /// NLA authentication in secondary target. <br/>
     /// type: bool <br/>
@@ -1382,14 +1382,14 @@ namespace cfg
     };
     /// Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel. <br/>
     /// type: char[8] <br/>
-    /// default: "" <br/>
+    /// default: {} <br/>
     struct mod_rdp::checkout_channel {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = char[8];
         using sesman_and_spec_type = ::configs::spec_types::fixed_string;
         using mapped_type = sesman_and_spec_type;
-        type value { "" };
+        type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
@@ -2756,14 +2756,14 @@ namespace cfg
     };
     /// signature key to digest log metrics header info <br/>
     /// type: std::string <br/>
-    /// default: "" <br/>
+    /// default: {} <br/>
     struct metrics::sign_key {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value { "" };
+        type value {  };
     };
 
     /// type: std::string <br/>

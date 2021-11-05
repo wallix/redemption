@@ -281,7 +281,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"open_session_timeout"}, set(0));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc}, set(""));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc});
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_nla"}, desc{"NLA authentication in secondary target."}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_kerberos"}, desc{
@@ -317,7 +317,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"ignore_auth_channel"}, set(false));
         W.member(ini_and_gui, no_sesman, L, type_<types::fixed_string<7>>(), names{"auth_channel"}, set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
-        W.member(ini_and_gui, no_sesman, L, type_<types::fixed_string<7>>(), names{"checkout_channel"}, set(""), desc{"Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel."});
+        W.member(ini_and_gui, no_sesman, L, type_<types::fixed_string<7>>(), names{"checkout_channel"}, desc{"Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel."});
 
         W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"alternate_shell"});
         W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"shell_arguments"});
@@ -592,7 +592,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), names{"log_dir_path"}, set(CPP_EXPR(app_path(AppPath::Metrics))));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"log_interval"}, set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), names{"log_file_turnover_interval"}, set(24));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"sign_key"}, desc{"signature key to digest log metrics header info"}, set(default_key));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"sign_key"}, desc{"signature key to digest log metrics header info"});
     });
 
     W.section("file_verification", [&]
