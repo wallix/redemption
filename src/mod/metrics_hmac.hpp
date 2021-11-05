@@ -27,9 +27,7 @@
 #include "utils/strutils.hpp"
 
 #include <array>
-#include <string>
-
-#include <cstdio>
+#include <charconv>
 
 
 class MetricsHmacSha256Encrypt
@@ -37,7 +35,7 @@ class MetricsHmacSha256Encrypt
     std::array<char, SslSha256::DIGEST_LENGTH*2+1> dest;
 
 public:
-    MetricsHmacSha256Encrypt(bytes_view src, bytes_view key_crypt)
+    MetricsHmacSha256Encrypt(chars_view src, chars_view key_crypt)
     {
         SslHMAC_Sha256 sha256(key_crypt);
         sha256.update(src);
@@ -78,19 +76,19 @@ inline MetricsHmacSha256Encrypt hmac_account(
 }
 
 inline MetricsHmacSha256Encrypt hmac_device_service(
-    chars_view device, std::string service, chars_view key)
+    chars_view device, chars_view service, chars_view key)
 {
-    str_append(service, ' ', device);
-    return MetricsHmacSha256Encrypt(service, key);
+    return MetricsHmacSha256Encrypt(str_concat(service, ' ', device), key);
 }
 
 inline MetricsHmacSha256Encrypt hmac_client_info(
-    std::string client_host, ScreenInfo const& info,
+    chars_view client_host, ScreenInfo const& info,
     chars_view key)
 {
     char session_info[128];
-    int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
-        underlying_cast(info.bpp), info.width, info.height);
-    client_host.append(session_info, session_info_size);
-    return MetricsHmacSha256Encrypt(client_host, key);
+    char* p = session_info;
+    p = std::to_chars(p, std::end(session_info), underlying_cast(info.bpp)).ptr;
+    p = std::to_chars(p, std::end(session_info), info.width).ptr;
+    p = std::to_chars(p, std::end(session_info), info.height).ptr;
+    return MetricsHmacSha256Encrypt(str_concat(client_host, chars_view{session_info, p}), key);
 }

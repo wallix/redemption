@@ -21,10 +21,6 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
-#include <string_view>
-
 #include "core/error.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
@@ -36,6 +32,11 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/noncopyable.hpp"
+
+#include <vector>
+#include <string>
+#include <string_view>
+#include <charconv>
 
 namespace RDP {
 
@@ -2174,24 +2175,11 @@ public:
         return WindowInformationCommonHeader::size();
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length, "DeletedWindow: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        length += this->header.str(buffer + length, size - length);
-
-        return length;
-    }
-
-public:
-    void log(int level) const {
+    void log(int level) const
+    {
         char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        this->header.str(buffer, sizeof(buffer));
+        LOG(level, "DeletedWindow: %s", buffer);
     }
 
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
@@ -2953,24 +2941,11 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
         return NotificationIconInformationCommonHeader::size();
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length, "DeletedNotificationIcons: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        length += this->header.str(buffer + length, size - length);
-
-        return length;
-    }
-
-public:
-    void log(int level) const {
+    void log(int level) const
+    {
         char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        this->header.str(buffer, sizeof(buffer));
+        LOG(level, "DeletedNotificationIcons: %s", buffer);
     }
 
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
@@ -3254,50 +3229,43 @@ public:
         return count;
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
+    void log(int level) const
+    {
+        char buffer[4096];
+        size_t size = sizeof(buffer);
 
-        size_t result = ::snprintf(buffer + length, size - length, "ActivelyMonitoredDesktop: ");
-        length += ((result < size - length) ? result : (size - length - 1));
+        auto copy = [](char* p, auto const& s) {
+            auto len = sizeof(s)-1u;
+            memcpy(p, s, len);
+            return p+len;
+        };
 
-        length += this->header.str(buffer + length, size - length);
+        auto p = buffer;
+        p = copy(p, "ActivelyMonitoredDesktop: ");
+        p += this->header.str(p, size - std::size_t(p - buffer));
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
-            result = ::snprintf(buffer + length, size - length, " ActiveWindowId=0x%X",
-                this->ActiveWindowId_);
-            length += ((result < size - length) ? result : (size - length - 1));
+            p = copy(p, " ActiveWindowId=0x");
+            p = std::to_chars(p, buffer + size, this->ActiveWindowId_, 16).ptr;
         }
 
-        if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) &&
-            this->NumWindowIds_) {
-            result = ::snprintf(buffer + length, size - length, " NumWindowIds=%u (",
-                uint(this->NumWindowIds_));
-            length += ((result < size - length) ? result : (size - length - 1));
+        if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
+         && this->NumWindowIds_
+        ) {
+            p = copy(p, " NumWindowIds=");
+            p = std::to_chars(p, buffer + size, this->NumWindowIds_).ptr;
+            p = copy(p, " (0x");
+            p = std::to_chars(p, buffer + size, this->window_ids_[0], 16).ptr;
 
-            for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
-                if (i) {
-                    result = ::snprintf(buffer + length, size - length, ", ");
-                    length += ((result < size - length) ? result : (size - length - 1));
-                }
-
-                result = ::snprintf(buffer + length, size - length, "0x%X",
-                    this->window_ids_[i]);
-                length += ((result < size - length) ? result : (size - length - 1));
+            for (uint8_t i = 1; i < this->NumWindowIds_; ++i) {
+                p = copy(p, ", 0x");
+                p = std::to_chars(p, buffer + size, this->window_ids_[i], 16).ptr;
             }
 
-            result = ::snprintf(buffer + length, size - length, ")");
-            length += ((result < size - length) ? result : (size - length - 1));
+            *p++ = ')';
         }
 
-        return length;
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
+        *p = '\0';
         LOG(level, "%s", buffer);
     }
 
@@ -3413,24 +3381,11 @@ public:
         return DesktopInformationCommonHeader::size();
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        length += this->header.str(buffer + length, size - length);
-
-        return length;
-    }
-
-public:
-    void log(int level) const {
+    void log(int level) const
+    {
         char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        this->header.str(buffer, sizeof(buffer));
+        LOG(level, "NonMonitoredDesktop: %s", buffer);
     }
 };  // NonMonitoredDesktop
 

@@ -34,9 +34,12 @@ RED_AUTO_TEST_CASE(TestVNCMetricsH)
         hmac_account("secondaryuser"_av, key).av());
 
     RED_CHECK("1CDD18B14EE86005EAB1E1F9BF95ECA85D52FCBA599C2D08359178816414526A"_av ==
-        hmac_device_service("device1"_av, "service1", key).av());
+        hmac_device_service("device1"_av, "service1"_av, key).av());
 
-    ScreenInfo info;
     RED_CHECK("2DACE33E1B966CB34ACD0B66B724810DE3D5E2B042729A9F2698EE9E23D6F40E"_av ==
-        hmac_client_info("10.10.13.12", info, key).av());
+        hmac_client_info("10.10.13.12"_av, ScreenInfo{}, key).av());
+
+    RED_CHECK("BDE3DD6359547723910599C911D725CECA4D460F4F99588C4061359E9EFF0EB7"_av ==
+        hmac_client_info("10.10.13.12"_av,
+                         ScreenInfo{800, 600, BitsPerPixel::BitsPP15}, key).av());
 }
