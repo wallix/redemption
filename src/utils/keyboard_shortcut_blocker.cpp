@@ -201,7 +201,7 @@ namespace
 
     struct KeyNames
     {
-        std::string_view names[std::size(key_name_and_codes)];
+        std::string_view names[std::size(key_name_and_codes)] {};
 
         constexpr KeyNames()
         {
@@ -214,7 +214,7 @@ namespace
 
     struct KeyCodes
     {
-        uint8_t compressed_keycodes[std::size(key_name_and_codes)];
+        uint8_t compressed_keycodes[std::size(key_name_and_codes)] {};
 
         constexpr KeyCodes()
         {
