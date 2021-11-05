@@ -29,6 +29,7 @@ from time import mktime
 from datetime import datetime
 import socket
 from socket import gethostname
+from ipaddress import ip_network
 
 from .sesmanconf import TR, SESMANCONF
 from . import engine
@@ -909,12 +910,12 @@ class Sesman():
                         extkv[u'target_login'] = \
                             self.shared.get(u'target_login')
                     if interactive_data.get(u'target_host') == MAGICASK:
-                        if self.check_hostname_in_subnet(
-                                self.shared.get(u'target_host'),
-                                target_subnet
-                        ):
-                            extkv[u'target_host'] = \
-                                self.shared.get(u'target_host')
+                        hostok, resolved_ip = self.check_hostname_in_subnet(
+                            self.shared.get(u'target_host'),
+                            target_subnet)
+
+                        if hostok:
+                            extkv[u'target_host'] = resolved_ip
                             extkv[u'target_device'] = \
                                 self.shared.get(u'target_host')
                         else:
@@ -2850,12 +2851,16 @@ class Sesman():
 
     def check_hostname_in_subnet(self, host, subnet):
         try:
-            host_ip = socket.getaddrinfo(host, None)[0][4][0]
+            family = (socket.AF_INET6
+                      if ip_network(subnet, strict=False).version == 6
+                      else socket.AF_INET)
+            host_ip = socket.getaddrinfo(host, None, family=family)[0][4][0]
+
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
                                                              host_ip))
         except Exception:
-            return False
-        return engine.is_device_in_subnet(host_ip, subnet)
+            return False, None
+        return engine.is_device_in_subnet(host_ip, subnet), host_ip
 
     def update_session_parameters(self, current_time):
         params = self.engine.read_session_parameters()
