@@ -29,7 +29,7 @@ namespace cfg_generators
     {
         Names const& names = infos;
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-            return str_concat(section_names.cpp, ':', names.cpp);
+            return str_concat(section_names.all, ':', names.all);
         }
         else {
             return names.sesman_name();

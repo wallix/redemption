@@ -455,7 +455,7 @@ struct CppConfigWriterBase
 
     void do_start_section(Names const& section_names)
     {
-        if (!section_names.cpp.empty()) {
+        if (!section_names.all.empty()) {
             ++this->depth;
         }
         this->start_section_index = this->authid_policies.size();
@@ -463,10 +463,10 @@ struct CppConfigWriterBase
 
     void do_stop_section(Names const& section_names)
     {
-        if (!section_names.cpp.empty()) {
+        if (!section_names.all.empty()) {
             --this->depth;
         }
-        this->sections.emplace_back(Section{section_names.cpp, this->out_member_.str(), std::move(this->members)});
+        this->sections.emplace_back(Section{section_names.all, this->out_member_.str(), std::move(this->members)});
         this->out_member_.str("");
         std::string str = this->out_body_parser_.str();
         if (!str.empty()) {
@@ -474,7 +474,7 @@ struct CppConfigWriterBase
             if (this->sections.back().members.empty()) {
                 str.clear();
             }
-            this->sections_parser.emplace_back(section_names.cpp, str);
+            this->sections_parser.emplace_back(section_names.all, str);
             this->out_body_parser_.str("");
         }
         this->start_indexes.emplace_back(this->authid_policies.size());
@@ -499,15 +499,15 @@ struct CppConfigWriterBase
             }
         }
         else {
-            std::string const& varname = names.cpp;
+            std::string const& varname = names.all;
 
             auto type = get_t_elem<cfg_attributes::type_>(infos);
             using cpp_type_t = typename decltype(type)::type;
             this->members.push_back({varname, alignof(cpp_type_t)});
 
-            std::string const & varname_with_section = section_names.cpp.empty()
+            std::string const & varname_with_section = section_names.all.empty()
                 ? varname
-                : str_concat(section_names.cpp, "::", varname);
+                : str_concat(section_names.all, "::", varname);
 
             using sesman_io = sesman::internal::io;
 
@@ -554,7 +554,7 @@ struct CppConfigWriterBase
                 if (!names.connpolicy.empty() || is_convertible_v<Pack, connpolicy::section>) {
                     this->out_member_ << "    [name: "
                         << value_or<connpolicy::section>(
-                            infos, connpolicy::section{section_names.cpp.c_str()}).name
+                            infos, connpolicy::section{section_names.all.c_str()}).name
                         << "::" << names.connpolicy_name() << "]"
                     ;
                 }
@@ -623,7 +623,7 @@ struct CppConfigWriterBase
 
             if constexpr (is_convertible_v<Pack, spec_attr_t>) {
                 auto& ini_name = names.ini_name();
-                this->full_names.spec.emplace_back(str_concat(section_names.cpp, ':', ini_name));
+                this->full_names.spec.emplace_back(str_concat(section_names.all, ':', ini_name));
                 auto type_spec = get_type<spec::type_>(infos);
                 this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
                 "            ::config_parse_and_log(\n"

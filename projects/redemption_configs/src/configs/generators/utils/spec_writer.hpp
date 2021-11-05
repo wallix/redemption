@@ -208,22 +208,22 @@ namespace detail_
         bool has_ini, bool has_sesman, bool has_connpolicy)
     {
         if (!has_ini && !names.ini.empty())
-            throw std::runtime_error("names.ini without ini for " + names.cpp);
+            throw std::runtime_error("names.ini without ini for " + names.all);
 
         if (!has_sesman && !names.sesman.empty())
-            throw std::runtime_error("names.sesman without sesman for " + names.cpp);
+            throw std::runtime_error("names.sesman without sesman for " + names.all);
 
         if (has_sesman && !names.connpolicy.empty())
-            throw std::runtime_error("names.connpolicy with sesman for " + names.cpp);
+            throw std::runtime_error("names.connpolicy with sesman for " + names.all);
 
         if (!has_connpolicy && !names.connpolicy.empty())
-            throw std::runtime_error("names.connpolicy without connection_policy for " + names.cpp);
+            throw std::runtime_error("names.connpolicy without connection_policy for " + names.all);
 
         if (has_connpolicy && !names.sesman.empty())
-            throw std::runtime_error("names.sesman with connection_policy for " + names.cpp);
+            throw std::runtime_error("names.sesman with connection_policy for " + names.all);
 
         if (!(has_ini || has_connpolicy) && !names.display.empty())
-            throw std::runtime_error("names.display without ini or connection_policy for " + names.cpp);
+            throw std::runtime_error("names.display without ini or connection_policy for " + names.all);
     }
 }
 
