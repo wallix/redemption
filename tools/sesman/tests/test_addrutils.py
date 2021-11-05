@@ -84,6 +84,8 @@ class Test_addrutils(unittest.TestCase):
                            "2001:db8:a88:85a3::ac1f:8099/88")
         expect_true_result("3FFE:0000:0000:0003:0200:F8FF:FE75:50DF",
                            "3FFE:0000:0000:0003:5147:D1FA:3EBC:9FAB/50")
+        expect_true_result("::ffff:191.239.213.197",
+                           "::ffff:191.239.213.197/11")
         expect_true_result("2001:db8:a88:85a3::ac1f:8001",
                            "2001:db8:a88:85a3::ac1f:8001")
 
@@ -98,3 +100,9 @@ class Test_addrutils(unittest.TestCase):
                            "192.168.32.9/21")
         expect_true_result("180.20.50.40",
                            "2002::b414:3299/38")
+        expect_true_result("191.239.213.197",
+                           "::ffff:191.239.213.197/14")
+        expect_true_result("2002:7f00:0001:0000:0000:0000:0000:0000",
+                           "127.0.0.1")
+        expect_true_result("13.184.133.163",
+                           "2002::db8:85a3")
