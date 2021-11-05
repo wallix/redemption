@@ -22,12 +22,13 @@
 
 #pragma once
 
-#include <utility>
-#include <string>
+#include "utils/sugar/array_view.hpp"
+
 #include <string_view>
+#include <utility>
 
 /// \return {username, domain}
-static std::pair<std::string, std::string>
+static std::pair<std::string_view, std::string_view>
 extract_user_domain(std::string_view target_user)
 {
     std::string::size_type
@@ -35,9 +36,9 @@ extract_user_domain(std::string_view target_user)
     if (pos != std::string::npos) {
         return {
             // username
-            std::string(target_user.begin() + pos + 1, target_user.end()),
+            chars_view(target_user).from_offset(pos + 1).as<std::string_view>(),
             // domain
-            std::string(target_user.begin(), target_user.begin() + pos),
+            chars_view(target_user).first(pos).as<std::string_view>(),
         };
     }
 
@@ -45,17 +46,17 @@ extract_user_domain(std::string_view target_user)
     if (pos != std::string::npos) {
         return {
             // username
-            std::string(target_user.begin(), target_user.begin() + pos),
+            chars_view(target_user).first(pos).as<std::string_view>(),
             // domain
-            std::string(target_user.begin() + pos + 1, target_user.end()),
+            chars_view(target_user).from_offset(pos + 1).as<std::string_view>(),
         };
     }
 
     return {
         // username
-        std::string(target_user),
+        target_user,
         // domain
-        std::string(),
+        std::string_view(""),
     };
 }
 
