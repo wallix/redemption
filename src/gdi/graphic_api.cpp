@@ -22,7 +22,7 @@
 
 namespace
 {
-    gdi::NullGraphic gd;
+    gdi::NullGraphic gd; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
 } // anonymous namespace
 
 namespace gdi

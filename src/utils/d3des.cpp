@@ -81,8 +81,11 @@ constexpr unsigned char pc2[48] = {
 /* Thanks to James Gillogly & Phil Karn! */
 void rfbDesKey(const unsigned char *key, int edf)
 {
-    int l, m, n;
-    unsigned char pc1m[56], pcr[56];
+    int l;
+    int m;
+    int n;
+    unsigned char pc1m[56];
+    unsigned char pcr[56];
     unsigned long kn[32];
 
     for (int j = 0; j < 56; j++ ) {
@@ -346,7 +349,9 @@ constexpr unsigned long SP8[64] = {
 
 static void desfunc(unsigned long* block, unsigned long const *keys)
 {
-    unsigned long work, right, leftt;
+    unsigned long work;
+    unsigned long right;
+    unsigned long leftt;
 
     leftt = block[0];
     right = block[1];

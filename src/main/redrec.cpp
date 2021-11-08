@@ -9,7 +9,7 @@
 
 namespace
 {
-    uint8_t g_key[CRYPTO_KEY_LENGTH] {};
+    uint8_t g_key[CRYPTO_KEY_LENGTH] {}; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
 
     int get_trace_key(uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/)
     {

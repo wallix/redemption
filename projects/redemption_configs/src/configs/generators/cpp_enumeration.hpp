@@ -179,9 +179,10 @@ namespace cpp_enumeration_writer
                     "    switch (xi) {\n"
                 ;
                 for (auto & v : e.values) {
-                    out << "        case " << type << "(" << e.name << "::" << v.name << "): break;\n";
+                    out << "        case " << type << "(" << e.name << "::" << v.name << "):\n";
                 }
                 out <<
+                    "               break;\n"
                     "        default: return parse_error{\"unknown value\"};\n"
                     "    }\n"
                 ;

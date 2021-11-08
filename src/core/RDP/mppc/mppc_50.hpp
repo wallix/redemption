@@ -33,13 +33,12 @@ static const size_t RDP_50_HIST_BUF_LEN = (1024 * 64); /* RDP 5.0 uses 64K histo
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec
 {
-    uint8_t    history_buf[RDP_50_HIST_BUF_LEN];
+    uint8_t    history_buf[RDP_50_HIST_BUF_LEN] {};
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
     rdp_mppc_50_dec()
-    : history_buf{0}
-    , history_buf_end(this->history_buf + RDP_50_HIST_BUF_LEN - 1)
+    : history_buf_end(this->history_buf + RDP_50_HIST_BUF_LEN - 1)
     , history_ptr(this->history_buf)
     {}
 
@@ -457,10 +456,10 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
     using hash_type = hash_table_manager::hash_type;
 
     // TODO making it static and large enough should be good for both RDP4 and RDP5
-    uint8_t    historyBuffer[RDP_50_HIST_BUF_LEN];       /* contains uncompressed data */
+    uint8_t    historyBuffer[RDP_50_HIST_BUF_LEN] {};       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
-    uint8_t    outputBufferPlus[RDP_50_HIST_BUF_LEN + 64 + 8];
-    uint16_t   outputBufferSize;
+    uint8_t    outputBufferPlus[RDP_50_HIST_BUF_LEN + 64 + 8] {};
+    uint16_t   outputBufferSize = RDP_50_HIST_BUF_LEN - 1;
     uint16_t   historyOffset{0};       /* next free slot in historyBuffer */
     uint16_t   bytes_in_opb{0};        /* compressed bytes available in outputBuffer */
     uint8_t    flags{0};               /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
@@ -471,10 +470,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
 
     explicit rdp_mppc_50_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_50_HIST_BUF_LEN - 1, verbose)
-        , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
-        , outputBufferPlus{0}
-        , outputBufferSize(RDP_50_HIST_BUF_LEN - 1)
     {}
 
 // 3.1.8.4.2 RDP 5.0
