@@ -57,7 +57,7 @@ public:
 private:
     struct Shortcut;
 
-    std::unique_ptr<Shortcut> shortcuts;
+    std::unique_ptr<Shortcut[]> shortcuts;
 
     kbdtypes::KeyModFlags mods {};
     uint8_t virtual_mods {};

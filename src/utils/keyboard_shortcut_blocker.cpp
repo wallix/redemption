@@ -393,7 +393,7 @@ public:
         return data.len;
     }
 
-    static std::unique_ptr<Shortcut> create_shortcuts(
+    static std::unique_ptr<Shortcut[]> create_shortcuts(
         uint8_t min_code, uint8_t max_code,
         array_view<ShortcutStage1> shortcuts)
     {
@@ -403,7 +403,7 @@ public:
         // Memory layout: {Shortcut..., mods...}
 
         auto* const refs = new Shortcut[nb_shortcut + nb_mods];
-        std::unique_ptr<Shortcut> ret(refs);
+        std::unique_ptr<Shortcut[]> ret(refs);
 
         std::memset(refs, 0, nb_shortcut * sizeof(Shortcut));
         auto* const p = reinterpret_cast<uint8_t*>(refs); /* NOLINT */
