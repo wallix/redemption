@@ -100,8 +100,7 @@ public:
 
 private:
     static constexpr std::string_view REPLACEMENT_HIDE = "********";
-    // TODO should be a char
-    static constexpr std::string_view TAG_HIDE = "\x03";
+    static constexpr char TAG_HIDE = '\x03';
 
     bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
@@ -1155,10 +1154,9 @@ public:
                         std::string transformed_app_name(parameters_[0].data(),
                                                          parameters_[0].size());
 
-                        utils::replace_substr_between_tags(
-                                       transformed_app_name,
-                                       REPLACEMENT_HIDE,
-                                       TAG_HIDE);
+                        utils::str_replace_inplace_between_pattern(transformed_app_name,
+                                                                   TAG_HIDE,
+                                                                   REPLACEMENT_HIDE);
 
                         this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
                             KVLog("application_name"_av, transformed_app_name),
@@ -1182,10 +1180,9 @@ public:
                         std::string transformed_app_name(parameters_[0].data(),
                                                          parameters_[0].size());
 
-                        utils::replace_substr_between_tags(
-                                       transformed_app_name,
-                                       REPLACEMENT_HIDE,
-                                       TAG_HIDE);
+                        utils::str_replace_inplace_between_pattern(transformed_app_name,
+                                                                   TAG_HIDE,
+                                                                   REPLACEMENT_HIDE);
 
                         this->log6(
                             LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {

@@ -102,23 +102,13 @@ template<std::size_t N>
  */
 
 //@{
-void replace_substr_on_tag(std::string& str,
-                           std::string_view tag,
-                           std::string_view replacement);
+void str_replace_inplace(std::string& str,
+                         std::string_view pattern,
+                         std::string_view replacement);
 
-void replace_substr_on_tag(std::string& str,
-                           std::string_view tag,
-                           std::string_view replacement,
-                           std::string_view decorator);
-
-void replace_substr_between_tags(std::string& str,
-                                 std::string_view replacement_str,
-                                 std::string_view opening_tag,
-                                 std::string_view closure_tag);
-
-void replace_substr_between_tags(std::string& str,
-                                 std::string_view replacement_str,
-                                 std::string_view tag);
+void str_replace_inplace_between_pattern(std::string& str,
+                                         char pattern,
+                                         std::string_view replacement);
 //@}
 
 } // namespace utils

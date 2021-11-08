@@ -1320,20 +1320,19 @@ public:
 
         std::string arguments_(arguments);
 
-        utils::replace_substr_on_tag(arguments_,
-                                     "${APPID}",
-                                     original_exe_or_file);
+        utils::str_replace_inplace(arguments_,
+                                   "${APPID}",
+                                   original_exe_or_file);
 
         if (account && *account) {
-            utils::replace_substr_on_tag(arguments_,
-                                         "${USER}",
-                                         account);
+            utils::str_replace_inplace(arguments_,
+                                       "${USER}",
+                                       account);
         }
         if (password && *password) {
-            utils::replace_substr_on_tag(arguments_,
-                                         "${PASSWORD}",
-                                         password,
-                                         "\x03");
+            utils::str_replace_inplace(arguments_,
+                                       "${PASSWORD}",
+                                       str_concat('\x03', password, '\x03'));
         }
 
         if (this->param_use_session_probe_to_launch_remote_program &&
