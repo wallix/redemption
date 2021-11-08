@@ -30,8 +30,8 @@
 
 extern "C" {
 
-static void scrunch(unsigned char * /*outof*/, unsigned long * /*into*/);
-static void unscrun(unsigned long * /*outof*/, unsigned char * /*into*/);
+static void scrunch(unsigned char const * /*outof*/, unsigned long * /*into*/);
+static void unscrun(unsigned long const * /*outof*/, unsigned char * /*into*/);
 static void desfunc(unsigned long * /*block*/, unsigned long const * /*keys*/);
 static void cookey(unsigned long * /*raw1*/);
 
@@ -50,21 +50,21 @@ constexpr unsigned short bytebit[8]    = {
 };
 
 constexpr unsigned long bigbyte[24] = {
-    0x800000L,    0x400000L,    0x200000L,    0x100000L,
-    0x80000L,    0x40000L,    0x20000L,    0x10000L,
+    0x800000L,  0x400000L,  0x200000L,  0x100000L,
+    0x80000L,   0x40000L,   0x20000L,   0x10000L,
     0x8000L,    0x4000L,    0x2000L,    0x1000L,
     0x800L,     0x400L,     0x200L,     0x100L,
-    0x80L,        0x40L,        0x20L,        0x10L,
-    0x8L,        0x4L,        0x2L,        0x1L
+    0x80L,      0x40L,      0x20L,      0x10L,
+    0x8L,       0x4L,       0x2L,       0x1L,
 };
 
 /* Use the key schedule specified in the Standard (ANSI X3.92-1981). */
 
 constexpr unsigned char pc1[56] = {
     56, 48, 40, 32, 24, 16,  8,     0, 57, 49, 41, 33, 25, 17,
-    9,  1, 58, 50, 42, 34, 26,    18, 10,  2, 59, 51, 43, 35,
+    9,   1, 58, 50, 42, 34, 26,    18, 10,  2, 59, 51, 43, 35,
     62, 54, 46, 38, 30, 22, 14,     6, 61, 53, 45, 37, 29, 21,
-    13,  5, 60, 52, 44, 36, 28,    20, 12,  4, 27, 19, 11,  3
+    13,  5, 60, 52, 44, 36, 28,    20, 12,  4, 27, 19, 11,  3,
 };
 
 constexpr unsigned char totrot[16] = {
@@ -75,7 +75,7 @@ constexpr unsigned char pc2[48] = {
     13, 16, 10, 23,  0,  4,  2, 27, 14,  5, 20,  9,
     22, 18, 11,  3, 25,  7, 15,  6, 26, 19, 12,  1,
     40, 51, 30, 36, 46, 54, 29, 39, 50, 44, 32, 47,
-    43, 48, 38, 55, 33, 52, 45, 41, 49, 35, 28, 31
+    43, 48, 38, 55, 33, 52, 45, 41, 49, 35, 28, 31,
 };
 
 /* Thanks to James Gillogly & Phil Karn! */
@@ -121,13 +121,13 @@ static void cookey(unsigned long *raw1)
     unsigned long * cook = dough;
     for ( i = 0; i < 16; i++, raw1++ ) {
         unsigned long * raw0 = raw1++;
-        *cook     = (*raw0 & 0x00fc0000L) << 6;
-        *cook    |= (*raw0 & 0x00000fc0L) << 10;
-        *cook    |= (*raw1 & 0x00fc0000L) >> 10;
+        *cook    = (*raw0 & 0x00fc0000L) << 6;
+        *cook   |= (*raw0 & 0x00000fc0L) << 10;
+        *cook   |= (*raw1 & 0x00fc0000L) >> 10;
         *cook++ |= (*raw1 & 0x00000fc0L) >> 6;
-        *cook     = (*raw0 & 0x0003f000L) << 12;
-        *cook    |= (*raw0 & 0x0000003fL) << 16;
-        *cook    |= (*raw1 & 0x0003f000L) >> 4;
+        *cook    = (*raw0 & 0x0003f000L) << 12;
+        *cook   |= (*raw0 & 0x0000003fL) << 16;
+        *cook   |= (*raw1 & 0x0003f000L) >> 4;
         *cook++ |= (*raw1 & 0x0000003fL);
     }
     rfbUseKey(dough);
@@ -147,7 +147,7 @@ void rfbUseKey(unsigned long *from)
     while ( to < endp ) *to++ = *from++;
 }
 
-void rfbDes(unsigned char *inblock, unsigned char *outblock)
+void rfbDes(unsigned char const *inblock, unsigned char *outblock)
 {
     unsigned long work[2];
 
@@ -171,7 +171,7 @@ void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long l
 
 }
 
-static void scrunch(unsigned char *outof, unsigned long *into)
+static void scrunch(unsigned char const *outof, unsigned long *into)
 {
     *into     = (*outof++ & 0xffL) << 24;
     *into    |= (*outof++ & 0xffL) << 16;
@@ -183,7 +183,7 @@ static void scrunch(unsigned char *outof, unsigned long *into)
     *into    |= (*outof   & 0xffL);
 }
 
-static void unscrun(unsigned long *outof, unsigned char *into)
+static void unscrun(unsigned long const *outof, unsigned char *into)
 {
     *into++ = ((*outof >> 24) & 0xffuL);
     *into++ = ((*outof >> 16) & 0xffuL);

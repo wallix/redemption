@@ -26,38 +26,38 @@
 #define DE1	1	/* MODE == decrypt */
 
 extern "C" {
-void rfbDesKey(const unsigned char * key, int edf);
 /*		      hexkey[8]     MODE
  * Sets the internal key register according to the hexadecimal
  * key contained in the 8 bytes of hexkey, according to the DES,
  * for encryption or decryption according to MODE.
  */
+void rfbDesKey(const unsigned char * key, int edf);
 
-void rfbUseKey(unsigned long * from);
 /*		    cookedkey[32]
  * Loads the internal key register with the data in cookedkey.
  */
+void rfbUseKey(unsigned long * from);
 
-void rfbCPKey(unsigned long * into);
 /*		   cookedkey[32]
  * Copies the contents of the internal key register into the storage
  * located at &cookedkey[0].
  */
+void rfbCPKey(unsigned long * into);
 
-void rfbDes(unsigned char * inblock, unsigned char * outblock);
 /*		    from[8]	      to[8]
  * Encrypts/Decrypts (according to the key currently loaded in the
  * internal key register) one block of eight bytes at address 'from'
  * into the block at address 'to'.  They can be the same.
  */
+void rfbDes(unsigned char const * inblock, unsigned char * outblock);
 
-void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long length,
-                unsigned char const *key);
 /*		       from[]	        to[]             length         iv[8]
  * Encrypts/Decrypts (according to the key currently loaded in the
  * internal key register) a text of size multiple of 8 at address 'from'
  * into the block at address 'to'.  They can be the same.
  */
+void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long length,
+                unsigned char const *key);
 
 /* d3des.h V5.09 rwo 9208.04 15:06 Graven Imagery
  ********************************************************************/
