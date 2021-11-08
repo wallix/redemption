@@ -1198,19 +1198,18 @@ public:
         std::string & text_with_tags,
         ApplicationParams const& application_params
     ){
-        utils::replace_substr_on_tag(
+        utils::str_replace_inplace(
                  text_with_tags,
                  "${APPID}",
                  application_params.target_application);
-        utils::replace_substr_on_tag(
+        utils::str_replace_inplace(
                  text_with_tags,
                  "${USER}",
                  application_params.target_application_account);
-        utils::replace_substr_on_tag(
+        utils::str_replace_inplace(
                  text_with_tags,
                  "${PASSWORD}",
-                 application_params.target_application_password,
-                 "\x03");
+                 str_concat('\x03', application_params.target_application_password, '\x03'));
     }
 
     static std::string get_shell_arguments(
@@ -1231,10 +1230,10 @@ public:
                                         std::string_view marker4,
                                         std::string_view replacement4)
     {
-        utils::replace_substr_on_tag(text_with_tags, marker1, replacement1);
-        utils::replace_substr_on_tag(text_with_tags, marker2, replacement2);
-        utils::replace_substr_on_tag(text_with_tags, marker3, replacement3);
-        utils::replace_substr_on_tag(text_with_tags, marker4, replacement4);
+        utils::str_replace_inplace(text_with_tags, marker1, replacement1);
+        utils::str_replace_inplace(text_with_tags, marker2, replacement2);
+        utils::str_replace_inplace(text_with_tags, marker3, replacement3);
+        utils::str_replace_inplace(text_with_tags, marker4, replacement4);
     }
 
     void init_remote_program_with_session_probe(
