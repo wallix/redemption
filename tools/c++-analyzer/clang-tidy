@@ -112,7 +112,7 @@ $(find tests/ -name 'test_*.cpp' \
     -a -not -path 'tests/system/emscripten/*' \
     -a -not -path 'tests/utils/crypto/*') \
 -- \
--std=c++17 \
+-std=c++2a \
 -I'include' \
 -I'modules/includes' \
 -I'modules/ppocr/includes/mln' \
