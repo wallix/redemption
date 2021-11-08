@@ -457,7 +457,7 @@ Author(s): Proxies Team
 // REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 // REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
 // template<class C, C... cs>
-// constexpr auto operator "" _static_fmt() noexcept
+// constexpr auto operator ""_static_fmt() noexcept
 // {
 //     // static_assert(std::is_same_v<C, char>);
 //     static_assert(sizeof...(cs) >= 2);

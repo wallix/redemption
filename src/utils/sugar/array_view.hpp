@@ -485,7 +485,7 @@ using writable_s64_array_view = writable_array_view<std::int64_t>;
 using chars_view = array_view<char>;
 using writable_chars_view = writable_array_view<char>;
 
-constexpr chars_view operator "" _av(char const * s, size_t len) noexcept
+constexpr chars_view operator ""_av(char const * s, size_t len) noexcept
 {
     return {s, len};
 }

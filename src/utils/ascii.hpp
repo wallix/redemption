@@ -351,13 +351,13 @@ REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
 template<class C, C... cs>
-constexpr TaggedStringView<UpperTag> operator "" _ascii_upper() noexcept
+constexpr TaggedStringView<UpperTag> operator ""_ascii_upper() noexcept
 {
     return {jln::string_c<ascii_to_upper(cs)...>::sv()};
 }
 
 template<class C, C... cs>
-constexpr TaggedStringView<LowerTag> operator "" _ascii_lower() noexcept
+constexpr TaggedStringView<LowerTag> operator ""_ascii_lower() noexcept
 {
     return {jln::string_c<ascii_to_lower(cs)...>::sv()};
 }
