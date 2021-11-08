@@ -24,6 +24,7 @@ Author(s): Proxies Team
 #include "utils/sugar/bounded_array_view.hpp"
 
 #include <cstdint>
+#include <cassert>
 
 
 //====================================
@@ -89,14 +90,16 @@ struct KeyLayout
 
         unicode_t accent() const noexcept
         {
+            assert(data);
             return data[0].meta.accent;
         }
 
         array_view<DKey> dkeys() const noexcept
         {
+            assert(data);
             static_assert(sizeof(DKey) == sizeof(Data));
             static_assert(alignof(DKey) == alignof(Data));
-            return array_view{reinterpret_cast<DKey const*>(&data[1]), data[0].meta.size};
+            return array_view{reinterpret_cast<DKey const*>(&data[1]), data[0].meta.size}; /*NOLINT*/
         }
 
         unicode_t find_composition(unicode_t unicode) const noexcept
@@ -196,7 +199,7 @@ namespace detail
         detail::null_layout_unicode_by_mods,
         detail::null_layout_keytable_by_mods
     };
-}
+} // namespace detail
 
 inline KeyLayout const& KeyLayout::null_layout() noexcept
 {

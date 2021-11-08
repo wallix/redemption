@@ -338,8 +338,21 @@ const scancodesForSynchronizedMods = function(syncFlags) {
     // accu.push(KanaSC   | ((syncFlags & SyncFlags.Kana)         ? KeyAcquire : KeyRelease));
 
     return accu;
-}
+};
 
+const toHumanReadableMods = function(mods) {
+    return `ShiftLeft: ${(mods & ShiftMod) ? '1' : '0'}
+ShiftRight: ${(mods & RightShiftMod) ? '1' : '0'}
+CtrlLeft: ${(mods & CtrlMod) ? '1' : '0'}
+CtrlRight: ${(mods & RightCtrlMod) ? '1' : '0'}
+Alt: ${(mods & AltMod) ? '1' : '0'}
+AltGr: ${(mods & AltGrMod) ? '1' : '0'}
+OEM8: ${(mods & OEM8Mod) ? '1' : '0'}
+Kana: ${(mods & KanaMod) ? '1' : '0'}
+CapsLock: ${(mods & CapsLockMod) ? '1' : '0'}
+NumLock: ${(mods & NumLockMod) ? '1' : '0'}
+KanaLock: ${(mods & KanaLockMod) ? '1' : '0'}`;
+};
 
 // Keyboard behavior
 //
@@ -517,8 +530,10 @@ class ReversedKeymap
         }
 
         // CapsLock
-        if ((this._virtualModFlags ^ expectedModFlags) & CapsLockMod) {
-            accu.push(CapsLockSC | ((expectedModFlags & CapsLockMod) ? down : release));
+        const hasCapLock = (this._virtualModFlags ^ expectedModFlags) & CapsLockMod;
+        if (hasCapLock) {
+            accu.push(CapsLockSC | down);
+            accu.push(CapsLockSC | release);
         }
 
         // // KanaMod
@@ -531,11 +546,21 @@ class ReversedKeymap
         //     accu.push(KanaLockSC | ((expectedModFlags & KanaLockMod) ? down : release));
         // }
 
-        const accuLen = accu.length;
+        let accuLen = accu.length;
+        if (hasCapLock) {
+            accuLen -= 2;
+        }
+
         accu.push(scancode);
+
         // reset emulated keys
         for (let i = 0; i < accuLen; ++i) {
             accu.push(accu[i] ^ KeyRelease);
+        }
+
+        if (hasCapLock) {
+            accu.push(CapsLockSC | down);
+            accu.push(CapsLockSC | release);
         }
 
         return accu;
@@ -553,7 +578,6 @@ class ReversedKeymap
             case "NumLock":
                 if (flag === KeyAcquire) {
                     this._modFlags ^= NumLockMod;
-                    this._virtualModFlags ^= NumLockMod;
                 }
                 return [NumLockSC | flag];
 
@@ -607,7 +631,7 @@ class ReversedKeymap
         const ctrl = this._rctrlIsOem8 ? CtrlMod : (CtrlMod | RightCtrlMod);
         const hasCtrl = this._modFlags & ctrl;
         const hasAlt = this._modFlags & AltMod;
-        this._virtualModFlags = this._modFlags & (AltGrMod | ShiftMod | CapsLockMod | NumLockMod);
+        this._virtualModFlags = this._modFlags & (AltGrMod | ShiftMod | CapsLockMod);
         this._virtualModFlags |= (this._modFlags & RightShiftMod) ? ShiftMod : 0;
         this._virtualModFlags |= (this._altGrIsCtrlAndAlt && (hasCtrl && hasAlt)) ? AltGrMod : 0;
         this._virtualModFlags |= (this._rctrlIsOem8 && (this._modFlags & RightCtrlMod)) ? OEM8Mod : 0;
@@ -616,6 +640,7 @@ class ReversedKeymap
 
 const scancodeFromScancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff; };
 const flagsFromScancodeAndFlags = function(scancodeAndFlags) { return scancodeAndFlags & 0xff00; };
+
 
 try {
     module.exports.scancodesForSynchronizedMods = scancodesForSynchronizedMods;
@@ -626,10 +651,10 @@ try {
     module.exports.codeToScancodes = codeToScancodes;
     module.exports.ReversedKeymap = ReversedKeymap;
     module.exports.ScancodeByMod = ScancodeByMod;
-    module.exports.NullLayout = NullLayout;
     module.exports.KeyRelease = KeyRelease;
     module.exports.KeyAcquire = KeyAcquire;
     module.exports.SyncFlags = SyncFlags;
+    module.exports.toHumanReadableMods = toHumanReadableMods;
 }
 catch (e) {
     // module not found

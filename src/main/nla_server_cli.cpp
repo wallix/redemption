@@ -78,21 +78,22 @@ class NLAServer
         auto tmp_utf8_domain = UTF16toResizableUTF8_zstring<std::vector<char>>(domain_av);
         auto u8domain = zstring_view::from_null_terminated(tmp_utf8_domain);
 
-        LOG(LOG_INFO, "NTML IDENTITY(message): identity.User=%s identity.Domain=%s username=%s, domain=%s",
-            u8user, u8domain, username, domain);
+        LOG(LOG_INFO, "NTML IDENTITY(message): identity.User=%s identity.Domain=%s username=%.*s, domain=%.*s",
+            u8user, u8domain,
+            int(username.size()), username.data(), int(domain.size()), domain.data());
 
         if (u8domain.size() == 0){
             auto [identity_username, identity_domain] = extract_user_domain(u8user.to_sv());
 
-            bool user_match = username == identity_username;
-            bool domain_match = domain == identity_domain;
+            bool user_match = (username == identity_username);
+            bool domain_match = (domain == identity_domain);
 
             if (user_match && domain_match){
                 LOG(LOG_INFO, "known identity");
                 return {PasswordCallback::Ok, Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>(this->nla_password))};
             }
         }
-        else if (u8user == username && u8domain == domain){
+        else if (u8user.to_sv() == username && u8domain.to_sv() == domain){
             return {PasswordCallback::Ok, Md4(::UTF8toResizableUTF16<std::vector<uint8_t>>(this->nla_password))};
         }
 

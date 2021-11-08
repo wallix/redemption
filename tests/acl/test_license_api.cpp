@@ -241,7 +241,7 @@ namespace
         }
 #endif
     };
-}
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {

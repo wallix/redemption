@@ -67,11 +67,10 @@ class UltraDSM
     };
 
 public:
-    UltraDSM();
+    UltraDSM() = default;
 
     ~UltraDSM();
 
-    void reset();
     bool handleChallenge(InStream &instream, uint16_t &challengeLen, uint8_t &passphraseused);
     bool getResponse(OutStream &out);
     bool encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out);
@@ -84,15 +83,15 @@ public:
 private:
     // UltraDsmState m_state;
     // char *m_password;
-    RSA *m_rsa;
-    int m_nRSASize;
-    uint32_t m_challengeFlags;
-    uint32_t m_responseFlags;
-    EVP_CIPHER_CTX *m_contextVS1;
-    EVP_CIPHER_CTX *m_contextSV1;
-    EVP_CIPHER_CTX *m_contextVS2;
-    EVP_CIPHER_CTX *m_contextSV2;
-    EVP_CIPHER_CTX *m_contextVS3;
-    EVP_CIPHER_CTX *m_contextSV3;
-    bool m_bTriple;
+    RSA *m_rsa = nullptr;
+    int m_nRSASize = 0;
+    uint32_t m_challengeFlags = 0;
+    uint32_t m_responseFlags = 0;
+    EVP_CIPHER_CTX *m_contextVS1 = nullptr;
+    EVP_CIPHER_CTX *m_contextSV1 = nullptr;
+    EVP_CIPHER_CTX *m_contextVS2 = nullptr;
+    EVP_CIPHER_CTX *m_contextSV2 = nullptr;
+    EVP_CIPHER_CTX *m_contextVS3 = nullptr;
+    EVP_CIPHER_CTX *m_contextSV3 = nullptr;
+    bool m_bTriple = false;
 };

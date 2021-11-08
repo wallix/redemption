@@ -74,7 +74,12 @@ namespace python
     std::enable_if_t<traits::is_integer_v<Int>>
     write_type(std::ostream& out, type_<types::list<Int>>, T const& x)
     {
-        out << "u'" << io_quoted2{x} << "'";
+        if constexpr (std::is_same_v<types::list<Int>, T>) {
+            out << "u''";
+        }
+        else {
+            out << "u'" << io_quoted2{x} << "'";
+        }
     }
 
     inline void write_type(std::ostream& out, type_<bool>, bool x)

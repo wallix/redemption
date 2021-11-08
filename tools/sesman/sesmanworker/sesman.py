@@ -355,10 +355,7 @@ class Sesman():
         self.record_filebase = None
         self.full_log_path = None
 
-        legacy_auth = SESMANCONF[u'sesman'].get(
-            u'legacy_wabengine_auth', False
-        )
-        self.engine = engine.Engine(legacy_auth)
+        self.engine = engine.Engine()
 
         self.effective_login = None
 
@@ -755,6 +752,47 @@ class Sesman():
 
         return _status
 
+    def interactive_ask_url_redirect(self):
+        """
+        Send a message to the proxy to prompt the user copy to url redirection
+        in his browser.
+        Wait until the user clicks Ok in Proxy prompt or until timeout
+        """
+        _status = False
+
+        challenge = self.engine.get_challenge()
+        if not challenge:
+            return _status
+
+        message = challenge.message if challenge.message else ""
+        link = challenge.link if challenge.link else False
+        timeout = challenge.timeout
+
+        data_to_send = ({
+            u'message': message,
+            u'password': u'url_redirect',
+            u"mod_timeout": timeout,
+            u'display_link': link,
+            u'module': u'link_confirm',
+            u'display_message': MAGICASK,
+        })
+
+        self.send_data(data_to_send)
+
+        # Wait for the user to click Ok in proxy
+
+        while self.shared.get(u'display_message') == MAGICASK:
+            Logger().info(u'wait user grant or reject connection')
+            _status, _error = self.receive_data()
+            if not _status:
+                break
+
+            Logger().info(u'Data received')
+            if self.shared.get(u'display_message').lower() != u'true':
+                _status = False
+
+        return _status
+
     def interactive_display_message(self, data_to_send):
         """ NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
         # TODO: we should not have to care about target login or device
@@ -961,9 +999,16 @@ class Sesman():
             # Check if we are using OTP
             # before trying any authentification method
             is_otp = wab_login.startswith('_OTP_')
+            is_magic_password = self.shared.get(u'password') == MAGICASK
+            is_empty_password = (
+                is_magic_password
+                or not self.shared.get(u'password')
+            )
+
+            authenticated = False
 
             # Check if X509 Authentication is active
-            if (not is_otp
+            if (not is_otp and is_empty_password
                 and self.engine.is_x509_connected(
                     wab_login,
                     self.shared.get(u'ip_client'),
@@ -983,6 +1028,7 @@ class Sesman():
 
                     return False, TR(u"x509 browser authentication not "
                                      u"validated by user")
+                authenticated = True
             elif self.passthrough_mode:
                 # Passthrough Authentification
                 method = "Passthrough"
@@ -994,23 +1040,65 @@ class Sesman():
                     self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
                     emsg = TR(u"passthrough_auth_failed_wab %s") % wab_login
                     return False, emsg
-            else:
-                # PASSWORD based Authentication
-                is_magic_password = self.shared.get(u'password') == MAGICASK
-                method = ((is_otp and "OTP")
-                          or (self.engine.get_challenge() and "Challenge")
-                          or "Password")
-                self.rdplog.log("AUTHENTICATION_TRY", method=method)
-                if ((is_magic_password and not is_otp)  # one-time pwd
-                    or not self.engine.password_authenticate(
+                authenticated = True
+            elif not authenticated:
+                if is_otp:
+                    # only try OTP
+                    method = "OTP"
+                    self.rdplog.log("AUTHENTICATION_TRY", method=method)
+                    if not self.engine.password_authenticate(
+                            wab_login,
+                            self.shared.get(u'ip_client'),
+                            "",
+                            self.shared.get(u'ip_target')):
+                        self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
+                        return None, TR(u"auth_failed_wab %s") % wab_login
+                    authenticated = True
+                else:
+                    # check available authentication
+                    check = self.engine.check_kbdint_auth(
                         wab_login,
                         self.shared.get(u'ip_client'),
-                        rvalue(self.shared.get(u'password')),
-                        self.shared.get(u'ip_target'))):
-                    if is_magic_password:
-                        self.engine.reset_challenge()
-                    self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                    return None, TR(u"auth_failed_wab %s") % wab_login
+                        self.shared.get(u'ip_target'),
+                    )
+                    if check == "url_redirect":
+                        method = "URL_REDIRECT"
+                        self.rdplog.log("AUTHENTICATION_TRY", method=method)
+                        # Prompt the user in proxy window
+                        # Wait for confirmation from GUI (or timeout)
+                        if not (self.interactive_ask_url_redirect()
+                                and self.engine.url_redirect_authenticate()):
+                            self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
+                            return False, TR(u"URL Redirection authentication not "
+                                             u"validated by user")
+                        authenticated = True
+                    elif ((check == "password" and not is_empty_password)
+                          or check is False):
+                        # If password provided or unknown user,
+                        # try password authenticate
+                        method = "Password"
+                        self.rdplog.log("AUTHENTICATION_TRY", method=method)
+                        if ((is_magic_password and not is_otp)  # one-time pwd
+                            or not self.engine.password_authenticate(
+                                wab_login,
+                                self.shared.get(u'ip_client'),
+                                rvalue(self.shared.get(u'password')),
+                                self.shared.get(u'ip_target'))):
+                            if is_magic_password:
+                                self.engine.reset_challenge()
+                            self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
+                            return None, TR(u"auth_failed_wab %s") % wab_login
+                        authenticated = True
+                    elif (check is True
+                          and self.engine.authenticated):
+                        method = "MOBILE_DEVICE"
+                        self.rdplog.log("AUTHENTICATION_TRY", method=method)
+                        authenticated = True
+                    else:
+                        return None, TR(u"auth_failed_wab %s") % wab_login
+
+            if not authenticated:
+                return None, TR(u"auth_failed_wab %s") % wab_login
 
             # At this point, User is authentified.
             if wab_login.startswith('_OTP_'):
@@ -1650,22 +1738,24 @@ class Sesman():
 
             if _status is None and self.engine.get_challenge():
                 challenge = self.engine.get_challenge()
-                # submit challenge:
-                message = challenge.fields[0] if challenge.fields else ""
-                echo = challenge.echos[0] if challenge.echos else False
-                if not message:
-                    message = challenge.message
-                elif challenge.challenge_type == "MFA":
-                    message = "%s:" % message
-                    if challenge.message:
-                        message = "%s\n%s" % (challenge.message, message)
-                data_to_send = {
-                    u'authentication_challenge': echo,
-                    u'message': message,
-                    u'module': u'challenge'
-                }
-                self.send_data(data_to_send)
-                continue
+                if not challenge.first_password:
+                    # on first password, let the login page
+                    # submit challenge:
+                    message = challenge.fields[0] if challenge.fields else ""
+                    echo = challenge.echos[0] if challenge.echos else False
+                    if not message:
+                        message = challenge.message
+                    elif challenge.challenge_type == "MFA":
+                        message = "%s:" % message
+                        if challenge.message:
+                            message = "%s\n%s" % (challenge.message, message)
+                    data_to_send = {
+                        u'authentication_challenge': echo,
+                        u'message': message,
+                        u'module': u'challenge'
+                    }
+                    self.send_data(data_to_send)
+                    continue
 
             tries = tries - 1
             if _status is None and tries > 0:

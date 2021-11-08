@@ -60,124 +60,6 @@ public:
         krb5_free_context(this->ctx);
     }
 
-private:
-
-    krb5_error_code resolve_cache_name(const char *cache_name, krb5_ccache *const cache)
-    {
-        krb5_error_code ret;
-
-        assert (cache);
-
-        if (cache_name)
-        {
-            ret = krb5_cc_resolve(this->ctx, cache_name, cache);
-            if (ret)
-            {
-                LOG(LOG_ERR, "Failed to resolve credentials cache name '%s' (%d)", cache_name, ret);
-            }
-        }
-        else
-        {
-            ret = krb5_cc_default(this->ctx, cache);
-            if (ret)
-            {
-                LOG(LOG_ERR, "Failed to resolve default credentials cache name (%d)", ret);
-            }
-        }
-
-        return ret;
-    }
-
-    krb5_error_code configure_fast(const char *fast_cache_name, krb5_get_init_creds_opt *options)
-    {
-        krb5_error_code ret;
-
-        assert (options);
-
-        // skip if no FAST cache name provided
-        if (!fast_cache_name)
-        {
-            return 0;
-        }
-
-        // resolve and set FAST cache
-        ret = krb5_get_init_creds_opt_set_fast_ccache_name(this->ctx, options, fast_cache_name);
-        if (ret)
-        {
-            LOG(LOG_ERR, "Failed to set FAST cache (%d)", ret);
-
-            return ret;
-        }
-
-        // require FAST usage
-        ret = krb5_get_init_creds_opt_set_fast_flags(this->ctx, options, KRB5_FAST_REQUIRED);
-        if (ret)
-        {
-            LOG(LOG_ERR, "Failed to set FAST flags (%d)", ret);
-        }
-
-        return ret;
-    }
-
-    krb5_error_code resolve_principal_name(const char *principal_name, krb5_principal *principal)
-    {
-        krb5_error_code ret;
-        char *name;
-
-        assert (principal_name);
-        assert (principal);
-
-        // parse principal name
-        ret = krb5_parse_name(this->ctx, principal_name, principal);
-        if (ret)
-        {
-            LOG(LOG_ERR, "Failed to parse principal name '%s' (%d)", principal_name, ret);
-            
-            return ret;
-        }
-
-        // unparse principal name (for logging only)
-        ret = krb5_unparse_name(this->ctx, *principal, &name);
-        if (ret)
-        {
-            LOG(LOG_ERR, "Failed to unparse principal name (%d)", ret);
-
-            return ret;
-        }
-
-        LOG(LOG_INFO, "Resolved principal name: %s", name);
-
-        // release unparsed principal name
-        krb5_free_unparsed_name(this->ctx, name);
-
-        return ret;
-    }
-
-    krb5_error_code cache_credentials(krb5_creds *credentials,
-        krb5_ccache cache, krb5_principal principal)
-    {
-        krb5_error_code ret;
-
-        assert (cache);
-
-        // initialize credentials cache
-        ret = krb5_cc_initialize(this->ctx, cache, principal);
-        if (ret)
-        {
-            LOG(LOG_ERR, "Failed to initialize credentials cache (%d)", ret);
-            return ret;
-        }
-
-        // store credentials in cache
-        ret = krb5_cc_store_cred(this->ctx, cache, credentials);
-        if (ret)
-        {
-            LOG(LOG_ERR, "Failed to store credentials in cache (%d)", ret);
-        }
-
-        return ret;
-    }
-
 public:
 
     int get_credentials_keytab(
@@ -279,8 +161,8 @@ public:
         return ret;
     }
 
-    int get_credentials(
-        const std::string &principal_name, const char *password,
+    int get_credentials_password(
+        const char *principal_name, const char *password,
         const char *cache_name, const char *fast_cache_name)
     {
         krb5_error_code ret;
@@ -317,7 +199,7 @@ public:
         }
 
         // resolve principal name
-        ret = resolve_principal_name(principal_name.c_str(), &princ);
+        ret = resolve_principal_name(principal_name, &princ);
         if (ret)
         {
             LOG(LOG_ERR, "Failed to configure FAST");
@@ -386,6 +268,124 @@ public:
         else
         {
             LOG(LOG_INFO, "Credentials cache destroyed");
+        }
+
+        return ret;
+    }
+
+private:
+
+    krb5_error_code resolve_cache_name(const char *cache_name, krb5_ccache * const cache)
+    {
+        krb5_error_code ret;
+
+        assert (cache);
+
+        if (cache_name)
+        {
+            ret = krb5_cc_resolve(this->ctx, cache_name, cache);
+            if (ret)
+            {
+                LOG(LOG_ERR, "Failed to resolve credentials cache name '%s' (%d)", cache_name, ret);
+            }
+        }
+        else
+        {
+            ret = krb5_cc_default(this->ctx, cache);
+            if (ret)
+            {
+                LOG(LOG_ERR, "Failed to resolve default credentials cache name (%d)", ret);
+            }
+        }
+
+        return ret;
+    }
+
+    krb5_error_code configure_fast(const char *fast_cache_name, krb5_get_init_creds_opt *options)
+    {
+        krb5_error_code ret;
+
+        assert (options);
+
+        // skip if no FAST cache name provided
+        if (!fast_cache_name)
+        {
+            return 0;
+        }
+
+        // resolve and set FAST cache
+        ret = krb5_get_init_creds_opt_set_fast_ccache_name(this->ctx, options, fast_cache_name);
+        if (ret)
+        {
+            LOG(LOG_ERR, "Failed to set FAST cache (%d)", ret);
+
+            return ret;
+        }
+
+        // require FAST usage
+        ret = krb5_get_init_creds_opt_set_fast_flags(this->ctx, options, KRB5_FAST_REQUIRED);
+        if (ret)
+        {
+            LOG(LOG_ERR, "Failed to set FAST flags (%d)", ret);
+        }
+
+        return ret;
+    }
+
+    krb5_error_code resolve_principal_name(const char *principal_name, krb5_principal *principal)
+    {
+        krb5_error_code ret;
+        char *name;
+
+        assert (principal_name);
+        assert (principal);
+
+        // parse principal name
+        ret = krb5_parse_name(this->ctx, principal_name, principal);
+        if (ret)
+        {
+            LOG(LOG_ERR, "Failed to parse principal name '%s' (%d)", principal_name, ret);
+            
+            return ret;
+        }
+
+        // unparse principal name (for logging only)
+        ret = krb5_unparse_name(this->ctx, *principal, &name);
+        if (ret)
+        {
+            LOG(LOG_ERR, "Failed to unparse principal name (%d)", ret);
+
+            return ret;
+        }
+
+        LOG(LOG_INFO, "Resolved principal name: %s", name);
+
+        // release unparsed principal name
+        krb5_free_unparsed_name(this->ctx, name);
+
+        return ret;
+    }
+
+    krb5_error_code cache_credentials(krb5_creds *credentials,
+        krb5_ccache &cache, krb5_principal &principal)
+    {
+        krb5_error_code ret;
+
+        assert (cache);
+
+        // initialize credentials cache
+        ret = krb5_cc_initialize(this->ctx, cache, principal);
+        if (ret)
+        {
+            LOG(LOG_ERR, "Failed to initialize credentials cache (%d)", ret);
+            return ret;
+        }
+
+        // store credentials in cache
+        ret = krb5_cc_store_cred(this->ctx, cache, credentials);
+        if (ret)
+        {
+            LOG(LOG_ERR, "Failed to store credentials in cache (%d)", ret);
         }
 
         return ret;

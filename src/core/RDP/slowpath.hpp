@@ -768,8 +768,9 @@ namespace SlowPath {
 struct GraphicsUpdate_Recv {
     uint16_t update_type;
 
-    explicit GraphicsUpdate_Recv(InStream & stream) {
-        update_type = stream.in_uint16_le();
+    explicit GraphicsUpdate_Recv(InStream & stream)
+    : update_type(stream.in_uint16_le())
+    {
     }
 };
 

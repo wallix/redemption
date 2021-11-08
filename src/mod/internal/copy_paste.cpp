@@ -213,16 +213,17 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             // format_data_request.recv(stream);
 
             constexpr auto header_size = RDPECLIP::CliprdrHeader::size();
-            StaticOutStream<header_size + 2048> out;
+            StaticOutStream<header_size + LimitString::static_size*2 + 2> out;
             auto header_data = out.out_skip_bytes(header_size);
 
             auto data_len = UTF8toUTF16(this->clipboard_str_.zstring(), out.get_tail());
             out.out_skip_bytes(data_len);
+            out.out_clear_bytes(2);
 
             OutStream out_header(header_data);
             RDPECLIP::CliprdrHeader(
-                RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL,
-                data_len
+                RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK,
+                data_len + 2
             ).emit(out_header);
 
             this->front_->send_to_channel(

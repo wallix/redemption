@@ -172,12 +172,13 @@ class Session
 
         void log6(LogId id, KVLogList kv_list) override
         {
-            timeval tv;
-            gettimeofday(&tv, nullptr);
-            this->log_file.log6(tv.tv_sec, id, kv_list);
+            timespec tp;
+            clock_gettime(CLOCK_REALTIME, &tp);
+
+            this->log_file.log6(tp.tv_sec, id, kv_list);
             /* Log to SIEM (redirected syslog) */
             this->siem_logger.log_syslog_format(id, kv_list, this->ini, this->session_type);
-            this->siem_logger.log_arcsight_format(tv.tv_sec, id, kv_list, this->ini, this->session_type);
+            this->siem_logger.log_arcsight_format(tp.tv_sec, id, kv_list, this->ini, this->session_type);
 
             if (this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
                 return ;
@@ -521,6 +522,19 @@ private:
             log_proxy::set_user("");
             inactivity.start(this->ini.get<cfg::globals::session_timeout>());
             mod_pack = mod_factory.create_display_message_mod();
+            break;
+
+        case ModuleName::link_confirm:
+            log_proxy::set_user("");
+            if (auto timeout = this->ini.get<cfg::context::mod_timeout>()
+                ; timeout.count() != 0
+            ) {
+                inactivity.start(timeout);
+            }
+            else {
+                inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            }
+            mod_pack = mod_factory.create_display_link_mod();
             break;
 
         case ModuleName::valid:

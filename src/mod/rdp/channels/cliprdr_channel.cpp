@@ -1820,17 +1820,15 @@ struct ClipboardVirtualChannel::ClipCtx::D
                             NoLockData::D::set_range(clip.nolock_data);
                             return true;
                         }
-                        else {
-                            Self::broken_file_transfer(self, clip, file_rng);
-                            NoLockData::D::init_empty(clip.nolock_data, self);
-                            return init_contents_range();
-                        }
-                    }
-                    else {
+
                         Self::broken_file_transfer(self, clip, file_rng);
                         NoLockData::D::init_empty(clip.nolock_data, self);
-                        return init_contents_size();
+                        return init_contents_range();
                     }
+
+                    Self::broken_file_transfer(self, clip, file_rng);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
+                    return init_contents_size();
 
                 case ClipCtx::TransferState::WaitingFileValidator:
                     Self::stop_wait_validation(self, clip, clip.nolock_data.data);

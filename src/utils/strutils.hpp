@@ -101,6 +101,26 @@ template<std::size_t N>
  * @}
  */
 
+//@{
+void replace_substr_on_tag(std::string& str,
+                           std::string_view tag,
+                           std::string_view replacement);
+
+void replace_substr_on_tag(std::string& str,
+                           std::string_view tag,
+                           std::string_view replacement,
+                           std::string_view decorator);
+
+void replace_substr_between_tags(std::string& str,
+                                 std::string_view replacement_str,
+                                 std::string_view opening_tag,
+                                 std::string_view closure_tag);
+
+void replace_substr_between_tags(std::string& str,
+                                 std::string_view replacement_str,
+                                 std::string_view tag);
+//@}
+
 } // namespace utils
 
 namespace detail
@@ -225,7 +245,7 @@ namespace detail
         char* last = const_cast<char*>(av.end()); /*NOLINT*/
         return writable_chars_view{first, last};
     }
-}
+} // namespace detail
 
 template<class Pred = is_blank_fn>
 chars_view ltrim(chars_view chars, Pred&& pred = Pred()) /*NOLINT*/

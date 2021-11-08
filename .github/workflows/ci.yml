@@ -29,7 +29,7 @@ jobs:
       id: cache-apt
       with:
         path: ~/dpkg_cache3
-        key: ${{ runner.os }}-apt_deps7
+        key: ${{ runner.os }}-apt_deps9
     - name: Install packages
       env:
         CACHE_HIT: ${{steps.cache-apt.outputs.cache-hit}}
@@ -59,6 +59,11 @@ jobs:
             -e 's/^#define SNAPPY_MINOR.*/#define SNAPPY_MINOR 1/' \
             -e 's/^#define SNAPPY_PATCHLEVEL.*/#define SNAPPY_PATCHLEVEL 8/' \
             /usr/include/snappy-stubs-public.h
+
+          # fix bjam test
+          sudo sed -i \
+            -e '/ostr << ( t ? t : L"null string" );/d' \
+            /usr/include/boost/test/impl/test_tools.ipp
 
           mkdir -p "$DPKG_CACHE"
           {

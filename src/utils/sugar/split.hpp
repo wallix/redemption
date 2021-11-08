@@ -192,7 +192,7 @@ namespace detail
         Ptr str;
         Ptr end;
     };
-}
+} // namespace detail
 
 template<class AV, class Sep = typename AV::value_type, bool = is_null_terminated_v<AV>>
 struct SplitterView

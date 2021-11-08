@@ -42,6 +42,7 @@
 #include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/uninit_checked.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/chars_to_int.hpp"
@@ -98,6 +99,10 @@ public:
     };
 
 private:
+    static constexpr std::string_view REPLACEMENT_HIDE = "********";
+    // TODO should be a char
+    static constexpr std::string_view TAG_HIDE = "\x03";
+
     bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
@@ -442,9 +447,9 @@ private:
         out_s.out_clear_bytes(1);   // Null-terminator.
 
         out_s.stream_at(message_length_offset).out_uint16_le(
-            out_s.get_offset() - message_length_offset - sizeof(uint16_t));
+            checked_int{out_s.get_offset() - message_length_offset - sizeof(uint16_t)});
 
-        this->send_message_to_server(out_s.get_offset(),
+        this->send_message_to_server(checked_int{out_s.get_offset()},
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_s.get_produced_bytes());
     }
@@ -751,14 +756,10 @@ public:
                 });
 
                 send_client_message([this](OutStream & out_s) {
-                    out_s.out_copy_bytes("DisabledFeatures="_av);
-
-                    {
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "0x%08X",
-                            static_cast<unsigned>(this->sespro_params.disabled_features));
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes("DisabledFeatures=0x"_av);
+                    out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(
+                        safe_cast<uint32_t>(this->sespro_params.disabled_features)
+                    ));
                 });
             }
             else if (upper_param0 == "DisableLaunchMask"_ascii_upper) {
@@ -1151,8 +1152,16 @@ public:
                 }
                 else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN"_ascii_upper) {
                     if (parameters_.size() == 2) {
+                        std::string transformed_app_name(parameters_[0].data(),
+                                                         parameters_[0].size());
+
+                        utils::replace_substr_between_tags(
+                                       transformed_app_name,
+                                       REPLACEMENT_HIDE,
+                                       TAG_HIDE);
+
                         this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
-                            //KVLog("application_name"_av, parameters_[0]),
+                            KVLog("application_name"_av, transformed_app_name),
                             KVLog("raw_result"_av,       parameters_[1]),
                         });
 
@@ -1170,9 +1179,17 @@ public:
                 }
                 else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN_2"_ascii_upper) {
                     if (parameters_.size() == 3) {
+                        std::string transformed_app_name(parameters_[0].data(),
+                                                         parameters_[0].size());
+
+                        utils::replace_substr_between_tags(
+                                       transformed_app_name,
+                                       REPLACEMENT_HIDE,
+                                       TAG_HIDE);
+
                         this->log6(
                             LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {
-                            //KVLog("application_name"_av,   parameters_[0]),
+                            KVLog("application_name"_av,   transformed_app_name),
                             KVLog("raw_result"_av,         parameters_[1]),
                             KVLog("raw_result_message"_av, parameters_[2]),
                         });

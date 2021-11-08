@@ -156,3 +156,320 @@ RED_AUTO_TEST_CASE(TestTrim)
     RED_CHECK_EQUAL(rtrim(av), " \t abcd"_av);
     RED_CHECK_EQUAL(trim(av), "abcd"_av);
 }
+
+RED_AUTO_TEST_CASE(Test_replace_substr_on_tag)
+{
+    constexpr auto REPLACEMENT = "|raw_word|"sv;
+    constexpr auto TAG = "${TAG}"sv;
+
+    {
+        std::string str = "${TAG}";
+        std::string expected_str = "|raw_word|";
+
+        utils::replace_substr_on_tag(str, TAG, REPLACEMENT);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG} AAAA ${TAG}${TAG} BBBB ${TAG}";
+        std::string expected_str =
+            "|raw_word| AAAA |raw_word||raw_word| BBBB |raw_word|";
+
+        utils::replace_substr_on_tag(str, TAG, REPLACEMENT);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "AAAA BBBB CCCC";
+        std::string expected_str = str;
+
+        utils::replace_substr_on_tag(str, TAG, REPLACEMENT);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "AAAA${TAG}BBBB";
+        std::string expected_str = "AAAABBBB";
+
+        utils::replace_substr_on_tag(str, TAG, "");
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+}
+
+RED_AUTO_TEST_CASE(Test_replace_substr_on_tag_WhileDecorating)
+{
+    constexpr auto REPLACEMENT = "|raw_word|"sv;
+    constexpr auto TAG = "${TAG}"sv;
+    constexpr auto DECORATOR =  "&?"sv;
+
+    {
+        std::string str = "${TAG}";
+        std::string expected_str = "&?|raw_word|&?";
+
+        utils::replace_substr_on_tag(str, TAG, REPLACEMENT, DECORATOR);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG}${TAG} AAAA ${TAG} BBBB ${TAG}${TAG}";
+        std::string expected_str =
+            "&?|raw_word|&?&?|raw_word|&? AAAA &?|raw_word|&?"
+            " BBBB &?|raw_word|&?&?|raw_word|&?";
+
+        utils::replace_substr_on_tag(str, TAG, REPLACEMENT, DECORATOR);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "123456";
+        std::string expected_str = str;
+
+        utils::replace_substr_on_tag(str, TAG, REPLACEMENT, DECORATOR);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "AAAA${TAG}BBBB";
+        std::string expected_str = "AAAA&?&?BBBB";
+
+        utils::replace_substr_on_tag(str, TAG, "", DECORATOR);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+}
+
+RED_AUTO_TEST_CASE(Test_replace_substr_between_tags)
+{
+    constexpr auto REPLACEMENT = "********"sv;
+    constexpr auto OPENING_TAG = "${TAG_B}"sv;
+    constexpr auto CLOSURE_TAG = "${TAG_E}"sv;
+
+    {
+        std::string str = "AAAAA ${TAG_B}BBBBB${TAG_E} CCCCC DDDDD";
+        std::string expected_str = "AAAAA ******** CCCCC DDDDD";
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "A${TAG_B}a${TAG_E}B${TAG_B}b${TAG_E}C";
+        std::string expected_str = "A********B********C";
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}${TAG_E}";
+        std::string expected_str = "********";
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}${TAG_E}${TAG_B}ABCDEFGHIJK${TAG_E}";
+        std::string expected_str = "****************";
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "AZERTYUIOP1234";
+        std::string expected_str = "AZERTYUIOP1234";
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str =
+            "${TAG_B}${TAG_B}${TAG_E}1${TAG_B}${TAG_B}${TAG_E}";
+        std::string expected_str = "********1********";
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = " ${TAG_B}abcdef${TAG_E} ";
+        std::string expected_str = "  ";
+
+        utils::replace_substr_between_tags(str, "", OPENING_TAG, CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str =
+            "AAAAA $$$$$$${TAG_B}}BBBBB$$$$$$$${TAG_B}} CCCCC DDDDD";
+        std::string expected_str = "AAAAA $$$$$$********} CCCCC DDDDD";
+
+        utils::replace_substr_between_tags(str, REPLACEMENT, OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str =
+            "${TAG_B}1${TAG_B}${TAG_B}2${TAG_B}${TAG_B}${TAG_B}";
+        std::string expected_str = "************************";
+
+        utils::replace_substr_between_tags(str, REPLACEMENT, OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}{TAG_B}${TAG_B}";
+        std::string expected_str = "********";
+
+        utils::replace_substr_between_tags(str, REPLACEMENT, OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = " ${TAG_B}abcdef${TAG_B} ";
+        std::string expected_str = "  ";
+
+        utils::replace_substr_between_tags(str, "", OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+
+
+    {
+        std::string str = "${TAG_E}1234567890${TAG_B}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B} ${TAG_E} ${TAG_B} 42";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str =
+            "${TAG_B}AAAAAA${TAG_E}BBBBB${TAG_E}CCCCCCC${TAG_B}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}${TAG_B}4242${TAG_E}${TAG_E}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}1${TAG_E}2${TAG_B}${TAG_E}${TAG_B}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str,
+                                           REPLACEMENT,
+                                           OPENING_TAG,
+                                           CLOSURE_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}${TAG_B}${TAG_B}aaa${TAG_B}${TAG_B}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str, REPLACEMENT, OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}${TAG_B}${TAG_B}";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str, REPLACEMENT, OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+
+    {
+        std::string str = "${TAG_B}{TAG_B}$";
+        std::string expected_str = str;
+
+        utils::replace_substr_between_tags(str, REPLACEMENT, OPENING_TAG);
+
+        RED_CHECK_EQ(str, expected_str);
+    }
+}

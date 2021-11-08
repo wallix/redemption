@@ -165,6 +165,8 @@ namespace configs
         "auth_channel_answer"_zv,
         "auth_channel_target"_zv,
         "message"_zv,
+        "display_link"_zv,
+        "mod_timeout"_zv,
         "accept_message"_zv,
         "display_message"_zv,
         "rejected"_zv,

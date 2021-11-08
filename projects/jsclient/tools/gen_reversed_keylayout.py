@@ -209,6 +209,10 @@ for layout in layouts:
     rdeadkeymap2 = {}
     for mods,keymap in layout.keymaps.items():
         mod_flags = vk_mod_to_mod_flags(mods)
+        # ignore numlock scancodes
+        if mod_flags & numlock:
+            continue
+
         for key in keymap:
             if key and key.deadkeys:
                 value = key_to_scancode(key)

@@ -43,12 +43,12 @@ namespace
 WidgetVerticalScrollText::WidgetVerticalScrollText(
     gdi::GraphicApi& drawable, Widget& parent,
     NotifyApi* notifier, int group_id, std::string text,
-    Color fgcolor, Color bgcolor, Color focuscolor,
+    Color fg_color, Color bg_color, Color focus_color,
     Font const & font, uint16_t xtext, uint16_t ytext)
 : Widget(drawable, parent, notifier, group_id)
-, fg_color(fgcolor)
-, bg_color(bgcolor)
-, focus_color(focuscolor)
+, fg_color(fg_color)
+, bg_color(bg_color)
+, focus_color(focus_color)
 , font(font)
 , x_text(xtext)
 , y_text(ytext)

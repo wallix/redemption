@@ -925,10 +925,11 @@ chars_to_int_result<Int> string_to_int_impl(char const* s, EndIt last)
             r.ptr = eat_hexadecimal_char(r.ptr, last);
             return convert_char_to_int_result<Int>(r);
         }
+
         // 0x[0-9a-fA-F]
-        else if (last - s >= 3
-              && is_hexadecimal_prefix(s)
-              && 0xff != hexadecimal_char_to_int(s[2])
+        if (last - s >= 3
+         && is_hexadecimal_prefix(s)
+         && 0xff != hexadecimal_char_to_int(s[2])
         ) {
             auto r = hexadecimal_chars_to_int_impl<UInt>(s + 2, last);
             constexpr auto max = std::numeric_limits<Int>::max();

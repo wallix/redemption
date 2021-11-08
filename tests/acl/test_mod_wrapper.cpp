@@ -73,7 +73,7 @@ namespace
     };
 
     using namespace std::string_view_literals;
-}
+} // anonymous namespace
 
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalUrgency,
                       TestOSDMessageDisplayFixture)
@@ -125,29 +125,24 @@ RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_EmptyMessage,
     constexpr const char *filedata_path_c = IMG_TEST_PATH "osd_message5.png";
 
     auto osd_message = ""sv;
-    gdi::OsdMsgUrgency omu;
 
     {
-        omu = gdi::OsdMsgUrgency::NORMAL;
         mod_wrapper_.display_osd_message(osd_message);
         RED_CHECK_IMG(front_, filedata_path_c);
     }
 
     {
-        omu = gdi::OsdMsgUrgency::INFO;
-        mod_wrapper_.display_osd_message(osd_message, omu);
+        mod_wrapper_.display_osd_message(osd_message, gdi::OsdMsgUrgency::INFO);
         RED_CHECK_IMG(front_, filedata_path_c);
     }
 
     {
-        omu = gdi::OsdMsgUrgency::WARNING;
-        mod_wrapper_.display_osd_message(osd_message, omu);
+        mod_wrapper_.display_osd_message(osd_message, gdi::OsdMsgUrgency::WARNING);
         RED_CHECK_IMG(front_, filedata_path_c);
     }
 
     {
-        omu = gdi::OsdMsgUrgency::ALERT;
-        mod_wrapper_.display_osd_message(osd_message, omu);
+        mod_wrapper_.display_osd_message(osd_message, gdi::OsdMsgUrgency::ALERT);
         RED_CHECK_IMG(front_, filedata_path_c);
     }
 }

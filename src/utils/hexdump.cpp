@@ -20,54 +20,66 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 
 #include "utils/hexdump.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
-#include <cstdio> // std::sprintf
-#include <cstring> // memcpy
+#include <charconv>
 #include <string_view>
+#include <cstring> // memcpy
 
 namespace {
 
 // $line_prefix "%.4x" $sep_page_values ($value_prefix "%.2x" $value_suffix) $sep_value_chars "%*c" $prefix_chars ("%c")
 void hexdump_impl(
     const unsigned char * data, size_t size,
-    char const * line_prefix, char const * sep_page_values,
+    std::string_view line_prefix, std::string_view sep_page_values,
     std::string_view value_prefix, std::string_view value_suffix,
-    char const * sep_value_chars, char const * prefix_chars)
+    std::string_view sep_value_chars, std::string_view prefix_chars)
 {
     constexpr unsigned line_length = 16;
     constexpr auto spaces =
         "                                                                     "
         "                                                                     "_av;
+
+    auto copy = [](char* line, std::string_view s) {
+        memcpy(line, s.data(), s.size());
+        return line + s.size();
+    };
+
     char buffer[2048];
     size_t const sep_len = value_prefix.size() + value_suffix.size() + 2;
     assert(sep_len * line_length < spaces.size());
     for (size_t j = 0; j < size; j += line_length){
         char * line = buffer;
-        line += std::sprintf(line, "%s%.4x%s",
-            line_prefix, static_cast<unsigned>(j), sep_page_values);
+        line = copy(line, line_prefix);
+        line = (j <= 0xffff)
+            ? int_to_fixed_hexadecimal_lower_chars(line, uint16_t(j))
+            : std::to_chars(line, line + 32, j, 16).ptr;
+        line = copy(line, sep_page_values);
 
         size_t i;
 
         for (i = 0; i < line_length && j+i < size; i++){
-            line += std::sprintf(line, "%s%.2x%s",
-                value_prefix.data(), static_cast<unsigned>(data[j+i]), value_suffix.data());
+            line = copy(line, value_prefix);
+            line = int_to_fixed_hexadecimal_lower_chars(line, data[j+i]);
+            line = copy(line, value_suffix);
         }
 
-        line += std::sprintf(line, "%s", sep_value_chars);
+        line = copy(line, sep_value_chars);
         if (i < line_length){
             auto n = (line_length-i)*sep_len;
-            memcpy(line, spaces.data(), n);
-            line += n;
+            line = copy(line, {spaces.data(), n});
         }
-        line += std::sprintf(line, "%s", prefix_chars);
+        line = copy(line, prefix_chars);
 
         for (i = 0; i < line_length && j+i < size; i++){
             unsigned char tmp = data[j+i];
             if (tmp < ' ' || tmp > '~' || tmp == '\\'){
                 tmp = '.';
             }
-            line += std::sprintf(line, "%c", tmp);
+            *line++ = static_cast<char>(tmp);
         }
+
+        *line = '\0';
 
         if (line != buffer){
             line[0] = 0;

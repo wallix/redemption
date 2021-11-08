@@ -44,6 +44,9 @@ class EventRef;
 
 struct Event
 {
+    Event(Event const&) = delete;
+    Event& operator=(Event const&) = delete;
+
     bool garbage = false;
 
     struct Trigger
@@ -127,9 +130,6 @@ private:
     {}
 
     ~Event();
-
-    Event(Event const&) = delete;
-    Event& operator=(Event const&) = delete;
 
     friend class EventRef;
     EventRef* event_ref = nullptr;

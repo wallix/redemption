@@ -62,7 +62,7 @@ namespace
             return event_manager.get_monotonic_time();
         }
     };
-} // namespace anonymous
+} // anonymous namespace
 
 
 using namespace std::chrono_literals;

@@ -751,7 +751,6 @@ private:
 //    | 0x00007F00 SYSPTR_DEFAULT | The default system pointer.  |
 //    +---------------------------|------------------------------+
 
-
     void send_pointer(uint16_t cache_idx, RdpPointerView const& cursor)
     {
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,

@@ -648,10 +648,10 @@ struct ClientTimeZone {
                               // of the StandardDate field are all set to zero
     uint8_t DaylightName[64] {};
     SystemTime DaylightDate;
-    uint32_t DaylightBias{0}; // MUST be ignored if a valid date and time is not specified in
-                              // the DaylightDate field or the wYear, wMonth, wDayOfWeek, wDay,
-                              // wHour, wMinute, wSecond, and wMilliseconds fields of the
-                              // DaylightDate field are all set to zero
+    uint32_t DaylightBias{4294967236}; // MUST be ignored if a valid date and time is not specified in
+                                       // the DaylightDate field or the wYear, wMonth, wDayOfWeek, wDay,
+                                       // wHour, wMinute, wSecond, and wMilliseconds fields of the
+                                       // DaylightDate field are all set to zero
 
     ClientTimeZone()
     {
@@ -666,8 +666,6 @@ struct ClientTimeZone {
         this->StandardDate.wMinute          = 0;
         this->StandardDate.wSecond          = 0;
         this->StandardDate.wMilliseconds    = 0;
-        // standard bias
-        this->StandardBias = 0;
         // daylight name
         ::UTF8toUTF16("GMT (heure d'été)"_av, this->DaylightName, sizeof(this->DaylightName));
         // daylight date
@@ -679,10 +677,7 @@ struct ClientTimeZone {
         this->DaylightDate.wMinute          = 0;
         this->DaylightDate.wSecond          = 0;
         this->DaylightDate.wMilliseconds    = 0;
-        // daylight bias
-        this->DaylightBias = 4294967236;
-
-    } // END CONSTRUCTOR
+    }
 
     void emit(OutStream & /*stream*/) const {
     }

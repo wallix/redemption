@@ -32,7 +32,7 @@ public:
     WidgetVerticalScrollText(
         gdi::GraphicApi& drawable, Widget& parent,
         NotifyApi* notifier, int group_id, std::string text,
-        Color fgcolor, Color bgcolor, Color focuscolor,
+        Color fg_color, Color bg_color, Color focus_color,
         Font const& font, uint16_t xtext = 0, uint16_t ytext = 0); /*NOLINT*/
 
     void set_xy(int16_t x, int16_t y) override;

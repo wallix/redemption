@@ -41,8 +41,6 @@ namespace
         int line_count = 1;
         char const * pos_line = p;
 
-        char cstr_empty[1]{};
-        char * section = cstr_empty;
         char * key;
         char * value;
         char * end_key;
@@ -94,8 +92,9 @@ namespace
                             set_error("empty section");
                             goto loop;
 
-                        default:
-                            section = p;
+                        default: {
+                            char * section = p;
+
                         insection:
                             for (;;) switch (*++p) /* NOLINT */ {
                                 default: continue;
@@ -134,6 +133,7 @@ namespace
                             *end_section = '\0';
                             ++p;
                             goto loop;
+                        }
                     }
 
                 // value

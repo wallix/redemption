@@ -26,15 +26,11 @@
 
 
 struct brush_item {
-    int stamp;
+    int stamp = 0;
     /* expand this to a structure to handle more complicated brushes
        for now its 8x8 1bpp brushes only */
     // TODO use RDPBrush
-    uint8_t pattern[8];
-    brush_item() {
-        this->stamp = 0;
-        memset(this->pattern, 0, 8);
-    }
+    uint8_t pattern[8] {};
 };
 
 enum {

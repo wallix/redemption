@@ -32,11 +32,11 @@ std::unique_ptr<mod_api> new_mod_vnc(
     FrontAPI& front,
     uint16_t front_width,
     uint16_t front_height,
-    KeyLayout::KbdId keylayout,
-    kbdtypes::KeyLocks key_locks,
     bool clipboard_up,
     bool clipboard_down,
     const char * encodings,
+    KeyLayout const& layout,
+    kbdtypes::KeyLocks locks,
     bool server_is_macos,
     bool send_alt_ksym,
     bool cursor_pseudo_encoding_supported,
@@ -47,8 +47,8 @@ std::unique_ptr<mod_api> new_mod_vnc(
 {
     return std::make_unique<mod_vnc>(
         t, gd, events, username, password, front,
-        front_width, front_height, keylayout, key_locks,
-        clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
-        VncBogusClipboardInfiniteLoop::delayed, server_is_macos, send_alt_ksym,
+        front_width, front_height, clipboard_up, clipboard_down, encodings,
+        mod_vnc::ClipboardEncodingType::UTF8, VncBogusClipboardInfiniteLoop::delayed,
+        layout, locks, server_is_macos, send_alt_ksym,
         cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics, session_log);
 }

@@ -59,7 +59,7 @@ class VNCMetrics;
 class ClientExecute;
 
 // got extracts of VNC documentation from
-// http://tigervnc.sourceforge.net/cgi-bin/rfbproto
+// https://github.com/rfbproto/rfbproto
 
 
 class mod_vnc final : public mod_api
@@ -171,14 +171,14 @@ public:
 
 private:
     VncTransport t;
-    UltraDSM *dsm;
+    std::unique_ptr<UltraDSM> dsm;
     bool dsmEncryption;
 
     uint16_t width;
     uint16_t height;
     BitsPerPixel bpp {};
     // TODO BytesPerPixel ?
-    uint8_t  depth = 0;
+    uint8_t depth = 0;
 
     uint8_t endianess;
     uint8_t true_color_flag;
@@ -191,12 +191,9 @@ private:
     uint8_t green_shift;
     uint8_t blue_shift;
 
-public:
     VNCVerbose verbose;
 
-
-private:
-    KeymapSym  keymapSym;
+    KeymapSym keymapSym;
 
     StaticOutStream<MAX_CLIPBOARD_DATA_SIZE> to_vnc_clipboard_data;
     uint32_t to_vnc_clipboard_data_size = 0;
@@ -309,13 +306,13 @@ public:
            // TODO: front width and front height should be provided through info
            , uint16_t front_width
            , uint16_t front_height
-           , KeyLayout::KbdId keylayout
-           , kbdtypes::KeyLocks key_locks
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
+           , KeyLayout const& layout
+           , kbdtypes::KeyLocks locks
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
@@ -783,10 +780,9 @@ public:
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    void send_keyevent(uint8_t down_flag, uint32_t key);
+    void send_keyevents(KeymapSym::Keys keys);
 
 private:
-    void input_keycode(KbdFlags flags, uint16_t scancode);
     void rdp_input_clip_data(bytes_view data);
 
 public:
@@ -1034,7 +1030,7 @@ public:
 private:
     static const char *securityTypeString(int32_t t);
 
-    void updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
+    static void updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
 
     bool readSecurityResult(InStream &s, uint32_t &status, bool &haveReason, std::string &reason, size_t &skipLen) const;
 
@@ -1057,21 +1053,12 @@ private:
 
         using Result = BasicResult<State>;
 
-        VNC::Encoder::EncoderState last;
+        VNC::Encoder::EncoderState last = VNC::Encoder::EncoderState::Ready;
 
         FrameBufferUpdateCtx(Zdecompressor<> & zd, VNCVerbose verbose)
-          : bpp(BitsPerPixel::BitsPP32)
-          , state(State::Header)
-          , num_recs(0)
-          , x(0)
-          , y(0)
-          , cx(0)
-          , cy(0)
-          , encoding(0)
-          , zd{zd}
+          : zd{zd}
           , verbose(verbose)
         {
-            this->last = VNC::Encoder::EncoderState::Ready;
         }
 
         void start(BitsPerPixel bpp, BytesPerPixel Bpp)
@@ -1263,18 +1250,18 @@ private:
         }
 
     private:
-        BitsPerPixel bpp;
-        BytesPerPixel Bpp;
+        BitsPerPixel bpp = BitsPerPixel::BitsPP32;
+        BytesPerPixel Bpp = BytesPerPixel(4);
 
-        State state;
+        State state = State::Header;
 
-        uint16_t num_recs;
+        uint16_t num_recs = 0;
 
-        uint16_t x;
-        uint16_t y;
-        uint16_t cx;
-        uint16_t cy;
-        int32_t encoding;
+        uint16_t x = 0;
+        uint16_t y = 0;
+        uint16_t cx = 0;
+        uint16_t cy = 0;
+        int32_t encoding = 0;
 
         VNC::Encoder::Encoder encoder;
 

@@ -68,7 +68,7 @@ private:
     class LimitString
     {
     public:
-        static const std::size_t static_size = 1024/* * 4*/;
+        static const std::size_t static_size = 2048/* * 4*/;
 
         char buf_[static_size];
         std::size_t size_ = 0;

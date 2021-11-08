@@ -114,7 +114,7 @@ void RailModBase::rdp_input_scancode(
     this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
-void RailModBase::check_alt_f4(Keymap const& keymap)
+void RailModBase::check_alt_f4(Keymap const& keymap) const
 {
     if (this->rail_enabled
      && keymap.last_kevent() == Keymap::KEvent::F4

@@ -313,7 +313,6 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
             case LogId::EDIT_CHANGED:
                 return line_with_2_var("windows"_av, "edit"_av);
             case LogId::EDIT_CHANGED_2:
-                return line_with_3_var("windows"_av, "edit"_av, "value"_av);
             case LogId::SELECT_CHANGED:
                 return line_with_3_var("windows"_av, "edit"_av, "value"_av);
             case LogId::DRIVE_REDIRECTION_USE:
@@ -324,12 +323,11 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
                 return line_with_1_var("file_name"_av);
             case LogId::DRIVE_REDIRECTION_READ_EX:
             case LogId::DRIVE_REDIRECTION_WRITE_EX:
-                return line_with_3_var("file_name"_av, "size"_av, "sha256"_av);
-            case LogId::DRIVE_REDIRECTION_RENAME:
-                return line_with_2_var("old_file_name"_av, "new_file_name"_av);
             case LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION:
             case LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION:
                 return line_with_3_var("file_name"_av, "size"_av, "sha256"_av);
+            case LogId::DRIVE_REDIRECTION_RENAME:
+                return line_with_2_var("old_file_name"_av, "new_file_name"_av);
             case LogId::CLIENT_EXECUTE_REMOTEAPP:
                 return line_with_1_var("exe_or_file"_av);
             case LogId::CERTIFICATE_CHECK_SUCCESS:

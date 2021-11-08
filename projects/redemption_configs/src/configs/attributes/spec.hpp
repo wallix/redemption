@@ -81,16 +81,16 @@ struct prefix_value { char const * value; };
 
 struct names
 {
-    std::string cpp;
+    std::string all;
     std::string ini {};
     std::string sesman {};
     std::string connpolicy {};
     std::string display {};
 
-    std::string const& cpp_name() const { assert(!cpp.empty()); return cpp; }
-    std::string const& ini_name() const { return ini.empty() ? cpp : ini; }
-    std::string const& sesman_name() const { return sesman.empty() ? cpp : sesman; }
-    std::string const& connpolicy_name() const { return connpolicy.empty() ? cpp : connpolicy; }
+    std::string const& cpp_name() const { assert(!all.empty()); return all; }
+    std::string const& ini_name() const { return ini.empty() ? all : ini; }
+    std::string const& sesman_name() const { return sesman.empty() ? all : sesman; }
+    std::string const& connpolicy_name() const { return connpolicy.empty() ? all : connpolicy; }
 };
 
 

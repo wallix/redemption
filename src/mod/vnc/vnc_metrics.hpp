@@ -86,19 +86,19 @@ public:
         LOG(LOG_INFO, "starting VNC Metrics");
     }
 
-    void data_from_client(long int len) {
+    void data_from_client(uint64_t len) {
         this->metrics.add_to_current_data(DATA_FROM_CLIENT, len);
     }
 
-    void data_from_server(long int len) {
+    void data_from_server(uint64_t len) {
         this->metrics.add_to_current_data(DATA_FROM_SERVER, len);
     }
 
-    void clipboard_data_from_client(long int len) {
+    void clipboard_data_from_client(uint64_t len) {
         this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
     }
 
-    void clipboard_data_from_server(long int len) {
+    void clipboard_data_from_server(uint64_t len) {
         this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
     }
 

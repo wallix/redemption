@@ -83,10 +83,10 @@ RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool h
         }
     }
 
-    this->_username = std::string(username_pos, username_pos+username_len);
-    this->_domain = std::string(domain_pos, domain_pos+domain_len);
+    this->_username.assign(username_pos, username_pos+username_len);
+    this->_domain.assign(domain_pos, domain_pos+domain_len);
 
     LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
-        this->_domain.c_str(), this->_username.c_str(), this->_hostname);
+        this->_domain, this->_username, this->_hostname);
 }
 

@@ -61,7 +61,7 @@ namespace
             d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(scancode), 0, keymap);
         }
     };
-}
+} // anonymous namespace
 
 
 RED_AUTO_TEST_CASE(TestDialogMod)

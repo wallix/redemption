@@ -55,7 +55,7 @@ struct VideoCaptureCtx : noncopyable
 
     VideoCaptureCtx(
         MonotonicTimePoint monotonic_now,
-        RealTimePoint real_time,
+        RealTimePoint real_now,
         ImageByInterval image_by_interval,
         unsigned frame_rate,
         Drawable & drawable,

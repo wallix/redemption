@@ -169,7 +169,7 @@ public:
 
     void send_rdp_scanCode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode) {
         if (this->mod != nullptr) {
-            this->mod->rdp_input_scancode(flags, scancode, /*timer=*/0, this->keymap);
+            this->mod->rdp_input_scancode(flags, scancode, /*event_time=*/0, this->keymap);
         }
     }
 

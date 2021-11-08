@@ -69,7 +69,7 @@ namespace
     {
         return byte_ptr_cast(p);
     }
-} // namespace anonymous
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 {

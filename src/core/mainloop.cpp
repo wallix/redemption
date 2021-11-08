@@ -36,6 +36,8 @@
 
 #include "configs/config.hpp"
 
+#include <charconv>
+
 #include <cerrno>
 #include <csignal>
 #include <cstring>
@@ -248,9 +250,10 @@ namespace
                     MonotonicTimePoint::clock::now().time_since_epoch()).count();
                 int const pid = getpid();
                 char psid[128];
-                std::sprintf(psid, "%lld%d", sec, pid);
-                psid[sizeof(psid)-1] = '\0';
-                ini.set_acl<cfg::context::psid>(psid);
+                char* p = psid;
+                p = std::to_chars(p, std::end(psid), sec).ptr;
+                p = std::to_chars(p, std::end(psid), pid).ptr;
+                ini.set_acl<cfg::context::psid>(std::string_view(psid, std::size_t(p - psid)));
                 log_proxy::set_psid(ini.get<cfg::context::psid>());
             }
 

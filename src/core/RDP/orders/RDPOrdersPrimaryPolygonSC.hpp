@@ -190,13 +190,14 @@ public:
     RDPPolygonSC() = default;
 
     RDPPolygonSC(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
-                 RDPColor BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints) {
-        this->xStart          = xStart;
-        this->yStart          = yStart;
-        this->bRop2           = bRop2;
-        this->fillMode        = fillMode;
-        this->BrushColor      = BrushColor;
-        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaPoints) / sizeof(this->deltaPoints[0]));
+                 RDPColor BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints)
+    : xStart         (xStart)
+    , yStart         (yStart)
+    , bRop2          (bRop2)
+    , fillMode       (fillMode)
+    , BrushColor     (BrushColor)
+    , NumDeltaEntries(std::min<uint8_t>(NumDeltaEntries, std::size(this->deltaPoints)))
+    {
         for (int i = 0; i < this->NumDeltaEntries; i++) {
             this->deltaPoints[i].xDelta = deltaPoints.in_sint16_le();
             this->deltaPoints[i].yDelta = deltaPoints.in_sint16_le();

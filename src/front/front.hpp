@@ -658,9 +658,8 @@ private:
 
     Random & gen;
 
-    bool fastpath_support;                    // choice of programmer
-    bool client_fastpath_input_event_support; // = choice of programmer
-    bool server_fastpath_update_support;      // choice of programmer + capability of client
+    const bool fastpath_support;         // choice of programmer
+    bool server_fastpath_update_support; // choice of programmer + capability of client
     bool tls_client_active;
     int clientRequestedProtocols;
 
@@ -839,7 +838,6 @@ public:
     , cctx(cctx)
     , gen(gen)
     , fastpath_support(fp_support)
-    , client_fastpath_input_event_support(fp_support)
     , server_fastpath_update_support(false)
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
@@ -3270,7 +3268,7 @@ private:
                 input_caps.inputFlags          =
                     INPUT_FLAG_SCANCODES
                     | (this->ini.get<cfg::globals::unicode_keyboard_event_support>() ? INPUT_FLAG_UNICODE : 0)
-                    | (this->client_fastpath_input_event_support ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
+                    | (this->fastpath_support ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
                 input_caps.keyboardLayout      = 0;
                 input_caps.keyboardType        = 0;
                 input_caps.keyboardSubType     = 0;

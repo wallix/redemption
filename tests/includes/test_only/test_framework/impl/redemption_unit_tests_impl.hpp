@@ -380,7 +380,7 @@ namespace ut
         }
     } // namespace detail
     RED_TEST_CREATE_DECORATOR(hex_int, detail::hex_int_compare)
-}
+} // namespace ut
 
 // fwd
 //@{

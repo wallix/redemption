@@ -69,7 +69,7 @@ private:
     [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const;
 
 protected:
-    void check_alt_f4(Keymap const& keymap);
+    void check_alt_f4(Keymap const& keymap) const;
 
 protected:
     uint16_t front_width;

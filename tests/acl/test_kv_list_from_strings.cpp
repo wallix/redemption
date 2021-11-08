@@ -45,7 +45,7 @@ namespace
             strs...
         );
     };
-} // namespace anonymous
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestKVListFromStrings)
 {

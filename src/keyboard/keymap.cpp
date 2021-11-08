@@ -108,8 +108,8 @@ namespace
             no_mod[int(KeyCode::Numpad1)] = KEvent::End;
             no_mod[int(KeyCode::Numpad2)] = KEvent::DownArrow;
             no_mod[int(KeyCode::Numpad3)] = KEvent::PgDown;
-            no_mod[int(KeyCode::NumpadInsert)] = KEvent::Insert;
-            no_mod[int(KeyCode::NumpadDelete)] = KEvent::Delete;
+            no_mod[int(KeyCode::Numpad0)] = KEvent::Insert;
+            no_mod[int(KeyCode::NumpadDecimal)] = KEvent::Delete;
             no_mod[int(KeyCode::NumpadEnter)] = KEvent::Enter;
             no_mod[int(KeyCode::LCtrl)] = KEvent::None;
             no_mod[int(KeyCode::RCtrl)] = KEvent::None;
@@ -119,7 +119,7 @@ namespace
             no_mod[int(KeyCode::RAlt)] = KEvent::None;
             no_mod[int(KeyCode::LWin)] = KEvent::None;
             no_mod[int(KeyCode::RWin)] = KEvent::None;
-            no_mod[int(KeyCode::Apps)] = KEvent::None;
+            no_mod[int(KeyCode::ContextMenu)] = KEvent::None;
             no_mod[int(KeyCode::CapsLock)] = KEvent::None;
             no_mod[int(KeyCode::NumLock)] = KEvent::None;
             no_mod[int(KeyCode::ScrollLock)] = KEvent::None;
@@ -150,7 +150,7 @@ namespace
             numpad_mod[int(KeyCode::RAlt)] = KEvent::None;
             numpad_mod[int(KeyCode::LWin)] = KEvent::None;
             numpad_mod[int(KeyCode::RWin)] = KEvent::None;
-            numpad_mod[int(KeyCode::Apps)] = KEvent::None;
+            numpad_mod[int(KeyCode::ContextMenu)] = KEvent::None;
             numpad_mod[int(KeyCode::CapsLock)] = KEvent::None;
             numpad_mod[int(KeyCode::NumLock)] = KEvent::None;
             numpad_mod[int(KeyCode::ScrollLock)] = KEvent::None;
@@ -184,36 +184,26 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
 {
     _decoded_key = {kbdtypes::to_keycode(flags, scancode), flags, {}};
 
-    auto set_mod = [&](KeyMod keyMod){
-        _key_mods.update(flags, keyMod);
+    auto set_mod = [&](KeyMod mod){
+        _key_mods.update(flags, mod);
         _update_keymap();
+    };
+
+    auto set_locks_mod = [&](KeyMod mod){
+        if (!bool(flags & KbdFlags::Release)) {
+            _key_mods.flip(mod);
+            _update_keymap();
+        }
     };
 
     switch (underlying_cast(_decoded_key.keycode))
     {
         // Lock keys
-
-        case underlying_cast(KeyCode::CapsLock):
-            if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                _key_mods.flip(KeyMod::CapsLock);
-                _update_keymap();
-            }
-            break;
-        case underlying_cast(KeyCode::NumLock):
-            if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                _key_mods.flip(KeyMod::NumLock);
-                _update_keymap();
-            }
-            break;
-        case underlying_cast(KeyCode::ScrollLock):
-            if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))) {
-                _key_mods.flip(KeyMod::ScrollLock);
-                _update_keymap();
-            }
-            return _decoded_key;
+        case underlying_cast(KeyCode::CapsLock):   set_locks_mod(KeyMod::CapsLock); break;
+        case underlying_cast(KeyCode::NumLock):    set_locks_mod(KeyMod::NumLock); break;
+        case underlying_cast(KeyCode::ScrollLock): set_locks_mod(KeyMod::ScrollLock); break;
 
         // Modifier keys
-
         case underlying_cast(KeyCode::LCtrl):  set_mod(KeyMod::LCtrl); break;
         case underlying_cast(KeyCode::RCtrl):  set_mod(KeyMod::RCtrl); break;
         case underlying_cast(KeyCode::LShift): set_mod(KeyMod::LShift); break;
@@ -223,11 +213,9 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
 
         default:
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))
-                // keycode with scancode <= 0x7f and with or without extended flag
-             && (uint16_t(_decoded_key.keycode) & uint16_t(~0x17fu)) == 0
+             && keycode_is_compressable_to_byte(_decoded_key.keycode)
             ) {
-                const std::size_t keymap_index = (std::size_t(_decoded_key.keycode) & 0x7f)
-                                               | ((std::size_t(_decoded_key.keycode) & 0x100) >> 1);
+                const std::size_t keymap_index = keycode_to_byte_index(_decoded_key.keycode);
                 auto unicode = _keymap[keymap_index];
 
                 if (REDEMPTION_UNLIKELY(_dkeys)) {
@@ -248,7 +236,6 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
                     _decoded_key.uchars[0] = unicode;
                 }
             }
-            return _decoded_key;
     }
 
     return _decoded_key;
@@ -261,22 +248,22 @@ void Keymap::_update_keymap() noexcept
     auto numlock = numlock_01u(_key_mods);
     auto capslock = capslock_01u(_key_mods);
     auto ctrl = ctrl_01u(_key_mods, rctrl_is_ctrl);
-    auto altgr = altgr_01u(_key_mods) | ctrl;
+    auto altgr = altgr_01u(_key_mods);
     auto oem8 = oem8_01u(_key_mods, rctrl_is_ctrl);
     auto alt = alt_01u(_key_mods);
     auto shift = shift_01u(_key_mods);
 
     _imods = checked_int(0u
-            | (shift << KeyLayout::Mods::Shift)
-            | (ctrl << KeyLayout::Mods::Control)
-            | (alt << KeyLayout::Mods::Menu)
-            // enable Ctrl and Alt when AltGr
-            | (altgr << KeyLayout::Mods::Control)
-            | (altgr << KeyLayout::Mods::Menu)
-            | (oem8 << KeyLayout::Mods::OEM_8)
-            | (numlock << KeyLayout::Mods::NumLock)
-            | (capslock << KeyLayout::Mods::CapsLock)
-            );
+           | (shift << KeyLayout::Mods::Shift)
+           | (ctrl << KeyLayout::Mods::Control)
+           | (alt << KeyLayout::Mods::Menu)
+           // enable Ctrl and Alt when AltGr
+           | (altgr << KeyLayout::Mods::Control)
+           | (altgr << KeyLayout::Mods::Menu)
+           | (oem8 << KeyLayout::Mods::OEM_8)
+           | (numlock << KeyLayout::Mods::NumLock)
+           | (capslock << KeyLayout::Mods::CapsLock)
+           );
     _keymap = _layout.keymap_by_mod[_imods];
 }
 
@@ -316,7 +303,7 @@ bool Keymap::is_tsk_switch_shortcut() const noexcept
 
     // ctrl+alt+del or ctrl+shift+esc
     return (alt_01u(_key_mods) && (_decoded_key.keycode == KeyCode::Delete
-                                 || _decoded_key.keycode == KeyCode::NumpadDelete))
+                                 || _decoded_key.keycode == KeyCode::NumpadDecimal))
         || (shift_01u(_key_mods) && _decoded_key.keycode == KeyCode::Esc);
 }
 
@@ -360,15 +347,7 @@ void Keymap::reset_mods(KeyLocks locks) noexcept
 
 void Keymap::set_locks(KeyLocks locks) noexcept
 {
-    _key_mods.clear(KeyMod::NumLock);
-    _key_mods.clear(KeyMod::CapsLock);
-    // _key_mods.clear(KeyMod::KanaLock);
-    _key_mods.clear(KeyMod::ScrollLock);
-    _key_mods.set_if(bool(locks & KeyLocks::NumLock), KeyMod::NumLock);
-    _key_mods.set_if(bool(locks & KeyLocks::CapsLock), KeyMod::CapsLock);
-    // _key_mods.set_if(bool(locks & KeyLocks::KanaLock), KeyMod::KanaLock);
-    _key_mods.set_if(bool(locks & KeyLocks::ScrollLock), KeyMod::ScrollLock);
-
+    _key_mods.sync_locks(locks);
     _update_keymap();
 }
 

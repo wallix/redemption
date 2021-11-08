@@ -93,6 +93,7 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -readability-qualified-auto,
 -readability-redundant-access-specifiers,
 -readability-static-accessed-through-instance,
+-readability-static-definition-in-anonymous-namespace,
 ' \
 -config='{CheckOptions: [
 {key: llvm-namespace-comment.ShortNamespaceLines, value: 10},

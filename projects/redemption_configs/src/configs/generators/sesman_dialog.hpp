@@ -124,7 +124,7 @@ public:
             else {
                 this->out
                     << "cfg::" << section_names.sesman_name() << "::"
-                    << static_cast<Names const&>(infos).cpp
+                    << static_cast<Names const&>(infos).all
                 ;
             }
 

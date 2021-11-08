@@ -218,7 +218,8 @@ namespace ut::ops
     {
         assertion_result ar(true);
 
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+        std::size_t pos = static_cast<std::size_t>(
+            std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin());
         const bool r = !(pos == a.size() && a.size() == b.size());
 
         if (REDEMPTION_UNLIKELY(r))

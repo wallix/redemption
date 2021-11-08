@@ -567,7 +567,7 @@ namespace
     "       "
     "       "
     ;
-}
+} // anonymous namespace
 
 TimestampTracer::TimestampTracer(const WritableImageView & image_view) noexcept
 : previous_timestamp_length(0)

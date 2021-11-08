@@ -28,12 +28,19 @@ Author(s): Jonathan Poelen
 struct U16Array
 {
     u16_array_view a;
+
+    U16Array() = default;
+
+    template<std::size_t N>
+    U16Array(uint16_t const (&a)[N]) noexcept
+    : a(a)
+    {}
 };
 // for IDE coloration only
 bool operator == (emscripten::val const& x, U16Array const&);
 
 using U16CArray = uint16_t[];
-#define U16A(...) U16Array{make_array_view(U16CArray{__VA_ARGS__})}
+#define U16A(...) U16Array(U16CArray{__VA_ARGS__})
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 static ut::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
@@ -71,11 +78,13 @@ RED_JS_AUTO_TEST_CASE(
     TestUnicodeToScancode,
     (emscripten::val reversedKeymap),
     (() => {
-        const ReversedKeymap = require("src/application/scancodes").ReversedKeymap;
+        const mod = require("src/application/scancodes");
         const layouts = require("src/application/reversed_layouts").layouts;
         for (const layout of layouts) {
             if (layout.localeName === "fr-FR") {
-                return new ReversedKeymap(layout);
+                const rkeymap = new mod.ReversedKeymap(layout);
+                rkeymap.toHumanReadableMods = mod.toHumanReadableMods;
+                return rkeymap;
             }
         }
     })()
@@ -94,6 +103,10 @@ RED_JS_AUTO_TEST_CASE(
 
     auto getModFlags = [&reversedKeymap]{
         return reversedKeymap.call<uint32_t>("getModFlags");
+    };
+
+    auto toHumanReadableMods = [&reversedKeymap](uint32_t mods){
+        return reversedKeymap.call<std::string>("toHumanReadableMods", mods);
     };
 
     const unsigned keyAcquire = 0;
@@ -290,6 +303,92 @@ RED_JS_AUTO_TEST_CASE(
         TEST_HEX32(getVirtualModFlags() == CapsLockMod);
 
         RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+        TEST_HEX32(getModFlags() == NoMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+        TEST_HEX32(getModFlags() == NoMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+    }();
+
+    // CapsLock + NumLock + A
+    [&]{
+        RED_CHECK(toScancodes("NumLock", keyAcquire) == U16A(0x45));
+        TEST_HEX32(getModFlags() == NumLockMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+
+        RED_CHECK(toScancodes("NumLock", keyRelease) == U16A(0x8045));
+        TEST_HEX32(getModFlags() == NumLockMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+        TEST_HEX32(getModFlags() == (NumLockMod | CapsLockMod));
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+        TEST_HEX32(getModFlags() == (NumLockMod | CapsLockMod));
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+        TEST_HEX32(getModFlags() == (NumLockMod | CapsLockMod));
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+        TEST_HEX32(getModFlags() == (NumLockMod | CapsLockMod));
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyAcquire) == U16A(0x10));
+        TEST_HEX32(getModFlags() == (NumLockMod | CapsLockMod));
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("A", keyRelease) == U16A(0x8010));
+        TEST_HEX32(getModFlags() == (NumLockMod | CapsLockMod));
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("NumLock", keyAcquire) == U16A(0x45));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("NumLock", keyRelease) == U16A(0x8045));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+        TEST_HEX32(getModFlags() == NoMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+        TEST_HEX32(getModFlags() == NoMod);
+        TEST_HEX32(getVirtualModFlags() == NoMod);
+    }();
+
+    // CapsLock + a
+    [&]{
+        RED_CHECK(toScancodes("CapsLock", keyAcquire) == U16A(0x3a));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("CapsLock", keyRelease) == U16A(0x803a));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("a", keyAcquire) == U16A(0x3a, 0x803a, 0x10, 0x3a, 0x803a));
+        TEST_HEX32(getModFlags() == CapsLockMod);
+        TEST_HEX32(getVirtualModFlags() == CapsLockMod);
+
+        RED_CHECK(toScancodes("a", keyRelease) == U16A(0x8010));
         TEST_HEX32(getModFlags() == CapsLockMod);
         TEST_HEX32(getVirtualModFlags() == CapsLockMod);
 
@@ -529,7 +628,7 @@ RED_JS_AUTO_TEST_CASE(
 
         sync(0xffff);
         TEST_HEX32(getModFlags() == (ShiftMod | CtrlMod | AltMod | AltGrMod | CapsLockMod | NumLockMod | RightShiftMod | RightCtrlMod));
-        TEST_HEX32(getVirtualModFlags() == (ShiftMod | AltGrMod | CapsLockMod | NumLockMod));
+        TEST_HEX32(getVirtualModFlags() == (ShiftMod | AltGrMod | CapsLockMod));
 
         sync(0);
         TEST_HEX32(getModFlags() == NoMod);
@@ -537,6 +636,52 @@ RED_JS_AUTO_TEST_CASE(
 
         sync(NumLock | AltLeft | ControlRight);
         TEST_HEX32(getModFlags() == (AltMod | NumLockMod | RightCtrlMod));
-        TEST_HEX32(getVirtualModFlags() == (AltGrMod | NumLockMod));
+        TEST_HEX32(getVirtualModFlags() == AltGrMod);
+    }();
+
+    // to readable mods
+    [&]{
+        RED_CHECK(toHumanReadableMods(0x000) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x001) ==
+            "ShiftLeft: 1\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x002) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 1\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x004) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 1\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x008) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 1\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x010) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 1\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x020) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 1\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x040) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 1\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x080) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 1"_av);
+        RED_CHECK(toHumanReadableMods(0x100) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 1\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x200) ==
+            "ShiftLeft: 0\nShiftRight: 1\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x400) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 1\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0x800) ==
+            "ShiftLeft: 0\nShiftRight: 0\nCtrlLeft: 0\nCtrlRight: 0\nAlt: 0\nAltGr: 0\n"
+            "OEM8: 0\nKana: 0\nCapsLock: 0\nNumLock: 0\nKanaLock: 0"_av);
+        RED_CHECK(toHumanReadableMods(0xfff) ==
+            "ShiftLeft: 1\nShiftRight: 1\nCtrlLeft: 1\nCtrlRight: 1\nAlt: 1\nAltGr: 1\n"
+            "OEM8: 1\nKana: 1\nCapsLock: 1\nNumLock: 1\nKanaLock: 1"_av);
     }();
 }

@@ -40,6 +40,7 @@
 #include "mod/internal/close_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/dialog_mod.hpp"
+#include "mod/internal/dialog_mod2.hpp"
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
@@ -264,6 +265,29 @@ public:
         return this->_create_dialog(button, caption, challenge);
     }
 
+    auto create_display_link_mod() -> ModPack
+    {
+        const char * caption = "URL Redirection";
+        const char * link_label = "Copy to clipboard: ";
+        // return this->_create_dialog(button, caption, NO_CHALLENGE);
+        auto new_mod = new DialogMod2(
+            this->ini,
+            this->graphics,
+            this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
+            caption,
+            this->ini.get<cfg::context::message>().c_str(),
+            this->ini.get<cfg::context::display_link>().c_str(),
+            link_label,
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
+    }
+
 private:
     auto _create_dialog(const char * button, const char * caption, ChallengeOpt challenge) -> ModPack
     {
@@ -406,6 +430,7 @@ public:
             this->ini,
             this->front, this->client_info,
             this->rail_client_execute,
+            this->keymap.layout(),
             this->keymap.locks(),
             this->glyphs, this->theme,
             this->events,
