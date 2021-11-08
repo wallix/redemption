@@ -493,11 +493,12 @@ parse_error parse_from_cfg(ColorDepth & x, ::configs::spec_type<ColorDepth> /*ty
     }
 
     switch (xi) {
-        case uint8_t(ColorDepth::depth8): break;
-        case uint8_t(ColorDepth::depth15): break;
-        case uint8_t(ColorDepth::depth16): break;
-        case uint8_t(ColorDepth::depth24): break;
-        case uint8_t(ColorDepth::depth32): break;
+        case uint8_t(ColorDepth::depth8):
+        case uint8_t(ColorDepth::depth15):
+        case uint8_t(ColorDepth::depth16):
+        case uint8_t(ColorDepth::depth24):
+        case uint8_t(ColorDepth::depth32):
+               break;
         default: return parse_error{"unknown value"};
     }
 
@@ -1104,8 +1105,9 @@ parse_error parse_from_cfg(OcrVersion & x, ::configs::spec_type<OcrVersion> /*ty
     }
 
     switch (xi) {
-        case uint8_t(OcrVersion::v1): break;
-        case uint8_t(OcrVersion::v2): break;
+        case uint8_t(OcrVersion::v1):
+        case uint8_t(OcrVersion::v2):
+               break;
         default: return parse_error{"unknown value"};
     }
 

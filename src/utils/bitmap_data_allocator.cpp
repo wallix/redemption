@@ -31,5 +31,5 @@
 
 namespace aux_
 {
-    BmpMemAlloc bitmap_data_allocator;
+    BmpMemAlloc bitmap_data_allocator; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
 } // namespace aux_

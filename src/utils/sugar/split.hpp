@@ -288,7 +288,7 @@ namespace detail
     {
         return c;
     }
-}
+} // namespace detail
 
 /// \brief Returns a view which allows to loop on strings separated by a character.
 /// \note There is no result when the separator is on the last character

@@ -622,7 +622,7 @@ namespace
         };
     }
 } // anonymous namespace
-} // namespace minpeg
+} // namespace minipeg
 
 zstring_view parse_ip_conntrack(
     int fd, const char * source, const char * dest, int sport, int dport,

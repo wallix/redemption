@@ -26,8 +26,8 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    char g_psid[32] = "42";
-    char g_username[256] = "";
+    char g_psid[32] = "42"; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
+    char g_username[256] = ""; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
 }
 
 namespace log_proxy

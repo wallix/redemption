@@ -1267,20 +1267,22 @@ public:
                 open_flags |= O_APPEND;
             }
 
-            if (CreateDisposition == smb2::FILE_SUPERSEDE) {
-                open_flags |= (O_TRUNC | O_CREAT);
-            }
-            else if (CreateDisposition == smb2::FILE_CREATE) {
-                open_flags |= (O_CREAT | O_EXCL);
-            }
-            else if (CreateDisposition == smb2::FILE_OPEN_IF) {
-                open_flags |= O_CREAT;
-            }
-            else if (CreateDisposition == smb2::FILE_OVERWRITE) {
-                open_flags |= O_TRUNC;
-            }
-            else if (CreateDisposition == smb2::FILE_OVERWRITE_IF) {
-                open_flags |= (O_TRUNC | O_CREAT);
+            switch (CreateDisposition) {
+                case smb2::FILE_SUPERSEDE:
+                    open_flags |= (O_TRUNC | O_CREAT);
+                    break;
+                case smb2::FILE_CREATE:
+                    open_flags |= (O_CREAT | O_EXCL);
+                    break;
+                case smb2::FILE_OPEN_IF:
+                    open_flags |= O_CREAT;
+                    break;
+                case smb2::FILE_OVERWRITE:
+                    open_flags |= O_TRUNC;
+                    break;
+                case smb2::FILE_OVERWRITE_IF:
+                    open_flags |= (O_TRUNC | O_CREAT);
+                    break;
             }
 
             LOG_IF(bool(verbose & RDPVerbose::fsdrvmgr), LOG_INFO,
