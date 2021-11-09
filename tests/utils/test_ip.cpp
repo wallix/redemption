@@ -7,7 +7,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 namespace
 {
     IpPort::ErrorMessage ip_port_with_ipv4(IpPort& ip_port, char const* ipv4_addr, uint16_t port)
@@ -57,20 +56,25 @@ RED_AUTO_TEST_CASE(Test_IpPort)
     RED_CHECK_EQ(ip_port_with_ipv4(ip_port, "192.0.2.128", 1234).error, nullptr);
     RED_CHECK(ip_port.ip_address() == "192.0.2.128");
     RED_CHECK(ip_port.port() == 1234);
+    RED_CHECK(!ip_port.is_ipv6());
 
     RED_CHECK_EQ(ip_port_with_ipv6(ip_port, "::ffff:192.0.2.128", 4242).error, nullptr);
     RED_CHECK(ip_port.ip_address() == "192.0.2.128");
     RED_CHECK(ip_port.port() == 4242);
+    RED_CHECK(!ip_port.is_ipv6());
 
     RED_CHECK_EQ(ip_port_with_ipv6(ip_port, "2001:db8:85a3::8a2e:370:7334", 1234).error, nullptr);
     RED_CHECK(ip_port.ip_address() == "2001:db8:85a3::8a2e:370:7334");
     RED_CHECK(ip_port.port() == 1234);
+    RED_CHECK(ip_port.is_ipv6());
 
     RED_CHECK_EQ(ip_port_with_ipv6(ip_port, "::ffff:c000:280", 4242).error, nullptr);
     RED_CHECK(ip_port.ip_address() == "192.0.2.128");
     RED_CHECK(ip_port.port() == 4242);
+    RED_CHECK(!ip_port.is_ipv6());
 
     RED_CHECK_EQ(ip_port_with_ipv6(ip_port, "0::ffff:192.0.2.128", 1234).error, nullptr);
     RED_CHECK(ip_port.ip_address() == "192.0.2.128");
     RED_CHECK(ip_port.port() == 1234);
+    RED_CHECK(!ip_port.is_ipv6());
 }

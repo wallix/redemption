@@ -9,6 +9,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 namespace
 {
@@ -53,6 +56,8 @@ IpPort::ErrorMessage IpPort::extract_of(sockaddr const& sa, socklen_t socklen) n
         _ip_address_len -= IPV4_MAPPED_IPV6_PREFIX.size();
         _ip_address_offset += IPV4_MAPPED_IPV6_PREFIX.size();
     }
+
+    _is_ipv6 = (sa.sa_family == AF_INET6 && _ip_address_offset == 0);
 
     [[maybe_unused]]
     auto r = std::from_chars(dest_port, dest_port + strlen(dest_port), _port);

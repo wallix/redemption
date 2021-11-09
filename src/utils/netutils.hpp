@@ -33,7 +33,9 @@
 #include <memory>
 
 class in_addr;
+class in6_addr;
 class addrinfo;
+class sockaddr_storage;
 
 struct IpAddress
 {
@@ -98,10 +100,21 @@ unique_fd addr_connect_blocking(
     int retry_count,
     bool no_log_for_unix_socket);
 
+[[nodiscard]]
+bool compare_binary_ipv4(const in_addr& in_addr, const char *ipv4);
+
+[[nodiscard]]
+bool compare_binary_ipv6(const in6_addr& in6_addr, const char *ipv6);
+
+[[nodiscard]]
+bool compare_binary_ip(const sockaddr_storage& ss, const char *ip, bool is_ipv6);
+
+bool get_in_addr_from_ip(sockaddr_storage& ss, const char *ip, bool is_ipv6);
+
 /// \return ip found or empty view whether not found or error
 zstring_view parse_ip_conntrack(
     int fd, const char * source, const char * dest, int sport, int dport,
-    writable_bytes_view transparent_dest, uint32_t verbose);
+    writable_bytes_view transparent_dest, bool is_ipv6, uint32_t verbose);
 
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);
 

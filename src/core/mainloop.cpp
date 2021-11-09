@@ -233,6 +233,7 @@ namespace
 
             const auto source_ip = source_ip_port.ip_address();
             const auto source_port = source_ip_port.port();
+            bool is_ipv6 = source_ip_port.is_ipv6();
 
             using namespace std::string_view_literals;
             const bool source_is_localhost = (source_ip.to_sv() == "127.0.0.1"sv || source_ip.to_sv() == "::1"sv);
@@ -341,7 +342,8 @@ namespace
 
                 real_target_ip = parse_ip_conntrack(
                     fd, target_ip, source_ip, target_port, source_port,
-                    make_writable_array_view(real_target_ip_buff), verbose);
+                    make_writable_array_view(real_target_ip_buff),
+                    is_ipv6, verbose);
                 if (real_target_ip.empty()) {
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }
@@ -387,9 +389,14 @@ namespace
 
                 ini.set_acl<cfg::globals::host>(source_ip);
                 ini.set_acl<cfg::globals::target>(target_ip);
+
+                sockaddr_storage target_ip_ss;
+
+                get_in_addr_from_ip(target_ip_ss, target_ip, is_ipv6);
+
                 if (ini.get<cfg::globals::enable_transparent_mode>()
-                 && target_ip != real_target_ip
-                ) {
+                    && !compare_binary_ip(target_ip_ss, real_target_ip, is_ipv6))
+                {
                     ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                 }
 
