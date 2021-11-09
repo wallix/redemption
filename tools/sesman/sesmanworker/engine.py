@@ -150,10 +150,8 @@ class Engine(object):
 
     def keepalive(self, timeout, close=True):
         if self.avatar_id:
-            self.wabengine.save_session(self.avatar_id, timeout=timeout)
-            # TODO: should free db session
-            # with manage_transaction(self.wabengine, close=close):
-            #     self.wabengine.save_session(self.avatar_id, timeout=timeout)
+            with manage_transaction(self.wabengine):
+                self.wabengine.save_session(self.avatar_id, timeout=timeout)
 
     def _post_authentication(self):
         self.avatar_id = self.wabengine.connect(timeout=60)
