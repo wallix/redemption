@@ -25,6 +25,9 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
+#include <openssl/rand.h>
+
+
 namespace
 {
 #define SCOPED_EVP_CONTEXT(TYPENAME, T, INIT, DESTROY) \
@@ -36,6 +39,36 @@ namespace
 
 SCOPED_EVP_CONTEXT(ScopedEvpMd, EVP_MD_CTX, EVP_MD_CTX_new, EVP_MD_CTX_free);
 SCOPED_EVP_CONTEXT(ScopedEvpCipher, EVP_CIPHER_CTX, EVP_CIPHER_CTX_new, EVP_CIPHER_CTX_free);
+
+
+    /** various plug-in constants */
+    enum {
+        svncInvalid             = 0x00,
+        svncCipherAES           = 0x01,
+        svncCipherARC4          = 0x02,
+        svncCipherBlowfish      = 0x04,
+        svncCipherIDEA          = 0x08,
+        svncCipherCAST5         = 0x10,
+        svncCipherAESCFB        = 0x20,
+        svncCipher3AESOFB       = 0x40,
+
+        svncCipherMask          = 0xFF,
+
+        svncKey128              = 0x1000,
+        svncKey192              = 0x2000,
+        svncKey256              = 0x4000,
+        svncKey448              = 0x8000,
+        svncKey56               = 0x0100,
+
+        svncKeyMask             = 0xFF00,
+
+        svncClientAuthRequired  = 0x00010000,
+
+        svncOverridePassphrase  = 0x00020000,
+        svncLowKey              = 0x00040000,
+        svncNewKey              = 0x00800000,
+        RC4_DROP_BYTES          = 3072,
+    };
 } // anonymous namespace
 
 static void cipherDelete(EVP_CIPHER_CTX **pctx) {
