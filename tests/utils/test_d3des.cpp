@@ -25,29 +25,37 @@
 
 #include <cstring>
 
-RED_AUTO_TEST_CASE(TestEncryptDes)
+RED_AUTO_TEST_CASE(TestRfbD3DesEncrypter)
 {
-    rfbDesKey(byte_ptr_cast("12345678"), EN0);
+    RfbD3DesEncrypter encrypter(to_bounded_u8_av("12345678"_sized_av));
 
-    uint8_t out[8];
-    rfbDes(byte_ptr_cast("abcdefgh"), out);
-    RED_CHECK(make_array_view(out) == "\x76\xda\xca\xea\xb9\xa5\x28\xa3"_av);
+    uint8_t raw_out[8];
+    auto out = make_writable_sized_array_view(raw_out);
 
-    std::memcpy(out, "abcdefgh", 8);
-    rfbDes(out, out);
-    RED_CHECK(make_array_view(out) == "\x76\xda\xca\xea\xb9\xa5\x28\xa3"_av);
+    encrypter.encrypt_block(to_bounded_u8_av("abcdefgh"_sized_av), out);
+    RED_CHECK(out == "\x76\xda\xca\xea\xb9\xa5\x28\xa3"_av);
+
+    std::memcpy(raw_out, "abcdefgh", 8);
+    encrypter.encrypt_block(out, out);
+    RED_CHECK(out == "\x76\xda\xca\xea\xb9\xa5\x28\xa3"_av);
 }
 
 RED_AUTO_TEST_CASE(TestEncryptDesText)
 {
-    rfbDesKey(byte_ptr_cast("12345678"), EN0);
+    RfbD3DesEncrypter encrypter(to_bounded_u8_av("12345678"_sized_av));
 
-    uint8_t out[24];
-    uint8_t inblock[25] = "abcdefghijklmnopqrstuvwx";
-    rfbDesText(inblock, out, 24, byte_ptr_cast("keykeyke"));
-    RED_CHECK(make_array_view(out) == "\x29\x42\xca\xbe\xb0\x12\x4b\x68\x98\xef\x52\x55\x79\xcc\xca\xde\x06\x78\xc6\x7d\xa5\x49\x27\xd9"_av_hex);
+    uint8_t raw_out[24];
+    auto out = make_writable_sized_array_view(raw_out);
 
-    std::memcpy(out, "abcdefghijklmnopqrstuvwx", 24);
-    rfbDesText(out, out, 24, byte_ptr_cast("keykeyke"));
-    RED_CHECK(make_array_view(out) == "\x29\x42\xca\xbe\xb0\x12\x4b\x68\x98\xef\x52\x55\x79\xcc\xca\xde\x06\x78\xc6\x7d\xa5\x49\x27\xd9"_av_hex);
+    encrypter.encrypt_text(to_bounded_u8_av("abcdefghijklmnopqrstuvwx"_sized_av),
+                           out, to_bounded_u8_av("keykeyke"_sized_av));
+    RED_CHECK(make_array_view(out) ==
+        "\x29\x42\xca\xbe\xb0\x12\x4b\x68\x98\xef\x52\x55\x79\xcc\xca\xde"
+        "\x06\x78\xc6\x7d\xa5\x49\x27\xd9"_av_hex);
+
+    std::memcpy(raw_out, "abcdefghijklmnopqrstuvwx", 24);
+    encrypter.encrypt_text(out, out, to_bounded_u8_av("keykeyke"_sized_av));
+    RED_CHECK(make_array_view(out) ==
+        "\x29\x42\xca\xbe\xb0\x12\x4b\x68\x98\xef\x52\x55\x79\xcc\xca\xde"
+        "\x06\x78\xc6\x7d\xa5\x49\x27\xd9"_av_hex);
 }

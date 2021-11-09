@@ -1,65 +1,55 @@
 /*
- * This is D3DES (V5.09) by Richard Outerbridge with the double and
- * triple-length support removed for use in VNC.
- *
- * These changes are:
- *  Copyright (C) 1999 AT&T Laboratories Cambridge.  All Rights Reserved.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-/* d3des.h -
- *
- *	Headers and defines for d3des.c
- *	Graven Imagery, 1992.
- *
- * Copyright (c) 1988,1989,1990,1991,1992 by Richard Outerbridge
- *	(GEnie : OUTER; CIS : [71755,204])
- */
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+Product name: redemption, a FLOSS RDP proxy
+Copyright (C) Wallix 2021
+Author(s): Proxies Team
+*/
 
 #pragma once
 
-#define EN0	0	/* MODE == encrypt */
-#define DE1	1	/* MODE == decrypt */
+#include "utils/sugar/bounded_array_view.hpp"
 
-extern "C" {
-/*		      hexkey[8]     MODE
- * Sets the internal key register according to the hexadecimal
- * key contained in the 8 bytes of hexkey, according to the DES,
- * for encryption or decryption according to MODE.
- */
-void rfbDesKey(const unsigned char * key, int edf);
+class RfbD3DesEncrypter
+{
+    template<std::size_t N>
+    static constexpr std::size_t value_identity_v = N;
 
-/*		    cookedkey[32]
- * Loads the internal key register with the data in cookedkey.
- */
-void rfbUseKey(unsigned long * from);
+public:
+    RfbD3DesEncrypter(sized_u8_array_view<8> key) noexcept;
 
-/*		   cookedkey[32]
- * Copies the contents of the internal key register into the storage
- * located at &cookedkey[0].
- */
-void rfbCPKey(unsigned long * into);
+    /// Encrypts one block of eight bytes at address.
+    /// \c from and \c to can be the same.
+    void encrypt_block(sized_u8_array_view<8> from, sized_writable_u8_array_view<8> to) const noexcept;
 
-/*		    from[8]	      to[8]
- * Encrypts/Decrypts (according to the key currently loaded in the
- * internal key register) one block of eight bytes at address 'from'
- * into the block at address 'to'.  They can be the same.
- */
-void rfbDes(unsigned char const * inblock, unsigned char * outblock);
+    /// Encrypts a text of size multiple of 8.
+    /// \c from and \c to can be the same.
+    template<std::size_t N>
+    void encrypt_text(
+        sized_u8_array_view<value_identity_v<N>> from,
+        sized_writable_u8_array_view<N> to,
+        sized_u8_array_view<8> iv
+    ) const noexcept
+    {
+        static_assert(N % 8 == 0);
+        encrypt_text_impl(from.data(), to.data(), from.size(), iv);
+    }
 
-/*		       from[]	        to[]             length         iv[8]
- * Encrypts/Decrypts (according to the key currently loaded in the
- * internal key register) a text of size multiple of 8 at address 'from'
- * into the block at address 'to'.  They can be the same.
- */
-void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long length,
-                unsigned char const *key);
+private:
+    void encrypt_text_impl(uint8_t const* from, uint8_t* to, std::size_t length,
+                           sized_u8_array_view<8> iv) const noexcept;
 
-/* d3des.h V5.09 rwo 9208.04 15:06 Graven Imagery
- ********************************************************************/
-}
-
+    uint32_t KnL[32] {};
+};
