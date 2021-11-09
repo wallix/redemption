@@ -23,7 +23,6 @@
 
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
-#include <openssl/rand.h>
 
 #include "utils/stream.hpp"
 
@@ -36,35 +35,6 @@ class UltraDSM
     // enum UltraDsmState {
     //     DSM_WAITING_CHALLENGE,
     // };
-
-    /** various plug-in constants */
-    enum {
-        svncInvalid                    = 0x00,
-        svncCipherAES                = 0x01,
-        svncCipherARC4                = 0x02,
-        svncCipherBlowfish            = 0x04,
-        svncCipherIDEA                = 0x08,
-        svncCipherCAST5                = 0x10,
-        svncCipherAESCFB            = 0x20,
-        svncCipher3AESOFB            = 0x40,
-
-        svncCipherMask                = 0xFF,
-
-        svncKey128                    = 0x1000,
-        svncKey192                    = 0x2000,
-        svncKey256                    = 0x4000,
-        svncKey448                    = 0x8000,
-        svncKey56                    = 0x0100,
-
-        svncKeyMask                    = 0xFF00,
-
-        svncClientAuthRequired        = 0x00010000,
-
-        svncOverridePassphrase        = 0x00020000,
-        svncLowKey                    = 0x00040000,
-        svncNewKey                    = 0x00800000,
-        RC4_DROP_BYTES                 = 3072,
-    };
 
 public:
     UltraDSM() = default;
