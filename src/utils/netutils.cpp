@@ -38,12 +38,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <sys/types.h>
 #include <netdb.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 static_assert(sizeof(IpAddress::ip_addr) >= INET6_ADDRSTRLEN);
 
@@ -319,6 +319,7 @@ unique_fd ip_connect(const char *ip,
         return unique_fd { -1 };
     }
 
+
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
     // we will try connection several time
@@ -531,6 +532,46 @@ struct LineBuffer
     }
 };
 
+bool compare_binary_ipv4(const in_addr& inaddr, const char *ipv4)
+{
+    assert(ipv4);
+
+    in_addr inaddr2;
+
+    return inet_aton(ipv4, &inaddr2)
+        && ntohl(inaddr.s_addr) == ntohl(inaddr2.s_addr);
+}
+
+bool compare_binary_ipv6(const in6_addr& in6addr, const char *ipv6)
+{
+    assert(ipv6);
+
+    in6_addr in6addr2;
+
+    return inet_pton(AF_INET6, ipv6, &in6addr2) == 1
+        && memcmp(in6addr.s6_addr,
+                  in6addr2.s6_addr,
+                  sizeof(in6_addr::s6_addr)) == 0;
+}
+
+bool compare_binary_ip(const sockaddr_storage& ss, const char *ip, bool is_ipv6)
+{
+    assert(ip);
+
+    return (is_ipv6) ?
+        compare_binary_ipv6(reinterpret_cast<const sockaddr_in6&>(ss).sin6_addr, ip)
+        : compare_binary_ipv4(reinterpret_cast<const sockaddr_in&>(ss).sin_addr, ip);
+}
+
+bool get_in_addr_from_ip(sockaddr_storage& ss, const char *ip, bool is_ipv6)
+{
+    assert(ip);
+
+    return (is_ipv6) ?
+        inet_pton(AF_INET6, ip, &reinterpret_cast<sockaddr_in6 *>(&ss)->sin6_addr) == 1
+        : inet_aton(ip, &reinterpret_cast<sockaddr_in *>(&ss)->sin_addr);
+}
+
 namespace minipeg
 {
 namespace
@@ -588,6 +629,7 @@ namespace
             return [](auto... p) {
                 return [=](Rng& r){
                     auto s = r.s;
+
                     if ((... && p(r))) {
                         return true;
                     }
@@ -595,6 +637,38 @@ namespace
                     return false;
                 };
             }(to_parser(ps)...);
+        }
+    }
+
+    template<class... Ps>
+    auto alternative(Ps... ps)
+    {
+        if constexpr (sizeof...(Ps) == 1) {
+            return [](auto p) { return p; }(to_parser(ps)...);
+        }
+        else {
+            auto parser_decorator = [](auto p) {
+                return [=](Rng& r){
+                    auto s = r.s;
+
+                    if (p(r)) {
+                        return true;
+                    }
+
+                    r.s = s;
+                    return false;
+                };
+            };
+
+            return [](auto... decorated_parser) {
+                return [=](Rng& r){
+                    if ((... || decorated_parser(r))) {
+                        return true;
+                    }
+
+                    return false;
+                };
+            }(parser_decorator(to_parser(ps))...);
         }
     }
 
@@ -671,6 +745,17 @@ namespace
     {
         char const* start;
         char const* end;
+
+        std::size_t size() const noexcept { return end - start; }
+
+        zstring_view copy(writable_chars_view out) const noexcept
+        {
+            memcpy(out.data(), this->start, this->size());
+            out[this->size()] = '\0';
+
+            return zstring_view::from_null_terminated(out.data(),
+                                                      this->size());
+        }
     };
 
     template<class... Ps>
@@ -691,41 +776,99 @@ namespace
 
 zstring_view parse_ip_conntrack(
     int fd, const char * source, const char * dest, int sport, int dport,
-    writable_bytes_view transparent_dest, uint32_t verbose)
+    writable_bytes_view transparent_dest, bool is_ipv6, uint32_t verbose)
 {
+    assert(source && dest);
+
     LineBuffer line(fd);
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
+    //"tcp      6 431979 ESTABLISHED src=2001:0db8:0000:0000::ff00:0042:8329 dst=2a0d:5d40:888:4176:d999:e759:962:19f sport=41971 dport=3389 packets=96 bytes=10739 src=2a0d:356:888:abcd:d999:957e:333:12a dst=2001:0db8:0000:0000::ff00:0042:8329 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
 
     using namespace minipeg;
 
-    Capture ip_dest_cap;
+    Capture in_ip_dest_cap;
+
+    Capture out_ip_src_cap;
+    Capture out_ip_dest_cap;
+
     auto sport_s = int_to_decimal_chars(sport);
     auto dport_s = int_to_decimal_chars(dport);
 
-    auto sv = [](chars_view av) { return std::string_view(av.data(), av.size()); };
-    auto is_digit = [](char c) { return c <= '9' && c >= '0'; };
+    auto sv = [](chars_view av)
+    {
+        return std::string_view(av.data(), av.size());
+    };
+    auto is_digit = [](char c)
+    {
+        return c <= '9' && c >= '0';
+    };
+    auto is_hex = [](char c)
+    {
+        return (c <= '9' && c >= '0')
+            || (c <= 'F' && c >= 'A')
+            || (c <= 'f' && c >= 'a');
+    };
 
     auto digit = is(is_digit);
+    auto hex = is(is_hex);
     auto ws = one_or_more(' ');
     auto int_ = one_or_more(digit);
+
+    // IPv4
     auto int3 = repeat<1, 3>(digit);
-    auto ip = group(int3, '.', int3, '.', int3, '.', int3);
+    auto ipv4 = group(int3, '.', int3, '.', int3, '.', int3);
+
+    // IPv6
+    auto hex4 = repeat<1, 4>(hex);
+
+    // "::", "::1" formats
+    auto ipv6_f1 = group("::", zero_or_one(hex4));
+
+    // "::ffff:127.0.0.1", "::ffff:255.255.255.255" formats
+    auto ipv6_f2 = group(ipv6_f1, ':', ipv4);
+
+    // "fe80::", "2001:db8:3c4d:15:0:d234:3eee::" formats
+    auto colon_hex6 = repeat<1, 6>(':', hex4);
+    auto ipv6_f3 = group(hex4, zero_or_one(colon_hex6), "::");
+
+    // "2a0d:356:888:abcd:d999:957e:333:12a", "2001:abcd::1234:e4d2" formats
+    auto colon2 = repeat<1, 2>(':');
+    auto colon_hex7 = repeat<1, 7>(colon2, hex4);
+    auto ipv6_f4 = group(hex4, colon_hex7);
+
+    auto ipv6_all = alternative(ipv6_f4, ipv6_f3, ipv6_f2, ipv6_f1);
+
+    // Both IPv4 and IPv6
+    auto ip = alternative(ipv4, ipv6_all);
 
     auto parser = group(
-        zero_or_one("ipv4", ws, '2', ws),
+        zero_or_one("ipv", alternative('4', '6'), ws, alternative('2', "10"), ws),
         "tcp", ws, '6', ws, int_, ws, "ESTABLISHED", ws,
         "src=", ip, ws,
-        "dst=", capture(ip_dest_cap, ip), ws,
+        "dst=", capture(in_ip_dest_cap, ip), ws,
         "sport=", int_, ws,
         "dport=", int_, ' ',
-        after("src="), source, ws,
-        "dst=", dest, ws,
+        after("src="), capture(out_ip_src_cap, ip), ws,
+        "dst=", capture(out_ip_dest_cap, ip), ws,
         "sport=", sv(sport_s), ws,
         "dport=", sv(dport_s), ' ',
         after("[ASSURED]")
     );
 
+    char out_ip_src[INET6_ADDRSTRLEN] = {};
+    char out_ip_dest[INET6_ADDRSTRLEN] = {};
+    sockaddr_storage source_ss;
+    sockaddr_storage dest_ss;
+
+    if (!get_in_addr_from_ip(source_ss, source, is_ipv6)
+        || !get_in_addr_from_ip(dest_ss, dest, is_ipv6))
+    {
+        // source or dest aren't valid IPs
+        return zstring_view{};
+    }
+
     int status = line.readline();
+
     for (; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
         if (verbose) {
             fprintf(stderr, "Line: %.*s", line.eol - line.begin_line, &line.buffer[line.begin_line]);
@@ -743,22 +886,28 @@ zstring_view parse_ip_conntrack(
         }
 
         Rng rng{s, line.buffer + (line.eol - 1)};
-        if (parser(rng)) {
-            const size_t match_size = std::size_t(ip_dest_cap.end - ip_dest_cap.start);
-            if (match_size >= transparent_dest.size()){
-                LOG(LOG_WARNING, "No enough space to store transparent ip target address");
-                return zstring_view{};
+
+        if (parser(rng) && in_ip_dest_cap.size() <= transparent_dest.size())
+        {
+            zstring_view out_ip_src_view = out_ip_src_cap.copy(
+                make_writable_array_view(out_ip_src));
+            zstring_view out_ip_dest_view = out_ip_dest_cap.copy(
+                make_writable_array_view(out_ip_dest));
+
+            if (compare_binary_ip(source_ss,
+                                  out_ip_src_view.c_str(),
+                                  is_ipv6)
+                && compare_binary_ip(dest_ss,
+                                     out_ip_dest_view.c_str(),
+                                     is_ipv6))
+            {
+                zstring_view ip = in_ip_dest_cap.copy(
+                    transparent_dest.as_chars());
+
+                LOG_IF(verbose, LOG_INFO, "Match found: %s", ip);
+
+                return ip;
             }
-
-            memcpy(transparent_dest.data(), ip_dest_cap.start, match_size);
-            transparent_dest[match_size] = 0;
-
-            auto ip = zstring_view::from_null_terminated(
-                transparent_dest.as_chars().data(), match_size);
-
-            LOG_IF(verbose, LOG_INFO, "Match found: %s", ip);
-
-            return ip;
         }
 
         if (contains_endl) {

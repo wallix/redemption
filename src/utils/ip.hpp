@@ -23,6 +23,11 @@ struct IpPort
         );
     }
 
+    bool is_ipv6() const noexcept
+    {
+        return _is_ipv6;
+    }
+
     struct [[nodiscard]] ErrorMessage
     {
         bool has_errror() const noexcept { return error; }
@@ -33,6 +38,7 @@ struct IpPort
 
 private:
     char _ip_address[INET6_ADDRSTRLEN];
+    bool _is_ipv6 = false;
     uint16_t _ip_address_offset = 0;
     uint16_t _ip_address_len = 0;
     uint16_t _port = 0;
