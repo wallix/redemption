@@ -184,19 +184,20 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     uint8_t keybuffer[8] = {};
     dh.uint64_to_uint8p(key, keybuffer);
 
-    rfbDesKey(keybuffer, EN0); // 0, encrypt
+    RfbD3DesEncrypter encrypter(make_bounded_array_view(keybuffer));
 
-    uint8_t ms_username[256] = {};
-    uint8_t ms_password[64] = {};
-    memcpy(ms_username, this->username, 256);
-    memcpy(ms_password, this->password, 64);
-    uint8_t cp_username[256] = {};
-    uint8_t cp_password[64] = {};
-    rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
-    rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
+    auto out_copy_encrypted = [&](auto chars){
+        bounded_array_view bav = to_bounded_u8_av(chars);
+        using BAV = decltype(bav);
+        using WritableBAV = as_writable_bounded_array_view_t<BAV>;
+        static_assert(BAV::at_least == BAV::at_most);
+        auto out = out_stream.out_skip_bytes(BAV::at_least);
+        auto key = make_bounded_array_view(keybuffer);
+        encrypter.encrypt_text(bav, WritableBAV::assumed(out), key);
+    };
 
-    out_stream.out_copy_bytes(cp_username, 256);
-    out_stream.out_copy_bytes(cp_password, 64);
+    out_copy_encrypted(make_bounded_array_view(this->username).first<256>());
+    out_copy_encrypted(make_bounded_array_view(this->password).first<64>());
 
     this->t.send(out_stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(out_stream.get_offset()));
@@ -1095,17 +1096,22 @@ bool mod_vnc::draw_event_impl()
             }
             this->password_ctx.restart();
 
-            char key[12] = {};
+            char key[8] = {};
 
             // key is simply password padded with nulls
             strncpy(key, char_ptr_cast(byte_ptr_cast(this->password)), 8);
-            rfbDesKey(byte_ptr_cast(key), EN0); // 0, encrypt
-            auto const random_buf = this->password_ctx.server_random.data();
-            rfbDes(random_buf, random_buf);
-            rfbDes(random_buf + 8, random_buf + 8);
+
+            RfbD3DesEncrypter encrypter(to_bounded_u8_av(make_bounded_array_view(key)));
+            auto encrypt_block = [&](auto bav){ encrypter.encrypt_block(bav, bav); };
+
+            auto random_buf = writable_sized_array_view<uint8_t, 16>::assumed(
+                this->password_ctx.server_random);
+
+            encrypt_block(random_buf.drop_back<8>());
+            encrypt_block(random_buf.drop_front<8>());
 
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Sending Password");
-            this->t.send(random_buf, 16);
+            this->t.send(random_buf);
             IF_ENABLE_METRICS(data_from_client(16));
         }
         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;

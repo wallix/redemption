@@ -1613,7 +1613,7 @@ template<std::size_t AtLeast, std::size_t AtMost>
 using bounded_u8_array_view = bounded_array_view<std::uint8_t, AtLeast, AtMost>;
 
 template<std::size_t AtLeast, std::size_t AtMost>
-using bounded_writable_u8_array_view = writable_bounded_array_view<std::uint8_t, AtLeast, AtMost>;
+using writable_bounded_u8_array_view = writable_bounded_array_view<std::uint8_t, AtLeast, AtMost>;
 
 
 template<class T, class Bounds>
@@ -1624,3 +1624,43 @@ template<class T, class Bounds>
 using writable_bounded_array_view_with
   = writable_bounded_array_view<T, Bounds::at_least, Bounds::at_most>;
 
+
+template<std::size_t AtLeast, std::size_t AtMost>
+bounded_array_view<uint8_t, AtLeast, AtMost>
+to_bounded_u8_av(bounded_array_view<char, AtLeast, AtMost> av) noexcept
+{
+    return bounded_array_view<uint8_t, AtLeast, AtMost>::assumed(
+        reinterpret_cast<uint8_t const*>(av.data())); /* NOLINT */
+}
+
+template<std::size_t AtLeast, std::size_t AtMost>
+bounded_array_view<char, AtLeast, AtMost>
+to_bounded_chars(bounded_array_view<uint8_t, AtLeast, AtMost> av) noexcept
+{
+    return bounded_array_view<char, AtLeast, AtMost>::assumed(
+        reinterpret_cast<char const*>(av.data())); /* NOLINT */
+}
+
+template<std::size_t AtLeast, std::size_t AtMost>
+writable_bounded_array_view<uint8_t, AtLeast, AtMost>
+to_bounded_u8_av(writable_bounded_array_view<char, AtLeast, AtMost> av) noexcept
+{
+    return writable_bounded_array_view<uint8_t, AtLeast, AtMost>::assumed(
+        reinterpret_cast<uint8_t*>(av.data())); /* NOLINT */
+}
+
+template<std::size_t AtLeast, std::size_t AtMost>
+writable_bounded_array_view<char, AtLeast, AtMost>
+to_bounded_chars(writable_bounded_array_view<uint8_t, AtLeast, AtMost> av) noexcept
+{
+    return writable_bounded_array_view<char, AtLeast, AtMost>::assumed(
+        reinterpret_cast<char*>(av.data())); /* NOLINT */
+}
+
+template<class BoundedArrayView>
+using as_writable_bounded_array_view_t = writable_bounded_array_view<
+    typename BoundedArrayView::value_type, BoundedArrayView::at_least, BoundedArrayView::at_most>;
+
+template<class BoundedArrayView>
+using as_bounded_array_view_t = bounded_array_view<
+    typename BoundedArrayView::value_type, BoundedArrayView::at_least, BoundedArrayView::at_most>;
