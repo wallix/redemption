@@ -59,7 +59,7 @@ struct writable_bytes_view : writable_array_view<uint8_t>
     {}
 
     writable_bytes_view(writable_array_view<uint8_t> av) noexcept /*NOLINT*/
-    : writable_array_view(av.data(), av.size())
+    : writable_array_view(av)
     {}
 
     template<class U, typename std::enable_if<
