@@ -133,17 +133,8 @@ RED_AUTO_TEST_CASE(TestSslHmacMd5)
         "\x80\x07\x07\x13\x46\x3e\x77\x49\xb9\x0c\x2d\xc2\x49\x11\xe2\x75"_av);
 }
 
-
 RED_AUTO_TEST_CASE(TestNTLMAUTH)
 {
-    SslMd4 md4;
-
-    uint8_t password[] = {
-        // 0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
-        // 0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00
-        0x70, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
-        0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00
-    };
     // uint8_t user[] = {
     //     0x75, 0x00, 0x73, 0x00, 0x65, 0x00, 0x72, 0x00,
     //     0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00, 0x65, 0x00
@@ -159,13 +150,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
     };
 
-
-    uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
-    md4.update(make_array_view(password));
-    md4.final(make_writable_sized_array_view(md4password));
-    // hexdump96_c(md4password, sizeof(md4password));
-
-    SslHMAC_Md5 hmac_md5(make_array_view(md4password));
+    SslHMAC_Md5 hmac_md5("\x88\x46\xf7\xea\xee\x8f\xb1\x17\xad\x06\xbd\xd8\x30\xb7\x58\x6c"_av);
     hmac_md5.update(make_array_view(userUpper));
     hmac_md5.update(make_array_view(userDomain));
     // equivalent: hmac_md5.update(useranddomain, sizeof(useranddomain));
