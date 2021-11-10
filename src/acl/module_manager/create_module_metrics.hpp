@@ -37,24 +37,21 @@ struct ModMetrics : Metrics
     static std::unique_ptr<ModMetrics>
     make_unique(EventContainer& events, Inifile& ini, ScreenInfo const& screen_info)
     {
+        // GCC 8 needs intermediate variable for implicit conversion
         chars_view auth_user(ini.get<cfg::globals::auth_user>());
         chars_view sign_key(ini.get<cfg::metrics::sign_key>());
         chars_view target_user(ini.get<cfg::globals::target_user>());
         chars_view target_device(ini.get<cfg::globals::target_device>());
+        chars_view target_service(ini.get<cfg::context::target_service>());
+        chars_view host(ini.get<cfg::globals::host>());
 
         return std::make_unique<ModMetrics>(
             ini.get<cfg::metrics::log_dir_path>().as_string(),
             ini.get<cfg::context::session_id>(),
             hmac_user(auth_user, sign_key),
             hmac_account(target_user, sign_key),
-            hmac_device_service(
-                target_device,
-                ini.get<cfg::context::target_service>(),
-                sign_key),
-            hmac_client_info(
-                ini.get<cfg::globals::host>(),
-                screen_info,
-                sign_key),
+            hmac_device_service(target_device, target_service, sign_key),
+            hmac_client_info(host, screen_info, sign_key),
             events.get_monotonic_time(),
             events.get_time_base().real_time,
             ini.get<cfg::metrics::log_file_turnover_interval>(),
