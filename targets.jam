@@ -4605,6 +4605,10 @@ test-run tests/utils/sugar/test_bounded_array_view :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_bounded_array_view.cpp
 :
 ;
+test-run tests/utils/sugar/test_bounded_bytes_view :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_bounded_bytes_view.cpp
+:
+;
 test-run tests/utils/sugar/test_buf_maker :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_buf_maker.cpp
 :
@@ -5489,6 +5493,7 @@ alias test_utf16 : tests/utils/literals/test_utf16 ;
 alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
 alias test_array_view : tests/utils/sugar/test_array_view ;
 alias test_bounded_array_view : tests/utils/sugar/test_bounded_array_view ;
+alias test_bounded_bytes_view : tests/utils/sugar/test_bounded_bytes_view ;
 alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
 alias test_buffer_view : tests/utils/sugar/test_buffer_view ;
 alias test_bytes_view : tests/utils/sugar/test_bytes_view ;
@@ -5888,6 +5893,7 @@ alias tests/utils/sugar/numerics.norec :
 alias tests/utils/sugar.norec :
   tests/utils/sugar/test_array_view
   tests/utils/sugar/test_bounded_array_view
+  tests/utils/sugar/test_bounded_bytes_view
   tests/utils/sugar/test_buf_maker
   tests/utils/sugar/test_buffer_view
   tests/utils/sugar/test_bytes_view
