@@ -121,9 +121,9 @@ RED_AUTO_TEST_CASE(TestSslMd4)
 
 RED_AUTO_TEST_CASE(TestSslHmacMd4)
 {
-    SslHMAC_Md4 hmac(cstr_array_view("key"));
+    SslHMAC_Md4 hmac("key"_av);
 
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
+    hmac.update("The quick brown fox jumps over the lazy dog"_av);
 
     uint8_t sig[SslMd4::DIGEST_LENGTH];
     hmac.final(make_writable_sized_array_view(sig));

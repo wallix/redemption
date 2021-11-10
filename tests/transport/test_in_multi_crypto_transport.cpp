@@ -88,10 +88,10 @@ RED_AUTO_TEST_CASE(TestInMultiCryptoTransport2)
     CryptoContext cctx;
     cctx.set_hmac_key(hmac_key);
     cctx.set_get_trace_key_cb(trace_fn);
-    cctx.set_master_derivator(cstr_array_view(
+    cctx.set_master_derivator(
         "toto@10.10.43.13,Administrateur@QA@cible,"
         "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
-    ));
+        ""_av);
     InMultiCryptoTransport t(
         {
             FIXTURES_PATH "/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",

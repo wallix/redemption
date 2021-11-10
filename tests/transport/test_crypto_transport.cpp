@@ -46,18 +46,18 @@ namespace
 {
     void init_keys(CryptoContext & cctx)
     {
-        cctx.set_master_key(cstr_array_view(
+        cctx.set_master_key(
             "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
             "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
             "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
             "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-        ));
-        cctx.set_hmac_key(cstr_array_view(
+            ""_av);
+        cctx.set_hmac_key(
             "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
             "\x49\x21\x57\x87\x47\x74\x08\x8a"
             "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
             "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-        ));
+            ""_av);
     }
 
     ssize_t write_file(WorkingFile const& wf, bytes_view data)
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestEncryption1)
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
-    ocrypto::Result res2 = encrypter.write(cstr_array_view("toto"));
+    ocrypto::Result res2 = encrypter.write("toto"_av);
     memcpy(result + offset, res2.buf.data(), res2.buf.size());
     offset += res2.buf.size();
     RED_CHECK_EQUAL(res2.buf.size(), 0);
@@ -134,11 +134,12 @@ RED_AUTO_TEST_CASE(TestEncryption1)
                                   };
     RED_CHECK(make_array_view(result, 68) == make_array_view(expected_result));
 
-    auto expected_hash = cstr_array_view(
+    auto expected_hash =
         "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
         "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
         "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
-        "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29");
+        "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29"
+        ""_av;
     RED_CHECK(make_array_view(qhash) == expected_hash);
     RED_CHECK(make_array_view(fhash) == expected_hash);
 
@@ -167,7 +168,7 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
     {
-        ocrypto::Result res2 = encrypter.write(cstr_array_view("to"));
+        ocrypto::Result res2 = encrypter.write("to"_av);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 0);
@@ -175,7 +176,7 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
     }
     // This test is very similar to Encryption1, but we are performing 2 writes
     {
-        ocrypto::Result res2 = encrypter.write(cstr_array_view("to"));
+        ocrypto::Result res2 = encrypter.write("to"_av);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 0);
@@ -215,11 +216,12 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
 
     RED_TEST(write_file(wf, expected_result) == 68);
 
-    auto expected_hash = cstr_array_view(
+    auto expected_hash =
         "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
         "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
         "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
-        "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29");
+        "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29"
+        ""_av;
     RED_CHECK(make_array_view(qhash) == make_array_view(expected_hash));
     RED_CHECK(make_array_view(fhash) == make_array_view(expected_hash));
 
@@ -259,10 +261,11 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
         CryptoContext cctx;
         cctx.set_hmac_key(hmac_key);
         cctx.set_get_trace_key_cb(trace_20161025_fn);
-        cctx.set_master_derivator(cstr_array_view(
+        cctx.set_master_derivator(
             FIXTURES_PATH "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
             "-192304,wab-4-2-4.yourdomain,5560.mwrm"
-        ));
+            ""_av
+        );
 
         RED_CHECK(not cctx.old_encryption_scheme);
         RED_CHECK_EQUAL(
@@ -300,10 +303,11 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
         CryptoContext cctx;
         cctx.set_hmac_key(hmac_key);
         cctx.set_get_trace_key_cb(trace_fn);
-        cctx.set_master_derivator(cstr_array_view(
+        cctx.set_master_derivator(
             FIXTURES_PATH "toto@10.10.43.13,Administrateur@QA@cible,"
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
-        ));
+            ""_av
+        );
 
         RED_CHECK_EQUAL(
             get_encryption_scheme_type(cctx,
@@ -433,25 +437,25 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     hmac2.final(make_writable_sized_array_view(qhash2));
 
     #if SNAPPY_VERSION < (1<<16|1<<8|4)
-        auto expected_qhash = cstr_array_view(
+        auto expected_qhash =
             "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee"
             "\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2"
-            );
+            ""_av;
 
-        auto expected_fhash = cstr_array_view(
+        auto expected_fhash =
             "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c"
             "\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35"
-            );
+            ""_av;
     #else
-        auto expected_qhash = cstr_array_view(
+        auto expected_qhash =
             "\xdf\xd9\xf0\xcc\x20\x77\x38\xd4\x55\x44\x9f\xf0\xce\x6f\xf6\xd1"
             "\x62\x16\x0e\xbf\x76\xa9\x26\x4d\xa9\xd3\x40\x22\x13\xbd\x10\x2a"
-            );
+            ""_av;
 
-        auto expected_fhash = cstr_array_view(
+        auto expected_fhash =
             "\xcb\xfe\x7b\x9a\xe6\x69\x80\x4a\xf8\xc8\x28\x68\xfd\xef\x18\x11"
             "\x22\x27\xce\xb1\xb6\x1c\xac\xe9\x1b\x04\x41\x23\xd6\xed\x75\x49"
-            );
+            ""_av;
     #endif
 
     RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
@@ -520,12 +524,14 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     }
     RED_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
-    auto expected_qhash = cstr_array_view(
+    auto expected_qhash =
         "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97"
-        "\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80");
-    auto expected_fhash = cstr_array_view(
+        "\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80"
+        ""_av;
+    auto expected_fhash =
         "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34"
-        "\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8");
+        "\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8"
+        ""_av;
 
     RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
     RED_CHECK(make_array_view(fhash) == make_array_view(expected_fhash));
@@ -681,12 +687,14 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         RED_CHECK_EQUAL(res2.consumed, 0);
     }
 
-    auto expected_qhash = cstr_array_view(
+    auto expected_qhash =
         "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3"
-        "\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68");
-    auto expected_fhash = cstr_array_view(
+        "\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68"
+        ""_av;
+    auto expected_fhash =
         "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14"
-        "\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68");
+        "\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68"
+        ""_av;
 
     RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
     RED_CHECK(make_array_view(fhash) == make_array_view(expected_fhash));
@@ -981,7 +989,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     {
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
-        ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
+        ct.open(hash_finalname, "encrypted.txt"_av);
         RED_CHECK(ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
@@ -1028,9 +1036,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
 
     RED_CHECK_WORKSPACE(wd);
 
-    auto expected_hash = cstr_array_view(
+    auto expected_hash =
         "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce"
-        "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5");
+        "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5"
+        ""_av;
 
     RED_CHECK(make_array_view(qhash) == make_array_view(expected_hash));
     RED_CHECK(make_array_view(fhash) == make_array_view(expected_hash));
@@ -1059,7 +1068,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     {
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
-        ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
+        ct.open(hash_finalname, "encrypted.txt"_av);
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
         auto st = get_stat(finalname);
@@ -1274,7 +1283,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     {
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
-        ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
+        ct.open(hash_encrypted_file, "encrypted_file.enc"_av);
         RED_CHECK(not ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
@@ -1341,7 +1350,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         RED_CHECK(make_array_view(fhash) == make_array_view(fhash2.hash));
 
         char hash_buf[512];
-        ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
+        ct.open(hash_encrypted_file, "encrypted_file.enc"_av);
         RED_CHECK(ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;

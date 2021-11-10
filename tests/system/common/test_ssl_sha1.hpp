@@ -121,9 +121,9 @@ RED_AUTO_TEST_CASE(TestSslSha1)
 
 RED_AUTO_TEST_CASE(TestSslHmacSHA1)
 {
-    SslHMAC_Sha1 hmac(cstr_array_view("key"));
+    SslHMAC_Sha1 hmac("key"_av);
 
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
+    hmac.update("The quick brown fox jumps over the lazy dog"_av);
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
     hmac.final(make_writable_sized_array_view(sig));
@@ -137,10 +137,10 @@ RED_AUTO_TEST_CASE(TestSslHmacSHA1)
 
 RED_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
 {
-    SslHMAC_Sha1 hmac(cstr_array_view(
-        "keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeyke"));
+    SslHMAC_Sha1 hmac(
+        "keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeyke"_av);
 
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
+    hmac.update("The quick brown fox jumps over the lazy dog"_av);
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
     hmac.final(make_writable_sized_array_view(sig));

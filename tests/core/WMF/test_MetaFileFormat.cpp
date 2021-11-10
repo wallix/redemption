@@ -27,7 +27,7 @@
 
 RED_AUTO_TEST_CASE(TestMetaHeader)
 {
-     auto data = cstr_array_view(
+     auto data =
         // metaFileData
         "\x01\x00" // meta_header_type : 1 MEMORYMETAFILE
         "\x09\x00" // meta_header_size : 9 = 18 bytes
@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestMetaHeader)
         "\x3b\x5e\x00\x00" // MaxRecord : 0x5e3b = 24123 : 24123 * 2 = 48246 bytes
 
         "\x00\x00" // NumberOfMembers (not used)
-    );
+        ""_av;
 
     {                                                      // Emit
         StaticOutStream<32> out_stream;
@@ -66,11 +66,11 @@ RED_AUTO_TEST_CASE(TestMetaHeader)
 
 RED_AUTO_TEST_CASE(TestMetaSetMapMod)
 {
-     auto data = cstr_array_view(
+     auto data =
         "\x04\x00\x00\x00" // RecordSize 4 = 8 bytes
         "\x03\x01"         // 0x0103 : META_SETMAPMODE
         "\x08\x00"         // mappingMode : record specific placeholder
-    );
+        ""_av;
 
     {                                                       // Emit
         StaticOutStream<32> out_stream;
@@ -93,12 +93,12 @@ RED_AUTO_TEST_CASE(TestMetaSetMapMod)
 
 RED_AUTO_TEST_CASE(TestMetaSetWindowExt)
 {
-     auto data = cstr_array_view(
+     auto data =
         "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
         "\x0c\x02"         // META_SETWINDOWEXT
         "\xb7\xff"         // height : -73 pixels (73 pixels upside down)
         "\xdc\x00"         // width :  220 pixels
-    );
+        ""_av;
 
     {                                                       // Emit
         StaticOutStream<32> out_stream;
@@ -123,12 +123,12 @@ RED_AUTO_TEST_CASE(TestMetaSetWindowExt)
 
 RED_AUTO_TEST_CASE(TestMetaSetWindowOrg)
 {
-     auto data = cstr_array_view(
+     auto data =
         "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
         "\x0b\x02"         // META_SETWINDOWORG
         "\x00\x00"         // Origin y = 0
         "\x00\x00"         // Origin x = 0
-    );
+        ""_av;
 
     {                                                       // Emit
         StaticOutStream<32> out_stream;
@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestMetaSetWindowOrg)
 
 RED_AUTO_TEST_CASE(TestDibStretchBLT)
 {
-     auto data = cstr_array_view(
+     auto data =
         // META_DIBSTRETCHBLT This record specifies the transfer of a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
         "\x3b\x5e\x00\x00" // RecordSize 0x5e3b = 24123 * 2 =  48246
         "\x41\x0b"         // META_DIBSTRETCHBLT
@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestDibStretchBLT)
         "\x00\x00\x00\x00" // YPelsPerMeter : 0
         "\x00\x00\x00\x00" // ColorUsed : 0
         "\x00\x00\x00\x00" // ColorImportant : 0
-    );
+        ""_av;
 
     {                                                      // Emit
         StaticOutStream<128> out_stream;

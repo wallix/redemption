@@ -132,9 +132,9 @@ RED_AUTO_TEST_CASE(TestSslSha256)
 
 RED_AUTO_TEST_CASE(TestSslHmacSHA256)
 {
-    SslHMAC_Sha256 hmac(cstr_array_view("key"));
+    SslHMAC_Sha256 hmac("key"_av);
 
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
+    hmac.update("The quick brown fox jumps over the lazy dog"_av);
 
     uint8_t sig[SslSha256::DIGEST_LENGTH];
     hmac.final(make_writable_sized_array_view(sig));
@@ -153,9 +153,9 @@ RED_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
 {
     SslHMAC_Sha256_Delayed hmac;
 
-    hmac.init(cstr_array_view("key"));
+    hmac.init("key"_av);
 
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
+    hmac.update("The quick brown fox jumps over the lazy dog"_av);
 
     uint8_t sig[SslSha256::DIGEST_LENGTH];
     hmac.final(make_writable_sized_array_view(sig));

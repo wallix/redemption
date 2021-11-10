@@ -38,28 +38,28 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         Pck type;
         chars_view s;
     } a[] {
-        {Pck::DataOut,    cstr_array_view("abc")},
-        {Pck::DataOut,    cstr_array_view("defg")},
-        {Pck::DataIn,     cstr_array_view("")},
-        {Pck::DataIn,     cstr_array_view("")},
-        {Pck::DataOut,    cstr_array_view("h")},
-        {Pck::DataOut,    cstr_array_view("ijklm")},
-        {Pck::Disconnect, cstr_array_view("")},
-        {Pck::Connect,    cstr_array_view("")},
-        {Pck::DataOut,    cstr_array_view("no")},
-        {Pck::ServerCert, cstr_array_view("")},
-        {Pck::DataOut,    cstr_array_view("p")},
-        {Pck::DataIn,     cstr_array_view("")},
-        {Pck::DataOut,    cstr_array_view("q")},
-        {Pck::DataOut,    cstr_array_view("rstuvw")},
-        {Pck::DataOut,    cstr_array_view("xyz")},
+        {Pck::DataOut,    "abc"_av},
+        {Pck::DataOut,    "defg"_av},
+        {Pck::DataIn,     ""_av},
+        {Pck::DataIn,     ""_av},
+        {Pck::DataOut,    "h"_av},
+        {Pck::DataOut,    "ijklm"_av},
+        {Pck::Disconnect, ""_av},
+        {Pck::Connect,    ""_av},
+        {Pck::DataOut,    "no"_av},
+        {Pck::ServerCert, ""_av},
+        {Pck::DataOut,    "p"_av},
+        {Pck::DataIn,     ""_av},
+        {Pck::DataOut,    "q"_av},
+        {Pck::DataOut,    "rstuvw"_av},
+        {Pck::DataOut,    "xyz"_av},
     };
 
     {
         TimeBase time_base{MonotonicTimePoint{}, {}};
         TestTransport socket(
-            cstr_array_view("123456789"),
-            cstr_array_view("abcdefghijklmnopqrstuvwxyz"));
+            "123456789"_av,
+            "abcdefghijklmnopqrstuvwxyz"_av);
         RecorderTransport trans(socket, time_base, wf);
         char buf[10];
 
@@ -134,7 +134,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         ReplayTransport trans(wf, time_base, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
         auto av = make_writable_array_view(buf);
-        auto in = cstr_array_view("123456789");
+        auto in = "123456789"_av;
         timeval timeout{0, 0};
         fd_set rfd;
         int fd = trans.get_fd();
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         ReplayTransport trans(wf, time_base, ReplayTransport::FdType::Timer);
         char buf[10];
         auto av = make_writable_array_view(buf);
-        auto in = cstr_array_view("123456789");
+        auto in = "123456789"_av;
         fd_set rfd;
         int fd = trans.get_fd();
         timeval timeout{1, 0};
