@@ -30,6 +30,7 @@
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"
 #include "utils/string_c.hpp"
+#include "utils/move_remaining_data.hpp"
 
 #include "main/version.hpp"
 
@@ -1138,55 +1139,49 @@ struct ScytaleMwrm3ReaderHandle
             this->remaining_data = remaining_data;
         };
 
-        for (;;)
-        {
-            switch (Mwrm3::parse_packet(this->remaining_data, store_values))
+        auto read_next = [&]() -> ScytaleMwrm3ReaderData * {
+            for (;;)
             {
-                case Mwrm3::ParserResult::Ok:
-                    return &this->raw_data;
+                switch (Mwrm3::parse_packet(this->remaining_data, store_values))
+                {
+                    case Mwrm3::ParserResult::Ok:
+                        return &this->raw_data;
 
-                case Mwrm3::ParserResult::UnknownType: {
-                    auto int_type = InStream(this->remaining_data).in_uint16_le();
-                    auto chars = int_to_fixed_hexadecimal_upper_chars(int_type);
-                    str_assign(this->message_error, "Unknown type: 0x"_av, chars);
-                    return nullptr;
-                }
-
-                case Mwrm3::ParserResult::NeedMoreData: {
-                    if (this->remaining_data.size() == this->buffer.size())
-                    {
-                        this->message_error = "Data too large";
+                    case Mwrm3::ParserResult::UnknownType: {
+                        auto int_type = InStream(this->remaining_data).in_uint16_le();
+                        auto chars = int_to_fixed_hexadecimal_upper_chars(int_type);
+                        str_assign(this->message_error, "Unknown type: 0x"_av, chars);
                         return nullptr;
                     }
 
-                    memmove(this->buffer.data(), this->remaining_data.data(), this->remaining_data.size());
-
-                    const auto free_buffer_len
-                      = this->buffer.size() - this->remaining_data.size();
-
-                    long long r = scytale_reader_read(
-                        &this->reader,
-                        this->buffer.data() + this->remaining_data.size(),
-                        free_buffer_len);
-
-                    if (r > 0)
-                    {
-                        this->remaining_data = array_view(this->buffer)
-                            .first(r + this->remaining_data.size());
-                    }
-                    else
-                    {
-                        if (r != 0)
+                    case Mwrm3::ParserResult::NeedMoreData: {
+                        auto reader = [&](writable_bytes_view data){ return this->reader.in_crypto_transport.partial_read(data); };
+                        auto result = move_remaining_data(remaining_data, buffer, reader);
+                        switch (result.status)
                         {
-                            str_assign(this->message_error,
-                                "Read error: ", this->reader.error_ctx.message());
-                        }
-                        return nullptr;
-                    }
+                            case RemainingDataResult::Status::Ok:
+                                remaining_data = result.data;
+                                break;
 
+                            case RemainingDataResult::Status::Eof:
+                                return nullptr;
+
+                            case RemainingDataResult::Status::DataToLarge:
+                                this->message_error = "Data too large";
+                                return nullptr;
+                        }
+                    }
                 }
             }
-        }
+        };
+
+        auto set_error = [&]{
+            str_assign(this->message_error,
+                "Read error: ", this->reader.error_ctx.message());
+            return nullptr;
+        };
+
+        CHECK_NOTHROW_R(return read_next(), set_error(), this->reader.error_ctx, ERR_TRANSPORT_READ_FAILED);
     }
 
 private:
