@@ -267,10 +267,10 @@ bool configuration_load(
         }
 
         char* p = buf.get();
-        std::size_t remaning = len;
+        std::size_t remaining = len;
         ssize_t r;
-        while ((r = read(fd.fd(), p, remaning)) > 0) {
-            remaning -= std::size_t(r);
+        while ((r = read(fd.fd(), p, remaining)) > 0) {
+            remaining -= std::size_t(r);
             p += r;
         }
 

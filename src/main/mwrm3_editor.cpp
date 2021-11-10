@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 #include "transport/crypto_transport.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/hexadecimal_string_to_buffer.hpp"
+#include "utils/move_remaining_data.hpp"
 
 #include <iostream>
 
@@ -31,58 +32,6 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-
-// TODO from ScytaleMwrm3ReaderData::next
-struct Mwrm3FileReader
-{
-    Mwrm3FileReader(InCryptoTransport& crypto_transport)
-    : crypto_transport(crypto_transport)
-    {}
-
-    enum class [[nodiscard]] NextResult
-    {
-        Ok,
-        DataToLarge,
-        Eof,
-    };
-
-    NextResult next_data()
-    {
-        if (this->remaining_data.size() == this->buffer.size())
-        {
-            return NextResult::DataToLarge;
-        }
-
-        memmove(this->buffer.data(), this->remaining_data.data(), this->remaining_data.size());
-
-        const auto free_buffer_len = this->buffer.size() - this->remaining_data.size();
-
-        size_t len = crypto_transport.partial_read(
-            this->buffer.data() + this->remaining_data.size(),
-            free_buffer_len);
-
-        if (len == 0)
-        {
-            return NextResult::Eof;
-        }
-
-        this->remaining_data = array_view(this->buffer)
-            .first(len + this->remaining_data.size());
-
-        return NextResult::Ok;
-    }
-
-    bytes_view get_bytes() const noexcept
-    {
-        return this->remaining_data;
-    }
-
-private:
-    std::array<uint8_t, 1024*16> buffer;
-    bytes_view remaining_data {"", 0};
-    InCryptoTransport& crypto_transport;
-};
-
 
 struct TypeName : std::string_view {};
 
@@ -296,10 +245,13 @@ struct print_value_impl<std::chrono::duration<Rep, Period>, void>
 };
 
 
-int mwrm3_text_viewer(Mwrm3FileReader& file)
+int mwrm3_text_viewer(InCryptoTransport& crypto_transport)
 {
-    auto remaining_data = file.get_bytes();
     int nb_packet = 0;
+
+    std::array<uint8_t, 1024*16> buffer;
+    bytes_view remaining_data = make_array_view(buffer)
+        .first(crypto_transport.partial_read(buffer));
 
     auto print_values = [&](auto type, bytes_view next_data, auto... xs){
         ++nb_packet;
@@ -325,16 +277,18 @@ int mwrm3_text_viewer(Mwrm3FileReader& file)
         }
 
         case Mwrm3::ParserResult::NeedMoreData: {
-            switch (file.next_data())
+            auto reader = [&](writable_bytes_view data){ return crypto_transport.partial_read(data); };
+            auto result = move_remaining_data(remaining_data, buffer, reader);
+            switch (result.status)
             {
-                case Mwrm3FileReader::NextResult::Ok:
-                    remaining_data = file.get_bytes();
+                case RemainingDataResult::Status::Ok:
+                    remaining_data = result.data;
                     break;
 
-                case Mwrm3FileReader::NextResult::Eof:
+                case RemainingDataResult::Status::Eof:
                     return 0;
 
-                case Mwrm3FileReader::NextResult::DataToLarge:
+                case RemainingDataResult::Status::DataToLarge:
                     std::cerr << "Data too large\n";
                     return 2;
             }
@@ -621,8 +575,7 @@ int main(int ac, char** av)
         InCryptoTransport infile(cctx, InCryptoTransport::EncryptionMode::Auto);
         infile.open(av[1]);
 
-        Mwrm3FileReader reader{infile};
-        return mwrm3_text_viewer(reader);
+        return mwrm3_text_viewer(infile);
     }
     catch (Error const& e)
     {

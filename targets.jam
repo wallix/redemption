@@ -4914,6 +4914,10 @@ test-run tests/utils/test_log_siem :
   <library>src/utils/log_siem.o
   <library>src/utils/strutils.o
 ;
+test-run tests/utils/test_move_remaining_data :
+  $(REDEMPTION_TEST_PATH)/utils/test_move_remaining_data.cpp
+:
+;
 test-run tests/utils/test_netutils :
   $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
 :
@@ -5557,6 +5561,7 @@ alias test_line_equation : tests/utils/test_line_equation ;
 alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
+alias test_move_remaining_data : tests/utils/test_move_remaining_data ;
 alias test_netutils : tests/utils/test_netutils ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse_primary_drawing_orders : tests/utils/test_parse_primary_drawing_orders ;
@@ -5961,6 +5966,7 @@ alias tests/utils.norec :
   tests/utils/test_load_theme
   tests/utils/test_log
   tests/utils/test_log_siem
+  tests/utils/test_move_remaining_data
   tests/utils/test_netutils
   tests/utils/test_parse
   tests/utils/test_parse_primary_drawing_orders
