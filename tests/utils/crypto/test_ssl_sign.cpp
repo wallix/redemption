@@ -24,9 +24,9 @@
 
 RED_AUTO_TEST_CASE(TestSign)
 {
-    Sign hmac(cstr_array_view("key"));
+    Sign hmac("key"_av);
 
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
+    hmac.update("The quick brown fox jumps over the lazy dog"_av);
 
     uint8_t sig[16];
     hmac.final(make_writable_sized_array_view(sig));

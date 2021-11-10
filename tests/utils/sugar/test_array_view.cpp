@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     RED_CHECK_EQUAL(*it2, 'b');
 
     RED_CHECK_EQUAL(make_writable_array_view("abc").size(), 4u);
-    RED_CHECK_EQUAL(cstr_array_view("abc").size(), 3u);
+    RED_CHECK_EQUAL("abc"_av.size(), 3u);
     RED_CHECK_EQUAL(make_writable_array_view(av.data(), 1).size(), 1u);
 
     RED_CHECK(chars_view{nullptr}.empty());
@@ -147,7 +147,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     }
 
     {
-        auto const avi = cstr_array_view("0123456789");
+        auto const avi = "0123456789"_av;
         RED_CHECK_EQUAL(avi.size(), 10u);
         RED_CHECK_EQUAL(voidp(avi.data()), voidp(&avi[0]));
     }
@@ -155,14 +155,14 @@ RED_AUTO_TEST_CASE(TestArrayView)
 
 RED_AUTO_TEST_CASE(TestSubArray)
 {
-    auto a = cstr_array_view("abcd");
-    RED_CHECK_EQUAL_RANGES(a.first(1), cstr_array_view("a"));
-    RED_CHECK_EQUAL_RANGES(a.first(3), cstr_array_view("abc"));
-    RED_CHECK_EQUAL_RANGES(a.last(1), cstr_array_view("d"));
-    RED_CHECK_EQUAL_RANGES(a.last(3), cstr_array_view("bcd"));
-    RED_CHECK_EQUAL_RANGES(a.from_offset(3), cstr_array_view("d"));
-    RED_CHECK_EQUAL_RANGES(a.from_offset(1), cstr_array_view("bcd"));
-    RED_CHECK_EQUAL_RANGES(a.subarray(1, 2), cstr_array_view("bc"));
+    auto a = "abcd"_av;
+    RED_CHECK_EQUAL_RANGES(a.first(1), "a"_av);
+    RED_CHECK_EQUAL_RANGES(a.first(3), "abc"_av);
+    RED_CHECK_EQUAL_RANGES(a.last(1), "d"_av);
+    RED_CHECK_EQUAL_RANGES(a.last(3), "bcd"_av);
+    RED_CHECK_EQUAL_RANGES(a.from_offset(3), "d"_av);
+    RED_CHECK_EQUAL_RANGES(a.from_offset(1), "bcd"_av);
+    RED_CHECK_EQUAL_RANGES(a.subarray(1, 2), "bc"_av);
 }
 
 namespace
@@ -186,7 +186,7 @@ namespace
 
 RED_AUTO_TEST_CASE(TestArrayView_as)
 {
-    auto a = cstr_array_view("abcd");
+    auto a = "abcd"_av;
 
     auto x1 = a.as<ptr_ptr<char const>>();
     RED_CHECK(voidp(x1.p1) == voidp(a.begin()));

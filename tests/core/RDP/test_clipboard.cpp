@@ -94,7 +94,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFilePic)
     RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
     fdr.emit(ou_stream_metaFilePic);
 
-    auto metafilepic_out_data = cstr_array_view(
+    auto metafilepic_out_data =
         "\x08\x00\x00\x00\x60\x22\x00\x00"
         "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
         "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFilePic)
         "\x00\x00\x00\x00\xb7\xff\xdc\x00\x00\x00\x00\x00\x28\x00\x00\x00"
         "\xdc\x00\x00\x00\xb7\xff\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
         "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00");
+        "\x00\x00\x00\x00"_av;
 
     RED_CHECK(metafilepic_out_data == ou_stream_metaFilePic.get_produced_bytes());
 }
@@ -398,9 +398,9 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeEmit)
     RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size_low, size_high, true);
     fileContentsRequest.emit(out_stream);
 
-    auto exp_data = cstr_array_view(
+    auto exp_data =
         "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
-        "\x00\x00\x00\x00\x01\x00\x00\x00");
+        "\x00\x00\x00\x00\x01\x00\x00\x00"_av;
 
     RED_CHECK(exp_data == out_stream.get_produced_bytes());
 }
@@ -440,9 +440,9 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeEmit)
     RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size, size, true);
     fileContentsRequest.emit(out_stream);
 
-    auto exp_data = cstr_array_view(
+    auto exp_data =
         "\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
-        "\x07\x00\x00\x00\x01\x00\x00\x00");
+        "\x07\x00\x00\x00\x01\x00\x00\x00"_av;
 
     RED_CHECK(exp_data == out_stream.get_produced_bytes());
 }

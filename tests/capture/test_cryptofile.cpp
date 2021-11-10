@@ -52,8 +52,8 @@ RED_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
 RED_AUTO_TEST_CASE(TestSetMasterDerivator)
 {
     CryptoContext cctx;
-    auto abc = cstr_array_view("abc");
-    auto abcd = cstr_array_view("abcd");
+    auto abc = "abc"_av;
+    auto abcd = "abcd"_av;
     cctx.set_master_derivator(abc);
     RED_CHECK_NO_THROW(cctx.set_master_derivator(abc));
     RED_CHECK_EXCEPTION_ERROR_ID(cctx.set_master_derivator(abcd), ERR_WRM_INVALID_INIT_CRYPT);
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestErrCb)
     static bool visited_cb = false;
 
     cctx.set_get_trace_key_cb([]([[maybe_unused]]auto... dummy){ visited_cb = true; return -1; });
-    cctx.set_master_derivator(cstr_array_view("abc"));
+    cctx.set_master_derivator("abc"_av);
 
     RED_CHECK_EXCEPTION_ERROR_ID(cctx.get_hmac_key(), ERR_WRM_INVALID_INIT_CRYPT);
 

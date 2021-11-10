@@ -671,17 +671,17 @@ RED_AUTO_TEST_CASE(TestPattern)
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
 
-        checker.title_changed(cstr_array_view("Gestionnaire"));
+        checker.title_changed("Gestionnaire"_av);
 
         RED_CHECK(report_message.reason.empty());
         RED_CHECK(report_message.message.empty());
 
-        checker.title_changed(cstr_array_view("Gestionnaire de serveur"));
+        checker.title_changed("Gestionnaire de serveur"_av);
 
         RED_CHECK_EQUAL(report_message.reason,  reason);
         RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de serveur");
 
-        checker.title_changed(cstr_array_view("Gestionnaire de licences TS"));
+        checker.title_changed("Gestionnaire de licences TS"_av);
 
         RED_CHECK_EQUAL(report_message.reason,  reason);
         RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de licences TS");
@@ -738,15 +738,15 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         send_kbd();
         meta.periodic_snapshot(now, 0, 0);
         send_kbd();
-        meta.title_changed(now, cstr_array_view("Blah1"));
+        meta.title_changed(now, "Blah1"_av);
         now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah2"));
+        meta.title_changed(now, "Blah2"_av);
         now += 1s;
         send_kbd();
         send_kbd();
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah3"));
+        meta.title_changed(now, "Blah3"_av);
         now += 1s;
         meta.periodic_snapshot(now, 0, 0);
     }
@@ -779,10 +779,10 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
         send_kbd();
         meta.periodic_snapshot(now, 0, 0);
         send_kbd();
-        meta.title_changed(now, cstr_array_view("Bl\"ah1"));
+        meta.title_changed(now, "Bl\"ah1"_av);
         now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah\\2"));
+        meta.title_changed(now, "Blah\\2"_av);
         meta.session_update(now, LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av, "fr"_av),
             KVLog("display_name"_av, "xy\\z"_av),
@@ -816,13 +816,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
             meta.kbd_input(now, 'D');
         };
 
-        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
+        meta.title_changed(now, "Blah1"_av); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.title_changed(now, "Blah2"_av); now += 1s;
         send_kbd(); now += 1s;
         send_kbd(); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.title_changed(now, "Blah3"_av); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
     }
@@ -855,7 +855,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
         send_kbd(); now += 1s;
 
-        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
+        meta.title_changed(now, "Blah1"_av); now += 1s;
 
         meta.session_update(now, LogId::BUTTON_CLICKED, {
             KVLog("windows"_av, ""_av),
@@ -871,11 +871,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         now += 1s;
 
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.title_changed(now, "Blah2"_av); now += 1s;
         send_kbd(); now += 1s;
         send_kbd(); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.title_changed(now, "Blah3"_av); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
     }
@@ -910,7 +910,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
         send_kbd(); now += 1s;
 
-        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
+        meta.title_changed(now, "Blah1"_av); now += 1s;
 
         send_kbd();
 
@@ -923,11 +923,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         send_kbd(); now += 1s;
 
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.title_changed(now, "Blah2"_av); now += 1s;
         send_kbd(); now += 1s;
         send_kbd(); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.title_changed(now, "Blah3"_av); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
     }
@@ -954,7 +954,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
         meta.kbd_input(now, 'A'); now += 1s;
 
-        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
+        meta.title_changed(now, "Blah1"_av); now += 1s;
 
         meta.kbd_input(now, 'B');
 
@@ -969,7 +969,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.possible_active_window_change();
 
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.title_changed(now, "Blah2"_av); now += 1s;
         meta.kbd_input(now, 'D'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, 'E'); now += 1s;
@@ -978,7 +978,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, 'G'); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.title_changed(now, "Blah3"_av); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\t'); now += 1s;
@@ -990,14 +990,14 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'K'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now, cstr_array_view("Blah4")); now += 1s;
+        meta.title_changed(now, "Blah4"_av); now += 1s;
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'a'); now += 1s;
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'L'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now, cstr_array_view("Blah5")); now += 1s;
+        meta.title_changed(now, "Blah5"_av); now += 1s;
         meta.kbd_input(now, 'M'); now += 1s;
         meta.kbd_input(now, 'N'); now += 1s;
         meta.kbd_input(now, 'O'); now += 1s;
@@ -1005,7 +1005,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'P'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now, cstr_array_view("Blah6")); now += 1s;
+        meta.title_changed(now, "Blah6"_av); now += 1s;
         meta.kbd_input(now, 'Q'); now += 1s;
         meta.kbd_input(now, 'R'); now += 1s;
         meta.kbd_input(now, 0x2191); now += 1s; // UP
@@ -1082,7 +1082,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
         meta.kbd_input(now, 'A'); now += 1s;
 
-        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
+        meta.title_changed(now, "Blah1"_av); now += 1s;
 
         meta.kbd_input(now, 'B');
 
@@ -1097,7 +1097,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.possible_active_window_change();
 
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.title_changed(now, "Blah2"_av); now += 1s;
         meta.kbd_input(now, 'D'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, 'E'); now += 1s;
@@ -1106,7 +1106,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, 'G'); now += 1s;
         meta.periodic_snapshot(now, 0, 0);
-        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.title_changed(now, "Blah3"_av); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\t'); now += 1s;
@@ -1118,14 +1118,14 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'K'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now, cstr_array_view("Blah4")); now += 1s;
+        meta.title_changed(now, "Blah4"_av); now += 1s;
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'a'); now += 1s;
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'L'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now, cstr_array_view("Blah5")); now += 1s;
+        meta.title_changed(now, "Blah5"_av); now += 1s;
         meta.kbd_input(now, 'M'); now += 1s;
         meta.kbd_input(now, 'N'); now += 1s;
         meta.kbd_input(now, 'O'); now += 1s;
@@ -1133,7 +1133,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, 0x08); now += 1s;
         meta.kbd_input(now, 'P'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now, cstr_array_view("Blah6")); now += 1s;
+        meta.title_changed(now, "Blah6"_av); now += 1s;
         meta.kbd_input(now, 'Q'); now += 1s;
         meta.kbd_input(now, 'R'); now += 1s;
         meta.kbd_input(now, 0x2191); now += 1s; // UP
