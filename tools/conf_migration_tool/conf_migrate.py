@@ -10,10 +10,12 @@
 # Module description:  Sesman Worker
 ##
 
+from collections import OrderedDict
+
 import sys
 import traceback
 
-class RedemptionVersion:
+class ExecutableVersion:
     def __init__(self, version_string=None):
         self.__major = -1
         self.__minor = 0
@@ -26,7 +28,7 @@ class RedemptionVersion:
 
                 if len(parts) != 3:
                     print(
-                         "RedemptionVersion.__init__: "
+                         "ExecutableVersion.__init__: "
                          "Invalid version string format: "
                         f"\"{version_string}\"")
 
@@ -45,7 +47,7 @@ class RedemptionVersion:
             except Exception as e:
                 _, exc_value, exc_traceback = sys.exc_info();
                 print(
-                     "RedemptionVersion.__init__: "
+                     "ExecutableVersion.__init__: "
                     f"{type(exc_value).__name__}")
                 traceback.print_tb(exc_traceback,
                     file=sys.stdout)
@@ -99,7 +101,7 @@ class RedemptionVersion:
         except Exception as e:
             _, exc_value, exc_traceback = sys.exc_info();
             print(
-                 "RedemptionVersion.fromfile: "
+                 "ExecutableVersion.fromfile: "
                 f"{type(exc_value).__name__}")
             traceback.print_tb(exc_traceback,
                 file=sys.stdout)
@@ -113,3 +115,37 @@ class RedemptionVersion:
                 return i
 
         return -1
+
+class ConfigurationFileLine:
+    def __init__(self, row_data):
+        self.__raw_data = row_data
+
+    def __str__(self):
+        return self.__raw_data
+
+def load_configuration_file(filename):
+    file_content = []
+#    print("load_configuration_file")
+
+    f = open(filename, 'r', encoding='utf-8')
+    while True:
+        line_raw_data = f.readline()
+        if not line_raw_data:
+            break
+
+#        print(line_raw_data)
+
+        file_content.append(ConfigurationFileLine(line_raw_data))
+
+#    print(file_content)
+    f.close()
+
+    return file_content
+
+def save_configuration_file(filename, file_content):
+    f = open(filename, 'w', encoding='utf-8')
+
+    for line in file_content:
+        f.write(f'{str(line)}')
+
+    f.close()
