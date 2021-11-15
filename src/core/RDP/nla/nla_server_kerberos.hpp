@@ -694,15 +694,17 @@ public:
     }
 
 public:
-    std::vector<uint8_t> authenticate_next(bytes_view in_data)
-    {
-        std::vector<uint8_t> buffer;
-        buffer.resize(4096);
-
-        OutStream out({buffer.data(), buffer.size()});
-        credssp::State st = authenticate_next(in_data, out);
-        return buffer;
-    }
+    // std::vector<uint8_t> authenticate_next(bytes_view in_data)
+    // {
+    //     std::vector<uint8_t> buffer;
+    //     buffer.resize(4096);
+    //
+    //     OutStream out({buffer.data(), buffer.size()});
+    //     credssp::State st = authenticate_next(in_data, out);
+    //     TODO st is unused
+    //     TODO buffer.size() should be equal to out.get_offset()
+    //     return buffer;
+    // }
 
     credssp::State authenticate_next(bytes_view in_data, OutStream & out_stream)
     {

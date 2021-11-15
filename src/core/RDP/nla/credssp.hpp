@@ -519,7 +519,7 @@ namespace BER {
         return 0;
     }
 
-    inline std::pair<int, bytes_view> pop_enumerated(bytes_view s, const char * message, error_type eid)
+    inline std::pair<uint32_t, bytes_view> pop_enumerated(bytes_view s, const char * message, error_type eid)
     {
         auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_ENUMERATED, message, eid);
 
@@ -546,7 +546,7 @@ namespace BER {
         return {in_s.in_uint32_be(), queue.drop_front(4)};
     }
 
-    inline int read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message, error_type eid)
+    inline uint32_t read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message, error_type eid)
     {
         auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
         stream.in_skip_bytes(stream.in_remain()-queue1.size());
@@ -557,7 +557,7 @@ namespace BER {
         return ret;
     }
 
-    inline void read_optional_enumerated(InStream & stream, uint8_t tag, int & ret, const char * message, error_type eid)
+    inline void read_optional_enumerated(InStream & stream, uint8_t tag, uint32_t & ret, const char * message, error_type eid)
     {
         if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag))
             ret = read_mandatory_enumerated(stream, tag, message, eid);
@@ -1548,7 +1548,7 @@ public:
     static constexpr uint8_t kileOid[] = { 0x2A, 0x86, 0x48, 0x82, 0xF7, 0x12, 0x01, 0x02, 0x02 };
     static constexpr uint8_t krb5Oid[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x12, 0x01, 0x02, 0x02 };
     static constexpr uint8_t user2userOid[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x12, 0x01, 0x02, 0x02, 0x03 };
-        static constexpr uint8_t spnegoexOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x1E };
+    static constexpr uint8_t spnegoexOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x1E };
     static constexpr uint8_t ntlmOid[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x02, 0x02, 0x0A };
     struct KnownOidDef {
         const uint8_t *oid;
@@ -1569,28 +1569,30 @@ public:
      * @param oid OID string
      * @return the resolved KnownOid, OID_UNKNOWN if not found
      */
-    static KnownOid resolve(const BER::BerOID & oid) {
-        for (size_t i = 0; i < ARRAY_SIZE(knownOids); i++) {
-            if (oid.size() != knownOids[i].oidLen)
+    static KnownOid resolve(const BER::BerOID & oid)
+    {
+        for (KnownOidDef const& knowOid : knownOids) {
+            if (oid.size() != knowOid.oidLen)
                 continue;
-            if (memcmp(oid.data(), knownOids[i].oid, knownOids[i].oidLen) == 0)
-                return knownOids[i].flag;
+            if (memcmp(oid.data(), knowOid.oid, knowOid.oidLen) == 0)
+                return knowOid.flag;
         }
 
         return OID_UNKNOWN;
-        }
+    }
 
     /** returns the OID bytes for the given known OID
      * @param oid known OID item
      * @return a bytes_view on the OID bytes, an empty bytes_view if not found
      */
-    static bytes_view oidData(KnownOid oid) {
+    static bytes_view oidData(KnownOid oid)
+    {
         if (oid == OID_UNKNOWN)
             return bytes_view();
 
-        for (size_t i = 0; i < ARRAY_SIZE(knownOids); i++) {
-            if (knownOids[i].flag == oid)
-                return bytes_view(knownOids[i].oid, knownOids[i].oidLen);
+        for (KnownOidDef const& knowOid : knownOids) {
+            if (knowOid.flag == oid)
+                return bytes_view(knowOid.oid, knowOid.oidLen);
         }
 
         return bytes_view();
@@ -1694,7 +1696,8 @@ struct SpNegoTokenInit final {
     std::vector<uint8_t> mechListMic;
 };
 
-inline SpNegoTokenInit recvSpNegoTokenInit(bytes_view data, bool verbose) {
+inline SpNegoTokenInit recvSpNegoTokenInit(bytes_view data, bool verbose)
+{
     InStream stream(data);
     SpNegoTokenInit self;
 
@@ -1717,10 +1720,7 @@ inline SpNegoTokenInit recvSpNegoTokenInit(bytes_view data, bool verbose) {
         SpNegoMech mech;
         mech.oid = BER::pop_oid(mechs_stream, "NegTokenInit::mechTypes", ERR_CREDSSP_TS_REQUEST);
         mech.mechType = SpNegoMech::resolve_mech(mech.oid);
-        if (mech.mechType == OID_UNKNOWN) {
-            if (verbose)
-                LOG(LOG_INFO, "recvSpNegoTokenInit mechUnknown");
-        }
+        LOG_IF(mech.mechType == OID_UNKNOWN && verbose, LOG_INFO, "recvSpNegoTokenInit mechUnknown");
         self.mechTypes.push_back(mech);
     }
 
@@ -1738,27 +1738,28 @@ inline SpNegoTokenInit recvSpNegoTokenInit(bytes_view data, bool verbose) {
 }
 
 /** @brief negState in negTokenResp */
-enum SpNegoNegstate {
+enum SpNegoNegstate : uint32_t {
     SPNEGO_STATE_ACCEPT_COMPLETED = 0,
     SPNEGO_STATE_ACCEPT_INCOMPLETE = 1,
     SPNEGO_STATE_REJECT = 2,
     SPNEGO_STATE_REQUEST_MIC = 3,
 
-    SPNEGO_STATE_INVALID = -1
+    SPNEGO_STATE_INVALID = 0xffffffffu,
 };
 
 /** @brief SPNEGO negTokenResp packet */
 struct SpNegoTokenResp final {
     SpNegoNegstate negState;
-    std::vector<uint8_t> supportedMech;
-    std::vector<uint8_t> responseToken;
-    std::vector<uint8_t> mechListMic;
+    std::vector<uint8_t> supportedMech {};
+    std::vector<uint8_t> responseToken {};
+    std::vector<uint8_t> mechListMic {};
 };
 
 
-inline SpNegoTokenResp recvSpNegoTokenResp(bytes_view data, bool verbose) {
+inline SpNegoTokenResp recvSpNegoTokenResp(bytes_view data)
+{
     InStream stream(data);
-    SpNegoTokenResp self;
+    SpNegoTokenResp self { SPNEGO_STATE_ACCEPT_COMPLETED };
 
     /* NegTokenResp ::= SEQUENCE { */
     auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "NegTokenResp", ERR_CREDSSP_TS_REQUEST);
@@ -1772,7 +1773,9 @@ inline SpNegoTokenResp recvSpNegoTokenResp(bytes_view data, bool verbose) {
               request-mic         (3)
           }                                 OPTIONAL,
     */
-    BER::read_optional_enumerated(stream, 0, (int &)self.negState, "NegTokenInit::negState", ERR_CREDSSP_TS_REQUEST);
+    uint32_t enum_value = SPNEGO_STATE_ACCEPT_COMPLETED;
+    BER::read_optional_enumerated(stream, 0, enum_value, "NegTokenInit::negState", ERR_CREDSSP_TS_REQUEST);
+    self.negState = SpNegoNegstate(enum_value);
 
     /* supportedMech   [1] MechType      OPTIONAL, */
     self.supportedMech = BER::read_optional_octet_string(stream, 1, "NegTokenInit::mechToken", ERR_CREDSSP_TS_REQUEST);
@@ -1904,7 +1907,7 @@ inline SpNegoToken recvSpNego(bytes_view data, bool verbose) {
     } else if (tag == 1) {
         /* NegTokenResp */
         ret.isInit = false;
-        ret.negTokenResp = recvSpNegoTokenResp(appBody, verbose);
+        ret.negTokenResp = recvSpNegoTokenResp(appBody);
 
     } else {
         ret.isError = true;

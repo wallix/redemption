@@ -33,7 +33,7 @@ public:
     virtual ~NtlmNlaBackend() = default;
 
     virtual std::vector<uint8_t> authenticate_next(bytes_view auth_data, bytes_view in_mic_data,
-            std::vector<uint8_t> & out_mic_data, credssp::State & next_state);
+            std::vector<uint8_t> & out_mic_data, credssp::State & next_state) override;
 
 protected:
 };
@@ -46,7 +46,7 @@ public:
     virtual ~SpNegoNlaBackend();
 
     virtual std::vector<uint8_t> authenticate_next(bytes_view auth_data, bytes_view in_mic_data,
-            std::vector<uint8_t> & out_mic_data, credssp::State & next_state);
+            std::vector<uint8_t> & out_mic_data, credssp::State & next_state) override;
 protected:
     KnownOid mBackendType;
     KnownOid mAnswerOid;
@@ -62,7 +62,7 @@ public:
     bool init(const char *serviceName);
 
     virtual std::vector<uint8_t> authenticate_next(bytes_view auth_data, bytes_view in_mic_data,
-            std::vector<uint8_t> & out_mic_data, credssp::State & next_state);
+            std::vector<uint8_t> & out_mic_data, credssp::State & next_state) override;
 
 public:
     static bool mech_available(gss_OID mech);
