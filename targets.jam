@@ -32,6 +32,7 @@ exe headlessclient :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -147,6 +148,7 @@ exe rdpproxy :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/RDP/orders/remoteFx.o
@@ -310,6 +312,7 @@ exe nla_server :
   <library>openssl
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/error.o
@@ -337,6 +340,7 @@ exe proxy_recorder :
   <library>openssl
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/error.o
@@ -373,6 +377,7 @@ exe rdpclient :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -635,6 +640,7 @@ test-run tests/acl/test_license_api :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -1001,6 +1007,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -1101,6 +1108,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -1174,6 +1182,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -1746,6 +1755,7 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/error.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/fileutils.o
@@ -1760,6 +1770,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -1767,10 +1778,20 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   <library>tests/includes/test_only/test_framework/sig.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run tests/core/RDP/nla/test_ber :
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_ber.cpp
+:
+  <library>src/core/RDP/nla/ber.o
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/core/RDP/nla/test_credssp :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_credssp.cpp
 :
   <library>crypto
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -1783,6 +1804,7 @@ test-run tests/core/RDP/nla/test_nla :
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -2040,6 +2062,7 @@ test-run tests/core/RDP/test_nego :
   <library>krb5
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/error.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/fileutils.o
@@ -2260,6 +2283,7 @@ test-run tests/front/test_front :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/RDP/orders/remoteFx.o
@@ -3868,6 +3892,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -3950,6 +3975,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>openssl
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4107,6 +4133,7 @@ test-run tests/proxy_recorder/test_proxy_recorder :
   <library>krb5
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/error.o
@@ -4161,6 +4188,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/RDP/rdp_pointer.o
@@ -4232,6 +4260,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/RDP/rdp_pointer.o
@@ -4303,6 +4332,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/ber.o
   <library>src/core/RDP/nla/nla_server.o
   <library>src/core/RDP/nla/nla_server_backends.o
   <library>src/core/RDP/rdp_pointer.o
@@ -5122,6 +5152,7 @@ obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+obj src/core/RDP/nla/ber.o : $(REDEMPTION_SRC_PATH)/core/RDP/nla/ber.cpp ;
 obj src/core/RDP/nla/nla_server.o : $(REDEMPTION_SRC_PATH)/core/RDP/nla/nla_server.cpp ;
 obj src/core/RDP/nla/nla_server_backends.o : $(REDEMPTION_SRC_PATH)/core/RDP/nla/nla_server_backends.cpp ;
 obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
@@ -5352,6 +5383,7 @@ alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
 alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
 alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
+alias test_ber : tests/core/RDP/nla/test_ber ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
 alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
@@ -5698,6 +5730,7 @@ alias tests/core/RDP/nla/ntlm.norec :
   tests/core/RDP/nla/ntlm/test_ntlm_message
 ;
 alias tests/core/RDP/nla.norec :
+  tests/core/RDP/nla/test_ber
   tests/core/RDP/nla/test_credssp
   tests/core/RDP/nla/test_nla
 ;
