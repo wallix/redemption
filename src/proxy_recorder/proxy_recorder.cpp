@@ -140,7 +140,7 @@ void ProxyRecorder::front_nla(Transport & frontConn)
     credssp::State st = credssp::State::Cont;
 
     while (buffer.next(TpduBuffer::CREDSSP)) {
-        result << this->nlaServer.authenticate_next(buffer.current_pdu_buffer());
+        result << this->nego_server->nlaServer.authenticate_next(buffer.current_pdu_buffer());
         frontConn.send(result);
     }
 

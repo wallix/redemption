@@ -62,7 +62,7 @@ std::vector<uint8_t> NlaServer::authenticate_next(bytes_view in_data) {
             break;
         case OID_KRB5_U2U:
             u2u = true;
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         case OID_KRB5:
         case OID_KRB5_KILE:
             backend = new GssapiNlaAuthBackend(*this, false, u2u);

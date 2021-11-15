@@ -122,7 +122,7 @@ std::vector<uint8_t> SpNegoNlaBackend::authenticate_next(bytes_view auth_data, b
         case OID_KRB5_U2U:
             mAnswerOid = OID_KRB5_KILE;
             u2u = true;
-            REDEMPTION_CXX_FALLTHROUGH;
+            [[fallthrough]];
         case OID_KRB5:
         case OID_KRB5_KILE:
             mSubBackend = new GssapiNlaAuthBackend(mParent, true, u2u);
