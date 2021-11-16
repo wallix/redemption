@@ -21,7 +21,6 @@ Author(s): Proxies Team
 #pragma once
 
 #include "utils/stream.hpp"
-#include "core/error.hpp"
 
 #include <vector>
 
@@ -68,37 +67,37 @@ namespace BER
 
     bool check_ber_ctxt_tag(bytes_view s, uint8_t tag);
 
-    std::pair<uint32_t, bytes_view> pop_length(bytes_view s, const char * message, error_type eid);
+    std::pair<uint32_t, bytes_view> pop_length(bytes_view s, const char * message);
 
     bool check_ber_app_tag(bytes_view s, uint8_t tag, bool verbose, const char * message, bytes_view & body);
 
     bool peek_construct_tag(bytes_view s, uint8_t & tag, bool verbose, const char * message, bytes_view & queue);
 
-    std::pair<uint32_t, bytes_view> pop_tag_length(bytes_view s, uint8_t tag, const char * message, error_type eid);
+    std::pair<uint32_t, bytes_view> pop_tag_length(bytes_view s, uint8_t tag, const char * message);
 
-    std::pair<uint32_t, bytes_view> pop_integer(bytes_view s, const char * message, error_type eid);
+    std::pair<uint32_t, bytes_view> pop_integer(bytes_view s, const char * message);
 
-    std::pair<uint32_t, bytes_view> pop_integer_field(bytes_view s, uint8_t tag, const char * message, error_type eid);
+    std::pair<uint32_t, bytes_view> pop_integer_field(bytes_view s, uint8_t tag, const char * message);
 
-    uint32_t read_mandatory_integer(InStream & stream, uint8_t tag, const char * message, error_type eid);
+    uint32_t read_mandatory_integer(InStream & stream, uint8_t tag, const char * message);
 
-    uint32_t read_optional_integer(InStream & stream, uint8_t tag, const char * message, error_type eid);
+    uint32_t read_optional_integer(InStream & stream, uint8_t tag, const char * message);
 
-    std::pair<uint32_t, bytes_view> pop_enumerated(bytes_view s, const char * message, error_type eid);
+    std::pair<uint32_t, bytes_view> pop_enumerated(bytes_view s, const char * message);
 
-    uint32_t read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message, error_type eid);
+    uint32_t read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message);
 
-    void read_optional_enumerated(InStream & stream, uint8_t tag, uint32_t & ret, const char * message, error_type eid);
+    void read_optional_enumerated(InStream & stream, uint8_t tag, uint32_t & ret, const char * message);
 
-    std::vector<uint8_t> read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid);
+    std::vector<uint8_t> read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message);
 
-    std::vector<uint8_t> read_optional_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid);
+    std::vector<uint8_t> read_optional_octet_string(InStream & stream, uint8_t tag, const char * message);
 
     typedef std::vector<uint8_t> BerOID;
 
     bool peek_oid(bytes_view s, bool verbose, const char * message, BerOID & oid, bytes_view & queue);
 
-    std::pair<BerOID, bytes_view> pop_oid(bytes_view s, const char * message, error_type eid);
+    std::pair<BerOID, bytes_view> pop_oid(bytes_view s, const char * message);
 
-    BerOID pop_oid(InStream & s, const char * message, error_type eid);
+    BerOID pop_oid(InStream & s, const char * message);
 } // namespace BER

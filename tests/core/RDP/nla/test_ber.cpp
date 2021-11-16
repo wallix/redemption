@@ -72,7 +72,7 @@ RED_TEST_DISPATCH_COMPARISON_EQ((), (::PairSizeAv), (::PairSizeAv), ::test_comp_
 RED_AUTO_TEST_CASE(TestBERInteger)
 {
     auto ber_pop_integer = [](chars_view av){
-        return BER::pop_integer(av, "Integer", ERR_CREDSSP_TS_REQUEST);
+        return BER::pop_integer(av, "Integer");
     };
 
     RED_CHECK_EQUAL(BER::mkIntegerField(114178754, 0), "\xa0\x06\x02\x04\x06\xce\x3a\xc2"_av_hex);
@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestBEROctetString)
 
     RED_CHECK_EQUAL(PairSizeAv(7, oct_str), BER::pop_tag_length("\x04\x07""1234567"_av,
         BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING,
-        "TestOctetString", ERR_CREDSSP_TS_REQUEST));
+        "TestOctetString"));
 }
 
 RED_AUTO_TEST_CASE(TestBEROctetString127)
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestBEROctetString127)
 
     RED_CHECK_EQUAL(PairSizeAv(127, oct_str), BER::pop_tag_length(str_concat("\x04\x7f", oct_str),
         BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING,
-        "TestOctetString", ERR_CREDSSP_TS_REQUEST));
+        "TestOctetString"));
 }
 
 RED_AUTO_TEST_CASE(TestBEROctetString128)
@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestBEROctetString128)
 
     RED_CHECK_EQUAL(PairSizeAv(128, oct_str), BER::pop_tag_length(str_concat("\x04\x81\x80", oct_str),
         BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING,
-        "TestOctetString", ERR_CREDSSP_TS_REQUEST));
+        "TestOctetString"));
 }
 
 RED_AUTO_TEST_CASE(TestBEROid)
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestBEROid)
 
     RED_CHECK_EQUAL(PairSizeAv(7, oct_str), BER::pop_tag_length("\x06\x07""1234567"_av,
         BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OBJECT_IDENTIFIER,
-        "TestOid", ERR_CREDSSP_TS_REQUEST));
+        "TestOid"));
 }
 
 RED_AUTO_TEST_CASE(TestBERContextual)
@@ -149,5 +149,5 @@ RED_AUTO_TEST_CASE(TestBERContextual)
 
     RED_CHECK(BER::check_ber_ctxt_tag("\xa6\x03""012"_av, tag));
     RED_CHECK_EQUAL(PairSizeAv(3, data), BER::pop_length("\x03""012"_av,
-        "TSBER", ERR_CREDSSP_TS_REQUEST));
+        "TSBER"));
 }

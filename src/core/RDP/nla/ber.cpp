@@ -478,12 +478,12 @@ static bool peek_length(bytes_view s, bool verbose, const char * message, uint32
 }
 
 
-std::pair<uint32_t, bytes_view> BER::pop_length(bytes_view s, const char * message, error_type eid)
+std::pair<uint32_t, bytes_view> BER::pop_length(bytes_view s, const char * message)
 {
     bytes_view queue;
     uint32_t len;
     if (!peek_length(s, true, message, len, queue)) {
-        throw Error(eid);
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
 
     return {len, queue};
@@ -545,46 +545,46 @@ static bool peek_check_tag(bytes_view s, uint8_t tag, bool verbose, const char *
     return true;
 }
 
-static bytes_view pop_check_tag(bytes_view s, uint8_t tag, const char * message, error_type eid)
+static bytes_view pop_check_tag(bytes_view s, uint8_t tag, const char * message)
 {
     bytes_view ret;
     if (!peek_check_tag(s, tag, true, message, ret)) {
-        throw Error(eid);
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
 
     return ret;
 }
 
-std::pair<uint32_t, bytes_view> BER::pop_tag_length(bytes_view s, uint8_t tag, const char * message, error_type eid)
+std::pair<uint32_t, bytes_view> BER::pop_tag_length(bytes_view s, uint8_t tag, const char * message)
 {
-    return pop_length(pop_check_tag(s, tag, message, eid), message, eid);
+    return pop_length(pop_check_tag(s, tag, message), message);
 }
 
-// std::pair<uint32_t, bytes_view> pop_app_tag(bytes_view s, uint8_t tag, const char * message, error_type eid) {
-//     return pop_length(pop_check_tag(s, (CLASS_APPL|PC_CONSTRUCT|tag), message, eid), message, eid);
+// std::pair<uint32_t, bytes_view> pop_app_tag(bytes_view s, uint8_t tag, const char * message) {
+//     return pop_length(pop_check_tag(s, (CLASS_APPL|PC_CONSTRUCT|tag), message), message);
 // }
 
 namespace BER
 {
 namespace {
     std::pair<uint32_t, bytes_view> pop_integer_or_enumerated(
-        bytes_view s, const char * message, uint8_t tag, error_type eid)
+        bytes_view s, const char * message, uint8_t tag)
     {
         assert(tag == TAG_INTEGER || tag == TAG_ENUMERATED);
 
-        auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | tag, message, eid);
+        auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | tag, message);
 
         if (byte < 1 || byte > 4) {
             LOG(LOG_ERR, "%s: Ber unexpected %s length %u",
                 message, (tag == TAG_INTEGER) ? "integer" : "enumerated", byte);
-            throw Error(eid);
+            throw Error(ERR_CREDSSP_TS_REQUEST);
         }
 
         // Now bytes contains length of integer value
         if (queue.size() < byte) {
             LOG(LOG_ERR, "%s: Ber %s data truncated %u",
                 message, (tag == TAG_INTEGER) ? "integer" : "enumerated", byte);
-            throw Error(eid);
+            throw Error(ERR_CREDSSP_TS_REQUEST);
         }
 
         InStream in_s(queue);
@@ -603,81 +603,81 @@ namespace {
 } // namespace BER
 } // anonymous namespace
 
-std::pair<uint32_t, bytes_view> BER::pop_integer(bytes_view s, const char * message, error_type eid)
+std::pair<uint32_t, bytes_view> BER::pop_integer(bytes_view s, const char * message)
 {
-    return pop_integer_or_enumerated(s, message, TAG_INTEGER, eid);
+    return pop_integer_or_enumerated(s, message, TAG_INTEGER);
 }
 
-std::pair<uint32_t, bytes_view> BER::pop_integer_field(bytes_view s, uint8_t tag, const char * message, error_type eid)
+std::pair<uint32_t, bytes_view> BER::pop_integer_field(bytes_view s, uint8_t tag, const char * message)
 {
-    auto [length, queue] = pop_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+    auto [length, queue] = pop_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, message);
     if (queue.size() < length) {
         LOG(LOG_ERR, "%s: Ber tagged integer field truncated", message);
-        throw Error(eid);
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
-    return pop_integer(queue, message, eid);
+    return pop_integer(queue, message);
 }
 
-uint32_t BER::read_mandatory_integer(InStream & stream, uint8_t tag, const char * message, error_type eid)
+uint32_t BER::read_mandatory_integer(InStream & stream, uint8_t tag, const char * message)
 {
-    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
     (void)length1;
 
-    auto [ret, queue2] = BER::pop_integer(stream.remaining_bytes(), message, eid);
+    auto [ret, queue2] = BER::pop_integer(stream.remaining_bytes(), message);
     stream.in_skip_bytes(stream.in_remain()-queue2.size());
     return ret;
 }
 
-uint32_t BER::read_optional_integer(InStream & stream, uint8_t tag, const char * message, error_type eid)
+uint32_t BER::read_optional_integer(InStream & stream, uint8_t tag, const char * message)
 {
     if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag)) {
-        return read_mandatory_integer(stream, tag, message, eid);
+        return read_mandatory_integer(stream, tag, message);
     }
     return 0;
 }
 
-std::pair<uint32_t, bytes_view> BER::pop_enumerated(bytes_view s, const char * message, error_type eid)
+std::pair<uint32_t, bytes_view> BER::pop_enumerated(bytes_view s, const char * message)
 {
-    return pop_integer_or_enumerated(s, message, TAG_ENUMERATED, eid);
+    return pop_integer_or_enumerated(s, message, TAG_ENUMERATED);
 }
 
-uint32_t BER::read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message, error_type eid)
+uint32_t BER::read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message)
 {
-    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
     (void)length1;
 
-    auto [ret, queue2] = BER::pop_enumerated(stream.remaining_bytes(), message, eid);
+    auto [ret, queue2] = BER::pop_enumerated(stream.remaining_bytes(), message);
     stream.in_skip_bytes(stream.in_remain()-queue2.size());
     return ret;
 }
 
-void BER::read_optional_enumerated(InStream & stream, uint8_t tag, uint32_t & ret, const char * message, error_type eid)
+void BER::read_optional_enumerated(InStream & stream, uint8_t tag, uint32_t & ret, const char * message)
 {
     if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag)) {
-        ret = read_mandatory_enumerated(stream, tag, message, eid);
+        ret = read_mandatory_enumerated(stream, tag, message);
     }
 }
 
 
-std::vector<uint8_t> BER::read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
+std::vector<uint8_t> BER::read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message)
 {
-    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
     (void)length1;
 
-    auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
+    auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message);
     stream.in_skip_bytes(stream.in_remain()-queue2.size());
 
     auto av = stream.in_skip_bytes(length2);
     return {av.data(), av.data()+av.size()};
 }
 
-std::vector<uint8_t> BER::read_optional_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
+std::vector<uint8_t> BER::read_optional_octet_string(InStream & stream, uint8_t tag, const char * message)
 {
     if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag)) {
-        return read_mandatory_octet_string(stream, tag, message, eid);
+        return read_mandatory_octet_string(stream, tag, message);
     }
     return {};
 }
@@ -699,25 +699,25 @@ bool BER::peek_oid(bytes_view s, bool verbose, const char * message, BerOID & oi
     return true;
 }
 
-std::pair<BerOID, bytes_view> BER::pop_oid(bytes_view s, const char * message, error_type eid)
+std::pair<BerOID, bytes_view> BER::pop_oid(bytes_view s, const char * message)
 {
     BerOID oid;
     bytes_view queue;
 
     if (!peek_oid(s, true, message, oid, queue)) {
-        throw Error(eid);
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
 
     return {oid, queue};
 }
 
-BerOID BER::pop_oid(InStream & s, const char * message, error_type eid)
+BerOID BER::pop_oid(InStream & s, const char * message)
 {
-    auto [bytes, queue] = pop_tag_length(s.remaining_bytes(), CLASS_UNIV | PC_PRIMITIVE | TAG_OBJECT_IDENTIFIER, message, eid);
+    auto [bytes, queue] = pop_tag_length(s.remaining_bytes(), CLASS_UNIV | PC_PRIMITIVE | TAG_OBJECT_IDENTIFIER, message);
 
     if (queue.size() < bytes) {
         LOG(LOG_ERR, "%s: Ber oid data truncated %u", message, bytes);
-        throw Error(eid);
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
 
     s.in_skip_bytes(s.in_remain() - queue.size());
