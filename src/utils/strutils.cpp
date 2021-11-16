@@ -23,6 +23,9 @@
 #include <cstring>
 #include <algorithm>
 #include <functional>
+#ifdef __EMSCRIPTEN__
+#  include <experimental/functional>
+#endif
 
 namespace utils
 {
@@ -69,12 +72,17 @@ void str_replace_inplace(std::string& str,
 {
     assert(!tag.empty());
 
-    std::boyer_moore_searcher searcher(tag.begin(), tag.end());
+#ifdef __EMSCRIPTEN__
+    std::experimental::boyer_moore_searcher<std::string_view::iterator>
+#else
+    std::boyer_moore_searcher
+#endif
+    searcher(tag.begin(), tag.end());
 
     std::ptrdiff_t i = 0;
 
     for (;;) {
-        auto rng = searcher(str.begin(), str.end());
+        auto rng = searcher(str.begin() + i, str.end());
         if (rng.first != rng.second) {
             i = rng.first - str.begin();
             i += std::ptrdiff_t(replacement.size());
