@@ -27,7 +27,7 @@ include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 EXE_DEPENDENCIES +=
     <cxxflags>"-s ABORTING_MALLOC=0"
-    <cxxflags>"-s EXTRA_EXPORTED_RUNTIME_METHODS=['stringToUTF16']"
+    <cxxflags>"-s EXPORTED_RUNTIME_METHODS=['stringToUTF16']"
     <cxxflags>"--no-entry"
 ;
 
@@ -140,7 +140,7 @@ project redjs
     # <cxxflags>"-s FS_LOG=1"
 
     <cxxflags>"-s USE_PTHREADS=0"
-    <cxxflags>"-s FILESYSTEM=0"
+    # <cxxflags>"-s FILESYSTEM=0"
     <cxxflags>"-s USE_LIBPNG=0"
     <cxxflags>"-s USE_ZLIB=0"
     <cxxflags>"-s USE_SDL=0"
@@ -151,8 +151,8 @@ project redjs
     # <cxxflags>"-s BINARYEN_TRAP_MODE=js" # clamp, allow
     # <cxxflags>"-s EMCC_WASM_BACKEND=1"
 
-    <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
-    <variant>debug:<linkflags>"-s DEMANGLE_SUPPORT=1"
+    # <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
+    # <variant>debug:<linkflags>"-s DEMANGLE_SUPPORT=1"
 
     <variant>release:<cxx-lto>on
 
