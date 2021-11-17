@@ -241,7 +241,6 @@ public:
               return {};
             case ServerAuthenticateData::Loop:
             {
-                std::vector<uint8_t> result;
                 REDEMPTION_DIAGNOSTIC_PUSH()
                 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
                 switch (this->ntlm_state) {
@@ -500,14 +499,16 @@ public:
 
                     this->authentication_token.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
-                    result = emitTSRequest(std::min(this->authentication_token.version,this->credssp_version),
-                                           {},
-                                           this->authentication_token.authInfo,
-                                           this->authentication_token.pubKeyAuth,
-                                           this->authentication_token.error_code,
-                                           {},
-                                           false,
-                                           this->credssp_verbose);
+                    std::vector<uint8_t> result
+                        = emitTSRequest(std::min(this->authentication_token.version,
+                                                 this->credssp_version),
+                                        {},
+                                        this->authentication_token.authInfo,
+                                        this->authentication_token.pubKeyAuth,
+                                        this->authentication_token.error_code,
+                                        {},
+                                        false,
+                                        this->credssp_verbose);
                     this->error_code = 0;
 
                     this->server_auth_data.state = ServerAuthenticateData::Final;

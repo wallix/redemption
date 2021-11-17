@@ -22,10 +22,8 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/nla/credssp.hpp"
-
-#include "test_only/test_framework/sig.hpp"
+#include "core/RDP/nla/ntlm_message.hpp"
 
 
 RED_TEST_DELEGATE_PRINT_ENUM(NTLM_AV_ID);
@@ -101,7 +99,7 @@ RED_AUTO_TEST_CASE(TestSPNego)
     bytes_view bv(packetOk, sizeof(packetOk));
     bytes_view queue;
     RED_CHECK(check_sp_nego(bv, true, queue));
-    RED_CHECK(check_sp_nego({packetWrongOid, sizeof(packetWrongOid)}, true, queue) != true);
+    RED_CHECK(!check_sp_nego({packetWrongOid, sizeof(packetWrongOid)}, true, queue));
 }
 
 RED_AUTO_TEST_CASE(TestSpNegoToken)
@@ -119,7 +117,9 @@ RED_AUTO_TEST_CASE(TestSpNegoToken)
     };
 
     auto spNegoInit = recvSpNegoTokenInit(make_array_view(packet), true);
-    RED_CHECK(spNegoInit.mechToken.size() > 0);
+    RED_CHECK(spNegoInit.mechToken == "\x60\x47\x06\n\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03\x04\x00"
+        "\x30\x37\xa0\x03\x02\x01\x05\xa1\x03\x02\x01\x10\xa2+0)\xa0\x03\x02\x01\x02\xa1\"0 \x1b\x07"
+        "TERMSRV\x1b\x15""djinn64.HARDENING.COM"_av);
 
     constexpr static uint8_t spNegoTokenInit[] = {
         0x60, 0x81, 0x8C, 0x06, 0x06, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x02, 0xA0, 0x81, 0x81, 0x30, 0x7F,
@@ -134,13 +134,15 @@ RED_AUTO_TEST_CASE(TestSpNegoToken)
     };
 
     auto spNegoInitToken = recvSpNego(make_array_view(spNegoTokenInit), true);
-    RED_CHECK_EQUAL(spNegoInitToken.isInit, true);
+    RED_CHECK(spNegoInitToken.isInit);
 
     uint8_t responseToken[] = { 0x10, 0x11, 0x12 };
     auto tokenResp = emitNegTokenResp(SPNEGO_STATE_ACCEPT_INCOMPLETE, OID_NTLM,
             {responseToken, sizeof(responseToken)},
             bytes_view(), true
     );
+    RED_CHECK(tokenResp == "\xa1\x1c\x30\x1a\xa0\x03\x0a\x01\x01\xa1\x0c\x06\x0a\x2b\x06\x01\x04\x01"
+        "\x82\x37\x02\x02\x0a\xa2\x05\x04\x03\x10\x11\x12"_av);
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
@@ -160,10 +162,10 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
     TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
-    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
-    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req.negoTokens, make_array_view(packet).drop_front(17));
+    RED_CHECK_EQUAL(ts_req.authInfo, ""_av);
     RED_CHECK_EQUAL(ts_req.error_code, 0);
-    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth, ""_av);
 
     ts_req.version = 3;
 
@@ -175,8 +177,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
                            ts_req.clientNonce.clientNonce,
                            ts_req.clientNonce.initialized,
                            true);
-    RED_CHECK_EQUAL(v.size(), 0x37 + 2);
-    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
+    RED_CHECK_EQUAL(v, make_array_view(packet));
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
@@ -207,9 +208,9 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
     TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
-    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x80);
-    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
-    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req.negoTokens, make_array_view(packet).drop_front(23));
+    RED_CHECK_EQUAL(ts_req.authInfo, ""_av);
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth, ""_av);
 
     ts_req.version = 3;
 
@@ -221,8 +222,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
                            ts_req.clientNonce.clientNonce,
                            ts_req.clientNonce.initialized,
                            true);
-    RED_CHECK_EQUAL(v.size(), 0x94 + 3);
-    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
+    RED_CHECK_EQUAL(v, make_array_view(packet));
 }
 
 
@@ -308,9 +308,9 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
     TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
-    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x102);
-    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
-    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
+    RED_CHECK_EQUAL(ts_req.negoTokens, make_array_view(packet).subarray(29, 258));
+    RED_CHECK_EQUAL(ts_req.authInfo, ""_av);
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth, make_array_view(packet).drop_front(295));
 
     ts_req.version = 3;
 
@@ -322,8 +322,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
                            ts_req.clientNonce.clientNonce,
                            ts_req.clientNonce.initialized,
                            true);
-    RED_CHECK_EQUAL(v.size(), 0x241 + 4);
-    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
+    RED_CHECK_EQUAL(v, make_array_view(packet));
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
@@ -373,9 +372,9 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
     TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
-    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0);
-    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
-    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
+    RED_CHECK_EQUAL(ts_req.negoTokens, ""_av);
+    RED_CHECK_EQUAL(ts_req.authInfo, ""_av);
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth, make_array_view(packet).drop_front(17));
 
     ts_req.version = 3;
 
@@ -387,8 +386,7 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
                            ts_req.clientNonce.clientNonce,
                            ts_req.clientNonce.initialized,
                            true);
-    RED_CHECK_EQUAL(v.size(), 0x12b + 4);
-    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
+    RED_CHECK_EQUAL(v, make_array_view(packet));
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
@@ -411,10 +409,11 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
     TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
-
-    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0);
-    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0x51);
-    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req.negoTokens, ""_av);
+    RED_CHECK_EQUAL(ts_req.authInfo, make_array_view(packet).drop_front(11));
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth, ""_av);
+    RED_CHECK_EQUAL(ts_req.error_code, 0);
+    RED_CHECK_EQUAL(ts_req.clientNonce.initialized, false);
 
     ts_req.version = 3;
 
@@ -426,9 +425,7 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
                            ts_req.clientNonce.clientNonce,
                            ts_req.clientNonce.initialized,
                            true);
-
-    RED_CHECK_EQUAL(v.size(), 0x5c);
-    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
+    RED_CHECK_EQUAL(v, make_array_view(packet));
 }
 
 RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
@@ -438,7 +435,9 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     bytes_view pass = "hypercube\0"_av;
 
     auto r = emitTSCredentialsPassword(domain, user, pass, true);
-    RED_CHECK_EQUAL(r.size(), r[1]+2u);
+    RED_CHECK_EQUAL(r, "\x30\x31\xa0\x03\x02\x01\x01\xa1\x2a\x04(0&"
+        "\xa0\x0b\x04\tflatland\x00\xa1\t\x04\x07square\x00\xa2\x0c"
+        "\x04\nhypercube\x00"_av);
 
     TSCredentials ts_cred_received = recvTSCredentials(r, true);
 
@@ -460,8 +459,13 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     bytes_view cspName = "what\0"_av;
     uint32_t keySpec = 32;
 
-    auto r = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName, true);
-    RED_CHECK_EQUAL(r.size(), r[1]+2u);
+    auto r = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec,
+        cardName, readerName, containerName, cspName, true);
+    RED_CHECK_EQUAL(r, "\x30\x64\xa0\x03\x02\x01\x02\xa1\x5d\x04[0Y\xa0\x07"
+        "\x04\x05""3615\x00\xa1""806\xa0\x03\x02\x01\x20\xa1\x0f\x04\rpasse"
+        "partout\x00\xa2\n\x04\bacrobat\x00\xa3\t\x04\x07""docker\x00\xa4"
+        "\x07\x04\x05what\x00\xa2\x06\x04\x04""aka\x00\xa3\x0c\x04\ngrandparc"
+        "\x00"_av);
 
     TSCredentials ts_cred = recvTSCredentials(r, true);
 

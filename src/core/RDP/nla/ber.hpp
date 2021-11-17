@@ -100,4 +100,14 @@ namespace BER
     std::pair<BerOID, bytes_view> pop_oid(bytes_view s, const char * message);
 
     BerOID pop_oid(InStream & s, const char * message);
+
+
+std::vector<uint8_t> emitTSRequest(uint32_t version,
+                                   bytes_view negoTokens,
+                                   bytes_view authInfo,
+                                   bytes_view pubKeyAuth,
+                                   uint32_t error_code,
+                                   bytes_view clientNonce,
+                                   bool nonce_initialized,
+                                   bool verbose);
 } // namespace BER

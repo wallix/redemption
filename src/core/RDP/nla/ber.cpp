@@ -21,6 +21,7 @@ Author(s): Proxies Team
 #include "core/RDP/nla/ber.hpp"
 #include "core/error.hpp"
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 
 
 // BER Encoding Cheat Sheet
@@ -75,26 +76,40 @@ namespace
     inline constexpr std::ptrdiff_t max_v = (a < b) ? b : a;
 
     template<class T, class U>
-    inline constexpr std::ptrdiff_t max_buffer_v = max_v<
-        BerBufferSize<T>::value,
-        BerBufferSize<U>::value
-    >;
+    struct CommonBuffer
+    {};
 
-    template<std::ptrdiff_t Size>
-    struct BerBuffer
+    template<std::ptrdiff_t Size1, std::ptrdiff_t Size2>
+    struct CommonBuffer<BerBuffer<Size1>, BerBuffer<Size2>>
+    {
+        using type = BerBuffer<max_v<Size1, Size2>>;
+    };
+
+    struct BerBufferData
     {
         uint8_t* start;
         uint8_t* p;
+    };
+
+    template<std::ptrdiff_t Size>
+    struct [[nodiscard]] BerBuffer
+    {
+        BerBufferData data;
+
+        BerBufferData internal_data() const noexcept
+        {
+            return data;
+        }
 
         BerBuffer<Size+1> push(uint8_t value) noexcept
         {
-            *p = value;
-            return {start, p+1};
+            *data.p = value;
+            return {{data.start, data.p+1}};
         }
 
         uint32_t size() const noexcept
         {
-            return static_cast<uint32_t>(p - start);
+            return static_cast<uint32_t>(data.p - data.start);
         }
 
         template<class F>
@@ -115,18 +130,16 @@ namespace
         {
             return [=](auto true_f, auto false_f) noexcept {
                 return [=](auto out) noexcept {
-                    using Result = BerBuffer<max_buffer_v<
+                    using Result = typename CommonBuffer<
                         decltype(true_f(out)),
                         decltype(false_f(out))
-                    >>;
+                    >::type;
 
                     if (b) {
-                        auto r = true_f(out);
-                        return Result{r.start, r.p};
+                        return Result{true_f(out).internal_data()};
                     }
                     else {
-                        auto r = false_f(out);
-                        return Result{r.start, r.p};
+                        return Result{false_f(out).internal_data()};
                     }
                 };
             };
@@ -724,6 +737,257 @@ BerOID BER::pop_oid(InStream & s, const char * message)
 
     BerOID ret = s.in_skip_bytes(bytes).as<std::vector<uint8_t>>();
     return ret;
+}
+
+
+namespace BER
+{
+
+namespace serial
+{
+
+namespace
+{
+
+auto integer(uint32_t value, uint8_t tag) noexcept
+{
+    return [=](auto out) noexcept {
+        auto n = out.size();
+        return out
+        | backward_push_integer(value)
+        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, tag));
+    };
+}
+
+auto push_bytes(bytes_view value) noexcept
+{
+    return [=](auto out) noexcept {
+        return out.push_bytes(value);
+    };
+}
+
+auto string(bytes_view value, uint8_t tag) noexcept
+{
+    return [=](auto out) noexcept {
+        auto n = out.size();
+        return out
+        | push_bytes(value)
+        | backward_push_octet_string_header(value.size())
+        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, tag));
+    };
+}
+
+auto nego_tokens(bytes_view value) noexcept
+{
+    return [=](auto out) noexcept {
+        auto n = out.size();
+        return out
+        | push_bytes(value)
+        | backward_push_octet_string_header(value.size())
+        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, 0))
+        | WRAP_F(out | backward_push_sequence_tag_field_header(out.size() - n))
+        | WRAP_F(out | backward_push_sequence_tag_field_header(out.size() - n))
+        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, 1))
+        ;
+    };
+}
+
+auto sequence_header() noexcept
+{
+    return [=](auto out) noexcept {
+        return out | backward_push_sequence_tag_field_header(out.size());
+    };
+}
+
+template<class F>
+auto optional(bool b, F f) noexcept
+{
+    return [=](auto out) noexcept {
+        using Result = decltype(f(out));
+        if (b) {
+            return f(out);
+        }
+        return Result{out.internal_data()};
+    };
+}
+
+template<std::size_t Size, std::size_t BufferCount>
+struct [[nodiscard]] ProcessSizeBuffer
+{
+    ProcessSizeBuffer(int /*dummy*/ = 0) {}
+
+    ProcessSizeBuffer<Size+1, BufferCount> push(uint8_t value) noexcept;
+
+    ProcessSizeBuffer<Size, BufferCount+1> push_bytes(bytes_view value) noexcept;
+
+    int internal_data() const noexcept;
+
+    static uint32_t size() noexcept;
+
+    template<class F>
+    auto operator | (F f) const noexcept -> decltype(f(*this));
+};
+
+template<class>
+struct ProcessSizes;
+
+template<std::size_t Size, std::size_t BufferCount>
+struct ProcessSizes<ProcessSizeBuffer<Size, BufferCount>>
+{
+    static constexpr std::size_t static_size = Size;
+    static constexpr std::size_t buffer_count = BufferCount;
+};
+
+
+struct [[nodiscard]] ProcessWritableBuffer
+{
+    struct Data
+    {
+        uint32_t previous_size;
+        uint8_t* start;
+        uint8_t* p;
+        bytes_view* end_stack;
+
+        bytes_view reversed_buffer() noexcept
+        {
+            std::reverse(start, p);
+            return {start, p};
+        }
+    };
+
+    Data data;
+
+    Data internal_data() const noexcept
+    {
+        return data;
+    }
+
+    uint32_t size() const noexcept
+    {
+        return data.previous_size;
+    }
+
+    ProcessWritableBuffer push(uint8_t value) noexcept
+    {
+        *data.p = value;
+        return {data.previous_size + 1, data.start, data.p + 1, data.end_stack};
+    }
+
+    ProcessWritableBuffer push_bytes(bytes_view value) noexcept
+    {
+        *(data.end_stack - 1) = data.reversed_buffer();
+        *(data.end_stack - 2) = {value.begin(), value.end()};
+        return {checked_int(data.previous_size + value.size()), data.p, data.p, data.end_stack - 2};
+    }
+
+    template<class F>
+    ProcessWritableBuffer operator | (F f) const noexcept
+    {
+        return f(*this);
+    }
+};
+
+std::vector<uint8_t> bytes_to_vec(array_view<bytes_view> ranges)
+{
+    std::size_t len = 0;
+    for (auto range : ranges) {
+        len += range.size();
+    }
+
+    std::vector<uint8_t> vec(static_cast<std::size_t>(len));
+    auto* p = vec.data();
+    for (auto range : ranges) {
+        std::memcpy(p, range.data(), range.size());
+        p += range.size();
+    }
+
+    return vec;
+}
+
+template<class F>
+struct Pipe
+{
+    F f;
+
+    template<class T>
+    auto operator | (T x) noexcept
+    {
+        return f(x);
+    }
+};
+
+template<class... Fs>
+std::vector<uint8_t> make_vector(Fs... fs) noexcept
+{
+    using Sizes = ProcessSizes<decltype((Pipe<Fs>{fs} | ... | ProcessSizeBuffer<0, 0>{}))>;
+    uint8_t buffer[Sizes::static_size];
+
+    constexpr auto stack_size = Sizes::buffer_count * 2 + 1u;
+    bytes_view stack[stack_size];
+
+    auto buf = (Pipe<Fs>{fs} | ... | ProcessWritableBuffer{{0, buffer, buffer, stack + stack_size}});
+    *--buf.data.end_stack = buf.data.reversed_buffer();
+    return bytes_to_vec({buf.data.end_stack, stack + stack_size});
+}
+
+}
+
+}
+
+template<std::size_t Size1, std::size_t BufferCount1, std::size_t Size2, std::size_t BufferCount2>
+struct CommonBuffer<serial::ProcessSizeBuffer<Size1, BufferCount1>, serial::ProcessSizeBuffer<Size2, BufferCount2>>
+{
+    using type = serial::ProcessSizeBuffer<max_v<Size1, Size2>, max_v<BufferCount1, BufferCount2>>;
+};
+
+template<>
+struct CommonBuffer<serial::ProcessWritableBuffer, serial::ProcessWritableBuffer>
+{
+    using type = serial::ProcessWritableBuffer;
+};
+
+std::vector<uint8_t> emitTSRequest(uint32_t version,
+                                   bytes_view negoTokens,
+                                   bytes_view authInfo,
+                                   bytes_view pubKeyAuth,
+                                   uint32_t error_code,
+                                   bytes_view clientNonce,
+                                   bool nonce_initialized,
+                                   bool verbose)
+{
+    auto vec = serial::make_vector(
+        serial::sequence_header(),
+        serial::integer(version, 0),
+        serial::optional(negoTokens.size(), serial::nego_tokens(negoTokens)),
+        serial::optional(authInfo.size(), serial::string(authInfo, 2)),
+        serial::optional(pubKeyAuth.size(), serial::string(pubKeyAuth, 3)),
+        serial::optional((version >= 3 && version == 5) && error_code != 0,
+            serial::integer(error_code, 4)),
+        serial::optional(version >= 5 && nonce_initialized,
+            serial::string(clientNonce, 5))
+    );
+
+    if (verbose) {
+        LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
+        LOG(LOG_INFO, "TSRequest version %u ------------------------------", version);
+        LOG(LOG_INFO, "TSRequest negoTokens ------------------------------");
+        hexdump_d(negoTokens);
+        LOG(LOG_INFO, "TSRequest authInfo --------------------------------");
+        hexdump_d(authInfo);
+        LOG(LOG_INFO, "TSRequest pubkeyAuth ------------------------------");
+        hexdump_d(pubKeyAuth);
+        LOG(LOG_INFO, "TSRequest error_code %u ---------------------------", error_code);
+        LOG(LOG_INFO, "TSRequest clientNonce -----------------------------");
+        hexdump_d(clientNonce);
+
+        LOG(LOG_INFO, "emit TSRequest full dump---------------------------");
+        hexdump_d(vec);
+        LOG(LOG_INFO, "emit TSRequest hexdump -DONE-----------------------");
+    }
+
+    return vec;
+}
+
 }
 
 #undef WRAP_F

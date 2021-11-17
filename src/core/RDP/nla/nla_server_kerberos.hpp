@@ -22,6 +22,7 @@
 #pragma once
 
 #include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/ntlm_message.hpp"
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 #include "utils/translation.hpp"
