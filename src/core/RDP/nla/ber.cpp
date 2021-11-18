@@ -22,6 +22,7 @@ Author(s): Proxies Team
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
+#include "cxx/diagnostic.hpp"
 
 
 // BER Encoding Cheat Sheet
@@ -54,6 +55,11 @@ Author(s): Proxies Team
 // LL = length of string <= 255
 // LHLL = length of string <= 65535
 // LHLMLL = length of string 24 bits (unlikely, in credssp context it's probably an error)
+
+REDEMPTION_DIAGNOSTIC_PUSH()
+// for ProcessSizeBuffer because only used with decltype()
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wundefined-internal")
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wundefined-func-template")
 
 namespace BER
 {
@@ -765,25 +771,6 @@ namespace serial2
 namespace
 {
 
-template<class F>
-auto tagged(F f, uint8_t tag) noexcept
-{
-    return [=](auto out) noexcept {
-        return f(out, tag);
-    };
-}
-
-template<class F>
-auto taggable_field(F f)
-{
-    return [=](auto out, uint8_t tag) noexcept {
-        auto n = out.size();
-        return out
-        | f
-        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, tag));
-    };
-}
-
 auto push_bytes(bytes_view value) noexcept
 {
     return [=](auto out) noexcept {
@@ -797,6 +784,14 @@ namespace detail
     auto operator | (F f, U x) noexcept
     {
         return f(x);
+    }
+
+    template<class F>
+    auto tagged(F f, uint8_t tag) noexcept
+    {
+        return [=](auto out) noexcept {
+            return f(out, tag);
+        };
     }
 
     template<class>
@@ -815,75 +810,68 @@ namespace detail
     };
 }
 
-template<class... Fs>
-auto sequence(Fs... fs) noexcept
+template<class F>
+auto field(uint8_t mask_tag, F f) noexcept
 {
-    return [=](auto out, uint8_t tag) noexcept {
+    return [=](auto out, uint8_t tag = 0) noexcept {
         auto n = out.size();
         return out
-        | detail::taggable_sequence_t<std::index_sequence_for<Fs...>>::impl(fs...)
+        | f
         | WRAP_F(out | backward_push_ber_len(out.size() - n))
-        | push(CLASS_UNIV|PC_CONSTRUCT|TAG_SEQUENCE_OF | tag);
+        | push(mask_tag | tag);
     };
 }
 
-template<class... Fs>
-auto packet(Fs... fs) noexcept
+template<class F>
+auto context(F f) noexcept
 {
-    return taggable_field(detail::taggable_sequence_t<std::index_sequence_for<Fs...>>::impl(fs...));
+    return field(CLASS_CTXT | PC_CONSTRUCT, f);
+}
+
+template<class... Fs>
+auto sequence(Fs... fs) noexcept
+{
+    return field(
+        CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF,
+        detail::taggable_sequence_t<std::index_sequence_for<Fs...>>::impl(fs...)
+    );
 }
 
 auto integer(uint32_t value) noexcept
 {
-    return taggable_field(backward_push_integer(value));
+    return context(backward_push_integer(value));
 }
 
 auto enumerated(uint32_t value) noexcept
 {
-    return taggable_field(backward_push_enumerated(value));
+    return context(backward_push_enumerated(value));
 }
 
 template<class F>
-auto string_header(F f) noexcept
+auto object_string(F f) noexcept
 {
-    return [=](auto out, uint8_t tag) noexcept {
-        auto n = out.size();
-        return f(out, 0)
-        | WRAP_F(out | backward_push_ber_len(out.size() - n))
-        | push(CLASS_UNIV | PC_PRIMITIVE | TAG_OCTET_STRING | tag);
-    };
+    return context(field(
+        CLASS_UNIV | PC_PRIMITIVE | TAG_OCTET_STRING,
+        f
+    ));
 }
 
 auto string(bytes_view value) noexcept
 {
-    return taggable_field([=](auto out) noexcept {
-        return out
-        | push_bytes(value)
-        | backward_push_octet_string_header(value.size());
-    });
+    return object_string(push_bytes(value));
 }
 
 auto oid(bytes_view value) noexcept
 {
-    return taggable_field([=](auto out) noexcept {
-        return out
-        | push_bytes(value)
-        | backward_push_oid_header(checked_cast<uint32_t>(value.size()));
-    });
+    return context(field(
+        CLASS_UNIV | PC_PRIMITIVE | TAG_OBJECT_IDENTIFIER,
+        push_bytes(value)
+    ));
 }
 
 auto nego_tokens(bytes_view value) noexcept
 {
-    return taggable_field([=](auto out) noexcept {
-        auto n = out.size();
-        return out
-        | push_bytes(value)
-        | backward_push_octet_string_header(value.size())
-        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, 0))
-        | WRAP_F(out | backward_push_sequence_tag_field_header(out.size() - n))
-        | WRAP_F(out | backward_push_sequence_tag_field_header(out.size() - n))
-        ;
-    });
+    return context(sequence(sequence(string(value))));
 }
 
 template<class F>
@@ -906,36 +894,18 @@ auto optional_string(bytes_view value) noexcept
 template<std::size_t Size, std::size_t BufferCount>
 struct [[nodiscard]] ProcessSizeBuffer
 {
-    ProcessSizeBuffer(int /*dummy*/ = 0)
-    {}
+    ProcessSizeBuffer(int /*dummy*/ = 0) noexcept;
 
-    ProcessSizeBuffer<Size+1, BufferCount> push(uint8_t value) noexcept
-    {
-        (void)value;
-        return {};
-    }
+    ProcessSizeBuffer<Size+1, BufferCount> push(uint8_t value) noexcept;
 
-    ProcessSizeBuffer<Size, BufferCount+1> push_bytes(bytes_view value) noexcept
-    {
-        (void)value;
-        return {};
-    }
+    ProcessSizeBuffer<Size, BufferCount+1> push_bytes(bytes_view value) noexcept;
 
-    int internal_data() const noexcept
-    {
-        return {};
-    }
+    int internal_data() const noexcept;
 
-    static uint32_t size() noexcept
-    {
-        return {};
-    }
+    static uint32_t size() noexcept;
 
     template<class F>
-    auto operator | (F f) const noexcept
-    {
-        return f(*this);
-    }
+    auto operator | (F f) const noexcept -> decltype(f(*this));
 };
 
 template<class>
@@ -1112,13 +1082,11 @@ std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName,
     auto result = serial2::make_vector(
         serial2::sequence(
             serial2::integer(1),
-            serial2::packet(
-                serial2::string_header(
-                    serial2::sequence(
-                        serial2::string(domainName),
-                        serial2::string(userName),
-                        serial2::string(password)
-                    )
+            serial2::object_string(
+                serial2::sequence(
+                    serial2::string(domainName),
+                    serial2::string(userName),
+                    serial2::string(password)
                 )
             )
         )
@@ -1146,22 +1114,20 @@ std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
     auto result = serial2::make_vector(
         serial2::sequence(
             serial2::integer(2),
-            serial2::packet(
-                serial2::string_header(
-                    serial2::sequence(
-                        serial2::string(pin),
-                        serial2::packet(
-                            serial2::sequence(
-                                serial2::integer(keySpec),
-                                serial2::string(cardName),
-                                serial2::string(readerName),
-                                serial2::string(containerName),
-                                serial2::string(cspName)
-                            )
-                        ),
-                        serial2::string(userHint),
-                        serial2::string(domainHint)
-                    )
+            serial2::object_string(
+                serial2::sequence(
+                    serial2::string(pin),
+                    serial2::context(
+                        serial2::sequence(
+                            serial2::integer(keySpec),
+                            serial2::string(cardName),
+                            serial2::string(readerName),
+                            serial2::string(containerName),
+                            serial2::string(cspName)
+                        )
+                    ),
+                    serial2::string(userHint),
+                    serial2::string(domainHint)
                 )
             )
         )
@@ -1215,3 +1181,5 @@ std::vector<uint8_t> emitNegTokenResp(uint32_t negState,
 }
 
 #undef WRAP_F
+
+REDEMPTION_DIAGNOSTIC_POP()
