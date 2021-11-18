@@ -434,12 +434,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     bytes_view user = "square\0"_av;
     bytes_view pass = "hypercube\0"_av;
 
-    auto r = emitTSCredentialsPassword(domain, user, pass, true);
-    RED_CHECK_EQUAL(r, "\x30\x31\xa0\x03\x02\x01\x01\xa1\x2a\x04(0&"
+    auto expected = "\x30\x31\xa0\x03\x02\x01\x01\xa1\x2a\x04(0&"
         "\xa0\x0b\x04\tflatland\x00\xa1\t\x04\x07square\x00\xa2\x0c"
-        "\x04\nhypercube\x00"_av);
+        "\x04\nhypercube\x00"_av;
+    RED_CHECK_EQUAL(emitTSCredentialsPassword(domain, user, pass, true), expected);
 
-    TSCredentials ts_cred_received = recvTSCredentials(r, true);
+    TSCredentials ts_cred_received = recvTSCredentials(expected, true);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
     RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName, domain);
@@ -459,15 +459,15 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     bytes_view cspName = "what\0"_av;
     uint32_t keySpec = 32;
 
-    auto r = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec,
-        cardName, readerName, containerName, cspName, true);
-    RED_CHECK_EQUAL(r, "\x30\x64\xa0\x03\x02\x01\x02\xa1\x5d\x04[0Y\xa0\x07"
+    auto expected = "\x30\x64\xa0\x03\x02\x01\x02\xa1\x5d\x04[0Y\xa0\x07"
         "\x04\x05""3615\x00\xa1""806\xa0\x03\x02\x01\x20\xa1\x0f\x04\rpasse"
         "partout\x00\xa2\n\x04\bacrobat\x00\xa3\t\x04\x07""docker\x00\xa4"
         "\x07\x04\x05what\x00\xa2\x06\x04\x04""aka\x00\xa3\x0c\x04\ngrandparc"
-        "\x00"_av);
+        "\x00"_av;
+    RED_CHECK_EQUAL(emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec,
+        cardName, readerName, containerName, cspName, true), expected);
 
-    TSCredentials ts_cred = recvTSCredentials(r, true);
+    TSCredentials ts_cred = recvTSCredentials(expected, true);
 
     RED_CHECK_EQUAL(ts_cred.credType, 2);
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.pin, pin);

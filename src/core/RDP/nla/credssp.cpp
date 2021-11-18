@@ -172,32 +172,7 @@ TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
 
 std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view user, bytes_view password, bool verbose)
 {
-    // [0] domainName (OCTET STRING)
-    auto ber_domain_name_header = BER::mkMandatoryOctetStringFieldHeader(domain.size(), 0);
-    // [1] userName (OCTET STRING)
-    auto ber_user_name_header = BER::mkMandatoryOctetStringFieldHeader(user.size(), 1);
-    // [2] password (OCTET STRING)
-    auto ber_password_header = BER::mkMandatoryOctetStringFieldHeader(password.size(), 2);
-
-    // TSPasswordCreds (SEQUENCE)
-    size_t ts_password_creds_length = ber_domain_name_header.size()+ domain.size()
-                             + ber_user_name_header.size()+user.size()
-                             + ber_password_header.size()+password.size();
-
-    auto ber_ts_password_creds_header = BER::mkSequenceHeader(uint32_t(ts_password_creds_length));
-
-    std::vector<uint8_t> result = std::move(ber_ts_password_creds_header);
-    result << ber_domain_name_header << domain
-           << ber_user_name_header << user
-           << ber_password_header << password;
-
-    if (verbose) {
-        LOG(LOG_INFO, "emitPasswordsCreds full dump ------------");
-        hexdump_d(result);
-        LOG(LOG_INFO, "emitPasswordsCreds hexdump done ---------");
-    }
-
-    return result;
+    return BER::emitTSPasswordCreds(domain, user, password, verbose);
 }
 
 
@@ -228,29 +203,7 @@ std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
                                          bytes_view containerName,
                                          bytes_view cspName)
 {
-    auto ber_keySpec_Field        = BER::mkIntegerField(keySpec, 0);
-    auto ber_cardName_Header      = BER::mkOptionalOctetStringFieldHeader(cardName.size(), 1);
-    auto ber_readerName_Header    = BER::mkOptionalOctetStringFieldHeader(readerName.size(), 2);
-    auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(containerName.size(), 3);
-    auto ber_cspName_Header       = BER::mkOptionalOctetStringFieldHeader(cspName.size(), 4);
-
-    auto innerSize = ber_keySpec_Field.size()
-                  + ber_cardName_Header.size() + cardName.size()
-                  + ber_readerName_Header.size() + readerName.size()
-                  + ber_containerName_Header.size() + containerName.size()
-                  + ber_cspName_Header.size() + cspName.size();
-
-    // TSCspDataDetail (SEQUENCE)
-    auto sequence_header = BER::mkSequenceHeader(innerSize);
-
-    std::vector<uint8_t> result = std::move(sequence_header);
-    result << ber_keySpec_Field
-           << ber_cardName_Header      << cardName
-           << ber_readerName_Header    << readerName
-           << ber_containerName_Header << containerName
-           << ber_cspName_Header       << cspName;
-
-    return result;
+    return BER::emitTSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
 }
 
 
@@ -302,35 +255,7 @@ std::vector<uint8_t> emitTSSmartCardCreds(
                   bytes_view containerName,
                   bytes_view cspName)
 {
-    // [0] pin (OCTET STRING)
-    auto ber_pin_header = BER::mkMandatoryOctetStringFieldHeader(pin.size(), 0);
-
-    // [1] cspData (TSCspDataDetail)
-    auto ber_TSCspDataDetail = emitTSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
-    auto ber_CspDataDetail_header = BER::mkContextualFieldHeader(ber_TSCspDataDetail.size(), 1);
-
-    /* [2] userHint (OCTET STRING OPTIONAL) */
-    auto ber_userHint_header = BER::mkOptionalOctetStringFieldHeader(userHint.size(), 2);
-
-    /* [3] domainHint (OCTET STRING OPTIONAL) */
-    auto ber_domainHint_header = BER::mkOptionalOctetStringFieldHeader(domainHint.size(), 3);
-
-    /* TSCredentials (SEQUENCE) */
-    size_t ts_smartcards_creds_length = ber_pin_header.size() + pin.size()
-                  + ber_CspDataDetail_header.size() + ber_TSCspDataDetail.size()
-                  + ber_userHint_header.size() + userHint.size()
-                  + ber_domainHint_header.size() + domainHint.size()
-                  ;
-
-    auto ber_ts_smartcards_creds_header = BER::mkSequenceHeader(ts_smartcards_creds_length);
-
-    std::vector<uint8_t> result = std::move(ber_ts_smartcards_creds_header);
-    result << ber_pin_header           << pin
-           << ber_CspDataDetail_header << ber_TSCspDataDetail
-           << ber_userHint_header      << userHint
-           << ber_domainHint_header    << domainHint;
-
-    return result;
+    return BER::emitTSSmartCardCreds(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
 }
 
 
@@ -377,28 +302,7 @@ TSCredentials recvTSCredentials(bytes_view data, bool verbose)
 
 std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, bytes_view userName, bytes_view password, bool verbose)
 {
-    // [0] credType (INTEGER) : 1 means password
-    auto ber_credtype_field = BER::mkSmallIntegerField(1, 0);
-
-    // [1] credentials (OCTET STRING)
-    std::vector<uint8_t> ber_credentials = emitTSPasswordCreds(domainName, userName, password, verbose);
-    auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
-
-    // TSCredentials (SEQUENCE)
-    auto inner_size = ber_credtype_field.size() + ber_credentials_header.size() + ber_credentials.size();
-    auto sequence_header = BER::mkSequenceHeader(inner_size);
-
-    std::vector<uint8_t> result = std::move(sequence_header);
-    result << ber_credtype_field
-           << ber_credentials_header << ber_credentials;
-
-    if (verbose) {
-        LOG(LOG_INFO, "emitTSCredentialsPassword full dump ------------");
-        hexdump_d(result);
-        LOG(LOG_INFO, "emitTSCredentialsPassword hexdump done----------");
-    }
-
-    return result;
+    return BER::emitTSCredentialsPassword(domainName, userName, password, verbose);
 }
 
 std::vector<uint8_t> emitTSCredentialsSmartCard(
@@ -410,28 +314,7 @@ std::vector<uint8_t> emitTSCredentialsSmartCard(
                   bytes_view cspName,
                   bool verbose)
 {
-    // [0] credType (INTEGER): 2 means SmartCard
-    auto ber_credtype_field = BER::mkSmallIntegerField(2, 0);
-
-    // [1] credentials (OCTET STRING)
-    std::vector<uint8_t> ber_credentials = emitTSSmartCardCreds(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
-    auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
-
-    // TSCredentials (SEQUENCE)
-    auto inner_size = ber_credtype_field.size() + ber_credentials_header.size() + ber_credentials.size();
-    auto sequence_header = BER::mkSequenceHeader(inner_size);
-
-    std::vector<uint8_t> result = std::move(sequence_header);
-    result << ber_credtype_field
-           << ber_credentials_header << ber_credentials;
-
-    if (verbose) {
-        LOG(LOG_INFO, "emitTSCredentialsSmartCard full dump ------------");
-        hexdump_d(result);
-        LOG(LOG_INFO, "emitTSCredentialsSmartCard hexdump done----------");
-    }
-
-    return result;
+    return BER::emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName, verbose);
 }
 
 

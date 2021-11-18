@@ -110,4 +110,43 @@ std::vector<uint8_t> emitTSRequest(uint32_t version,
                                    bytes_view clientNonce,
                                    bool nonce_initialized,
                                    bool verbose);
+
+std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain,
+                                         bytes_view user,
+                                         bytes_view password,
+                                         bool verbose);
+
+
+std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
+                                         bytes_view cardName,
+                                         bytes_view readerName,
+                                         bytes_view containerName,
+                                         bytes_view cspName);
+
+std::vector<uint8_t> emitTSSmartCardCreds(buffer_view pin,
+                                          buffer_view userHint,
+                                          bytes_view domainHint,
+                                          uint32_t keySpec,
+                                          bytes_view cardName,
+                                          bytes_view readerName,
+                                          bytes_view containerName,
+                                          bytes_view cspName);
+
+std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName,
+                                               bytes_view userName,
+                                               bytes_view password,
+                                               bool verbose);
+
+std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
+                                                buffer_view userHint,
+                                                bytes_view domainHint,
+                                                uint32_t keySpec,
+                                                bytes_view cardName,
+                                                bytes_view readerName,
+                                                bytes_view containerName,
+                                                bytes_view cspName,
+                                                bool verbose);
+
+std::vector<uint8_t> emitMechTokensEnvelop(bytes_view & mechTokens);
+
 } // namespace BER
