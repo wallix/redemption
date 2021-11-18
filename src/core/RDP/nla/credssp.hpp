@@ -412,8 +412,6 @@ struct TSPasswordCreds {
 
 TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose);
 
-std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view user, bytes_view password, bool verbose);
-
 
 /* TSCspDataDetail ::= SEQUENCE {
  *     keySpec       [0] INTEGER,
@@ -436,13 +434,6 @@ struct TSCspDataDetail {
 TSCspDataDetail recvTSCspDataDetail(bytes_view data);
 
 
-std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
-                                         bytes_view cardName,
-                                         bytes_view readerName,
-                                         bytes_view containerName,
-                                         bytes_view cspName);
-
-
 /*
  * TSSmartCardCreds ::= SEQUENCE {
  *     pin        [0] OCTET STRING,
@@ -460,14 +451,6 @@ struct TSSmartCardCreds {
 };
 
 TSSmartCardCreds recvTSSmartCardCreds(bytes_view data, bool verbose);
-
-std::vector<uint8_t> emitTSSmartCardCreds(
-                  buffer_view pin, buffer_view userHint, bytes_view domainHint,
-                  uint32_t keySpec,
-                  bytes_view cardName,
-                  bytes_view readerName,
-                  bytes_view containerName,
-                  bytes_view cspName);
 
 
 /*
@@ -631,7 +614,7 @@ struct SpNegoTokenResp final {
 SpNegoTokenResp recvSpNegoTokenResp(bytes_view data);
 
 
-std::vector<uint8_t> emitMechTokensEnvelop(const std::vector<uint8_t> & mechTokens);
+std::vector<uint8_t> emitMechTokensEnvelop(bytes_view mechTokens);
 
 
 std::vector<uint8_t> emitNegTokenResp(

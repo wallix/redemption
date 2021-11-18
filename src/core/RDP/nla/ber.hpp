@@ -83,6 +83,8 @@ namespace BER
 
     uint32_t read_optional_integer(InStream & stream, uint8_t tag, const char * message);
 
+    std::vector<uint8_t> read_optional_oid(InStream & stream, uint8_t tag, const char * message);
+
     std::pair<uint32_t, bytes_view> pop_enumerated(bytes_view s, const char * message);
 
     uint32_t read_mandatory_enumerated(InStream & stream, uint8_t tag, const char *message);
@@ -111,27 +113,6 @@ std::vector<uint8_t> emitTSRequest(uint32_t version,
                                    bool nonce_initialized,
                                    bool verbose);
 
-std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain,
-                                         bytes_view user,
-                                         bytes_view password,
-                                         bool verbose);
-
-
-std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
-                                         bytes_view cardName,
-                                         bytes_view readerName,
-                                         bytes_view containerName,
-                                         bytes_view cspName);
-
-std::vector<uint8_t> emitTSSmartCardCreds(buffer_view pin,
-                                          buffer_view userHint,
-                                          bytes_view domainHint,
-                                          uint32_t keySpec,
-                                          bytes_view cardName,
-                                          bytes_view readerName,
-                                          bytes_view containerName,
-                                          bytes_view cspName);
-
 std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName,
                                                bytes_view userName,
                                                bytes_view password,
@@ -147,6 +128,13 @@ std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
                                                 bytes_view cspName,
                                                 bool verbose);
 
-std::vector<uint8_t> emitMechTokensEnvelop(bytes_view & mechTokens);
+std::vector<uint8_t> emitMechTokensEnvelop(bytes_view mechTokens);
+
+std::vector<uint8_t> emitNegTokenResp(uint32_t negState,
+                                      bool sendNegState,
+                                      bytes_view mechOid,
+                                      buffer_view responseToken,
+                                      buffer_view mechListMIC,
+                                      bool verbose);
 
 } // namespace BER

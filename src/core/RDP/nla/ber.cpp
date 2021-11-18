@@ -724,6 +724,22 @@ std::pair<BerOID, bytes_view> BER::pop_oid(bytes_view s, const char * message)
     return {oid, queue};
 }
 
+std::vector<uint8_t> BER::read_optional_oid(InStream & stream, uint8_t tag, const char * message)
+{
+    if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag)) {
+        auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message);
+        stream.in_skip_bytes(stream.in_remain()-queue1.size());
+        (void)length1;
+
+        auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_UNIV|PC_PRIMITIVE|TAG_OBJECT_IDENTIFIER, message);
+        stream.in_skip_bytes(stream.in_remain()-queue2.size());
+
+        auto av = stream.in_skip_bytes(length2);
+        return {av.data(), av.data()+av.size()};
+    }
+    return {};
+}
+
 BerOID BER::pop_oid(InStream & s, const char * message)
 {
     auto [bytes, queue] = pop_tag_length(s.remaining_bytes(), CLASS_UNIV | PC_PRIMITIVE | TAG_OBJECT_IDENTIFIER, message);
@@ -806,7 +822,8 @@ auto sequence(Fs... fs) noexcept
         auto n = out.size();
         return out
         | detail::taggable_sequence_t<std::index_sequence_for<Fs...>>::impl(fs...)
-        | WRAP_F(out | backward_push_sequence_tag_field_header(out.size() - n));
+        | WRAP_F(out | backward_push_ber_len(out.size() - n))
+        | push(CLASS_UNIV|PC_CONSTRUCT|TAG_SEQUENCE_OF | tag);
     };
 }
 
@@ -821,12 +838,37 @@ auto integer(uint32_t value) noexcept
     return taggable_field(backward_push_integer(value));
 }
 
+auto enumerated(uint32_t value) noexcept
+{
+    return taggable_field(backward_push_enumerated(value));
+}
+
+template<class F>
+auto string_header(F f) noexcept
+{
+    return [=](auto out, uint8_t tag) noexcept {
+        auto n = out.size();
+        return f(out, 0)
+        | WRAP_F(out | backward_push_ber_len(out.size() - n))
+        | push(CLASS_UNIV | PC_PRIMITIVE | TAG_OCTET_STRING | tag);
+    };
+}
+
 auto string(bytes_view value) noexcept
 {
     return taggable_field([=](auto out) noexcept {
         return out
         | push_bytes(value)
         | backward_push_octet_string_header(value.size());
+    });
+}
+
+auto oid(bytes_view value) noexcept
+{
+    return taggable_field([=](auto out) noexcept {
+        return out
+        | push_bytes(value)
+        | backward_push_oid_header(checked_cast<uint32_t>(value.size()));
     });
 }
 
@@ -845,17 +887,6 @@ auto nego_tokens(bytes_view value) noexcept
 }
 
 template<class F>
-auto contextual(F f, uint8_t tag) noexcept
-{
-    return [=](auto out) noexcept {
-        auto n = out.size();
-        return out
-        | f
-        | WRAP_F(out | backward_push_tagged_field_header(out.size() - n, tag));
-    };
-}
-
-template<class F>
 auto optional(bool b, F f) noexcept
 {
     return [=](auto out, uint8_t tag) noexcept {
@@ -867,21 +898,44 @@ auto optional(bool b, F f) noexcept
     };
 }
 
+auto optional_string(bytes_view value) noexcept
+{
+    return optional(!value.empty(), string(value));
+}
+
 template<std::size_t Size, std::size_t BufferCount>
 struct [[nodiscard]] ProcessSizeBuffer
 {
-    ProcessSizeBuffer(int /*dummy*/ = 0) {}
+    ProcessSizeBuffer(int /*dummy*/ = 0)
+    {}
 
-    ProcessSizeBuffer<Size+1, BufferCount> push(uint8_t value) noexcept;
+    ProcessSizeBuffer<Size+1, BufferCount> push(uint8_t value) noexcept
+    {
+        (void)value;
+        return {};
+    }
 
-    ProcessSizeBuffer<Size, BufferCount+1> push_bytes(bytes_view value) noexcept;
+    ProcessSizeBuffer<Size, BufferCount+1> push_bytes(bytes_view value) noexcept
+    {
+        (void)value;
+        return {};
+    }
 
-    int internal_data() const noexcept;
+    int internal_data() const noexcept
+    {
+        return {};
+    }
 
-    static uint32_t size() noexcept;
+    static uint32_t size() noexcept
+    {
+        return {};
+    }
 
     template<class F>
-    auto operator | (F f) const noexcept -> decltype(f(*this));
+    auto operator | (F f) const noexcept
+    {
+        return f(*this);
+    }
 };
 
 template<class>
@@ -1020,8 +1074,8 @@ std::vector<uint8_t> emitTSRequest(uint32_t version,
         serial2::sequence(
             serial2::integer(version),
             serial2::optional(negoTokens.size(), serial2::nego_tokens(negoTokens)),
-            serial2::optional(authInfo.size(), serial2::string(authInfo)),
-            serial2::optional(pubKeyAuth.size(), serial2::string(pubKeyAuth)),
+            serial2::optional_string(authInfo),
+            serial2::optional_string(pubKeyAuth),
             serial2::optional((version >= 3 && version == 5) && error_code != 0,
                 serial2::integer(error_code)),
             serial2::optional(version >= 5 && nonce_initialized,
@@ -1050,72 +1104,6 @@ std::vector<uint8_t> emitTSRequest(uint32_t version,
     return result;
 }
 
-std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain,
-                                         bytes_view user,
-                                         bytes_view password,
-                                         bool verbose)
-{
-    auto result = serial2::make_vector(
-        serial2::sequence(
-            serial2::string(domain),
-            serial2::string(user),
-            serial2::string(password)
-        )
-    );
-
-    if (verbose) {
-        LOG(LOG_INFO, "emitPasswordsCreds full dump ------------");
-        hexdump_d(result);
-        LOG(LOG_INFO, "emitPasswordsCreds hexdump done ---------");
-    }
-
-    return result;
-}
-
-std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
-                                         bytes_view cardName,
-                                         bytes_view readerName,
-                                         bytes_view containerName,
-                                         bytes_view cspName)
-{
-    return serial2::make_vector(
-        serial2::sequence(
-            serial2::integer(keySpec),
-            serial2::string(cardName),
-            serial2::string(readerName),
-            serial2::string(containerName),
-            serial2::string(cspName)
-        )
-    );
-}
-
-std::vector<uint8_t> emitTSSmartCardCreds(buffer_view pin,
-                                          buffer_view userHint,
-                                          bytes_view domainHint,
-                                          uint32_t keySpec,
-                                          bytes_view cardName,
-                                          bytes_view readerName,
-                                          bytes_view containerName,
-                                          bytes_view cspName)
-{
-    return serial2::make_vector(
-        serial2::sequence(
-            serial2::string(pin),
-            serial2::packet(
-                serial2::sequence(
-                    serial2::integer(keySpec),
-                    serial2::string(cardName),
-                    serial2::string(readerName),
-                    serial2::string(containerName),
-                    serial2::string(cspName)
-                )
-            ),
-            serial2::string(userHint),
-            serial2::string(domainHint)
-        )
-    );
-}
-
 std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName,
                                                bytes_view userName,
                                                bytes_view password,
@@ -1125,15 +1113,13 @@ std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName,
         serial2::sequence(
             serial2::integer(1),
             serial2::packet(
-                [=](auto out, uint8_t tag) {
-                    auto n = out.size();
-                    return serial2::sequence(
+                serial2::string_header(
+                    serial2::sequence(
                         serial2::string(domainName),
                         serial2::string(userName),
                         serial2::string(password)
-                    )(out, tag)
-                    | WRAP_F(out | backward_push_octet_string_header(out.size() - n));
-                }
+                    )
+                )
             )
         )
     );
@@ -1146,7 +1132,6 @@ std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName,
 
     return result;
 }
-
 
 std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
                                                 buffer_view userHint,
@@ -1162,9 +1147,8 @@ std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
         serial2::sequence(
             serial2::integer(2),
             serial2::packet(
-                [=](auto out, uint8_t tag) {
-                    auto n = out.size();
-                    return serial2::sequence(
+                serial2::string_header(
+                    serial2::sequence(
                         serial2::string(pin),
                         serial2::packet(
                             serial2::sequence(
@@ -1177,9 +1161,8 @@ std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
                         ),
                         serial2::string(userHint),
                         serial2::string(domainHint)
-                    )(out, tag)
-                    | WRAP_F(out | backward_push_octet_string_header(out.size() - n));
-                }
+                    )
+                )
             )
         )
     );
@@ -1193,10 +1176,41 @@ std::vector<uint8_t> emitTSCredentialsSmartCard(buffer_view pin,
     return result;
 }
 
-// std::vector<uint8_t> emitMechTokensEnvelop(bytes_view & mechTokens)
-// {
-//
-// }
+std::vector<uint8_t> emitMechTokensEnvelop(bytes_view mechTokens)
+{
+    return serial2::make_vector(
+        serial2::sequence(
+            serial2::sequence(
+                serial2::string(mechTokens)
+            )
+        )
+    );
+}
+
+std::vector<uint8_t> emitNegTokenResp(uint32_t negState,
+                                      bool sendNegState,
+                                      bytes_view mechOid,
+                                      buffer_view responseToken,
+                                      buffer_view mechListMIC,
+                                      bool verbose)
+{
+    auto result = serial2::make_vector(
+        serial2::sequence(
+            serial2::optional(sendNegState, serial2::enumerated(negState)),
+            serial2::optional(mechOid.size(), serial2::oid(mechOid)),
+            serial2::optional_string(responseToken),
+            serial2::optional_string(mechListMIC)
+        )
+    );
+
+     if (verbose) {
+         LOG(LOG_INFO, "emitNegTokenResp full dump ------------");
+         hexdump_d(result);
+         LOG(LOG_INFO, "emitNegTokenResp hexdump done----------");
+     }
+
+     return result;
+}
 
 }
 

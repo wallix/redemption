@@ -170,11 +170,6 @@ TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
     return self;
 }
 
-std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view user, bytes_view password, bool verbose)
-{
-    return BER::emitTSPasswordCreds(domain, user, password, verbose);
-}
-
 
 TSCspDataDetail recvTSCspDataDetail(bytes_view data)
 {
@@ -194,16 +189,6 @@ TSCspDataDetail recvTSCspDataDetail(bytes_view data)
     self.containerName = BER::read_optional_octet_string(stream, 3, "TSCspDataDetail [3] containerName");
     self.cspName       = BER::read_optional_octet_string(stream, 4, "TSCspDataDetail [4] cspName");
     return self;
-}
-
-
-std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
-                                         bytes_view cardName,
-                                         bytes_view readerName,
-                                         bytes_view containerName,
-                                         bytes_view cspName)
-{
-    return BER::emitTSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
 }
 
 
@@ -246,18 +231,6 @@ TSSmartCardCreds recvTSSmartCardCreds(bytes_view data, bool verbose)
     self.domainHint = BER::read_optional_octet_string(stream, 3, "TSSmartCardCreds [3] domainHint");
     return self;
 }
-
-std::vector<uint8_t> emitTSSmartCardCreds(
-                  buffer_view pin, buffer_view userHint, bytes_view domainHint,
-                  uint32_t keySpec,
-                  bytes_view cardName,
-                  bytes_view readerName,
-                  bytes_view containerName,
-                  bytes_view cspName)
-{
-    return BER::emitTSSmartCardCreds(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
-}
-
 
 TSCredentials recvTSCredentials(bytes_view data, bool verbose)
 {
@@ -445,7 +418,7 @@ SpNegoTokenResp recvSpNegoTokenResp(bytes_view data)
     self.negState = SpNegoNegstate(enum_value);
 
     /* supportedMech   [1] MechType      OPTIONAL, */
-    self.supportedMech = BER::read_optional_octet_string(stream, 1, "NegTokenInit::mechToken");
+    self.supportedMech = BER::read_optional_oid(stream, 1, "NegTokenInit::mechToken");
 
     /* mechToken [2] OCTET STRING  OPTIONAL, */
     self.responseToken = BER::read_optional_octet_string(stream, 2, "NegTokenInit::responseToken");
@@ -458,26 +431,9 @@ SpNegoTokenResp recvSpNegoTokenResp(bytes_view data)
 }
 
 
-std::vector<uint8_t> emitMechTokensEnvelop(const std::vector<uint8_t> & mechTokens) {
-    size_t cumulatedSize = mechTokens.size();
-    std::vector<uint8_t> octetStringHeader = BER::mkOctetStringHeader(cumulatedSize);
-
-    cumulatedSize += octetStringHeader.size();
-    std::vector<uint8_t> innerCtxHeader = BER::mkContextualFieldHeader(cumulatedSize, 0);
-
-    cumulatedSize += innerCtxHeader.size();
-    std::vector<uint8_t> innerSeqHeader = BER::mkSequenceHeader(cumulatedSize);
-
-    cumulatedSize += innerSeqHeader.size();
-    std::vector<uint8_t> topSeqHeader = BER::mkSequenceHeader(cumulatedSize);
-
-    std::vector<uint8_t> ret;
-    ret << topSeqHeader
-            << innerSeqHeader
-               << innerCtxHeader
-               << octetStringHeader << mechTokens;
-
-    return ret;
+std::vector<uint8_t> emitMechTokensEnvelop(bytes_view mechTokens)
+{
+    return BER::emitMechTokensEnvelop(mechTokens);
 }
 
 
@@ -488,55 +444,13 @@ std::vector<uint8_t> emitNegTokenResp(
         buffer_view mechListMIC,
         bool verbose)
 {
-
-
     // negState       [0] ENUMERATED {
     //      accept-completed    (0),
     //      accept-incomplete   (1),
     //      reject              (2),
     //      request-mic         (3)
     //  }                                 OPTIONAL,
-    //  -- REQUIRED in the first reply from the target
-    std::vector<uint8_t>  ber_negState;
-    if (negState != SPNEGO_STATE_INVALID)
-        ber_negState = BER::mkEnumeratedField(negState, 0);
-
-    // supportedMech   [1] MechType      OPTIONAL,
-    // -- present only in the first reply from the target
-    std::vector<uint8_t> ber_supportedMech;
-    bytes_view mechOidString = KnownOidHelper::oidData(supportedMech);
-    if (mechOidString.size())
-        ber_supportedMech = BER::mkOidField(mechOidString, 1);
-
-    // responseToken   [2] OCTET STRING  OPTIONAL,
-    auto ber_responseTokenHeader = BER::mkOptionalOctetStringFieldHeader(responseToken.size(), 2);
-
-    // mechListMIC     [3] OCTET STRING  OPTIONAL,
-    auto ber_mecListMIC = BER::mkOptionalOctetStringFieldHeader(mechListMIC.size(), 3);
-
-    //
-    auto inner_size = ber_negState.size() + ber_supportedMech.size() +
-            ber_responseTokenHeader.size() + responseToken.size() +
-            ber_mecListMIC.size() + mechListMIC.size();
-    auto sequence_header = BER::mkSequenceHeader(inner_size);
-
-    auto ctxt_header = BER::mkContextualFieldHeader(sequence_header.size() + inner_size, 1);
-
-    std::vector<uint8_t> result;
-    result  << ctxt_header
-            << sequence_header
-            << ber_negState
-            << ber_supportedMech
-            << ber_responseTokenHeader << responseToken
-            << ber_mecListMIC << mechListMIC;
-
-     if (verbose) {
-         LOG(LOG_INFO, "emitNegTokenResp full dump ------------");
-         hexdump_d(result);
-         LOG(LOG_INFO, "emitNegTokenResp hexdump done----------");
-     }
-
-     return result;
+    return BER::emitNegTokenResp(underlying_cast(negState), negState != SPNEGO_STATE_INVALID, KnownOidHelper::oidData(supportedMech), responseToken, mechListMIC, verbose);
 }
 
 

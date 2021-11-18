@@ -138,11 +138,17 @@ RED_AUTO_TEST_CASE(TestSpNegoToken)
 
     uint8_t responseToken[] = { 0x10, 0x11, 0x12 };
     auto tokenResp = emitNegTokenResp(SPNEGO_STATE_ACCEPT_INCOMPLETE, OID_NTLM,
-            {responseToken, sizeof(responseToken)},
-            bytes_view(), true
+        make_array_view(responseToken), bytes_view(), true
     );
-    RED_CHECK(tokenResp == "\xa1\x1c\x30\x1a\xa0\x03\x0a\x01\x01\xa1\x0c\x06\x0a\x2b\x06\x01\x04\x01"
-        "\x82\x37\x02\x02\x0a\xa2\x05\x04\x03\x10\x11\x12"_av);
+    auto expected = "\x30\x1a\xa0\x03\x0a\x01\x01\xa1\x0c\x06\x0a\x2b\x06\x01"
+        "\x04\x01\x82\x37\x02\x02\x0a\xa2\x05\x04\x03\x10\x11\x12"_av;
+    RED_CHECK(tokenResp == expected);
+
+    auto r = recvSpNegoTokenResp(expected);
+    RED_CHECK_EQUAL(r.negState, SPNEGO_STATE_ACCEPT_INCOMPLETE);
+    RED_CHECK_EQUAL(r.supportedMech, "\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a"_av);
+    RED_CHECK_EQUAL(r.responseToken, make_array_view(responseToken));
+    RED_CHECK_EQUAL(r.mechListMic, ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
@@ -479,6 +485,14 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK(ts_cred.smartcardCreds.cspData.readerName == readerName);
     RED_CHECK(ts_cred.smartcardCreds.cspData.containerName == containerName);
     RED_CHECK(ts_cred.smartcardCreds.cspData.cspName == cspName);
+}
+
+RED_AUTO_TEST_CASE(TestMechTokensEnvelop)
+{
+    bytes_view mechTokens = "abcdefgh"_av;
+
+    RED_CHECK_EQUAL(emitMechTokensEnvelop(mechTokens),
+        "\x30\x0e\x30\x0c\xa0\x0a\x04\x08""abcdefgh"_av);
 }
 
 //rdpCredssp - Client Authentication : Sending Authentication Token
