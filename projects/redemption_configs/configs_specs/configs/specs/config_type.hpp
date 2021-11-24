@@ -254,6 +254,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("FR")
     ;
 
+    e.enumeration_list("VncTunnelingType")
+        .value("pxssh")
+        .value("pexpect")
+        .value("popen")
+    ;
+
     e.enumeration_list("BannerType")
       .value("info")
       .value("warn")

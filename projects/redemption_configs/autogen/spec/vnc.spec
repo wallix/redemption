@@ -38,3 +38,16 @@ support_cursor_pseudo_encoding = boolean(default=True)
 # Enable target connection on ipv6
 enable_ipv6 = boolean(default=True)
 
+[vnc_over_ssh]
+
+enable = boolean(default=False)
+
+ssh_port = integer(min=0, default=22)
+
+ssh_login = string(default='')
+
+ssh_password = string(default='')
+
+#_advanced
+tunneling_type = option('pxssh', 'pexpect', 'popen', default='pxssh')
+

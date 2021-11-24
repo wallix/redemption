@@ -1845,6 +1845,68 @@ parse_error parse_from_cfg(LoginLanguage & x, ::configs::spec_type<std::string> 
         x, value, "bad value, expected: Auto, EN, FR");
 }
 
+inline constexpr zstring_view enum_zstr_VncTunnelingType[] {
+    "pxssh"_zv,
+    "pexpect"_zv,
+    "popen"_zv,
+};
+
+inline constexpr zstring_view enum_zint_VncTunnelingType[] {
+    "0"_zv,
+    "1"_zv,
+    "2"_zv,
+};
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<VncTunnelingType> /*type*/,
+    VncTunnelingType x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<VncTunnelingType>::is_valid(uint8_t(x)));
+    return enum_zint_VncTunnelingType[uint8_t(x)];
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<std::string> /*type*/,
+    VncTunnelingType x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<VncTunnelingType>::is_valid(uint8_t(x)));
+    return enum_zstr_VncTunnelingType[uint8_t(x)];
+}
+
+parse_error parse_from_cfg(VncTunnelingType & x, ::configs::spec_type<VncTunnelingType> /*type*/, bytes_view value)
+{
+    using ul = uint8_t;
+
+    ul xi = 0;
+    if (parse_error err = parse_integral(
+        xi, value,
+        zero_integral<ul>(),
+        std::integral_constant<ul, 2>()
+    )) {
+        return err;
+    }
+
+    x = static_cast<VncTunnelingType>(xi);
+    return no_parse_error;
+}
+
+
+inline constexpr std::pair<chars_view, VncTunnelingType> enum_str_value_VncTunnelingType[] {
+    {"PXSSH"_av, VncTunnelingType::pxssh},
+    {"PEXPECT"_av, VncTunnelingType::pexpect},
+    {"POPEN"_av, VncTunnelingType::popen},
+};
+
+parse_error parse_from_cfg(VncTunnelingType & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+{
+    return parse_str_value_pairs<enum_str_value_VncTunnelingType>(
+        x, value, "bad value, expected: pxssh, pexpect, popen");
+}
+
 inline constexpr zstring_view enum_zstr_BannerType[] {
     "info"_zv,
     "warn"_zv,

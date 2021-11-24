@@ -614,6 +614,18 @@ template<> struct is_valid_enum_value<LoginLanguage>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
+enum class VncTunnelingType : uint8_t
+{
+    pxssh = 0,
+    pexpect = 1,
+    popen = 2,
+};
+
+template<> struct is_valid_enum_value<VncTunnelingType>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 2; }
+};
+
 enum class BannerType : uint8_t
 {
     info = 0,

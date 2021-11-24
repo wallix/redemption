@@ -105,6 +105,8 @@ void config_spec_definition(Writer && W)
         "crypto",
         "websocket",
 
+        "vnc_over_ssh",
+
         "context",
 
         "internal_mod",
@@ -675,6 +677,15 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(true));
     });
 
+    W.section(names{"vnc_over_ssh"}, [&]
+    {
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"enable"}, set(false));
+        W.member(external, vnc_connpolicy, L, type_<types::unsigned_>(), names{"ssh_port"}, set(22));
+        W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"ssh_login"});
+        W.member(external, vnc_connpolicy, NL, type_<std::string>(), names{"ssh_password"});
+        W.member(external, vnc_connpolicy | advanced_in_connpolicy, L, type_<VncTunnelingType>(), spec::type_<std::string>(), names{"tunneling_type"}, set(VncTunnelingType::pxssh));
+    });
+
     W.section("metrics", [&]
     {
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_rdp_metrics"}, set(false));
@@ -935,6 +946,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, NL, type_<std::string>(), names{"target_password"});
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{"target_host"});
+        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{"tunneling_target_host"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_str"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_service"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), names{"target_port"}, set(3389));

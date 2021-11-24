@@ -46,6 +46,7 @@ back_to_selector_default_sent = {
     u'target_str': u'',
     u'timeclose': 0,
     u'trace_type': 1,
+    u'tunneling_target_host': u'',
 }
 back_to_selector_default_reinit = {
     u'auth_channel_target': u'',

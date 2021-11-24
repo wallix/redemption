@@ -117,6 +117,7 @@ namespace configs
         "mod_vnc:server_unix_alt"_zv,
         "mod_vnc:support_cursor_pseudo_encoding"_zv,
         "mod_vnc:enable_ipv6"_zv,
+        "vnc_over_ssh:enable"_zv,
         "file_verification:enable_up"_zv,
         "file_verification:enable_down"_zv,
         "file_verification:clipboard_text_up"_zv,
@@ -162,6 +163,7 @@ namespace configs
         "selector_number_of_pages"_zv,
         "target_password"_zv,
         "target_host"_zv,
+        "tunneling_target_host"_zv,
         "target_str"_zv,
         "target_service"_zv,
         "target_port"_zv,
@@ -242,11 +244,15 @@ namespace configs
         "mod_rdp:krb_armoring_realm"_zv,
         "mod_rdp:krb_armoring_fallback_user"_zv,
         "mod_rdp:krb_armoring_fallback_password"_zv,
+        "vnc_over_ssh:ssh_port"_zv,
+        "vnc_over_ssh:ssh_login"_zv,
+        "vnc_over_ssh:ssh_password"_zv,
+        "vnc_over_ssh:tunneling_type"_zv,
     };
 
 
 constexpr U64BitFlags<1> unused_connpolicy_loggable{ {
-  0b0000000000000000000000000000000000000000000000000000000000000111
+  0b0000000000000000000000000000000000000000000000000000000010110111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
