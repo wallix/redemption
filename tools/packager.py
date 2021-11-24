@@ -188,7 +188,7 @@ def get_current_tag_from_version_file():
     found = False
     current_tag = None
     out = readall("include/main/version.hpp")
-    out = out.split(b'\n')
+    out = out.split('\n')
     for line in out:
         res = re.match(r'^[#]define\sVERSION\s"(.*)"\s*$', line)
         if res:
@@ -283,7 +283,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
 def check_matching_version_changelog():
     found = False
     out = readall("include/main/version.hpp")
-    out = out.split(b'\n')
+    out = out.split('\n')
     for line in out:
         res = re.match(
             r'^[#]define\sVERSION\s"(([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)"\s*$',
