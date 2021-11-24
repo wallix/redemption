@@ -157,6 +157,8 @@ class ConfigurationFileLine:
         self.__is_variable_declaration = False
         self.__value = None
 
+        self.__must_be_deleted = False
+
         striped_data = raw_data.strip()
         striped_data_length = len(striped_data)
         if 0 == striped_data_length:
@@ -176,7 +178,7 @@ class ConfigurationFileLine:
             else:
                 raise AssertionError(
                      "ConfigurationFile.__init__: Invalid format: "
-                    f"{self.raw_data}")
+                    f"\"{self.raw_data}\"")
 
     def __eq__(self, other):
         if self.__verbose:
@@ -207,7 +209,7 @@ class ConfigurationFileLine:
             raise AssertionError(
                  "ConfigurationFile.get_name: "
                  "Not a section declaration or a variable declaration: "
-                f"{self.__raw_data}")
+                f"\"{self.__raw_data}\"")
 
         return self.__name
 
@@ -215,7 +217,7 @@ class ConfigurationFileLine:
         if not self.__is_variable_declaration:
             raise AssertionError(
                  "ConfigurationFile.get_value: "
-                f"Not a variable declaration: {self.__raw_data}")
+                f"Not a variable declaration: \"{self.__raw_data}\"")
 
         return self.__value
 
@@ -225,11 +227,28 @@ class ConfigurationFileLine:
     def is_empty(self):
         return self.__is_empty
 
+    def is_marked_to_be_deleted(self):
+        if self.__verbose:
+            print(
+                 "ConfigurationFileLine::is_marked_to_be_deleted: "
+                f"\"{self.__raw_data}\" MustBeDeleted={'Yes' if self.__must_be_deleted else 'No'}")
+
+        return self.__must_be_deleted
+
     def is_section_declaration(self):
         return self.__is_section_declaration
 
     def is_variable_declaration(self):
         return self.__is_variable_declaration
+
+    def mark_to_be_deleted(self):
+        if self.__verbose:
+            print(
+                 "ConfigurationFileLine::mark_to_be_deleted: "
+                f"\"{self.__raw_data}\"")
+
+        if self.__is_comment:
+            self.__must_be_deleted = True
 
 class ConfigurationFile:
     def __init__(self, filename = None, verbose = False):
@@ -279,12 +298,12 @@ class ConfigurationFile:
         if configuration_file_line.is_section_declaration():
             raise AssertionError(
                  "ConfigurationFile.__add_variable: "
-                f"Cannot add a new section: {line_raw_data}")
+                f"Cannot add a new section: \"{line_raw_data}\"")
 
         if not section_name:
             raise AssertionError(
                  "ConfigurationFile.__add_variable: "
-                f"Section name is invalid or missing: {line_raw_data}")
+                f"Section name is invalid or missing: \"{line_raw_data}\"")
 
         if configuration_file_line.is_variable_declaration():
             if self.__is_variable_exist(section_name,
@@ -292,7 +311,7 @@ class ConfigurationFile:
                 print("ConfigurationFile.migrate: "
                      "A variable of the same name still exists in the "
                          "section: "
-                    f"{str(configuration_file_line)}")
+                    f"\"{str(configuration_file_line)}\"")
 
                 return -1, 0
 
@@ -382,6 +401,9 @@ class ConfigurationFile:
                 f = open(filename, 'w', encoding='utf-8')
 
                 for line in self._content:
+                    if line.is_marked_to_be_deleted():
+                        continue
+
                     line_raw_data = str(line).rstrip("\r\n") + "\n"
                     f.write(f'{line_raw_data}')
 
@@ -395,6 +417,8 @@ class ConfigurationFile:
                     file=sys.stdout)
 
     def migrate(self, previous_version):
+        first_migration = True
+
         while True:
             line_migration_func, result_version =                           \
                 self._get_line_migration_func(previous_version)
@@ -410,13 +434,16 @@ class ConfigurationFile:
                             raise AssertionError(
                                  "ConfigurationFile.migrate: "
                                  "Not in a section: "
-                                f"{str(configuration_file_line)}")
+                                f"\"{str(configuration_file_line)}\"")
 
                         keep_unchanged, dest_section_name, line_raw_data =  \
                             line_migration_func(section_name,
                                 self._content[line_index])
                         if not keep_unchanged:
                             self._content[line_index].disable()
+
+                            if not first_migration:
+                                self._content[line_index].mark_to_be_deleted()
 
                             if dest_section_name:
                                 insert_position, insert_count =             \
@@ -456,7 +483,7 @@ class ConfigurationFile:
                                          "ConfigurationFile.migrate: "
                                          "Should not insert a new section "
                                              "with this method: "
-                                        f"{str(configuration_file_line)}")
+                                        f"\"{str(configuration_file_line)}\"")
 
                                 if configuration_file_line.is_variable_declaration() and \
                                    self.__is_variable_exist(
@@ -466,7 +493,7 @@ class ConfigurationFile:
                                          "ConfigurationFile.migrate: "
                                          "A variable of the same name still "
                                              "exists in the section: "
-                                        f"{str(configuration_file_line)}")
+                                        f"\"{str(configuration_file_line)}\"")
                                 else:
                                     self._content.insert(line_index + 1,
                                         configuration_file_line)
@@ -479,6 +506,20 @@ class ConfigurationFile:
                 previous_version = result_version
             else:
                 break
+
+            first_migration = False
+
+        line_count = len(self._content)
+        line_index = 0
+        while line_index < line_count:
+            if self._content[line_index].is_marked_to_be_deleted():
+                self._content.pop(line_index)
+
+                line_count -= 1
+
+                continue
+
+            line_index += 1
 
     def _get_line_migration_func(self, previous_version):
         raise NotImplementedError(
@@ -502,7 +543,7 @@ class ConfigurationFile:
                     raise AssertionError(
                          "ConfigurationFile.__is_variable_exist: "
                          "Not in a section: "
-                        f"{str(configuration_file_line)}")
+                        f"\"{str(configuration_file_line)}\"")
 
                 if current_section_name == section_name and                 \
                    self._content[line_index].get_name() == variable_name:
