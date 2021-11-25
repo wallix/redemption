@@ -62,7 +62,7 @@ if [[ ! -d node_modules ]]; then
 fi
 set -o pipefail
 toolset_emscripten=toolset=clang
-bjam -qj2 $toolset_emscripten -s EM_NO_ALLOW_UNIMPLEMENTED_SYSCALLS=1 debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
+bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
 rm -r bin/*
 popd
