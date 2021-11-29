@@ -22,9 +22,15 @@ Author(s): Proxies Team
 
 #include <sys/select.h>
 #include "cxx/diagnostic.hpp"
+#include "cxx/compiler_version.hpp"
+
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+#if REDEMPTION_COMP_VERSION_NUMBER(13, 0, 0) >= REDEMPTION_COMP_CLANG_VERSION
+  REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier")
+#endif
+
 inline void io_fd_zero(fd_set & rfds)
 {
     FD_ZERO(&rfds); /*NOLINT*/
