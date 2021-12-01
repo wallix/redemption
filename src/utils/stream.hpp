@@ -635,7 +635,7 @@ public:
         this->p+=4;
     }
 
-    void out_sint32_le(int64_t v) noexcept {
+    void out_sint32_le(int32_t v) noexcept {
         assert(this->has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
