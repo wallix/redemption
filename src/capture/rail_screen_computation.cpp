@@ -208,7 +208,7 @@ Rect RailScreenVisibility::get_join_visibility_rect() const
         }
     }
 
-    LOG_IF(this->verbose, LOG_INFO, "Capture::get_join_visibility_rect(): Done.");
+    LOG_IF(this->verbose, LOG_INFO, "Capture::get_join_visibility_rect(): Done %s", join_visibility_rect);
 
     return join_visibility_rect;
 }

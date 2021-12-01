@@ -54,4 +54,15 @@ RED_AUTO_TEST_CASE(TestRailScreenComputation)
     rail_screen.draw(RDP::RAIL::NonMonitoredDesktop());
     RED_TEST(rail_screen.get_max_image_frame_rect() == Rect(0, 0, 100, 100));
     RED_TEST(rail_screen.get_min_image_frame_dim() == Dimension(100, 100));
+
+    in_stream = InStream(
+        // orderSize(0), fieldsPresentFlags(VISOFFSET), windowId(1)
+        "\x00\x00" "\x00\x10\x00\x00" "\x01\x00\x00\x00"
+        // offsetX(-16), offsetY(-16)
+        "\xF0\xFF\xFF\xFF" "\xF0\xFF\xFF\xFF"
+        ""_av);
+    cmd.receive(in_stream);
+    rail_screen.draw(cmd);
+    RED_TEST(rail_screen.get_max_image_frame_rect() == Rect(-11, -6, 111, 106));
+    RED_TEST(rail_screen.get_min_image_frame_dim() == Dimension(100, 100));
 }
