@@ -22,7 +22,9 @@ Author(s): Proxies Team
 #include "capture/file_to_graphic.hpp"
 #include "capture/rail_screen_computation.hpp"
 #include "gdi/updatable_graphics.hpp"
+#include "gdi/relayout_api.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/bitset_stream.hpp"
 
 namespace
@@ -30,7 +32,7 @@ namespace
 
 constexpr std::size_t updatable_frame_end_buffer_size = 16*1024*1024 / sizeof(unsigned long long);
 
-struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics
+struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics, gdi::RelayoutApi
 {
     UpdatableFrameMarkerEndGraphics(
         MonotonicTimePoint::duration interval,
@@ -76,11 +78,20 @@ struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics
             ;
     }
 
+    void relayout(MonitorLayoutPDU const& monitor_layout_pdu) override
+    {
+        auto rect = monitor_layout_pdu.get_rect();
+        offset_screen_x = std::min(rect.x, offset_screen_x);
+        offset_screen_y = std::min(rect.y, offset_screen_y);
+    }
+
     FileToGraphic const& ftg;
     MonotonicTimePoint next_time;
     MonotonicTimePoint::duration interval;
     BitsetOutStream updatable_frame_end_bitset_stream;
     unsigned long long* updatable_frame_last_it = nullptr;
+    int16_t offset_screen_x = 0;
+    int16_t offset_screen_y = 0;
     bool previous_drawing_event = true;
     bool first_frame = true;
 };
@@ -155,8 +166,8 @@ RegionsCapture RegionsCapture::compute_regions(
         rail_computation.visibility_rect_event(reader.rail_wrm_window_rect);
 
         reader.add_consumer(
-            &rail_computation, nullptr, nullptr, nullptr, nullptr, nullptr,
-            &rail_computation);
+            &rail_computation, nullptr, nullptr, nullptr, nullptr,
+            &updatable_frame_end, &rail_computation);
 
         consume_all_orders();
 
@@ -202,6 +213,10 @@ RegionsCapture RegionsCapture::compute_regions(
                 }
                 break;
         }
+
+        // screen position should be negative
+        ret.crop_rect.x -= updatable_frame_end.offset_screen_x;
+        ret.crop_rect.y -= updatable_frame_end.offset_screen_y;
 
         LOG_IF(bool(verbose), LOG_INFO, "RegionsCapture::crop=%s", ret.crop_rect);
     }
