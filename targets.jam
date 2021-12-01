@@ -895,6 +895,33 @@ test-run tests/capture/test_redis_writer :
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run tests/capture/test_regions_capture :
+  $(REDEMPTION_TEST_PATH)/capture/test_regions_capture.cpp
+:
+  <library>crypto
+  <library>png
+  <library>snappy
+  <library>src/capture/agent_data_extractor.o
+  <library>src/capture/file_to_graphic.o
+  <library>src/capture/rail_screen_computation.o
+  <library>src/capture/regions_capture.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/snappy_compression_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  <library>z
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/capture/test_session_update_buffer :
   $(REDEMPTION_TEST_PATH)/capture/test_session_update_buffer.cpp
 :
@@ -5271,6 +5298,7 @@ alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
 alias test_rail_screen_computation : tests/capture/test_rail_screen_computation ;
 alias test_redis_writer : tests/capture/test_redis_writer ;
+alias test_regions_capture : tests/capture/test_regions_capture ;
 alias test_session_update_buffer : tests/capture/test_session_update_buffer ;
 alias test_video_capture : tests/capture/test_video_capture ;
 alias test_wrm_capture : tests/capture/test_wrm_capture ;
@@ -5589,6 +5617,7 @@ alias tests/capture.norec :
   tests/capture/test_ppocr
   tests/capture/test_rail_screen_computation
   tests/capture/test_redis_writer
+  tests/capture/test_regions_capture
   tests/capture/test_session_update_buffer
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture

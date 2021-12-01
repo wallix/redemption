@@ -74,7 +74,8 @@ private:
     , in_bmpdata_effective(
           this->in_bmpdata +
           this->y * this->in_rowsize +
-          this->x * VideoCropper::bytes_per_pixel) {
+          this->x * VideoCropper::bytes_per_pixel)
+    {
         if ((this->out_width != this->in_width) ||
             (this->out_height != this->in_height)) {
             this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
@@ -90,7 +91,8 @@ public:
     : VideoCropper(imageFrameApi, imageFrameApi.get_writable_image_view(), x, y, out_width, out_height)
     {}
 
-    void resize(ImageFrameApi& imageFrameApi) {
+    void resize(ImageFrameApi& imageFrameApi)
+    {
         this->image_frame_api_ptr = &imageFrameApi;
 
         ImageView const & image_view = imageFrameApi.get_writable_image_view();
@@ -141,7 +143,8 @@ public:
         return this->create_image_view<ImageView>();
     }
 
-    void prepare_image_frame() override {
+    void prepare_image_frame() override
+    {
         if ((this->out_width == this->in_width) &&
             (this->out_height == this->in_height)) {
             return;
@@ -165,7 +168,8 @@ public:
         }
     }
 
-    [[nodiscard]] unsigned int get_last_update_index() const noexcept override {
+    [[nodiscard]] unsigned int get_last_update_index() const noexcept override
+    {
         return this->last_update_index;
     }
 
@@ -174,7 +178,8 @@ public:
     // returns true if size of image frame has changed
     /* TODO x, y, out_width, out_height -> Rect*/
     bool reset(unsigned int x, unsigned int y,
-               unsigned int out_width, unsigned int out_height) override {
+               unsigned int out_width, unsigned int out_height) override
+    {
         unsigned int const old_out_rowsize = this->out_rowsize;
         unsigned int const old_out_height  = this->out_height;
 
@@ -208,7 +213,8 @@ public:
         return result;
     }
 
-    [[nodiscard]] Rect get_rect() const override {
+    [[nodiscard]] Rect get_rect() const override
+    {
         return Rect(this->x, this->y, this->out_width, this->out_height);
     }
 };

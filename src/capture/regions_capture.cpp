@@ -144,7 +144,7 @@ RegionsCapture RegionsCapture::compute_regions(
     };
 
     if (ret.is_remote_app
-     && smart_video_cropping != SmartVideoCropping::v1
+     && smart_video_cropping != SmartVideoCropping::disable
     ) {
         RailScreenComputation rail_computation(
             reader.get_wrm_info().width,
@@ -175,7 +175,7 @@ RegionsCapture RegionsCapture::compute_regions(
         auto& info = reader.get_wrm_info();
 
         switch (smart_video_cropping) {
-            case SmartVideoCropping::v1:
+            case SmartVideoCropping::disable:
                 break;
 
             case SmartVideoCropping::v2:
@@ -189,7 +189,7 @@ RegionsCapture RegionsCapture::compute_regions(
                 }
                 break;
 
-            case SmartVideoCropping::disable:
+            case SmartVideoCropping::v1:
                 ret.crop_rect = ret.max_image_frame_rect.intersect(info.width, info.height);
                 if (ret.crop_rect.cx & 1) {
                     if (ret.crop_rect.x + ret.crop_rect.cx < info.width) {
@@ -202,6 +202,8 @@ RegionsCapture RegionsCapture::compute_regions(
                 }
                 break;
         }
+
+        LOG_IF(bool(verbose), LOG_INFO, "RegionsCapture::crop=%s", ret.crop_rect);
     }
     else if (interval_time_for_frame_maker_end.count()) {
         consume_all_orders();
@@ -212,8 +214,7 @@ RegionsCapture RegionsCapture::compute_regions(
         ret.max_screen_dim = reader.max_screen_dim;
         try {
             auto t = reader.get_monotonic_time();
-            while (!requested_to_shutdown && t <= end_capture) {
-                trans.next();
+            while (!requested_to_shutdown && t <= end_capture && trans.next()) {
                 FileToGraphic reader(trans, play_video_with_corrupted_bitmap, verbose);
                 set_max_dim(ret.max_screen_dim, reader.max_screen_dim);
                 t = reader.get_monotonic_time();

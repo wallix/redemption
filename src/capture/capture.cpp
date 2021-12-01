@@ -1983,7 +1983,8 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
     return WaitingTimeBeforeNextSnapshot(time);
 }
 
-void Capture::visibility_rects_event(Rect rect) {
+void Capture::visibility_rects_event(Rect rect)
+{
     if (this->png_real_time_capture_obj) {
         this->png_real_time_capture_obj->visibility_rects_event(rect);
     }
