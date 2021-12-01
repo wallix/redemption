@@ -94,3 +94,42 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureV2)
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }
+
+RED_AUTO_TEST_CASE(TestRegionsCaptureDisabledSecondaryScreenToLeft)
+{
+    auto r = compute_regions(RECORDER_TEST_PATH "/secondary_screen_to_left-000000.wrm", SmartVideoCropping::disable);
+
+    RED_CHECK(r.is_remote_app);
+    RED_CHECK(r.rail_window_rect_start == Rect());
+    RED_CHECK(r.max_image_frame_rect == Rect());
+    RED_CHECK(r.crop_rect == Rect());
+    RED_CHECK(r.min_image_frame_dim == Dimension());
+    RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.updatable_frame_marker_end.len == 0);
+}
+
+RED_AUTO_TEST_CASE(TestRegionsCaptureV1SecondaryScreenToLeft)
+{
+    auto r = compute_regions(RECORDER_TEST_PATH "/secondary_screen_to_left-000000.wrm", SmartVideoCropping::v1);
+
+    RED_CHECK(r.is_remote_app);
+    RED_CHECK(r.rail_window_rect_start == Rect());
+    RED_CHECK(r.max_image_frame_rect == Rect(-826, 35, 2865, 924));
+    RED_CHECK(r.crop_rect == Rect(1280, 35, 2040, 924));
+    RED_CHECK(r.min_image_frame_dim == Dimension(1048, 559));
+    RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.updatable_frame_marker_end.len == 0);
+}
+
+RED_AUTO_TEST_CASE(TestRegionsCaptureV2SecondaryScreenToLeft)
+{
+    auto r = compute_regions(RECORDER_TEST_PATH "/secondary_screen_to_left-000000.wrm", SmartVideoCropping::v2);
+
+    RED_CHECK(r.is_remote_app);
+    RED_CHECK(r.rail_window_rect_start == Rect());
+    RED_CHECK(r.max_image_frame_rect == Rect(-826, 35, 2865, 924));
+    RED_CHECK(r.crop_rect == Rect(3116, 440, 1048, 559));
+    RED_CHECK(r.min_image_frame_dim == Dimension(1048, 559));
+    RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.updatable_frame_marker_end.len == 0);
+}

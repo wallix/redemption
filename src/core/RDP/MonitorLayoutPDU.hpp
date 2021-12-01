@@ -212,7 +212,8 @@ public:
         }
     }
 
-    [[nodiscard]] Dimension get_dimension() const {
+    [[nodiscard]] Rect get_rect() const
+    {
         Rect rect;
 
         for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
@@ -222,6 +223,12 @@ public:
                                       this->monitorDefArray[monitorIndex].bottom - this->monitorDefArray[monitorIndex].top + 1));
         }
 
+        return rect;
+    }
+
+    [[nodiscard]] Dimension get_dimension() const
+    {
+        Rect rect = this->get_rect();
         return Dimension(rect.cx, rect.cy);
     }
 

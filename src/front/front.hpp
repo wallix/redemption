@@ -695,6 +695,7 @@ public:
 
 private:
     bool palette_sent = false;
+    bool receive_server_relayout = false;
 
     const std::chrono::milliseconds rdp_keepalive_connection_interval;
     const PrimaryDrawingOrdersSupport supported_orders;
@@ -993,11 +994,13 @@ public:
         return res;
     }
 
-    void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) override {
+    void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) override
+    {
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout");
 
         monitor_layout_pdu_ref.get(this->client_info.cs_monitor);
+        this->receive_server_relayout = true;
 
         if (this->capture) {
             this->capture->relayout(monitor_layout_pdu_ref);
@@ -1222,6 +1225,12 @@ public:
             this->capture->session_update(kv_event.time, kv_event.id, kv_event.kv_list);
         }
         this->session_update_buffer.clear();
+
+        if (this->receive_server_relayout) {
+            MonitorLayoutPDU monitor_layout_pdu;
+            monitor_layout_pdu.set(this->client_info.cs_monitor);
+            this->capture->relayout(monitor_layout_pdu);
+        }
 
         return true;
     }
