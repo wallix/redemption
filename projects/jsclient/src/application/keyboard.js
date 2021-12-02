@@ -39,20 +39,20 @@ class CompositeKeyState
     }
 
     update(evt) {
-        if (!this.isComposing) {
+        if (!this._isComposing) {
             if (isComposing(evt.key)) {
-                this.isComposing = true;
+                this._isComposing = true;
                 return true;
             }
         }
-        else if (evt.isComposing) {
+        else if (evt._isComposing) {
             if (!isMods(evt.key)) {
                 return true;
             }
         }
         else {
             this._driver.compositeLater();
-            this.isComposing = false;
+            this._isComposing = false;
             return true;
         }
 
