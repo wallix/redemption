@@ -28,7 +28,7 @@ const isComposing = function(key) {
     return false;
 };
 
-class Composite
+class CompositeKeyState
 {
     // driver = class {
     //  compositeLater()
@@ -201,7 +201,7 @@ class EmulatedKeyboard extends Keyboard
     constructor(keymap, driver) {
         super(keymap, driver)
         this._hasUnicodeSupport = false;
-        this._composite = new Composite(driver);
+        this._composite = new CompositeKeyState(driver);
     }
 
     setUnicodeSupport(enable) {
@@ -272,7 +272,7 @@ class UnicodeKeyboard extends Keyboard
     // }
     constructor(keymap, driver) {
         super(keymap, driver)
-        this._composite = new Composite(driver);
+        this._composite = new CompositeKeyState(driver);
     }
 
     sendComposition(text) {

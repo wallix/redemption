@@ -317,7 +317,6 @@ function run(openCb, closeCb)
             return true;
         }
 
-        // console.warn('Scancode: unknown keycode', evt.key, evt.code)
         return false;
     }
 
@@ -374,13 +373,23 @@ function run(openCb, closeCb)
         }
     };
 
-    const onKeyUp = (evt) => { stopPropagationIf(keyboardForEvent.keyup(evt), evt); };
-    const onKeyDown = (evt) => { stopPropagationIf(keyboardForEvent.keydown(evt), evt); };
+    const onKeyUp = (evt) => {
+        console.warn(`keyUp: key=${evt.key} code=${evt.code}`);
+        stopPropagationIf(keyboardForEvent.keyup(evt), evt);
+    };
+
+    const onKeyDown = (evt) => {
+        console.warn(`keyDown: key=${evt.key} code=${evt.code}`);
+        stopPropagationIf(keyboardForEvent.keydown(evt), evt);
+    };
+
     const onCompositeStart = (evt) => {
         console.log(`CompositeStart: ${evt.data}`);
         ecanvasFocus.value = '';
     };
+
     // const onCompositeUpdate = (evt) => {  };
+
     const onCompositeEnd = (evt) => {
         console.log(`CompositeEnd: ${evt.data}`);
     };
