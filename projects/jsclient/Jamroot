@@ -80,9 +80,6 @@ rule emcc_flags ( properties * )
     #     ;
     # }
 
-    # fix udl warning on Ubuntu
-    fs += <cxxflags>-Wno-reserved-identifier ;
-
     return $(fs) ;
 }
 
@@ -180,7 +177,7 @@ project redjs
     <cxxflags>-Wno-missing-variable-declarations
 
     # execve and fork with boost unit test | uname() with gethostname()
-    <cxxflags>"-s ALLOW_UNIMPLEMENTED_SYSCALLS"
+    # <cxxflags>"-s ALLOW_UNIMPLEMENTED_SYSCALLS"
 
     : default-build release
 ;
