@@ -187,7 +187,7 @@ div, section, canvas{
 <script src="clipboard.js"></script>
 <script src="keyboard.js"></script>
 
-<script>
+<script type="text/javascript">
 "use strict";
 
 // new canvas whether new gdimpl
@@ -306,30 +306,27 @@ function run(openCb, closeCb)
         }
     };
 
-    const sendScancodes = function(scancodes, evt) {
+    const sendScancodes = function(scancodes) {
         if (scancodes) {
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
             for (let i = 0; i < scancodes.length; ++i) {
                 const scancode = scancodes[i];
                 console.log('Scancode: send', scancode, '0x'+scancode.toString(16));
                 rdpclient.writeScancodeEvent(scancode);
             }
             sendData();
+            return true;
         }
-        else {
-            console.warn('Scancode: unknown keycode', evt.key, evt.code)
-        }
+
+        // console.warn('Scancode: unknown keycode', evt.key, evt.code)
+        return false;
     }
 
-    const sendUnicode = function(unicode, flag, evt) {
+    const sendUnicode = function(unicode, flag) {
         const scancode = keycodeToSingleScancode(unicode); // actionLayout[unicode];
         if (scancode) {
-            sendScancodes([scancode | flag], evt)
+            sendScancodes([scancode | flag]);
         }
         else {
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
             for (let i = 0; i < unicode.length; ++i) {
                 const code = unicode.charCodeAt(i);
                 console.log('Unicode: send', code, `(0x${code.toString(16)})`, 'flag:', flag, `(0x${flag.toString(16)})`);
@@ -337,6 +334,8 @@ function run(openCb, closeCb)
             }
             sendData();
         }
+
+        return true;
     }
 
     const currentLayout = function() {
@@ -351,6 +350,14 @@ function run(openCb, closeCb)
         syncKbdLocks: function(syncFlags) {
             rdpclient.syncKbdLocks(syncFlags);
         },
+        compositeLater: function() {
+            // event is fired before that input.value is updated
+            setTimeout(() => {
+                const text = ecanvasFocus.value;
+                console.log(`CompositeEnd: ${text}`);
+                if (text) emulatedKeyboard.sendComposition(text);
+            }, 0);
+        },
     };
 
     const keymap = new ReversedKeymap(currentLayout());
@@ -360,22 +367,22 @@ function run(openCb, closeCb)
     const unicodeKeyboard = new UnicodeKeyboard(keymap, keyboardDriver);
     let keyboardForEvent = scancodeKeyboard;
 
-    const onKeyUp = (evt) => { keyboardForEvent.keyup(evt); };
-    const onKeyDown = (evt) => { keyboardForEvent.keydown(evt); };
+    const stopPropagationIf = function(b, evt) {
+        if (b) {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+        }
+    };
+
+    const onKeyUp = (evt) => { stopPropagationIf(keyboardForEvent.keyup(evt), evt); };
+    const onKeyDown = (evt) => { stopPropagationIf(keyboardForEvent.keydown(evt), evt); };
     const onCompositeStart = (evt) => {
-        if (keyboardForEvent !== emulatedKeyboard) return;
         console.log(`CompositeStart: ${evt.data}`);
         ecanvasFocus.value = '';
     };
     // const onCompositeUpdate = (evt) => {  };
     const onCompositeEnd = (evt) => {
-        if (keyboardForEvent !== emulatedKeyboard) return;
-        // event is fired before that input.value is updated
-        setTimeout(() => {
-            const text = ecanvasFocus.value;
-            console.log(`CompositeEnd: ${text}`);
-            if (text) emulatedKeyboard.compositeKeyEvent(evt, text);
-        }, 1);
+        console.log(`CompositeEnd: ${evt.data}`);
     };
 
     function sendMouseEvent(evt, flags)
@@ -763,7 +770,9 @@ function openClient()
             connCtx.ctrlAltDel.disabled = false;
             connCtx.disconnectButton.disabled = false;
             ctrlAltDel.onclick = (evt) => {
-                sendScancodes([0x1d, 0x38, 0x153, 0x801d, 0x8038, 0x8153, ], evt);
+                sendScancodes([0x1d, 0x38, 0x153, 0x801d, 0x8038, 0x8153, ]);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
             };
         },
         () => {

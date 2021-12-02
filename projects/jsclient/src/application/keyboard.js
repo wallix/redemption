@@ -2,8 +2,8 @@
 
 // import {ScancodeByMod, SyncFlags, KeyRelease, KeyAcquire, numpadCodeToScancode, codeToScancodes} from './scancodes.js';
 
-const isComposing = function(evt) {
-    switch (evt.key) {
+const isMods = function(key) {
+    switch (key) {
         case 'Control':
         case 'Shift':
         case 'Alt':
@@ -12,20 +12,58 @@ const isComposing = function(evt) {
         case 'ScrollLock':
         case 'CapsLock':
         case 'OS':
-            return false;
+            return true;
+    }
+    return false;
+};
+
+const isComposing = function(key) {
+    switch (key) {
         case 'Dead':
         case 'Compose':
         case 'Process':
-        // case 'Unidentified':
+        case 'Unidentified':
             return true;
     }
-    return evt.isComposing;
+    return false;
 };
+
+class Composite
+{
+    // driver = class {
+    //  compositeLater()
+    // }
+    constructor(driver) {
+        this._isComposing = false;
+        this._driver = driver;
+    }
+
+    update(evt) {
+        if (!this.isComposing) {
+            if (isComposing(evt.key)) {
+                this.isComposing = true;
+                return true;
+            }
+        }
+        else if (evt.isComposing) {
+            if (!isMods(evt.key)) {
+                return true;
+            }
+        }
+        else {
+            this._driver.compositeLater();
+            this.isComposing = false;
+            return true;
+        }
+
+        return false;
+    }
+}
 
 class Keyboard
 {
     // driver = class {
-    //  sendScancodes(scancodes:Array[Number], evt:KeyEvent);
+    //  sendScancodes(scancodes:Array[Number]):bool
     //  syncKbdLocks(syncFlags:Number)
     // }
     constructor(keymap, driver) {
@@ -60,33 +98,36 @@ class Keyboard
                     scancodes.push(ScancodeByMod.ShiftLeft | KeyRelease);
                 }
                 this._shiftDown = 0;
-                this._driver.sendScancodes(scancodes, evt);
-                return;
+                this._driver.sendScancodes(scancodes);
+                return true;
             }
         }
-        this._keyEvent(evt, KeyRelease);
+        return this._keyEvent(evt, KeyRelease);
     }
 
     keydown(evt) {
         if (!this._syncState && evt.key === 'Shift') {
             this._shiftDown |= this._codeToShiftMod(evt.code);
         }
-        this._keyEvent(evt, KeyAcquire);
+        return this._keyEvent(evt, KeyAcquire);
+    }
+
+    sendComposition(text) {
     }
 
     _keyEvent(evt, flag) {
-        if (!this._preprocessKeyEvent(evt, flag)) return;
+        if (!this._preprocessKeyEvent(evt, flag)) return true;
 
         // numpad
         if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
             const scancode = numpadCodeToScancode(evt.code);
-            this._driver.sendScancodes([scancode | flag], evt);
-            return;
+            this._driver.sendScancodes([scancode | flag]);
+            return true;
         }
 
         const scancodes = codeToScancodes(evt.key, flag) || codeToScancodes(evt.code, flag);
         if (scancodes) {
-            this._driver.sendScancodes(scancodes, evt);
+            return this._driver.sendScancodes(scancodes);
         }
     }
 
@@ -118,7 +159,7 @@ class Keyboard
         if (evt.shiftKey) leftOrRight |= (evt.code === 'ShiftRight' && flag === KeyAcquire) ? SyncFlags.ShiftRight : SyncFlags.ShiftLeft;
 
         syncFlags |= leftOrRight;
-        this._driver.sendScancodes(scancodesForSynchronizedMods(syncFlags), evt);
+        this._driver.sendScancodes(scancodesForSynchronizedMods(syncFlags));
 
         this._keymap.sync(syncFlags);
         this._shiftDown = leftOrRight & (SyncFlags.ShiftRight | SyncFlags.ShiftLeft);
@@ -152,29 +193,29 @@ class Keyboard
 class EmulatedKeyboard extends Keyboard
 {
     // driver = class {
-    // sendUnicode(unicode:String, flag:Number, evt:KeyEvent)
-    //  sendScancodes(scancodes:Array[Number], evt:KeyEvent);
+    //  sendUnicode(unicode:String, flag:Number):bool
+    //  sendScancodes(scancodes:Array[Number]):bool
     //  syncKbdLocks(syncFlags:Number)
+    //  compositeLater()
     // }
     constructor(keymap, driver) {
         super(keymap, driver)
         this._hasUnicodeSupport = false;
+        this._composite = new Composite(driver);
     }
 
     setUnicodeSupport(enable) {
         this._hasUnicodeSupport = enable;
     }
 
-    compositeKeyEvent(evt, text) {
-        if (!this._preprocessKeyEvent(evt, flag)) return;
-
+    sendComposition(text) {
         const scancodes = this._keymap.toScancodesAndFlags(text, text, KeyAcquire);
         if (scancodes) {
-            this._driver.sendScancodes(unstatedScancodes(scancodes), evt);
+            this._driver.sendScancodes(this._unstatedScancodes(scancodes));
         }
         else if (this._hasUnicodeSupport) {
-            this._driver.sendUnicode(text, KeyAcquire, evt);
-            this._driver.sendUnicode(text, KeyRelease, evt);
+            this._driver.sendUnicode(text, KeyAcquire);
+            this._driver.sendUnicode(text, KeyRelease);
         }
     }
 
@@ -200,25 +241,23 @@ class EmulatedKeyboard extends Keyboard
     }
 
     _keyEvent(evt, flag) {
-        if (!this._preprocessKeyEvent(evt, flag)) return;
+        if (!this._preprocessKeyEvent(evt, flag)) return true;
 
-        if (isComposing(evt)) {
-            return;
-        }
+        if (this._composite.update(evt)) return false;
 
         // numpad
         if (evt.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD) {
             const scancode = numpadCodeToScancode(evt.code);
-            this._driver.sendScancodes([scancode | flag], evt);
-            return;
+            this._driver.sendScancodes([scancode | flag]);
+            return true;
         }
 
         const scancodes = this._keymap.toScancodesAndFlags(evt.key, evt.code, flag);
         if (scancodes) {
-            this._driver.sendScancodes(scancodes, evt);
+            return this._driver.sendScancodes(scancodes);
         }
         else if (this._hasUnicodeSupport) {
-            this._driver.sendUnicode(evt.key, flag, evt);
+            return this._driver.sendUnicode(evt.key, flag);
         }
     }
 }
@@ -226,28 +265,33 @@ class EmulatedKeyboard extends Keyboard
 class UnicodeKeyboard extends Keyboard
 {
     // driver = class {
-    // sendUnicode(unicode:String, flag:Number, evt:KeyEvent)
-    //  sendScancodes(scancodes:Array[Number], evt:KeyEvent);
+    //  sendUnicode(unicode:String, flag:Number):bool
+    //  sendScancodes(scancodes:Array[Number]):bool
     //  syncKbdLocks(syncFlags:Number)
+    //  compositeLater()
     // }
     constructor(keymap, driver) {
         super(keymap, driver)
+        this._composite = new Composite(driver);
+    }
+
+    sendComposition(text) {
+        this._driver.sendUnicode(text, KeyAcquire);
+        this._driver.sendUnicode(text, KeyRelease);
     }
 
     _keyEvent(evt, flag) {
-        if (!this._preprocessKeyEvent(evt, flag)) return;
+        if (!this._preprocessKeyEvent(evt, flag)) return true;
 
-        if (isComposing(evt)) {
-            return;
-        }
+        if (this._composite.update(evt)) return false;
 
         if (evt.key.length === 1 || evt.key.charCodeAt(0) > 127) {
-            this._driver.sendUnicode(evt.key, flag, evt);
+            return this._driver.sendUnicode(evt.key, flag);
         }
         else {
             const scancodes = codeToScancodes(evt.key, flag) || codeToScancodes(evt.code, flag);
             if (scancodes) {
-                this._driver.sendScancodes(scancodes, evt);
+                return this._driver.sendScancodes(scancodes);
             }
         }
     }
