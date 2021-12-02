@@ -31,7 +31,7 @@ import signal
 socket_path = '/tmp/redemption-sesman-sock'
 # # rdpproxy -c |& sed -E '/recorded\/rdp/!d;s#[^"]+"([^"]+)".*#\1#;s#recorded/rdp##;q'
 # DEFAULT_LOCAL_TRACE_PATH_RDP = '/var/wab/recorded/rdp/'
-# try: os.mkdir(DEFAULT_LOCAL_TRACE_PATH_RDP)
+# try: os.makedirs(DEFAULT_LOCAL_TRACE_PATH_RDP)
 # except: pass
 # os.environ['LOCAL_TRACE_PATH_RDP'] = DEFAULT_LOCAL_TRACE_PATH_RDP
 
