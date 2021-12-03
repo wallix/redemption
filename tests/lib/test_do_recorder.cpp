@@ -776,27 +776,25 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
         RED_TEST(::close(::open(f.c_str(), 0777, O_RDONLY | O_CREAT)) == 0);
         return Data{std::move(filename), std::move(f), {bool(exists)...}};
     };
-#define F(filename, ...) create_file(#filename, __VA_ARGS__)
-    const std::array prefixes{"", "ddd", "toto", "titititi", "tititi"};
+    const std::array prefixes       {"", "ddd", "toto", "titititi", "tititi"};
     const std::array datas{
-        F(toto_mwrm,          1,   1,     1,      1,          1),
-        F(toto_0_wrm,         1,   1,     1,      1,          1),
-        F(toto_1_wrm,         1,   1,     1,      1,          1),
-        F(toto_0_flv,         1,   1,     0,      0,          0),
-        F(toto_1_flv,         1,   1,     0,      0,          0),
-        F(toto_meta,          1,   1,     0,      0,          0),
-        F(toto_0_png,         1,   1,     0,      0,          0),
-        F(toto_1_png,         1,   1,     0,      0,          0),
-        F(tititi_mwrm,        1,   1,     1,      1,          1),
-        F(tititi_0_wrm,       1,   1,     1,      1,          1),
-        F(tititi_1_wrm,       1,   1,     1,      1,          1),
-        F(tititi_0_flv,       1,   1,     1,      1,          0),
-        F(tititi_1_flv,       1,   1,     1,      1,          0),
-        F(tititi_meta,        1,   1,     1,      1,          0),
-        F(tititi_0_png,       1,   1,     1,      1,          0),
-        F(tititi_1_png,       1,   1,     1,      1,          0)
+        create_file("toto_mwrm",     1,   1,     1,      1,          1),
+        create_file("toto_0_wrm",    1,   1,     1,      1,          1),
+        create_file("toto_1_wrm",    1,   1,     1,      1,          1),
+        create_file("toto_0_flv",    1,   1,     0,      0,          0),
+        create_file("toto_1_flv",    1,   1,     0,      0,          0),
+        create_file("toto_meta",     1,   1,     0,      0,          0),
+        create_file("toto_0_png",    1,   1,     0,      0,          0),
+        create_file("toto_1_png",    1,   1,     0,      0,          0),
+        create_file("tititi_mwrm",   1,   1,     1,      1,          1),
+        create_file("tititi_0_wrm",  1,   1,     1,      1,          1),
+        create_file("tititi_1_wrm",  1,   1,     1,      1,          1),
+        create_file("tititi_0_flv",  1,   1,     1,      1,          0),
+        create_file("tititi_1_flv",  1,   1,     1,      1,          0),
+        create_file("tititi_meta",   1,   1,     1,      1,          0),
+        create_file("tititi_0_png",  1,   1,     1,      1,          0),
+        create_file("tititi_1_png",  1,   1,     1,      1,          0)
     };
-#undef F
 
     for (std::size_t i = 0; i < prefixes.size(); ++i)
     {
@@ -967,6 +965,58 @@ RED_AUTO_TEST_CASE_WD(TestMetaCaptureDisableKbdInput, wd)
 
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 244);
+    RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
+}
+
+RED_AUTO_TEST_CASE_WD(TestVideoCroppedV1, wd)
+{
+    auto output = wd.dirname().string() + "test_capture.mwrm";
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/secondary_screen_to_left.mwrm",
+        "--mwrm-path",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/",
+        "--config-file",
+            FIXTURES_PATH "/smart_video_cropping_v1.ini",
+        "-o", output.c_str(),
+        "-f",
+        "-S",
+    };
+
+    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
+        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
+
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 99122 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 12424);
+    RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
+}
+
+RED_AUTO_TEST_CASE_WD(TestVideoCroppedV2, wd)
+{
+    auto output = wd.dirname().string() + "test_capture.mwrm";
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/secondary_screen_to_left.mwrm",
+        "--mwrm-path",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/",
+        "--config-file",
+            FIXTURES_PATH "/smart_video_cropping_v2.ini",
+        "-o", output.c_str(),
+        "-f",
+        "-S",
+    };
+
+    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
+        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
+
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 95100 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 4899);
     RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
         "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }

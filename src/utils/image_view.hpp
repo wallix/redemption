@@ -77,6 +77,7 @@ public:
 
     [[nodiscard]] uint8_t const * data()          const noexcept { return this->data_; }
     [[nodiscard]] uint16_t width()                const noexcept { return this->width_; }
+    [[nodiscard]] uint16_t bytes_width()          const noexcept { return this->width_ * uint16_t(this->bytes_per_pixel_); }
     [[nodiscard]] uint16_t height()               const noexcept { return this->height_; }
     [[nodiscard]] BytesPerPixel bytes_per_pixel() const noexcept { return this->bytes_per_pixel_; }
     [[nodiscard]] BitsPerPixel bits_per_pixel()   const noexcept { return this->bits_per_pixel_; }
@@ -97,17 +98,27 @@ public:
 
     [[nodiscard]] ImageView sub_view(Rect rect) const noexcept
     {
+        assert(rect.x >= 0);
+        assert(rect.y >= 0);
+        assert(rect.x + rect.cx <= width());
+        assert(rect.y + rect.cy <= height());
+
         const unsigned physical_y = (this->storage_ == Storage::BottomToTop ? (this->height_ - rect.ebottom()) : rect.y);
 
         return ImageView(
-                this->data_ + physical_y * this->rowsize_ + rect.x * underlying_cast(this->bytes_per_pixel_),
-                rect.cx,
-                rect.cy,
-                this->rowsize_,
-                this->bits_per_pixel_,
-                this->storage_,
-                this->palette_
-            );
+            this->data_ + physical_y * this->rowsize_ + rect.x * underlying_cast(this->bytes_per_pixel_),
+            rect.cx,
+            rect.cy,
+            this->rowsize_,
+            this->bits_per_pixel_,
+            this->storage_,
+            this->palette_
+        );
+    }
+
+    static ImageView create_null_view() noexcept
+    {
+        return ImageView{nullptr, 0, 0, 0, BytesPerPixel(3), Storage()};
     }
 
 private:
@@ -135,5 +146,30 @@ struct WritableImageView : ImageView
     : ImageView(data, width, height, line_size, bytes_or_byte_per_pixel, storage, palette)
     {}
 
+    static WritableImageView create_null_view() noexcept
+    {
+        return WritableImageView{nullptr, 0, 0, 0, BytesPerPixel(3), Storage()};
+    }
+
     uint8_t * mutable_data() const noexcept { return const_cast<uint8_t*>(this->data()); /*NOLINT*/ }
+
+    [[nodiscard]] WritableImageView mutable_sub_view(Rect rect) const noexcept
+    {
+        assert(rect.x >= 0);
+        assert(rect.y >= 0);
+        assert(rect.x + rect.cx <= width());
+        assert(rect.y + rect.cy <= height());
+
+        const unsigned physical_y = (this->storage_type() == Storage::BottomToTop ? (this->height() - rect.ebottom()) : rect.y);
+
+        return WritableImageView(
+            this->mutable_data() + physical_y * this->line_size() + rect.x * underlying_cast(this->bytes_per_pixel()),
+            rect.cx,
+            rect.cy,
+            this->line_size(),
+            this->bits_per_pixel(),
+            this->storage_type(),
+            &this->palette()
+        );
+    }
 };

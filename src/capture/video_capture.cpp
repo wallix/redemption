@@ -71,31 +71,6 @@ namespace
                 : ImageByInterval::ZeroOrOneWithTimestamp)
             ;
     }
-
-    struct MouseTracer
-    {
-        MouseTracer(
-            Drawable & drawable,
-            DrawablePointer const & drawable_pointer) noexcept
-        : drawable(drawable)
-        , drawable_pointer(drawable_pointer)
-        {}
-
-        void trace_mouse()
-        {
-            drawable_pointer.trace_mouse(drawable, buffer_saver);
-        }
-
-        void clear_mouse()
-        {
-            drawable_pointer.clear_mouse(drawable, buffer_saver);
-        }
-
-    private:
-        Drawable & drawable;
-        DrawablePointer const & drawable_pointer;
-        DrawablePointer::BufferSaver buffer_saver;
-    };
 } // anonymous namespace
 
 
@@ -103,6 +78,82 @@ using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnap
 
 // VideoCaptureCtx
 //@{
+VideoCaptureCtx::VideoCropper::VideoCropper(Drawable& drawable, Rect crop_rect)
+: crop_rect(crop_rect)
+, original_dimension(crop_rect.cx, crop_rect.cy)
+, is_fullscreen(drawable.width() == crop_rect.width()
+             && drawable.height() == crop_rect.height())
+, out_bmpdata(this->is_fullscreen
+    ? nullptr
+    : new uint8_t[drawable.width() * drawable.height() * drawable.Bpp] /*NOLINT*/
+)
+{
+}
+
+void VideoCaptureCtx::VideoCropper::set_cropping(Rect cropping) noexcept
+{
+    assert(cropping.cx <= original_dimension.w);
+    assert(cropping.cy <= original_dimension.h);
+
+    if (cropping.cx != crop_rect.cx) {
+        uint8_t* out_bmpdata_tmp = out_bmpdata.get() + cropping.cx * Drawable::Bpp;
+        std::size_t const rowsize = original_dimension.w * Drawable::Bpp;
+        std::size_t const empty_rowsize = (original_dimension.w - cropping.cx) * Drawable::Bpp;
+
+        for (uint16_t i = 0; i < cropping.cy; ++i) {
+            std::memset(out_bmpdata_tmp, 0, empty_rowsize);
+            out_bmpdata_tmp += rowsize;
+        }
+    }
+
+    if (cropping.cx != crop_rect.cx || cropping.cy != crop_rect.cy) {
+        uint8_t* out_bmpdata_tmp = out_bmpdata.get() + cropping.cx * cropping.cy * Drawable::Bpp;
+        std::size_t const rowsize = original_dimension.w * Drawable::Bpp;
+
+        for (uint16_t i = original_dimension.h - cropping.cy; i < original_dimension.h; ++i) {
+            std::memset(out_bmpdata_tmp, 0, rowsize);
+            out_bmpdata_tmp += rowsize;
+        }
+    }
+
+    crop_rect = cropping;
+}
+
+WritableImageView VideoCaptureCtx::VideoCropper::prepare_image_frame(Drawable& drawable)
+{
+    if (this->is_fullscreen) {
+        return gdi::get_writable_image_view(drawable);
+    }
+
+    // TODO copy only when view is updated
+
+    uint8_t* out_bmpdata_tmp = this->out_bmpdata.get();
+
+    uint8_t const* in_bmpdata_tmp
+        = drawable.data()
+        + checked_cast<size_t>(this->crop_rect.y) * drawable.rowsize()
+        + checked_cast<size_t>(this->crop_rect.x) * drawable.Bpp;
+
+    unsigned const rowsize = this->original_dimension.w * drawable.Bpp;
+    unsigned const datasize = this->crop_rect.cx * drawable.Bpp;
+
+    for (uint16_t i = 0; i < this->crop_rect.cy; ++i) {
+        std::memcpy(out_bmpdata_tmp, in_bmpdata_tmp, datasize);
+
+        in_bmpdata_tmp  += drawable.rowsize();
+        out_bmpdata_tmp += rowsize;
+    }
+
+    return WritableImageView{
+        this->out_bmpdata.get(),
+        this->original_dimension.w,
+        this->original_dimension.h,
+        this->original_dimension.w * drawable.Bpp,
+        BytesPerPixel(drawable.Bpp),
+        WritableImageView::Storage::TopToBottom,
+    };
+}
+
 VideoCaptureCtx::VideoCaptureCtx(
     MonotonicTimePoint monotonic_now,
     RealTimePoint real_now,
@@ -110,7 +161,7 @@ VideoCaptureCtx::VideoCaptureCtx(
     unsigned frame_rate,
     Drawable & drawable,
     DrawablePointer const & drawable_pointer,
-    gdi::ImageFrameApi & image_frame,
+    Rect crop_rect,
     array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
 )
 : drawable(drawable)
@@ -123,33 +174,33 @@ VideoCaptureCtx::VideoCaptureCtx(
 , has_timestamp(
     image_by_interval == ImageByInterval::OneWithTimestamp
  || image_by_interval == ImageByInterval::ZeroOrOneWithTimestamp)
-, image_frame_api(image_frame)
+, video_cropper(drawable, crop_rect)
 , updatable_frame_marker_end_bitset_stream(updatable_frame_marker_end_bitset_view.data())
 , updatable_frame_marker_end_bitset_end(updatable_frame_marker_end_bitset_view.end())
-, timestamp_tracer(image_frame.get_writable_image_view())
 {
     this->updatable_graphics.set_drawing_event(true);
 }
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
-    this->image_frame_api.prepare_image_frame();
+    DrawablePointer::BufferSaver buffer_saver;
 
-    MouseTracer mouse_tracer{this->drawable, this->drawable_pointer};
-    mouse_tracer.trace_mouse();
+    this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+
+    auto image = this->video_cropper.prepare_image_frame(this->drawable);
 
     if (this->has_timestamp) {
-        this->timestamp_tracer.trace(to_tm_t(
+        this->timestamp_tracer.trace(image, to_tm_t(
             this->monotonic_last_time_capture, this->monotonic_to_real));
     }
 
     recorder.preparing_video_frame();
 
     if (this->has_timestamp) {
-        this->timestamp_tracer.clear();
+        this->timestamp_tracer.clear(image);
     }
 
-    mouse_tracer.clear_mouse();
+    this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
 }
 
 void VideoCaptureCtx::frame_marker_event(
@@ -197,6 +248,26 @@ void VideoCaptureCtx::synchronize_times(MonotonicTimePoint monotonic_time, RealT
     this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
 }
 
+void VideoCaptureCtx::set_cropping(Rect cropping) noexcept
+{
+    assert(cropping.x >= 0);
+    assert(cropping.y >= 0);
+    assert(cropping.eright() <= this->drawable.width());
+    assert(cropping.ebottom() <= this->drawable.height());
+
+    this->video_cropper.set_cropping(cropping);
+}
+
+WritableImageView VideoCaptureCtx::prepare_writable_image() noexcept
+{
+    return this->video_cropper.prepare_image_frame(this->drawable);
+}
+
+bool VideoCaptureCtx::logical_frame_ended() const noexcept
+{
+    return this->drawable.logical_frame_ended;
+}
+
 WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
     video_recorder & recorder, MonotonicTimePoint now,
     uint16_t cursor_x, uint16_t cursor_y
@@ -214,19 +285,22 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                                 ;
         bool const update_pointer = (update_image || update_timestamp);
 
-        MouseTracer mouse_tracer{this->drawable, this->drawable_pointer};
+        DrawablePointer::BufferSaver buffer_saver;
 
         if (update_pointer) {
-            this->image_frame_api.prepare_image_frame();
-            mouse_tracer.trace_mouse();
+            this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
         }
+
+        auto image = WritableImageView::create_null_view();
 
         if (update_pointer
          || (update_image
              && (!this->has_timestamp || this->monotonic_last_time_capture < this->next_trace_time))
         ) {
+            image = this->video_cropper.prepare_image_frame(this->drawable);
+
             if (this->has_timestamp) {
-                this->timestamp_tracer.trace(to_tm_t(
+                this->timestamp_tracer.trace(image, to_tm_t(
                     this->monotonic_last_time_capture, this->monotonic_to_real));
 
                 if (this->monotonic_last_time_capture >= this->next_trace_time) {
@@ -244,8 +318,12 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
 
         // synchronize video time with the end of second
 
-        auto preparing_timestamp_video_frame = [this](video_recorder & recorder){
-            this->timestamp_tracer.trace(to_tm_t(
+        auto preparing_timestamp_video_frame = [&, this](video_recorder & recorder){
+            if (not image.data()) {
+                image = this->video_cropper.prepare_image_frame(this->drawable);
+            }
+
+            this->timestamp_tracer.trace(image, to_tm_t(
                 this->monotonic_last_time_capture, this->monotonic_to_real));
 
             recorder.preparing_timestamp_video_frame();
@@ -313,11 +391,11 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         }
 
         if (update_timestamp && this->has_timestamp) {
-            this->timestamp_tracer.clear();
+            this->timestamp_tracer.clear(image);
         }
 
         if (update_pointer) {
-            mouse_tracer.clear_mouse();
+            this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
         }
     }
     return WaitingTimeBeforeNextSnapshot(frame_interval - tick);
@@ -342,14 +420,14 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     CaptureParams const & capture_params,
     Drawable & drawable,
     DrawablePointer const & drawable_pointer,
-    gdi::ImageFrameApi & image_frame,
+    Rect crop_rect,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : video_cap_ctx(
     capture_params.now, capture_params.real_now,
     video_params_to_image_by_interval(
         video_params.no_timestamp,
         full_video_params.bogus_vlc_frame_rate),
-    video_params.frame_rate, drawable, drawable_pointer, image_frame,
+    video_params.frame_rate, drawable, drawable_pointer, crop_rect,
     video_params.updatable_frame_marker_end_bitset_view)
 , recorder(
     str_concat(
@@ -359,7 +437,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
         video_params.codec
     ).c_str(),
     capture_params.groupid, capture_params.session_log,
-    image_frame.get_image_view(),
+    drawable,
     checked_int{video_params.frame_rate},
     video_params.codec.c_str(),
     video_params.codec_options.c_str(),
@@ -444,7 +522,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
     auto const duration = now - this->monotonic_start_capture;
     if (duration >= interval) {
         auto video_interval = this->break_interval;
-        if (this->ic_drawable.logical_frame_ended
+        if (this->video_cap_ctx.logical_frame_ended()
          || duration > 2s
          || duration >= video_interval
         ) {
@@ -470,7 +548,7 @@ void SequencedVideoCaptureImpl::init_recorder()
         this->vc_filename_generator.current_filename(),
         this->recorder_params.groupid,
         this->recorder_params.acl_report,
-        this->image_frame_api.get_image_view(),
+        this->video_cap_ctx.prepare_writable_image(),
         this->recorder_params.frame_rate,
         this->recorder_params.codec_name.c_str(),
         this->recorder_params.codec_options.c_str(),
@@ -480,10 +558,11 @@ void SequencedVideoCaptureImpl::init_recorder()
 
 void SequencedVideoCaptureImpl::ic_flush(const tm& now)
 {
-    this->image_frame_api.prepare_image_frame();
-    this->video_cap_ctx.timestamp_tracer.trace(now);
-    this->ic_scaled_png.dump_png24(this->ic_filename_generator.current_filename(), this->image_frame_api, true);
-    this->video_cap_ctx.timestamp_tracer.clear();
+    // TODO mouse ?
+    auto image = this->video_cap_ctx.prepare_writable_image();
+    this->video_cap_ctx.timestamp_tracer.trace(image, now);
+    this->ic_scaled_png.dump_png24(this->ic_filename_generator.current_filename(), image, true);
+    this->video_cap_ctx.timestamp_tracer.clear(image);
     this->ic_filename_generator.next();
 }
 
@@ -504,7 +583,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     unsigned png_width, unsigned png_height,
     Drawable & drawable,
     DrawablePointer const & drawable_pointer,
-    gdi::ImageFrameApi & image_frame,
+    Rect crop_rect,
     VideoParams const & video_params,
     SequencedVideoParams const& sequenced_video_params,
     NotifyNextVideo & next_video_notifier)
@@ -514,12 +593,10 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     capture_params.now, capture_params.real_now,
     video_params_to_image_by_interval(
         video_params.no_timestamp, sequenced_video_params.bogus_vlc_frame_rate),
-    video_params.frame_rate, drawable, drawable_pointer, image_frame,
+    video_params.frame_rate, drawable, drawable_pointer, crop_rect,
     video_params.updatable_frame_marker_end_bitset_view)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
 , ic_filename_generator(capture_params.record_path, capture_params.basename, "png")
-, ic_drawable(drawable)
-, image_frame_api(image_frame)
 , ic_scaled_png(png_width, png_height)
 , start_break(capture_params.now)
 , break_interval((sequenced_video_params.break_interval > std::chrono::microseconds::zero())

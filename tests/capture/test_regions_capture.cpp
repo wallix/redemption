@@ -66,6 +66,7 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureDisabled)
     RED_CHECK(r.crop_rect == Rect());
     RED_CHECK(r.min_image_frame_dim == Dimension());
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.screen_position == (Point{0, 0}));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }
 
@@ -76,9 +77,10 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureV1)
     RED_CHECK(r.is_remote_app);
     RED_CHECK(r.rail_window_rect_start == Rect());
     RED_CHECK(r.max_image_frame_rect == Rect(135, 72, 1603, 763));
-    RED_CHECK(r.crop_rect == Rect(135, 72, 1604, 763));
+    RED_CHECK(r.crop_rect == Rect(135, 72, 1603, 763));
     RED_CHECK(r.min_image_frame_dim == Dimension(769, 559));
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.screen_position == (Point{0, 0}));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }
 
@@ -89,9 +91,10 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureV2)
     RED_CHECK(r.is_remote_app);
     RED_CHECK(r.rail_window_rect_start == Rect());
     RED_CHECK(r.max_image_frame_rect == Rect(135, 72, 1603, 763));
-    RED_CHECK(r.crop_rect == Rect(1975, 440, 770, 559));
+    RED_CHECK(r.crop_rect == Rect(1975, 440, 769, 559));
     RED_CHECK(r.min_image_frame_dim == Dimension(769, 559));
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.screen_position == (Point{0, 0}));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }
 
@@ -105,6 +108,7 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureDisabledSecondaryScreenToLeft)
     RED_CHECK(r.crop_rect == Rect());
     RED_CHECK(r.min_image_frame_dim == Dimension());
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.screen_position == (Point{0, 0}));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }
 
@@ -115,9 +119,10 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureV1SecondaryScreenToLeft)
     RED_CHECK(r.is_remote_app);
     RED_CHECK(r.rail_window_rect_start == Rect());
     RED_CHECK(r.max_image_frame_rect == Rect(-826, 35, 2865, 924));
-    RED_CHECK(r.crop_rect == Rect(1280, 35, 2040, 924));
+    RED_CHECK(r.crop_rect == Rect(454, 35, 2865, 924));
     RED_CHECK(r.min_image_frame_dim == Dimension(1048, 559));
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.screen_position == (Point{-1280, 0}));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }
 
@@ -128,8 +133,9 @@ RED_AUTO_TEST_CASE(TestRegionsCaptureV2SecondaryScreenToLeft)
     RED_CHECK(r.is_remote_app);
     RED_CHECK(r.rail_window_rect_start == Rect());
     RED_CHECK(r.max_image_frame_rect == Rect(-826, 35, 2865, 924));
-    RED_CHECK(r.crop_rect == Rect(3116, 440, 1048, 559));
+    RED_CHECK(r.crop_rect == Rect(1836, 440, 1048, 559));
     RED_CHECK(r.min_image_frame_dim == Dimension(1048, 559));
     RED_CHECK(r.max_screen_dim == Dimension(4720, 1440));
+    RED_CHECK(r.screen_position == (Point{-1280, 0}));
     RED_CHECK(r.updatable_frame_marker_end.len == 0);
 }

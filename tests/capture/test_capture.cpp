@@ -163,7 +163,7 @@ namespace
                 capture_video_full, full_video_params,
                 capture_meta, meta_params,
                 capture_kbd, kbd_log_params,
-                video_params, nullptr, Rect(), Rect()
+                video_params, nullptr, Capture::CropperInfo(), Rect()
             );
 
             f(capture, Rect(0, 0, rdp_drawable.width(), rdp_drawable.height()));

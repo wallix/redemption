@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
 {
     TestGraphic drawable(800, 600);
 
-    VideoCropper video_cropper(drawable, 0, 0, 800, 600);
+    VideoCropper video_cropper(drawable, {0, 0, 800, 600});
 
     auto const color_cxt = gdi::ColorCtx::depth24();
 
@@ -42,30 +42,24 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "video_cropper_full_1.png");
 
-    video_cropper.prepare_image_frame();
-
-    RED_CHECK_IMG(video_cropper.get_image_view(), IMG_TEST_PATH "video_cropper_full_1.png");
+    RED_CHECK_IMG(video_cropper.prepare_image_frame(), IMG_TEST_PATH "video_cropper_full_1.png");
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
     drawable->draw(RDPOpaqueRect(Rect(125, 75, 320, 200), encode_color24()(RED)), Rect(125, 75, 320, 200), color_cxt);
 
-    video_cropper.prepare_image_frame();
-
-    RED_CHECK_IMG(video_cropper.get_image_view(), IMG_TEST_PATH "video_cropper_full_2.png");
+    RED_CHECK_IMG(video_cropper.prepare_image_frame(), IMG_TEST_PATH "video_cropper_full_2.png");
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
     drawable->draw(RDPOpaqueRect(Rect(100, 100, 370, 250), encode_color24()(RED)), Rect(100, 100, 370, 250), color_cxt);
 
-    video_cropper.prepare_image_frame();
-
-    RED_CHECK_IMG(video_cropper.get_image_view(), IMG_TEST_PATH "video_cropper_full_3.png");
+    RED_CHECK_IMG(video_cropper.prepare_image_frame(), IMG_TEST_PATH "video_cropper_full_3.png");
 }
 
 RED_AUTO_TEST_CASE(TestVideoCropperReset)
 {
     TestGraphic drawable(800, 600);
 
-    VideoCropper video_cropper(drawable, 0, 0, 800, 600);
+    VideoCropper video_cropper(drawable, {0, 0, 800, 600});
 
     auto const color_cxt = gdi::ColorCtx::depth24();
 
@@ -73,27 +67,21 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "video_cropper_reset_1.png");
 
-    video_cropper.reset(50, 50, 320, 200);
+    video_cropper.set_crop({50, 50, 320, 200});
 
-    video_cropper.prepare_image_frame();
-
-    RED_CHECK_IMG(video_cropper.get_image_view(), IMG_TEST_PATH "video_cropper_reset_2.png");
+    RED_CHECK_IMG(video_cropper.prepare_image_frame(), IMG_TEST_PATH "video_cropper_reset_2.png");
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
     drawable->draw(RDPOpaqueRect(Rect(125, 75, 320, 200), encode_color24()(GREEN)), Rect(125, 75, 320, 200), color_cxt);
 
-    video_cropper.reset(125, 75, 320, 200);
+    video_cropper.set_crop({125, 75, 320, 200});
 
-    video_cropper.prepare_image_frame();
-
-    RED_CHECK_IMG(video_cropper.get_image_view(), IMG_TEST_PATH "video_cropper_reset_2.png");
+    RED_CHECK_IMG(video_cropper.prepare_image_frame(), IMG_TEST_PATH "video_cropper_reset_2.png");
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
     drawable->draw(RDPOpaqueRect(Rect(100, 100, 370, 250), encode_color24()(GREEN)), Rect(100, 100, 370, 250), color_cxt);
 
-    video_cropper.reset(100, 100, 370, 250);
+    video_cropper.set_crop({100, 100, 370, 250});
 
-    video_cropper.prepare_image_frame();
-
-    RED_CHECK_IMG(video_cropper.get_image_view(), IMG_TEST_PATH "video_cropper_reset_3.png");
+    RED_CHECK_IMG(video_cropper.prepare_image_frame(), IMG_TEST_PATH "video_cropper_reset_3.png");
 }

@@ -40,7 +40,6 @@
 
 class UpdateProgressData;
 class RDPDrawable;
-class VideoCropper;
 class WrmCaptureImpl;
 class SequencedVideoCaptureImpl;
 class FullVideoCaptureImpl;
@@ -68,6 +67,13 @@ class Capture final
 , public gdi::ResizeApi
 {
 public:
+    struct CropperInfo
+    {
+        // relative to 0, 0
+        Rect crop_rect;
+        Point screen_position;
+    };
+
     Capture(
         const CaptureParams& capture_params,
         const DrawableParams& drawable_params,
@@ -81,8 +87,8 @@ public:
         bool capture_kbd, const KbdLogParams& kbd_log_params,
         const VideoParams& video_params,
         UpdateProgressData * update_progress_data,
-        Rect const & crop_rect,
-        Rect const & rail_window_rect
+        CropperInfo cropping_info,
+        Rect rail_window_rect
     );
 
     ~Capture();
@@ -225,9 +231,6 @@ private:
     std::unique_ptr<DrawablePointer> drawable_pointer;
     PointerCache::SourcePointersView ptr_cache;
 
-    std::unique_ptr<VideoCropper> video_cropper;
-    std::unique_ptr<VideoCropper> video_cropper_real_time;
-
     struct MouseTrace
     {
         MonotonicTimePoint last_now;
@@ -264,6 +267,7 @@ private:
     bool const capture_drawable;
 
     SmartVideoCropping smart_video_cropping;
+    Point rail_screen_offset;
 
     RailScreenVisibility rail_screen_visibility;
 

@@ -569,27 +569,23 @@ namespace
     ;
 } // anonymous namespace
 
-TimestampTracer::TimestampTracer(const WritableImageView & image_view) noexcept
-: previous_timestamp_length(0)
-, width(image_view.width())
-, height(image_view.height())
-, bytes_per_pixel(safe_int(image_view.bytes_per_pixel()))
-, pixels(image_view.mutable_data())
-, rowsize(checked_int(image_view.line_size()))
+TimestampTracer::TimestampTracer() noexcept
 {
     memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
     memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
 }
 
-void TimestampTracer::trace(const tm & now) noexcept
+void TimestampTracer::trace(WritableImageView image_view, const tm & now) noexcept
 {
-    auto draw_12x7_digits = [this](unsigned lg_message, const char * message) {
-        auto posch_12x7 = [](char ch){
+    unsigned const bytes_per_pixel = safe_int(image_view.bytes_per_pixel());
+
+    auto draw_12x7_digits = [&, this](unsigned lg_message, const char * message) noexcept {
+        auto posch_12x7 = [](char ch) noexcept {
             return char_width * char_height
                  * ch12x7ToPosTable.posTable[static_cast<unsigned char>(ch)];
         };
 
-        for (size_t i = 0; i < lg_message; ++i) {
+        for (unsigned i = 0; i < lg_message; ++i) {
             char newch = message[i];
             char oldch = this->previous_timestamp[i];
 
@@ -598,19 +594,19 @@ void TimestampTracer::trace(const tm & now) noexcept
                 const char * poldch = digits + posch_12x7(oldch);
 
                 unsigned br_pix = 0;
-                unsigned br_pixindex = i * (char_width * this->bytes_per_pixel);
+                unsigned br_pixindex = i * (char_width * bytes_per_pixel);
 
                 for (unsigned y = 0; y < char_height
                   ; ++y, br_pix += char_width
-                  , br_pixindex += ts_width * this->bytes_per_pixel
+                  , br_pixindex += ts_width * bytes_per_pixel
                 ) {
                     for (unsigned x = 0; x < char_width; ++x) {
                         unsigned pix = br_pix + x;
                         if (pnewch[pix] != poldch[pix]) {
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
-                            unsigned pixindex = br_pixindex + x * this->bytes_per_pixel;
+                            unsigned pixindex = br_pixindex + x * bytes_per_pixel;
                             memset(&this->timestamp_data[pixindex], pixcolorcomponent,
-                                   this->bytes_per_pixel);
+                                   bytes_per_pixel);
                         }
                     }
                 }
@@ -622,35 +618,42 @@ void TimestampTracer::trace(const tm & now) noexcept
     char rawdate[size_str_timestamp] {};
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wformat-truncation")
-    const unsigned timestamp_length = unsigned(std::max(0,
+    const int timestamp_length = std::max(0,
         snprintf(rawdate, size_str_timestamp - 1,
             "%4d-%02d-%02d %02d:%02d:%02d %s",
             now.tm_year + 1900, now.tm_mon + 1, now.tm_mday,
-            now.tm_hour, now.tm_min, now.tm_sec, timezone)));
+            now.tm_hour, now.tm_min, now.tm_sec, timezone));
     REDEMPTION_DIAGNOSTIC_POP()
     draw_12x7_digits(size_str_timestamp - 1, rawdate);
     memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
     this->previous_timestamp_length = timestamp_length;
 
     uint8_t * tsave = this->timestamp_save;
-    uint8_t * buf = this->pixels;
-    const size_t n = timestamp_length * char_width * this->bytes_per_pixel;
-    const size_t cp_n = std::min<size_t>(n, this->width * this->bytes_per_pixel);
-    const size_t ny = std::min<size_t>(ts_height, this->height);
-    for (size_t y = 0; y < ny ; ++y, buf += this->rowsize, tsave += n) {
+    uint8_t * buf = image_view.mutable_data();
+    size_t const width = image_view.width();
+    size_t const height = image_view.height();
+    size_t const rowsize = checked_int(image_view.line_size());
+    size_t const n = checked_cast<size_t>(timestamp_length) * char_width * bytes_per_pixel;
+    size_t const cp_n = std::min<size_t>(n, width * bytes_per_pixel);
+    size_t const ny = std::min<size_t>(ts_height, height);
+    for (size_t y = 0; y < ny ; ++y, buf += rowsize, tsave += n) {
         memcpy(tsave, buf, cp_n);
-        memcpy(buf, this->timestamp_data + y * ts_width * this->bytes_per_pixel, cp_n);
+        memcpy(buf, this->timestamp_data + y * ts_width * bytes_per_pixel, cp_n);
     }
 }
 
-void TimestampTracer::clear() noexcept
+void TimestampTracer::clear(WritableImageView image_view) noexcept
 {
-    const uint8_t * tsave = this->timestamp_save;
-    uint8_t * buf = this->pixels;
-    const size_t n = this->previous_timestamp_length * char_width * this->bytes_per_pixel;
-    const size_t cp_n = std::min<size_t>(n, this->width);
-    const size_t ny = std::min<size_t>(ts_height, this->height);
-    for (size_t y = 0; y < ny; ++y, buf += this->rowsize, tsave += n) {
+    size_t const width = image_view.width();
+    size_t const height = image_view.height();
+    size_t const rowsize = checked_int(image_view.line_size());
+    size_t const bytes_per_pixel = safe_int(image_view.bytes_per_pixel());
+    uint8_t * buf = image_view.mutable_data();
+    uint8_t const * tsave = this->timestamp_save;
+    size_t const n = checked_cast<size_t>(this->previous_timestamp_length) * char_width * bytes_per_pixel;
+    size_t const cp_n = std::min<size_t>(n, width);
+    size_t const ny = std::min<size_t>(ts_height, height);
+    for (size_t y = 0; y < ny; ++y, buf += rowsize, tsave += n) {
         memcpy(buf, tsave, cp_n);
     }
 }

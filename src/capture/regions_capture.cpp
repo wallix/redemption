@@ -81,8 +81,8 @@ struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics, gdi::Rela
     void relayout(MonitorLayoutPDU const& monitor_layout_pdu) override
     {
         auto rect = monitor_layout_pdu.get_rect();
-        offset_screen_x = std::min(rect.x, offset_screen_x);
-        offset_screen_y = std::min(rect.y, offset_screen_y);
+        screen_position_x = std::min(rect.x, screen_position_x);
+        screen_position_y = std::min(rect.y, screen_position_y);
     }
 
     FileToGraphic const& ftg;
@@ -90,8 +90,8 @@ struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics, gdi::Rela
     MonotonicTimePoint::duration interval;
     BitsetOutStream updatable_frame_end_bitset_stream;
     unsigned long long* updatable_frame_last_it = nullptr;
-    int16_t offset_screen_x = 0;
-    int16_t offset_screen_y = 0;
+    int16_t screen_position_x = 0;
+    int16_t screen_position_y = 0;
     bool previous_drawing_event = true;
     bool first_frame = true;
 };
@@ -160,7 +160,7 @@ RegionsCapture RegionsCapture::compute_regions(
         RailScreenComputation rail_computation(
             reader.get_wrm_info().width,
             reader.get_wrm_info().height,
-            bool(verbose));
+            true);
 
         ret.rail_window_rect_start = reader.rail_wrm_window_rect;
         rail_computation.visibility_rect_event(reader.rail_wrm_window_rect);
@@ -192,31 +192,18 @@ RegionsCapture RegionsCapture::compute_regions(
             case SmartVideoCropping::v2:
                 ret.crop_rect.cx = std::min(ret.min_image_frame_dim.w, info.width);
                 ret.crop_rect.cy = std::min(ret.min_image_frame_dim.h, info.height);
-                if (!ret.crop_rect.isempty()) {
-                    ret.crop_rect.cx += (ret.crop_rect.cx & 1);
-
-                    ret.crop_rect.x = (info.width  - ret.crop_rect.cx) / 2;
-                    ret.crop_rect.y = (info.height - ret.crop_rect.cy) / 2;
-                }
+                ret.crop_rect.x = (info.width  - ret.crop_rect.cx) / 2;
+                ret.crop_rect.y = (info.height - ret.crop_rect.cy) / 2;
                 break;
 
             case SmartVideoCropping::v1:
-                ret.crop_rect = ret.max_image_frame_rect.intersect(info.width, info.height);
-                if (ret.crop_rect.cx & 1) {
-                    if (ret.crop_rect.x + ret.crop_rect.cx < info.width) {
-                        ret.crop_rect.cx += 1;
-                    }
-                    else if (ret.crop_rect.x > 0) {
-                        ret.crop_rect.x  -= 1;
-                        ret.crop_rect.cx += 1;
-                    }
-                }
+                ret.crop_rect = ret.max_image_frame_rect
+                  // screen position should be negative or 0
+                  .offset(-updatable_frame_end.screen_position_x,
+                          -updatable_frame_end.screen_position_y)
+                  .intersect(info.width, info.height);
                 break;
         }
-
-        // screen position should be negative
-        ret.crop_rect.x -= updatable_frame_end.offset_screen_x;
-        ret.crop_rect.y -= updatable_frame_end.offset_screen_y;
 
         LOG_IF(bool(verbose), LOG_INFO, "RegionsCapture::crop=%s", ret.crop_rect);
     }
@@ -239,6 +226,11 @@ RegionsCapture RegionsCapture::compute_regions(
             // ERR_NO_MORE_DATA
         }
     }
+
+    ret.screen_position = {
+        updatable_frame_end.screen_position_x,
+        updatable_frame_end.screen_position_y,
+    };
 
     updatable_frame_end.last_frame();
 

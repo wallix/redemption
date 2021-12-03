@@ -21,8 +21,8 @@
 #pragma once
 
 #include "gdi/image_frame_api.hpp"
-#include "utils/bitfu.hpp"
-#include "utils/sugar/not_null_ptr.hpp"
+#include "utils/image_view.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <memory>
 #include <cstring>
@@ -30,191 +30,92 @@
 
 class VideoCropper : public gdi::ImageFrameApi
 {
-private:
-    static constexpr const unsigned int bytes_per_pixel = 3;
-
-    not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr;
-
-    unsigned int in_width;
-    unsigned int in_height;
-
-    unsigned int in_rowsize;
-
-    const uint8_t* in_bmpdata;
-
-    unsigned int x;
-    unsigned int y;
-
-    unsigned int out_width;
-    unsigned int out_height;
-
-    unsigned int out_rowsize;
-
-    std::unique_ptr<uint8_t[]> out_bmpdata;
-
-    const uint8_t* in_bmpdata_effective;
-
-    unsigned int last_update_index = 0;
-
-    VideoCropper(
-        ImageFrameApi& imageFrameApi, ImageView const & image_view,
-        /* TODO x, y, out_width, out_height -> Rect*/
-        unsigned int x, unsigned int y,
-        unsigned int out_width, unsigned int out_height)
-    : image_frame_api_ptr(&imageFrameApi)
-    , in_width(image_view.width())
-    , in_height(image_view.height())
-    , in_rowsize(image_view.width() * VideoCropper::bytes_per_pixel) /* TODO image_view.rowsize() ? */
-    , in_bmpdata(image_view.data())
-    , x(x)
-    , y(y)
-    , out_width(out_width)
-    , out_height(out_height)
-    , out_rowsize(this->out_width * VideoCropper::bytes_per_pixel)
-    , in_bmpdata_effective(
-          this->in_bmpdata +
-          this->y * this->in_rowsize +
-          this->x * VideoCropper::bytes_per_pixel)
-    {
-        if ((this->out_width != this->in_width) ||
-            (this->out_height != this->in_height)) {
-            this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
-        }
-    }
-
 public:
-    VideoCropper(
-        ImageFrameApi& imageFrameApi,
-        /* TODO x, y, out_width, out_height -> Rect*/
-        unsigned int x, unsigned int y,
-        unsigned int out_width, unsigned int out_height)
-    : VideoCropper(imageFrameApi, imageFrameApi.get_writable_image_view(), x, y, out_width, out_height)
-    {}
-
-    void resize(ImageFrameApi& imageFrameApi)
+    VideoCropper(ImageFrameApi& image_frame, Rect cropper) noexcept
+    : image_frame(image_frame)
+    , in_rect(cropper)
     {
-        this->image_frame_api_ptr = &imageFrameApi;
-
-        ImageView const & image_view = imageFrameApi.get_writable_image_view();
-
-        this->in_width   = image_view.width();
-        this->in_height  = image_view.height();
-        this->in_rowsize = image_view.width() * VideoCropper::bytes_per_pixel;  /* TODO image_view.rowsize() ? */
-        this->in_bmpdata = image_view.data();
-
-        Rect rect = Rect(this->x, this->y, this->out_width, this->out_height).intersect(this->in_width, this->in_height);
-
-        this->reset(rect.x, rect.y, rect.cx, rect.cy);
-
-        this->in_bmpdata_effective =
-            this->in_bmpdata +
-              this->y * this->in_rowsize +
-              this->x * VideoCropper::bytes_per_pixel;
+        auto img = this->image_frame.prepare_image_frame();
+        cropper = this->in_rect.intersect(img.width(), img.height());
+        unsigned rowsize = cropper.cx * underlying_cast(img.bytes_per_pixel());
+        this->alloc_buffer(rowsize * cropper.cy);
     }
 
-private:
-    template<class ImgView>
-    [[nodiscard]] ImgView create_image_view() const
+    void set_crop(Rect cropper) noexcept
     {
-        uint8_t * data = this->out_bmpdata.get();
+        this->in_rect = cropper;
+    }
 
-        if (this->out_width == this->in_width && this->out_height == this->in_height) {
-            data = const_cast<uint8_t*>(this->in_bmpdata); /*NOLINT*/
+    Rect get_rect() noexcept
+    {
+        return this->in_rect;
+    }
+
+    WritableImageView prepare_image_frame() override
+    {
+        auto img = this->image_frame.prepare_image_frame();
+
+        if (this->in_rect.cy == img.width() && this->in_rect.cx == img.height()) {
+            return img;
         }
 
-        return ImgView{
-            data,
-            static_cast<uint16_t>(this->out_width),
-            static_cast<uint16_t>(this->out_height),
-            this->out_rowsize,
-            ImageView::BytesPerPixel(this->bytes_per_pixel),
-            ImageView::Storage::TopToBottom
-        };
-    }
-
-public:
-    WritableImageView get_writable_image_view() override
-    {
-        return this->create_image_view<WritableImageView>();
-    }
-
-    [[nodiscard]] ImageView get_image_view() const override
-    {
-        return this->create_image_view<ImageView>();
-    }
-
-    void prepare_image_frame() override
-    {
-        if ((this->out_width == this->in_width) &&
-            (this->out_height == this->in_height)) {
-            return;
-        }
-
-        const unsigned int remote_last_update_index =
-            this->image_frame_api_ptr->get_last_update_index();
+        // image not modified, returns previous image
+        const unsigned remote_last_update_index =
+            this->image_frame.get_last_update_index();
         if (remote_last_update_index == this->last_update_index) {
-            return;
+            assert(this->previous_image_view.data());
+            return this->previous_image_view;
         }
         this->last_update_index = remote_last_update_index;
 
-        const uint8_t* in_bmpdata_tmp  = this->in_bmpdata_effective;
-              uint8_t* out_bmpdata_tmp = this->out_bmpdata.get();
+        Rect cropper = this->in_rect.intersect(img.width(), img.height());
+        unsigned rowsize = cropper.cx * underlying_cast(img.bytes_per_pixel());
+        uint8_t* out_bmpdata_tmp = this->alloc_buffer(rowsize * cropper.cy);
 
-        for (unsigned int i = 0; i < this->out_height; ++i) {
-            ::memcpy(out_bmpdata_tmp, in_bmpdata_tmp, this->out_rowsize);
+        uint8_t const* in_bmpdata_tmp
+          = img.data()
+          + cropper.y * img.line_size()
+          + cropper.x * underlying_cast(img.bytes_per_pixel());
 
-            in_bmpdata_tmp  += this->in_rowsize;
-            out_bmpdata_tmp += this->out_rowsize;
-        }
-    }
+        for (uint16_t i = 0; i < cropper.cy; ++i) {
+            std::memcpy(out_bmpdata_tmp, in_bmpdata_tmp, rowsize);
 
-    [[nodiscard]] unsigned int get_last_update_index() const noexcept override
-    {
-        return this->last_update_index;
-    }
-
-    using gdi::ImageFrameApi::reset;
-
-    // returns true if size of image frame has changed
-    /* TODO x, y, out_width, out_height -> Rect*/
-    bool reset(unsigned int x, unsigned int y,
-               unsigned int out_width, unsigned int out_height) override
-    {
-        unsigned int const old_out_rowsize = this->out_rowsize;
-        unsigned int const old_out_height  = this->out_height;
-
-        bool result = false;
-
-        this->x = x;
-        this->y = y;
-        this->out_width = out_width;
-        this->out_height = out_height;
-        this->out_rowsize = this->out_width * VideoCropper::bytes_per_pixel;
-        if ((this->out_width != this->in_width) ||
-            (this->out_height != this->in_height)) {
-            if (((old_out_rowsize * old_out_height) < (this->out_rowsize * this->out_height)) || !this->out_bmpdata) {
-                this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * this->out_height);
-
-                result = true;
-            }
-            else if (old_out_rowsize != this->out_rowsize) {
-                result = true;
-            }
-        }
-        else {
-            this->out_bmpdata = nullptr;
+            in_bmpdata_tmp  += img.line_size();
+            out_bmpdata_tmp += rowsize;
         }
 
-        this->in_bmpdata_effective =
-            this->in_bmpdata +
-            this->y * this->in_rowsize +
-            this->x * VideoCropper::bytes_per_pixel;
+        this->previous_image_view = WritableImageView{
+            this->out_bmpdata.get(),
+            cropper.cx,
+            cropper.cy,
+            rowsize,
+            img.bytes_per_pixel(),
+            img.storage_type()
+        };
 
-        return result;
+        return this->previous_image_view;
     }
 
-    [[nodiscard]] Rect get_rect() const override
+    unsigned int get_last_update_index() const noexcept override
     {
-        return Rect(this->x, this->y, this->out_width, this->out_height);
+        return this->last_update_index + 1u;
     }
+
+private:
+    uint8_t* alloc_buffer(std::size_t len)
+    {
+        if (this->max_buffer_len < len) {
+            this->out_bmpdata = std::make_unique<uint8_t[]>(len);
+            this->max_buffer_len = len;
+        }
+        return this->out_bmpdata.get();
+    }
+
+private:
+    gdi::ImageFrameApi& image_frame;
+    std::unique_ptr<uint8_t[]> out_bmpdata;
+    WritableImageView previous_image_view = WritableImageView::create_null_view();
+    Rect in_rect;
+    unsigned max_buffer_len = 0;
+    unsigned int last_update_index = 0;
 };

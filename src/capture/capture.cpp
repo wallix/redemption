@@ -68,7 +68,6 @@
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 #include "capture/utils/match_finder.hpp"
-#include "utils/video_cropper.hpp"
 #include "utils/drawable_pointer.hpp"
 
 #include <algorithm>
@@ -666,16 +665,15 @@ struct PngCaptureData
 {
     PngCaptureData(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame_api)
-    : image_frame_api(image_frame_api)
-    , drawable(drawable)
+        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Rect cropping)
+    : drawable(drawable)
     , drawable_pointer(drawable_pointer)
     , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , monotonic_to_real(capture_params.now, capture_params.real_now)
     , scaled_png{png_params.png_width, png_params.png_height}
-    , timestamp_tracer(image_frame_api.get_writable_image_view())
+    , cropping(cropping)
     {}
 
     MonotonicTimePoint::duration interval() const
@@ -683,9 +681,9 @@ struct PngCaptureData
         return this->frame_interval;
     }
 
-    void resize(gdi::ImageFrameApi & image_frame_api)
+    void set_cropping(Rect cropping) noexcept
     {
-        this->timestamp_tracer = TimestampTracer(image_frame_api.get_writable_image_view());
+        this->cropping = cropping;
     }
 
     template<class NextCaptureFn>
@@ -714,70 +712,28 @@ struct PngCaptureData
     {
         DrawablePointer::BufferSaver buffer_saver;
         this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+
+        auto writable_image = gdi::get_writable_image_view(this->drawable)
+            .mutable_sub_view(this->cropping);
+
         tm ptm;
         localtime_r(&t, &ptm);
-        this->image_frame_api.prepare_image_frame();
-        this->timestamp_tracer.trace(ptm);
+        this->timestamp_tracer.trace(writable_image, ptm);
 
-        this->scaled_png.dump_png24(trans, this->image_frame_api, true);
+        this->scaled_png.dump_png24(trans, writable_image, true);
 
-        this->timestamp_tracer.clear();
+        this->timestamp_tracer.clear(writable_image);
         this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
     }
 
-    void visibility_rects_event(Rect rect)
-    {
-        if (rect.isempty()) {
-            return;
-        }
-
-        rect = rect.intersect(this->drawable.width(), this->drawable.height());
-
-        bool right         = true;
-        int  failure_count = 0;
-        while ((rect.cx & 3) && (failure_count < 2)) {
-            if (right) {
-                if (rect.x + rect.cx < this->drawable.width()) {
-                    rect.cx += 1;
-                    failure_count = 0;
-                }
-                else {
-                    failure_count++;
-                }
-
-                right = false;
-            }
-            else {
-                if (rect.x > 0) {
-                    rect.x -=1;
-                    rect.cx += 1;
-                    failure_count = 0;
-                }
-                else {
-                    failure_count++;
-                }
-
-                right = true;
-            }
-        }
-
-        if (rect.cx & 3) {
-            rect.cx &= ~3u;
-        }
-
-        if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
-            this->resize(this->image_frame_api);
-        }
-    }
-
 private:
-    gdi::ImageFrameApi & image_frame_api;
-    Drawable & drawable;
+    Drawable& drawable;
     DrawablePointer const & drawable_pointer;
     MonotonicTimePoint last_time_capture;
     const MonotonicTimePoint::duration frame_interval;
     const MonotonicTimeToRealTime monotonic_to_real;
     const ScaledPng24 scaled_png;
+    Rect cropping;
     TimestampTracer timestamp_tracer;
 };
 
@@ -790,9 +746,9 @@ class Capture::PngCapture final : public gdi::CaptureApi
 public:
     PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame_api)
-    : png_data(capture_params, png_params, drawable, drawable_pointer, image_frame_api)
+        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Rect cropping)
+    : png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
     , trans(
         capture_params.record_tmp_path,
         png_params.real_basename,
@@ -801,11 +757,6 @@ public:
         FilesystemFullReporter{capture_params.session_log})
     {}
 
-    void resize(gdi::ImageFrameApi & image_frame_api)
-    {
-        this->png_data.resize(image_frame_api);
-    }
-
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/
     ) override
@@ -813,6 +764,11 @@ public:
         return this->png_data.periodic_snapshot(now, this->trans, [this]{
             this->trans.next();
         });
+    }
+
+    void set_cropping(Rect cropping) noexcept
+    {
+        this->png_data.set_cropping(cropping);
     }
 
 private:
@@ -825,12 +781,11 @@ class Capture::PngCaptureRT final : public gdi::CaptureApi
 public:
     explicit PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame_api)
+        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Rect cropping)
     : png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
-    , smart_video_cropping(capture_params.smart_video_cropping)
-    , png_data(capture_params, png_params, drawable, drawable_pointer, image_frame_api)
+    , png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
     , trans(
         capture_params.record_tmp_path,
         png_params.real_basename,
@@ -842,11 +797,6 @@ public:
     ~PngCaptureRT()
     {
         this->clear_png_interval();
-    }
-
-    void resize(gdi::ImageFrameApi & image_frame_api)
-    {
-        this->png_data.resize(image_frame_api);
     }
 
     RTDisplayResult set_rt_display(bool enable_rt_display)
@@ -882,13 +832,9 @@ public:
         });
     }
 
-    void visibility_rects_event(Rect rect)
+    void set_cropping(Rect cropping) noexcept
     {
-        if (this->smart_video_cropping == SmartVideoCropping::disable) {
-            return;
-        }
-
-        this->png_data.visibility_rects_event(rect);
+        this->png_data.set_cropping(cropping);
     }
 
 private:
@@ -906,8 +852,6 @@ private:
 
     bool enable_rt_display;
 
-    SmartVideoCropping smart_video_cropping;
-
     PngCaptureData png_data;
     OutFilenameSequenceTransport trans;
 };
@@ -918,11 +862,10 @@ class Capture::PngCaptureRTRedis final : public gdi::CaptureApi
 public:
     explicit PngCaptureRTRedis(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable & drawable, DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame_api)
+        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Rect cropping)
     : enable_rt_display(png_params.rt_display)
-    , smart_video_cropping(capture_params.smart_video_cropping)
-    , png_data(capture_params, png_params, drawable, drawable_pointer, image_frame_api)
+    , png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
     , redis_cmd(png_params.redis.key_name)
     , redis_server(truncated_bounded_array_view(png_params.redis.address),
                    png_params.redis.timeout,
@@ -934,9 +877,9 @@ public:
         }
     }
 
-    void resize(gdi::ImageFrameApi & image_frame_api)
+    void set_cropping(Rect cropping) noexcept
     {
-        this->png_data.resize(image_frame_api);
+        this->png_data.set_cropping(cropping);
     }
 
     RTDisplayResult set_rt_display(bool enable_rt_display)
@@ -1015,15 +958,6 @@ public:
         });
     }
 
-    void visibility_rects_event(Rect rect)
-    {
-        if (this->smart_video_cropping == SmartVideoCropping::disable) {
-            return;
-        }
-
-        this->png_data.visibility_rects_event(rect);
-    }
-
 private:
     void connect_to_redis()
     {
@@ -1035,8 +969,6 @@ private:
     }
 
     bool enable_rt_display;
-
-    SmartVideoCropping smart_video_cropping;
 
     PngCaptureData png_data;
     RedisCmdSet redis_cmd;
@@ -1526,8 +1458,8 @@ Capture::Capture(
     bool capture_kbd, const KbdLogParams& kbd_log_params,
     const VideoParams& video_params,
     UpdateProgressData * update_progress_data,
-    Rect const & crop_rect,
-    Rect const & rail_window_rect)
+    const CropperInfo cropper_info,
+    const Rect rail_window_rect)
 : gd_drawable(drawable_params.rdp_drawable)
 , ptr_cache(drawable_params.ptr_cache)
 , update_progress_data(update_progress_data)
@@ -1537,6 +1469,10 @@ Capture::Capture(
     static_cast<uint16_t>(drawable_params.rdp_drawable.height() / 2)}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 , smart_video_cropping(capture_params.smart_video_cropping)
+, rail_screen_offset{
+    checked_int(-cropper_info.screen_position.x),
+    checked_int(-cropper_info.screen_position.y),
+}
 , rail_screen_visibility(capture_params.verbose)
 {
     LOG(LOG_INFO,
@@ -1558,6 +1494,14 @@ Capture::Capture(
         }
     }
 
+    if (cropper_info.crop_rect.isempty() || !(capture_png || capture_video || capture_video_full)) {
+        smart_video_cropping = SmartVideoCropping::disable;
+    }
+
+    Rect real_crop_rect = (SmartVideoCropping::disable == smart_video_cropping)
+        ? Rect(0, 0, this->gd_drawable.width(), this->gd_drawable.height())
+        : cropper_info.crop_rect;
+
     if (capture_meta) {
         this->meta_capture_obj = std::make_unique<MetaCaptureImpl>(capture_params, meta_params);
     }
@@ -1569,67 +1513,38 @@ Capture::Capture(
         drawable_pointer->set_position(this->gd_drawable.width() / 2,
                                        this->gd_drawable.height() / 2);
 
-        not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = &this->gd_drawable;
-
-        if (!crop_rect.isempty()
-         && ( (capture_png && !png_params.real_time_image_capture)
-           || capture_video
-           || capture_video_full
-         )
-        ) {
-            this->video_cropper = std::make_unique<VideoCropper>(
-                this->gd_drawable,
-                crop_rect.x,
-                crop_rect.y,
-                crop_rect.cx,
-                crop_rect.cy
-            );
-
-            image_frame_api_ptr = this->video_cropper.get();
-        }
-
         if (capture_png) {
             if (png_params.real_time_image_capture) {
-                not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = &this->gd_drawable;
-
-                if (png_params.remote_program_session) {
-                    this->video_cropper_real_time = std::make_unique<VideoCropper>(
-                        this->gd_drawable,
-                        0,
-                        0,
-                        this->gd_drawable.width(),
-                        this->gd_drawable.height()
-                    );
-
-                    image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
-                }
-
                 if (!png_params.redis.address.empty()) {
-                    this->png_real_time_redis_capture_obj =
-                        std::make_unique<PngCaptureRTRedis>(capture_params,
-                                                            png_params,
-                                                            this->gd_drawable.impl(),
-                                                            *this->drawable_pointer,
-                                                            *image_frame_api_real_time_ptr);
+                    this->png_real_time_redis_capture_obj = std::make_unique<PngCaptureRTRedis>(
+                        capture_params,
+                        png_params,
+                        this->gd_drawable.impl(),
+                        *this->drawable_pointer,
+                        real_crop_rect
+                    );
                 }
                 else {
-                    this->png_real_time_capture_obj =
-                        std::make_unique<PngCaptureRT>(capture_params,
-                                                       png_params,
-                                                       this->gd_drawable.impl(),
-                                                       *this->drawable_pointer,
-                                                       *image_frame_api_real_time_ptr);
+                    this->png_real_time_capture_obj = std::make_unique<PngCaptureRT>(
+                        capture_params,
+                        png_params,
+                        this->gd_drawable.impl(),
+                        *this->drawable_pointer,
+                        real_crop_rect
+                    );
                 }
             }
             else {
-                this->png_capture_obj =
-                    std::make_unique<PngCapture>(capture_params,
-                                                 png_params,
-                                                 this->gd_drawable.impl(),
-                                                 *this->drawable_pointer,
-                                                 *image_frame_api_ptr);
+                this->png_capture_obj = std::make_unique<PngCapture>(
+                    capture_params,
+                    png_params,
+                    this->gd_drawable.impl(),
+                    *this->drawable_pointer,
+                    real_crop_rect
+                );
             }
         }
+
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
                 capture_params, wrm_params, this->gd_drawable, rail_window_rect,
@@ -1646,13 +1561,13 @@ Capture::Capture(
             this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
                 capture_params, png_params.png_width, png_params.png_height,
                 this->gd_drawable.impl(), *this->drawable_pointer,
-                *image_frame_api_ptr, video_params, sequenced_video_params, notifier);
+                real_crop_rect, video_params, sequenced_video_params, notifier);
         }
 
         if (capture_video_full) {
             this->full_video_capture_obj = std::make_unique<FullVideoCaptureImpl>(
                 capture_params, this->gd_drawable.impl(), *this->drawable_pointer,
-                *image_frame_api_ptr, video_params, full_video_params);
+                real_crop_rect, video_params, full_video_params);
         }
 #else
         if (capture_video || capture_video_full) {
@@ -1697,14 +1612,13 @@ Capture::Capture(
         if (this->png_real_time_capture_obj) {
             this->caps.emplace_back(*this->png_real_time_capture_obj);
         }
-
-        if (this->png_real_time_redis_capture_obj) {
+        else if (this->png_real_time_redis_capture_obj) {
             this->caps.emplace_back(*this->png_real_time_redis_capture_obj);
         }
-
-        if (this->png_capture_obj) {
+        else if (this->png_capture_obj) {
             this->caps.emplace_back(*this->png_capture_obj);
         }
+
 #ifndef REDEMPTION_NO_FFMPEG
         if (this->sequenced_video_capture_obj) {
             this->caps.emplace_back(*this->sequenced_video_capture_obj);
@@ -1869,33 +1783,21 @@ void Capture::resize(uint16_t width, uint16_t height)
         this->gd_drawable.resize(width, height);
     }
 
-    if (this->png_real_time_capture_obj || this->png_real_time_redis_capture_obj) {
-        not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = &this->gd_drawable;
-
-        if (this->video_cropper_real_time) {
-            this->video_cropper_real_time->resize(this->gd_drawable);
-
-            image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
-        }
+    if (this->png_real_time_capture_obj
+     || this->png_real_time_redis_capture_obj
+     || this->png_capture_obj
+    ) {
+        auto rect = Rect(0, 0, this->gd_drawable.width(), this->gd_drawable.height());
 
         if (this->png_real_time_capture_obj) {
-            this->png_real_time_capture_obj->resize(*image_frame_api_real_time_ptr);
+            this->png_real_time_capture_obj->set_cropping(rect);
         }
-        else {
-            this->png_real_time_redis_capture_obj->resize(*image_frame_api_real_time_ptr);
+        else if (this->png_real_time_redis_capture_obj) {
+            this->png_real_time_redis_capture_obj->set_cropping(rect);
         }
-    }
-
-    if (this->png_capture_obj) {
-        not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = &this->gd_drawable;
-
-        if (this->video_cropper) {
-            this->video_cropper->resize(this->gd_drawable);
-
-            image_frame_api_ptr = this->video_cropper.get();
+        else if (this->png_capture_obj) {
+            this->png_capture_obj->set_cropping(rect);
         }
-
-        this->png_capture_obj->resize(*image_frame_api_ptr);
     }
 
     this->external_breakpoint();
@@ -1985,56 +1887,51 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
 
 void Capture::visibility_rects_event(Rect rect)
 {
-    if (this->png_real_time_capture_obj) {
-        this->png_real_time_capture_obj->visibility_rects_event(rect);
-    }
-    if (this->png_real_time_redis_capture_obj) {
-        this->png_real_time_redis_capture_obj->visibility_rects_event(rect);
-    }
-
     if (this->wrm_capture_obj) {
         this->wrm_capture_obj->visibility_rects_event(rect);
     }
 
-    if (this->smart_video_cropping == SmartVideoCropping::disable
-     || this->smart_video_cropping == SmartVideoCropping::v1
-     || !this->video_cropper
+    switch (this->smart_video_cropping) {
+        case SmartVideoCropping::disable:
+        case SmartVideoCropping::v1:
+            return;
+        case SmartVideoCropping::v2:;
+    }
+
+    if (this->png_real_time_capture_obj
+     || this->png_real_time_redis_capture_obj
+     || this->png_capture_obj
+    #ifndef REDEMPTION_NO_FFMPEG
+     || this->sequenced_video_capture_obj
+     || this->full_video_capture_obj
+    #endif
     ) {
-        return;
+        rect.x += this->rail_screen_offset.x;
+        rect.y += this->rail_screen_offset.y;
+
+        auto cropping = rect.intersect(this->gd_drawable.width(),
+                                       this->gd_drawable.height());
+
+        if (this->png_real_time_capture_obj) {
+            this->png_real_time_capture_obj->set_cropping(cropping);
+        }
+        else if (this->png_real_time_redis_capture_obj) {
+            this->png_real_time_redis_capture_obj->set_cropping(cropping);
+        }
+        else if (this->png_capture_obj) {
+            this->png_capture_obj->set_cropping(cropping);
+        }
+
+        #ifndef REDEMPTION_NO_FFMPEG
+        if (this->sequenced_video_capture_obj) {
+            this->sequenced_video_capture_obj->set_cropping(cropping);
+        }
+
+        if (this->full_video_capture_obj) {
+            this->full_video_capture_obj->set_cropping(cropping);
+        }
+        #endif
     }
-
-    uint16_t const drawable_width  = this->gd_drawable.width();
-    uint16_t const drawable_height = this->gd_drawable.height();
-
-    Rect const image_frame_rect = this->video_cropper->get_rect();
-
-    assert((image_frame_rect.cx <= drawable_width) && (image_frame_rect.cy <= drawable_height));
-
-    rect = Rect(0, 0, drawable_width, drawable_height).intersect(rect);
-
-    if (image_frame_rect.contains(rect)) {
-        return;
-    }
-
-    Rect new_image_frame_rect = image_frame_rect;
-
-    if (new_image_frame_rect.x > rect.x) {
-        new_image_frame_rect.x = rect.x;
-    }
-    else if ((new_image_frame_rect.x + new_image_frame_rect.cx) < (rect.x + rect.cx)) {
-        new_image_frame_rect.x = (rect.x + rect.cx) - new_image_frame_rect.cx;
-    }
-
-    if (new_image_frame_rect.y > rect.y) {
-        new_image_frame_rect.y = rect.y;
-    }
-    else if ((new_image_frame_rect.y + new_image_frame_rect.cy) < (rect.y + rect.cy)) {
-        new_image_frame_rect.y = (rect.y + rect.cy) - new_image_frame_rect.cy;
-    }
-
-    bool const retval = this->video_cropper->reset(new_image_frame_rect);
-    assert(!retval);
-    (void)retval;
 }
 
 

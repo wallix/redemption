@@ -206,7 +206,7 @@ private:
                 capture_kbd, kbd_log_params,
                 VideoParams{},
                 nullptr,
-                Rect(),
+                Capture::CropperInfo(),
                 rail_window_rect)
             {}
         };

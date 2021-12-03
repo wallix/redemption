@@ -98,9 +98,20 @@ namespace
     };
     constexpr Codec mp4{"mp4", "profile=baseline preset=ultrafast b=100000"};
 
+    enum class Cropped : bool;
+    enum class Mouse : bool;
+
+    Rect to_rect(RDPDrawable& drawable, Cropped cropped)
+    {
+        return bool(cropped)
+            ? Rect(drawable.width() / 4, drawable.height() / 4,
+                   drawable.width() / 2 + 1, drawable.height() / 2 + 1)
+            : Rect(0, 0, drawable.width(), drawable.height());
+    }
+
     void simple_sequenced_video(
         char const* dirname, Codec const& codec, std::chrono::seconds video_interval,
-        unsigned loop_duration, bool mouse)
+        unsigned loop_duration, Mouse mouse, Cropped cropped)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
@@ -114,16 +125,16 @@ namespace
             nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 0 /* png_width */, 0 /* png_height */,
-            drawable.impl(), drawable_pointer, drawable, video_params,
-            sequenced_video_params, next_video_notifier);
+            drawable.impl(), drawable_pointer, to_rect(drawable, cropped),
+            video_params, sequenced_video_params, next_video_notifier);
         simple_movie(
             monotonic_time, loop_duration, drawable, drawable_pointer,
-            video_capture, video_capture.graphics_api(), mouse);
+            video_capture, video_capture.graphics_api(), bool(mouse));
     }
 
     void simple_full_video(
         char const* dirname, Codec const& codec,
-        unsigned loop_duration, bool mouse)
+        unsigned loop_duration, Mouse mouse, Cropped cropped)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
@@ -135,17 +146,17 @@ namespace
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
-            capture_params, drawable.impl(), drawable_pointer, drawable,
+            capture_params, drawable.impl(), drawable_pointer, to_rect(drawable, cropped),
             video_params, FullVideoParams{});
         simple_movie(
             monotonic_time, loop_duration, drawable, drawable_pointer,
-            video_capture, video_capture.graphics_api(), mouse);
+            video_capture, video_capture.graphics_api(), bool(mouse));
     }
 } // namespace
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
 {
-    simple_sequenced_video(wd.dirname(), mp4, 2s, 250, true);
+    simple_sequenced_video(wd.dirname(), mp4, 2s, 250, Mouse(true), Cropped(false));
 
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "2bis.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "2s.png");
@@ -163,7 +174,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
 
 RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
 {
-    simple_sequenced_video(wd.dirname(), mp4, 1s, 250, true);
+    simple_sequenced_video(wd.dirname(), mp4, 1s, 250, Mouse(true), Cropped(false));
 
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "1s.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "1s.png");
@@ -191,7 +202,7 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4_3, wd)
 {
-    simple_sequenced_video(wd.dirname(), mp4, 5s, 250, true);
+    simple_sequenced_video(wd.dirname(), mp4, 5s, 250, Mouse(true), Cropped(false));
 
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "2bis.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "5s.png");
@@ -203,16 +214,89 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4_3, wd)
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264, wd)
 {
-    simple_full_video(wd.dirname(), mp4, 250, true);
+    simple_full_video(wd.dirname(), mp4, 250, Mouse(true), Cropped(false));
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 106930 +- 10000_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264_2, wd)
 {
-    simple_full_video(wd.dirname(), mp4, 250, false);
+    simple_full_video(wd.dirname(), mp4, 250, Mouse(false), Cropped(false));
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 92693 +- 10000_v);
+}
+
+
+RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureCroppedMP4, wd)
+{
+    simple_sequenced_video(wd.dirname(), mp4, 2s, 250, Mouse(true), Cropped(true));
+
+    RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "cropped_2bis.png");
+    RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "cropped_2s.png");
+    RED_CHECK_IMG(wd.add_file("video-000002.png"), IMG_TEST_PATH "cropped_4s.png");
+    RED_CHECK_IMG(wd.add_file("video-000003.png"), IMG_TEST_PATH "cropped_6s.png");
+    RED_CHECK_IMG(wd.add_file("video-000004.png"), IMG_TEST_PATH "cropped_8s.png");
+    RED_CHECK_IMG(wd.add_file("video-000005.png"), IMG_TEST_PATH "cropped_10s.png");
+    RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 20021 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 27338 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15267 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 19767 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000004.mp4"), 28044 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000005.mp4"), 5315 +- 2000_v);
+}
+
+RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureCroppedX264, wd)
+{
+    simple_sequenced_video(wd.dirname(), mp4, 1s, 250, Mouse(true), Cropped(true));
+
+    RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "cropped_1s.png");
+    RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "cropped_1s.png");
+    RED_CHECK_IMG(wd.add_file("video-000002.png"), IMG_TEST_PATH "cropped_2s.png");
+    RED_CHECK_IMG(wd.add_file("video-000003.png"), IMG_TEST_PATH "cropped_3s.png");
+    RED_CHECK_IMG(wd.add_file("video-000004.png"), IMG_TEST_PATH "cropped_4s.png");
+    RED_CHECK_IMG(wd.add_file("video-000005.png"), IMG_TEST_PATH "cropped_5s.png");
+    RED_CHECK_IMG(wd.add_file("video-000006.png"), IMG_TEST_PATH "cropped_6s.png");
+    RED_CHECK_IMG(wd.add_file("video-000007.png"), IMG_TEST_PATH "cropped_7s.png");
+    RED_CHECK_IMG(wd.add_file("video-000008.png"), IMG_TEST_PATH "cropped_8s.png");
+    RED_CHECK_IMG(wd.add_file("video-000009.png"), IMG_TEST_PATH "cropped_9s.png");
+    RED_CHECK_IMG(wd.add_file("video-000010.png"), IMG_TEST_PATH "cropped_10s.png");
+    RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 8584 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 15175 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15299 +- 2300_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 15576 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000004.mp4"), 11587 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000005.mp4"), 8264 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000006.mp4"), 8949 +- 3100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000007.mp4"), 15385 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000008.mp4"), 17622 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000009.mp4"), 17693 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000010.mp4"), 4980 +- 200_v);
+}
+
+RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureCroppedMP4_3, wd)
+{
+    simple_sequenced_video(wd.dirname(), mp4, 5s, 250, Mouse(true), Cropped(true));
+
+    RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "cropped_2bis.png");
+    RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "cropped_5s.png");
+    RED_CHECK_IMG(wd.add_file("video-000002.png"), IMG_TEST_PATH "cropped_10s.png");
+    RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 49021 +- 2500_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 46338 +- 3000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 4980 +- 200_v);
+}
+
+RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureCroppedX264, wd)
+{
+    simple_full_video(wd.dirname(), mp4, 250, Mouse(true), Cropped(true));
+
+    RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 86930 +- 10000_v);
+}
+
+RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureCroppedX264_2, wd)
+{
+    simple_full_video(wd.dirname(), mp4, 250, Mouse(false), Cropped(true));
+
+    RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 65693 +- 10000_v);
 }
 #else
 int main() {}

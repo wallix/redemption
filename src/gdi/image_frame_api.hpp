@@ -25,44 +25,22 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
-namespace gdi {
+namespace gdi
+{
 
 struct ImageFrameApi : private noncopyable
 {
     virtual ~ImageFrameApi() = default;
 
-    virtual WritableImageView get_writable_image_view() = 0;
-    [[nodiscard]] virtual ImageView get_image_view() const = 0;
+    [[nodiscard]]
+    virtual WritableImageView prepare_image_frame() = 0;
 
-    operator ImageView () const
+    operator WritableImageView ()
     {
-        return get_image_view();
+        return this->prepare_image_frame();
     }
 
-    virtual void prepare_image_frame() = 0;
-
-    [[nodiscard]] virtual unsigned int get_last_update_index() const = 0;
-
-    // returns true if size of image frame has changed
-    bool reset(Rect const & out_rect) {
-        return this->reset(out_rect.x, out_rect.y, out_rect.cx, out_rect.cy);
-    }
-
-    // returns true if size of image frame has changed
-    virtual bool reset(unsigned int x, unsigned int y,
-               unsigned int out_width, unsigned int out_height) = 0;
-
-    [[nodiscard]] virtual Rect get_rect() const = 0;
+    virtual unsigned int get_last_update_index() const = 0;
 };
-
-inline ImageView get_image_view(ImageFrameApi const & image_frame)
-{
-    return image_frame.get_image_view();
-}
-
-inline WritableImageView get_writable_image_view(ImageFrameApi & image_frame)
-{
-    return image_frame.get_writable_image_view();
-}
 
 }  // namespace gdi

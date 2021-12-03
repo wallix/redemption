@@ -39,6 +39,15 @@ struct Point
 {
     int16_t x;
     int16_t y;
+
+    REDEMPTION_FRIEND_OSTREAM(out, Point const & p) {
+        return out << "(" << p.x << ", " << p.y << ")";
+    }
+
+    bool operator==(Point const & other) const {
+        return (other.x == this->x
+             && other.y == this->y);
+    }
 };
 
 
@@ -121,7 +130,7 @@ struct Rect {
     Rect(int16_t left, int16_t top, uint16_t width, uint16_t height) noexcept
         : x(left), y(top), cx(width), cy(height)
     {
-        // fast detection of overflow, works for valid width/height range 0..4096
+        // fast detection of overflow, works for valid width/height range 0..32768
         if (((width-1)|(height-1)) & 0x8000){
             this->cx = 0;
             this->cy = 0;
