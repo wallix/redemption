@@ -34,10 +34,12 @@ EXE_DEPENDENCIES +=
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "'./'" ] ;
 constant JS_CLIENT_COPY_MODE : [ setvar copy_application_mode : "copy" ] ;
+constant EM_ALLOW_UNIMPLEMENTED_SYSCALLS : [ setvar allow_unimplemented_syscalls : "yes" ] ;
 
 import feature : feature ;
-feature source_map_support : no yes : propagated ;
 import toolset ;
+
+feature source_map_support : no yes : propagated ;
 toolset.flags source_map_support SOURCE_MAP_SUPPORT : <source_map_support> ;
 toolset.flags exenode SOURCE_MAP_SUPPORT <source_map_support> ;
 
@@ -58,8 +60,9 @@ rule emcc_flags ( properties * )
         }
     }
 
-    # source-map support
     local ps = [ property-set.create $(properties) ] ;
+
+    # source-map support
     local map_support = [ $(ps).get <source_map_support> ] ;
     if $(map_support) = yes
     {
@@ -79,6 +82,14 @@ rule emcc_flags ( properties * )
     #         <cxxflags>"-s WASM=0"
     #     ;
     # }
+
+    # execve and fork with boost unit test | uname() with gethostname()
+    if $(EM_ALLOW_UNIMPLEMENTED_SYSCALLS) = yes
+    {
+        fs +=
+            <cxxflags>"-s ALLOW_UNIMPLEMENTED_SYSCALLS"
+        ;
+    }
 
     return $(fs) ;
 }
@@ -175,9 +186,6 @@ project redjs
 
     <cxxflags>-Wno-dollar-in-identifier-extension
     <cxxflags>-Wno-missing-variable-declarations
-
-    # execve and fork with boost unit test | uname() with gethostname()
-    # <cxxflags>"-s ALLOW_UNIMPLEMENTED_SYSCALLS"
 
     : default-build release
 ;
