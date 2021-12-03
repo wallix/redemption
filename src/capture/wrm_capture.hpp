@@ -252,7 +252,7 @@ public:
         const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
         const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
 
-        auto const image_view = image_frame_api.get_image_view();
+        auto const image_view = image_frame_api.prepare_image_frame();
 
         WrmMetaChunk{
             this->wrm_format_version
@@ -853,7 +853,7 @@ public:
         PointerCache::SourcePointersView ptr_cache)
     : WrmCaptureImpl(
         capture_params, wrm_params, image_frame_api,
-        image_frame_api.get_image_view(), rail_window_rect, ptr_cache)
+        image_frame_api.prepare_image_frame(), rail_window_rect, ptr_cache)
     {}
 
     void visibility_rects_event(Rect rect)

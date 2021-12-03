@@ -272,7 +272,8 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    TimestampTracer timestamp_tracer(gdi::get_writable_image_view(gd));
+    auto img = gdi::get_writable_image_view(gd);
+    TimestampTracer timestamp_tracer;
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED));
 
     time_t rawtime;
@@ -289,7 +290,7 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-    timestamp_tracer.trace(now);
+    timestamp_tracer.trace(img, now);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "timestamp_1.png");
 
     now.tm_sec  =  00;
@@ -302,11 +303,11 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-    timestamp_tracer.clear();
-    timestamp_tracer.trace(now);
+    timestamp_tracer.clear(img);
+    timestamp_tracer.trace(img, now);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "timestamp_2.png");
 
-    timestamp_tracer.clear();
+    timestamp_tracer.clear(img);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "timestamp_0.png");
 }
 

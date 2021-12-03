@@ -25,6 +25,7 @@
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
 #include "gdi/capture_api.hpp"
+#include "gdi/image_frame_api.hpp"
 #include "gdi/updatable_graphics.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -60,7 +61,7 @@ struct VideoCaptureCtx : noncopyable
         unsigned frame_rate,
         Drawable & drawable,
         DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame,
+        Rect crop_rect,
         array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
     );
 
@@ -83,8 +84,30 @@ struct VideoCaptureCtx : noncopyable
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
+    void set_cropping(Rect cropping) noexcept;
+
+    WritableImageView prepare_writable_image() noexcept;
+
+    bool logical_frame_ended() const noexcept;
+
 private:
     void preparing_video_frame(video_recorder & recorder);
+
+    struct VideoCropper
+    {
+        VideoCropper(Drawable & drawable, Rect crop_rect);
+
+        void set_cropping(Rect cropping) noexcept;
+
+        [[nodiscard]]
+        WritableImageView prepare_image_frame(Drawable & drawable);
+
+    private:
+        Rect crop_rect;
+        Dimension original_dimension;
+        bool is_fullscreen;
+        std::unique_ptr<uint8_t[]> out_bmpdata;
+    };
 
     Drawable & drawable;
     DrawablePointer const & drawable_pointer;
@@ -100,7 +123,7 @@ private:
     uint16_t cursor_x = 0;
     uint16_t cursor_y = 0;
 
-    gdi::ImageFrameApi & image_frame_api;
+    VideoCropper video_cropper;
 
     gdi::UpdatableGraphics updatable_graphics;
     BitsetInStream updatable_frame_marker_end_bitset_stream;
@@ -118,8 +141,9 @@ public:
         CaptureParams const & capture_params,
         Drawable & drawable,
         DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame,
-        VideoParams const & video_params, FullVideoParams const & full_video_params
+        Rect crop_rect,
+        VideoParams const & video_params,
+        FullVideoParams const & full_video_params
     );
 
     ~FullVideoCaptureImpl();
@@ -127,6 +151,11 @@ public:
     gdi::GraphicApi& graphics_api() noexcept
     {
         return this->video_cap_ctx.graphics_api();
+    }
+
+    void set_cropping(Rect cropping)
+    {
+        return this->video_cap_ctx.set_cropping(cropping);
     }
 
     void frame_marker_event(
@@ -153,7 +182,7 @@ public:
         unsigned png_width, unsigned png_height,
         Drawable & drawable,
         DrawablePointer const & drawable_pointer,
-        gdi::ImageFrameApi & image_frame,
+        Rect crop_rect,
         VideoParams const& video_params,
         SequencedVideoParams const& sequenced_video_params,
         NotifyNextVideo & next_video_notifier);
@@ -163,6 +192,11 @@ public:
     gdi::GraphicApi& graphics_api() noexcept
     {
         return this->video_cap_ctx.graphics_api();
+    }
+
+    void set_cropping(Rect cropping)
+    {
+        return this->video_cap_ctx.set_cropping(cropping);
     }
 
     void frame_marker_event(
@@ -215,10 +249,6 @@ private:
     FilenameGenerator vc_filename_generator;
     std::optional<video_recorder> recorder;
     FilenameGenerator ic_filename_generator;
-
-    Drawable & ic_drawable;
-
-    gdi::ImageFrameApi & image_frame_api;
 
     ScaledPng24 ic_scaled_png;
 

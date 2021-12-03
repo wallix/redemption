@@ -48,6 +48,7 @@ struct RegionsCapture
     Rect      crop_rect;
     Dimension min_image_frame_dim;
     Dimension max_screen_dim;
+    Point     screen_position;
 
     struct UpdatableFrameMarkerEnd
     {

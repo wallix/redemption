@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "gdi/image_frame_api.hpp"
+#include "utils/image_view.hpp"
 
 #include <cstdint>
 #include <ctime>
@@ -29,10 +29,10 @@
 class TimestampTracer
 {
 public:
-    explicit TimestampTracer(const WritableImageView & image_view) noexcept;
+    explicit TimestampTracer() noexcept;
 
-    void trace(const tm & now) noexcept;
-    void clear() noexcept;
+    void trace(WritableImageView image_view, const tm & now) noexcept;
+    void clear(WritableImageView image_view) noexcept;
 
 private:
     enum {
@@ -49,11 +49,5 @@ private:
     uint8_t timestamp_save[ts_width * ts_height * /*DrawableImplPrivate::bytes_per_pixel*/4];
     uint8_t timestamp_data[ts_width * ts_height * /*DrawableImplPrivate::bytes_per_pixel*/4];
     char previous_timestamp[size_str_timestamp];
-    unsigned previous_timestamp_length;
-
-    unsigned int width;
-    unsigned int height;
-    unsigned int bytes_per_pixel;
-    uint8_t*     pixels;
-    unsigned int rowsize;
+    int previous_timestamp_length;
 };

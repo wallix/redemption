@@ -49,16 +49,6 @@ public:
 
     void resize(uint16_t width, uint16_t height) override;
 
-    [[nodiscard]] ImageView get_image_view() const override
-    {
-        return gdi::get_image_view(this->drawable);
-    }
-
-    WritableImageView get_writable_image_view() override
-    {
-        return gdi::get_writable_image_view(this->drawable);
-    }
-
     uint8_t * first_pixel() noexcept
     {
         return this->drawable.first_pixel();
@@ -99,8 +89,10 @@ public:
         return this->drawable.pix_len();
     }
 
-    void prepare_image_frame() override
-    {}
+    WritableImageView prepare_image_frame() override
+    {
+        return gdi::get_writable_image_view(this->drawable);
+    }
 
     // TODO FIXME temporary
     //@{
@@ -192,12 +184,22 @@ public:
         return this->last_update_index;
     }
 
-    bool reset(unsigned int /*x*/, unsigned int /*y*/,
-        unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept override
-    { return false; }
-
-    [[nodiscard]] Rect get_rect() const override
+    operator ImageView () const noexcept
     {
-        return Rect(0, 0, this->drawable.width(), this->drawable.height());
+        return gdi::get_image_view(this->drawable);
     }
 };
+
+namespace gdi
+{
+
+    inline ImageView get_image_view(RDPDrawable const & drawable) noexcept
+    {
+        return gdi::get_image_view(drawable.impl());
+    }
+
+    inline WritableImageView get_writable_image_view(RDPDrawable & drawable) noexcept
+    {
+        return gdi::get_writable_image_view(drawable.impl());
+    }
+}

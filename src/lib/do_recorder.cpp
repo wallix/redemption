@@ -977,10 +977,11 @@ static inline int replay(
     InMultiCryptoTransport&& in_wrm_trans,
     std::vector<MetaLine> const& wrm_lines,
     RecorderParams const& rp,
-    const CaptureTimes capture_times,
+    CaptureTimes const capture_times,
     CryptoContext & cctx,
-    Rect const & crop_rect,
-    Dimension const & max_screen_dim,
+    Rect crop_rect,
+    Point screen_position,
+    Dimension max_screen_dim,
     Random & rnd)
 {
     using Seconds = std::chrono::seconds;
@@ -1181,7 +1182,7 @@ static inline int replay(
                                 , capture_kbd, kbd_log_params
                                 , rp.video_params
                                 , &update_progress_data
-                                , crop_rect
+                                , Capture::CropperInfo{crop_rect, screen_position}
                                 // TODO rail_window_rect
                                 , Rect()
                             );
@@ -1933,8 +1934,9 @@ extern "C" {
                 return r;
             }
 
-            Rect      crop_rect;
-            Dimension max_screen_dim;
+            Rect      crop_rect {};
+            Point     screen_position {};
+            Dimension max_screen_dim {};
             std::unique_ptr<unsigned long long[]> updatable_frame_marker_end_bitset;
             try {
                 InMultiCryptoTransport trans(wrm_filenames, cctx, mwrm_infos.encryption_mode);
@@ -1951,6 +1953,7 @@ extern "C" {
                     safe_cast<FileToGraphic::Verbose>(rp.verbosity));
                 crop_rect = r.crop_rect;
                 max_screen_dim = r.max_screen_dim;
+                screen_position = r.screen_position;
                 updatable_frame_marker_end_bitset = std::move(r.updatable_frame_marker_end.p);
                 rp.video_params.updatable_frame_marker_end_bitset_view = {
                     updatable_frame_marker_end_bitset.get(),
@@ -1977,6 +1980,7 @@ extern "C" {
                          capture_times,
                          cctx,
                          crop_rect,
+                         screen_position,
                          max_screen_dim,
                          rnd);
 
