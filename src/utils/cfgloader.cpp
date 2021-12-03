@@ -247,7 +247,7 @@ bool configuration_load(
     }
 
     if (st.st_size > 1024*1024) {
-        LOG(LOG_ERR, "%s: file too large", filename);
+        LOG(LOG_ERR, "configuration_load: %s: file too large", filename);
         return false;
     }
 
