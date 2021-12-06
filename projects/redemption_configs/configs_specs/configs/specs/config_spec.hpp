@@ -396,6 +396,12 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 1000>>(), names{.all="session_probe_handle_usage_limit", .connpolicy="handle_usage_limit"}, set(0));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 200'000'000>>(), names{.all="session_probe_memory_usage_limit", .connpolicy="memory_usage_limit"}, set(0));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 10000>>(), names{.all="session_probe_cpu_usage_alarm_threshold", .connpolicy="cpu_usage_alarm_threshold"}, desc{
+            "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.\n"
+            "The alarm is deactivated if this value is less than 200."
+        }, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeCPUUsageAlarmAction>(), names{.all="session_probe_cpu_usage_alarm_action", .connpolicy="cpu_usage_alarm_action"}, set(SessionProbeCPUUsageAlarmAction::Restart));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{.all="session_probe_end_of_session_check_delay_time", .connpolicy="end_of_session_check_delay_time"}, set(0));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_ignore_ui_less_processes_during_end_of_session_check", .connpolicy="ignore_ui_less_processes_during_end_of_session_check"}, set(true));

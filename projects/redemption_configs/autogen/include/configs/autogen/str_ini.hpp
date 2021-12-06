@@ -626,6 +626,19 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_memory_usage_limit = 0
 
+# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
+# The alarm is deactivated if this value is less than 200.
+# min = 0, max = 10000
+# min = 0
+#_hidden
+#session_probe_cpu_usage_alarm_threshold = 0
+
+# min = 0, max = 1
+#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+#_hidden
+#session_probe_cpu_usage_alarm_action = 0
+
 # min = 0, max = 60000
 # (in milliseconds)
 #_hidden

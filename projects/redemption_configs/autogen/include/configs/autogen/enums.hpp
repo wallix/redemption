@@ -626,3 +626,16 @@ template<> struct is_valid_enum_value<BannerType>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
+enum class SessionProbeCPUUsageAlarmAction : uint8_t
+{
+    // Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+    Restart = 0,
+    // Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+    Stop = 1,
+};
+
+template<> struct is_valid_enum_value<SessionProbeCPUUsageAlarmAction>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
+};
+

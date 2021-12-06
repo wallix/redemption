@@ -755,10 +755,23 @@ public:
                 });
 
                 send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("CPUUsageAlarmThresholdAndAction="_av);
+                    out_s.out_copy_bytes(int_to_decimal_chars(
+                        safe_cast<uint32_t>(this->sespro_params.cpu_usage_alarm_action)));
+                    out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(int_to_decimal_chars(
+                        this->sespro_params.cpu_usage_alarm_threshold));
+                });
+
+                send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("DisabledFeatures=0x"_av);
                     out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(
                         safe_cast<uint32_t>(this->sespro_params.disabled_features)
                     ));
+                });
+
+                send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("Notify=EndOfSettings"_av);
                 });
             }
             else if (upper_param0 == "DisableLaunchMask"_ascii_upper) {

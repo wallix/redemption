@@ -443,6 +443,10 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.vc_params.enable_crash_dump = ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
     spp.vc_params.handle_usage_limit = ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
     spp.vc_params.memory_usage_limit = ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
+
+    spp.vc_params.cpu_usage_alarm_threshold = ini.get<cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold>();
+    spp.vc_params.cpu_usage_alarm_action    = ini.get<cfg::mod_rdp::session_probe_cpu_usage_alarm_action>();
+
     spp.vc_params.disabled_features = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
     spp.vc_params.bestsafe_integration = ini.get<cfg::mod_rdp::session_probe_bestsafe_integration>();
     spp.used_to_launch_remote_program = ini.get<cfg::context::use_session_probe_to_launch_remote_program>();

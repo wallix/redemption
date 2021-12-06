@@ -1062,6 +1062,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "session_probe_cpu_usage_alarm_threshold"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 10000>>{},
+                value
+            );
+        }
+        else if (key == "session_probe_cpu_usage_alarm_action"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::session_probe_cpu_usage_alarm_action&>(this->variables).value,
+                ::configs::spec_type<SessionProbeCPUUsageAlarmAction>{},
+                value
+            );
+        }
         else if (key == "session_probe_end_of_session_check_delay_time"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
