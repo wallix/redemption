@@ -1907,4 +1907,63 @@ parse_error parse_from_cfg(BannerType & x, ::configs::spec_type<std::string> /*t
         x, value, "bad value, expected: info, warn, alert");
 }
 
+inline constexpr zstring_view enum_zstr_SessionProbeCPUUsageAlarmAction[] {
+    "Restart"_zv,
+    "Stop"_zv,
+};
+
+inline constexpr zstring_view enum_zint_SessionProbeCPUUsageAlarmAction[] {
+    "0"_zv,
+    "1"_zv,
+};
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<SessionProbeCPUUsageAlarmAction> /*type*/,
+    SessionProbeCPUUsageAlarmAction x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<SessionProbeCPUUsageAlarmAction>::is_valid(uint8_t(x)));
+    return enum_zint_SessionProbeCPUUsageAlarmAction[uint8_t(x)];
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<std::string> /*type*/,
+    SessionProbeCPUUsageAlarmAction x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<SessionProbeCPUUsageAlarmAction>::is_valid(uint8_t(x)));
+    return enum_zstr_SessionProbeCPUUsageAlarmAction[uint8_t(x)];
+}
+
+parse_error parse_from_cfg(SessionProbeCPUUsageAlarmAction & x, ::configs::spec_type<SessionProbeCPUUsageAlarmAction> /*type*/, bytes_view value)
+{
+    using ul = uint8_t;
+
+    ul xi = 0;
+    if (parse_error err = parse_integral(
+        xi, value,
+        zero_integral<ul>(),
+        std::integral_constant<ul, 1>()
+    )) {
+        return err;
+    }
+
+    x = static_cast<SessionProbeCPUUsageAlarmAction>(xi);
+    return no_parse_error;
+}
+
+
+inline constexpr std::pair<chars_view, SessionProbeCPUUsageAlarmAction> enum_str_value_SessionProbeCPUUsageAlarmAction[] {
+    {"RESTART"_av, SessionProbeCPUUsageAlarmAction::Restart},
+    {"STOP"_av, SessionProbeCPUUsageAlarmAction::Stop},
+};
+
+parse_error parse_from_cfg(SessionProbeCPUUsageAlarmAction & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+{
+    return parse_str_value_pairs<enum_str_value_SessionProbeCPUUsageAlarmAction>(
+        x, value, "bad value, expected: Restart, Stop");
+}
+
 } // anonymous namespace

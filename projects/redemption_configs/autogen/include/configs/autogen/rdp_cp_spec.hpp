@@ -271,6 +271,16 @@ handle_usage_limit = integer(min=0, max=1000, default=0)
 #_advanced
 memory_usage_limit = integer(min=0, max=200000000, default=0)
 
+# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
+# The alarm is deactivated if this value is less than 200.
+#_advanced
+cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
+
+#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+#_advanced
+cpu_usage_alarm_action = option(0, 1, default=0)
+
 # (in milliseconds)
 #_advanced
 end_of_session_check_delay_time = integer(min=0, max=60000, default=0)

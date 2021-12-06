@@ -141,6 +141,9 @@ struct SessionProbeVirtualChannelParams
     uint32_t handle_usage_limit = 0;
     uint32_t memory_usage_limit = 0;
 
+    uint32_t                        cpu_usage_alarm_threshold = 0;
+    SessionProbeCPUUsageAlarmAction cpu_usage_alarm_action    = SessionProbeCPUUsageAlarmAction::Restart;
+
     SessionProbeDisabledFeature disabled_features = SessionProbeDisabledFeature::none;
 
     bool bestsafe_integration = false;

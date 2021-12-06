@@ -181,6 +181,12 @@ cp_spec = {
         u'mod_rdp:session_probe_memory_usage_limit': (
             'memory_usage_limit', 0
         ),
+        u'mod_rdp:session_probe_cpu_usage_alarm_threshold': (
+            'cpu_usage_alarm_threshold', 0
+        ),
+        u'mod_rdp:session_probe_cpu_usage_alarm_action': (
+            'cpu_usage_alarm_action', 0
+        ),
         u'mod_rdp:session_probe_end_of_session_check_delay_time': (
             'end_of_session_check_delay_time', 0
         ),

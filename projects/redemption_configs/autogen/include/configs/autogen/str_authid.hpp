@@ -77,6 +77,8 @@ namespace configs
         "mod_rdp:session_probe_enable_crash_dump"_zv,
         "mod_rdp:session_probe_handle_usage_limit"_zv,
         "mod_rdp:session_probe_memory_usage_limit"_zv,
+        "mod_rdp:session_probe_cpu_usage_alarm_threshold"_zv,
+        "mod_rdp:session_probe_cpu_usage_alarm_action"_zv,
         "mod_rdp:session_probe_end_of_session_check_delay_time"_zv,
         "mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check"_zv,
         "mod_rdp:session_probe_childless_window_as_unidentified_input_field"_zv,
