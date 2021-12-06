@@ -303,6 +303,9 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc_params.handle_usage_limit);
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc_params.memory_usage_limit);
 
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc_params.cpu_usage_alarm_threshold);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.cpu_usage_alarm_action);
+
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, session_probe_params.vc_params.disabled_features);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.end_of_session_check_delay_time);

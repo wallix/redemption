@@ -66,6 +66,8 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_launcher_abort_delay>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_enable_crash_dump>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_handle_usage_limit>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_memory_usage_limit>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_cpu_usage_alarm_action>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_update_disabled_features>;

@@ -465,6 +465,34 @@
           "description": ""
         },
         {
+          "name": "cpu_usage_alarm_threshold",
+          "type": "integer",
+          "min": 0,
+          "max": 10000,
+          "default": 0,
+          "advanced": true,
+          "description": "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.\nThe alarm is deactivated if this value is less than 200."
+        },
+        {
+          "name": "cpu_usage_alarm_action",
+          "type": "option",
+          "default": 0,
+          "values": [
+            {
+               "value": 0,
+               "label": "Restart",
+               "description": "Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section."
+            },
+            {
+               "value": 1,
+               "label": "Stop",
+               "description": "Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section."
+            }
+          ],
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "end_of_session_check_delay_time",
           "type": "integer",
           "min": 0,

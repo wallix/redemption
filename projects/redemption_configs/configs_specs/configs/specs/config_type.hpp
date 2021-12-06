@@ -223,6 +223,11 @@ inline void config_type_definition(type_enumerations & e)
       .value("Off")
       .value("v1")
     ;
+
+    e.enumeration_list("SessionProbeCPUUsageAlarmAction")
+      .value("Restart", "Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.")
+      .value("Stop", "Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.")
+    ;
 }
 
 }

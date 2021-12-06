@@ -313,6 +313,17 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(VideoEnhancedMode & x, spec_type<VideoEnhancedMode> /*type*/, array_view_const_char value)
 ;
 
+template<> struct zstr_buffer_traits<SessionProbeCPUUsageAlarmAction> : zstr_buffer_traits<unsigned long> {};
+
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SessionProbeCPUUsageAlarmAction> & buf,
+    cfg_s_type<SessionProbeCPUUsageAlarmAction> /*type*/,
+    SessionProbeCPUUsageAlarmAction x
+);
+
+parse_error parse(SessionProbeCPUUsageAlarmAction & x, spec_type<SessionProbeCPUUsageAlarmAction> /*type*/, array_view_const_char value)
+;
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 array_view_const_char assign_zbuf_from_cfg(
