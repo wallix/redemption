@@ -894,7 +894,10 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"login_message"});
 
         W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.all="session_probe_outbound_connection_monitoring_rules", .connpolicy="outbound_connection_monitoring_rules"}, desc{
-            "Comma-separated rules (Ex.: $deny:192.168.0.0/24:5900,$allow:host.domain.net:3389,$allow:192.168.0.110:21)\n"
+            "Comma-separated rules\n"
+            "(Ex. IPv4 address: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)\n"
+            "(Ex. only the full representation of IPv6 addresses are supported: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389)\n"
+            "(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)\n"
             "(Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"
             "Session Probe must be enabled to use this feature."
         });
