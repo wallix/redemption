@@ -454,7 +454,7 @@ private:
 
 namespace gdi
 {
-    inline WritableImageView get_writable_image_view(Drawable & drawable)
+    inline WritableImageView get_writable_image_view(Drawable & drawable) noexcept
     {
         return WritableImageView{
             drawable.first_pixel(),
@@ -465,7 +465,7 @@ namespace gdi
         };
     }
 
-    inline ImageView get_image_view(Drawable const & drawable)
+    inline ImageView get_image_view(Drawable const & drawable) noexcept
     {
         return drawable;
     }
