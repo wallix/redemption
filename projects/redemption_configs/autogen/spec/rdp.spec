@@ -279,7 +279,10 @@ public_session = boolean(default=False)
 #   2: User action will be rejected
 on_account_manipulation = option(0, 1, 2, default=0)
 
-# Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
+# Comma-separated rules
+# (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)
+# (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)
+# (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)
 # (Ex. for backwards compatibility only: 10.1.0.0/16:22)
 # Session Probe must be enabled to use this feature.
 outbound_connection_monitoring_rules = string(default='')
