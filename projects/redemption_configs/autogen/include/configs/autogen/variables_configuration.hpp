@@ -4532,7 +4532,7 @@ namespace cfg
     };
     /// Comma-separated rules <br/>
     /// (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21) <br/>
-    /// (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:20D1:0:3238:DFE1:63::FEFB:21) <br/>
+    /// (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21) <br/>
     /// (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389) <br/>
     /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
     /// Session Probe must be enabled to use this feature. <br/>
