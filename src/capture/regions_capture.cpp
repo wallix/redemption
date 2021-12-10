@@ -99,7 +99,7 @@ struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics, gdi::Rela
 } // anonymous namespace
 
 RegionsCapture RegionsCapture::compute_regions(
-    Transport & trans,
+    SequencedTransport & trans,
     SmartVideoCropping smart_video_cropping,
     MonotonicTimePoint::duration interval_time_for_frame_maker_end,
     MonotonicTimePoint begin_capture,

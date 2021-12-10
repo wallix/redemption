@@ -1190,7 +1190,7 @@ namespace
         RDPDrawable drawable;
         GraphicToFile consumer;
 
-        TestGraphicToFile(Transport& trans, Rect scr, bool small_cache)
+        TestGraphicToFile(SequencedTransport& trans, Rect scr, bool small_cache)
         : bmp_cache(
             BmpCache::Recorder, BitsPerPixel{24}, 3, false,
             BmpCache::CacheOption(small_cache ? 2 : 600, 256, false),

@@ -56,13 +56,18 @@ private:
 };
 
 
-struct BufTransport : Transport
+struct BufTransport : SequencedTransport
 {
     std::string buf;
 
     [[nodiscard]] std::size_t size() const noexcept { return buf.size(); }
     void clear() noexcept { buf.clear(); }
     std::string& data() noexcept { return buf; }
+
+    bool next() override
+    {
+        return true;
+    }
 
 private:
     void do_send(const uint8_t * const data, size_t len) override;
@@ -72,24 +77,7 @@ private:
 };
 
 
-struct BufSequenceTransport : Transport
-{
-    BufSequenceTransport();
-
-    std::string& operator[](std::size_t i) noexcept { return this->datas[i]; }
-    [[nodiscard]] std::size_t size() const noexcept { return this->datas.size(); }
-    [[nodiscard]] bool empty() const noexcept;
-
-private:
-    void do_send(const uint8_t * const data, size_t len) override;
-
-    bool next() override;
-
-    std::vector<std::string> datas;
-};
-
-
-struct CheckTransport : Transport
+struct CheckTransport : SequencedTransport
 {
     CheckTransport(buffer_view buffer);
 
@@ -106,6 +94,11 @@ struct CheckTransport : Transport
     ~CheckTransport() override;
 
     bool disconnect() override;
+
+    bool next() override
+    {
+        return true;
+    }
 
 private:
     void do_send(const uint8_t * const data, size_t len) override;
@@ -151,7 +144,7 @@ private:
 };
 
 
-class MemoryTransport : public Transport
+class MemoryTransport : public SequencedTransport
 {
     uint8_t buf[65536];
     bool remaining_is_error = true;
@@ -168,6 +161,11 @@ public:
     }
 
     bool disconnect() override;
+
+    bool next() override
+    {
+        return true;
+    }
 
 private:
     Read do_atomic_read(uint8_t * buffer, size_t len) override;

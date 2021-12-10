@@ -28,12 +28,12 @@ Author(s): Proxies Team
 
 #include <memory>
 
-class Transport;
+class SequencedTransport;
 
 struct RegionsCapture
 {
     static RegionsCapture compute_regions(
-        Transport & trans,
+        SequencedTransport & trans,
         SmartVideoCropping smart_video_cropping,
         MonotonicTimePoint::duration interval_time_for_frame_maker_end,
         MonotonicTimePoint begin_capture,

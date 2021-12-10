@@ -89,8 +89,6 @@ public:
 
     bool connect() override;
 
-    bool next() override;
-
     [[nodiscard]] int get_fd() const override;
 
 private:

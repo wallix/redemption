@@ -221,28 +221,6 @@ size_t BufTransport::do_partial_read(uint8_t* buffer, size_t len)
 }
 
 
-BufSequenceTransport::BufSequenceTransport()
-{
-    this->datas.emplace_back();
-}
-
-bool BufSequenceTransport::empty() const noexcept
-{
-    return this->datas.size() == 1 && this->datas[0].empty();
-}
-
-void BufSequenceTransport::do_send(const uint8_t * const data, size_t len)
-{
-    this->datas.back().append(char_ptr_cast(data), len);
-}
-
-bool BufSequenceTransport::next()
-{
-    this->datas.emplace_back();
-    return true;
-}
-
-
 CheckTransport::CheckTransport(buffer_view buffer)
 : data(new(std::nothrow) uint8_t[buffer.size()])
 , len(buffer.size())

@@ -28,14 +28,30 @@ Author(s): Proxies Team
 
 namespace
 {
-    struct InTestFile : InFileTransport
+    struct InTestFile : SequencedTransport
     {
-        using InFileTransport::InFileTransport;
+        InTestFile(unique_fd&& fd)
+        : in_file(std::move(fd))
+        {}
 
         bool next() override
         {
             return false;
         }
+
+    protected:
+        size_t do_partial_read(uint8_t * buffer, size_t len) override
+        {
+            return in_file.partial_read(buffer, len);
+        }
+
+        Read do_atomic_read(uint8_t * buffer, size_t len) override
+        {
+            return in_file.atomic_read(buffer, len);
+        }
+
+    private:
+        InFileTransport in_file;
     };
 
     RegionsCapture compute_regions(char const* filename, SmartVideoCropping svc)

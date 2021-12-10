@@ -51,9 +51,9 @@ private:
 };
 
 
-class GZipCompressionOutTransport : public Transport
+class GZipCompressionOutTransport : public SequencedTransport
 {
-    Transport & target_transport;
+    SequencedTransport & target_transport;
 
     z_stream compression_stream;
 
@@ -66,7 +66,7 @@ class GZipCompressionOutTransport : public Transport
     size_t  compressed_data_length = 0;
 
 public:
-    explicit GZipCompressionOutTransport(Transport & tt);
+    explicit GZipCompressionOutTransport(SequencedTransport & tt);
 
     ~GZipCompressionOutTransport() override;
 

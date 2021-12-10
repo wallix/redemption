@@ -502,7 +502,6 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), encode_color24()(BLUE)), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), encode_color24()(WHITE)), scr, color_cxt);
     dump_png24(trans, drawable, true);
-    trans.next();
     RED_CHECK_EQUAL(107, trans.buf.size());
 }
 

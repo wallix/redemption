@@ -107,11 +107,6 @@ bool RecorderTransport::connect()
     return this->trans.connect();
 }
 
-bool RecorderTransport::next()
-{
-    return this->trans.next();
-}
-
 int RecorderTransport::get_fd() const
 {
     return this->trans.get_fd();

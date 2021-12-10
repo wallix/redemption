@@ -188,18 +188,14 @@ public:
         return true;
     }
 
-    /* Some transports are splitted between sequential discrete units
-     * (it may be block, chunk, numbered files, directory entries, whatever).
-     * Calling next means flushing the current unit and start the next one.
-     * seqno countains the current sequence number, starting from 0. */
-    virtual bool next()
-    {
-        return true;
-    }
-
     [[nodiscard]] virtual int get_fd() const { return INVALID_SOCKET; }
 };
 
+class SequencedTransport : public Transport
+{
+public:
+    virtual bool next() = 0;
+};
 
 struct InTransport
 {
@@ -228,7 +224,6 @@ struct InTransport
 
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
-    bool next() { return this->t.next(); }
     [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 
 private:
@@ -256,7 +251,6 @@ struct OutTransport
 
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
-    bool next() { return this->t.next(); }
     [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 
     // TODO [[deprecated]]

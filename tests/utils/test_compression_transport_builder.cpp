@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 
     NoneTransport trans;
 
-    using CompressionTestTransportBuilder = CompressionTransportBuilder<GzipTransport, SnappyTransport>;
+    using CompressionTestTransportBuilder = CompressionTransportBuilder<GzipTransport, SnappyTransport, Transport>;
 
     CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::no_compression).get().flush();
     CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::gzip).get().flush();

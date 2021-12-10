@@ -24,7 +24,7 @@
 
 
 // TODO in PngCapture
-class OutFilenameSequenceTransport : public Transport
+class OutFilenameSequenceTransport : public SequencedTransport
 {
 public:
     OutFilenameSequenceTransport(

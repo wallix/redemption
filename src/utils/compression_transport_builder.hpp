@@ -24,7 +24,7 @@
 #include "transport/snappy_compression_transport.hpp"
 #include "configs/autogen/enums.hpp"
 
-template<class GZipTransport, class SnappyTransport>
+template<class GZipTransport, class SnappyTransport, class Transport>
 struct CompressionTransportBuilder
 {
     CompressionTransportBuilder(
@@ -116,5 +116,5 @@ private:
     }
 };
 
-using CompressionOutTransportBuilder = CompressionTransportBuilder<GZipCompressionOutTransport, SnappyCompressionOutTransport>;
-using CompressionInTransportBuilder = CompressionTransportBuilder<GZipCompressionInTransport, SnappyCompressionInTransport>;
+using CompressionOutTransportBuilder = CompressionTransportBuilder<GZipCompressionOutTransport, SnappyCompressionOutTransport, SequencedTransport>;
+using CompressionInTransportBuilder = CompressionTransportBuilder<GZipCompressionInTransport, SnappyCompressionInTransport, Transport>;
