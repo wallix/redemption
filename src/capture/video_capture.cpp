@@ -24,7 +24,6 @@
 #include "capture/sequenced_video_params.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
-#include "utils/drawable_pointer.hpp"
 #include "utils/drawable.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
@@ -119,13 +118,11 @@ void VideoCaptureCtx::VideoCropper::set_cropping(Rect cropping) noexcept
     crop_rect = cropping;
 }
 
-WritableImageView VideoCaptureCtx::VideoCropper::prepare_image_frame(Drawable& drawable)
+void VideoCaptureCtx::VideoCropper::prepare_image_frame(Drawable& drawable) noexcept
 {
     if (this->is_fullscreen) {
-        return gdi::get_writable_image_view(drawable);
+        return ;
     }
-
-    // TODO copy only when view is updated
 
     uint8_t* out_bmpdata_tmp = this->out_bmpdata.get();
 
@@ -142,6 +139,13 @@ WritableImageView VideoCaptureCtx::VideoCropper::prepare_image_frame(Drawable& d
 
         in_bmpdata_tmp  += drawable.rowsize();
         out_bmpdata_tmp += rowsize;
+    }
+}
+
+WritableImageView VideoCaptureCtx::VideoCropper::get_image(Drawable& drawable) noexcept
+{
+    if (this->is_fullscreen) {
+        return gdi::get_writable_image_view(drawable);
     }
 
     return WritableImageView{
@@ -187,11 +191,10 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 
     this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
 
-    auto image = this->video_cropper.prepare_image_frame(this->drawable);
+    auto image = this->prepare_image_frame();
 
     if (this->has_timestamp) {
-        this->timestamp_tracer.trace(image, to_tm_t(
-            this->monotonic_last_time_capture, this->monotonic_to_real));
+        this->timestamp_tracer.trace(image, this->get_tm());
     }
 
     recorder.preparing_video_frame();
@@ -201,6 +204,14 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
     }
 
     this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+}
+
+WritableImageView VideoCaptureCtx::prepare_image_frame() noexcept
+{
+    // TODO could be avoided when updatable_graphics.has_drawing_event() == false,
+    // but the mouse pointer is drawn on Drawable
+    this->video_cropper.prepare_image_frame(this->drawable);
+    return this->video_cropper.get_image(this->drawable);
 }
 
 void VideoCaptureCtx::frame_marker_event(
@@ -258,14 +269,40 @@ void VideoCaptureCtx::set_cropping(Rect cropping) noexcept
     this->video_cropper.set_cropping(cropping);
 }
 
-WritableImageView VideoCaptureCtx::prepare_writable_image() noexcept
-{
-    return this->video_cropper.prepare_image_frame(this->drawable);
-}
-
 bool VideoCaptureCtx::logical_frame_ended() const noexcept
 {
     return this->drawable.logical_frame_ended;
+}
+
+WritableImageView VideoCaptureCtx::acquire_image_for_dump(
+    DrawablePointer::BufferSaver& buffer_saver,
+    const tm& now)
+{
+    this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+
+    auto image = this->prepare_image_frame();
+
+    if (this->has_timestamp) {
+        this->timestamp_tracer.trace(image, now);
+    }
+
+    return image;
+}
+
+void VideoCaptureCtx::release_image_for_dump(
+    WritableImageView image,
+    DrawablePointer::BufferSaver const& buffer_saver)
+{
+    if (this->has_timestamp) {
+        this->timestamp_tracer.clear(image);
+    }
+
+    this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+}
+
+tm VideoCaptureCtx::get_tm() const
+{
+    return to_tm_t(this->monotonic_last_time_capture, this->monotonic_to_real);
 }
 
 WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
@@ -297,11 +334,10 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
          || (update_image
              && (!this->has_timestamp || this->monotonic_last_time_capture < this->next_trace_time))
         ) {
-            image = this->video_cropper.prepare_image_frame(this->drawable);
+            image = this->prepare_image_frame();
 
             if (this->has_timestamp) {
-                this->timestamp_tracer.trace(image, to_tm_t(
-                    this->monotonic_last_time_capture, this->monotonic_to_real));
+                this->timestamp_tracer.trace(image, this->get_tm());
 
                 if (this->monotonic_last_time_capture >= this->next_trace_time) {
                     this->next_trace_time += 1s;
@@ -314,17 +350,14 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         this->cursor_x = cursor_x;
         this->cursor_y = cursor_y;
 
-        this->updatable_graphics.set_drawing_event(false);
-
         // synchronize video time with the end of second
 
         auto preparing_timestamp_video_frame = [&, this](video_recorder & recorder){
             if (not image.data()) {
-                image = this->video_cropper.prepare_image_frame(this->drawable);
+                image = this->prepare_image_frame();
             }
 
-            this->timestamp_tracer.trace(image, to_tm_t(
-                this->monotonic_last_time_capture, this->monotonic_to_real));
+            this->timestamp_tracer.trace(image, this->get_tm());
 
             recorder.preparing_timestamp_video_frame();
         };
@@ -389,6 +422,8 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                 } while (this->monotonic_last_time_capture + frame_interval <= now);
                 break;
         }
+
+        this->updatable_graphics.set_drawing_event(false);
 
         if (update_timestamp && this->has_timestamp) {
             this->timestamp_tracer.clear(image);
@@ -544,25 +579,28 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
 
 void SequencedVideoCaptureImpl::init_recorder()
 {
+    DrawablePointer::BufferSaver buffer_saver;
+    const auto now = this->video_cap_ctx.get_tm();
+    auto image = this->video_cap_ctx.acquire_image_for_dump(buffer_saver, now);
     this->recorder.emplace(
         this->vc_filename_generator.current_filename(),
         this->recorder_params.groupid,
         this->recorder_params.acl_report,
-        this->video_cap_ctx.prepare_writable_image(),
+        image,
         this->recorder_params.frame_rate,
         this->recorder_params.codec_name.c_str(),
         this->recorder_params.codec_options.c_str(),
         this->recorder_params.verbosity
     );
+    this->video_cap_ctx.release_image_for_dump(image, buffer_saver);
 }
 
 void SequencedVideoCaptureImpl::ic_flush(const tm& now)
 {
-    // TODO mouse ?
-    auto image = this->video_cap_ctx.prepare_writable_image();
-    this->video_cap_ctx.timestamp_tracer.trace(image, now);
+    DrawablePointer::BufferSaver buffer_saver;
+    auto image = this->video_cap_ctx.acquire_image_for_dump(buffer_saver, now);
     this->ic_scaled_png.dump_png24(this->ic_filename_generator.current_filename(), image, true);
-    this->video_cap_ctx.timestamp_tracer.clear(image);
+    this->video_cap_ctx.release_image_for_dump(image, buffer_saver);
     this->ic_filename_generator.next();
 }
 

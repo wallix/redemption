@@ -33,6 +33,7 @@
 #include "utils/monotonic_time_to_real_time.hpp"
 #include "utils/scaled_image24.hpp"
 #include "utils/bitset_stream.hpp"
+#include "utils/drawable_pointer.hpp"
 
 #include <chrono>
 #include <optional>
@@ -86,12 +87,23 @@ struct VideoCaptureCtx : noncopyable
 
     void set_cropping(Rect cropping) noexcept;
 
-    WritableImageView prepare_writable_image() noexcept;
-
     bool logical_frame_ended() const noexcept;
+
+    WritableImageView acquire_image_for_dump(
+        DrawablePointer::BufferSaver& buffer_saver,
+        const tm& now);
+
+    void release_image_for_dump(
+        WritableImageView image,
+        DrawablePointer::BufferSaver const& buffer_saver);
+
+    tm get_tm() const;
 
 private:
     void preparing_video_frame(video_recorder & recorder);
+
+    [[nodiscard]]
+    WritableImageView prepare_image_frame() noexcept;
 
     struct VideoCropper
     {
@@ -99,8 +111,9 @@ private:
 
         void set_cropping(Rect cropping) noexcept;
 
-        [[nodiscard]]
-        WritableImageView prepare_image_frame(Drawable & drawable);
+        void prepare_image_frame(Drawable & drawable) noexcept;
+
+        WritableImageView get_image(Drawable& drawable) noexcept;
 
     private:
         Rect crop_rect;
