@@ -168,7 +168,9 @@ private:
                 SmartVideoCropping{},
                 0
             },
-            wrm_params, this->drawable, Rect(),
+            wrm_params,
+            this->drawable.impl(),
+            Rect(),
             PointerCache::SourcePointersView{pointers}
         )
         {}

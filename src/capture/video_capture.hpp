@@ -25,7 +25,6 @@
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/image_frame_api.hpp"
 #include "gdi/updatable_graphics.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"

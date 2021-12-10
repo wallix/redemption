@@ -32,7 +32,6 @@
 #include "core/RDP/caches/pointercache.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 
-#include "gdi/image_frame_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/graphic_api.hpp"
@@ -48,6 +47,8 @@
 #include "utils/ref.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/monotonic_time_to_real_time.hpp"
+#include "utils/drawable.hpp"
+#include "utils/ref.hpp"
 
 #include <cstddef>
 
@@ -120,7 +121,7 @@ class GraphicToFile
     // for a monotic real time
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
-    gdi::ImageFrameApi & image_frame_api;
+    Drawable const& drawable;
 
 
     uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
@@ -146,7 +147,7 @@ public:
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache::SourcePointersView ptr_cache
-                , gdi::ImageFrameApi & image_frame_api
+                , CRef<Drawable> drawable_ref
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , RDPSerializerVerbose verbose)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
@@ -158,7 +159,7 @@ public:
     , start_timer(now)
     , monotonic_real_time(now)
     , last_real_time(real_now)
-    , image_frame_api(image_frame_api)
+    , drawable(drawable_ref)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(remote_app ? 5 : (bool(this->compression_builder.get_algorithm()) ? 4 : 3))
     , remote_app(remote_app)
@@ -182,7 +183,7 @@ public:
 
     void dump_png24(Transport & trans, bool bgr) const
     {
-        ::dump_png24(trans, this->image_frame_api, bgr);
+        ::dump_png24(trans, this->drawable, bgr);
     }
 
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
@@ -252,13 +253,11 @@ public:
         const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
         const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
 
-        auto const image_view = image_frame_api.prepare_image_frame();
-
         WrmMetaChunk{
             this->wrm_format_version
 
-          , image_view.width()
-          , image_view.height()
+          , this->drawable.width()
+          , this->drawable.height()
           , this->capture_bpp
 
           , static_cast<uint16_t>(c0.entries())
@@ -309,7 +308,7 @@ public:
     void send_image_chunk(bool bgr = false) /*NOLINT*/
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        ::dump_png24(png_trans, this->image_frame_api, bgr);
+        ::dump_png24(png_trans, this->drawable, bgr);
     }
 
     void send_reset_chunk()
@@ -813,8 +812,8 @@ public:
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
-        gdi::ImageFrameApi & image_frame_api, ImageView const & image_view,
-        Rect rail_window_rect, PointerCache::SourcePointersView ptr_cache)
+        CRef<Drawable> drawable_ref, Rect rail_window_rect,
+        PointerCache::SourcePointersView ptr_cache)
     : next_break(capture_params.now + wrm_params.break_interval)
     , break_interval(wrm_params.break_interval)
     , original_monotonic_to_real(capture_params.now, capture_params.real_now)
@@ -834,8 +833,8 @@ public:
         wrm_params.hash_path,
         capture_params.basename,
         capture_params.real_now,
-        image_view.width(),
-        image_view.height(),
+        drawable_ref.get().width(),
+        drawable_ref.get().height(),
         capture_params.groupid,
         capture_params.session_log,
         wrm_params.file_permissions)
@@ -843,17 +842,8 @@ public:
         capture_params.now, capture_params.real_now,
         this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         rail_window_rect, this->bmp_cache, this->gly_cache,
-        ptr_cache, image_frame_api, wrm_params.wrm_compression_algorithm,
+        ptr_cache, drawable_ref, wrm_params.wrm_compression_algorithm,
         wrm_params.wrm_verbose)
-    {}
-
-    WrmCaptureImpl(
-        const CaptureParams & capture_params, const WrmParams & wrm_params,
-        gdi::ImageFrameApi & image_frame_api, Rect rail_window_rect,
-        PointerCache::SourcePointersView ptr_cache)
-    : WrmCaptureImpl(
-        capture_params, wrm_params, image_frame_api,
-        image_frame_api.prepare_image_frame(), rail_window_rect, ptr_cache)
     {}
 
     void visibility_rects_event(Rect rect)

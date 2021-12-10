@@ -142,7 +142,6 @@ void RDPDrawable::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color
 {
     const Rect trect = intersect(this->drawable, clip, cmd.rect);
     this->drawable.opaquerect(trect, u32rgb_to_color(this->drawable, color_ctx, cmd.color));
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -150,7 +149,6 @@ void RDPDrawable::draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_
     // TODO clip is not used
     (void)clip;
     this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, u32rgb_to_color(this->drawable, color_ctx, cmd.color));
-    this->last_update_index++;
 }
 
 // TODO This will draw a standard ellipse without brush style
@@ -159,7 +157,6 @@ void RDPDrawable::draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_
     // TODO clip is not used
     (void)clip;
     this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, u32rgb_to_color(this->drawable, color_ctx, cmd.back_color));
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDPScrBlt & cmd, Rect clip)
@@ -171,14 +168,12 @@ void RDPDrawable::draw(const RDPScrBlt & cmd, Rect clip)
         .intersect(this->drawable.width(), this->drawable.height());
     const Rect trect(drect.x, drect.y, std::min(drect.cx, src.cx), std::min(drect.cy, src.cy));
     this->drawable.scrblt(src.x, src.y, trect, cmd.rop);
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDPDstBlt & cmd, Rect clip)
 {
     const Rect trect = intersect(this->drawable, clip, cmd.rect);
     this->drawable.destblt(trect, cmd.rop);
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDPMultiDstBlt & cmd, Rect clip)
@@ -186,7 +181,6 @@ void RDPDrawable::draw(const RDPMultiDstBlt & cmd, Rect clip)
     draw_multi(this->drawable, cmd, clip, [&](const Rect & trect) {
         this->drawable.destblt(trect, cmd.bRop);
     });
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -195,7 +189,6 @@ void RDPDrawable::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx 
     draw_multi(this->drawable, cmd, clip, [color, this](const Rect & trect) {
         this->drawable.opaquerect(trect, color);
     });
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -221,7 +214,6 @@ void RDPDrawable::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx
             this->drawable.patblt(trect, cmd.bRop, color);
         });
     }
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
@@ -245,7 +237,6 @@ void RDPDrawable::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
         this->drawable.scrblt(src.x, src.y, trect, cmd.bRop);
     }
 
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -269,7 +260,6 @@ void RDPDrawable::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx
     else {
         this->drawable.patblt(trect, cmd.rop, u32rgb_to_color(this->drawable, color_ctx, cmd.back_color));
     }
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDPMemBlt & cmd_, Rect clip, const Bitmap & bmp)
@@ -318,7 +308,6 @@ void RDPDrawable::draw(const RDPMemBlt & cmd_, Rect clip, const Bitmap & bmp)
         //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
     break;
     }
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bmp)
@@ -334,7 +323,6 @@ void RDPDrawable::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ct
         , cmd.rop
         , u32rgb_to_color(this->drawable, color_ctx, cmd.fore_color)
     );
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/) {}
@@ -386,7 +374,6 @@ void RDPDrawable::draw(const RDPLineTo & lineto, Rect clip, gdi::ColorCtx color_
         lineto.endx, lineto.endy,
         lineto.rop2, u32rgb_to_color(this->drawable, color_ctx, lineto.pen.color), clip
     );
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
@@ -424,7 +411,6 @@ void RDPDrawable::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color
         has_delta_bytes, cmd.ui_charinc, draw_pos,
         offset_y, cmd.bk.x + offset_x, cmd.bk.y,
         clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -443,7 +429,6 @@ void RDPDrawable::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_c
         startx = endx;
         starty = endy;
     }
-    this->last_update_index++;
 }
 
 // TODO this functions only draw polygon borders but do not fill them with solid color.
@@ -470,7 +455,6 @@ void RDPDrawable::draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_
     endy = cmd.yStart;
 
     this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
-    this->last_update_index++;
 }
 
 // TODO this functions only draw polygon borders but do not fill them with brush color.
@@ -497,7 +481,6 @@ void RDPDrawable::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_
     endy = cmd.yStart;
 
     this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
@@ -509,7 +492,6 @@ void RDPDrawable::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
     const Rect trect = rectBmp.intersect(this->drawable.width(), this->drawable.height());
 
     this->drawable.draw_bitmap(trect, bmp);
-    this->last_update_index++;
 }
 
 void RDPDrawable::draw(const RDP::FrameMarker & order)
@@ -517,7 +499,6 @@ void RDPDrawable::draw(const RDP::FrameMarker & order)
     this->frame_start_count += ((order.action == RDP::FrameMarker::FrameStart) ? 1 : -1);
     assert(this->frame_start_count >= 0);
     this->drawable.logical_frame_ended = (this->frame_start_count == 0);
-    this->last_update_index++;
 }
 
 void RDPDrawable::new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor)
