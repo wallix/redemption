@@ -75,7 +75,7 @@ Transport::Read SnappyCompressionInTransport::do_atomic_read(uint8_t * buffer, s
 }
 
 
-SnappyCompressionOutTransport::SnappyCompressionOutTransport(Transport & tt)
+SnappyCompressionOutTransport::SnappyCompressionOutTransport(SequencedTransport & tt)
 : target_transport(tt)
 {
     assert(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);

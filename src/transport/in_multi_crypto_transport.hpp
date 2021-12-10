@@ -26,7 +26,7 @@ Author(s): Proxies Team
 #include <vector>
 
 
-struct InMultiCryptoTransport final : public Transport
+struct InMultiCryptoTransport final : public SequencedTransport
 {
     using EncryptionMode = InCryptoTransport::EncryptionMode;
 

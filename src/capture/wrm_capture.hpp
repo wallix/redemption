@@ -109,7 +109,7 @@ class GraphicToFile
 
     CompressionOutTransportBuilder compression_builder;
     Transport & trans_target;
-    Transport & trans;
+    SequencedTransport & trans;
     StaticOutStream<65536> buffer_stream_orders;
     StaticOutStream<65536> buffer_stream_bitmaps;
 
@@ -139,7 +139,7 @@ class GraphicToFile
 public:
     GraphicToFile(MonotonicTimePoint now
                 , RealTimePoint real_now
-                , Transport & trans
+                , SequencedTransport & trans
                 , const BitsPerPixel capture_bpp
                 // TODO strong type
                 , const bool remote_app

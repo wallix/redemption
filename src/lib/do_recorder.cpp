@@ -127,7 +127,7 @@ class ChunkToFile
 {
     CompressionOutTransportBuilder compression_bullder;
     OutMetaSequenceTransport & trans_target;
-    Transport & trans;
+    SequencedTransport & trans;
 
     const uint8_t wrm_format_version;
 

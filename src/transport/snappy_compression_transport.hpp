@@ -43,9 +43,9 @@ private:
 };
 
 
-class SnappyCompressionOutTransport : public Transport
+class SnappyCompressionOutTransport : public SequencedTransport
 {
-    Transport & target_transport;
+    SequencedTransport & target_transport;
 
     static const size_t MAX_UNCOMPRESSED_DATA_LENGTH = 56000; // ::snappy_max_compressed_length(56000) = 65365
 
@@ -53,7 +53,7 @@ class SnappyCompressionOutTransport : public Transport
     size_t  uncompressed_data_length = 0;
 
 public:
-    explicit SnappyCompressionOutTransport(Transport & tt);
+    explicit SnappyCompressionOutTransport(SequencedTransport & tt);
 
     ~SnappyCompressionOutTransport() override;
 

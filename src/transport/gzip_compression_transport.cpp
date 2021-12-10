@@ -112,7 +112,7 @@ Transport::Read GZipCompressionInTransport::do_atomic_read(uint8_t * buffer, siz
 }
 
 
-GZipCompressionOutTransport::GZipCompressionOutTransport(Transport & tt)
+GZipCompressionOutTransport::GZipCompressionOutTransport(SequencedTransport & tt)
 : target_transport(tt)
 , compression_stream()
 , reset_compressor(false)
