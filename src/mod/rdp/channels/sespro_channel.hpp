@@ -770,7 +770,7 @@ public:
                     ));
                 });
 
-                send_client_message([this](OutStream & out_s) {
+                send_client_message([](OutStream & out_s) {
                     out_s.out_copy_bytes("Notify=EndOfSettings"_av);
                 });
             }
