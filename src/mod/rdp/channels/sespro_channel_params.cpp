@@ -126,9 +126,17 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
 
             const char * info_separator = strchr(rule_c_str, ':');
 
+            const bool has_quare_brackets = (
+                    ('[' == *rule_c_str) &&
+                    (']' == *(info_separator - 1))
+                );
+
             if (info_separator)
             {
-                std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
+                std::string host_address_or_subnet(
+                        rule_c_str + (has_quare_brackets ? 1 : 0),
+                        info_separator - rule_c_str - (has_quare_brackets ? 2 : 0)
+                    );
 
                 this->rules.push_back({
                     uType,
