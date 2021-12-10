@@ -24,14 +24,13 @@
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 
 #include "gdi/graphic_api.hpp"
-#include "gdi/image_frame_api.hpp"
 #include "gdi/resize_api.hpp"
 
 #include "utils/drawable.hpp"
 
 
 class RDPDrawable final
-: public gdi::GraphicApi, public gdi::ImageFrameApi, public gdi::ResizeApi
+: public gdi::GraphicApi, public gdi::ResizeApi
 {
     using Color = Drawable::Color;
 
@@ -39,8 +38,6 @@ class RDPDrawable final
 
     int frame_start_count;
     BGRPalette mod_palette_rgb;
-
-    unsigned int last_update_index = 1;
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
@@ -87,11 +84,6 @@ public:
     [[nodiscard]] size_t pix_len() const noexcept
     {
         return this->drawable.pix_len();
-    }
-
-    WritableImageView prepare_image_frame() override
-    {
-        return gdi::get_writable_image_view(this->drawable);
     }
 
     // TODO FIXME temporary
@@ -177,11 +169,6 @@ public:
     void set_palette(const BGRPalette & palette) override
     {
         this->mod_palette_rgb = palette;
-    }
-
-    [[nodiscard]] unsigned int get_last_update_index() const noexcept override
-    {
-        return this->last_update_index;
     }
 
     operator ImageView () const noexcept

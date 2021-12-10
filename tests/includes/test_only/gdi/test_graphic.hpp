@@ -31,6 +31,8 @@ namespace gdi
     class ImageFrameApi;
 }
 
+class Drawable;
+
 struct TestGraphic
 {
     TestGraphic(uint16_t w, uint16_t h);
@@ -41,8 +43,9 @@ struct TestGraphic
 
     operator ImageView () const;
     operator gdi::GraphicApi& ();
-    operator gdi::ImageFrameApi& ();
     gdi::GraphicApi* operator->();
+
+    Drawable const& drawable() const;
 
     void resize(uint16_t w, uint16_t h);
 

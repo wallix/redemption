@@ -53,9 +53,9 @@ TestGraphic::operator gdi::GraphicApi&()
     return this->d->gd;
 }
 
-TestGraphic::operator gdi::ImageFrameApi&()
+Drawable const& TestGraphic::drawable() const
 {
-    return this->d->gd;
+    return this->d->gd.impl();
 }
 
 gdi::GraphicApi* TestGraphic::operator->()

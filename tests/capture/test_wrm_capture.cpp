@@ -98,7 +98,7 @@ namespace
                 RDPSerializerVerbose::none,
                 FilePermissions(0777),
             },
-            gd_drawable,
+            gd_drawable.drawable(),
             rail_window_rect,
             PointerCache::SourcePointersView{pointers})
         {}

@@ -1204,7 +1204,7 @@ namespace
         , consumer(now, RealTimePoint{now.time_since_epoch()},
             trans, BitsPerPixel{24}, false, Rect(), bmp_cache, gly_cache,
             PointerCache::SourcePointersView{pointers},
-            drawable, WrmCompressionAlgorithm::no_compression,
+            drawable.impl(), WrmCompressionAlgorithm::no_compression,
             RDPSerializerVerbose::none)
         {}
 

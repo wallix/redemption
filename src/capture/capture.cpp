@@ -1547,7 +1547,7 @@ Capture::Capture(
 
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
-                capture_params, wrm_params, this->gd_drawable, rail_window_rect,
+                capture_params, wrm_params, this->gd_drawable.impl(), rail_window_rect,
                 drawable_params.ptr_cache);
         }
 
