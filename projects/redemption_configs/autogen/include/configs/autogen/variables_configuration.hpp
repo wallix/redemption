@@ -690,8 +690,14 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 128 };
     };
+    /// Disable wallpaper (0x1). <br/>
+    /// Disable full-window drag (0x2). <br/>
+    /// Disable menu animations (0x4). <br/>
     /// Disable theme (0x8). <br/>
     /// Disable mouse cursor shadows (0x20). <br/>
+    /// Disable cursor blinking (0x40). <br/>
+    /// Enable font smoothing (0x80). <br/>
+    /// Enable Desktop Composition (0x100). <br/>
     /// type: uint32_t <br/>
     /// default: 40 <br/>
     struct client::performance_flags_force_present {
@@ -702,6 +708,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 40 };
     };
+    /// See the comment of "Performance flags force present" above for available values. <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct client::performance_flags_force_not_present {

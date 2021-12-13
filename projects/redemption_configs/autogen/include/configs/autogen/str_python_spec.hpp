@@ -155,16 +155,22 @@ keyboard_layout_proposals = string(default='en-US, fr-FR, de-DE, ru-RU')
 ignore_logon_password = boolean(default=False)
 
 # Enable font smoothing (0x80).
-#_advanced
-#_hex
+#_hidden
 performance_flags_default = integer(min=0, default=128)
 
+# Disable wallpaper (0x1).
+# Disable full-window drag (0x2).
+# Disable menu animations (0x4).
 # Disable theme (0x8).
 # Disable mouse cursor shadows (0x20).
+# Disable cursor blinking (0x40).
+# Enable font smoothing (0x80).
+# Enable Desktop Composition (0x100).
 #_advanced
 #_hex
 performance_flags_force_present = integer(min=0, default=40)
 
+# See the comment of "Performance flags force present" above for available values.
 #_advanced
 #_hex
 performance_flags_force_not_present = integer(min=0, default=0)
