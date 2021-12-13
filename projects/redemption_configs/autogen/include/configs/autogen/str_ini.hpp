@@ -182,17 +182,23 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Enable font smoothing (0x80).
 # min = 0
-#_advanced
-#_hex
+#_hidden
 #performance_flags_default = 128
 
+# Disable wallpaper (0x1).
+# Disable full-window drag (0x2).
+# Disable menu animations (0x4).
 # Disable theme (0x8).
 # Disable mouse cursor shadows (0x20).
+# Disable cursor blinking (0x40).
+# Enable font smoothing (0x80).
+# Enable Desktop Composition (0x100).
 # min = 0
 #_advanced
 #_hex
 #performance_flags_force_present = 40
 
+# See the comment of "Performance flags force present" above for available values.
 # min = 0
 #_advanced
 #_hex

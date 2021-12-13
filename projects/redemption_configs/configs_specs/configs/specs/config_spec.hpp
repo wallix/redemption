@@ -212,12 +212,22 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::list<std::string>>(), names{"keyboard_layout_proposals"}, desc{keyboard_layout_proposals_desc}, set("en-US, fr-FR, de-DE, ru-RU"));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"ignore_logon_password"}, desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), names{"performance_flags_default"}, desc{"Enable font smoothing (0x80)."}, set(0x80));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), names{"performance_flags_default"}, desc{
+            "Enable font smoothing (0x80)."
+        }, set(0x80));
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), names{"performance_flags_force_present"}, desc{
+            "Disable wallpaper (0x1).\n"
+            "Disable full-window drag (0x2).\n"
+            "Disable menu animations (0x4).\n"
             "Disable theme (0x8).\n"
-            "Disable mouse cursor shadows (0x20)."
+            "Disable mouse cursor shadows (0x20).\n"
+            "Disable cursor blinking (0x40).\n"
+            "Enable font smoothing (0x80).\n"
+            "Enable Desktop Composition (0x100)."
         }, set(0x28));
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), names{"performance_flags_force_not_present"}, set(0));
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), names{"performance_flags_force_not_present"}, desc{
+            "See the comment of \"Performance flags force present\" above for available values."
+        }, set(0));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"auto_adjust_performance_flags"}, desc{"If enabled, avoid automatically font smoothing in recorded session."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"tls_fallback_legacy"}, desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
