@@ -40,11 +40,13 @@ struct Point
     int16_t x;
     int16_t y;
 
-    REDEMPTION_FRIEND_OSTREAM(out, Point const & p) {
+    REDEMPTION_FRIEND_OSTREAM(out, Point const & p)
+    {
         return out << "(" << p.x << ", " << p.y << ")";
     }
 
-    bool operator==(Point const & other) const {
+    bool operator==(Point const & other) const noexcept
+    {
         return (other.x == this->x
              && other.y == this->y);
     }
@@ -63,21 +65,19 @@ struct Dimension
         , h(h)
     {}
 
-    bool operator==(Dimension const & other) const {
+    bool operator==(Dimension const & other) const noexcept
+    {
         return (other.w == this->w
              && other.h == this->h);
     }
 
-    void empty() {
-        this->w = 0;
-        this->h = 0;
-    }
-
-    [[nodiscard]] bool isempty() const {
+    [[nodiscard]] bool isempty() const noexcept
+    {
         return (!this->w || !this->h);
     }
 
-    REDEMPTION_FRIEND_OSTREAM(out, Dimension const & d) {
+    REDEMPTION_FRIEND_OSTREAM(out, Dimension const & d)
+    {
         return out << "(" << d.w << ", " << d.h << ")";
     }
 };
@@ -100,28 +100,34 @@ struct Rect {
     uint16_t cy = 0;
 
     // Inclusive left of rectangle
-    [[nodiscard]] int16_t ileft() const {
+    [[nodiscard]] int16_t ileft() const noexcept
+    {
         return this->x;
     }
 
     // Exclusive right of rectangle
-    [[nodiscard]] int16_t eright() const {
+    [[nodiscard]] int16_t eright() const noexcept
+    {
         return static_cast<int16_t>(this->x + this->cx);
     }
 
-    [[nodiscard]] int16_t itop() const {
+    [[nodiscard]] int16_t itop() const noexcept
+    {
         return this->y;
     }
 
-    [[nodiscard]] int16_t ebottom() const {
+    [[nodiscard]] int16_t ebottom() const noexcept
+    {
         return static_cast<int16_t>(this->y + this->cy);
     }
 
-    [[nodiscard]] uint16_t width() const {
+    [[nodiscard]] uint16_t width() const noexcept
+    {
         return this->cx;
     }
 
-    [[nodiscard]] uint16_t height() const {
+    [[nodiscard]] uint16_t height() const noexcept
+    {
         return this->cy;
     }
 
@@ -141,7 +147,8 @@ struct Rect {
         : Rect(point.x, point.y, dimension.w, dimension.h)
     {}
 
-    [[nodiscard]] bool contains_pt(int16_t x, int16_t y) const {
+    [[nodiscard]] bool contains_pt(int16_t x, int16_t y) const noexcept
+    {
         // return this->contains(Rect(x,y,1,1));
         return x  >= this->x
             && y  >= this->y
@@ -149,7 +156,7 @@ struct Rect {
             && y   < this->y + this->cy;
     }
 
-    [[nodiscard]] bool has_intersection(int16_t x, int16_t y) const
+    [[nodiscard]] bool has_intersection(int16_t x, int16_t y) const noexcept
     {
         return this->cx && this->cy
             && (x >= this->x && x < this->eright())
@@ -159,51 +166,52 @@ struct Rect {
     // special cases: contains returns true
     // - if both rects are empty
     // - if inner rect is empty
-    [[nodiscard]] bool contains(Rect inner) const {
+    [[nodiscard]] bool contains(Rect inner) const noexcept
+    {
         return (inner.x >= this->x
               && inner.y >= this->y
               && inner.eright() <= this->eright()
               && inner.ebottom() <= this->ebottom());
     }
 
-    bool operator==(Rect const & other) const {
+    bool operator==(Rect const & other) const noexcept
+    {
         return (other.x == this->x
              && other.y == this->y
              && other.cx == this->cx
              && other.cy == this->cy);
     }
 
-    bool operator!=(Rect const & other) const {
+    bool operator!=(Rect const & other) const noexcept
+    {
         return !(*this == other);
-    }
-
-    void empty() {
-        this->x  = 0;
-        this->y  = 0;
-        this->cx = 0;
-        this->cy = 0;
     }
 
     // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)
     // hence testing cx or cy is enough
-    [[nodiscard]] bool isempty() const {
+    [[nodiscard]] bool isempty() const noexcept
+    {
         return (this->cx == 0) || (this->cy == 0);
     }
 
-    [[nodiscard]] int getCenteredX() const {
+    [[nodiscard]] int getCenteredX() const noexcept
+    {
         return this->x + (this->cx / 2);
     }
 
-    [[nodiscard]] int getCenteredY() const {
+    [[nodiscard]] int getCenteredY() const noexcept
+    {
         return this->y + (this->cy / 2);
     }
 
-    [[nodiscard]] Rect wh() const {
+    [[nodiscard]] Rect wh() const noexcept
+    {
         return Rect(0, 0, this->cx, this->cy);
     }
 
     // compute a new rect containing old rect and given point
-    [[nodiscard]] Rect enlarge_to(int16_t x, int16_t y) const {
+    [[nodiscard]] Rect enlarge_to(int16_t x, int16_t y) const noexcept
+    {
         if (this->isempty()){
             return Rect(x, y, 1, 1);
         }
@@ -215,7 +223,8 @@ struct Rect {
         return Rect(x0, y0, uint16_t(x1 - x0 + 1), uint16_t(y1 - y0 + 1));
     }
 
-    [[nodiscard]] Rect offset(int16_t dx, int16_t dy) const {
+    [[nodiscard]] Rect offset(int16_t dx, int16_t dy) const noexcept
+    {
         return Rect(
             static_cast<int16_t>(this->x + dx),
             static_cast<int16_t>(this->y + dy),
@@ -224,11 +233,13 @@ struct Rect {
         );
     }
 
-    [[nodiscard]] Rect offset(Point point) const {
+    [[nodiscard]] Rect offset(Point point) const noexcept
+    {
         return this->offset(point.x, point.y);
     }
 
-    [[nodiscard]] Rect shrink(uint16_t margin) const {
+    [[nodiscard]] Rect shrink(uint16_t margin) const noexcept
+    {
         assert((this->cx >= margin * 2) && (this->cy >= margin * 2));
         return Rect(
             static_cast<int16_t>(this->x + margin),
@@ -238,7 +249,8 @@ struct Rect {
         );
     }
 
-    [[nodiscard]] Rect expand(uint16_t margin) const {
+    [[nodiscard]] Rect expand(uint16_t margin) const noexcept
+    {
         return Rect(
             static_cast<int16_t>(this->x - margin),
             static_cast<int16_t>(this->y - margin),
@@ -247,11 +259,12 @@ struct Rect {
         );
     }
 
-    [[nodiscard]] Rect intersect(uint16_t width, uint16_t height) const {
+    [[nodiscard]] Rect intersect(uint16_t width, uint16_t height) const noexcept
+    {
         return this->intersect(Rect(0, 0, width, height));
     }
 
-    [[nodiscard]] Rect intersect(Rect in) const
+    [[nodiscard]] Rect intersect(Rect in) const noexcept
     {
         int16_t max_x = std::max(in.x, this->x);
         int16_t max_y = std::max(in.y, this->y);
@@ -261,7 +274,7 @@ struct Rect {
         return Rect(max_x, max_y, uint16_t(min_right - max_x), uint16_t(min_bottom - max_y));
     }
 
-    [[nodiscard]] Rect disjunct(Rect r) const
+    [[nodiscard]] Rect disjunct(Rect r) const noexcept
     {
         if (this->isempty()) {
             return r;
@@ -277,7 +290,7 @@ struct Rect {
         return Rect(x, y, uint16_t(cx), uint16_t(cy));
     }
 
-    [[nodiscard]] bool has_intersection(Rect in) const
+    [[nodiscard]] bool has_intersection(Rect in) const noexcept
     {
         return (this->cx && this->cy && !in.isempty()
         && ((in.x >= this->x && in.x < this->eright()) || (this->x >= in.x && this->x < in.eright()))
@@ -314,7 +327,8 @@ struct Rect {
         }
     }
 
-    REDEMPTION_FRIEND_OSTREAM(out, Rect const & r) {
+    REDEMPTION_FRIEND_OSTREAM(out, Rect const & r)
+    {
         return out << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
     }
 };
@@ -338,14 +352,15 @@ class DeltaRect {
     int dheight;
     int dwidth;
 
-    DeltaRect(Rect r1, Rect r2)
+    DeltaRect(Rect r1, Rect r2) noexcept
     : dleft(r1.x - r2.x)
     , dtop(r1.y - r2.y)
     , dheight(r1.cy - r2.cy)
     , dwidth(r1.cx - r2.cx)
     {}
 
-    [[nodiscard]] bool fully_relative() const {
+    [[nodiscard]] bool fully_relative() const noexcept
+    {
         return (abs(this->dleft) < 128)
             && (abs(this->dtop) < 128)
             && (abs(this->dwidth) < 128)
