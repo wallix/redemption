@@ -1082,20 +1082,20 @@ file_permissions = string(default='440')
 
 [audit]
 
-#_advanced
+#_hidden
 use_redis = boolean(default=False)
 
-#_advanced
+#_hidden
 redis_address = string(default='')
 
-#_advanced
+#_hidden
 redis_password = string(default='')
 
-#_advanced
+#_hidden
 redis_db = integer(min=0, default=0)
 
 # (in milliseconds)
-#_advanced
+#_hidden
 redis_timeout = integer(min=0, default=500)
 
 [crypto]
