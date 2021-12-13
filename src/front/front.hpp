@@ -4644,14 +4644,14 @@ private:
                 .offset(cmd.VisibleOffsetX(), cmd.VisibleOffsetY());
         }
         else {
-            this->rail_window_rect.empty();
+            this->rail_window_rect = Rect();
         }
     }
 
     void draw_impl(RDP::RAIL::DeletedWindow const & cmd) {
         this->gd->draw(cmd);
 
-        this->rail_window_rect.empty();
+        this->rail_window_rect = Rect();
     }
 
 private:
