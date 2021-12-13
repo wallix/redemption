@@ -1273,21 +1273,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 [audit]
 
 # value: 0 or 1
-#_advanced
+#_hidden
 #use_redis = 0
 
-#_advanced
+#_hidden
 #redis_address = 
 
-#_advanced
+#_hidden
 #redis_password = 
 
 # min = 0
-#_advanced
+#_hidden
 #redis_db = 0
 
 # (in milliseconds)
-#_advanced
+#_hidden
 #redis_timeout = 500
 
 [crypto]
