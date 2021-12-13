@@ -33,7 +33,7 @@
 /** @brief a surface content update */
 class RDPSurfaceContent {
 public:
-    RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride, const Rect &rect,
+    RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride, Rect rect,
             const SubRegion &region, u8_array_view content)
     : stride(stride)
     , width(width)

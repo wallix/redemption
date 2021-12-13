@@ -114,7 +114,7 @@ namespace
     void draw_multi(Drawable const& drawable, const RDPMulti & cmd, Rect clip, FRect f)
     {
         const Rect clip_drawable_cmd_intersect = intersect(drawable, clip, clip_from_cmd(cmd));
-        for_each_delta_rect(cmd, [&](Rect const& cmd_rect){
+        for_each_delta_rect(cmd, [&](Rect cmd_rect){
             f(clip_drawable_cmd_intersect.intersect(cmd_rect));
         });
     }
@@ -178,7 +178,7 @@ void RDPDrawable::draw(const RDPDstBlt & cmd, Rect clip)
 
 void RDPDrawable::draw(const RDPMultiDstBlt & cmd, Rect clip)
 {
-    draw_multi(this->drawable, cmd, clip, [&](const Rect & trect) {
+    draw_multi(this->drawable, cmd, clip, [&](Rect trect) {
         this->drawable.destblt(trect, cmd.bRop);
     });
 }
@@ -186,7 +186,7 @@ void RDPDrawable::draw(const RDPMultiDstBlt & cmd, Rect clip)
 void RDPDrawable::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     const Color color = u32rgb_to_color(this->drawable, color_ctx, cmd.color);
-    draw_multi(this->drawable, cmd, clip, [color, this](const Rect & trect) {
+    draw_multi(this->drawable, cmd, clip, [color, this](Rect trect) {
         this->drawable.opaquerect(trect, color);
     });
 }
@@ -200,7 +200,7 @@ void RDPDrawable::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx
         uint8_t brush_data[8];
         memcpy(brush_data, cmd.brush.extra, 7);
         brush_data[7] = cmd.brush.hatch;
-        draw_multi(this->drawable, cmd, clip, [&](const Rect & trect) {
+        draw_multi(this->drawable, cmd, clip, [&](Rect trect) {
             this->drawable.patblt_ex(
                 trect, cmd.bRop,
                 std::get<BackColor>(colors), std::get<ForeColor>(colors),
@@ -210,7 +210,7 @@ void RDPDrawable::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx
     }
     else {
         const Color color = u32rgb_to_color(this->drawable, color_ctx, cmd.BackColor);
-        draw_multi(this->drawable, cmd, clip, [&](const Rect & trect) {
+        draw_multi(this->drawable, cmd, clip, [&](Rect trect) {
             this->drawable.patblt(trect, cmd.bRop, color);
         });
     }

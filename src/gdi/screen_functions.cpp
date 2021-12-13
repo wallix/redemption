@@ -24,7 +24,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "utils/rect.hpp"
 
-void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim)
+void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension dim)
 {
     Rect const r(0, 0, dim.w, dim.h);
     RDPOpaqueRect cmd(r, color_encode(BLACK, BitsPerPixel{24}));
@@ -33,7 +33,7 @@ void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim)
     drawable.end_update();
 }
 
-void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim)
+void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension dim)
 {
     Rect const r(0, 0, dim.w, dim.h);
     RDPPatBlt cmd(

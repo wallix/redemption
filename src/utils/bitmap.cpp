@@ -159,7 +159,7 @@ Bitmap::Bitmap(
     }
 }
 
-Bitmap::Bitmap(const uint8_t *data, size_t stride, const Rect &rect)
+Bitmap::Bitmap(const uint8_t *data, size_t stride, const Rect rect)
     : data_bitmap(DataBitmap::construct(BitsPerPixel{32}, align4(rect.width()), rect.height()))
 {
     uint8_t *dest = this->data_bitmap->get();

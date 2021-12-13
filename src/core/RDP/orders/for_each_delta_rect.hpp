@@ -34,6 +34,6 @@ inline void for_each_delta_rect(const RDPMulti & cmd, FRect f)
         cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
         cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
         cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-        f(static_cast<Rect const&>(cmd_rect));
+        f(Rect(cmd_rect));
     }
 }
