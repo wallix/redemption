@@ -64,6 +64,11 @@ class TestRedemptionConfigurationFile(ConfigurationFile):
                     noneable_line_raw_data =                                \
                         f"old_value_2 = {line.get_value()}"
 
+                elif line.get_name() == "value_to_delete":
+                    keep_unchanged = False
+                    noneable_dest_section_name = None
+                    noneable_line_raw_data = None
+
         return keep_unchanged, noneable_dest_section_name,                  \
             noneable_line_raw_data
 
@@ -571,6 +576,34 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationFileLine("", verbose),
             ConfigurationFileLine("[new_section]", verbose),
             ConfigurationFileLine("new_value_2 = 1234", verbose)
+        ]
+
+        self.assertEqual(expected_content, configuration_file._content)
+        self.assertEqual(len(expected_content),
+            len(configuration_file._content))
+
+    def test_migrate_to_9_1_0_section_value_to_delete(self):
+        verbose = False
+
+        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+
+        configuration_file._content = [
+            ConfigurationFileLine("[section]", verbose),
+            ConfigurationFileLine("value_to_delete = ABC", verbose),
+            ConfigurationFileLine("other_value = 1234", verbose)
+        ]
+
+        configuration_file.migrate(RedemptionVersion("8.2.0"))
+
+        if verbose:
+            print(
+                 "test_migrate_to_9_1_0_section_value_to_delete: "
+                f"len(content)={len(configuration_file._content)}")
+
+        expected_content = [
+            ConfigurationFileLine("[section]", verbose),
+            ConfigurationFileLine("#value_to_delete = ABC", verbose),
+            ConfigurationFileLine("other_value = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
