@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE(TestRect)
     RED_CHECK_EQUAL(Rect(10, 10, 100, 50).getCenteredY(), 35);
 
 
-    RED_CHECK_EQUAL(Rect(0, 0, 20, 45), Rect(45, 57, 20, 45).wh());
+    RED_CHECK_EQUAL(Dimension(20, 45), Rect(45, 57, 20, 45).get_dimension());
 
     RED_CHECK_EQUAL(Rect(20, 30, 50, 80).shrink(15), Rect(35, 45, 20, 50));
 

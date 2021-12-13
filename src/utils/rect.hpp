@@ -65,6 +65,16 @@ struct Dimension
         , h(h)
     {}
 
+    [[nodiscard]] uint16_t width() const noexcept
+    {
+        return this->w;
+    }
+
+    [[nodiscard]] uint16_t height() const noexcept
+    {
+        return this->h;
+    }
+
     bool operator==(Dimension const & other) const noexcept
     {
         return (other.w == this->w
@@ -93,7 +103,8 @@ inline auto log_value(Dimension const & dim) noexcept
 }
 
 
-struct Rect {
+struct Rect
+{
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 0;
@@ -204,9 +215,9 @@ struct Rect {
         return this->y + (this->cy / 2);
     }
 
-    [[nodiscard]] Rect wh() const noexcept
+    [[nodiscard]] Dimension get_dimension() const noexcept
     {
-        return Rect(0, 0, this->cx, this->cy);
+        return Dimension(this->cx, this->cy);
     }
 
     // compute a new rect containing old rect and given point

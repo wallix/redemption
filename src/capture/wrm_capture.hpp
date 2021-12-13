@@ -783,7 +783,7 @@ public:
         for (const Rect & rect : content.region.rects) {
             // LOG(LOG_INFO, "draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
             //     content.stride, rect);
-            Bitmap bitmap(content.data, content.stride, rect);
+            Bitmap bitmap(content.data, content.stride, rect.get_dimension());
             RDPBitmapData bitmap_data;
             bitmap_data.dest_left = cmd.destRect.x + rect.ileft();
             bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;

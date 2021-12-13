@@ -789,14 +789,13 @@ public:
         /* no front remoteFx support, fallback and transcode to bitmapUpdates */
         for (const Rect & rect : content.region.rects) {
 
-            Bitmap bitmap(content.data, content.stride, rect);
+            Bitmap bitmap(content.data, content.stride, rect.get_dimension());
             RDPBitmapData bitmap_data;
-            const Rect &base = cmd.destRect;
 
-            bitmap_data.dest_left = base.x + rect.ileft();
-            bitmap_data.dest_right = base.x + rect.eright()-1;
-            bitmap_data.dest_top = base.y + rect.itop();
-            bitmap_data.dest_bottom = base.y + rect.ebottom()-1;
+            bitmap_data.dest_left = cmd.destRect.x + rect.ileft();
+            bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
+            bitmap_data.dest_top = cmd.destRect.y + rect.itop();
+            bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
 
             bitmap_data.width = bitmap.cx();
             bitmap_data.height = bitmap.cy();
