@@ -265,12 +265,6 @@ private:
                     || (!subject.is_empty() && subject_existing.sv() != subject.sv())
                     || (fingerprint_existing.sv() != fingerprint.sv()))
                 ) {
-                    if (error_message) {
-                        char buff[256];
-                        snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
-                                    ip_address, port);
-                        *error_message = buff;
-                    }
                     LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"",
                         ip_address, port,
                         issuer_existing, subject_existing,
