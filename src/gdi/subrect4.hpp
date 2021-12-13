@@ -30,7 +30,7 @@ namespace gdi
 
 using subrect4_t = std::array<Rect, 4>;
 
-inline subrect4_t subrect4(const Rect rect, const Rect & exclude_rect)
+inline subrect4_t subrect4(const Rect rect, const Rect exclude_rect)
 {
     const Rect inter = rect.intersect(exclude_rect);
     return {{

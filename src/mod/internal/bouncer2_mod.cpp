@@ -147,7 +147,7 @@ void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
     gd.draw(RDPOpaqueRect(this->dancing_rect, red), this->get_screen_rect(), color_ctx);
 
     // And erase
-    oldrect.difference(this->dancing_rect, [&](const Rect & a) {
+    oldrect.difference(this->dancing_rect, [&](const Rect a) {
         gd.draw(RDPOpaqueRect(a, green), this->get_screen_rect(), gdi::ColorCtx::depth24());
     });
     gd.end_update();

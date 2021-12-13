@@ -26,6 +26,6 @@ namespace gdi
     class GraphicApi;
 }
 
-void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim);
+void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension dim);
 
-void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim);
+void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension dim);
