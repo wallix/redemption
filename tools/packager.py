@@ -403,9 +403,14 @@ try:
         opts.config["%ARCHI%"] = archi_to_control_archi(device_archi)
 
         # write redemption.preinst file
-        copy_and_replace_dict_file("%s/redemption.preinst" % opts.packagetemp,
-                                   opts.config,
-                                   "debian/redemption.preinst")
+        try:
+            copy_and_replace_dict_file("%s/redemption.preinst" %
+                                       opts.packagetemp,
+                                       opts.config,
+                                       "debian/redemption.preinst")
+        except IOError as e:
+            if e.errno != 2:
+                raise e
 
         # write redemption.install file
         copy_and_replace_dict_file("%s/redemption.install" % opts.packagetemp,
