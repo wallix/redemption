@@ -1,5 +1,10 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import ipaddress
+import socket
 from logger import Logger
+
 
 def _get_adapted_device_ipaddr_from_subnet(device, subnet_ipaddr):
     adapted_device_ipaddr = None
@@ -36,28 +41,27 @@ def _get_adapted_device_ipaddr_from_subnet(device, subnet_ipaddr):
 
                     if adapted_device_ipaddr is not None:
                         return adapted_device_ipaddr
-
-                Logger().error("Cannot adapt '%s' device to ipv4 format"
+                Logger().debug("Cannot adapt '%s' device to ipv4 format"
                                % device)
-
         else:
             adapted_device_ipaddr = device_ipaddr
 
     except (ValueError, ipaddress.AddressValueError) as e:
-        Logger().error("Invalid IP address of device '%s' : %s"
+        Logger().debug("Invalid IP address of device '%s' : %s"
                        % (device, str(e)))
 
     return adapted_device_ipaddr
 
+
 def is_device_in_subnet(device, subnet):
     if subnet is None:
-        Logger().error("No value for subnet")
+        Logger().debug("No value for subnet")
         return False
 
     try:
         subnet_ipface = ipaddress.ip_interface(subnet)
     except ValueError as e:
-        Logger().error("Invalid IP address of subnet '%s' : %s"
+        Logger().debug("Invalid IP address of subnet '%s' : %s"
                        % (subnet, str(e)))
 
         return False
@@ -75,12 +79,11 @@ def is_device_in_subnet(device, subnet):
                 + '/'
                 + str(subnet_ipface.network.prefixlen))
         except ValueError as e:
-            Logger().error("Invalid IP address with "
+            Logger().debug("Invalid IP address with "
                            "adapted IP version device "
                            "and subnet netmask : %s"
                            % str(e))
             return False
-
         result = (adapted_device_ipface_with_nmask.network
                   == subnet_ipface.network)
     else:
@@ -88,5 +91,37 @@ def is_device_in_subnet(device, subnet):
 
     Logger().debug("checking if device %s is in subnet %s -> %s" %
                    (device, subnet, ['No', 'Yes'][result]))
-
     return result
+
+
+def is_ip_address(host):
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return True
+
+
+def resolve_reverse_dns(ip_str):
+    found_fqdn = None
+    try:
+        found_fqdn = socket.gethostbyaddr(ip_str)[0]
+    except Exception:
+        Logger().debug("Unable to reverse dns %s" % ip_str)
+    else:
+        Logger().debug("Found fqdn %s for %s" % (found_fqdn, ip_str))
+    return found_fqdn
+
+
+def check_hostname_in_subnet(host, subnet):
+    try:
+        family = (socket.AF_INET6
+                  if ipaddress.ip_network(subnet, strict=False).version == 6
+                  else socket.AF_INET)
+        host_ip = socket.getaddrinfo(host, None, family=family)[0][4][0]
+
+        Logger().debug("Resolve DNS Hostname %s -> %s" % (host,
+                                                          host_ip))
+    except Exception:
+        return False, None
+    return is_device_in_subnet(host_ip, subnet), host_ip

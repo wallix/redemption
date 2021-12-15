@@ -66,7 +66,11 @@ from .checkout import (
 )
 from .transaction import manage_transaction
 from . import targetaccuratefilter as taf
-from .addrutils import is_device_in_subnet
+from .addrutils import (
+    is_device_in_subnet,
+    is_ip_address,
+    resolve_reverse_dns,
+)
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
 DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
@@ -75,17 +79,6 @@ FINGERPRINT_SHA1 = 0
 FINGERPRINT_MD5 = 1
 FINGERPRINT_MD5_LEN = 16
 FINGERPRINT_SHA1_LEN = 20
-
-
-def resolve_reverse_dns(ip_str):
-    found_fqdn = None
-    try:
-        found_fqdn = socket.gethostbyaddr(ip_str)[0]
-    except Exception:
-        Logger().debug("Unable to reverse dns %s" % ip_str)
-    else:
-        Logger().debug("Found fqdn %s for %s" % (found_fqdn, ip_str))
-    return found_fqdn
 
 
 def read_config_file(modulename="sesman",
@@ -452,9 +445,7 @@ class Engine(object):
                     host_ip = socket.getaddrinfo(target_device, None)[0][4][0]
                     Logger().info("Resolve DNS Hostname %s -> %s" %
                                   (target_device, host_ip))
-                    try:
-                        socket.inet_pton(socket.AF_INET, target_device)
-                    except socket.error:
+                    if not is_ip_address(target_device):
                         dnsname = target_device
                     target_context = TargetContext(host=host_ip,
                                                    dnsname=dnsname,
