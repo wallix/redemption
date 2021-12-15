@@ -159,8 +159,13 @@ namespace
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 {
     if (!inet_aton(ip, &s4_sin_addr)) {
-        struct addrinfo * addr_info = nullptr;
-        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
+        struct addrinfo *addr_info = nullptr;
+        struct addrinfo hints { };
+
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+        int result = getaddrinfo(ip, nullptr, &hints, &addr_info);
         if (result) {
             char const* error = (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result);
             LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)",
@@ -237,6 +242,7 @@ resolve_both_ipv4_and_ipv6_address(const char *ip,
     hints.ai_flags |= AI_V4MAPPED;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
     auto port_str = int_to_decimal_zchars(port);
     if (int res = ::getaddrinfo(ip, port_str.c_str(), &hints, &addr_info))
     {
