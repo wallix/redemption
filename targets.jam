@@ -466,6 +466,7 @@ lib libredrec :
   <library>crypto
   <library>ffmpeg
   <library>log.o
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -759,6 +760,7 @@ test-run tests/capture/test_capture :
   <library>app_path_test.o
   <library>crypto
   <library>ffmpeg
+  <library>openssl
   <library>png
   <library>ppocr
   <library>snappy
@@ -889,11 +891,10 @@ test-run tests/capture/test_rail_screen_computation :
 test-run tests/capture/test_redis_writer :
   $(REDEMPTION_TEST_PATH)/capture/test_redis_writer.cpp
 :
+  <library>crypto
+  <library>openssl
   <library>src/capture/redis_writer.o
-  <library>src/core/error.o
   <library>src/utils/netutils.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/capture/test_regions_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_regions_capture.cpp
@@ -2421,6 +2422,7 @@ test-run tests/lib/test_do_recorder :
   <library>app_path_test.o
   <library>crypto
   <library>ffmpeg
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -4161,6 +4163,7 @@ test-run tests/server/test_mstsc_client :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -4230,6 +4233,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -4299,6 +4303,7 @@ test-run tests/server/test_rdesktop_client :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o

@@ -58,12 +58,12 @@ RED_AUTO_TEST_CASE(TestRedisServer)
 
     using namespace std::chrono_literals;
 
-    RedisWriter cmd(addr, 100ms, "admin"_sized_av, 0);
+    RedisWriter cmd(addr, 100ms, "admin"_sized_av, 0, RedisWriter::TlsParams{});
 
     // open -> close -> open -> close
     for (int i = 0; i < 2; ++i) {
         RED_TEST_CONTEXT("i = " << i) {
-            RED_REQUIRE(cmd.open());
+            RED_REQUIRE(cmd.open().code() == RedisWriter::IOResult::Code::Ok);
 
             sockaddr s {};
             socklen_t sin_size = sizeof(s);
@@ -91,19 +91,19 @@ RED_AUTO_TEST_CASE(TestRedisServer)
             RED_REQUIRE(send("+OK\r\n"_av));
             RED_REQUIRE(send("+OK\r\n"_av));
 
-            RED_CHECK(cmd.send("bla bla"_av) == RedisWriter::IOResult::Ok);
+            RED_CHECK(cmd.send("bla bla"_av).code() == RedisWriter::IOResult::Code::Ok);
 
             RED_REQUIRE(recv() == "bla bla"_av);
             RED_REQUIRE(send("+OK\r\n"_av));
-            RED_CHECK(cmd.send("bla bla bla"_av) == RedisWriter::IOResult::Ok);
+            RED_CHECK(cmd.send("bla bla bla"_av).code() == RedisWriter::IOResult::Code::Ok);
 
             RED_REQUIRE(recv() == "bla bla bla"_av);
             RED_REQUIRE(send("+OK\r\n"_av));
-            RED_CHECK(cmd.send("bad"_av) == RedisWriter::IOResult::Ok);
+            RED_CHECK(cmd.send("bad"_av).code() == RedisWriter::IOResult::Code::Ok);
 
             RED_REQUIRE(recv() == "bad"_av);
             RED_REQUIRE(send("-ERR\r\n"_av));
-            RED_CHECK(cmd.send("receive response"_av) == RedisWriter::IOResult::UnknownResponse);
+            RED_CHECK(cmd.send("receive response"_av).code() == RedisWriter::IOResult::Code::UnknownResponse);
 
             cmd.close();
             ::close(sck);

@@ -856,7 +856,6 @@ private:
     OutFilenameSequenceTransport trans;
 };
 
-
 class Capture::PngCaptureRTRedis final : public gdi::CaptureApi
 {
 public:
@@ -867,10 +866,9 @@ public:
     : enable_rt_display(png_params.rt_display)
     , png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
     , redis_cmd(png_params.redis.key_name)
-    , redis_server(truncated_bounded_array_view(png_params.redis.address),
-                   png_params.redis.timeout,
-                   truncated_bounded_array_view(png_params.redis.password),
-                   png_params.redis.db)
+    , redis_server(png_params.redis.address, png_params.redis.timeout,
+                   png_params.redis.password, png_params.redis.db,
+                   RedisWriter::TlsParams{})
     {
         if (this->enable_rt_display) {
             this->connect_to_redis();
@@ -926,45 +924,25 @@ public:
             auto cmd = this->redis_cmd.build_command();
             auto result = this->redis_server.send(cmd);
             this->redis_cmd.clear();
-
-            if (result != RedisWriter::IOResult::Ok) {
-                char const* errmsg = nullptr;
-                switch (result) {
-                    case RedisWriter::IOResult::Ok:
-                    case RedisWriter::IOResult::UnknownResponse:
-                        // already logged
-                        break;
-                    case RedisWriter::IOResult::ReadError:
-                        errmsg = "Read error";
-                        break;
-                    case RedisWriter::IOResult::WriteError:
-                        errmsg = "Write error";
-                        break;
-                    case RedisWriter::IOResult::ReadEventError:
-                        errmsg = "Read event error";
-                        break;
-                    case RedisWriter::IOResult::WriteEventError:
-                        errmsg = "Write event error";
-                        break;
-                    case RedisWriter::IOResult::Timeout:
-                        errmsg = "Timeout error";
-                        break;
-                }
-                if (errmsg) {
-                    LOG(LOG_ERR, "Redis: %s", errmsg);
-                }
-                throw Error(ERR_RECORDER_REDIS_RESPONSE, errno);
-            }
+            this->check(result, "PngCaptureRTRedis::periodic_snapshot()",
+                        ERR_RECORDER_REDIS_RESPONSE);
         });
     }
 
 private:
     void connect_to_redis()
     {
-        if (!this->redis_server.open()) {
-            int errnum = errno;
-            LOG(LOG_ERR, "Failed to connect to the Redis server");
-            throw Error(ERR_SOCKET_CONNECT_FAILED, errnum);
+        auto result = this->redis_server.open();
+        this->check(result, "PngCaptureRTRedis::connect_to_redis()",
+                    ERR_SOCKET_CONNECT_FAILED);
+    }
+
+    void check(RedisWriter::IOResult const& result, char const* context, error_type err)
+    {
+        if (REDEMPTION_UNLIKELY(not result.ok())) {
+            LOG(LOG_ERR, "%s: %s: %s",
+                context, result.code_as_cstring(), result.error_message());
+            throw Error(err, result.errnum());
         }
     }
 

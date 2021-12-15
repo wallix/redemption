@@ -24,9 +24,10 @@ Author(s): Proxies Team
 #include "utils/to_timeval.hpp"
 #include "utils/netutils.hpp"
 #include "utils/select.hpp"
-#include "utils/log.hpp"
-#include "core/error.hpp"
 #include "cxx/cxx.hpp"
+
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include <sys/socket.h>
 
@@ -96,30 +97,428 @@ bytes_view RedisCmdSet::build_command()
 
 
 RedisWriter::RedisWriter(
-    bounded_chars_view<0, 127> address, std::chrono::milliseconds timeout,
-    bounded_chars_view<0, 127> password, unsigned db)
+    chars_view address, std::chrono::milliseconds timeout,
+    chars_view password, unsigned db, TlsParams tls_params)
 : tv(to_timeval(timeout))
 , db(db)
-, address(address)
-, password(password)
-{}
+, strings{
+    std::unique_ptr<char[]>(new char[
+        address.size()
+      + password.size()
+      + tls_params.cert_file.size()
+      + tls_params.key_file.size()
+      + tls_params.ca_cert_file.size()
+      + 5
+    ]), /* NOLINT */
+    {}
+}
+{
+    auto* p = strings.data.get();
+    auto* n = strings.iends;
+    std::size_t iend = 0;
+
+    for (auto s : {
+        address,
+        password,
+        tls_params.cert_file,
+        tls_params.key_file,
+        tls_params.ca_cert_file,
+    }) {
+        memcpy(p, s.data(), s.size());
+        p += s.size();
+        *p = '\0';
+        ++p;
+        iend += s.size();
+        *n = iend;
+        ++n;
+        ++iend;
+    }
+}
+
+zstring_view RedisWriter::Strings::address() const noexcept
+{
+    return zstring_view::from_null_terminated(data.get(), iends[0]);
+}
+
+zstring_view RedisWriter::Strings::password() const noexcept
+{
+    return zstring_view::from_null_terminated({data.get() + iends[0] + 1, data.get() + iends[1]});
+}
+
+zstring_view RedisWriter::Strings::cert_file() const noexcept
+{
+    return zstring_view::from_null_terminated({data.get() + iends[1] + 1, data.get() + iends[2]});
+}
+
+zstring_view RedisWriter::Strings::key_file() const noexcept
+{
+    return zstring_view::from_null_terminated({data.get() + iends[2] + 1, data.get() + iends[3]});
+}
+
+zstring_view RedisWriter::Strings::ca_cert_file() const noexcept
+{
+    return zstring_view::from_null_terminated({data.get() + iends[3] + 1, data.get() + iends[4]});
+}
 
 RedisWriter::~RedisWriter()
 {
     close();
 }
 
-bool RedisWriter::open()
+RedisWriter::IOResult::IOResult(Code code, ErrorCtx error_ctx) noexcept
+: code_(code)
+, data_{.error_ctx = error_ctx}
 {
-    close();
-    fd = addr_connect_blocking(address, true).release();
-    if (fd == -1) {
-        return false;
+    assert(code != Code::UnknownResponse);
+}
+
+RedisWriter::IOResult::IOResult(bounded_array_view<char, 0, 5> resp) noexcept
+: code_(Code::UnknownResponse)
+, data_{.resp = {}}
+{
+    memcpy(data_.resp, resp.data(), resp.size());
+}
+
+RedisWriter::IOResult RedisWriter::IOResult::Unknown(bounded_array_view<char, 0, 5> resp) noexcept
+{
+    return IOResult(resp);
+}
+
+int RedisWriter::IOResult::errnum() const noexcept
+{
+    if (code() != Code::UnknownResponse) {
+        return data_.error_ctx.errnum;
+    }
+    return 0;
+}
+
+const char * RedisWriter::IOResult::code_as_cstring() const noexcept
+{
+    switch (code()) {
+        case Code::Ok: return "Ok";
+        case Code::ConnectError: return "Connect";
+        case Code::CertificateError: return "Certificate";
+        case Code::ReadError: return "Read";
+        case Code::WriteError: return "Write";
+        case Code::Timeout: return "Timeout";
+        case Code::UnknownResponse: return "Unknown response";
+    }
+    REDEMPTION_UNREACHABLE();
+}
+
+const char * RedisWriter::IOResult::error_message() const
+{
+    if (code() != Code::UnknownResponse) {
+        if (data_.error_ctx.msg) {
+            return data_.error_ctx.msg;
+        }
+        if (data_.error_ctx.errnum) {
+            return strerror(data_.error_ctx.errnum);
+        }
+        if (data_.error_ctx.sslnum) {
+            return ERR_reason_error_string(checked_int{data_.error_ctx.sslnum});
+        }
+        return "unknown error";
     }
 
+    return data_.resp;
+}
+
+namespace
+{
+
+using IOResult = RedisWriter::IOResult;
+
+template<class F>
+int redis_tls_func(int fd, SSL* ssl, timeval tv,
+                   fd_set& read_fds, fd_set& write_fds,
+                   IOResult& result, IOResult::Code error_code, F&& f)
+{
+    for (;;) {
+        int ret = f();
+        if (ret > 0) {
+            return ret;
+        }
+
+        int ssl_error = SSL_get_error(ssl, ret);
+
+        fd_set* rfds = nullptr;
+        fd_set* wfds = nullptr;
+
+        if (ssl_error == SSL_ERROR_WANT_READ) {
+            rfds = &read_fds;
+            io_fd_set(fd, read_fds);
+        }
+        else if (ssl_error == SSL_ERROR_WANT_WRITE) {
+            wfds = &write_fds;
+            io_fd_set(fd, write_fds);
+        }
+        else {
+            IOResult::ErrorCtx error_ctx = (ssl_error == SSL_ERROR_SYSCALL)
+                ? IOResult::ErrorCtx{.errnum = errno}
+                : IOResult::ErrorCtx{.sslnum = ssl_error};
+            result = IOResult(error_code, error_ctx);
+            return -1;
+        }
+
+        auto tv_remaining = tv;
+        int nfds = select(fd+1, rfds, wfds, nullptr, &tv_remaining);
+
+        if (nfds > 0) {
+        }
+        else if (nfds == 0) {
+            result = IOResult(IOResult::Code::Timeout, {.errnum = errno});
+            return -1;
+        }
+        else if (errno != EINTR && errno != EAGAIN) {
+            // possibly EINVAL -> negative timeout
+            result = IOResult(error_code, {.errnum = errno});
+            return -1;
+        }
+    }
+}
+
+IOResult redis_send_on_fd(int fd, bytes_view buffer, timeval tv, fd_set& write_fds)
+{
+    auto* p = buffer.data();
+    auto len = buffer.size();
+
+    for (;;) {
+        io_fd_set(fd, write_fds);
+        auto tv_remaining = tv;
+        int nfds = select(fd+1, nullptr, &write_fds, nullptr, &tv_remaining);
+        if (nfds > 0) {
+            ssize_t res = ::send(fd, p, len, 0);
+            if (REDEMPTION_UNLIKELY(res == -1)) {
+                if (errno == EAGAIN || errno == EINTR) {
+                    res = 0;
+                }
+                return IOResult(IOResult::Code::WriteError, {.errnum = errno});
+            }
+            if (std::size_t(res) == len) {
+                return IOResult::Ok();
+            }
+            p += res;
+            len -= std::size_t(res);
+        }
+        else if (nfds == 0) {
+            return IOResult(IOResult::Code::Timeout, {.errnum = errno});
+        }
+        else if (errno != EINTR && errno != EAGAIN) {
+            // possibly EINVAL -> negative timeout
+            return IOResult(IOResult::Code::WriteError, {.errnum = errno});
+        }
+    }
+}
+
+IOResult redis_send_on_ssl(int fd, SSL* ssl, bytes_view buffer, timeval tv,
+                           fd_set& read_fds, fd_set& write_fds)
+{
+    auto error = IOResult::Ok();
+    auto* p = buffer.data();
+    int len = checked_int{buffer.size()};
+    redis_tls_func(fd, ssl, tv, read_fds, write_fds, error, IOResult::Code::WriteError, [&]{
+       return SSL_write(ssl, p, len);
+    });
+    return error;
+}
+
+IOResult redis_send(int fd, SSL* ssl, bytes_view buffer, timeval tv, fd_set& read_fds, fd_set& write_fds)
+{
+    if (!ssl) {
+        return redis_send_on_fd(fd, buffer, tv, write_fds);
+    }
+    return redis_send_on_ssl(fd, ssl, buffer, tv, read_fds, write_fds);
+}
+
+
+ssize_t redis_recv_on_fd(int fd, writable_bytes_view buffer, timeval tv, fd_set& fds, IOResult& error)
+{
+    for (;;) {
+        io_fd_set(fd, fds);
+        auto tv_remaining = tv;
+        int nfds = select(fd+1, &fds, nullptr, nullptr, &tv_remaining);
+        if (nfds > 0) {
+            using namespace std::string_view_literals;
+            ssize_t res = ::recv(fd, buffer.data(), buffer.size(), 0);
+            if (res > 0) {
+                return res;
+            }
+            else if (res == -1) {
+                if (errno != EAGAIN && errno != EINTR) {
+                    error = IOResult(IOResult::Code::ReadError, {.errnum = errno});
+                    return -1;
+                }
+            }
+            else {
+                error = IOResult(IOResult::Code::Timeout, {.errnum = errno});
+                return -1;
+            }
+        }
+        else if (nfds == 0) {
+            error = IOResult(IOResult::Code::Timeout, {.errnum = errno});
+            return -1;
+        }
+        else if (errno != EINTR) {
+            error = IOResult(IOResult::Code::ReadError, {.errnum = errno});
+            return -1;
+        }
+    }
+}
+
+int redis_recv_on_ssl(int fd, SSL* ssl, writable_bytes_view buffer, timeval tv,
+                          fd_set& read_fds, fd_set& write_fds, IOResult& error)
+{
+    int res = -1;
+    auto* p = buffer.data();
+    int len = checked_int{buffer.size()};
+    return redis_tls_func(fd, ssl, tv, read_fds, write_fds, error, IOResult::Code::ReadError, [&]{
+       res = SSL_read(ssl, p, len);
+       return res;
+    });
+}
+
+IOResult receive_response(int fd, SSL* ssl, timeval tv, fd_set& read_fds, fd_set& write_fds)
+{
+    using namespace std::string_view_literals;
+    constexpr auto expected_resp = "+OK\r\n"sv;
+    char buffer[expected_resp.size()];
+
+    writable_bytes_view data = make_writable_array_view(buffer);
+
+    auto error = IOResult::Ok();
+
+    ssize_t ret;
+    for (;;) {
+        if (!ssl) {
+            ret = redis_recv_on_fd(fd, data, tv, write_fds, error);
+        }
+        else {
+            ret = redis_recv_on_ssl(fd, ssl, data, tv, read_fds, write_fds, error);
+        }
+
+        if (ret < 0) {
+            return error;
+        }
+
+        data = data.drop_front(checked_int{ret});
+        if (data.empty()) {
+            break;
+        }
+    }
+
+    if (std::string_view(buffer, expected_resp.size()) == expected_resp) {
+        return IOResult::Ok();
+    }
+
+    return IOResult::Unknown(make_sized_array_view(buffer));
+}
+
+} // anonymous namespace
+
+struct RedisWriter::Access
+{
+    static SSL* as_ssl(RedisTlsCtx& self) noexcept
+    {
+        return static_cast<SSL*>(self.ssl);
+    }
+
+    static SSL_CTX* as_ssl_ctx(RedisTlsCtx& self) noexcept
+    {
+        return static_cast<SSL_CTX*>(self.ssl_ctx);
+    }
+};
+
+char const* RedisWriter::RedisTlsCtx::open(
+    const char *cacert_filename,
+    const char *cert_filename,
+    const char *private_key_filename,
+    int fd)
+{
+#define CHECK(x, msg) do { if (REDEMPTION_UNLIKELY(x)) { return msg; } } while (0)
+
+    // Create context
+
+    auto* ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+    this->ssl_ctx = ssl_ctx;
+    CHECK(!ssl_ctx, "ctx create");
+
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, nullptr);
+
+    CHECK(!SSL_CTX_load_verify_locations(ssl_ctx, cacert_filename, nullptr),
+        "ca_cert load");
+
+    CHECK(!SSL_CTX_use_certificate_chain_file(ssl_ctx, cert_filename),
+        "client_cert load");
+
+    CHECK(!SSL_CTX_use_PrivateKey_file(ssl_ctx, private_key_filename, SSL_FILETYPE_PEM),
+        "private_key load");
+
+    // Connect
+
+    auto* ssl = SSL_new(ssl_ctx);
+    this->ssl = ssl;
+    CHECK(!ssl_ctx, "ssl create");
+
+    // SSL_set_mode(ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    SSL_clear_mode(ssl, SSL_MODE_AUTO_RETRY);
+    SSL_set_fd(ssl, fd);
+    SSL_set_connect_state(ssl);
+
+    ERR_clear_error();
+
+    return nullptr;
+
+#undef CHECK
+}
+
+void RedisWriter::RedisTlsCtx::close()
+{
+    if (ssl) SSL_free(Access::as_ssl(*this));
+    if (ssl_ctx) SSL_CTX_free(Access::as_ssl_ctx(*this));
+    ssl = nullptr;
+    ssl_ctx = nullptr;
+}
+
+
+RedisWriter::IOResult RedisWriter::open()
+{
+    state = State::FirstPacket;
+
+    // open socket
+    close();
+    fd = addr_connect(strings.address(), true).release();
+    if (fd == -1) {
+        return IOResult(IOResult::Code::ConnectError, {.errnum = errno});
+    }
+
+    // enable tls
+    if (!strings.cert_file().empty()) {
+        auto* error_msg = tls.open(
+            strings.ca_cert_file().c_str(),
+            strings.cert_file().c_str(),
+            strings.key_file().c_str(),
+            fd);
+        if (error_msg) {
+            return IOResult(IOResult::Code::CertificateError, {.msg = error_msg});
+        }
+
+        IOResult result = IOResult::Ok();
+        redis_tls_func(fd, Access::as_ssl(tls), tv, rfds, wfds, result, IOResult::Code::ConnectError, [&]{
+            return SSL_connect(Access::as_ssl(tls));
+        });
+
+        if (not result.ok()) {
+            return result;
+        }
+    }
+
+    // send data:
     // AUTH password
     // SELECT db
     auto db_s = int_to_decimal_chars(db);
+    auto password = bounded_chars_view<0, 256>(truncated_bounded_array_view(strings.password()));
     auto data = static_str_concat(
         "*2\r\n$4\r\nAUTH\r\n$"_sized_av,
         int_to_decimal_chars(password.size()),
@@ -134,17 +533,10 @@ bool RedisWriter::open()
         av = av.from_offset(20);
     }
 
-    ssize_t res = ::send(fd, av.data(), av.size(), 0);
-    if (res <= 0 || std::size_t(res) != av.size()) {
-        ::close(fd);
-        fd = -1;
-        return false;
-    }
+    io_fd_zero(rfds);
+    io_fd_zero(wfds);
 
-    io_fd_zero(fds);
-
-    state = State::FirstPacket;
-    return true;
+    return redis_send(fd, Access::as_ssl(tls), av, tv, rfds, wfds);
 }
 
 void RedisWriter::close()
@@ -153,113 +545,27 @@ void RedisWriter::close()
         ::close(fd);
         fd = -1;
     }
+    tls.close();
 }
-
-namespace
-{
-    using IOResult = RedisWriter::IOResult;
-
-    IOResult receive_response(int fd, timeval tv, fd_set& fds)
-    {
-        for (;;) {
-            auto tv_cp = tv;
-            io_fd_set(fd, fds);
-            int nfds = select(fd+1, &fds, nullptr, nullptr, &tv_cp);
-            if (nfds > 0) {
-                using namespace std::string_view_literals;
-                constexpr auto expected_resp = "+OK\r\n"sv;
-                char buffer[expected_resp.size()];
-                ssize_t res = ::recv(fd, buffer, expected_resp.size(), 0);
-                if (res > 0) {
-                    if (std::string_view(buffer, std::size_t(res)) == expected_resp) {
-                        return IOResult::Ok;
-                    }
-                    LOG(LOG_ERR, "Redis: unknown response: %.*s", int(res), buffer);
-                    return IOResult::UnknownResponse;
-                }
-                else if (res == -1) {
-                    if (errno != EAGAIN && errno != EINTR) {
-                        return IOResult::ReadError;
-                    }
-                }
-                else {
-                    return IOResult::Timeout;
-                }
-            }
-            else if (nfds == 0) {
-                return IOResult::Timeout;
-            }
-            else if (errno != EINTR) {
-                return IOResult::ReadEventError;
-            }
-        }
-    }
-} // anonymous namespace
 
 RedisWriter::IOResult RedisWriter::send(bytes_view data)
 {
-
-#define CHECK(x, err) do { if (REDEMPTION_UNLIKELY(x == -1)) return err; } while (0)
+    auto* ssl = Access::as_ssl(tls);
 
     if (state == State::FirstPacket) {
-        if (!password.empty()) {
-            auto res = receive_response(fd, tv, fds);
-            if (res != IOResult::Ok) {
+        if (!strings.password().empty()) {
+            auto res = receive_response(fd, ssl, tv, rfds, wfds);
+            if (not res.ok()) {
                 return res;
             }
         }
         state = State::WaitResponse;
     }
 
-    if (auto res = receive_response(fd, tv, fds)
-      ; res != IOResult::Ok
-    ) {
+    auto res = receive_response(fd, ssl, tv, rfds, wfds);
+    if (not res.ok()) {
         return res;
     }
 
-    auto send_data = [this](uint8_t const* p, std::size_t len){
-        ssize_t res = ::send(fd, p, len, 0);
-        if (REDEMPTION_UNLIKELY(res == -1)) {
-            if (errno == EAGAIN || errno == EINTR) {
-                res = 0;
-            }
-        }
-        return res;
-    };
-
-    auto* p = data.data();
-    auto len = data.size();
-
-    ssize_t res = send_data(p, len);
-    CHECK(res, IOResult::WriteError);
-
-    if (len != std::size_t(res)) {
-        auto tv_remaining = tv;
-        auto t = MonotonicTimePoint::clock::now();
-
-        for (;;) {
-            io_fd_set(fd, fds);
-            int nfds = select(fd+1, nullptr, &fds, nullptr, &tv_remaining);
-            if (nfds > 0) {
-                p += res;
-                len -= std::size_t(res);
-                res = send_data(p, len);
-                CHECK(res, IOResult::WriteError);
-                if (std::size_t(res) == len) {
-                    break;
-                }
-            }
-            else if (nfds == 0) {
-                return IOResult::Timeout;
-            }
-            else if (errno != EINTR) {
-                // possibly EINVAL -> negative timeout
-                return IOResult::WriteEventError;
-            }
-
-            tv_remaining = to_timeval(MonotonicTimePoint::clock::now() - t);
-        }
-    }
-
-    return IOResult::Ok;
+    return redis_send(fd, ssl, data, tv, rfds, wfds);
 }

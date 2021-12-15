@@ -22,9 +22,12 @@ Author(s): Proxies Team
 
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/static_string.hpp"
+#include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/bounded_array_view.hpp"
 
 #include <chrono>
 #include <vector>
+#include <memory>
 
 #include <sys/select.h>
 #include <sys/time.h>
@@ -52,9 +55,16 @@ private:
 class RedisWriter
 {
 public:
+    struct TlsParams
+    {
+        chars_view cert_file;
+        chars_view key_file;
+        chars_view ca_cert_file;
+    };
+
     explicit RedisWriter(
-        bounded_chars_view<0, 127> address, std::chrono::milliseconds timeout,
-        bounded_chars_view<0, 127> password, unsigned db
+        chars_view address, std::chrono::milliseconds timeout,
+        chars_view password, unsigned db, TlsParams tls_params
     );
 
     RedisWriter(RedisWriter const&) = delete;
@@ -62,34 +72,111 @@ public:
 
     ~RedisWriter();
 
-    bool open();
-    void close();
-
-    enum class IOResult : uint8_t
+    struct [[nodiscard]] IOResult
     {
-        Ok,
-        ReadError,
-        WriteError,
-        ReadEventError,
-        WriteEventError,
-        Timeout,
-        UnknownResponse,
+        enum class Code : uint8_t
+        {
+            Ok,
+            ConnectError,
+            CertificateError,
+            ReadError,
+            WriteError,
+            Timeout,
+            UnknownResponse,
+        };
+
+        struct ErrorCtx
+        {
+            char const* msg = nullptr;
+            int errnum = 0;
+            int sslnum = 0;
+        };
+
+        static IOResult Ok() noexcept
+        {
+            return IOResult(IOResult::Code::Ok, ErrorCtx{});
+        }
+
+        static IOResult Unknown(bounded_array_view<char, 0, 5> resp) noexcept;
+
+        explicit IOResult(Code code, ErrorCtx error_ctx) noexcept;
+
+        bool ok() const noexcept
+        {
+            return code_ == Code::Ok;
+        }
+
+        Code code() const noexcept
+        {
+            return code_;
+        }
+
+        int errnum() const noexcept;
+        char const* code_as_cstring() const noexcept;
+        char const* error_message() const;
+
+    private:
+        explicit IOResult(bounded_array_view<char, 0, 5> resp) noexcept;
+
+        union Data
+        {
+            ErrorCtx error_ctx;
+            char resp[6];
+        };
+
+        Code code_;
+        Data data_;
     };
+
+    IOResult open();
+    void close();
 
     IOResult send(bytes_view data);
 
 private:
+    struct Strings
+    {
+        std::unique_ptr<char[]> data;
+        std::size_t iends[5];
+
+        zstring_view address() const noexcept;
+        zstring_view password() const noexcept;
+        zstring_view cert_file() const noexcept;
+        zstring_view key_file() const noexcept;
+        zstring_view ca_cert_file() const noexcept;
+    };
+
+    class Access;
+
+    struct RedisTlsCtx
+    {
+        char const* open(
+            char const* cacert_filename,
+            char const* cert_filename,
+            char const* private_key_filename,
+            int fd);
+
+        void close();
+
+    private:
+        friend Access;
+
+        void* ssl_ctx;
+        void* ssl;
+    };
+
     enum class State : bool
     {
         FirstPacket,
         WaitResponse,
     };
 
+    RedisTlsCtx tls {};
     timeval tv;
-    fd_set fds;
     int fd = -1;
     unsigned db;
     State state {};
-    static_string<127> address;
-    static_string<127> password;
+    fd_set rfds;
+    fd_set wfds;
+    Strings strings;
 };
