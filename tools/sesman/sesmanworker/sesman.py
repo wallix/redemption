@@ -171,9 +171,9 @@ def parse_auth(username):
     no ambiguity)
 
     """
-    user_dev_service_group, sep, primary = username.rpartition(':')
+    user_dev_service_group, sep, primary = username.rpartition('+')
     if not sep:
-        user_dev_service_group, sep, primary = username.rpartition('+')
+        user_dev_service_group, sep, primary = username.rpartition(':')
     if sep:
         user_dev_service, sep, group = user_dev_service_group.rpartition(sep)
         if not sep:
@@ -1922,7 +1922,6 @@ class Sesman():
                 _status, _error = False, \
                     TR(u"start_session_failed") + " (" + error_msg + ")"
 
-
         if _status:
             record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
             if record_warning and extra_info.is_recorded:
@@ -2983,12 +2982,12 @@ class Sesman():
                 banner_type = 2
             elif banner_type == "warn":
                 banner_type = 1
-            else: # banner_type == "info"
+            else:  # banner_type == "info"
                 banner_type = 0
 
             data_to_send = {
-                u"banner_message" : banner_message,
-                u"banner_type" : banner_type
+                u"banner_message": banner_message,
+                u"banner_type": banner_type
             }
 
             self.send_data(data_to_send)
