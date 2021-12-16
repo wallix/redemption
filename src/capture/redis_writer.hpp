@@ -21,13 +21,11 @@ Author(s): Proxies Team
 #pragma once
 
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/static_string.hpp"
 #include "utils/sugar/zstring_view.hpp"
 #include "utils/sugar/bounded_array_view.hpp"
 
 #include <chrono>
 #include <vector>
-#include <memory>
 
 #include <sys/select.h>
 #include <sys/time.h>
@@ -57,15 +55,13 @@ class RedisWriter
 public:
     struct TlsParams
     {
-        chars_view cert_file;
-        chars_view key_file;
-        chars_view ca_cert_file;
+        bool enable_tls;
+        const char * cert_file;
+        const char * key_file;
+        const char * ca_cert_file;
     };
 
-    explicit RedisWriter(
-        chars_view address, std::chrono::milliseconds timeout,
-        chars_view password, unsigned db, TlsParams tls_params
-    );
+    explicit RedisWriter();
 
     RedisWriter(RedisWriter const&) = delete;
     RedisWriter& operator=(RedisWriter const&) = delete;
@@ -128,24 +124,14 @@ public:
         Data data_;
     };
 
-    IOResult open();
+    IOResult open(
+        zstring_view address, zstring_view password, unsigned db,
+        std::chrono::milliseconds timeout, TlsParams tls_params);
     void close();
 
     IOResult send(bytes_view data);
 
 private:
-    struct Strings
-    {
-        std::unique_ptr<char[]> data;
-        std::size_t iends[5];
-
-        zstring_view address() const noexcept;
-        zstring_view password() const noexcept;
-        zstring_view cert_file() const noexcept;
-        zstring_view key_file() const noexcept;
-        zstring_view ca_cert_file() const noexcept;
-    };
-
     class Access;
 
     struct RedisTlsCtx
@@ -167,16 +153,14 @@ private:
 
     enum class State : bool
     {
-        FirstPacket,
         WaitResponse,
+        WaitPassword,
     };
 
     RedisTlsCtx tls {};
     timeval tv;
     int fd = -1;
-    unsigned db;
-    State state {};
+    State state;
     fd_set rfds;
     fd_set wfds;
-    Strings strings;
 };

@@ -36,6 +36,7 @@
 #include "capture/ocr_params.hpp"
 #include "capture/pattern_params.hpp"
 #include "capture/png_params.hpp"
+#include "capture/redis_params.hpp"
 #include "capture/sequenced_video_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
@@ -1137,16 +1138,9 @@ public:
                 : 0,
             true,
             this->client_info.remote_program,
-            ini.get<cfg::audit::rt_display>(),
+            ini.get<cfg::audit::use_redis>(),
             record_filebase,
-            PngParams::Redis {
-              .use_redis = ini.get<cfg::audit::use_redis>(),
-              .address = ini.get<cfg::audit::redis_address>(),
-              .password = ini.get<cfg::audit::redis_password>(),
-              .key_name = redis_key_name,
-              .timeout = ini.get<cfg::audit::redis_timeout>(),
-              .db = ini.get<cfg::audit::redis_db>(),
-            }
+            redis_key_name,
         };
         bool const capture_png = bool(capture_flags & CaptureFlags::png)
                               && (png_params.png_limit > 0);
@@ -1231,6 +1225,8 @@ public:
             this->capture->relayout(monitor_layout_pdu);
         }
 
+        this->capture->set_rt_display(ini.get<cfg::audit::rt_display>(), redis_params_from_ini(ini));
+
         return true;
     }
 
@@ -1266,10 +1262,10 @@ public:
         return (this->capture && this->capture->has_wrm_capture());
     }
 
-    Capture::RTDisplayResult set_rt_display(bool enable_rt_display)
+    Capture::RTDisplayResult set_rt_display(bool enable_rt_display, RedisParams redis_params)
     {
         return this->capture
-            ? this->capture->set_rt_display(enable_rt_display)
+            ? this->capture->set_rt_display(enable_rt_display, redis_params)
             : Capture::RTDisplayResult::Unchanged;
     }
 

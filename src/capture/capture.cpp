@@ -62,6 +62,7 @@
 #include "capture/ocr_params.hpp"
 #include "capture/pattern_params.hpp"
 #include "capture/png_params.hpp"
+#include "capture/redis_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
 
@@ -784,7 +785,6 @@ public:
         Drawable& drawable, DrawablePointer const & drawable_pointer,
         Rect cropping)
     : png_limit(png_params.png_limit)
-    , enable_rt_display(png_params.rt_display)
     , png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
     , trans(
         capture_params.record_tmp_path,
@@ -850,7 +850,7 @@ private:
     uint32_t num_start = 0;
     uint32_t png_limit;
 
-    bool enable_rt_display;
+    bool enable_rt_display = false;
 
     PngCaptureData png_data;
     OutFilenameSequenceTransport trans;
@@ -863,24 +863,16 @@ public:
         const CaptureParams & capture_params, const PngParams & png_params,
         Drawable& drawable, DrawablePointer const & drawable_pointer,
         Rect cropping)
-    : enable_rt_display(png_params.rt_display)
-    , png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
-    , redis_cmd(png_params.redis.key_name)
-    , redis_server(png_params.redis.address, png_params.redis.timeout,
-                   png_params.redis.password, png_params.redis.db,
-                   RedisWriter::TlsParams{})
-    {
-        if (this->enable_rt_display) {
-            this->connect_to_redis();
-        }
-    }
+    : png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
+    , redis_cmd(png_params.redis_key_name)
+    {}
 
     void set_cropping(Rect cropping) noexcept
     {
         this->png_data.set_cropping(cropping);
     }
 
-    RTDisplayResult set_rt_display(bool enable_rt_display)
+    RTDisplayResult set_rt_display(bool enable_rt_display, RedisParams const& redis_params)
     {
         if (enable_rt_display != this->enable_rt_display) {
             LOG(LOG_INFO, "PngCaptureRTRedis::enable_rt_display=%d", enable_rt_display);
@@ -891,7 +883,7 @@ public:
                 return RTDisplayResult::Disabled;
             }
 
-            this->connect_to_redis();
+            this->connect_to_redis(redis_params);
 
             return RTDisplayResult::Enabled;
         }
@@ -930,9 +922,16 @@ public:
     }
 
 private:
-    void connect_to_redis()
+    void connect_to_redis(RedisParams const& redis_params)
     {
-        auto result = this->redis_server.open();
+        auto result = this->redis_server.open(
+            redis_params.address, redis_params.password, redis_params.db,
+            redis_params.timeout, RedisWriter::TlsParams{
+                .enable_tls = redis_params.tls.enable_tls,
+                .cert_file = redis_params.tls.cert_file,
+                .key_file = redis_params.tls.key_file,
+                .ca_cert_file = redis_params.tls.ca_cert_file
+            });
         this->check(result, "PngCaptureRTRedis::connect_to_redis()",
                     ERR_SOCKET_CONNECT_FAILED);
     }
@@ -946,7 +945,7 @@ private:
         }
     }
 
-    bool enable_rt_display;
+    bool enable_rt_display = false;
 
     PngCaptureData png_data;
     RedisCmdSet redis_cmd;
@@ -1493,7 +1492,7 @@ Capture::Capture(
 
         if (capture_png) {
             if (png_params.real_time_image_capture) {
-                if (!png_params.redis.address.empty()) {
+                if (png_params.use_redis_with_rt_display) {
                     this->png_real_time_redis_capture_obj = std::make_unique<PngCaptureRTRedis>(
                         capture_params,
                         png_params,
@@ -1781,14 +1780,14 @@ void Capture::resize(uint16_t width, uint16_t height)
     this->external_breakpoint();
 }
 
-Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
+Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display, const RedisParams& redis_params)
 {
     if (this->png_real_time_capture_obj) {
         return this->png_real_time_capture_obj->set_rt_display(enable_rt_display);
     }
 
     if (this->png_real_time_redis_capture_obj) {
-        return this->png_real_time_redis_capture_obj->set_rt_display(enable_rt_display);
+        return this->png_real_time_redis_capture_obj->set_rt_display(enable_rt_display, redis_params);
     }
 
     return Capture::RTDisplayResult::Unchanged;

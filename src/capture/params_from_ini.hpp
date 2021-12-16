@@ -25,6 +25,7 @@
 #include "capture/ocr_params.hpp"
 #include "capture/pattern_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "capture/redis_params.hpp"
 #include "gdi/screen_info.hpp"
 
 
@@ -44,3 +45,5 @@ PatternParams pattern_params_from_ini(const Inifile & ini);
 WrmParams wrm_params_from_ini(
     BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd,
     const char * hash_path, const Inifile & ini);
+
+RedisParams redis_params_from_ini(const Inifile & ini);

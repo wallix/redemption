@@ -52,6 +52,7 @@ class MetaParams;
 class OcrParams;
 class PatternParams;
 class PngParams;
+class RedisParams;
 class SequencedVideoParams;
 class VideoParams;
 class WrmParams;
@@ -109,7 +110,7 @@ public:
         Unchanged,
     };
 
-    RTDisplayResult set_rt_display(bool enable_rt_display);
+    RTDisplayResult set_rt_display(bool enable_rt_display, const RedisParams& redis_params);
 
     void set_row(size_t rownum, bytes_view data) override;
 

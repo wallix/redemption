@@ -709,7 +709,7 @@ ModPack create_mod_rdp(
     if (enable_validator) {
         auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
         bool const no_log_for_unix_socket = false;
-        unique_fd ufd = addr_connect_blocking(socket_path, no_log_for_unix_socket);
+        unique_fd ufd = addr_connect_blocking(socket_path.c_str(), no_log_for_unix_socket);
         if (ufd) {
             file_validator = std::make_unique<RdpData::FileValidator>(
                 std::move(ufd),

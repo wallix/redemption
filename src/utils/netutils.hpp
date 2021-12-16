@@ -63,9 +63,9 @@ unique_fd ip_connect_both_ipv4_and_ipv6
 
 unique_fd local_connect(const char* sck_name, bool no_log);
 
-unique_fd addr_connect(zstring_view addr, bool no_log_for_unix_socket);
+unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket);
 
-unique_fd addr_connect_blocking(zstring_view addr, bool no_log_for_unix_socket);
+unique_fd addr_connect_blocking(const char* addr, bool no_log_for_unix_socket);
 
 /// \return ip found or empty view whether not found or error
 zstring_view parse_ip_conntrack(

@@ -105,3 +105,19 @@ WrmParams wrm_params_from_ini(
         ini.get<cfg::video::file_permissions>()
     };
 }
+
+RedisParams redis_params_from_ini(const Inifile & ini)
+{
+    return RedisParams{
+        .address = ini.get<cfg::audit::redis_address>(),
+        .password = ini.get<cfg::audit::redis_password>(),
+        .db = ini.get<cfg::audit::redis_db>(),
+        .timeout = ini.get<cfg::audit::redis_timeout>(),
+        .tls = RedisParams::Tls{
+            .enable_tls = false,
+            .cert_file = nullptr,
+            .key_file = nullptr,
+            .ca_cert_file = nullptr,
+        }
+    };
+}

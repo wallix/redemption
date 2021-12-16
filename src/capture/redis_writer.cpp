@@ -96,69 +96,7 @@ bytes_view RedisCmdSet::build_command()
 }
 
 
-RedisWriter::RedisWriter(
-    chars_view address, std::chrono::milliseconds timeout,
-    chars_view password, unsigned db, TlsParams tls_params)
-: tv(to_timeval(timeout))
-, db(db)
-, strings{
-    std::unique_ptr<char[]>(new char[
-        address.size()
-      + password.size()
-      + tls_params.cert_file.size()
-      + tls_params.key_file.size()
-      + tls_params.ca_cert_file.size()
-      + 5
-    ]), /* NOLINT */
-    {}
-}
-{
-    auto* p = strings.data.get();
-    auto* n = strings.iends;
-    std::size_t iend = 0;
-
-    for (auto s : {
-        address,
-        password,
-        tls_params.cert_file,
-        tls_params.key_file,
-        tls_params.ca_cert_file,
-    }) {
-        memcpy(p, s.data(), s.size());
-        p += s.size();
-        *p = '\0';
-        ++p;
-        iend += s.size();
-        *n = iend;
-        ++n;
-        ++iend;
-    }
-}
-
-zstring_view RedisWriter::Strings::address() const noexcept
-{
-    return zstring_view::from_null_terminated(data.get(), iends[0]);
-}
-
-zstring_view RedisWriter::Strings::password() const noexcept
-{
-    return zstring_view::from_null_terminated({data.get() + iends[0] + 1, data.get() + iends[1]});
-}
-
-zstring_view RedisWriter::Strings::cert_file() const noexcept
-{
-    return zstring_view::from_null_terminated({data.get() + iends[1] + 1, data.get() + iends[2]});
-}
-
-zstring_view RedisWriter::Strings::key_file() const noexcept
-{
-    return zstring_view::from_null_terminated({data.get() + iends[2] + 1, data.get() + iends[3]});
-}
-
-zstring_view RedisWriter::Strings::ca_cert_file() const noexcept
-{
-    return zstring_view::from_null_terminated({data.get() + iends[3] + 1, data.get() + iends[4]});
-}
+RedisWriter::RedisWriter() = default;
 
 RedisWriter::~RedisWriter()
 {
@@ -482,23 +420,25 @@ void RedisWriter::RedisTlsCtx::close()
 }
 
 
-RedisWriter::IOResult RedisWriter::open()
+RedisWriter::IOResult RedisWriter::open(
+    zstring_view address, zstring_view password, unsigned db,
+    std::chrono::milliseconds timeout, TlsParams tls_params)
 {
-    state = State::FirstPacket;
+    tv = to_timeval(timeout);
 
     // open socket
     close();
-    fd = addr_connect(strings.address(), true).release();
+    fd = addr_connect(address, true).release();
     if (fd == -1) {
         return IOResult(IOResult::Code::ConnectError, {.errnum = errno});
     }
 
     // enable tls
-    if (!strings.cert_file().empty()) {
+    if (tls_params.enable_tls) {
         auto* error_msg = tls.open(
-            strings.ca_cert_file().c_str(),
-            strings.cert_file().c_str(),
-            strings.key_file().c_str(),
+            tls_params.ca_cert_file,
+            tls_params.cert_file,
+            tls_params.key_file,
             fd);
         if (error_msg) {
             return IOResult(IOResult::Code::CertificateError, {.msg = error_msg});
@@ -518,11 +458,11 @@ RedisWriter::IOResult RedisWriter::open()
     // AUTH password
     // SELECT db
     auto db_s = int_to_decimal_chars(db);
-    auto password = bounded_chars_view<0, 256>(truncated_bounded_array_view(strings.password()));
+    auto truncated_password = bounded_chars_view<0, 256>(truncated_bounded_array_view(password));
     auto data = static_str_concat(
         "*2\r\n$4\r\nAUTH\r\n$"_sized_av,
-        int_to_decimal_chars(password.size()),
-        "\r\n"_sized_av, password, "\r\n"
+        int_to_decimal_chars(truncated_password.size()),
+        "\r\n"_sized_av, truncated_password, "\r\n"
         "*2\r\n$6\r\nSELECT\r\n$"_sized_av,
         int_to_decimal_chars(db_s.size()),
         "\r\n"_sized_av, db_s, "\r\n"_sized_av
@@ -531,6 +471,10 @@ RedisWriter::IOResult RedisWriter::open()
 
     if (password.empty()) {
         av = av.from_offset(20);
+        state = State::WaitResponse;
+    }
+    else {
+        state = State::WaitPassword;
     }
 
     io_fd_zero(rfds);
@@ -552,12 +496,10 @@ RedisWriter::IOResult RedisWriter::send(bytes_view data)
 {
     auto* ssl = Access::as_ssl(tls);
 
-    if (state == State::FirstPacket) {
-        if (!strings.password().empty()) {
-            auto res = receive_response(fd, ssl, tv, rfds, wfds);
-            if (not res.ok()) {
-                return res;
-            }
+    if (state == State::WaitPassword) {
+        auto res = receive_response(fd, ssl, tv, rfds, wfds);
+        if (not res.ok()) {
+            return res;
         }
         state = State::WaitResponse;
     }

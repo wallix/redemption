@@ -47,7 +47,8 @@ RED_AUTO_TEST_CASE(TestRedisSet)
 
 RED_AUTO_TEST_CASE(TestRedisServer)
 {
-    auto addr = "127.0.0.1:4446"_sized_av;
+    auto addr = "127.0.0.1:4446"_zv;
+    auto password = "admin"_zv;
 
     unique_fd sck_server = create_server(inet_addr("127.0.0.1"), 4446, EnableTransparentMode::No);
     RED_REQUIRE(sck_server.is_open());
@@ -58,12 +59,13 @@ RED_AUTO_TEST_CASE(TestRedisServer)
 
     using namespace std::chrono_literals;
 
-    RedisWriter cmd(addr, 100ms, "admin"_sized_av, 0, RedisWriter::TlsParams{});
+    RedisWriter cmd;
 
     // open -> close -> open -> close
     for (int i = 0; i < 2; ++i) {
         RED_TEST_CONTEXT("i = " << i) {
-            RED_REQUIRE(cmd.open().code() == RedisWriter::IOResult::Code::Ok);
+            RED_REQUIRE(cmd.open(addr, password, 0, 100ms, RedisWriter::TlsParams{}).code()
+                == RedisWriter::IOResult::Code::Ok);
 
             sockaddr s {};
             socklen_t sin_size = sizeof(s);

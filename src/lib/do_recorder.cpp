@@ -1108,12 +1108,12 @@ static inline int replay(
                             rp.png_geometry.w,
                             rp.png_geometry.h,
                             rp.png_interval,
-                            /*limit = */0,
+                            /*png_limit = */0,
                             /*real_time_image_capture = */false,
                             /*remote_program_session = */false,
-                            /*rt_display = */false,
+                            /*use_redis_with_rt_display = */false,
                             /*real_basename = */spath.basename.c_str(),
-                            PngParams::Redis{},
+                            /*redis_key_name = */nullptr,
                         };
 
                         RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};

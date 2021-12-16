@@ -33,18 +33,7 @@ struct PngParams
     uint32_t png_limit;
     bool real_time_image_capture;
     bool remote_program_session;
-    bool rt_display;
-    const char *real_basename;
-
-    struct Redis
-    {
-        bool use_redis;
-        chars_view address;
-        chars_view password;
-        chars_view key_name;
-        std::chrono::milliseconds timeout;
-        unsigned db;
-    };
-
-    Redis redis;
+    bool use_redis_with_rt_display;
+    const char * real_basename;
+    chars_view redis_key_name;
 };

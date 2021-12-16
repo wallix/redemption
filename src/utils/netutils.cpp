@@ -26,6 +26,7 @@
 #include "utils/log.hpp"
 #include "utils/select.hpp"
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 
 #include <charconv>
 
@@ -357,9 +358,6 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
 
 unique_fd local_connect(const char* sck_name, bool no_log)
 {
-    char target[1024] = {};
-    snprintf(target, sizeof(target), "%s", sck_name);
-
     LOG_IF(!no_log, LOG_INFO, "connecting to %s", sck_name);
     // we will try connection several time
     // the trial process include "ocket opening, hostname resolution, etc
@@ -385,22 +383,21 @@ unique_fd local_connect(const char* sck_name, bool no_log)
 
     int nbretry = 1;
     int retry_delai_ms = 1000;
-    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target, no_log);
+    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + len + 1u), sck_name, no_log);
 }
 
 
-unique_fd addr_connect(zstring_view addr, bool no_log_for_unix_socket)
+unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
 {
     const char* pos = strchr(addr, ':');
     if (!pos) {
         return local_connect(addr, no_log_for_unix_socket);
     }
 
-    int port;
-    auto r = std::from_chars(pos + 1, addr.end(), port);
-    if (r.ec == std::errc()) {
-        std::string ip(addr.data(), pos);
-        return ip_connect(ip.c_str(), port);
+    auto port_result = decimal_chars_to_int<int>(pos + 1);
+    if (port_result.ec == std::errc()) {
+        std::string ip(addr, pos);
+        return ip_connect(ip.c_str(), port_result.val);
     }
 
     LOG(LOG_ERR, "Connecting to %s failed: invalid port", pos + 1);
@@ -408,7 +405,7 @@ unique_fd addr_connect(zstring_view addr, bool no_log_for_unix_socket)
 }
 
 
-unique_fd addr_connect_blocking(zstring_view addr, bool no_log_for_unix_socket)
+unique_fd addr_connect_blocking(const char* addr, bool no_log_for_unix_socket)
 {
     auto fd = addr_connect(addr, no_log_for_unix_socket);
     if (fd) {

@@ -993,7 +993,8 @@ private:
 
                     if (has_field(cfg::audit::rt_display())) {
                         const Capture::RTDisplayResult rt_status =
-                            front.set_rt_display(ini.get<cfg::audit::rt_display>());
+                            front.set_rt_display(ini.get<cfg::audit::rt_display>(),
+                                                 redis_params_from_ini(ini));
 
                         if (ini.get<cfg::client::enable_osd_4_eyes>()
                          && rt_status == Capture::RTDisplayResult::Enabled
@@ -1375,7 +1376,7 @@ public:
 
             if (is_connected) {
                 if (unique_fd client_sck = addr_connect_blocking(
-                    this->ini.get<cfg::globals::authfile>(),
+                    this->ini.get<cfg::globals::authfile>().c_str(),
                     source_is_localhost)
                 ) {
                     auth_sck = client_sck.release();
