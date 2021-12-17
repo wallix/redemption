@@ -194,6 +194,7 @@ namespace
 {
 
 using IOResult = RedisWriter::IOResult;
+using ErrorCtx = IOResult::ErrorCtx;
 
 template<class F>
 int redis_tls_func(int fd, SSL* ssl, timeval tv,
@@ -220,9 +221,9 @@ int redis_tls_func(int fd, SSL* ssl, timeval tv,
             io_fd_set(fd, write_fds);
         }
         else {
-            IOResult::ErrorCtx error_ctx = (ssl_error == SSL_ERROR_SYSCALL)
-                ? IOResult::ErrorCtx{.errnum = errno}
-                : IOResult::ErrorCtx{.sslnum = ssl_error};
+            ErrorCtx error_ctx = (ssl_error == SSL_ERROR_SYSCALL)
+                ? ErrorCtx{.errnum = errno}
+                : ErrorCtx{.sslnum = ssl_error};
             result = IOResult(error_code, error_ctx);
             return -1;
         }
@@ -233,12 +234,12 @@ int redis_tls_func(int fd, SSL* ssl, timeval tv,
         if (nfds > 0) {
         }
         else if (nfds == 0) {
-            result = IOResult(IOResult::Code::Timeout, {.errnum = errno});
+            result = IOResult(IOResult::Code::Timeout, ErrorCtx{.errnum = errno});
             return -1;
         }
         else if (errno != EINTR && errno != EAGAIN) {
             // possibly EINVAL -> negative timeout
-            result = IOResult(error_code, {.errnum = errno});
+            result = IOResult(error_code, ErrorCtx{.errnum = errno});
             return -1;
         }
     }
@@ -259,7 +260,7 @@ IOResult redis_send_on_fd(int fd, bytes_view buffer, timeval tv, fd_set& write_f
                 if (errno == EAGAIN || errno == EINTR) {
                     res = 0;
                 }
-                return IOResult(IOResult::Code::WriteError, {.errnum = errno});
+                return IOResult(IOResult::Code::WriteError, ErrorCtx{.errnum = errno});
             }
             if (std::size_t(res) == len) {
                 return IOResult::Ok();
@@ -268,11 +269,11 @@ IOResult redis_send_on_fd(int fd, bytes_view buffer, timeval tv, fd_set& write_f
             len -= std::size_t(res);
         }
         else if (nfds == 0) {
-            return IOResult(IOResult::Code::Timeout, {.errnum = errno});
+            return IOResult(IOResult::Code::Timeout, ErrorCtx{.errnum = errno});
         }
         else if (errno != EINTR && errno != EAGAIN) {
             // possibly EINVAL -> negative timeout
-            return IOResult(IOResult::Code::WriteError, {.errnum = errno});
+            return IOResult(IOResult::Code::WriteError, ErrorCtx{.errnum = errno});
         }
     }
 }
@@ -312,21 +313,21 @@ ssize_t redis_recv_on_fd(int fd, writable_bytes_view buffer, timeval tv, fd_set&
             }
             else if (res == -1) {
                 if (errno != EAGAIN && errno != EINTR) {
-                    error = IOResult(IOResult::Code::ReadError, {.errnum = errno});
+                    error = IOResult(IOResult::Code::ReadError, ErrorCtx{.errnum = errno});
                     return -1;
                 }
             }
             else {
-                error = IOResult(IOResult::Code::Timeout, {.errnum = errno});
+                error = IOResult(IOResult::Code::Timeout, ErrorCtx{.errnum = errno});
                 return -1;
             }
         }
         else if (nfds == 0) {
-            error = IOResult(IOResult::Code::Timeout, {.errnum = errno});
+            error = IOResult(IOResult::Code::Timeout, ErrorCtx{.errnum = errno});
             return -1;
         }
         else if (errno != EINTR) {
-            error = IOResult(IOResult::Code::ReadError, {.errnum = errno});
+            error = IOResult(IOResult::Code::ReadError, ErrorCtx{.errnum = errno});
             return -1;
         }
     }
@@ -458,7 +459,7 @@ RedisWriter::IOResult RedisWriter::open(
     close();
     fd = addr_connect(address, true).release();
     if (fd == -1) {
-        return IOResult(IOResult::Code::ConnectError, {.errnum = errno});
+        return IOResult(IOResult::Code::ConnectError, ErrorCtx{.errnum = errno});
     }
 
     // enable tls
@@ -469,7 +470,7 @@ RedisWriter::IOResult RedisWriter::open(
             tls_params.key_file,
             fd);
         if (error_msg) {
-            return IOResult(IOResult::Code::CertificateError, {.msg = error_msg});
+            return IOResult(IOResult::Code::CertificateError, ErrorCtx{.msg = error_msg});
         }
 
         IOResult result = IOResult::Ok();
