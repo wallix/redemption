@@ -35,7 +35,7 @@ Author(s): Proxies Team
 class RedisCmdSet
 {
 public:
-    explicit RedisCmdSet(chars_view key_name);
+    explicit RedisCmdSet(chars_view key_name, std::chrono::seconds expiration_delay);
 
     RedisCmdSet(RedisCmdSet const&) = delete;
     RedisCmdSet& operator=(RedisCmdSet const&) = delete;
@@ -45,8 +45,11 @@ public:
     bytes_view build_command();
 
 private:
+    std::size_t reserved_buffer_size() noexcept;
+
     std::vector<uint8_t> cmd_buffer;
-    std::size_t reserved;
+    std::size_t preformatted_header_set_pos;
+    std::size_t preformatted_size;
 };
 
 

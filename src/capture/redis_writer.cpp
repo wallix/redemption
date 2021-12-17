@@ -36,37 +36,49 @@ Author(s): Proxies Team
 // '*' {nb_args} '\r\n'
 // ( '$' {arg_len} '\r\n' {arg_value} '\r\n' )*
 // Command:
-// SET key value
+// SET key value [EX second]
 // SELECT db
 // AUTH password
 // AUTH username password
 
-namespace
+RedisCmdSet::RedisCmdSet(chars_view key_name, std::chrono::seconds expiration_delay)
 {
-    std::size_t reserved_buffer_size(std::size_t reserved)
-    {
-        // reserved + data_len
-        return reserved * 2 + detail::int_to_chars_buf_size + 2;
-    }
-}
-
-RedisCmdSet::RedisCmdSet(chars_view key_name)
-{
+    // buffer contents:
+    // [EXPIRE value][SET cmd without size nor data][reserved formatted header for SET][data]
     cmd_buffer.reserve(32 * 1024);
 
-    append("*3\r\n$3\r\nSET\r\n$"_av);
+    // EXPIRE value
+    auto expiration_delay_as_str = int_to_decimal_chars(expiration_delay.count());
+    append("\r\n$2\r\nEX\r\n$"_av);
+    append(int_to_decimal_chars(expiration_delay_as_str.size()));
+    append("\r\n"_av);
+    append(expiration_delay_as_str);
+    append("\r\n"_av);
+
+    preformatted_header_set_pos = cmd_buffer.size();
+
+    // preformatted header for SET command
+    append("*5\r\n$3\r\nSET\r\n$"_av);
     append(int_to_decimal_chars(key_name.size()));
     append("\r\n"_av);
     append(key_name);
     append("\r\n$"_av);
 
-    reserved = cmd_buffer.size();
+    preformatted_size = cmd_buffer.size();
     clear();
+}
+
+std::size_t RedisCmdSet::reserved_buffer_size() noexcept
+{
+    // [EXPIRE] [header for SET] [reserved size of SET] [separator]
+    return preformatted_header_set_pos
+        + (preformatted_size - preformatted_header_set_pos) * 2
+        + detail::int_to_chars_buf_size + 2;
 }
 
 void RedisCmdSet::clear()
 {
-    cmd_buffer.resize(reserved_buffer_size(reserved));
+    cmd_buffer.resize(reserved_buffer_size());
 }
 
 void RedisCmdSet::append(bytes_view data)
@@ -76,23 +88,39 @@ void RedisCmdSet::append(bytes_view data)
 
 bytes_view RedisCmdSet::build_command()
 {
-    const auto field_sep = "\r\n"_av;
-
-    append(field_sep);
-    auto data_len_s = int_to_decimal_chars(cmd_buffer.size() - (reserved_buffer_size(reserved) + field_sep.size()));
-
-    auto* reserved_reverse_it = cmd_buffer.data() + reserved_buffer_size(reserved);
-
-    auto stream_write = [&](bytes_view av) mutable {
-        auto p = reserved_reverse_it - av.size();
+    auto copy = [&](uint8_t* p, bytes_view av) {
         memcpy(p, av.data(), av.size());
-        reserved_reverse_it = p;
+        return p + av.size();
     };
-    stream_write(field_sep);
-    stream_write(data_len_s);
-    stream_write(bytes_view(cmd_buffer).first(reserved));
 
-    return {reserved_reverse_it, cmd_buffer.data() + cmd_buffer.size()};
+    constexpr auto field_sep = "\r\n"_av;
+
+    auto start_data_pos = reserved_buffer_size();
+    auto data_len = cmd_buffer.size() - start_data_pos;
+
+    // push EXPIRE command
+    auto n = cmd_buffer.size();
+    // note: cmd_buffer.insert(cmd_buffer.end(), {cmd_buffer.data(), preformatted_header_set_pos})
+    // is invalid with -D_GLIBCXX_DEBUG (same after cmd_buffer.reserve()):
+    // Error: attempt to insert with an iterator range [__first, __last) from this container.
+    // maybe a bug of libstdc++ ?
+    cmd_buffer.resize(n + preformatted_header_set_pos);
+    copy(cmd_buffer.data() + n, {cmd_buffer.data(), preformatted_header_set_pos});
+
+    auto data_len_as_str = int_to_decimal_chars(data_len);
+
+    auto preformatted_header_size = preformatted_size - preformatted_header_set_pos;
+    auto preformatted_header_for_set_cmd = cmd_buffer.data() + preformatted_header_set_pos;
+    auto set_cmd_size = preformatted_header_size + data_len_as_str.size() + field_sep.size();
+    auto header_for_set_cmd = cmd_buffer.data() + start_data_pos - set_cmd_size;
+
+    // push SET command
+    auto* p = header_for_set_cmd;
+    p = copy(p, {preformatted_header_for_set_cmd, preformatted_header_size});
+    p = copy(p, data_len_as_str);
+    p = copy(p, field_sep);
+
+    return {header_for_set_cmd, cmd_buffer.data() + cmd_buffer.size()};
 }
 
 

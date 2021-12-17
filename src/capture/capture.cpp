@@ -864,8 +864,15 @@ public:
         Drawable& drawable, DrawablePointer const & drawable_pointer,
         Rect cropping)
     : png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
-    , redis_cmd(png_params.redis_key_name)
-    {}
+    , redis_cmd(png_params.redis_key_name, [&]{
+        auto expiration_delay = png_params.png_interval * 2;
+        if (expiration_delay < 2min) {
+            expiration_delay = 2min;
+        }
+        return std::chrono::duration_cast<std::chrono::seconds>(expiration_delay);
+    }())
+    {
+    }
 
     void set_cropping(Rect cropping) noexcept
     {

@@ -23,48 +23,64 @@ Author(s): Proxies Team
 #include "capture/redis_writer.hpp"
 #include "core/listen.hpp"
 
+#include <thread>
 
 RED_AUTO_TEST_CASE(TestRedisSet)
 {
-    RedisCmdSet cmd{"my_image_key"_av};
+    using namespace std::chrono_literals;
+    RedisCmdSet cmd{"my_image_key"_av, 2s};
+
+    ut::default_ascii_min_len = 0;
 
     cmd.append("blabla"_av);
     cmd.append("tagadasouinsouin"_av);
     RED_CHECK(cmd.build_command() ==
-        "*3\r\n"
+        "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
-        "$22\r\nblablatagadasouinsouin\r\n"_av_ascii);
+        "$22\r\nblablatagadasouinsouin\r\n"
+        "$2\r\nEX\r\n"
+        "$1\r\n2\r\n"_av_ascii);
 
     cmd.clear();
     cmd.append("tic tac toe"_av);
     RED_CHECK(cmd.build_command() ==
-        "*3\r\n"
+        "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
-        "$11\r\ntic tac toe\r\n"_av_ascii);
+        "$11\r\ntic tac toe\r\n"
+        "$2\r\nEX\r\n"
+        "$1\r\n2\r\n"_av_ascii);
 }
 
 RED_AUTO_TEST_CASE(TestRedisServer)
 {
+    using namespace std::chrono_literals;
+
     auto addr = "127.0.0.1:4446"_zv;
     auto password = "admin"_zv;
 
-    unique_fd sck_server = create_server(inet_addr("127.0.0.1"), 4446, EnableTransparentMode::No);
+    unique_fd sck_server = invalid_fd();
+    for (int i = 0; i < 5; ++i) {
+        sck_server = create_server(inet_addr("127.0.0.1"), 4446, EnableTransparentMode::No);
+        if (sck_server.is_open()) {
+            break;
+        }
+        // wait another test...
+        std::this_thread::sleep_for(50ms);
+    }
     RED_REQUIRE(sck_server.is_open());
 
     fcntl(sck_server.fd(), F_SETFL, fcntl(sck_server.fd(), F_GETFL) & ~O_NONBLOCK);
 
     std::vector<uint8_t> message;
 
-    using namespace std::chrono_literals;
-
     RedisWriter cmd;
 
     // open -> close -> open -> close
     for (int i = 0; i < 2; ++i) {
         RED_TEST_CONTEXT("i = " << i) {
-            RED_REQUIRE(cmd.open(addr, password, 0, 100ms, RedisWriter::TlsParams{}).code()
+            RED_REQUIRE(cmd.open(addr, password, 0, 50ms, RedisWriter::TlsParams{}).code()
                 == RedisWriter::IOResult::Code::Ok);
 
             sockaddr s {};
@@ -72,6 +88,7 @@ RED_AUTO_TEST_CASE(TestRedisServer)
             int sck = accept(sck_server.fd(), &s, &sin_size);
 
             RED_REQUIRE(sck != -1);
+            unique_fd usck{sck};
 
             auto recv = [&]{
                 message.clear();
@@ -83,32 +100,30 @@ RED_AUTO_TEST_CASE(TestRedisServer)
                 return bytes_view(message).as_chars();
             };
 
-            auto send = [&](chars_view resp){
+            auto server_send = [&](chars_view resp){
                 return ::send(sck, resp.data(), resp.size(), 0) == ssize_t(resp.size());
             };
 
             RED_REQUIRE(recv() ==
                 "*2\r\n$4\r\nAUTH\r\n$5\r\nadmin\r\n"
                 "*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"_av);
-            RED_REQUIRE(send("+OK\r\n"_av));
-            RED_REQUIRE(send("+OK\r\n"_av));
+            RED_REQUIRE(server_send("+OK\r\n+OK\r\n"_av));
 
             RED_CHECK(cmd.send("bla bla"_av).code() == RedisWriter::IOResult::Code::Ok);
 
             RED_REQUIRE(recv() == "bla bla"_av);
-            RED_REQUIRE(send("+OK\r\n"_av));
+            RED_REQUIRE(server_send("+OK\r\n"_av));
             RED_CHECK(cmd.send("bla bla bla"_av).code() == RedisWriter::IOResult::Code::Ok);
 
             RED_REQUIRE(recv() == "bla bla bla"_av);
-            RED_REQUIRE(send("+OK\r\n"_av));
+            RED_REQUIRE(server_send("+OK\r\n"_av));
             RED_CHECK(cmd.send("bad"_av).code() == RedisWriter::IOResult::Code::Ok);
 
             RED_REQUIRE(recv() == "bad"_av);
-            RED_REQUIRE(send("-ERR\r\n"_av));
+            RED_REQUIRE(server_send("-ERR\r\n"_av));
             RED_CHECK(cmd.send("receive response"_av).code() == RedisWriter::IOResult::Code::UnknownResponse);
 
             cmd.close();
-            ::close(sck);
         }
     }
 }
