@@ -1100,6 +1100,15 @@ redis_password = string(default='')
 #_hidden
 redis_db = integer(min=0, default=0)
 
+#_hidden
+redis_tls_cacert = string(default='')
+
+#_hidden
+redis_tls_cert = string(default='')
+
+#_hidden
+redis_tls_key = string(default='')
+
 # (in milliseconds)
 #_hidden
 redis_timeout = integer(min=0, default=500)

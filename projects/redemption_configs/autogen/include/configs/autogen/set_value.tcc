@@ -1988,6 +1988,30 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "redis_tls_cacert"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::redis_tls_cacert&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "redis_tls_cert"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::redis_tls_cert&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "redis_tls_key"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::redis_tls_key&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
         else if (key == "redis_timeout"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

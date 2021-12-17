@@ -302,6 +302,9 @@ namespace cfg
         struct redis_address;
         struct redis_password;
         struct redis_db;
+        struct redis_tls_cacert;
+        struct redis_tls_cert;
+        struct redis_tls_key;
         struct redis_timeout;
     };
 

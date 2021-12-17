@@ -1292,6 +1292,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #redis_db = 0
 
+#_hidden
+#redis_tls_cacert = 
+
+#_hidden
+#redis_tls_cert = 
+
+#_hidden
+#redis_tls_key = 
+
 # (in milliseconds)
 #_hidden
 #redis_timeout = 500

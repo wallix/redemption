@@ -750,7 +750,10 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"use_redis"}, set(false));
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_address"});
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_password"});
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::unsigned_>(), names{"redis_db"}, set(0));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::unsigned_>(), names{"redis_db"});
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_tls_cacert"});
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_tls_cert"});
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"redis_tls_key"});
         //@}
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));
     });
