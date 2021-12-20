@@ -304,21 +304,21 @@ class RTManager(object):
         Logger().debug("Start RT Manager at %s" % current_time)
         self.last_start = current_time
         if not self.sesman.shared.get("rt_display"):
-            confredis = engine.read_config_file(modulename='redis')
             redis_addr = engine.redis.get_redis_master() or ('127.0.0.1', 6379)
+            redis_config = engine.redis.get_redis_conf()
+            use_tls = redis_config.get('ssl', False)
             data = {
                 'rt_display': 1,
                 'redis_address': redis_addr[0],
                 'redis_port': redis_addr[1],
-                'redis_password': confredis.get('password', ''),
-                'redis_db': confredis.get('db', 0),
+                'redis_password': redis_config.get('password', ''),
+                'redis_db': redis_config.get('db', 0),
+                'redis_use_tls': use_tls,
             }
-            use_redis_tls = engine.redis.get_redis_conf().get('ssl', False)
-            data['redis_use_tls'] = use_redis_tls
-            if use_redis_tls:
-                data['redis_tls_key'] = confredis['ssl_keyfile']
-                data['redis_tls_cert'] = confredis['ssl_certfile']
-                data['redis_tls_cacert'] = confredis['ssl_ca_certs']
+            if use_tls:
+                data['redis_tls_key'] = redis_config['ssl_keyfile']
+                data['redis_tls_cert'] = redis_config['ssl_certfile']
+                data['redis_tls_cacert'] = redis_config['ssl_ca_certs']
             self.sesman.send_data(data)
 
     def stop(self):
