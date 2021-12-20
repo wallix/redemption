@@ -300,8 +300,10 @@ namespace cfg
         struct rt_display;
         struct use_redis;
         struct redis_address;
+        struct redis_port;
         struct redis_password;
         struct redis_db;
+        struct redis_use_tls;
         struct redis_tls_cacert;
         struct redis_tls_cert;
         struct redis_tls_key;

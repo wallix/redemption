@@ -450,14 +450,15 @@ void RedisWriter::RedisTlsCtx::close()
 
 
 RedisWriter::IOResult RedisWriter::open(
-    zstring_view address, zstring_view password, unsigned db,
+    zstring_view address, unsigned port,
+    zstring_view password, unsigned db,
     std::chrono::milliseconds timeout, TlsParams tls_params)
 {
     tv = to_timeval(timeout);
 
     // open socket
     close();
-    fd = addr_connect(address, true).release();
+    fd = ip_connect_blocking(address, checked_int(port)).release();
     if (fd == -1) {
         return IOResult(IOResult::Code::ConnectError, ErrorCtx{.errnum = errno});
     }

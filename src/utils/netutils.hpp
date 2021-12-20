@@ -53,6 +53,7 @@ bool try_again(int errnum);
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
 unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr);
+unique_fd ip_connect_blocking(const char* addr, int port, char const** error_result = nullptr);
 
 [[nodiscard]]
 AddrInfoPtrWithDel_t resolve_both_ipv4_and_ipv6_address

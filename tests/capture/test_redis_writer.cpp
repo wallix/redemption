@@ -57,12 +57,13 @@ RED_AUTO_TEST_CASE(TestRedisServer)
 {
     using namespace std::chrono_literals;
 
-    auto addr = "127.0.0.1:4446"_zv;
+    auto addr = "127.0.0.1"_zv;
+    int port = 4446;
     auto password = "admin"_zv;
 
     unique_fd sck_server = invalid_fd();
     for (int i = 0; i < 5; ++i) {
-        sck_server = create_server(inet_addr("127.0.0.1"), 4446, EnableTransparentMode::No);
+        sck_server = create_server(inet_addr(addr), port, EnableTransparentMode::No);
         if (sck_server.is_open()) {
             break;
         }
@@ -80,7 +81,7 @@ RED_AUTO_TEST_CASE(TestRedisServer)
     // open -> close -> open -> close
     for (int i = 0; i < 2; ++i) {
         RED_TEST_CONTEXT("i = " << i) {
-            RED_REQUIRE(cmd.open(addr, password, 0, 50ms, RedisWriter::TlsParams{}).code()
+            RED_REQUIRE(cmd.open(addr, port, password, 0, 50ms, RedisWriter::TlsParams{}).code()
                 == RedisWriter::IOResult::Code::Ok);
 
             sockaddr s {};

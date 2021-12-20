@@ -1285,12 +1285,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #redis_address = 
 
+# min = 0
+#_hidden
+#redis_port = 0
+
 #_hidden
 #redis_password = 
 
 # min = 0
 #_hidden
 #redis_db = 0
+
+# value: 0 or 1
+#_hidden
+#redis_use_tls = 0
 
 #_hidden
 #redis_tls_cacert = 

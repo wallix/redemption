@@ -1095,10 +1095,16 @@ use_redis = boolean(default=False)
 redis_address = string(default='')
 
 #_hidden
+redis_port = integer(min=0, default=0)
+
+#_hidden
 redis_password = string(default='')
 
 #_hidden
 redis_db = integer(min=0, default=0)
+
+#_hidden
+redis_use_tls = boolean(default=False)
 
 #_hidden
 redis_tls_cacert = string(default='')

@@ -102,7 +102,8 @@ namespace
     }
 
     unique_fd connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr,
-                          socklen_t addr_len, const char * target, bool no_log, char const** error_result = nullptr)
+                          socklen_t addr_len, const char * target, bool no_log,
+                          char const** error_result = nullptr)
     {
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
@@ -230,6 +231,16 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     bool const no_log = false;
 
     return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
+}
+
+unique_fd ip_connect_blocking(const char* addr, int port, char const** error_result)
+{
+    auto fd = ip_connect(addr, port, error_result);
+    if (fd) {
+        const auto sck = fd.fd();
+        fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+    }
+    return fd;
 }
 
 AddrInfoPtrWithDel_t

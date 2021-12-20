@@ -35,6 +35,7 @@ struct RedisParams
     };
 
     zstring_view address;
+    unsigned port;
     zstring_view password;
     unsigned db;
     std::chrono::milliseconds timeout;

@@ -932,7 +932,10 @@ private:
     void connect_to_redis(RedisParams const& redis_params)
     {
         auto result = this->redis_server.open(
-            redis_params.address, redis_params.password, redis_params.db,
+            redis_params.address,
+            redis_params.port,
+            redis_params.password,
+            redis_params.db,
             redis_params.timeout, RedisWriter::TlsParams{
                 .enable_tls = redis_params.tls.enable_tls,
                 .cert_file = redis_params.tls.cert_file,
