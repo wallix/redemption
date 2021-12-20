@@ -29,6 +29,7 @@ try:
     )
     from wallixconst.account import AM_IL_DOMAIN
     from wallixconst.trace import LOCAL_TRACE_PATH_RDP
+    from wallixredis import redis
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
     CRED_INDEX = "credentials"

@@ -303,7 +303,23 @@ class RTManager(object):
     def start(self, current_time):
         Logger().debug("Start RT Manager at %s" % current_time)
         self.last_start = current_time
-        self.send_rtdisplay(1)
+        if not self.sesman.shared.get("rt_display"):
+            confredis = engine.read_config_file(modulename='redis')
+            redis_addr = engine.redis.get_redis_master() or ('127.0.0.1', 6379)
+            data = {
+                'rt_display': 1,
+                'redis_address': redis_addr[0],
+                'redis_port': redis_addr[1],
+                'redis_password': confredis.get('password', ''),
+                'redis_db': confredis.get('db', 0),
+            }
+            use_redis_tls = engine.redis.get_redis_conf().get('ssl', False)
+            data['redis_use_tls'] = use_redis_tls
+            if use_redis_tls:
+                data['redis_tls_key'] = confredis['ssl_keyfile']
+                data['redis_tls_cert'] = confredis['ssl_certfile']
+                data['redis_tls_cacert'] = confredis['ssl_ca_certs']
+            self.sesman.send_data(data)
 
     def stop(self):
         self.last_start = 0
