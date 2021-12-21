@@ -236,7 +236,8 @@ struct video_recorder::D
     AVStream* video_st = nullptr;
 
     AVFrame* dst_frame = nullptr;
-    AVFrame* src_frame = nullptr;
+    uint8_t *src_frame_data[AV_NUM_DATA_POINTERS];
+    int src_frame_linesize[AV_NUM_DATA_POINTERS];
 
     AVCodecContext* codec_ctx = nullptr;
     AVFormatContext* oc = nullptr;
@@ -256,7 +257,6 @@ struct video_recorder::D
     D(std::string_view filename, const int groupid, AclReportApi * acl_report)
     : out_file(filename, groupid, acl_report)
     , dst_frame(av_frame_alloc())
-    , src_frame(av_frame_alloc())
     , pkt(av_packet_alloc())
     {}
 
@@ -269,7 +269,6 @@ struct video_recorder::D
         avformat_free_context(this->oc);
         avcodec_free_context(&this->codec_ctx);
         av_frame_free(&this->dst_frame);
-        av_frame_free(&this->src_frame);
         av_packet_free(&this->pkt);
     }
 };
@@ -458,9 +457,8 @@ video_recorder::video_recorder(
 
     check_errnum(avformat_write_header(this->d->oc, nullptr), "video recorder: Failed to write header");
 
-    this->d->src_frame->format = src_pix_fmt;
     av_image_fill_arrays(
-        this->d->src_frame->data, this->d->src_frame->linesize,
+        this->d->src_frame_data, this->d->src_frame_linesize,
         image_view.data(), src_pix_fmt, width, height, 1
     );
 
@@ -531,8 +529,8 @@ void video_recorder::preparing_video_frame()
     /* stat */// LOG(LOG_INFO, "preparing_video_frame");
     sws_scale(
         this->d->frame_convert_ctx,
-        this->d->src_frame->data,
-        this->d->src_frame->linesize,
+        this->d->src_frame_data,
+        this->d->src_frame_linesize,
         0,
         this->d->original_height,
         this->d->dst_frame->data,
@@ -544,8 +542,8 @@ void video_recorder::preparing_timestamp_video_frame()
     /* stat */// LOG(LOG_INFO, "preparing_timestamp_video_frame");
     sws_scale(
         this->d->timestamp_convert_ctx,
-        this->d->src_frame->data,
-        this->d->src_frame->linesize,
+        this->d->src_frame_data,
+        this->d->src_frame_linesize,
         0,
         this->d->timestamp_height,
         this->d->dst_frame->data,
