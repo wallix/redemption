@@ -137,12 +137,14 @@ struct ConnectionPolicyWriterBase
             if (!this->sesman_mems.emplace(sesman_mem_key).second) {
                 throw std::runtime_error(str_concat("duplicate ", section.name, ' ', member_name));
             }
-            sesman_default_map::python::write_type2(buf, enums, type, semantic_type, default_value);
-            str_append(this->sesman_file[section.name],
-                   "        u'", sesman_name, "': (\n"
-                   "            '", member_name, "', ", buf.str(), "\n"
-                   "        ),\n");
-            buf.str("");
+            if constexpr (is_convertible_v<Pack, not_external_attr_t>) {
+                sesman_default_map::python::write_type2(buf, enums, type, semantic_type, default_value);
+                str_append(this->sesman_file[section.name],
+                           "        u'", sesman_name, "': (\n"
+                           "            '", member_name, "', ", buf.str(), "\n"
+                           "        ),\n");
+                buf.str("");
+            }
         }
     }
 
