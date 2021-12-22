@@ -26,6 +26,7 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
+#include "keyboard/keymap.hpp"
 
 #include <cstring>
 
@@ -453,6 +454,13 @@ void WidgetSelector::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint3
     }
     else {
         WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+    }
+
+    if (this->extra_button
+        && keymap.is_shift_pressed()
+        && keymap.is_ctrl_pressed())
+    {
+        this->extra_button->notify(*this, NOTIFY_SUBMIT);
     }
 }
 

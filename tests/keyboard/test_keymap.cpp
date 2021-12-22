@@ -129,12 +129,12 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'a'}, KV::KeyDown)); // auto-repeat
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'a'}, KV::KeyDown)); // auto-repeat
     RED_CHECK_EQ(event(release | 0x10 /*a*/), values(KCode(0x10), KFlags(0x8000), {}, KV::None));
-    RED_CHECK_EQ(event(downnnn | 0x36 /*right shift*/), values(KCode(0x36), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x36 /*right shift*/), values(KCode(0x36), KFlags(), {}, KV::Shift));
     RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMod::RShift).as_uint());
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'A'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x10 /*a*/), values(KCode(0x10), KFlags(0x8000), {}, KV::None));
     RED_CHECK(!keymap.is_ctrl_pressed());
-    RED_CHECK_EQ(event(downnnn | 0x11d /*right ctrl*/), values(KCode(0x100 | 0x1d), KFlags(0x0100), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x11d /*right ctrl*/), values(KCode(0x100 | 0x1d), KFlags(0x0100), {}, KV::Ctrl));
     RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMod::RShift | KeyMod::RCtrl).as_uint());
     RED_CHECK(keymap.is_ctrl_pressed());
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {}, KV::KeyDown));
@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(release | 0x10 /*a*/), values(KCode(0x10), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x02 /*&*/), values(KCode(0x02), KFlags(), {'1'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x02 /*&*/), values(KCode(0x02), KFlags(0x8000), {}, KV::None));
-    RED_CHECK_EQ(event(downnnn | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(), {}, KV::Shift));
     RED_CHECK_EQ(keymap.mods().as_uint(), (KeyMod::RShift | KeyMod::LShift).as_uint());
     RED_CHECK_EQ(event(release | 0x36 /*right shift*/), values(KCode(0x36), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(keymap.mods().as_uint(), KeyModFlags(KeyMod::LShift).as_uint());
@@ -167,7 +167,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(release | 0x2e /*c*/), values(KCode(0x2e), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x2f /*v*/), values(KCode(0x2f), KFlags(), {'v'}, KV::KeyDown));
     RED_CHECK_EQ(event(release | 0x2f /*v*/), values(KCode(0x2f), KFlags(0x8000), {}, KV::None));
-    RED_CHECK_EQ(event(downnnn | 0x1d /*left ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x1d /*left ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::Ctrl));
     RED_CHECK_EQ(event(downnnn | 0x2d /*x*/), values(KCode(0x2d), KFlags(), {}, KV::Cut));
     RED_CHECK_EQ(event(release | 0x2d /*x*/), values(KCode(0x2d), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x2e /*c*/), values(KCode(0x2e), KFlags(), {}, KV::Copy));
@@ -226,7 +226,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(release | 0x148 /*up*/), values(KCode(0x100 | 0x48), KFlags(0x8100), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {'\t'}, KV::Tab));
     RED_CHECK_EQ(event(release | 0x0F /*tab*/), values(KCode(0x0F), KFlags(0x8000), {}, KV::None));
-    RED_CHECK_EQ(event(downnnn | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(), {}, KV::Shift));
     RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {'\t'}, KV::BackTab));
     RED_CHECK_EQ(event(release | 0x0F /*tab*/), values(KCode(0x0F), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(release | 0x2a /*left shift*/), values(KCode(0x2a), KFlags(0x8000), {}, KV::None));
@@ -254,7 +254,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     // shortcut for task manager
     // ctrl+alt+del
-    RED_CHECK_EQ(event(downnnn | 0x11d /*right ctrl*/), values(KCode(0x100 | 0x1d), KFlags(0x0100), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x11d /*right ctrl*/), values(KCode(0x100 | 0x1d), KFlags(0x0100), {}, KV::Ctrl));
     RED_CHECK(!keymap.is_tsk_switch_shortcut());
     RED_CHECK_EQ(event(downnnn | 0x38 /*alt*/), values(KCode(0x38), KFlags(), {}, KV::None));
     RED_CHECK(!keymap.is_tsk_switch_shortcut());
@@ -269,9 +269,9 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     // shortcut for task manager
     // ctrl+shift+esc
-    RED_CHECK_EQ(event(downnnn | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::Ctrl));
     RED_CHECK(!keymap.is_tsk_switch_shortcut());
-    RED_CHECK_EQ(event(downnnn | 0x2a /*shift*/), values(KCode(0x2a), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x2a /*shift*/), values(KCode(0x2a), KFlags(), {}, KV::Shift));
     RED_CHECK(!keymap.is_tsk_switch_shortcut());
     RED_CHECK_EQ(event(downnnn | 0x01 /*esc*/), values(KCode(0x01), KFlags(), {}, KV::Esc));
     RED_CHECK(keymap.is_tsk_switch_shortcut());
@@ -299,7 +299,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     // application switching
     // alt+ctrl
-    RED_CHECK_EQ(event(downnnn | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x1d /*ctrl*/), values(KCode(0x1d), KFlags(), {}, KV::Ctrl));
     RED_CHECK(!keymap.is_tsk_switch_shortcut());
     RED_CHECK_EQ(event(downnnn | 0x0F /*tab*/), values(KCode(0x0F), KFlags(), {}, KV::Tab));
     RED_CHECK(keymap.is_app_switching_shortcut());

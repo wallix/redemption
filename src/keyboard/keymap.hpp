@@ -63,6 +63,8 @@ struct Keymap
         Cut,
         Copy,
         Paste,
+        Ctrl,
+        Shift,
     };
 
     struct DecodedKeys

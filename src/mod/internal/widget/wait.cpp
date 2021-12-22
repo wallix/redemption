@@ -20,6 +20,7 @@
  */
 
 #include "mod/internal/widget/wait.hpp"
+#include "keyboard/keymap.hpp"
 
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
@@ -166,4 +167,12 @@ void WidgetWait::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
     else {
         WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
+
+    if (this->extra_button
+        && keymap.is_shift_pressed()
+        && keymap.is_ctrl_pressed())
+    {
+        this->extra_button->notify(*this, NOTIFY_SUBMIT);
+    }
+
 }

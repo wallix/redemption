@@ -236,11 +236,19 @@ void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
         case Keymap::KEvent::PgUp:
             this->dialog.scroll_up();
             break;
-
         case Keymap::KEvent::RightArrow:
         case Keymap::KEvent::DownArrow:
         case Keymap::KEvent::PgDown:
             this->dialog.scroll_down();
+            break;
+        case Keymap::KEvent::Ctrl:
+        case Keymap::KEvent::Shift:
+            if (this->extra_button
+                && keymap.is_shift_pressed()
+                && keymap.is_ctrl_pressed())
+            {
+                this->extra_button->notify(*this, NOTIFY_SUBMIT);
+            }
             break;
         default:
             WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
