@@ -21,6 +21,7 @@
 
 #include "mod/internal/widget/interactive_target.hpp"
 #include "utils/theme.hpp"
+#include "keyboard/keymap.hpp"
 
 #include <cstring>
 
@@ -258,4 +259,12 @@ void WidgetInteractiveTarget::rdp_input_scancode(KbdFlags flags, Scancode scanco
     else {
         WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
+
+    if (this->extra_button
+        && keymap.is_shift_pressed()
+        && keymap.is_ctrl_pressed())
+    {
+        this->extra_button->notify(*this, NOTIFY_SUBMIT);
+    }
+
 }
