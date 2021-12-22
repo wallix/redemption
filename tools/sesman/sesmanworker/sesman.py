@@ -2046,27 +2046,7 @@ class Sesman():
 
                     kv.update(self.fetch_connectionpolicy(conn_opts))
 
-                if 'rdp' in conn_opts:
-                    rdp_opts = conn_opts.get('rdp', {})
-                    krb_armoring_account = rdp_opts.get('krb_armoring_account')
-                    krb_armoring_realm = rdp_opts.get('krb_armoring_realm')
-                    krb_armoring_fallback_user = rdp_opts.get('krb_armoring_fallback_user', '')
-                    krb_armoring_fallback_password = rdp_opts.get('krb_armoring_fallback_password', '')
-
-                    if krb_armoring_account:
-                        effective_krb_armoring_user = self.engine.get_scenario_account_field(
-                            u'login', krb_armoring_account, default=krb_armoring_fallback_user)
-                        effective_krb_armoring_password = self.engine.get_scenario_account_field(
-                            u'password', krb_armoring_account, default=krb_armoring_fallback_password)
-                    else:
-                        effective_krb_armoring_user = krb_armoring_fallback_user
-                        effective_krb_armoring_password = krb_armoring_fallback_password
-
-                    if krb_armoring_realm:
-                        effective_krb_armoring_user += '@' + krb_armoring_realm
-
-                    kv[u'effective_krb_armoring_user'] = effective_krb_armoring_user
-                    kv[u'effective_krb_armoring_password'] = effective_krb_armoring_password
+                kv.update(self._load_kerberos_armoring_options(conn_opts))
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if application:
@@ -2991,6 +2971,45 @@ class Sesman():
             }
 
             self.send_data(data_to_send)
+
+    def _load_kerberos_armoring_options(self, conn_opts):
+        krb_data = {}
+        if 'rdp' in conn_opts:
+            rdp_opts = conn_opts.get('rdp', {})
+            krb_armoring_account = rdp_opts.get('krb_armoring_account')
+            krb_armoring_realm = rdp_opts.get('krb_armoring_realm')
+            krb_armoring_fallback_user = rdp_opts.get(
+                'krb_armoring_fallback_user', ''
+            )
+            krb_armoring_fallback_password = rdp_opts.get(
+                'krb_armoring_fallback_password', ''
+            )
+
+            if krb_armoring_account:
+                effective_krb_armoring_user = \
+                    self.engine.get_scenario_account_field(
+                        u'login', krb_armoring_account,
+                        default=krb_armoring_fallback_user
+                    )
+                effective_krb_armoring_password = \
+                    self.engine.get_scenario_account_field(
+                        u'password', krb_armoring_account,
+                        default=krb_armoring_fallback_password
+                    )
+            else:
+                effective_krb_armoring_user = krb_armoring_fallback_user
+                effective_krb_armoring_password = \
+                    krb_armoring_fallback_password
+
+            if krb_armoring_realm:
+                effective_krb_armoring_user += '@' + krb_armoring_realm
+
+            krb_data[u'effective_krb_armoring_user'] = \
+                effective_krb_armoring_user
+            krb_data[u'effective_krb_armoring_password'] = \
+                effective_krb_armoring_password
+        return krb_data
+
 
 
 # END CLASS - Sesman
