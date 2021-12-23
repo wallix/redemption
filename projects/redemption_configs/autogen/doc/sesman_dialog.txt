@@ -43,6 +43,7 @@ cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]
     If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 
+
 cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]
     Disables supported drawing orders:
        0: DstBlt

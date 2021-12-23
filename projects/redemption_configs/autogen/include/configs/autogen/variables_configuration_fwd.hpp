@@ -96,6 +96,11 @@ namespace cfg
         struct disabled_orders;
     };
 
+    struct all_target_mod {
+        struct connection_establishment_timeout;
+        struct connection_retry_count;
+    };
+
     struct mod_rdp {
         struct rdp_compression;
         struct disconnect_on_logon_user_change;

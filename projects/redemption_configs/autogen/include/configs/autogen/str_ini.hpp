@@ -341,6 +341,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disabled_orders = 25
 
+[all_target_mod]
+
+# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
+# min = 1000, max = 10000
+# (in milliseconds)
+#_advanced
+#connection_establishment_timeout = 1000
+
+# Controls the number of reconnection attempts if there's a connection failure.
+# min = 1, max = 10
+# min = 0
+#_advanced
+#connection_retry_count = 3
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
