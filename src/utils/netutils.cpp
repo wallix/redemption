@@ -101,14 +101,17 @@ namespace
         return true;
     }
 
-    unique_fd connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr,
+    unique_fd connect_sck(int sck, std::chrono::milliseconds connection_establishment_timeout,
+                          int connection_retry_count, sockaddr & addr,
                           socklen_t addr_len, const char * target, bool no_log,
                           char const** error_result = nullptr)
     {
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
+        int connection_establishment_timeout_ms = connection_establishment_timeout.count();
+
         int trial = 0;
-        for (; trial < nbretry ; trial++){
+        for (; trial < connection_retry_count ; trial++){
             int const res = ::connect(sck, &addr, addr_len);
             if (-1 != res){
                 // connection suceeded
@@ -130,8 +133,8 @@ namespace
                 io_fd_zero(fds);
                 io_fd_set(sck, fds);
                 struct timeval timeout = {
-                    retry_delai_ms / 1000,
-                    1000 * (retry_delai_ms % 1000)
+                    connection_establishment_timeout_ms / 1000,
+                    1000 * (connection_establishment_timeout_ms % 1000)
                 };
                 // exit select on timeout or connect or error
                 // connect will catch the actual error if any,
@@ -140,12 +143,12 @@ namespace
             }
             else {
                 // real failure
-                trial = nbretry;
+                trial = connection_retry_count;
                 break;
             }
         }
 
-        if (trial >= nbretry){
+        if (trial >= connection_retry_count){
             if (error_result) {
                 *error_result = "All trials done";
             }
@@ -226,11 +229,12 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
-    int nbretry = 3;
-    int retry_delai_ms = 1000;
+    const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
+    const int connection_retry_count = 3;
     bool const no_log = false;
 
-    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
+    return connect_sck(sck, connection_establishment_timeout, connection_retry_count,
+        u.s, sizeof(u), text_target, no_log, error_result);
 }
 
 unique_fd ip_connect_blocking(const char* addr, int port, char const** error_result)
@@ -275,6 +279,8 @@ resolve_both_ipv4_and_ipv6_address(const char *ip,
 
 unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
                                         int port,
+                                        std::chrono::milliseconds connection_establishment_timeout,
+                                        int connection_retry_count,
                                         const char **error_result) noexcept
 {
     AddrInfoPtrWithDel_t addr_info_ptr =
@@ -353,13 +359,11 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
              port,
              resolved_ip_addr);
 
-    int nbretry = 3;
-    int retry_delai_ms = 1000;
     const bool no_log = false;
 
     return connect_sck(sck,
-                       nbretry,
-                       retry_delai_ms,
+                       connection_establishment_timeout,
+                       connection_retry_count,
                        *addr_info_ptr->ai_addr,
                        addr_info_ptr->ai_addrlen,
                        text_target,
@@ -392,9 +396,10 @@ unique_fd local_connect(const char* sck_name, bool no_log)
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    int nbretry = 1;
-    int retry_delai_ms = 1000;
-    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + len + 1u), sck_name, no_log);
+    const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
+    const int connection_retry_count = 1;
+    return connect_sck(sck, connection_establishment_timeout, connection_retry_count,
+        u.addr, static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + len + 1u), sck_name, no_log);
 }
 
 

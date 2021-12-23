@@ -12,59 +12,62 @@ void Inifile::ConfigurationHolder::set_section(zstring_view section) {
     else if (section == "client"_zv) {
         this->section_id = 3;
     }
-    else if (section == "mod_rdp"_zv) {
+    else if (section == "all_target_mod"_zv) {
         this->section_id = 4;
     }
-    else if (section == "mod_vnc"_zv) {
+    else if (section == "mod_rdp"_zv) {
         this->section_id = 5;
     }
-    else if (section == "metrics"_zv) {
+    else if (section == "mod_vnc"_zv) {
         this->section_id = 6;
     }
-    else if (section == "file_verification"_zv) {
+    else if (section == "metrics"_zv) {
         this->section_id = 7;
     }
-    else if (section == "file_storage"_zv) {
+    else if (section == "file_verification"_zv) {
         this->section_id = 8;
     }
-    else if (section == "icap_server_down"_zv) {
+    else if (section == "file_storage"_zv) {
         this->section_id = 9;
     }
-    else if (section == "icap_server_up"_zv) {
+    else if (section == "icap_server_down"_zv) {
         this->section_id = 10;
     }
-    else if (section == "mod_replay"_zv) {
+    else if (section == "icap_server_up"_zv) {
         this->section_id = 11;
     }
-    else if (section == "ocr"_zv) {
+    else if (section == "mod_replay"_zv) {
         this->section_id = 12;
     }
-    else if (section == "video"_zv) {
+    else if (section == "ocr"_zv) {
         this->section_id = 13;
     }
-    else if (section == "audit"_zv) {
+    else if (section == "video"_zv) {
         this->section_id = 14;
     }
-    else if (section == "crypto"_zv) {
+    else if (section == "audit"_zv) {
         this->section_id = 15;
     }
-    else if (section == "websocket"_zv) {
+    else if (section == "crypto"_zv) {
         this->section_id = 16;
     }
-    else if (section == "debug"_zv) {
+    else if (section == "websocket"_zv) {
         this->section_id = 17;
     }
-    else if (section == "remote_program"_zv) {
+    else if (section == "debug"_zv) {
         this->section_id = 18;
     }
-    else if (section == "translation"_zv) {
+    else if (section == "remote_program"_zv) {
         this->section_id = 19;
     }
-    else if (section == "internal_mod"_zv) {
+    else if (section == "translation"_zv) {
         this->section_id = 20;
     }
-    else if (section == "theme"_zv) {
+    else if (section == "internal_mod"_zv) {
         this->section_id = 21;
+    }
+    else if (section == "theme"_zv) {
+        this->section_id = 22;
     }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_WARNING, "unknown section [%s]", section);
@@ -637,6 +640,30 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         }
     }
     else if (this->section_id == 4) {
+        if (0) {}
+        else if (key == "connection_establishment_timeout"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::all_target_mod::connection_establishment_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>>{},
+                value
+            );
+        }
+        else if (key == "connection_retry_count"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::all_target_mod::connection_retry_count&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 1, 10>>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 5) {
         if (0) {}
         else if (key == "rdp_compression"_zv) {
             ::config_parse_and_log(
@@ -1428,7 +1455,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 5) {
+    else if (this->section_id == 6) {
         if (0) {}
         else if (key == "clipboard_up"_zv) {
             ::config_parse_and_log(
@@ -1508,7 +1535,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 6) {
+    else if (this->section_id == 7) {
         if (0) {}
         else if (key == "enable_rdp_metrics"_zv) {
             ::config_parse_and_log(
@@ -1564,7 +1591,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 7) {
+    else if (this->section_id == 8) {
         if (0) {}
         else if (key == "socket_path"_zv) {
             ::config_parse_and_log(
@@ -1668,7 +1695,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 8) {
+    else if (this->section_id == 9) {
         if (0) {}
         else if (key == "store_file"_zv) {
             ::config_parse_and_log(
@@ -1684,13 +1711,13 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 9) {
-        // all members are external
-    }
     else if (this->section_id == 10) {
         // all members are external
     }
     else if (this->section_id == 11) {
+        // all members are external
+    }
+    else if (this->section_id == 12) {
         if (0) {}
         else if (key == "on_end_of_data"_zv) {
             ::config_parse_and_log(
@@ -1714,7 +1741,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 12) {
+    else if (this->section_id == 13) {
         if (0) {}
         else if (key == "version"_zv) {
             ::config_parse_and_log(
@@ -1762,7 +1789,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 13) {
+    else if (this->section_id == 14) {
         if (0) {}
         else if (key == "capture_groupid"_zv) {
             ::config_parse_and_log(
@@ -1954,7 +1981,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 14) {
+    else if (this->section_id == 15) {
         if (0) {}
         else if (key == "use_redis"_zv) {
             ::config_parse_and_log(
@@ -2042,7 +2069,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 15) {
+    else if (this->section_id == 16) {
         if (0) {}
         else if (key == "encryption_key"_zv) {
             ::config_parse_and_log(
@@ -2066,7 +2093,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 16) {
+    else if (this->section_id == 17) {
         if (0) {}
         else if (key == "enable_websocket"_zv) {
             ::config_parse_and_log(
@@ -2098,7 +2125,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 17) {
+    else if (this->section_id == 18) {
         if (0) {}
         else if (key == "fake_target_ip"_zv) {
             ::config_parse_and_log(
@@ -2242,7 +2269,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 18) {
+    else if (this->section_id == 19) {
         if (0) {}
         else if (key == "allow_resize_hosted_desktop"_zv) {
             ::config_parse_and_log(
@@ -2258,7 +2285,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 19) {
+    else if (this->section_id == 20) {
         if (0) {}
         else if (key == "language"_zv) {
             ::config_parse_and_log(
@@ -2282,7 +2309,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 20) {
+    else if (this->section_id == 21) {
         if (0) {}
         else if (key == "enable_target_field"_zv) {
             ::config_parse_and_log(
@@ -2298,7 +2325,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 21) {
+    else if (this->section_id == 22) {
         if (0) {}
         else if (key == "enable_theme"_zv) {
             ::config_parse_and_log(

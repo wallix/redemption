@@ -295,6 +295,17 @@ enable_remotefx = boolean(default=True)
 #_advanced
 disabled_orders = string(default='25')
 
+[all_target_mod]
+
+# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
+# (in milliseconds)
+#_advanced
+connection_establishment_timeout = integer(min=1000, max=10000, default=1000)
+
+# Controls the number of reconnection attempts if there's a connection failure.
+#_advanced
+connection_retry_count = integer(min=1, max=10, default=3)
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
