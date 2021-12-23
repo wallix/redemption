@@ -76,6 +76,43 @@ void config_spec_definition(Writer && W)
     using namespace cfg_attributes::sesman::constants;
     using namespace cfg_attributes::connpolicy::constants;
 
+    // force ordering section
+    for (char const * section : {
+        "globals",
+
+        "client",
+
+        "all_target_mod",
+        "remote_program",
+        "mod_rdp",
+        "mod_vnc",
+
+        "session_log",
+        "ocr",
+        "capture",
+        "video",
+        "audit",
+
+        "file_verification",
+        "file_storage",
+        "icap_server_down",
+        "icap_server_up",
+
+        "metrics",
+
+        "crypto",
+        "websocket",
+
+        "internal_mod",
+        "mod_replay",
+        "translation",
+        "theme",
+
+        "debug",
+    }) {
+        W.section(section, [&]{});
+    }
+
     prefix_value disable_prefix_val{"disable"};
 
     constexpr char default_key[] =
