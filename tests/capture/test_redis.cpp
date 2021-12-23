@@ -20,7 +20,7 @@ Author(s): Proxies Team
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "capture/redis_writer.hpp"
+#include "capture/redis.hpp"
 #include "core/listen.hpp"
 
 #include <thread>
@@ -34,6 +34,7 @@ RED_AUTO_TEST_CASE(TestRedisSet)
 
     cmd.append("blabla"_av);
     cmd.append("tagadasouinsouin"_av);
+    RED_CHECK(cmd.current_data() == "blablatagadasouinsouin"_av);
     RED_CHECK(cmd.build_command() ==
         "*5\r\n"
         "$3\r\nSET\r\n"
@@ -59,7 +60,7 @@ RED_AUTO_TEST_CASE(TestRedisServer)
 
     auto addr = "127.0.0.1"_zv;
     int port = 4446;
-    auto password = "admin"_zv;
+    auto password = "admin"_sized_av;
 
     unique_fd sck_server = invalid_fd();
     for (int i = 0; i < 5; ++i) {
@@ -76,13 +77,13 @@ RED_AUTO_TEST_CASE(TestRedisServer)
 
     std::vector<uint8_t> message;
 
-    RedisWriter cmd;
+    RedisSyncSession session;
 
     // open -> close -> open -> close
     for (int i = 0; i < 2; ++i) {
         RED_TEST_CONTEXT("i = " << i) {
-            RED_REQUIRE(cmd.open(addr, port, password, 0, 50ms, RedisWriter::TlsParams{}).code()
-                == RedisWriter::IOResult::Code::Ok);
+            RED_REQUIRE(session.open(addr, unsigned(port), password, 0, 50ms, RedisSyncSession::TlsParams{})
+                == RedisIOCode::Ok);
 
             sockaddr s {};
             socklen_t sin_size = sizeof(s);
@@ -110,21 +111,21 @@ RED_AUTO_TEST_CASE(TestRedisServer)
                 "*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"_av);
             RED_REQUIRE(server_send("+OK\r\n+OK\r\n"_av));
 
-            RED_CHECK(cmd.send("bla bla"_av).code() == RedisWriter::IOResult::Code::Ok);
+            RED_CHECK(session.send("bla bla"_av) == RedisIOCode::Ok);
 
             RED_REQUIRE(recv() == "bla bla"_av);
             RED_REQUIRE(server_send("+OK\r\n"_av));
-            RED_CHECK(cmd.send("bla bla bla"_av).code() == RedisWriter::IOResult::Code::Ok);
+            RED_CHECK(session.send("bla bla bla"_av) == RedisIOCode::Ok);
 
             RED_REQUIRE(recv() == "bla bla bla"_av);
             RED_REQUIRE(server_send("+OK\r\n"_av));
-            RED_CHECK(cmd.send("bad"_av).code() == RedisWriter::IOResult::Code::Ok);
+            RED_CHECK(session.send("bad"_av) == RedisIOCode::Ok);
 
             RED_REQUIRE(recv() == "bad"_av);
             RED_REQUIRE(server_send("-ERR\r\n"_av));
-            RED_CHECK(cmd.send("receive response"_av).code() == RedisWriter::IOResult::Code::UnknownResponse);
+            RED_CHECK(session.send("receive response"_av) == RedisIOCode::UnknownResponse);
 
-            cmd.close();
+            session.close();
         }
     }
 }

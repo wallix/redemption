@@ -53,7 +53,7 @@
 
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
-#include "capture/redis_writer.hpp"
+#include "capture/redis.hpp"
 
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
@@ -886,7 +886,7 @@ public:
             this->enable_rt_display = enable_rt_display;
 
             if (!this->enable_rt_display) {
-                this->redis_server.close();
+                this->redis_session.close();
                 return RTDisplayResult::Disabled;
             }
 
@@ -921,9 +921,9 @@ public:
 
         return this->png_data.periodic_snapshot(now, buf, [this]{
             auto cmd = this->redis_cmd.build_command();
-            auto result = this->redis_server.send(cmd);
+            auto result_code = this->redis_session.send(cmd);
             this->redis_cmd.clear();
-            this->check(result, "PngCaptureRTRedis::periodic_snapshot()",
+            this->check(result_code, "PngCaptureRTRedis::periodic_snapshot()",
                         ERR_RECORDER_REDIS_RESPONSE);
         });
     }
@@ -931,27 +931,28 @@ public:
 private:
     void connect_to_redis(RedisParams const& redis_params)
     {
-        auto result = this->redis_server.open(
+        auto result_code = this->redis_session.open(
             redis_params.address,
             redis_params.port,
-            redis_params.password,
+            truncated_bounded_array_view(redis_params.password),
             redis_params.db,
-            redis_params.timeout, RedisWriter::TlsParams{
+            redis_params.timeout, RedisSyncSession::TlsParams{
                 .enable_tls = redis_params.tls.enable_tls,
                 .cert_file = redis_params.tls.cert_file,
                 .key_file = redis_params.tls.key_file,
                 .ca_cert_file = redis_params.tls.ca_cert_file
             });
-        this->check(result, "PngCaptureRTRedis::connect_to_redis()",
+        this->check(result_code, "PngCaptureRTRedis::connect_to_redis()",
                     ERR_SOCKET_CONNECT_FAILED);
     }
 
-    void check(RedisWriter::IOResult const& result, char const* context, error_type err)
+    void check(RedisIOCode code, char const* context, error_type err)
     {
-        if (REDEMPTION_UNLIKELY(not result.ok())) {
-            LOG(LOG_ERR, "%s: %s: %s",
-                context, result.code_as_cstring(), result.error_message());
-            throw Error(err, result.errnum());
+        if (REDEMPTION_UNLIKELY(code != RedisIOCode::Ok)) {
+            int errnum = redis_session.get_last_errno();
+            auto msg = redis_session.get_last_error_message();
+            LOG(LOG_ERR, "%s: %s: %s", context, redios_io_code_to_zstring(code), msg);
+            throw Error(err, errnum);
         }
     }
 
@@ -959,7 +960,7 @@ private:
 
     PngCaptureData png_data;
     RedisCmdSet redis_cmd;
-    RedisWriter redis_server;
+    RedisSyncSession redis_session;
 };
 REDEMPTION_DIAGNOSTIC_POP()
 
