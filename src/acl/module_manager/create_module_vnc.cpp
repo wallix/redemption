@@ -35,6 +35,7 @@
 #include "acl/module_manager/create_module_metrics.hpp"
 #include "acl/connect_to_target_host.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/netutils.hpp"
 #include "RAIL/client_execute.hpp"
 
 
@@ -235,9 +236,10 @@ ModPack create_mod_vnc(
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
-    unique_fd client_sck =
+    unique_fd client_sck = ini.get<cfg::context::tunneling_target_host>().empty() ?
         connect_to_target_host(ini, session_log, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>(),
-            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>());
+            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>())
+        : addr_connect_blocking(ini.get<cfg::context::tunneling_target_host>().c_str(), false);
 
     bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
