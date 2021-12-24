@@ -212,7 +212,7 @@ char const* RedisWriter::Tls::open(
     this->ssl = ssl;
     CHECK(!ssl_ctx, "ssl create");
 
-    // SSL_set_mode(ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    SSL_set_mode(ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     SSL_clear_mode(ssl, SSL_MODE_AUTO_RETRY);
     SSL_set_fd(ssl, fd);
     SSL_set_connect_state(ssl);
@@ -294,10 +294,13 @@ RedisWriter::IOResult RedisWriter::recv(writable_bytes_view buffer)
     if (!ssl) {
         for (;;) {
             ssize_t res = ::recv(fd, buffer.data(), buffer.size(), 0);
-            if (res >= 0) {
+            if (res > 0) {
                 return {IOCode::Ok, checked_int{res}};
             }
-            if (errno != EAGAIN && errno != EINTR) {
+            if (res == 0 || errno == EAGAIN) {
+                return {IOCode::WantRead, 0};
+            }
+            if (errno != EINTR) {
                 return {IOCode::ReadError, 0};
             }
         }
@@ -318,10 +321,13 @@ RedisWriter::IOResult RedisWriter::send(bytes_view buffer)
     if (!ssl) {
         for (;;) {
             ssize_t res = ::send(fd, buffer.data(), buffer.size(), 0);
-            if (res >= 0) {
+            if (res > 0) {
                 return {IOCode::Ok, checked_int{res}};
             }
-            if (errno != EAGAIN && errno != EINTR) {
+            if (res == 0 || errno == EAGAIN) {
+                return {IOCode::WantRead, 0};
+            }
+            if (errno != EINTR) {
                 return {IOCode::WriteError, 0};
             }
         }
@@ -381,7 +387,7 @@ RedisSyncSession::IOCode RedisSyncSession::open(
 
     // open socket
     close();
-    int fd = ip_connect_blocking(address, checked_int(port)).release();
+    int fd = ip_connect(address, checked_int(port)).release();
     if (fd == -1) {
         return IOCode::ConnectError;
     }

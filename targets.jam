@@ -459,6 +459,16 @@ exe ppocr_extract_text :
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
+lib libcredis :
+  src/lib/credis.cpp.lib.o
+:
+  <library>crypto
+  <library>log.o
+  <library>openssl
+  <library>src/capture/redis.o
+  <library>src/utils/netutils.o
+  $(LIB_DEPENDENCIES)
+;
 lib libredrec :
   src/lib/do_recorder.cpp.lib.o
 :
@@ -546,6 +556,11 @@ lib libscytale :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
+;
+obj src/lib/credis.cpp.lib.o :
+  $(REDEMPTION_SRC_PATH)/lib/credis.cpp
+:
+  $(LIB_DEPENDENCIES)
 ;
 obj src/lib/do_recorder.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp
@@ -2416,6 +2431,16 @@ test-run tests/keyboard/test_keymapsym :
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
+;
+test-run tests/lib/test_credis :
+  $(REDEMPTION_TEST_PATH)/lib/test_credis.cpp
+:
+  <library>crypto
+  <library>openssl
+  <library>src/capture/redis.o
+  <library>src/lib/credis.o
+  <library>src/utils/netutils.o
+  <linkflags>-pthread
 ;
 test-run tests/lib/test_do_recorder :
   $(REDEMPTION_TEST_PATH)/lib/test_do_recorder.cpp
@@ -5137,6 +5162,7 @@ obj src/keyboard/keyboard_shortcut_layout.o : $(REDEMPTION_SRC_PATH)/keyboard/ke
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
+obj src/lib/credis.o : $(REDEMPTION_SRC_PATH)/lib/credis.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
@@ -5412,6 +5438,7 @@ alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
 alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
+alias test_credis : tests/lib/test_credis ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
 alias test_iametrics : tests/lib/test_iametrics ;
 alias test_scytale : tests/lib/test_scytale ;
@@ -5778,6 +5805,7 @@ alias tests/keyboard.norec :
   tests/keyboard/test_keymapsym
 ;
 alias tests/lib.norec :
+  tests/lib/test_credis
   tests/lib/test_do_recorder
   tests/lib/test_iametrics
   tests/lib/test_scytale
