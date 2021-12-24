@@ -40,6 +40,7 @@ from .sesmanbacktoselector import (
 )
 
 from .engine import LOCAL_TRACE_PATH_RDP
+from .engine import SOCK_PATH_DIR
 from .engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from .engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
@@ -430,6 +431,7 @@ class Sesman():
             self,
             self.engine.wabengine_conf.get("session_4eyes_timer", 60)
         )
+        self.tun_process = None
 
     def reset_session_var(self):
         """
@@ -2204,6 +2206,14 @@ class Sesman():
                     self.engine.update_session_target(physical_target,
                                                       **update_args)
 
+                    if (_status
+                        and 'vnc_over_ssh' in conn_opts
+                        and conn_opts.get("vnc_over_ssh").get("enable")):
+                        _status, _error = \
+                            self._load_vnc_over_ssh_options(
+                                kv, conn_opts
+                            )
+
                     if not _status:
                         Logger().info(
                             u"(%s):%s:REJECTED : User message: \"%s\"" % (
@@ -2340,7 +2350,9 @@ class Sesman():
         # Notify WabEngine to stop connection if it has been
         # launched successfully
         self.engine.stop_session(title=u"End session")
-
+        if self.tun_process:
+            self.tun_process.stop()
+            self.tun_process = None
         Logger().info(u"Stop session done.")
         if self.shared.get(u"module") == u"close":
             if close_box and self.back_selector:
@@ -3009,6 +3021,29 @@ class Sesman():
             krb_data[u'effective_krb_armoring_password'] = \
                 effective_krb_armoring_password
         return krb_data
+
+    def _load_vnc_over_ssh_options(self, kv, conn_opts):
+        from .tunneling_process import check_tunneling
+        Logger().debug("CHECK TUNNELLING %s" %
+                       conn_opts.get("vnc_over_ssh", {}).get("enable"))
+        _status = False
+        _error = "VNC over SSH Tunneling Error"
+        self.tun_process = check_tunneling(
+            self.engine, conn_opts.get("vnc_over_ssh"),
+            self._physical_target_host,
+            kv[u'target_port'],
+            sock_path_dir=SOCK_PATH_DIR
+        )
+        if self.tun_process:
+            _status = self.tun_process.start()
+            kv['tunneling_target_host'] = \
+                self.tun_process.sock_path
+            _status = self.tun_process.pre_connect()
+        if _status:
+            _error = "No Error"
+        return _status, _error
+
+
 
 
 

@@ -35,6 +35,7 @@ try:
     CRED_INDEX = "credentials"
     APPREQ_REQUIRED = 1
     APPREQ_OPTIONAL = 0
+    SOCK_PATH_DIR = "/var/run/redemption"
 except Exception:
     import traceback
     tracelog = traceback.format_exc()
@@ -42,6 +43,7 @@ except Exception:
         from .fake.proxyengine import *
         import os
         LOCAL_TRACE_PATH_RDP = os.getenv('LOCAL_TRACE_PATH_RDP') or u'/var/wab/recorded/rdp/'
+        SOCK_PATH_DIR = "/tmp/"
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
