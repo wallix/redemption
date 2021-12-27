@@ -290,6 +290,17 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disabled_orders_desc}, set("25"));
     });
 
+    W.section("all_target_mod", [&]
+    {
+        W.member(advanced_in_gui, no_sesman, L, type_<types::range<std::chrono::milliseconds, 1000, 10000>>{}, "connection_establishment_timeout", desc{
+            "The maximum time in milliseconds that the proxy will wait while attempting to connect to an target."
+        }, set(1000));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<types::range<types::u32, 1, 10>>(), "connection_retry_count", desc{
+            "Controls the number of reconnection attempts if there's a connection failure."
+        }, set(3));
+    });
+
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
     {
         auto co_probe = connpolicy::section{"session_probe"};

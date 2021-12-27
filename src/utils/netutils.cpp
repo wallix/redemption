@@ -166,7 +166,9 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result)
+unique_fd ip_connect(const char* ip, int port,
+                     std::chrono::milliseconds connection_establishment_timeout,
+                     int connection_retry_count, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -212,8 +214,8 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
-    int nbretry = 3;
-    int retry_delai_ms = 1000;
+    int const nbretry = connection_retry_count;
+    int const retry_delai_ms = connection_establishment_timeout.count();
     bool const no_log = false;
     return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
 }
@@ -268,7 +270,7 @@ unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
     }
 
     std::string ip(addr, pos);
-    return ip_connect(ip.c_str(), int(port));
+    return ip_connect(ip.c_str(), int(port), std::chrono::milliseconds(1000), 3);
 }
 
 

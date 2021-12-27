@@ -69,6 +69,9 @@ int main(int argc, char** argv)
 
     int cert_check;
 
+    unsigned connection_establishment_timeout_ms = 1000u;
+    unsigned connection_retry_count = 3u;
+
     /* Program options */
     namespace po = program_options;
     po::options_description desc({
@@ -92,6 +95,10 @@ int main(int argc, char** argv)
             "2 = succeed if certificates exists (not checked), fails if missing.\n"
             "3 = always succeed.\n"
         },
+
+        {'e', "connection-establishment-timeout", &connection_establishment_timeout_ms, "The maximum time in milliseconds that the proxy will wait while attempting to connect to an target."},
+        {'T', "connection-retry-count", &connection_retry_count, "Controls the number of reconnection attempts if there's a connection failure."},
+
         {"verbose", &verbose, "verbose"},
     });
 
@@ -123,7 +130,8 @@ int main(int argc, char** argv)
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     /* SocketTransport mod_trans */
-    auto sck = ip_connect(target_device.c_str(), target_port);
+    auto sck = ip_connect(target_device.c_str(), target_port,
+        std::chrono::milliseconds(connection_establishment_timeout_ms), connection_retry_count);
     if (!sck.is_open()) {
         return 1;
     }
@@ -141,7 +149,7 @@ int main(int argc, char** argv)
 
     SocketTransport mod_trans(
         is_vnc ? "VNC Server" : "RDP Server", std::move(sck), target_device.c_str(),
-        target_port, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
+        target_port, std::chrono::milliseconds(1000), 3, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
 
     ScopedSslInit scoped_ssl;
 

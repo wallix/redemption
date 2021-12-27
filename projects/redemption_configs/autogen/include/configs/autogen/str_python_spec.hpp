@@ -1119,6 +1119,17 @@ config = boolean(default=True)
 #_hidden
 mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 
+[all_target_mod]
+
+# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
+# (is in millisecond)
+#_advanced
+connection_establishment_timeout = integer(min=1000, max=10000, default=1000)
+
+# Controls the number of reconnection attempts if there's a connection failure.
+#_advanced
+connection_retry_count = integer(min=1, max=10, default=3)
+
 [remote_program]
 
 allow_resize_hosted_desktop = boolean(default=True)

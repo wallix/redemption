@@ -2101,6 +2101,29 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
+    else if (0 == strcmp(context, "all_target_mod")) {
+        if (0) {}
+        else if (0 == strcmp(key, "connection_establishment_timeout")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::all_target_mod::connection_establishment_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "connection_retry_count")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::all_target_mod::connection_retry_count&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 1, 10>>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
     else if (0 == strcmp(context, "remote_program")) {
         if (0) {}
         else if (0 == strcmp(key, "allow_resize_hosted_desktop")) {

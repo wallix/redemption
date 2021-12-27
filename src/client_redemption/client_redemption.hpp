@@ -497,7 +497,8 @@ public:
         }
 
         unique_fd unique_client_sck = ip_connect(
-            this->config.target_IP.c_str(), this->config.port);
+            this->config.target_IP.c_str(), this->config.port,
+            std::chrono::milliseconds(1000), 3);
 
         this->client_sck = unique_client_sck.fd();
 
@@ -511,6 +512,8 @@ public:
                     std::move(unique_client_sck),
                     this->config.target_IP.c_str(),
                     this->config.port,
+                    std::chrono::milliseconds(1000),
+                    3,
                     std::chrono::seconds(1),
                     to_verbose_flags(0x0),
                     //SocketTransport::Verbose::dump,

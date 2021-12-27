@@ -337,6 +337,11 @@ namespace cfg {
         struct mod_rdp_use_failure_simulation_socket_transport;
     };
 
+    struct all_target_mod {
+        struct connection_establishment_timeout;
+        struct connection_retry_count;
+    };
+
     struct remote_program {
         struct allow_resize_hosted_desktop;
     };

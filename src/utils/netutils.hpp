@@ -26,6 +26,8 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/bytes_view.hpp"
 
+#include <chrono>
+
 #include <cstdint>
 #include <cstdio>
 
@@ -37,7 +39,9 @@ bool try_again(int errnum);
 /// \return nullptr if ok, view string if error
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr);
+unique_fd ip_connect(const char* ip, int port,
+                     std::chrono::milliseconds connection_establishment_timeout,
+                     int connection_retry_count, char const** error_result = nullptr);
 
 unique_fd local_connect(const char* sck_name, bool no_log);
 

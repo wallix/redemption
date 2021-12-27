@@ -47,12 +47,15 @@ namespace
 
 SocketTransport::SocketTransport(
     const char * name, unique_fd sck, const char *ip_address, int port,
-    std::chrono::milliseconds recv_timeout,
+    std::chrono::milliseconds connection_establishment_timeout,
+    int connection_retry_count, std::chrono::milliseconds recv_timeout,
     Verbose verbose, std::string * error_message
 )
     : sck(sck.release())
     , name(name)
     , port(port)
+    , connection_establishment_timeout(connection_establishment_timeout)
+    , connection_retry_count(connection_retry_count)
     , error_message(error_message)
     , tls(nullptr)
     , recv_timeout(recv_timeout)
@@ -198,7 +201,8 @@ bool SocketTransport::disconnect()
 bool SocketTransport::connect()
 {
     if (this->sck <= INVALID_SOCKET){
-        this->sck = ip_connect(this->ip_address, this->port).release();
+        this->sck = ip_connect(this->ip_address, this->port,
+            this->connection_establishment_timeout, this->connection_retry_count).release();
     }
     return this->sck > INVALID_SOCKET;
 }

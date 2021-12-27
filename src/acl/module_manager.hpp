@@ -800,6 +800,7 @@ private:
         std::unique_ptr<SocketTransport> t(
                 []( ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
                   , const char * name, unique_fd sck, const char *ip_address, int port
+                  , std::chrono::milliseconds connection_establishment_timeout, int connection_retry_count
                   , std::chrono::milliseconds recv_timeout, uint32_t verbose, std::string * error_message) -> SocketTransport*
                     {
                         if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport)
@@ -807,6 +808,8 @@ private:
                             return new SocketTransport( name, std::move(sck)
                                                       , ip_address
                                                       , port
+                                                      , connection_establishment_timeout
+                                                      , connection_retry_count
                                                       , recv_timeout
                                                       , to_verbose_flags(verbose), error_message);
                         }
@@ -826,6 +829,8 @@ private:
                        name, std::move(sck)
                      , mm.ini.get<cfg::context::target_host>().c_str()
                      , mm.ini.get<cfg::context::target_port>()
+                     , mm.ini.get<cfg::all_target_mod::connection_establishment_timeout>()
+                     , mm.ini.get<cfg::all_target_mod::connection_retry_count>()
                      , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
                      , verbose, error_message)
             );
@@ -1099,7 +1104,9 @@ private:
         snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
         char const* error_message = nullptr;
-        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), &error_message);
+        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(),
+            this->ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+            this->ini.get<cfg::all_target_mod::connection_retry_count>(), &error_message);
 
         if (!client_sck.is_open()) {
             throw_error(error_message, 2);

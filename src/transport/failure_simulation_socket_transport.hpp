@@ -30,7 +30,7 @@ public:
     FailureSimulationSocketTransport( bool simulate_read_failure, const char * name, unique_fd sck
                                     , const char *ip_address, int port, std::chrono::milliseconds recv_timeout
                                     , Verbose verbose, std::string * error_message = nullptr)
-    : SocketTransport(name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message)
+    : SocketTransport(name, std::move(sck), ip_address, port, std::chrono::milliseconds(1000), 3, recv_timeout, verbose, error_message)
     , simulate_read_failure(simulate_read_failure)
     {}
 

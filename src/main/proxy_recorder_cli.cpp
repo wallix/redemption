@@ -79,9 +79,9 @@ public:
             TimeSystem timeobj;
             RecorderFile outFile(timeobj, finalPath);
 
-            SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
-            SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort),
-                this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
+            SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(1000), 3, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
+            SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(1000), 3),
+                this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(1000), 3, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
             TraceTransport frontConn("front", lowFrontConn);
             TraceTransport backConn("back", lowBackConn);
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);

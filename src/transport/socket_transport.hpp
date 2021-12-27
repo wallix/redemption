@@ -52,6 +52,9 @@ private:
     char ip_address[128];
     int  port;
 
+    std::chrono::milliseconds const connection_establishment_timeout;
+    int const connection_retry_count;
+
     std::string * error_message;
     std::unique_ptr<TLSContext> tls;
     enum class TLSState { Uninit, Want, Ok, WaitCertCb } tls_state = TLSState::Uninit;
@@ -82,6 +85,8 @@ public:
 
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
     SocketTransport( const char * name, unique_fd sck, const char *ip_address, int port
+                   , std::chrono::milliseconds connection_establishment_timeout
+                   , int connection_retry_count
                    , std::chrono::milliseconds recv_timeout
                    , Verbose verbose, std::string * error_message = nullptr);
 

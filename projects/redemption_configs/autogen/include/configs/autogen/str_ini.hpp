@@ -1316,6 +1316,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #mod_rdp_use_failure_simulation_socket_transport = 0
 
+[all_target_mod]
+
+# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
+# min = 1000, max = 10000
+# (is in millisecond)
+#_advanced
+#connection_establishment_timeout = 1000
+
+# Controls the number of reconnection attempts if there's a connection failure.
+# min = 1, max = 10
+# min = 0
+#_advanced
+#connection_retry_count = 3
+
 [remote_program]
 
 # value: 0 or 1

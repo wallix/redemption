@@ -153,6 +153,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                     if (res != -1){
                         client_trans = std::make_unique<SocketTransport>(
                             "Sender", unique_fd{client_sck}, "127.0.0.1", 4444,
+                            std::chrono::milliseconds(1000), 3,
                             std::chrono::seconds(1), to_verbose_flags(0));
                     }
                 }
@@ -189,6 +190,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 recv_sck[nb_recv_sck] = sck;
                 sck_trans[nb_recv_sck] = std::make_unique<SocketTransport>(
                     "Reader", unique_fd{sck}, "127.0.0.1", 4444,
+                    std::chrono::milliseconds(1000), 3,
                     std::chrono::seconds(1), to_verbose_flags(0));
                 nb_recv_sck++;
             }
