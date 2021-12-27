@@ -47,28 +47,56 @@ struct AddrInfoDeleter
 
 using AddrInfoPtrWithDel_t = std::unique_ptr<addrinfo, AddrInfoDeleter>;
 
+struct DefaultConnectTag { };
+
 bool try_again(int errnum);
 
 /// std::expected
 /// \return nullptr if ok, view string if error
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr);
-unique_fd ip_connect_blocking(const char* addr, int port, char const** error_result = nullptr);
+unique_fd ip_connect_ipv4(const char* ip,
+                          int port,
+                          std::chrono::milliseconds establishment_timeout,
+                          int retry_count,
+                          char const** error_result = nullptr);
+
+unique_fd ip_connect_blocking(const char* ip,
+                              int port,
+                              std::chrono::milliseconds establishment_timeout,
+                              int retry_count,
+                              char const** error_result = nullptr);
 
 [[nodiscard]]
-AddrInfoPtrWithDel_t resolve_both_ipv4_and_ipv6_address
-(const char *ip, int port, const char **error_result = nullptr) noexcept;
+AddrInfoPtrWithDel_t resolve_both_ipv4_and_ipv6_address(
+    const char *ip, int port, const char **error_result = nullptr) noexcept;
 
-unique_fd ip_connect_both_ipv4_and_ipv6
-(const char* ip, int port, std::chrono::milliseconds connection_establishment_timeout,
- int connection_retry_count, const char **error_result = nullptr) noexcept;
+unique_fd ip_connect(const char *ip,
+                     int port,
+                     DefaultConnectTag default_connect_tag,
+                     const char **error_result = nullptr) noexcept;
 
-unique_fd local_connect(const char* sck_name, bool no_log);
+unique_fd ip_connect(const char* ip,
+                     int port,
+                     std::chrono::milliseconds establishment_timeout,
+                     int retry_count,
+                     const char **error_result = nullptr) noexcept;
 
-unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket);
+unique_fd local_connect(const char* sck_name,
+                        std::chrono::milliseconds establishment_timeout,
+                        int retry_count,
+                        bool no_log);
 
-unique_fd addr_connect_blocking(const char* addr, bool no_log_for_unix_socket);
+unique_fd addr_connect(const char* addr,
+                       std::chrono::milliseconds establishment_timeout,
+                       int retry_count,
+                       bool no_log_for_unix_socket);
+
+unique_fd addr_connect_blocking(
+    const char* addr,
+    std::chrono::milliseconds establishment_timeout,
+    int retry_count,
+    bool no_log_for_unix_socket);
 
 /// \return ip found or empty view whether not found or error
 zstring_view parse_ip_conntrack(

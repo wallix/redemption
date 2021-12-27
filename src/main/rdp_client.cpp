@@ -162,7 +162,9 @@ int main(int argc, char** argv)
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     /* SocketTransport mod_trans */
-    auto sck = ip_connect(target_device.c_str(), target_port);
+    auto sck = ip_connect(target_device.c_str(),
+                          target_port,
+                          DefaultConnectTag { });
     if (!sck.is_open()) {
         return 1;
     }
@@ -182,6 +184,7 @@ int main(int argc, char** argv)
         is_vnc ? "VNC Server"_sck_name : "RDP Server"_sck_name,
         std::move(sck), target_device,
         target_port, std::chrono::seconds(1),
+        std::chrono::milliseconds(1000), 3,
         safe_cast<SocketTransport::Verbose>(uint32_t(verbose >> 32)), nullptr);
 
     ScopedSslInit scoped_ssl;

@@ -54,7 +54,7 @@ public:
         this->strans.send(buffer, len);
     }
 
-    [[nodiscard]] int get_fd() const final
+    [[nodiscard]] int get_fd() const override final
     {
         return this->strans.get_fd();
     }
@@ -101,4 +101,3 @@ public:
     bool enable_trace = false;
     bool enable_trace_send = false;
 };
-

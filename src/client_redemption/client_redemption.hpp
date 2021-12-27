@@ -505,7 +505,9 @@ public:
         }
 
         unique_fd unique_client_sck = ip_connect(
-            this->config.target_IP.c_str(), this->config.port);
+            this->config.target_IP.c_str(),
+            this->config.port,
+            DefaultConnectTag { });
 
         this->client_sck = unique_client_sck.fd();
 
@@ -520,6 +522,8 @@ public:
                     this->config.target_IP,
                     this->config.port,
                     std::chrono::seconds(1),
+                    std::chrono::milliseconds(1000),
+                    3,
                     SocketTransport::Verbose(),
                     &this->error_message);
 

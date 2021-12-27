@@ -113,11 +113,13 @@ public:
         VNCVerbose vnc_verbose,
         VNCMetrics * metrics
         )
-    : socket_transport( name, std::move(sck)
-                      , ini.get<cfg::context::target_host>()
-                      , checked_int(ini.get<cfg::context::target_port>())
-                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
-                      , verbose, error_message)
+    : socket_transport(name, std::move(sck),
+                       ini.get<cfg::context::target_host>(),
+                       checked_int(ini.get<cfg::context::target_port>()),
+                       std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>()),
+                       ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+                       ini.get<cfg::all_target_mod::connection_retry_count>(),
+                       verbose, error_message)
     , mod(
           this->socket_transport, drawable,
           events, username, password, front, front_width, front_height,
