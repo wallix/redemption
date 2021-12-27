@@ -56,14 +56,16 @@ namespace cfg_specs {
     // for coloration...
     struct Writer
     {
-        template<class... Args>
-        void member(Args...);
+        void set_sections(std::initializer_list<char const*> l);
 
         template<class F>
         void section(char const * name, F closure_section);
 
         template<class F>
         void section(cfg_attributes::names_, F closure_section);
+
+        template<class... Args>
+        void member(Args...);
     };
 #else
 template<class Writer>
@@ -77,7 +79,7 @@ void config_spec_definition(Writer && W)
     using namespace cfg_attributes::connpolicy::constants;
 
     // force ordering section
-    for (char const * section : {
+    W.set_sections({
         "globals",
 
         "client",
@@ -103,15 +105,15 @@ void config_spec_definition(Writer && W)
         "crypto",
         "websocket",
 
+        "context",
+
         "internal_mod",
         "mod_replay",
         "translation",
         "theme",
 
         "debug",
-    }) {
-        W.section(section, [&]{});
-    }
+    });
 
     prefix_value disable_prefix_val{"disable"};
 

@@ -25,6 +25,7 @@
 
 #include <type_traits>
 #include <string>
+#include <unordered_set>
 #include <memory>
 
 
@@ -241,11 +242,27 @@ struct ConfigSpecWrapper
 
 private:
     Names current_section_names {};
+    std::unordered_set<std::string> sections;
 
 public:
+    void set_sections(std::initializer_list<char const*> l)
+    {
+        if (!sections.empty()) {
+            throw std::runtime_error("set_sections() is alerady initialized");
+        }
+
+        for (char const* section : l) {
+            sections.emplace(section);
+        }
+    }
+
     template<class Fn>
     void section(Names&& names, Fn fn)
     {
+        if (sections.find(names.all) == sections.end()) {
+            throw std::runtime_error("Unknown section '" + names.all + "'. Please use set_sections()");
+        }
+
         current_section_names = std::move(names);
         assert(current_section_names.sesman.empty());
 
