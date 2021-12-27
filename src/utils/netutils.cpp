@@ -183,7 +183,11 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result)
+unique_fd ip_connect_ipv4(const char *ip,
+                          int port,
+                          std::chrono::milliseconds establishment_timeout,
+                          int retry_count,
+                          char const **error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -229,17 +233,29 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
-    const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
-    const int connection_retry_count = 3;
     bool const no_log = false;
 
-    return connect_sck(sck, connection_establishment_timeout, connection_retry_count,
-        u.s, sizeof(u), text_target, no_log, error_result);
+    return connect_sck(sck,
+                       establishment_timeout,
+                       retry_count,
+                       u.s,
+                       sizeof(u),
+                       text_target,
+                       no_log,
+                       error_result);
 }
 
-unique_fd ip_connect_blocking(const char* addr, int port, char const** error_result)
+unique_fd ip_connect_blocking(const char* ip,
+                              int port,
+                              std::chrono::milliseconds establishment_timeout,
+                              int retry_count,
+                              char const** error_result)
 {
-    auto fd = ip_connect(addr, port, error_result);
+    auto fd = ip_connect(ip,
+                         port,
+                         establishment_timeout,
+                         retry_count,
+                         error_result);
     if (fd) {
         const auto sck = fd.fd();
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
@@ -277,11 +293,23 @@ resolve_both_ipv4_and_ipv6_address(const char *ip,
     return AddrInfoPtrWithDel_t(addr_info);
 }
 
-unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
-                                        int port,
-                                        std::chrono::milliseconds connection_establishment_timeout,
-                                        int connection_retry_count,
-                                        const char **error_result) noexcept
+unique_fd ip_connect(const char *ip,
+                     int port,
+                     DefaultConnectTag,
+                     const char **error_result) noexcept
+{
+    return ip_connect(ip,
+                      port,
+                      std::chrono::milliseconds(1000),
+                      3,
+                      error_result);
+}
+
+unique_fd ip_connect(const char *ip,
+                     int port,
+                     std::chrono::milliseconds establishment_timeout,
+                     int retry_count,
+                     const char **error_result) noexcept
 {
     AddrInfoPtrWithDel_t addr_info_ptr =
         resolve_both_ipv4_and_ipv6_address(ip, port, error_result);
@@ -362,8 +390,8 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
     const bool no_log = false;
 
     return connect_sck(sck,
-                       connection_establishment_timeout,
-                       connection_retry_count,
+                       establishment_timeout,
+                       retry_count,
                        *addr_info_ptr->ai_addr,
                        addr_info_ptr->ai_addrlen,
                        text_target,
@@ -371,7 +399,10 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
                        error_result);
 }
 
-unique_fd local_connect(const char* sck_name, bool no_log)
+unique_fd local_connect(const char* sck_name,
+                        std::chrono::milliseconds establishment_timeout,
+                        int retry_count,
+                        bool no_log)
 {
     LOG_IF(!no_log, LOG_INFO, "connecting to %s", sck_name);
     // we will try connection several time
@@ -396,34 +427,49 @@ unique_fd local_connect(const char* sck_name, bool no_log)
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
-    const int connection_retry_count = 1;
-    return connect_sck(sck, connection_establishment_timeout, connection_retry_count,
-        u.addr, static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + len + 1u), sck_name, no_log);
+    return connect_sck(sck,
+                       establishment_timeout,
+                       retry_count,
+                       u.addr,
+                       static_cast<socklen_t>(offsetof(sockaddr_un, sun_path)
+                                              + len + 1u),
+                       sck_name,
+                       no_log);
 }
 
-
-unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
+unique_fd addr_connect(const char* addr,
+                       std::chrono::milliseconds establishment_timeout,
+                       int retry_count,
+                       bool no_log_for_unix_socket)
 {
     const char* pos = strchr(addr, ':');
     if (!pos) {
-        return local_connect(addr, no_log_for_unix_socket);
+        return local_connect(addr,
+                             establishment_timeout,
+                             retry_count,
+                             no_log_for_unix_socket);
     }
 
     auto port_result = decimal_chars_to_int<int>(pos + 1);
     if (port_result.ec == std::errc()) {
         std::string ip(addr, pos);
-        return ip_connect(ip.c_str(), port_result.val);
+        return ip_connect(ip.c_str(), port_result.val, DefaultConnectTag {});
     }
 
     LOG(LOG_ERR, "Connecting to %s failed: invalid port", pos + 1);
     return unique_fd{-1};
 }
 
-
-unique_fd addr_connect_blocking(const char* addr, bool no_log_for_unix_socket)
+unique_fd addr_connect_blocking(
+    const char* addr,
+    std::chrono::milliseconds establishment_timeout,
+    int retry_count,
+    bool no_log_for_unix_socket)
 {
-    auto fd = addr_connect(addr, no_log_for_unix_socket);
+    auto fd = addr_connect(addr,
+                           establishment_timeout,
+                           retry_count,
+                           no_log_for_unix_socket);
     if (fd) {
         const auto sck = fd.fd();
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);

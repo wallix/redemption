@@ -96,11 +96,15 @@ public:
 
             SocketTransport lowFrontConn(
                 "front"_sck_name, std::move(sck_in), "127.0.0.1"_av, 3389,
-                std::chrono::milliseconds(100), sck_verbose);
+                std::chrono::milliseconds(100),
+                std::chrono::milliseconds(1000), 3, sck_verbose);
             SocketTransport lowBackConn(
-                "back"_sck_name, ip_connect(this->targetHost.c_str(), this->targetPort),
+                "back"_sck_name, ip_connect(this->targetHost.c_str(),
+                                            this->targetPort,
+                                            DefaultConnectTag { }),
                 this->targetHost, this->targetPort,
-                std::chrono::milliseconds(100), sck_verbose);
+                std::chrono::milliseconds(100),
+                std::chrono::milliseconds(1000), 3, sck_verbose);
             TraceTransport frontConn("front", lowFrontConn);
             TraceTransport backConn("back", lowBackConn);
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);

@@ -263,10 +263,20 @@ public:
             chars_view ip_address = ini.get<cfg::context::target_host>();
             int port = checked_int(ini.get<cfg::context::target_port>());
             auto recv_timeout = std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>());
+            auto connection_establishment_timeout = ini.get<cfg::all_target_mod::connection_establishment_timeout>();
+            int connection_retry_count = ini.get<cfg::all_target_mod::connection_retry_count>();
 
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
                 return new FinalSocketTransport( /*NOLINT*/
-                    name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message
+                    name,
+                    std::move(sck),
+                    ip_address,
+                    port,
+                    recv_timeout,
+                    connection_establishment_timeout,
+                    connection_retry_count,
+                    verbose,
+                    error_message
                 );
             }
 
@@ -277,7 +287,15 @@ public:
 
             return new FailureSimulationSocketTransport( /*NOLINT*/
                 is_read_error_simulation,
-                name, std::move(sck) , ip_address , port , recv_timeout , verbose , error_message
+                name,
+                std::move(sck),
+                ip_address,
+                port,
+                recv_timeout,
+                connection_establishment_timeout,
+                connection_retry_count,
+                verbose,
+                error_message
             );
         }())
     , mod(*this->socket_transport_ptr, gd
@@ -709,7 +727,11 @@ ModPack create_mod_rdp(
     if (enable_validator) {
         auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
         bool const no_log_for_unix_socket = false;
-        unique_fd ufd = addr_connect_blocking(socket_path.c_str(), no_log_for_unix_socket);
+        unique_fd ufd = addr_connect_blocking(
+            socket_path.c_str(),
+            ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+            ini.get<cfg::all_target_mod::connection_retry_count>(),
+            no_log_for_unix_socket);
         if (ufd) {
             file_validator = std::make_unique<RdpData::FileValidator>(
                 std::move(ufd),

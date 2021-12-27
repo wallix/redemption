@@ -152,8 +152,14 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                     res = ::connect(client_sck, &ucs.s, sizeof(ucs));
                     if (res != -1){
                         client_trans = std::make_unique<SocketTransport>(
-                            "Sender"_sck_name, unique_fd{client_sck}, "127.0.0.1"_av, 4444,
-                            std::chrono::seconds(1), SocketTransport::Verbose(0));
+                            "Sender"_sck_name,
+                            unique_fd{client_sck},
+                            "127.0.0.1"_av,
+                            4444,
+                            std::chrono::seconds(1),
+                            std::chrono::milliseconds(1000),
+                            3,
+                            SocketTransport::Verbose(0));
                     }
                 }
             }
@@ -188,8 +194,14 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 RED_REQUIRE(sck > 0);
                 recv_sck[nb_recv_sck] = sck;
                 sck_trans[nb_recv_sck] = std::make_unique<SocketTransport>(
-                    "Reader"_sck_name, unique_fd{sck}, "127.0.0.1"_av, 4444,
-                    std::chrono::seconds(1), SocketTransport::Verbose(0));
+                    "Reader"_sck_name,
+                    unique_fd{sck},
+                    "127.0.0.1"_av,
+                    4444,
+                    std::chrono::seconds(1),
+                    std::chrono::milliseconds(1000),
+                    3,
+                    SocketTransport::Verbose(0));
                 nb_recv_sck++;
             }
         }

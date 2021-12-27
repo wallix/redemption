@@ -180,7 +180,7 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
 
     fcntl(sck_server.fd(), F_SETFL, fcntl(sck_server.fd(), F_GETFL) & ~O_NONBLOCK);
 
-    unique_fd client_fd = ip_connect(addr, port);
+    unique_fd client_fd = ip_connect(addr, port, DefaultConnectTag { });
     RED_REQUIRE(client_fd.is_open());
 
     sockaddr s {};

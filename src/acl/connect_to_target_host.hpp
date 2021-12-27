@@ -91,7 +91,11 @@ inline unique_fd connect_to_target_host(
                  sizeof(resolved_ip_addr),
                  "%s",
                  inet_ntoa(s4_sin_addr));
-        client_sck = ip_connect(ip, port, &error_message);
+        client_sck = ip_connect_ipv4(ip,
+                                     port,
+                                     connection_establishment_timeout,
+                                     connection_retry_count,
+                                     &error_message);
     }
     else
     {
@@ -116,8 +120,11 @@ inline unique_fd connect_to_target_host(
             throw_error(error_message, 1);
         }
 
-        client_sck = ip_connect_both_ipv4_and_ipv6(ip, port,
-            connection_establishment_timeout, connection_retry_count, &error_message);
+        client_sck = ip_connect(ip,
+                                port,
+                                connection_establishment_timeout,
+                                connection_retry_count,
+                                &error_message);
     }
 
     if (!client_sck.is_open())

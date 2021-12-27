@@ -69,6 +69,8 @@ private:
     enum class TLSState { Uninit, Want, Ok, WaitCertCb } tls_state = TLSState::Uninit;
 
     std::chrono::milliseconds recv_timeout;
+    std::chrono::milliseconds connection_establishment_timeout;
+    int connection_retry_count;
 
     struct AsyncBuf
     {
@@ -90,9 +92,11 @@ public:
     };
 
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-    SocketTransport( Name name, unique_fd sck, chars_view ip_address, int port
-                   , std::chrono::milliseconds recv_timeout
-                   , Verbose verbose, std::string * error_message = nullptr);
+    SocketTransport(Name name, unique_fd sck, chars_view ip_address, int port,
+                    std::chrono::milliseconds recv_timeout,
+                    std::chrono::milliseconds connection_establishment_timeout,
+                    int connection_retry_count, Verbose verbose,
+                    std::string *error_message = nullptr);
 
     ~SocketTransport() override;
 
@@ -101,7 +105,7 @@ public:
 
     [[nodiscard]] bool has_tls_pending_data() const;
 
-    [[nodiscard]] int get_fd() const final { return this->sck; }
+    [[nodiscard]] int get_fd() const override final { return this->sck; }
 
     [[nodiscard]] u8_array_view get_public_key() const override;
 
