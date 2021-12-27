@@ -1,4 +1,9 @@
 #!/usr/bin/env lua
+
+if not pcall(require, 're') then
+    io.stderr:write('Module not found.\nInstall re module with\n\n$ luarocks install --user re\n\nThen configure with\n\n$ eval "$(luarocks path)"\n')
+    os.exit(1)
+end
 re = require're'
 
 typemap = {
@@ -27,7 +32,10 @@ for _,v in pairs(typemap) do
     basetype[v] = true
 end
 typemap['void'] = 'None'
-typemap['uint8_t*']='POINTER(c_char)'
+typemap['uint8_t*'] = 'POINTER(c_char)'
+for _,v in pairs({'int16_t', 'int32_t', 'int64_t', 'uint16_t', 'uint32_t', 'uint64_t', }) do
+    typemap[v .. '*'] = 'POINTER(c_' .. v:sub(1, -3) .. ')'
+end
 
 imported = {}
 lines = {}
@@ -69,6 +77,13 @@ defs={
     end,
     declareclass=function(name)
         typemap[name..'*'] = typemap['void*']
+    end,
+    declareenum=function(t)
+        if t[4] then
+            typemap[t[2]] = typemap[t[4]]
+        end
+        local s = table.concat(t)
+        lines[#lines+1] = '# ' .. s:gsub('\n ?', '\n# ')
     end,
     doc=function(s)
         if s == '@}' and lines[#lines] == '' then
@@ -142,7 +157,7 @@ comment1    <- '//' '/'? ' '? { [^%nl]* } -> doc %nl
 comment2    <- '/*' { (!'*/' .)* } -> multidoc '*/'
 forward     <- ('class' / 'struct') ws { id } -> declareclass S ';'
 class       <- {| 'struct' ws { id } S '{' memvars S '}' S ';' |} -> newclass
-enum        <- { 'enum ' [^;]+ ';' %s? } -> multidoc
+enum        <- {| { 'enum' S ('class' S)? ( '[[' [^]]+ ']]' S )? } {id} {[^;:]*} (':' S {id} {[^;]*} )? ';' %s? |} -> declareenum
 memvars     <- {| ( {| S (comment S)* type S {id} S ';' |} )* |}
 
 ]=] .. pcommun
