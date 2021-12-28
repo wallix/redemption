@@ -467,6 +467,7 @@ lib libcredis :
   <library>openssl
   <library>src/capture/redis.o
   <library>src/utils/netutils.o
+  <library>src/utils/uninit_buffer.o
   $(LIB_DEPENDENCIES)
 ;
 lib libredrec :
@@ -2440,6 +2441,7 @@ test-run tests/lib/test_credis :
   <library>src/capture/redis.o
   <library>src/lib/credis.o
   <library>src/utils/netutils.o
+  <library>src/utils/uninit_buffer.o
   <linkflags>-pthread
 ;
 test-run tests/lib/test_do_recorder :
@@ -5280,6 +5282,7 @@ obj src/utils/stacktrace.o : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOO
 obj src/utils/strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/timestamp_tracer.o : $(REDEMPTION_SRC_PATH)/utils/timestamp_tracer.cpp ;
+obj src/utils/uninit_buffer.o : $(REDEMPTION_SRC_PATH)/utils/uninit_buffer.cpp ;
 obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;

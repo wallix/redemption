@@ -1,23 +1,23 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2017
-   Author(s): Christophe Grosjean, Clément Moroldo
-
+Product name: redemption, a FLOSS RDP proxy
+Copyright (C) Wallix 2021
+Author(s): Proxies Team
 */
+
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
@@ -33,21 +33,16 @@ using namespace std::chrono_literals;
 namespace
 {
 
-chars_view redis_buffer_get_current_data_view(RedemptionRedis* redis)
+chars_view credis_buffer_get_data_view(CRedisBuffer* buffer)
 {
     uint64_t len;
-    uint8_t const* data = ::redis_buffer_get_current_data(redis, &len);
-    return bytes_view{data, len}.as_chars();
+    char const* data = credis_buffer_get_data(buffer, &len);
+    return chars_view{data, len};
 };
 
-RedemptionRedisCode redis_buffer_push_data(RedemptionRedis* redis, bytes_view buffer)
+chars_view credis_transport_get_last_error_zmessage(CRedisTransport* redis)
 {
-    return redis_buffer_push_data(redis, buffer.data(), buffer.size());
-};
-
-chars_view redis_get_last_error_zmessage(RedemptionRedis* redis)
-{
-    auto msg = redis_get_last_error_message(redis);
+    auto msg = credis_transport_get_last_error_message(redis);
     return chars_view(msg, strlen(msg));
 }
 
@@ -56,44 +51,102 @@ chars_view redis_get_last_error_zmessage(RedemptionRedis* redis)
 
 RED_AUTO_TEST_CASE(TestCRedisBuffer)
 {
-    using Code = RedemptionRedisCode;
+    auto* buffer = credis_buffer_new(0, 0, 0);
 
-    auto* redis = redis_new("my_image_key", 2);
-
-    RED_CHECK(redis_buffer_get_current_data_view(redis) == ""_av);
-    RED_CHECK(redis_buffer_push_cmd_auth(redis, "sacrifice") == Code::Ok);
-    RED_CHECK(redis_buffer_push_cmd_select_db(redis, 42) == Code::Ok);
-    RED_CHECK(redis_buffer_get_current_data_view(redis) == ""_av);
-    RED_CHECK(redis_buffer_build_commands(redis) == Code::Ok);
-    RED_CHECK(redis_buffer_get_current_data_view(redis) ==
+    RED_CHECK(credis_buffer_get_data_view(buffer) == ""_av);
+    RED_CHECK(credis_buffer_push_cmd_auth(buffer, "sacrifice") == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*2\r\n$4\r\nAUTH\r\n$9\r\nsacrifice\r\n"
+        ""_av_ascii);
+    RED_CHECK(credis_buffer_push_cmd_select_db(buffer, 42) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*2\r\n$4\r\nAUTH\r\n$9\r\nsacrifice\r\n"
         "*2\r\n$6\r\nSELECT\r\n$2\r\n42\r\n"
         ""_av_ascii);
-    redis_buffer_clear(redis);
+    credis_buffer_clear(buffer);
 
-    RED_CHECK(redis_buffer_get_current_data_view(redis) == ""_av);
-    RED_CHECK(redis_buffer_push_data(redis, "blabla"_av) == Code::Ok);
-    RED_CHECK(redis_buffer_push_data(redis, "bloblo"_av) == Code::Ok);
-    RED_CHECK(redis_buffer_get_current_data_view(redis) == ""_av);
-    RED_CHECK(redis_buffer_build_commands(redis) == Code::Ok);
-    RED_CHECK(redis_buffer_get_current_data_view(redis) == "blablabloblo"_av);
-    RED_CHECK(redis_buffer_build_cmd_set(redis) == Code::Ok);
-    RED_CHECK(redis_buffer_get_current_data_view(redis) ==
+    RED_CHECK(credis_buffer_get_data_view(buffer) == ""_av);
+    RED_CHECK(credis_buffer_push_cmd_header(buffer, 3) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "*3\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_arg_size(buffer, 4) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcd", 4) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd"_av_ascii);
+    RED_CHECK(credis_buffer_push_arg_separator(buffer) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_i64_arg(buffer, 20) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_u64_arg(buffer, 31) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_string_arg(buffer, "blabla", 5) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
+        "$5\r\nblabl\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_null_arg(buffer) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
+        "$5\r\nblabl\r\n$-1\r\n"_av_ascii);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, "xyz", 3) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) ==
+        "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
+        "$5\r\nblabl\r\n$-1\r\nxyz"_av_ascii);
+
+    uint64_t len;
+    char* data;
+    credis_buffer_reset(buffer, 5, 5, 0);
+    data = credis_buffer_alloc_fragment(buffer, 3);
+    memcpy(data, "abc", 3);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "abc"_av_ascii);
+    credis_buffer_shrink_to(buffer, 2);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "ab"_av_ascii);
+    data = credis_buffer_build_with_prefix_and_suffix(
+        buffer, "pre", 3, "post", 4, &len);
+    RED_CHECK(chars_view(data, len) == "preabpost"_av_ascii);
+    data = credis_buffer_build_with_prefix_and_suffix(
+        buffer, "preprepre", 9, "post", 4, &len);
+    RED_CHECK(chars_view(data, len) == chars_view(nullptr));
+
+    credis_buffer_delete(buffer);
+}
+
+RED_AUTO_TEST_CASE(TestCRedisCmdSet)
+{
+    auto* cmd = credis_cmd_set_new("my_image_key", 2, 0);
+    auto* buffer = credis_cmd_set_get_buffer(cmd);
+
+    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcde", 5) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, "fgh", 3) == 0);
+
+    uint64_t len;
+    char* data = credis_cmd_set_build_command(cmd, &len);
+    RED_CHECK(chars_view(data, len) ==
         "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
-        "$12\r\nblablabloblo\r\n"
+        "$8\r\nabcdefgh\r\n"
         "$2\r\nEX\r\n"
         "$1\r\n2\r\n"_av_ascii);
-    redis_buffer_clear(redis);
 
-    RED_CHECK(redis_buffer_get_current_data_view(redis) == ""_av);
+    credis_buffer_clear(buffer);
+    data = credis_cmd_set_build_command(cmd, &len);
+    RED_CHECK(chars_view(data, len) ==
+        "*5\r\n"
+        "$3\r\nSET\r\n"
+        "$12\r\nmy_image_key\r\n"
+        "$0\r\n\r\n"
+        "$2\r\nEX\r\n"
+        "$1\r\n2\r\n"_av_ascii);
 
-    redis_delete(redis);
+    credis_cmd_set_delete(cmd);
 }
 
 
-RED_AUTO_TEST_CASE(TestCRedisWriter)
+RED_AUTO_TEST_CASE(TestCRedisTransport)
 {
     using namespace std::chrono_literals;
 
@@ -139,46 +192,44 @@ RED_AUTO_TEST_CASE(TestCRedisWriter)
         return ::send(sck, resp.data(), resp.size(), 0) == ssize_t(resp.size());
     };
 
-    using Code = RedemptionRedisCode;
+    using Code = CRedisTransportCode;
 
-    auto* redis = redis_new("my_image_key", 2);
+    auto* redis = credis_transport_new();
 
-    RED_CHECK(redis_set_fd(redis, client_fd.fd()) == Code::Ok);
-    RED_CHECK(redis_buffer_push_cmd_auth(redis, "sacrifice") == Code::Ok);
-    RED_CHECK(redis_buffer_push_cmd_select_db(redis, 42) == Code::Ok);
-    RED_CHECK(redis_buffer_build_commands(redis) == Code::Ok);
-    RED_CHECK(redis_write_builded_commands(redis) == Code::Ok);
-    redis_buffer_clear(redis);
-
-    RED_REQUIRE(recv() ==
+    auto msg1 =
         "*2\r\n$4\r\nAUTH\r\n$9\r\nsacrifice\r\n"
-        "*2\r\n$6\r\nSELECT\r\n$2\r\n42\r\n"_av_ascii);
+        "*2\r\n$6\r\nSELECT\r\n$2\r\n42\r\n"_av_ascii;
+
+    uint64_t out_len;
+
+    RED_CHECK(credis_transport_set_fd(redis, client_fd.fd()) == Code::Ok);
+    RED_CHECK(credis_transport_write(redis, msg1.bytes.data(), msg1.bytes.size(), &out_len) == Code::Ok);
+    RED_CHECK(out_len == msg1.bytes.size());
+    RED_REQUIRE(recv() == msg1);
+
     RED_REQUIRE(server_send("+OK\r\n+OK\r\n"_av));
+    RED_CHECK(credis_transport_read_response_ok(redis) == Code::Ok);
+    RED_CHECK(credis_transport_read_response_ok(redis) == Code::Ok);
 
-    RED_CHECK(redis_read_response_ok(redis) == Code::Ok);
-    RED_CHECK(redis_read_response_ok(redis) == Code::Ok);
-
-    RED_CHECK(redis_buffer_push_data(redis, "blabla"_av) == Code::Ok);
-    RED_CHECK(redis_buffer_push_data(redis, "bloblo"_av) == Code::Ok);
-    RED_CHECK(redis_buffer_build_cmd_set(redis) == Code::Ok);
-    RED_CHECK(redis_write_builded_commands(redis) == Code::Ok);
-    redis_buffer_clear(redis);
-
-    RED_REQUIRE(recv() ==
+    auto msg2 =
         "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
         "$12\r\nblablabloblo\r\n"
         "$2\r\nEX\r\n"
-        "$1\r\n2\r\n"_av_ascii);
-    RED_REQUIRE(server_send("+OK\r\n"_av));
+        "$1\r\n2\r\n"_av_ascii;
 
-    RED_CHECK(redis_read_response_ok(redis) == Code::Ok);
-    RED_CHECK(redis_read_response_ok(redis) == Code::WantRead);
+    RED_CHECK(credis_transport_write(redis, msg2.bytes.data(), msg2.bytes.size(), &out_len) == Code::Ok);
+    RED_CHECK(out_len == msg2.bytes.size());
+    RED_REQUIRE(recv() == msg2);
+
+    RED_REQUIRE(server_send("+OK\r\n"_av));
+    RED_CHECK(credis_transport_read_response_ok(redis) == Code::Ok);
+    RED_CHECK(credis_transport_read_response_ok(redis) == Code::WantRead);
 
     RED_REQUIRE(server_send("+ERR\r\n"_av));
-    RED_CHECK(redis_read_response_ok(redis) == Code::UnknownResponse);
-    RED_CHECK(redis_get_last_error_zmessage(redis) == "+ERR\r"_av_ascii);
+    RED_CHECK(credis_transport_read_response_ok(redis) == Code::UnknownResponse);
+    RED_CHECK(credis_transport_get_last_error_zmessage(redis) == "+ERR\r"_av_ascii);
 
-    redis_delete(redis);
+    credis_transport_delete(redis);
 }

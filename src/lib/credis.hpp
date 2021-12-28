@@ -27,11 +27,103 @@ Author(s): Proxies Team
 extern "C"
 {
     REDEMPTION_LIB_EXPORT
-    char const* redis_version();
+    char const* credis_version();
 
-    struct RedemptionRedis;
 
-    enum class [[nodiscard]] RedemptionRedisCode : uint8_t
+    struct CRedisBuffer;
+    //@{
+    REDEMPTION_LIB_EXPORT
+    CRedisBuffer* credis_buffer_new(std::size_t reserved_prefix,
+                                    std::size_t reserved_suffix,
+                                    std::size_t start_capacity);
+
+    REDEMPTION_LIB_EXPORT
+    void credis_buffer_delete(CRedisBuffer* buffer);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_reset(CRedisBuffer* buffer,
+                            std::size_t reserved_prefix,
+                            std::size_t reserved_suffix,
+                            std::size_t start_capacity);
+
+    REDEMPTION_LIB_EXPORT
+    char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t len);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t len);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_cmd_header(CRedisBuffer* buffer, unsigned nargs);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_i64_arg(CRedisBuffer* buffer, int64_t n);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_u64_arg(CRedisBuffer* buffer, uint64_t n);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_string_arg(CRedisBuffer* buffer,
+                                      char const* value, uint64_t len);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_null_arg(CRedisBuffer* buffer);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint64_t len);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_arg_separator(CRedisBuffer* buffer);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_raw_data(CRedisBuffer* buffer,
+                                    char const* value, uint64_t len);
+
+    REDEMPTION_LIB_EXPORT
+    void credis_buffer_clear(CRedisBuffer* buffer);
+
+    REDEMPTION_LIB_EXPORT
+    void credis_buffer_free(CRedisBuffer* buffer);
+
+    REDEMPTION_LIB_EXPORT
+    char* credis_buffer_get_data(CRedisBuffer* buffer, uint64_t* output_len);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_cmd_auth(CRedisBuffer* buffer, char const* password);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_buffer_push_cmd_select_db(CRedisBuffer* buffer, unsigned db);
+
+    REDEMPTION_LIB_EXPORT
+    char* credis_buffer_build_with_prefix_and_suffix(
+        CRedisBuffer* buffer,
+        char const* prefix, uint64_t prefix_len,
+        char const* suffix, uint64_t suffix_len,
+        uint64_t* output_len);
+    //@}
+
+
+    struct CRedisCmdSet;
+    //@{
+    REDEMPTION_LIB_EXPORT
+    CRedisCmdSet* credis_cmd_set_new(char const* key_name,
+                                     unsigned expiration_delay,
+                                     std::size_t start_capacity);
+
+    REDEMPTION_LIB_EXPORT
+    void credis_cmd_set_delete(CRedisCmdSet* cmd);
+
+    REDEMPTION_LIB_EXPORT
+    CRedisBuffer* credis_cmd_set_get_buffer(CRedisCmdSet* cmd);
+
+    REDEMPTION_LIB_EXPORT
+    int credis_cmd_set_free_buffer(CRedisCmdSet* cmd, std::size_t start_capacity);
+
+    REDEMPTION_LIB_EXPORT
+    char* credis_cmd_set_build_command(CRedisCmdSet* cmd, uint64_t* output_len);
+    //@}
+
+
+    enum class [[nodiscard]] CRedisTransportCode : int
     {
         // from RedisIOCode
         //@{
@@ -47,90 +139,48 @@ extern "C"
         //@}
 
         InvalidFd,
-        MallocError,
         UnknownError,
     };
 
 
-    // Resource
+    struct CRedisTransport;
     //@{
     /// \return nullptr when error
     REDEMPTION_LIB_EXPORT
-    RedemptionRedis* redis_new(char const* key_name,
-                               unsigned expiration_delay);
+    CRedisTransport* credis_transport_new();
 
     REDEMPTION_LIB_EXPORT
-    void redis_delete(RedemptionRedis* redis);
-    //@}
-
-
-    // Error
-    //@{
-    REDEMPTION_LIB_EXPORT
-    char const* redis_get_last_error_message(RedemptionRedis* redis);
-    //@}
-
-
-    // Buffer
-    //@{
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_buffer_push_cmd_auth(RedemptionRedis* redis,
-                                                   char const* password);
+    void credis_transport_delete(CRedisTransport* redis);
 
     REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_buffer_push_cmd_select_db(RedemptionRedis* redis,
-                                                        unsigned db);
+    char const* credis_transport_get_last_error_message(CRedisTransport* redis);
 
     REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_buffer_build_commands(RedemptionRedis* redis);
+    CRedisTransportCode credis_transport_set_fd(CRedisTransport* redis, int fd);
 
     REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_buffer_push_data(RedemptionRedis* redis,
+    CRedisTransportCode credis_transport_enable_tls(CRedisTransport* redis,
+                                                    char const* ca_cert_file,
+                                                    char const* cert_file,
+                                                    char const* key_file);
+
+    REDEMPTION_LIB_EXPORT
+    CRedisTransportCode credis_transport_ssl_connect(CRedisTransport* redis);
+
+    REDEMPTION_LIB_EXPORT
+    CRedisTransportCode credis_transport_read(CRedisTransport* redis,
+                                              uint8_t* buffer,
+                                              uint64_t len,
+                                              uint64_t* output_len);
+
+    REDEMPTION_LIB_EXPORT
+    CRedisTransportCode credis_transport_write(CRedisTransport* redis,
                                                uint8_t const* buffer,
-                                               uint64_t len);
+                                               uint64_t len,
+                                               uint64_t* output_len);
 
     REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_buffer_build_cmd_set(RedemptionRedis* redis);
-
-    REDEMPTION_LIB_EXPORT
-    uint8_t const* redis_buffer_get_current_data(RedemptionRedis* redis,
-                                                 uint64_t* output_len);
-
-    REDEMPTION_LIB_EXPORT
-    void redis_buffer_clear(RedemptionRedis* redis);
+    CRedisTransportCode credis_transport_read_response_ok(CRedisTransport* redis);
     //@}
 
-
-    // read / write
-    //@{
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_set_fd(RedemptionRedis* redis, int fd);
-
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_enable_tls(RedemptionRedis* redis,
-                                         char const* ca_cert_file,
-                                         char const* cert_file,
-                                         char const* key_file);
-
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_ssl_connect(RedemptionRedis* redis);
-
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_read(RedemptionRedis* redis,
-                                   uint8_t* buffer,
-                                   uint64_t len,
-                                   uint64_t* output_len);
-
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_write(RedemptionRedis* redis,
-                                    uint8_t const* buffer,
-                                    uint64_t len,
-                                    uint64_t* output_len);
-
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_write_builded_commands(RedemptionRedis* redis);
-
-    REDEMPTION_LIB_EXPORT
-    RedemptionRedisCode redis_read_response_ok(RedemptionRedis* redis);
-    //@}
 }
