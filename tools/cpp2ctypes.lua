@@ -25,6 +25,11 @@ typemap = {
     ['uint16_t']='c_uint16',
     ['uint32_t']='c_uint32',
     ['uint64_t']='c_uint64',
+    ['size_t']='c_size_t',
+    ['ssize_t']='c_ssize_t',
+    ['float']='c_float',
+    ['double']='c_double',
+    ['long double']='c_longdouble',
 }
 
 basetype = {POINTER=true}
@@ -33,9 +38,14 @@ for _,v in pairs(typemap) do
 end
 typemap['void'] = 'None'
 typemap['uint8_t*'] = 'POINTER(c_char)'
-for _,v in pairs({'int16_t', 'int32_t', 'int64_t', 'uint16_t', 'uint32_t', 'uint64_t', }) do
-    typemap[v .. '*'] = 'POINTER(c_' .. v:sub(1, -3) .. ')'
-end
+typemap['uint16_t*'] = 'POINTER(c_uint16_t)'
+typemap['uint32_t*'] = 'POINTER(c_uint32_t)'
+typemap['uint64_t*'] = 'POINTER(c_uint64_t)'
+typemap['int16_t*'] = 'POINTER(c_int16_t)'
+typemap['int32_t*'] = 'POINTER(c_int32_t)'
+typemap['int64_t*'] = 'POINTER(c_int64_t)'
+typemap['size_t*'] = 'POINTER(c_size_t)'
+typemap['ssize_t*'] = 'POINTER(c_ssize_t)'
 
 imported = {}
 lines = {}
@@ -128,7 +138,9 @@ defs={
 local pcommun = [=[
 
 id          <- [_a-zA-Z0-9]+
-type        <- {| ('const' ws)? {'unsigned '? id ' long'?} (ws 'const')? S {'*'?} S |}
+type        <- {| ('const' ws)? 'std::'? {native_type / id} (ws 'const')? S {'*'?} S |}
+scalar_w1   <- 'char' / 'short' / 'int' / 'long' / 'double'
+native_type <- 'unsigned ' scalar_w1 ' long'? / 'long '+ 'double'?
 
 ws          <- %s+
 S           <- %s*
