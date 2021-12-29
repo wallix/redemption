@@ -111,6 +111,17 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
         buffer, "preprepre", 9, "post", 4, &len);
     RED_CHECK(chars_view(data, len) == chars_view(nullptr));
 
+    data = credis_buffer_realloc(buffer, nullptr, 3);
+    *data++ = 'x';
+    data = credis_buffer_realloc(buffer, data, 3);
+    *data++ = 'y';
+    *data++ = 'X';
+    *data++ = 'Y';
+    data = credis_buffer_realloc(buffer, data, 1);
+    *data++ = 'z';
+    data = credis_buffer_realloc(buffer, data, 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "abxyXYz"_av_ascii);
+
     credis_buffer_delete(buffer);
 }
 

@@ -101,7 +101,7 @@ struct CRedisBuffer
         auto value_s = int_to_decimal_chars(value);
 
         auto n = 3 + value_s.size();
-        auto writer = extend_of(n);
+        auto writer = use(n);
         writer.push('*');
         writer.push(value_s);
         writer.push("\r\n"_av);
@@ -122,7 +122,7 @@ struct CRedisBuffer
         auto value_len_s = int_to_decimal_chars(value.size());
 
         auto n = 5 + value.size() + value_len_s.size();
-        auto writer = extend_of(n);
+        auto writer = use(n);
         writer.push('$');
         writer.push(value_len_s);
         writer.push("\r\n"_av);
@@ -133,16 +133,16 @@ struct CRedisBuffer
     void push_arg(std::nullptr_t)
     {
         auto cmd = "$-1\r\n"_av;
-        auto writer = extend_of(cmd.size());
+        auto writer = use(cmd.size());
         writer.push(cmd);
     }
 
-    void push_arg_size(std::size_t value)
+    void push_arg_size(uint32_t value)
     {
         auto value_s = int_to_decimal_chars(value);
 
         auto n = 3 + value_s.size();
-        auto writer = extend_of(n);
+        auto writer = use(n);
         writer.push('$');
         writer.push(value_s);
         writer.push("\r\n"_av);
@@ -150,12 +150,12 @@ struct CRedisBuffer
 
     void push_arg_separator()
     {
-        extend_of(2).push("\r\n"_av);
+        use(2).push("\r\n"_av);
     }
 
     void push_raw_data(bytes_view value)
     {
-        extend_of(value.size()).push(value);
+        use(value.size()).push(value);
     }
 
     bool is_valid_prefix(bytes_view prefix) const noexcept
@@ -183,12 +183,17 @@ struct CRedisBuffer
         return {buf.data() + reserved_prefix, used_len};
     }
 
+    std::size_t capacity() const noexcept
+    {
+        return buf.size() - (reserved_prefix + reserved_suffix);
+    }
+
     writable_bytes_view buffer() noexcept
     {
         return {buf.data() + reserved_prefix, used_len};
     }
 
-    Writer extend_of(std::size_t n)
+    Writer use(std::size_t n)
     {
         auto capacity = n + used_len + reserved_prefix + reserved_suffix;
         buf.grow(grow_size(capacity), used_len, reserved_prefix);
@@ -200,7 +205,7 @@ struct CRedisBuffer
 
     void force_buffer_size(std::size_t n) noexcept
     {
-        assert(n <= used_len);
+        assert(n <= capacity());
         used_len = n;
     }
 
@@ -258,7 +263,7 @@ namespace
     void credis_buffer_push_avs(CRedisBuffer& buffer, AV... av)
     {
         std::size_t n = (... + av.size());
-        auto writer = buffer.extend_of(n);
+        auto writer = buffer.use(n);
         (writer.push(av), ...);
     }
 } // anonymous namespace
@@ -308,7 +313,26 @@ char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t len)
 {
     SCOPED_TRACE;
 
-    return char_ptr_cast(buffer->extend_of(len).p);
+    return char_ptr_cast(buffer->use(len).p);
+}
+
+REDEMPTION_LIB_EXPORT
+char* credis_buffer_realloc(CRedisBuffer* buffer, char* endpos, std::size_t fragment_len)
+{
+    SCOPED_TRACE;
+
+    if (endpos) {
+        std::size_t used = checked_int(endpos - buffer->buffer().as_charp());
+        buffer->force_buffer_size(used);
+        if (buffer->capacity() >= used + fragment_len) {
+            return endpos;
+        }
+    }
+
+    auto oldlen = buffer->buffer().size();
+    auto* p = buffer->use(fragment_len).p;
+    buffer->force_buffer_size(oldlen);
+    return char_ptr_cast(p);
 }
 
 REDEMPTION_LIB_EXPORT
@@ -349,7 +373,7 @@ int credis_buffer_push_u64_arg(CRedisBuffer* buffer, uint64_t n)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_push_string_arg(CRedisBuffer* buffer,
-                                  char const* value, uint64_t len)
+                                  char const* value, uint32_t len)
 {
     SCOPED_TRACE;
 
@@ -365,7 +389,7 @@ int credis_buffer_push_null_arg(CRedisBuffer* buffer)
 }
 
 REDEMPTION_LIB_EXPORT
-int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint64_t len)
+int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint32_t len)
 {
     SCOPED_TRACE;
 
@@ -382,7 +406,7 @@ int credis_buffer_push_arg_separator(CRedisBuffer* buffer)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_push_raw_data(CRedisBuffer* buffer,
-                                char const* value, uint64_t len)
+                                char const* value, std::size_t len)
 {
     SCOPED_TRACE;
 
@@ -406,7 +430,7 @@ void credis_buffer_free(CRedisBuffer* buffer)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_get_data(CRedisBuffer* buffer, uint64_t* output_len)
+char* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_len)
 {
     SCOPED_TRACE;
 
@@ -452,9 +476,9 @@ int credis_buffer_push_cmd_select_db(CRedisBuffer* buffer, unsigned db)
 REDEMPTION_LIB_EXPORT
 char* credis_buffer_build_with_prefix_and_suffix(
     CRedisBuffer* buffer,
-    char const* prefix, uint64_t prefix_len,
-    char const* suffix, uint64_t suffix_len,
-    uint64_t* output_len)
+    char const* prefix, std::size_t prefix_len,
+    char const* suffix, std::size_t suffix_len,
+    std::size_t* output_len)
 {
     SCOPED_TRACE;
 
@@ -621,7 +645,7 @@ int credis_cmd_set_free_buffer(CRedisCmdSet* cmd, std::size_t start_capacity)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_cmd_set_build_command(CRedisCmdSet* cmd, uint64_t* output_len)
+char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_len)
 {
     SCOPED_TRACE;
 
@@ -750,8 +774,8 @@ CRedisTransportCode credis_transport_ssl_connect(CRedisTransport* redis)
 REDEMPTION_LIB_EXPORT
 CRedisTransportCode credis_transport_read(CRedisTransport* redis,
                                           uint8_t* buffer,
-                                          uint64_t len,
-                                          uint64_t* output_len)
+                                          std::size_t len,
+                                          std::size_t* output_len)
 {
     SCOPED_TRACE;
 
@@ -763,8 +787,8 @@ CRedisTransportCode credis_transport_read(CRedisTransport* redis,
 REDEMPTION_LIB_EXPORT
 CRedisTransportCode credis_transport_write(CRedisTransport* redis,
                                            uint8_t const* buffer,
-                                           uint64_t len,
-                                           uint64_t* output_len)
+                                           std::size_t len,
+                                           std::size_t* output_len)
 {
     SCOPED_TRACE;
 

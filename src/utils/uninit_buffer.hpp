@@ -59,7 +59,7 @@ struct UninitDynamicBuffer
         return p;
     }
 
-    std::size_t size() noexcept
+    std::size_t size() const noexcept
     {
         return len;
     }
