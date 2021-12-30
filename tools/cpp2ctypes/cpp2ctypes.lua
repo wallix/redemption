@@ -318,11 +318,28 @@ if not gen_class then
 
     print(table.concat(lines, '\n'))
 else
+    local common_prefix = function(s1, s2, maxlen)
+        for i=1,maxlen do
+            if s1:byte(i) ~= s2:byte(i) then
+                return i-1
+            end
+        end
+        return maxlen
+    end
+
     strings = {}
     for _,classname in ipairs(classes) do
         strings[#strings+1] = 'class ' .. classname .. ':\n'
-        for _,func in ipairs(functions_by_classes[classname]) do
-            strings[#strings+1] = '    def ' .. (func[4] or func[1]) .. '(self'
+
+        local functions = functions_by_classes[classname]
+        local funcname = functions[1][1]
+        local commonlen = #funcname
+        for i=2,#functions do
+            commonlen = common_prefix(funcname, functions[i][1], commonlen)
+        end
+
+        for _,func in ipairs(functions) do
+            strings[#strings+1] = '    def ' .. (func[4] or func[1]:sub(commonlen+1)) .. '(self'
 
             -- func parameters
             for _,param in ipairs(func[3]) do

@@ -7,7 +7,7 @@ class MyType:
     def __del__(self) -> None:
         lib.my_type_delete(self._ctx)
 
-    def my_type_get(self, default_value:int) -> int:
+    def get(self, default_value:int) -> int:
         return lib.my_type_get(self._ctx, default_value)
 
 
