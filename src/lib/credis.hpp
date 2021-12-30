@@ -46,18 +46,16 @@ extern "C"
                             std::size_t reserved_suffix,
                             std::size_t start_capacity);
 
-    /// Alloc and use \p len bytes
+    /// Allocate and use \p len bytes.
     REDEMPTION_LIB_EXPORT
     char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t len);
 
-    /// Resize the buffer so as not to exceed \p endpos and allocate
-    /// additional \p len.
-    /// When \p endpos is nullptr the size of the buffer is unchanged.
-    /// The last call must indicate the final size of the buffer with
-    /// `credis_buffer_realloc(buffer, endpos_not_nullptr, 0)` or
-    /// `credis_buffer_shrink_to()`
+    /// Allocate and use \p len bytes from position \p endpos.
+    /// When \p endpos is nullptr, this function is equivalent to
+    /// \c credis_buffer_alloc_fragment()
+    /// \post Data after \p endpos are unspecified.
     REDEMPTION_LIB_EXPORT
-    char* credis_buffer_realloc(CRedisBuffer* buffer, char* endpos, std::size_t fragment_len);
+    char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t len);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t len);
