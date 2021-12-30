@@ -44,8 +44,16 @@ enable = boolean(default=False)
 
 ssh_port = integer(min=0, default=22)
 
+# Login to be used for SSH tunneling.
+# Can defined as a Scenario Account in form 'account_name@domain_name[@device_name]'.
+# If Scenario Account resolution succeeds the login associated with this account will be used;
+# otherwise ssh_login will be used as is.
 ssh_login = string(default='')
 
+# Password to be used for SSH tunneling.
+# Can defined as a Scenario Account in form 'account_name@domain_name[@device_name]'.
+# If Scenario Account resolution succeeds the password associated with this account will be used;
+# otherwise ssh_password will be used as is.
 ssh_password = string(default='')
 
 #_advanced
