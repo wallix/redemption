@@ -329,7 +329,7 @@ else
 
     strings = {}
     for _,classname in ipairs(classes) do
-        strings[#strings+1] = 'class ' .. classname .. ':\n'
+        strings[#strings+1] = 'class ' .. classname .. ":\n    __slot__ = ('_ctx')\n\n"
 
         local functions = functions_by_classes[classname]
         local funcname = functions[1][1]

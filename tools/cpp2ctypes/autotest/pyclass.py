@@ -1,4 +1,6 @@
 class MyType:
+    __slot__ = ('_ctx')
+
     def __init__(self, x:int) -> None:
         self._ctx = lib.my_type_new(x)
         if not self._ctx:
