@@ -46,19 +46,19 @@ extern "C"
                             std::size_t reserved_suffix,
                             std::size_t start_capacity);
 
-    /// Allocate and use \p len bytes.
+    /// Allocate and use \p length bytes.
     REDEMPTION_LIB_EXPORT
-    char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t len);
+    char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length);
 
-    /// Allocate and use \p len bytes from position \p endpos.
+    /// Allocate and use \p length bytes from position \p endpos.
     /// When \p endpos is nullptr, this function is equivalent to
     /// \c credis_buffer_alloc_fragment()
     /// \post Data after \p endpos are unspecified.
     REDEMPTION_LIB_EXPORT
-    char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t len);
+    char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t length);
 
     REDEMPTION_LIB_EXPORT
-    int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t len);
+    int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t length);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_cmd_header(CRedisBuffer* buffer, unsigned nargs);
@@ -71,20 +71,20 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_string_arg(CRedisBuffer* buffer,
-                                      char const* value, uint32_t len);
+                                      char const* value, uint32_t length);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_null_arg(CRedisBuffer* buffer);
 
     REDEMPTION_LIB_EXPORT
-    int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint32_t len);
+    int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint32_t length);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_arg_separator(CRedisBuffer* buffer);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_raw_data(CRedisBuffer* buffer,
-                                    char const* value, std::size_t len);
+                                    char const* value, std::size_t length);
 
     REDEMPTION_LIB_EXPORT
     void credis_buffer_clear(CRedisBuffer* buffer);
@@ -93,7 +93,7 @@ extern "C"
     void credis_buffer_free(CRedisBuffer* buffer);
 
     REDEMPTION_LIB_EXPORT
-    char* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_len);
+    char* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_length);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_cmd_auth(CRedisBuffer* buffer, char const* password);
@@ -104,9 +104,9 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char* credis_buffer_build_with_prefix_and_suffix(
         CRedisBuffer* buffer,
-        char const* prefix, std::size_t prefix_len,
-        char const* suffix, std::size_t suffix_len,
-        std::size_t* output_len);
+        char const* prefix, std::size_t prefix_length,
+        char const* suffix, std::size_t suffix_length,
+        std::size_t* output_length);
     //@}
 
 
@@ -127,7 +127,7 @@ extern "C"
     int credis_cmd_set_free_buffer(CRedisCmdSet* cmd, std::size_t start_capacity);
 
     REDEMPTION_LIB_EXPORT
-    char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_len);
+    char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_length);
     //@}
 
 
@@ -178,14 +178,14 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     CRedisTransportCode credis_transport_read(CRedisTransport* redis,
                                               uint8_t* buffer,
-                                              std::size_t len,
-                                              std::size_t* output_len);
+                                              std::size_t length,
+                                              std::size_t* output_length);
 
     REDEMPTION_LIB_EXPORT
     CRedisTransportCode credis_transport_write(CRedisTransport* redis,
                                                uint8_t const* buffer,
-                                               std::size_t len,
-                                               std::size_t* output_len);
+                                               std::size_t length,
+                                               std::size_t* output_length);
 
     REDEMPTION_LIB_EXPORT
     CRedisTransportCode credis_transport_read_response_ok(CRedisTransport* redis);

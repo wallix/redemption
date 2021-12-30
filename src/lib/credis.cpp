@@ -309,15 +309,15 @@ int credis_buffer_reset(CRedisBuffer* buffer,
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t len)
+char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
 {
     SCOPED_TRACE;
 
-    return char_ptr_cast(buffer->use(len).p);
+    return char_ptr_cast(buffer->use(length).p);
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t len)
+char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t length)
 {
     SCOPED_TRACE;
 
@@ -326,16 +326,16 @@ char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t l
         buffer->force_buffer_size(used);
     }
 
-    return char_ptr_cast(buffer->use(len).p);
+    return char_ptr_cast(buffer->use(length).p);
 }
 
 REDEMPTION_LIB_EXPORT
-int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t len)
+int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t length)
 {
     SCOPED_TRACE;
 
-    if (len <= buffer->buffer().size()) {
-        buffer->force_buffer_size(len);
+    if (length <= buffer->buffer().size()) {
+        buffer->force_buffer_size(length);
         return 0;
     }
     return -1;
@@ -367,11 +367,11 @@ int credis_buffer_push_u64_arg(CRedisBuffer* buffer, uint64_t n)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_push_string_arg(CRedisBuffer* buffer,
-                                  char const* value, uint32_t len)
+                                  char const* value, uint32_t length)
 {
     SCOPED_TRACE;
 
-    return CHECK_NOTHROW_INT_R(buffer->push_arg({value, len}));
+    return CHECK_NOTHROW_INT_R(buffer->push_arg({value, length}));
 }
 
 REDEMPTION_LIB_EXPORT
@@ -383,11 +383,11 @@ int credis_buffer_push_null_arg(CRedisBuffer* buffer)
 }
 
 REDEMPTION_LIB_EXPORT
-int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint32_t len)
+int credis_buffer_push_arg_size(CRedisBuffer* buffer, uint32_t length)
 {
     SCOPED_TRACE;
 
-    return CHECK_NOTHROW_INT_R(buffer->push_arg_size(len));
+    return CHECK_NOTHROW_INT_R(buffer->push_arg_size(length));
 }
 
 REDEMPTION_LIB_EXPORT
@@ -400,11 +400,11 @@ int credis_buffer_push_arg_separator(CRedisBuffer* buffer)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_push_raw_data(CRedisBuffer* buffer,
-                                char const* value, std::size_t len)
+                                char const* value, std::size_t length)
 {
     SCOPED_TRACE;
 
-    return CHECK_NOTHROW_INT_R(buffer->push_raw_data({value, len}));
+    return CHECK_NOTHROW_INT_R(buffer->push_raw_data({value, length}));
 }
 
 REDEMPTION_LIB_EXPORT
@@ -424,12 +424,12 @@ void credis_buffer_free(CRedisBuffer* buffer)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_len)
+char* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_length)
 {
     SCOPED_TRACE;
 
     auto av = buffer->buffer();
-    *output_len = av.size();
+    *output_length = av.size();
     return av.as_chars().data();
 }
 
@@ -470,22 +470,22 @@ int credis_buffer_push_cmd_select_db(CRedisBuffer* buffer, unsigned db)
 REDEMPTION_LIB_EXPORT
 char* credis_buffer_build_with_prefix_and_suffix(
     CRedisBuffer* buffer,
-    char const* prefix, std::size_t prefix_len,
-    char const* suffix, std::size_t suffix_len,
-    std::size_t* output_len)
+    char const* prefix, std::size_t prefix_length,
+    char const* suffix, std::size_t suffix_length,
+    std::size_t* output_length)
 {
     SCOPED_TRACE;
 
-    auto av_prefix = prefix ? bytes_view{prefix, prefix_len} : bytes_view{"", 0};
-    auto av_suffix = suffix ? bytes_view{suffix, suffix_len} : bytes_view{"", 0};
+    auto av_prefix = prefix ? bytes_view{prefix, prefix_length} : bytes_view{"", 0};
+    auto av_suffix = suffix ? bytes_view{suffix, suffix_length} : bytes_view{"", 0};
 
     if (buffer->is_valid_prefix(av_prefix) && buffer->is_valid_suffix(av_suffix)) {
         auto av = buffer->build_with_prefix_and_suffix(av_prefix, av_suffix);
-        *output_len = av.size();
+        *output_length = av.size();
         return av.as_chars().data();
     }
 
-    *output_len = 0;
+    *output_length = 0;
     return nullptr;
 }
 
@@ -639,7 +639,7 @@ int credis_cmd_set_free_buffer(CRedisCmdSet* cmd, std::size_t start_capacity)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_len)
+char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_length)
 {
     SCOPED_TRACE;
 
@@ -659,7 +659,7 @@ char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_len)
     p = av.end();
     p = push_data(p, cmd->suffix());
 
-    *output_len = checked_int(p - data);
+    *output_length = checked_int(p - data);
     return char_ptr_cast(data);
 }
 
@@ -768,26 +768,26 @@ CRedisTransportCode credis_transport_ssl_connect(CRedisTransport* redis)
 REDEMPTION_LIB_EXPORT
 CRedisTransportCode credis_transport_read(CRedisTransport* redis,
                                           uint8_t* buffer,
-                                          std::size_t len,
-                                          std::size_t* output_len)
+                                          std::size_t length,
+                                          std::size_t* output_length)
 {
     SCOPED_TRACE;
 
-    auto result = redis->writer.recv(writable_bytes_view{buffer, len});
-    *output_len = result.len;
+    auto result = redis->writer.recv(writable_bytes_view{buffer, length});
+    *output_length = result.len;
     return to_credis_code(result.code);
 }
 
 REDEMPTION_LIB_EXPORT
 CRedisTransportCode credis_transport_write(CRedisTransport* redis,
                                            uint8_t const* buffer,
-                                           std::size_t len,
-                                           std::size_t* output_len)
+                                           std::size_t length,
+                                           std::size_t* output_length)
 {
     SCOPED_TRACE;
 
-    auto result = redis->writer.send(bytes_view{buffer, len});
-    *output_len = result.len;
+    auto result = redis->writer.send(bytes_view{buffer, length});
+    *output_length = result.len;
     return to_credis_code(result.code);
 }
 
