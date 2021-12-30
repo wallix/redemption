@@ -326,11 +326,11 @@ else
 
             -- func parameters
             for _,param in ipairs(func[3]) do
-                strings[#strings+1] = ', ' .. param[2] .. ':' .. pytypemap[param[1]]
+                strings[#strings+1] = ', ' .. param[2] .. ':' .. (pytypemap[param[1]] or '')
             end
 
             -- result type
-            local resulttype = func[4] and 'None' or pytypemap[func[2]]
+            local resulttype = func[4] and 'None' or pytypemap[func[2]] or ''
             strings[#strings+1] = ') -> ' .. resulttype .. ':\n        '
 
             local isinit = (func[4] == '__init__')
