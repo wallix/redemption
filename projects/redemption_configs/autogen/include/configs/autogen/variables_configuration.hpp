@@ -3919,6 +3919,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { ModRdpUseFailureSimulationSocketTransport::Off };
     };
+    /// List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs <br/>
+    /// type: std::string <br/>
+    /// default: {} <br/>
+    struct debug::probe_client_addresses {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = std::string;
+        using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
 
     /// type: bool <br/>
     /// default: true <br/>
@@ -5785,6 +5796,7 @@ struct debug
 , cfg::debug::ffmpeg
 , cfg::debug::config
 , cfg::debug::mod_rdp_use_failure_simulation_socket_transport
+, cfg::debug::probe_client_addresses
 { static constexpr bool is_section = true; };
 
 struct remote_program

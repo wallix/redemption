@@ -95,6 +95,18 @@ struct static_string
         return *this;
     }
 
+    /// \return \c false when the input string is greater than \c max_capacity(), otherwise \c true.
+    bool try_assign(chars_view str) noexcept
+    {
+        if (str.size() <= N)
+        {
+            *this = bounded_array_view<char, 0, N>::assumed(str);
+            return true;
+        }
+
+        return false;
+    }
+
     template<class Builder>
     void delayed_build(Builder&& builder)
     {

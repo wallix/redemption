@@ -344,6 +344,7 @@ namespace cfg
         struct ffmpeg;
         struct config;
         struct mod_rdp_use_failure_simulation_socket_transport;
+        struct probe_client_addresses;
     };
 
     struct remote_program {

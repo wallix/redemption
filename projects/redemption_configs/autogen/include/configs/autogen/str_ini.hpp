@@ -1541,6 +1541,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #mod_rdp_use_failure_simulation_socket_transport = 0
 
+# List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs
+#_advanced
+#probe_client_addresses = 
+
 [remote_program]
 
 # value: 0 or 1
