@@ -25,6 +25,8 @@
 
 #include "utils/log.hpp"
 #include "utils/select.hpp"
+#include "utils/static_string.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/chars_to_int.hpp"
 
@@ -959,4 +961,32 @@ bool get_local_ip_address(IpAddress& client_address, int fd) noexcept
     }
 
     return true;
+}
+
+bool find_probe_client(std::string_view probe_client_addresses,
+                       zstring_view source_ip,
+                       bool is_ipv6)
+{
+    if (!probe_client_addresses.empty())
+    {
+        sockaddr_storage source_ss;
+
+        if (get_in_addr_from_ip(source_ss, source_ip.c_str(), is_ipv6))
+        {
+            static_string<INET6_ADDRSTRLEN> probe_ip_buf;
+
+            for (chars_view addr : split_with(probe_client_addresses, ','))
+            {
+                if (probe_ip_buf.try_assign(addr)
+                    && compare_binary_ip(source_ss,
+                                         probe_ip_buf.c_str(),
+                                         is_ipv6))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }

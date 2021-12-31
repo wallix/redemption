@@ -38,7 +38,7 @@ chars_view credis_buffer_get_data_view(CRedisBuffer* buffer)
     uint64_t len;
     char const* data = credis_buffer_get_data(buffer, &len);
     return chars_view{data, len};
-};
+}
 
 chars_view credis_transport_get_last_error_zmessage(CRedisTransport* redis)
 {
@@ -245,6 +245,9 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
     RED_CHECK(credis_transport_read_response_ok(redis) == Code::WantRead);
 
     RED_REQUIRE(server_send("+ERR\r\n"_av));
+
+    // Some case, buffer is not sent when we try to read
+    std::this_thread::sleep_for(50ms);
     RED_CHECK(credis_transport_read_response_ok(redis) == Code::UnknownResponse);
     RED_CHECK(credis_transport_get_last_error_zmessage(redis) == "+ERR\r"_av_ascii);
 

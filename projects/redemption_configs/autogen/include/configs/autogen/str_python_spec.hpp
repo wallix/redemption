@@ -1326,6 +1326,11 @@ config = boolean(default=True)
 #_hidden
 mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 
+# List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs
+# (values are comma-separated)
+#_advanced
+probe_client_addresses = string(default='')
+
 [remote_program]
 
 allow_resize_hosted_desktop = boolean(default=True)

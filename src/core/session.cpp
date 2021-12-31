@@ -1321,7 +1321,7 @@ private:
     }
 
 public:
-    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool source_is_localhost)
+    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool prevent_early_log)
     : ini(ini)
     , pid_file(pid_file)
     {
@@ -1379,7 +1379,7 @@ public:
                     this->ini.get<cfg::globals::authfile>().c_str(),
                     this->ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
                     this->ini.get<cfg::all_target_mod::connection_retry_count>(),
-                    source_is_localhost)
+                    prevent_early_log)
                 ) {
                     auth_sck = client_sck.release();
 
@@ -1418,8 +1418,8 @@ public:
         if (auth_sck == INVALID_SOCKET
          && (!front.is_up_and_running() || !ini.get<cfg::globals::enable_close_box>())
         ) {
-            // silent message for localhost for watchdog
-            if (!source_is_localhost) {
+            // silent message for localhost or probe IPs for watchdog
+            if (!prevent_early_log) {
                 log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
             }
 
@@ -1505,13 +1505,10 @@ template<class SocketType, class... Args>
 void session_start_sck(
     SocketTransport::Name name, unique_fd&& sck,
     MonotonicTimePoint sck_start_time, Inifile& ini,
-    PidFile& pid_file, Font const& font, Args&&... args)
+    PidFile& pid_file, Font const& font, bool prevent_early_log,
+    Args&&... args)
 {
-    using namespace std::string_view_literals;
-    const bool source_is_localhost = (ini.get<cfg::globals::host>() == "127.0.0.1"sv
-                                   || ini.get<cfg::globals::host>() == "::1"sv);
-
-    auto const watchdog_verbosity = source_is_localhost
+    auto const watchdog_verbosity = prevent_early_log
         ? SocketTransport::Verbose::watchdog
         : SocketTransport::Verbose();
     auto const sck_verbosity = safe_cast<SocketTransport::Verbose>(
@@ -1525,29 +1522,29 @@ void session_start_sck(
             ini.get<cfg::client::recv_timeout>(),
             static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
         ),
-        sck_start_time, ini, pid_file, font, source_is_localhost
+        sck_start_time, ini, pid_file, font, prevent_early_log
     );
 }
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
+void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool prevent_early_log)
 {
     session_start_sck<FinalSocketTransport>(
-        "RDP Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font);
+        "RDP Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font, prevent_early_log);
 }
 
-void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
+void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool prevent_early_log)
 {
     session_start_sck<WsTransport>(
-        "RDP Ws Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font,
+        "RDP Ws Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font, prevent_early_log,
         WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
+void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool prevent_early_log)
 {
     session_start_sck<WsTransport>(
-        "RDP Wss Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font,
+        "RDP Wss Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font, prevent_early_log,
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),

@@ -864,6 +864,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), spec::type_<bool>(), names{"config"}, set(2));
 
         W.member(hidden_in_gui, no_sesman, L, type_<ModRdpUseFailureSimulationSocketTransport>(), names{"mod_rdp_use_failure_simulation_socket_transport"}, set(ModRdpUseFailureSimulationSocketTransport::Off));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<types::list<std::string>>(), names{"probe_client_addresses"}, desc{"List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs"});
     });
 
     W.section("remote_program", [&]

@@ -242,6 +242,14 @@ namespace
             ini.set<cfg::debug::config>(debug_config);
             configuration_load(ini.configuration_holder(), config_filename.c_str());
 
+            bool prevent_early_log = (source_is_localhost
+                                      || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
+                                                           source_ip,
+                                                           is_ipv6));
+            {
+                prevent_early_log = true;
+            }
+
             if (ini.get<cfg::debug::session>()){
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
             }
@@ -258,7 +266,8 @@ namespace
                 log_proxy::set_psid(ini.get<cfg::context::psid>());
             }
 
-            if (!source_is_localhost) {
+            if (!prevent_early_log)
+            {
                 log_proxy::incoming_connection(source_ip.to_sv(), source_port);
             }
 
@@ -296,11 +305,17 @@ namespace
                 target_ip = target_ip_port.ip_address();
             }
 
-            if (!source_is_localhost) {
-                // do not log early messages for localhost (to avoid tracing in watchdog)
+            if (!prevent_early_log)
+            {
+                /* do not log early messages for localhost or
+                   probe IPs (to avoid tracing in watchdog) */
                 LOG(LOG_INFO, "Redemption " VERSION);
-                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d",
-                    source_ip, source_port, target_ip, target_port);
+                LOG(LOG_INFO,
+                    "src=%s sport=%d dst=%s dport=%d",
+                    source_ip,
+                    source_port,
+                    target_ip,
+                    target_port);
             }
 
             char real_target_ip_buff[256];
@@ -379,11 +394,15 @@ namespace
                 }
 
                 // Launch session
-                if (!source_is_localhost){
-                    // do not log early messages for localhost (to avoid tracing in watchdog)
+                if (!prevent_early_log)
+                {
+                    /* do not log early messages for localhost
+                       or probe IPs (to avoid tracing in watchdog) */
                     LOG(LOG_INFO,
                         "New session on %d (pid=%d) from %s to %s",
-                        sck, child_pid, source_ip,
+                        sck,
+                        child_pid,
+                        source_ip,
                         real_target_ip.empty() ? target_ip : real_target_ip);
                 }
 
@@ -402,16 +421,31 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, start_time, ini, pid_file, font);
+                        session_start_ws(unique_fd{sck},
+                                         start_time,
+                                         ini,
+                                         pid_file,
+                                         font,
+                                         prevent_early_log);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, start_time, ini, pid_file, font);
+                        session_start_wss(unique_fd{sck},
+                                          start_time,
+                                          ini,
+                                          pid_file,
+                                          font,
+                                          prevent_early_log);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, start_time, ini, pid_file, font);
+                        session_start_tls(unique_fd{sck},
+                                          start_time,
+                                          ini,
+                                          pid_file,
+                                          font,
+                                          prevent_early_log);
                         break;
                 }
 

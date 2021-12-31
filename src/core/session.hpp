@@ -27,6 +27,23 @@ class Inifile;
 class PidFile;
 class Font;
 
-void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font);
-void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font);
-void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font);
+void session_start_tls(unique_fd sck,
+                       MonotonicTimePoint sck_start_time,
+                       Inifile& ini,
+                       PidFile& pid_file,
+                       Font const& font,
+                       bool prevent_early_log);
+
+void session_start_ws(unique_fd sck,
+                      MonotonicTimePoint sck_start_time,
+                      Inifile& ini,
+                      PidFile& pid_file,
+                      Font const& font,
+                      bool prevent_early_log);
+
+void session_start_wss(unique_fd sck,
+                       MonotonicTimePoint sck_start_time,
+                       Inifile& ini,
+                       PidFile& pid_file,
+                       Font const& font,
+                       bool prevent_early_log);

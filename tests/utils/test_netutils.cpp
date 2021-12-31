@@ -146,6 +146,80 @@ RED_AUTO_TEST_CASE(Test_compare_binary_ipv6)
                                    ""));
 }
 
+RED_AUTO_TEST_CASE(Test_find_probe_client_ipv4)
+{
+    RED_CHECK(find_probe_client(",,0.0.0.0,,"sv,
+                                "0.0.0.0"_zv,
+                                false));
+    RED_CHECK(find_probe_client("10.20.30.40,1.2.3.4"sv,
+                                "10.20.30.40"_zv,
+                                false));
+    RED_CHECK(find_probe_client("127.0.0.1,,25.50.75.100"sv,
+                                "25.50.75.100"_zv,
+                                false));
+    RED_CHECK(find_probe_client("20.30.40.50,60.70.80.90,99.72.43.13"sv,
+                                "99.72.43.13"_zv,
+                                false));
+    RED_CHECK(find_probe_client("255.255.255.255"sv,
+                                "255.255.255.255"_zv,
+                                false));
+
+
+
+    RED_CHECK(!find_probe_client("5.6.7.8"sv,
+                                 "1.2.3.4"_zv,
+                                 false));
+    RED_CHECK(!find_probe_client("abcdef,127.0.0.2,,1.2.3.4"sv,
+                                 "127.0.0.1"_zv,
+                                 false));
+    RED_CHECK(!find_probe_client("40.50.60.70"sv,
+                                 "70.60.50.40"_zv,
+                                 false));
+    RED_CHECK(!find_probe_client("00000000000000000000000000000000000000000000000000,,,,,"sv,
+                                 "100.75.50.20"_zv,
+                                 false));
+    RED_CHECK(!find_probe_client(""sv,
+                                 "0.10.100.0"_zv,
+                                 false));
+}
+
+RED_AUTO_TEST_CASE(Test_find_probe_client_ipv6)
+{
+    RED_CHECK(find_probe_client("fe80::,::1"sv,
+                                "0000:0000:0000:0000:0000:0000:0000:0001"_zv,
+                                true));
+    RED_CHECK(find_probe_client("2001:abcd::1234"sv,
+                                "2001:abcd:0000:0000::1234"_zv,
+                                true));
+    RED_CHECK(find_probe_client("2a0d:0356:0888:abcd:d999:957e:0333:012a"sv,
+                                "2a0d:0356:0888:abcd:d999:957e:0333:012a"_zv,
+                                true));
+    RED_CHECK(find_probe_client(",::ffff:255.255.255.255,2001:abcd::"sv,
+                                "::ffff:255.255.255.255"_zv,
+                                true));
+    RED_CHECK(find_probe_client("2a0d:5d40:0888:4176:d999:e759:0962:019f"sv,
+                                "2a0d:5d40:888:4176:d999:e759:962:19f"_zv,
+                                true));
+
+
+
+    RED_CHECK(!find_probe_client("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,,,,,"sv,
+                                 "::ffff:127.0.0.1"_zv,
+                                 true));
+    RED_CHECK(!find_probe_client("2001:0db8:3c4d:0015:0000:0000:1a2f:1a2b",
+                                 "0000:0000:0000:0000:0000:0000:0000:0000"_zv,
+                                 true));
+    RED_CHECK(!find_probe_client("1234,2001:0db8"sv,
+                                 "2001:0db8:0000:0000::ff00:0042:8329"_zv,
+                                 true));
+    RED_CHECK(!find_probe_client("fe80,2001:0db8:3c4d:0015::"sv,
+                                 "2001:0db8:3c4d:0015:0000:0000:1a2f:1a2b"_zv,
+                                 true));
+    RED_CHECK(!find_probe_client(""sv,
+                                 "fe80::1234"_zv,
+                                 true));
+}
+
 RED_AUTO_TEST_CASE(ParseIpConntrack_IPv4)
 {
     chars_view conntrack1
