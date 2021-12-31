@@ -268,7 +268,10 @@ public:
 
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
                 return new FinalSocketTransport( /*NOLINT*/
-                    name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message
+                    name, std::move(sck), ip_address, port,
+                    ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+                    ini.get<cfg::all_target_mod::connection_retry_count>(),
+                    recv_timeout, verbose, error_message
                 );
             }
 
@@ -279,7 +282,10 @@ public:
 
             return new FailureSimulationSocketTransport( /*NOLINT*/
                 is_read_error_simulation,
-                name, std::move(sck) , ip_address , port , recv_timeout , verbose , error_message
+                name, std::move(sck), ip_address, port,
+                ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+                ini.get<cfg::all_target_mod::connection_retry_count>(),
+                recv_timeout, verbose, error_message
             );
         }())
     , mod(*this->socket_transport_ptr, gd

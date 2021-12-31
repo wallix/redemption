@@ -94,12 +94,19 @@ public:
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
             RecorderFile outFile(this->time_base, finalPath);
 
+            const std::chrono::milliseconds connection_establishment_timeout(1000);
+            const int connection_retry_count(3);
+
             SocketTransport lowFrontConn(
                 "front"_sck_name, std::move(sck_in), "127.0.0.1"_av, 3389,
+                connection_establishment_timeout, connection_retry_count,
                 std::chrono::milliseconds(100), sck_verbose);
             SocketTransport lowBackConn(
-                "back"_sck_name, ip_connect(this->targetHost.c_str(), this->targetPort),
+                "back"_sck_name,
+                ip_connect(this->targetHost.c_str(), this->targetPort,
+                    connection_establishment_timeout, connection_retry_count),
                 this->targetHost, this->targetPort,
+                connection_establishment_timeout, connection_retry_count,
                 std::chrono::milliseconds(100), sck_verbose);
             TraceTransport frontConn("front", lowFrontConn);
             TraceTransport backConn("back", lowBackConn);

@@ -176,7 +176,9 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result)
+unique_fd ip_connect(const char* ip, int port,
+    std::chrono::milliseconds connection_establishment_timeout,
+    int connection_retry_count, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -222,8 +224,6 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
-    const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
-    int connection_retry_count = 3;
     bool const no_log = false;
 
     return connect_sck(sck, connection_establishment_timeout, connection_retry_count,
@@ -382,7 +382,7 @@ unique_fd local_connect(const char* sck_name, bool no_log)
     u.s.sun_family = AF_UNIX;
 
     const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
-    int connection_retry_count = 1;
+    const int connection_retry_count = 1;
     return connect_sck(sck, connection_establishment_timeout, connection_retry_count,
         u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target, no_log);
 }
@@ -403,7 +403,10 @@ unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
     }
 
     std::string ip(addr, pos);
-    return ip_connect(ip.c_str(), int(port));
+    const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
+    const int connection_retry_count = 1;
+    return ip_connect(ip.c_str(), int(port),
+        connection_establishment_timeout, connection_retry_count);
 }
 
 

@@ -499,8 +499,12 @@ public:
             return true;
         }
 
+        const std::chrono::milliseconds connection_establishment_timeout(1000);
+        const int connection_retry_count(3);
+
         unique_fd unique_client_sck = ip_connect(
-            this->config.target_IP.c_str(), this->config.port);
+            this->config.target_IP.c_str(), this->config.port,
+            connection_establishment_timeout, connection_retry_count);
 
         this->client_sck = unique_client_sck.fd();
 
@@ -514,6 +518,8 @@ public:
                     std::move(unique_client_sck),
                     this->config.target_IP,
                     this->config.port,
+                    connection_establishment_timeout,
+                    connection_retry_count,
                     std::chrono::seconds(1),
                     SocketTransport::Verbose(),
                     &this->error_message);

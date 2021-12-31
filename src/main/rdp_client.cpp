@@ -72,6 +72,9 @@ int main(int argc, char** argv)
     bool is_vnc = false;
     bool use_LCGRandom = false;
 
+    std::chrono::milliseconds connection_establishment_timeout_ms {1000};
+    int connection_retry_count = 3;
+
     auto positive_duration_location = [](std::chrono::milliseconds& ms){
         return cli::arg_location(ms, [](std::chrono::milliseconds& ms){
             return ms < std::chrono::milliseconds::zero() ? cli::Res::BadFormat : cli::Res::Ok;
@@ -130,6 +133,14 @@ int main(int argc, char** argv)
             "    3 = always succeed.")
             .parser(cli::arg_location(cert_check)).argname("<number>"),
 
+        cli::option('e', "connection-establishment-timeout").help(
+            "The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.")
+            .parser(positive_duration_location(connection_establishment_timeout_ms)),
+
+        cli::option('T', "connection-retry-count").help(
+            "Controls the number of reconnection attempts if there's a connection failure.")
+            .parser(cli::arg_location(connection_retry_count)).argname("<count>"),
+
         cli::option("verbose")
             .parser(cli::arg_location(verbose)).argname("<verbosity>")
     );
@@ -161,7 +172,8 @@ int main(int argc, char** argv)
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     /* SocketTransport mod_trans */
-    auto sck = ip_connect(target_device.c_str(), target_port);
+    auto sck = ip_connect(target_device.c_str(), target_port,
+        connection_establishment_timeout_ms, connection_retry_count);
     if (!sck.is_open()) {
         return 1;
     }
@@ -180,7 +192,8 @@ int main(int argc, char** argv)
     SocketTransport mod_trans(
         is_vnc ? "VNC Server"_sck_name : "RDP Server"_sck_name,
         std::move(sck), target_device,
-        target_port, std::chrono::seconds(1),
+        target_port, connection_establishment_timeout_ms, connection_retry_count,
+        std::chrono::seconds(1),
         safe_cast<SocketTransport::Verbose>(uint32_t(verbose >> 32)), nullptr);
 
     ScopedSslInit scoped_ssl;

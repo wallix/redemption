@@ -116,6 +116,8 @@ public:
     : socket_transport( name, std::move(sck)
                       , ini.get<cfg::context::target_host>()
                       , checked_int(ini.get<cfg::context::target_port>())
+                      , ini.get<cfg::all_target_mod::connection_establishment_timeout>()
+                      , ini.get<cfg::all_target_mod::connection_retry_count>()
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
     , mod(

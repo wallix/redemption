@@ -91,7 +91,8 @@ inline unique_fd connect_to_target_host(
                  sizeof(resolved_ip_addr),
                  "%s",
                  inet_ntoa(s4_sin_addr));
-        client_sck = ip_connect(ip, port, &error_message);
+        client_sck = ip_connect(ip, port,
+            connection_establishment_timeout, connection_retry_count, &error_message);
     }
     else
     {
