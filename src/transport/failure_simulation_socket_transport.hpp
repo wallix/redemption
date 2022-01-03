@@ -33,17 +33,17 @@ public:
       unique_fd sck,
       chars_view ip_address,
       int port,
-      std::chrono::milliseconds recv_timeout,
       std::chrono::milliseconds connection_establishment_timeout,
       int connection_retry_count,
+      std::chrono::milliseconds recv_timeout,
       Verbose verbose,
       std::string *error_message = nullptr)
     : SocketTransport(name,
                       std::move(sck),
                       ip_address, port,
-                      recv_timeout,
                       connection_establishment_timeout,
                       connection_retry_count,
+                      recv_timeout,
                       verbose,
                       error_message)
     , simulate_read_failure(simulate_read_failure)

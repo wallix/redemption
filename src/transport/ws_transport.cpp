@@ -48,17 +48,17 @@ enum class WsTransport::State : char
 
 WsTransport::WsTransport(
     Name name, unique_fd sck, chars_view ip_address, int port,
-    std::chrono::milliseconds recv_timeout,
     std::chrono::milliseconds connection_establishment_timeout,
-    int connection_retry_count, UseTls use_tls, TlsOptions tls_options,
+    int connection_retry_count, std::chrono::milliseconds recv_timeout,
+    UseTls use_tls, TlsOptions tls_options,
     Verbose verbose, std::string * error_message)
 : SocketTransport(name,
                   std::move(sck),
                   ip_address,
                   port,
-                  recv_timeout,
                   connection_establishment_timeout,
                   connection_retry_count,
+                  recv_timeout,
                   verbose,
                   error_message)
 , state(use_tls == UseTls::No ? State::HttpHeader : State::StartTls)

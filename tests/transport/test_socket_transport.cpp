@@ -156,9 +156,9 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                             unique_fd{client_sck},
                             "127.0.0.1"_av,
                             4444,
-                            std::chrono::seconds(1),
                             std::chrono::milliseconds(1000),
                             3,
+                            std::chrono::seconds(1),
                             SocketTransport::Verbose(0));
                     }
                 }
@@ -198,9 +198,9 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                     unique_fd{sck},
                     "127.0.0.1"_av,
                     4444,
-                    std::chrono::seconds(1),
                     std::chrono::milliseconds(1000),
                     3,
+                    std::chrono::seconds(1),
                     SocketTransport::Verbose(0));
                 nb_recv_sck++;
             }

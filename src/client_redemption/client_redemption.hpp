@@ -521,9 +521,9 @@ public:
                     std::move(unique_client_sck),
                     this->config.target_IP,
                     this->config.port,
-                    std::chrono::seconds(1),
                     std::chrono::milliseconds(1000),
                     3,
+                    std::chrono::seconds(1),
                     SocketTransport::Verbose(),
                     &this->error_message);
 

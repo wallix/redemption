@@ -272,9 +272,9 @@ public:
                     std::move(sck),
                     ip_address,
                     port,
-                    recv_timeout,
                     connection_establishment_timeout,
                     connection_retry_count,
+                    recv_timeout,
                     verbose,
                     error_message
                 );
@@ -291,9 +291,9 @@ public:
                 std::move(sck),
                 ip_address,
                 port,
-                recv_timeout,
                 connection_establishment_timeout,
                 connection_retry_count,
+                recv_timeout,
                 verbose,
                 error_message
             );
