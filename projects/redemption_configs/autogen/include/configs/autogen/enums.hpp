@@ -622,6 +622,23 @@ operator << (std::basic_ostream<Ch, Tr> & os, VideoEnhancedMode e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class SessionProbeCPUUsageAlarmAction : unsigned char
+{
+    // Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+    Restart = 0,
+    // Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+    Stop = 1,
+};
+
+inline bool is_valid_enum_value(SessionProbeCPUUsageAlarmAction e)
+{ return static_cast<unsigned long>(e) <= 1; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeCPUUsageAlarmAction e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {

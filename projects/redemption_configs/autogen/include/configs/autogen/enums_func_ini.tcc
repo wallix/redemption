@@ -431,6 +431,20 @@ parse_error parse(VideoEnhancedMode & x, spec_type<VideoEnhancedMode> /*type*/, 
 }
 
 array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SessionProbeCPUUsageAlarmAction> & buf,
+    cfg_s_type<SessionProbeCPUUsageAlarmAction> /*type*/,
+    SessionProbeCPUUsageAlarmAction x
+){
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+parse_error parse(SessionProbeCPUUsageAlarmAction & x, spec_type<SessionProbeCPUUsageAlarmAction> /*type*/, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 1>());
+}
+
+array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ColorDepth> & buf,
     cfg_s_type<ColorDepth> /*type*/,
     ColorDepth x

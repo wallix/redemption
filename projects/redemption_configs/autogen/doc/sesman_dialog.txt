@@ -142,6 +142,12 @@ cfg::mod_rdp::session_probe_launcher_abort_delay ⇐ mod_rdp:session_probe_launc
 cfg::mod_rdp::session_probe_enable_crash_dump ⇐ mod_rdp:session_probe_enable_crash_dump   [bool]
 cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_memory_usage_limit ⇐ mod_rdp:session_probe_memory_usage_limit   [uint32_t]
+cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold ⇐ mod_rdp:session_probe_cpu_usage_alarm_threshold   [uint32_t]
+    As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
+    The alarm is deactivated if this value is less than 200.
+cfg::mod_rdp::session_probe_cpu_usage_alarm_action ⇐ mod_rdp:session_probe_cpu_usage_alarm_action   [SessionProbeCPUUsageAlarmAction]
+      0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+      1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
 cfg::mod_rdp::session_probe_end_of_session_check_delay_time ⇐ mod_rdp:session_probe_end_of_session_check_delay_time   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check ⇐ mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
 cfg::mod_rdp::session_probe_update_disabled_features ⇐ mod_rdp:session_probe_update_disabled_features   [bool]

@@ -740,6 +740,21 @@ public:
                     }
                 });
 
+                if (this->sespro_params.cpu_usage_alarm_threshold)
+                {
+                    send_client_message([this](OutStream & out_s) {
+                        out_s.out_copy_bytes("CPUUsageAlarmThresholdAndAction="_av);
+
+                        {
+                            char cstr[128];
+                            int len = std::snprintf(cstr, sizeof(cstr), "%d" "\x01" "%u",
+                                static_cast<int>(this->sespro_params.cpu_usage_alarm_action),
+                                this->sespro_params.cpu_usage_alarm_threshold);
+                            out_s.out_copy_bytes(cstr, size_t(len));
+                        }
+                    });
+                }
+
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("DisabledFeatures="_av);
 
@@ -749,6 +764,10 @@ public:
                             static_cast<unsigned>(this->sespro_params.disabled_features));
                         out_s.out_copy_bytes(cstr, size_t(len));
                     }
+                });
+
+               send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("Notify=EndOfSettings"_av);
                 });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {

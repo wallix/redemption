@@ -236,6 +236,9 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.vc_params.handle_usage_limit    = ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
     mod_rdp_params.session_probe_params.vc_params.memory_usage_limit    = ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
 
+    mod_rdp_params.session_probe_params.vc_params.cpu_usage_alarm_threshold = ini.get<cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold>();
+    mod_rdp_params.session_probe_params.vc_params.cpu_usage_alarm_action    = ini.get<cfg::mod_rdp::session_probe_cpu_usage_alarm_action>();
+
     mod_rdp_params.session_probe_params.vc_params.disabled_features     = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
 
     mod_rdp_params.session_probe_params.vc_params.bestsafe_integration  = ini.get<cfg::mod_rdp::session_probe_bestsafe_integration>();
