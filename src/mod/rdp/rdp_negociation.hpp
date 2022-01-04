@@ -38,6 +38,7 @@
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "acl/auth_api.hpp"
+#include "keyboard/keylayout.hpp"
 
 #include <functional> // std::reference_wrapper
 #include <memory>
@@ -125,7 +126,7 @@ private:
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t autoReconnectCookie[28] = { 0 };
 
-    const uint32_t keylayout;
+    const KeyLayout::KbdId keylayout;
 
     uint32_t server_public_key_len = 0;
     uint8_t client_crypt_random[512] {};

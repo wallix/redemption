@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <charconv>
+#include "utils/sugar/chars_to_int.hpp"
 
 
 namespace cli
@@ -320,7 +320,7 @@ namespace detail
                 if (s[1]) {
                     pr.str = s + ((s[1] == '=') ? 2 : 1);
                 }
-                else if (pr.opti < pr.argc) {
+                else if (pr.opti + 1 < pr.argc) {
                     pr.str = pr.argv[pr.opti+1];
                     ++inc;
                 }
@@ -382,7 +382,7 @@ namespace detail
                 if (!*s) {
                     int inc = 1;
                     if constexpr (parsers::is_required_value<decltype(opt._parser)>) {
-                        if (pr.opti < pr.argc) {
+                        if (pr.opti + 1 < pr.argc) {
                             ++inc;
                             pr.str = pr.argv[pr.opti+1];
                         }
@@ -543,12 +543,16 @@ T operator, (T x, Ok_ /*unused*/)
 namespace detail
 {
     template<class T>
-    Res arg_parse_int(T& result, std::string_view s)
+    Res arg_parse_int(T& result, char const * s)
     {
-        auto [p, ec] = std::from_chars(s.begin(), s.end(), result);
-        return (ec == std::errc()) ? Res::Ok : Res::BadFormat;
+        auto r = decimal_chars_to_int<T>(s);
+        if (r.ec == std::errc() && !*r.ptr) {
+            result = r.val;
+            return Res::Ok;
+        }
+        return Res::BadFormat;
     }
-}
+} // namespace detail
 
 namespace arg_parsers
 {
@@ -606,6 +610,15 @@ namespace arg_parsers
         static Res parse(T& result, char const* s)
         {
             return arg_parse(result, s);
+        }
+    };
+
+    template<class T>
+    struct arg_parse_traits<T, std::enable_if_t<std::is_enum_v<T>>>
+    {
+        static Res parse(T& result, char const* s)
+        {
+            return detail::arg_parse_int(result, s);
         }
     };
 } // namespace arg_parsers
@@ -737,10 +750,14 @@ namespace parsers
 
         Res operator()(ParseResult& pr) const
         {
-            bool const on = !pr.str || !strcmp(pr.str, "on") || !strcmp(pr.str, "1");
-            bool const off = !on && (!strcmp(pr.str, "off") || !strcmp(pr.str, "0"));
-            if (!on && !off) {
-                return Res::BadFormat;
+            bool on = !pr.str;
+            if (!on) {
+                using namespace std::string_view_literals;
+                std::string_view str = pr.str;
+                on = str == "on"sv || str == "1"sv;
+                if (!on && pr.str != "off"sv && pr.str != "0"sv) {
+                    return Res::BadFormat;
+                }
             }
 
             Res r = (this->act(on), Ok);
@@ -943,7 +960,7 @@ namespace detail
 
         return out;
     }
-} // namespace cli::detail
+} // namespace detail
 
 template<class Opt>
 void print_help(std::ostream& out, Opt const& opt, int pad)

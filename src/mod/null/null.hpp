@@ -32,11 +32,22 @@ struct null_mod : public mod_api
         this->set_mod_signal(BACK_EVENT_NEXT);
         // throw Error(ERR_BACK_EVENT_NEXT);
     }
-    void rdp_input_mouse(int,int,int,Keymap2 *) override {}
-    void rdp_input_scancode(long,long,long,long,Keymap2 *) override {}
-    void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
-    void rdp_input_invalidate(const Rect rect) override { (void)rect; }
-    void refresh(const Rect rect) override { (void)rect; }
+
+    void rdp_input_mouse(
+        [[maybe_unused]] int device_flags,
+        [[maybe_unused]] int x,
+        [[maybe_unused]] int y) override
+    {}
+
+    void rdp_input_scancode(
+        [[maybe_unused]] KbdFlags flags,
+        [[maybe_unused]] Scancode scancode,
+        [[maybe_unused]] uint32_t time,
+        [[maybe_unused]] Keymap const& keymap) override
+    {}
+
+    void rdp_input_synchronize([[maybe_unused]] KeyLocks locks) override {}
+    void rdp_input_invalidate([[maybe_unused]] const Rect rect) override {}
     bool is_up_and_running() const override { return true; }
 
     bool is_auto_reconnectable() const override { return false; }
@@ -44,8 +55,12 @@ struct null_mod : public mod_api
 
     void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
-    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+    void send_to_mod_channel(
+        [[maybe_unused]] CHANNELS::ChannelNameId front_channel_name,
+        [[maybe_unused]] InStream & chunk,
+        [[maybe_unused]] std::size_t length,
+        [[maybe_unused]] uint32_t flags) override
+    {}
 
-    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+    void acl_update([[maybe_unused]] AclFieldMask const& acl_fields) override {}
 };
-

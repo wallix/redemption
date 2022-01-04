@@ -257,7 +257,7 @@ public:
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
-        , _callback(this)
+        , _callback(this, default_layout())
         , event_manager(event_manager)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(event_manager.get_time_base(), *this, *this,
@@ -376,7 +376,7 @@ public:
                   , this->config.user_password.c_str()
                   , this->config.target_IP.c_str()
                   , this->local_IP.c_str()
-                  , 2
+                  , kbdtypes::KeyLocks::NumLock
                   , this->font
                   , this->theme
                   , this->server_auto_reconnect_packet_ref
@@ -449,6 +449,7 @@ public:
             }
 
             case ClientRedemptionConfig::MOD_VNC:
+                auto* layout = find_layout_by_id(this->config.modVNCParamsData.keylayout);
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , *this
@@ -459,11 +460,11 @@ public:
                   , *this
                   , this->config.modVNCParamsData.width
                   , this->config.modVNCParamsData.height
-                  , this->config.modVNCParamsData.keylayout
-                  , 0
                   , true
                   , true
                   , this->config.modVNCParamsData.vnc_encodings.c_str()
+                  , layout ? *layout : default_layout()
+                  , kbdtypes::KeyLocks::NoLocks
                   , this->config.modVNCParamsData.is_apple
                   , true                                    // alt server unix
                   , true                                    // support Cursor Pseudo-encoding

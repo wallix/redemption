@@ -45,6 +45,7 @@
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
 #include "gdi/osd_api.hpp"
+#include "keyboard/keylayouts.hpp"
 
 #include <iostream>
 #include <string>
@@ -184,7 +185,7 @@ int main(int argc, char** argv)
     client_info.screen_info.bpp = BitsPerPixel{24};
     client_info.build = 420;
     if (is_vnc) {
-        client_info.keylayout = 0x04C;
+        client_info.keylayout = KeyLayout::KbdId(0x04C);
         client_info.console_session = false;
         client_info.brush_cache_code = 0;
     }
@@ -255,11 +256,11 @@ int main(int argc, char** argv)
               , front
               , 800
               , 600
-              , 0x04C         /* keylayout */
-              , 0             /* key_flags */
               , true          /* clipboard */
               , true          /* clipboard */
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+              , *find_layout_by_id(KeyLayout::KbdId(0x040C))
+              , kbdtypes::KeyLocks::NoLocks
               , false
               , false          /*remove_server_alt_state_for_char*/
               , true           /* support Cursor Pseudo-Encoding */
@@ -282,7 +283,7 @@ int main(int argc, char** argv)
         , password.c_str()
         , target_device.c_str()
         , "0.0.0.0"   // client ip is silenced
-        , /*front.keymap.key_flags*/ 0
+        , kbdtypes::KeyLocks::NoLocks
         , font
         , theme
         , server_auto_reconnect_packet

@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/login.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -103,11 +104,10 @@ RED_AUTO_TEST_CASE(TraceWidgetLogin3)
 
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
-    flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c));
+    flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
     RED_CHECK(notifier.last_widget == &flat_login);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
 
@@ -121,9 +121,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLogin3)
 
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
-    keymap.push_kevent(Keymap2::KEVENT_ESC); // enterto validate
-    flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01));
+    flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
     RED_CHECK(notifier.last_widget == &flat_login);
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 }
@@ -154,7 +153,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLoginHelp)
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
-                               flat_login.helpicon.y() + flat_login.helpicon.cy() / 2, nullptr);
+                               flat_login.helpicon.y() + flat_login.helpicon.cy() / 2);
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_help_2.png");
 }

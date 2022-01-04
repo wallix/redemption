@@ -58,9 +58,9 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_1.png");
 }
 
-static void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget * w, const char * text)
+static void rdp_input_mouse(int device_flags, int x, int y, WidgetScreen * parent, Widget * w, const char * text)
 {
-    parent->rdp_input_mouse(device_flags, x, y, keymap);
+    parent->rdp_input_mouse(device_flags, x, y);
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = parent->widget_at_pos(x, y);
         if (wid == w) {
@@ -100,14 +100,14 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.x() + label.cx() / 2, label.y() + label.cy() / 2,
-                    nullptr, &parent, &label, "Test tooltip description");
+                    &parent, &label, "Test tooltip description");
     parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_3.png");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
-                    nullptr, &parent, &label2,
+                    &parent, &label2,
                     "Test tooltip\n"
                     "description in\n"
                     "multilines !");

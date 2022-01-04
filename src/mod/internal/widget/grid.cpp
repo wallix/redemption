@@ -21,7 +21,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "mod/internal/widget/grid.hpp"
 #include "gdi/graphic_api.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "utils/monotonic_clock.hpp"
 
 
@@ -316,7 +316,7 @@ void WidgetGrid::blur()
     }
 }
 
-void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap)
+void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y)
 {
     using namespace std::chrono_literals;
 
@@ -346,57 +346,55 @@ void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Key
     else if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = this->widget_at_pos(mouse_x, mouse_y);
         if (wid) {
-            wid->rdp_input_mouse(device_flags, mouse_x, mouse_y, keymap);
+            wid->rdp_input_mouse(device_flags, mouse_x, mouse_y);
         }
     }
 
-    Widget::rdp_input_mouse(device_flags, mouse_x, mouse_y, keymap);
+    Widget::rdp_input_mouse(device_flags, mouse_x, mouse_y);
 }
 
-void WidgetGrid::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap)
+void WidgetGrid::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (keymap->nb_kevent_available() > 0) {
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (keymap->top_kevent()) {
-            case Keymap2::KEVENT_LEFT_ARROW:
-            case Keymap2::KEVENT_UP_ARROW:
-                keymap->get_kevent();
-                if (this->widgets.nb_rows > 1) {
-                    this->set_selection((this->selection_y > 0) ? this->selection_y - 1 : this->widgets.nb_rows - 1);
-                }
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::LeftArrow:
+        case Keymap::KEvent::UpArrow:
+            if (this->widgets.nb_rows > 1) {
+                this->set_selection((this->selection_y > 0) ? this->selection_y - 1 : this->widgets.nb_rows - 1);
+            }
             break;
-            case Keymap2::KEVENT_RIGHT_ARROW:
-            case Keymap2::KEVENT_DOWN_ARROW:
-                keymap->get_kevent();
-                if (this->widgets.nb_rows > 1) {
-                    this->set_selection((this->selection_y + 1 != this->widgets.nb_rows) ? this->selection_y + 1 : 0);
-                }
+
+        case Keymap::KEvent::RightArrow:
+        case Keymap::KEvent::DownArrow:
+            if (this->widgets.nb_rows > 1) {
+                this->set_selection((this->selection_y + 1 != this->widgets.nb_rows) ? this->selection_y + 1 : 0);
+            }
             break;
-            case Keymap2::KEVENT_END:
-                keymap->get_kevent();
-                if (this->widgets.nb_rows > 1 && this->widgets.nb_rows - 1 != this->selection_y) {
-                    this->set_selection(this->widgets.nb_rows - 1);
-                }
-                break;
-            case Keymap2::KEVENT_HOME:
-                keymap->get_kevent();
-                if ((this->widgets.nb_rows > 1) && this->selection_y) {
-                    this->set_selection(0);
-                }
-                break;
-            case Keymap2::KEVENT_ENTER:
-                keymap->get_kevent();
-                if (this->widgets.nb_rows) {
-                    this->send_notify(NOTIFY_SUBMIT);
-                }
-                break;
-            default:
-                Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
-                break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
+
+        case Keymap::KEvent::End:
+            if (this->widgets.nb_rows > 1 && this->widgets.nb_rows - 1 != this->selection_y) {
+                this->set_selection(this->widgets.nb_rows - 1);
+            }
+            break;
+
+        case Keymap::KEvent::Home:
+            if ((this->widgets.nb_rows > 1) && this->selection_y) {
+                this->set_selection(0);
+            }
+            break;
+
+        case Keymap::KEvent::Enter:
+            if (this->widgets.nb_rows) {
+                this->send_notify(NOTIFY_SUBMIT);
+            }
+            break;
+
+        default:
+            Widget::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void compute_format(

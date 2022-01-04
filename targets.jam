@@ -44,10 +44,10 @@ exe headlessclient :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/button.o
@@ -90,6 +90,7 @@ exe headlessclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
@@ -160,10 +161,10 @@ exe rdpproxy :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
@@ -244,6 +245,7 @@ exe rdpproxy :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/ip.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/load_theme.o
   <library>src/utils/local_err_msg.o
   <library>src/utils/log_siem.o
@@ -277,13 +279,6 @@ exe mwrm3_editor :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  $(EXE_DEPENDENCIES)
-;
-exe scancodes_LCID_files_generator :
-  src/main/scancodes_LCID_files_generator.o
-:
-  <library>src/keyboard/keymap2.o
-  <library>src/utils/strutils.o
   $(EXE_DEPENDENCIES)
 ;
 exe rdpinichecker :
@@ -376,10 +371,10 @@ exe rdpclient :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -415,6 +410,7 @@ exe rdpclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
@@ -647,9 +643,9 @@ test-run tests/acl/test_license_api :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -673,6 +669,7 @@ test-run tests/acl/test_license_api :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -981,9 +978,9 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -1007,6 +1004,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -1035,7 +1033,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -1081,9 +1079,9 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -1107,6 +1105,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -1152,9 +1151,9 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -1178,6 +1177,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -1214,7 +1214,8 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -1257,7 +1258,8 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -1300,7 +1302,8 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -1343,7 +1346,8 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -2459,10 +2463,10 @@ test-run tests/core/test_mainloop :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
@@ -2543,6 +2547,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/ip.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/load_theme.o
   <library>src/utils/local_err_msg.o
   <library>src/utils/log_siem.o
@@ -2631,10 +2636,10 @@ test-run tests/core/test_session :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
@@ -2714,6 +2719,7 @@ test-run tests/core/test_session :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/load_theme.o
   <library>src/utils/local_err_msg.o
   <library>src/utils/log_siem.o
@@ -2789,9 +2795,9 @@ test-run tests/front/test_front :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -2820,6 +2826,7 @@ test-run tests/front/test_front :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2899,24 +2906,19 @@ test-run tests/gdi/test_text_metrics :
   <covfile>src/gdi/text_metrics.cpp
   <covfile>src/gdi/text_metrics.hpp
 ;
-test-run tests/keyboard/scancode/test_unicode_to_scancode :
-  $(REDEMPTION_TEST_PATH)/keyboard/scancode/test_unicode_to_scancode.cpp
+test-run tests/keyboard/test_keymap :
+  $(REDEMPTION_TEST_PATH)/keyboard/test_keymap.cpp
 :
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
-  <covfile>src/keyboard/scancode/unicode_to_scancode.cpp
-  <covfile>src/keyboard/scancode/unicode_to_scancode.hpp
-;
-test-run tests/keyboard/test_keymap2 :
-  $(REDEMPTION_TEST_PATH)/keyboard/test_keymap2.cpp
-:
-  <library>src/keyboard/keymap2.o
-  <covfile>src/keyboard/keymap2.cpp
-  <covfile>src/keyboard/keymap2.hpp
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
+  <covfile>src/keyboard/keymap.cpp
+  <covfile>src/keyboard/keymap.hpp
 ;
 test-run tests/keyboard/test_keymapsym :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymapsym.cpp
 :
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
   <covfile>src/keyboard/keymapsym.cpp
   <covfile>src/keyboard/keymapsym.hpp
@@ -3006,28 +3008,6 @@ test-run tests/lib/test_scytale :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
-test-run tests/mod/internal/test_bouncer2_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_bouncer2_mod.cpp
-:
-  <library>crypto
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/bouncer2_mod.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/bouncer2_mod.cpp
-  <covfile>src/mod/internal/bouncer2_mod.hpp
-;
 test-run tests/mod/internal/test_close_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_close_mod.cpp
 :
@@ -3043,7 +3023,8 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
@@ -3091,7 +3072,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3132,7 +3113,8 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/rail_mod_base.o
@@ -3184,7 +3166,8 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/rail_mod_base.o
@@ -3235,7 +3218,8 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_mod_base.o
@@ -3286,7 +3270,7 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/widget/button.o
@@ -3329,7 +3313,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -3371,7 +3355,8 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
   <library>src/mod/internal/selector_mod.o
@@ -3416,7 +3401,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3448,7 +3433,8 @@ test-run tests/mod/internal/test_wait_mod :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
   <library>src/mod/internal/wait_mod.o
@@ -3490,7 +3476,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
@@ -3526,7 +3512,8 @@ test-run tests/mod/internal/widget/test_button :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3561,7 +3548,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
@@ -3591,7 +3578,7 @@ test-run tests/mod/internal/widget/test_delegated_copy :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/multiline.o
@@ -3627,7 +3614,8 @@ test-run tests/mod/internal/widget/test_dialog :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3670,7 +3658,8 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3707,7 +3696,8 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3748,7 +3738,7 @@ test-run tests/mod/internal/widget/test_form :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3789,7 +3779,8 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3827,7 +3818,8 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3866,7 +3858,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/multiline.o
@@ -3901,7 +3893,7 @@ test-run tests/mod/internal/widget/test_interactive_target :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -3943,7 +3935,8 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/label.o
@@ -3979,7 +3972,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/grid.o
@@ -4014,7 +4007,8 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -4039,7 +4033,8 @@ test-run tests/mod/internal/widget/test_login :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -4084,7 +4079,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
@@ -4123,7 +4118,8 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -4161,7 +4157,8 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -4199,7 +4196,8 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -4235,7 +4233,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -4270,7 +4268,8 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -4314,7 +4313,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/label.o
@@ -4349,7 +4348,8 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -4384,7 +4384,8 @@ test-run tests/mod/internal/widget/test_wab_close :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -4427,7 +4428,8 @@ test-run tests/mod/internal/widget/test_wait :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
@@ -4476,7 +4478,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
@@ -4498,11 +4500,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget_rect.cpp
   <covfile>src/mod/internal/widget/widget_rect.hpp
-;
-test-run tests/mod/null/test_null :
-  $(REDEMPTION_TEST_PATH)/mod/null/test_null.cpp
-:
-  <covfile>src/mod/null/null.hpp
 ;
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
@@ -4615,7 +4612,8 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -4646,6 +4644,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/core/error.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
+  <library>src/keyboard/keylayouts.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -4671,6 +4670,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/core/error.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
+  <library>src/keyboard/keylayouts.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -4732,9 +4732,9 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
@@ -4759,6 +4759,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/fileutils.o
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
+  <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
@@ -4963,9 +4964,8 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
   <library>src/mod/metrics.o
   <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
@@ -5095,7 +5095,8 @@ test-run tests/server/test_mstsc_client :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -5161,7 +5162,8 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -5227,7 +5229,8 @@ test-run tests/server/test_rdesktop_client :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -5942,12 +5945,11 @@ test-run tests/utils/test_key_qvalue_pairs :
 test-run tests/utils/test_keyboard_shortcut_blocker :
   $(REDEMPTION_TEST_PATH)/utils/test_keyboard_shortcut_blocker.cpp
 :
-  <library>src/core/error.o
-  <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
-  <library>src/keyboard/scancode/unicode_to_scancode.o
-  <library>src/utils/stacktrace.o
+  <library>src/keyboard/keyboard_shortcut_layout.o
+  <library>src/utils/keyboard_shortcut_blocker.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/utils/keyboard_shortcut_blocker.cpp
   <covfile>src/utils/keyboard_shortcut_blocker.hpp
 ;
 test-run tests/utils/test_line_equation :
@@ -6221,10 +6223,10 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
-obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
+obj src/keyboard/keyboard_shortcut_layout.o : $(REDEMPTION_SRC_PATH)/keyboard/keyboard_shortcut_layout.cpp ;
+obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
+obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
-obj src/keyboard/scancode/autogen/all_LCIDs_scancodes.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
-obj src/keyboard/scancode/unicode_to_scancode.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
@@ -6235,7 +6237,6 @@ obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp ;
 obj src/main/nla_server_cli.o : $(REDEMPTION_SRC_PATH)/main/nla_server_cli.cpp ;
 obj src/main/proxy_recorder_cli.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder_cli.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp ;
-obj src/main/scancodes_LCID_files_generator.o : $(REDEMPTION_SRC_PATH)/main/scancodes_LCID_files_generator.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
@@ -6322,6 +6323,7 @@ obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/hexadecimal_string_to_buffer.o : $(REDEMPTION_SRC_PATH)/utils/hexadecimal_string_to_buffer.cpp ;
 obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj src/utils/ip.o : $(REDEMPTION_SRC_PATH)/utils/ip.cpp ;
+obj src/utils/keyboard_shortcut_blocker.o : $(REDEMPTION_SRC_PATH)/utils/keyboard_shortcut_blocker.cpp ;
 obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/local_err_msg.o : $(REDEMPTION_SRC_PATH)/utils/local_err_msg.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
@@ -6510,13 +6512,11 @@ alias test_front : tests/front/test_front ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
-alias test_unicode_to_scancode : tests/keyboard/scancode/test_unicode_to_scancode ;
-alias test_keymap2 : tests/keyboard/test_keymap2 ;
+alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
 alias test_iametrics : tests/lib/test_iametrics ;
 alias test_scytale : tests/lib/test_scytale ;
-alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
 alias test_close_mod : tests/mod/internal/test_close_mod ;
 alias test_copy_paste : tests/mod/internal/test_copy_paste ;
 alias test_dialog_mod : tests/mod/internal/test_dialog_mod ;
@@ -6556,7 +6556,6 @@ alias test_wab_close : tests/mod/internal/widget/test_wab_close ;
 alias test_wait : tests/mod/internal/widget/test_wait ;
 alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
-alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
@@ -6857,10 +6856,8 @@ alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_cmd_color.coverage : tests/gdi/test_graphic_cmd_color.coverage ;
 alias test_protected_graphics.coverage : tests/gdi/test_protected_graphics.coverage ;
 alias test_text_metrics.coverage : tests/gdi/test_text_metrics.coverage ;
-alias test_unicode_to_scancode.coverage : tests/keyboard/scancode/test_unicode_to_scancode.coverage ;
-alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
+alias test_keymap.coverage : tests/keyboard/test_keymap.coverage ;
 alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
-alias test_bouncer2_mod.coverage : tests/mod/internal/test_bouncer2_mod.coverage ;
 alias test_close_mod.coverage : tests/mod/internal/test_close_mod.coverage ;
 alias test_copy_paste.coverage : tests/mod/internal/test_copy_paste.coverage ;
 alias test_dialog_mod.coverage : tests/mod/internal/test_dialog_mod.coverage ;
@@ -6900,7 +6897,6 @@ alias test_wab_close.coverage : tests/mod/internal/widget/test_wab_close.coverag
 alias test_wait.coverage : tests/mod/internal/widget/test_wait.coverage ;
 alias test_widget.coverage : tests/mod/internal/widget/test_widget.coverage ;
 alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.coverage ;
-alias test_null.coverage : tests/mod/null/test_null.coverage ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
 alias test_cliprdr_channel_send_and_receive.coverage : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive.coverage ;
@@ -7257,11 +7253,8 @@ alias tests/gdi.norec :
   tests/gdi/test_protected_graphics
   tests/gdi/test_text_metrics
 ;
-alias tests/keyboard/scancode.norec :
-  tests/keyboard/scancode/test_unicode_to_scancode
-;
 alias tests/keyboard.norec :
-  tests/keyboard/test_keymap2
+  tests/keyboard/test_keymap
   tests/keyboard/test_keymapsym
 ;
 alias tests/lib.norec :
@@ -7270,7 +7263,6 @@ alias tests/lib.norec :
   tests/lib/test_scytale
 ;
 alias tests/mod/internal.norec :
-  tests/mod/internal/test_bouncer2_mod
   tests/mod/internal/test_close_mod
   tests/mod/internal/test_copy_paste
   tests/mod/internal/test_dialog_mod
@@ -7312,9 +7304,6 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_wait
   tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect
-;
-alias tests/mod/null.norec :
-  tests/mod/null/test_null
 ;
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
@@ -7614,11 +7603,7 @@ alias tests/front :
 alias tests/gdi :
   tests/gdi.norec
 ;
-alias tests/keyboard/scancode :
-  tests/keyboard/scancode.norec
-;
 alias tests/keyboard :
-  tests/keyboard/scancode
   tests/keyboard.norec
 ;
 alias tests/lib :
@@ -7630,16 +7615,12 @@ alias tests/mod/internal :
 ;
 alias tests/mod :
   tests/mod/internal
-  tests/mod/null
   tests/mod/rdp
   tests/mod.norec
   tests/mod/vnc
 ;
 alias tests/mod/internal/widget :
   tests/mod/internal/widget.norec
-;
-alias tests/mod/null :
-  tests/mod/null.norec
 ;
 alias tests/mod/rdp/channels :
   tests/mod/rdp/channels.norec
@@ -7727,12 +7708,10 @@ explicit
   tests/core.norec
   tests/front.norec
   tests/gdi.norec
-  tests/keyboard/scancode.norec
   tests/keyboard.norec
   tests/lib.norec
   tests/mod/internal.norec
   tests/mod/internal/widget.norec
-  tests/mod/null.norec
   tests/mod/rdp/channels.norec
   tests/mod/rdp.norec
   tests/mod.norec
@@ -7781,13 +7760,11 @@ explicit
   tests/core/WMF
   tests/front
   tests/gdi
-  tests/keyboard/scancode
   tests/keyboard
   tests/lib
   tests/mod/internal
   tests/mod
   tests/mod/internal/widget
-  tests/mod/null
   tests/mod/rdp/channels
   tests/mod/rdp
   tests/mod/vnc/encoder

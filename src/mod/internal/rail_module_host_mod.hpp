@@ -49,12 +49,11 @@ public:
 
     void rdp_input_invalidate(Rect r) override;
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4,
-            Keymap2 * keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
     {
-        this->screen.rdp_input_unicode(unicode, flag);
+        this->screen.rdp_input_unicode(flag, unicode);
     }
 
     void refresh(Rect r) override;
@@ -69,7 +68,6 @@ private:
 
     EventRef2 disconnection_reconnection_timer;
 
-    bool alt_key_pressed = false;
     const bool rail_enabled;
 
     enum class MouseOwner : bool
@@ -105,18 +103,15 @@ public:
 
     // RdpInput
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 
     void rdp_gdi_down() override {}
 
     void rdp_gdi_up_and_running() override;
 
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    void rdp_input_synchronize(KeyLocks locks) override
     {
-        (void)time;
-        (void)device_flags;
-        (void)param1;
-        (void)param2;
+        (void)locks;
     }
 
     // Callback

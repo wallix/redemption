@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -307,12 +308,12 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_9.png");
 
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15);
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_10.png");
 
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, nullptr);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15);
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button_9.png");
@@ -337,52 +338,54 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonEvent)
     wbutton.set_wh(dim);
     wbutton.set_xy(x, y);
 
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
+
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
+
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
+    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
+    RED_CHECK(widget_for_receive_event.last_event == 0);
+    RED_CHECK(notifier.last_widget == &wbutton);
+    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
+
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
+    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
+    RED_CHECK(widget_for_receive_event.last_event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
+
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    using KFlags = Keymap::KbdFlags;
+    using Scancode = Keymap::Scancode;
+
+    keymap.event(KFlags(), Scancode(0x10)); // 'a'
+    wbutton.rdp_input_scancode(KFlags(), Scancode(0x10), 0, keymap);
+    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
+    RED_CHECK(widget_for_receive_event.last_event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
+
+    keymap.event(KFlags(), Scancode(0x39)); // ' '
+    wbutton.rdp_input_scancode(KFlags(), Scancode(0x39), 0, keymap);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
     RED_CHECK(notifier.last_widget == &wbutton);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
-    keymap.push_kevent(Keymap2::KEVENT_KEY);
-    keymap.push_char('a');
-    wbutton.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
-
-    keymap.push_kevent(Keymap2::KEVENT_KEY);
-    keymap.push_char(' ');
-    wbutton.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == &wbutton);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
-
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    wbutton.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(KFlags(), Scancode(0x1c)); // Enter
+    wbutton.rdp_input_scancode(KFlags(), Scancode(0x1c), 0, keymap);
     RED_CHECK(widget_for_receive_event.last_widget == nullptr);
     RED_CHECK(widget_for_receive_event.last_event == 0);
     RED_CHECK(notifier.last_widget == &wbutton);
@@ -534,7 +537,7 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonLite)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button18.png");
 
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2);
 
     wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
 
@@ -568,7 +571,7 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonStrong)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "button20.png");
 
-    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2);
 
     wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
 

@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x040C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};
@@ -104,7 +104,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , "S3cur3!1nux"
                                , "10.10.47.35"
                                , "192.168.1.100"
-                               , 7
+                               , kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
+                               | kbdtypes::KeyLocks::ScrollLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
@@ -175,7 +177,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x040C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};
@@ -233,7 +235,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , "S3cur3!1nux"
                                , "10.10.47.16"
                                , "10.10.43.33"
-                               , 7
+                               , kbdtypes::KeyLocks::NumLock
+                               | kbdtypes::KeyLocks::CapsLock
+                               | kbdtypes::KeyLocks::ScrollLock
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet

@@ -80,7 +80,7 @@ public:
 
     void set_color(Color bg_color, Color fg_color) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 
     void auto_resize();
 

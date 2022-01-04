@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x04C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};
@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                                        , ini.get<cfg::context::target_password>().c_str()
                                        , ini.get<cfg::context::target_host>().c_str()
                                        , "10.10.43.33"
-                                       , 7
+                                       , kbdtypes::KeyLocks::NoLocks
                                        , global_font()
                                        , theme
                                        , server_auto_reconnect_packet
@@ -355,7 +355,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 {
     ClientInfo info;
     info.build                 = 2600;
-    info.keylayout             = 0x040C;
+    info.keylayout             = KeyLayout::KbdId(0x04C);
     info.console_session       = false;
     info.brush_cache_code      = 0;
     info.screen_info.bpp       = BitsPerPixel{16};
@@ -440,7 +440,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                                        , ini.get<cfg::context::target_password>().c_str()
                                        , ini.get<cfg::context::target_host>().c_str()
                                        , "10.10.43.33"
-                                       , 7
+                                       , kbdtypes::KeyLocks::NoLocks
                                        , global_font()
                                        , theme
                                        , server_auto_reconnect_packet

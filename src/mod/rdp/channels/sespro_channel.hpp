@@ -27,6 +27,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/kv_list_from_strings.hpp"
 #include "gdi/screen_functions.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/front_api.hpp"
@@ -43,6 +44,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/uninit_checked.hpp"
 #include "utils/translation.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 
 #include <chrono>
 #include <memory>
@@ -1126,8 +1128,11 @@ public:
                             KVLog("display_name"_av, parameters_[1]),
                         });
 
-                        this->front.set_keylayout(
-                            ::strtol(parameters_[0].c_str(), nullptr, 16));
+                        KeyLayout::KbdId kbdid = unchecked_hexadecimal_chars_with_prefix_to_int(parameters_[0]);
+                        auto* layout = find_layout_by_id(kbdid);
+                        if (layout) {
+                            this->front.set_keylayout(*layout);
+                        }
                     }
                     else {
                         message_format_invalid = true;

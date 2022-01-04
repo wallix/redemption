@@ -21,7 +21,7 @@
 #include "mod/internal/selector_mod.hpp"
 #include "configs/config.hpp"
 #include "gdi/text_metrics.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 
 
@@ -291,18 +291,14 @@ void SelectorMod::refresh_device()
 }
 
 void SelectorMod::rdp_input_scancode(
-    long int param1, long int param2,
-    long int param3, long int param4, Keymap2* keymap)
+    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    RailModBase::check_alt_f4(param1, param3);
+    RailModBase::check_alt_f4(keymap);
 
-    if (&this->selector.selector_lines == this->selector.current_focus
-     && keymap->nb_kevent_available() > 0
-    ) {
-        switch (underlying_cast(keymap->top_kevent()))
+    if (&this->selector.selector_lines == this->selector.current_focus) {
+        switch (underlying_cast(keymap.last_kevent()))
         {
-        case Keymap2::KEVENT_LEFT_ARROW:
-            keymap->get_kevent();
+        case underlying_cast(Keymap::KEvent::LeftArrow):
             if (this->current_page > 1) {
                 --this->current_page;
                 this->ask_page();
@@ -313,10 +309,9 @@ void SelectorMod::rdp_input_scancode(
                 this->ask_page();
                 return;
             }
-            break;
+            return;
 
-        case Keymap2::KEVENT_RIGHT_ARROW:
-            keymap->get_kevent();
+        case underlying_cast(Keymap::KEvent::RightArrow):
             if (this->current_page < this->number_page) {
                 ++this->current_page;
                 this->ask_page();
@@ -327,11 +322,11 @@ void SelectorMod::rdp_input_scancode(
                 this->ask_page();
                 return;
             }
-            break;
+            return;
         }
     }
 
-    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
 void SelectorMod::send_to_mod_channel(

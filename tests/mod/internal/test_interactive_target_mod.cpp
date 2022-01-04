@@ -25,7 +25,8 @@
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 #include "core/events.hpp"
@@ -46,14 +47,13 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
     InteractiveTargetMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599), client_execute,
                            global_font(), theme);
     d.init();
-    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c)); // enter
+    d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
 
     RED_CHECK(ini.get<cfg::context::display_message>());
 }
@@ -70,14 +70,13 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
     Inifile ini;
     Theme theme;
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
     InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
                            client_execute, global_font(), theme);
     d.init();
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
+    d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
 
     RED_CHECK(not ini.get<cfg::context::display_message>());
 }
@@ -96,79 +95,27 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
     ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
     InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
                            client_execute, global_font(), theme);
     d.init();
 
-    bool    ctrl_alt_del;
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 16; // key is 'a'
+    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        d.rdp_input_scancode(flags, scancode, 0, keymap);
+    };
 
-    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
-    RED_CHECK(ini.get<cfg::context::display_message>());
-}
-
-RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge2)
-{
-    ScreenInfo screen_info{1600, 1200, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
-
-    Inifile ini;
-    Theme theme;
-    ini.set_acl<cfg::context::target_host>("somehost");
-    ini.set_acl<cfg::globals::target_user>("someuser");
-    ini.ask<cfg::context::target_password>();
-
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
-
-    InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(800, 600, 799, 599),
-                           client_execute, global_font(), theme);
-    d.init();
-
-    bool    ctrl_alt_del;
-
-    uint16_t keyboardFlags = 0 ;
-    uint16_t keyCode = 16; // key is 'a'
-
-    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
+    rdp_input_scancode(Keymap::KeyCode(0x12)); // 'e'
+    rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
+    rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
+    rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
+    rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
+    rdp_input_scancode(Keymap::KeyCode(0x1c)); // enter
 
     RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
     RED_CHECK(ini.get<cfg::context::display_message>());

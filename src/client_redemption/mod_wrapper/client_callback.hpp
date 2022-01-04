@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "mod/internal/replay_mod.hpp"
 
@@ -28,7 +29,7 @@
 class ClientCallback
 {
 private:
-    Keymap2           keymap;
+    Keymap            keymap;
 
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
@@ -41,8 +42,9 @@ public:
         uint16_t y = 0;
     } mouse_data;
 
-    ClientCallback(ClientRedemptionAPI * client)
-    : client(client)
+    ClientCallback(ClientRedemptionAPI * client, KeyLayout layout)
+    : keymap(layout)
+    , client(client)
     {}
 
     mod_api * get_mod() {
@@ -74,9 +76,10 @@ public:
         this->replay_mod = replay_mod;
     }
 
-    // Controller
-    void init_layout(int lcid) {
-        this->keymap.init_layout(lcid);
+    void init_layout(KeyLayout::KbdId kbdid) {
+        if (auto* layout = find_layout_by_id(kbdid)) {
+            this->keymap.set_layout(*layout);
+        }
     }
 
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
@@ -109,25 +112,25 @@ public:
     }
 
     void CtrlAltDelPressed() {
-        const int flag = Keymap2::KBDFLAGS_EXTENDED;
+        const auto flags = Keymap::KbdFlags::Extended;
 
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
+        this->send_rdp_scanCode(flags, Keymap::Scancode::LCtrl);
+        this->send_rdp_scanCode(flags, Keymap::Scancode::LAlt);
+        this->send_rdp_scanCode(flags, Keymap::Scancode::Delete);
     }
 
     void CtrlAltDelReleased() {
-        const int flag = int(Keymap2::KBDFLAGS_EXTENDED) | int(KBD_FLAG_UP);
+        const auto flags = Keymap::KbdFlags::Extended | Keymap::KbdFlags::Release;
 
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
+        this->send_rdp_scanCode(flags, Keymap::Scancode::LCtrl);
+        this->send_rdp_scanCode(flags, Keymap::Scancode::LAlt);
+        this->send_rdp_scanCode(flags, Keymap::Scancode::Delete);
     }
 
     void mouseButtonEvent(int x, int y, int flag) {
         if (this->mod != nullptr && flag != MOUSE_FLAG_BUTTON4) {
 
-            this->mod->rdp_input_mouse(flag, x, y, &(this->keymap));
+            this->mod->rdp_input_mouse(flag, x, y);
         }
     }
 
@@ -140,7 +143,7 @@ public:
         }
 
         if (this->mod != nullptr) {
-            this->mod->rdp_input_mouse(flag, 0, 0, &(this->keymap));
+            this->mod->rdp_input_mouse(flag, 0, 0);
         }
     }
 
@@ -149,19 +152,19 @@ public:
         if (this->mod != nullptr /*&& y < this->config.info.height*/) {
             this->mouse_data.x = x;
             this->mouse_data.y = y;
-            this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
+            this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y);
         }
 
         return false;
     }
 
-    void send_rdp_scanCode(uint16_t keyCode, uint16_t flag) {
+    void send_rdp_scanCode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode) {
         if (this->mod != nullptr) {
-            this->mod->rdp_input_scancode(keyCode, 0, flag, /*timer=*/0, &(this->keymap));
+            this->mod->rdp_input_scancode(flags, scancode, /*timer=*/0, this->keymap);
         }
     }
 
-    void send_rdp_unicode(uint16_t unicode, uint16_t flag) {
-        this->mod->rdp_input_unicode(unicode, flag);
+    void send_rdp_unicode(kbdtypes::KbdFlags flag, uint16_t unicode) {
+        this->mod->rdp_input_unicode(flag, unicode);
     }
 };

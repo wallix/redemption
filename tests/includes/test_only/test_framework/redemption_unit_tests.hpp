@@ -91,22 +91,22 @@ namespace redemption_unit_test_
 {
     namespace literals
     {
-        inline ut::flagged_bytes_view operator"" _av_ascii(char const * s, size_t len) noexcept
+        inline ut::flagged_bytes_view operator""_av_ascii(char const * s, size_t len) noexcept
         {
             return ut::ascii({s, len});
         }
 
-        inline ut::flagged_bytes_view operator"" _av_utf8(char const * s, size_t len) noexcept
+        inline ut::flagged_bytes_view operator""_av_utf8(char const * s, size_t len) noexcept
         {
             return ut::utf8({s, len});
         }
 
-        inline ut::flagged_bytes_view operator"" _av_hex(char const * s, size_t len) noexcept
+        inline ut::flagged_bytes_view operator""_av_hex(char const * s, size_t len) noexcept
         {
             return ut::hex({s, len});
         }
 
-        inline ut::flagged_bytes_view operator"" _av_dump(char const * s, size_t len) noexcept
+        inline ut::flagged_bytes_view operator""_av_dump(char const * s, size_t len) noexcept
         {
             return ut::dump({s, len});
         }

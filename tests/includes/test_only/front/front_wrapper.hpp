@@ -61,17 +61,17 @@ public:
 
     void update_pointer_position(uint16_t x, uint16_t y) override;
 
-    void set_keyboard_indicators(uint16_t LedFlags) override;
+    void set_keyboard_indicators(kbdtypes::KeyLocks key_locks) override;
 
     void session_probe_started(bool /*unused*/) override;
-    void set_keylayout(int LCID) override;
+    void set_keylayout(KeyLayout const& keylayout) override;
     void set_focus_on_password_textbox(bool /*unused*/) override;
     void set_focus_on_unidentified_input_field(bool /*unused*/) override;
     void set_consent_ui_visible(bool /*unused*/) override;
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override;
     void possible_active_window_change() override;
     void send_savesessioninfo() override;
-    int get_keylayout() const override;
+    KeyLayout const& get_keylayout() const override;
 
     gdi::GraphicApi& gd() noexcept;
     operator gdi::GraphicApi& () noexcept { return this->gd(); }

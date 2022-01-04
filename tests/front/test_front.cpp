@@ -81,7 +81,7 @@ struct FrontTransport : GeneratorTransport
 RED_AUTO_TEST_CASE(TestFront)
 {
     ClientInfo info;
-    info.keylayout = 0x04C;
+    info.keylayout = KeyLayout::KbdId(0x040C);
     info.console_session = false;
     info.brush_cache_code = 0;
     info.screen_info.bpp = BitsPerPixel{24};
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestFront)
                                 , "S3cur3!1nux"
                                 , "10.10.47.36"
                                 , "10.10.43.33"
-                                , 2
+                                , kbdtypes::KeyLocks::NumLock
                                 , global_font()
                                 , theme
                                 , server_auto_reconnect_packet

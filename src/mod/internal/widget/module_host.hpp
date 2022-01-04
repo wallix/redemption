@@ -107,11 +107,11 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override;
+    void rdp_input_synchronize(KeyLocks locks) override;
 
     // Widget
 

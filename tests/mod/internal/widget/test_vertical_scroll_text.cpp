@@ -23,7 +23,8 @@ Author(s): Proxies Team
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "mod/internal/widget/vertical_scroll_text.hpp"
 
 
@@ -31,7 +32,7 @@ struct TestScrollCtx
 {
     TestGraphic drawable;
     WidgetVerticalScrollText scroll;
-    Keymap2 keymap;
+    Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
 
     TestScrollCtx(std::string text)
     : drawable(1, 1)
@@ -39,9 +40,7 @@ struct TestScrollCtx
         this->drawable, this->scroll, nullptr, 0, std::move(text),
         /*fg_color=*/RED, /*bg_color=*/YELLOW, /*focus_color=*/WINBLUE,
         global_font_deja_vu_14(), /*xtext=*/4)
-    {
-        this->keymap.init_layout(0x040C);
-    }
+    {}
 
     void set_size(uint16_t w, uint16_t h, int16_t x = 0, int16_t y = 0)
     {
@@ -58,15 +57,18 @@ struct TestScrollCtx
 
     void click(int x, int y)
     {
-        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x, y, nullptr);
+        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x, y);
         this->draw();
-        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
+        this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
     }
 
-    void input_key(Keymap2::KEvent ev)
+    void input_key(Keymap::KeyCode keycode)
     {
-        this->keymap.push_kevent(ev);
-        this->scroll.rdp_input_scancode(0, 0, 0, 0, &this->keymap);
+        auto ukeycode = underlying_cast(keycode);
+        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+        keymap.event(flags, scancode);
+        this->scroll.rdp_input_scancode(flags, scancode, 0, keymap);
         this->draw();
     }
 };
@@ -102,10 +104,10 @@ RED_AUTO_TEST_CASE(TestWidgetVerticalScrollTextLongText)
     ctx.set_size(300, 200);
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long1.png");
 
-    ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 290, 10, nullptr);
+    ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 290, 10);
     ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long2.png");
-    ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 290, 10, nullptr);
+    ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 290, 10);
 
     ctx.click(290, 190);
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long3.png");
@@ -131,7 +133,7 @@ RED_AUTO_TEST_CASE(TestWidgetVerticalScrollTextLongText)
     ctx.click(290, 50);
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long5_2.png");
 
-    ctx.input_key(Keymap2::KEVENT_DOWN_ARROW);
+    ctx.input_key(Keymap::KeyCode::DownArrow);
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long6_2.png");
 
     auto dim = ctx.scroll.get_optimal_dim();

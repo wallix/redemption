@@ -1142,7 +1142,7 @@ const char outdata[] = /* NOLINT */
 // mod_rdp::send_input_fastpath |
 // mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0 |
 // Sending on RDP W2012 Target (3) 3 bytes |
-/* 0000 */ "\x04\x03\x60"                                                     // ..` |
+/* 0000 */ "\x04\x03\x67"                                                     // ..` |
 // Sent dumped on RDP W2012 Target (3) 3 bytes |
 // mod_rdp::send_input_fastpath done |
 // Recv done on RDP W2012 Target (3) 56 bytes |

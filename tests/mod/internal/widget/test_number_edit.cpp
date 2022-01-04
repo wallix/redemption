@@ -24,7 +24,8 @@
 
 #include "mod/internal/widget/number_edit.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap2.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -54,18 +55,21 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_1.png");
 
-    Keymap2 keymap;
-    keymap.init_layout(0x040C);
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    using KFlags = Keymap::KbdFlags;
+    using Scancode = Keymap::Scancode;
 
-    keymap.push('a');
-    wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(KFlags(), Scancode(0x10)); // 'a'
+    wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x10), 0, keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_1.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    keymap.push('2');
-    wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(KFlags(), Scancode(0x2a)); // shift
+    wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x2a), 0, keymap);
+    keymap.event(KFlags(), Scancode(0x03)); // '2'
+    wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x03), 0, keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_3.png");
     RED_CHECK(notifier.last_widget == &wnumber_edit);

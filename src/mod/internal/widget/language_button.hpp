@@ -22,6 +22,8 @@
 #pragma once
 
 #include "mod/internal/widget/button.hpp"
+#include "keyboard/keylayout.hpp"
+#include "utils/ref.hpp"
 
 #include <vector>
 
@@ -43,13 +45,9 @@ public:
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
 private:
-    struct Loc
-    {
-        char const * locale_name;
-        int LCID;
-    };
-    std::vector<Loc> locales;
     unsigned selected_language = 0;
     FrontAPI & front;
     Widget & parent_redraw;
+    std::vector<CRef<KeyLayout>> locales;
+    KeyLayout front_layout;
 };

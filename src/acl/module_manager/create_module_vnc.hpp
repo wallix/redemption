@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "keyboard/keymap2.hpp"
 #include "acl/mod_pack.hpp"
 #include "utils/ref.hpp"
 
@@ -35,8 +34,13 @@ class ClientExecute;
 class Font;
 class Theme;
 class EventContainer;
-class AuthApi;
 class SessionLogApi;
+class KeyLayout;
+
+namespace kbdtypes
+{
+    enum class KeyLocks : uint8_t;
+}
 
 namespace gdi
 {
@@ -49,7 +53,8 @@ ModPack create_mod_vnc(
     FrontAPI& front,
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
-    Keymap2::KeyFlags key_flags,
+    KeyLayout const& layout,
+    kbdtypes::KeyLocks locks,
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,

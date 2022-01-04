@@ -601,7 +601,7 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
             to_write,
             "\nid ", int_to_decimal_chars(config.userProfils[config.current_user_profil].id), "\n"
             "name ", config.userProfils[config.current_user_profil].name, "\n"
-            "keylayout ", int_to_decimal_chars(config.info.keylayout), "\n"
+            "keylayout ", int_to_decimal_chars(underlying_cast(config.info.keylayout)), "\n"
             "brush_cache_code ", int_to_decimal_chars(config.info.brush_cache_code), "\n"
             "bpp ", int_to_decimal_chars(underlying_cast(config.info.screen_info.bpp)), "\n"
             "width ", int_to_decimal_chars(config.rdp_width), "\n"
@@ -636,7 +636,7 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
 
 void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
     //config.current_user_profil = 0;
-    config.info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+    config.info.keylayout = KeyLayout::KbdId(0x040C);// 0x40C FR, 0x409 USA
     config.info.brush_cache_code = 0;
     config.info.screen_info.bpp = BitsPerPixel{24};
     config.info.screen_info.width  = 800;
@@ -659,7 +659,7 @@ void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
 
     config.info.screen_info.width       = 800;
     config.info.screen_info.height      = 600;
-    config.info.keylayout               = 0x040C;            // 0x40C FR, 0x409 USA
+    config.info.keylayout               = KeyLayout::KbdId(0x040C); // 0x40C FR, 0x409 USA
     config.info.console_session         = false;
     config.info.brush_cache_code        = 0;
     config.info.screen_info.bpp         = BitsPerPixel{24};
@@ -760,7 +760,7 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
             if (config.current_user_profil == read_id) {
 
                 if (tag == "keylayout") {
-                    config.info.keylayout = std::stoi(info);
+                    config.info.keylayout = KeyLayout::KbdId(std::stoi(info));
                 } else
                 if (tag == "console_session") {
                     config.info.console_session = std::stoi(info);

@@ -1327,7 +1327,7 @@ const char outdata[] = /* NOLINT */
 //  mod_rdp::send_fonts done |
 //  mod_rdp::send_input_fastpath |
 //  Sending on RDP W2012 Target (4) 3 bytes |
- /* 0000 */ "\x04\x03\x60"                                                     //..` |
+ /* 0000 */ "\x04\x03\x67"                                                     //..` |
 //  Sent dumped on RDP W2012 Target (4) 3 bytes |
 //  mod_rdp::send_input_fastpath done |
 //  ===================> count = 8 |

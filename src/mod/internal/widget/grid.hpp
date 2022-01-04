@@ -132,9 +132,9 @@ public:
 
     void blur() override;
 
-    void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override;
+    void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y) override;
 
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
 private:
     void refresh_selected();

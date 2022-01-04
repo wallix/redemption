@@ -882,10 +882,6 @@ private:
         }
     }
 
-    void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*unused*/) {
-        this->mod.send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
-    }
-
 public:
     [[nodiscard]] bool is_keyboard_sequences_started() const override {
         return (State::START != this->state);

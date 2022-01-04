@@ -309,13 +309,13 @@ public:
            // TODO: front width and front height should be provided through info
            , uint16_t front_width
            , uint16_t front_height
-           , int keylayout
-           , int key_flags
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
+           , KeyLayout const& layout
+           , kbdtypes::KeyLocks locks
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
@@ -779,19 +779,17 @@ public:
     void initial_clear_screen();
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
-    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override;
-    void rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/) override;
-    void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override;
+    void rdp_input_mouse( int device_flags, int x, int y) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    void send_keyevent(uint8_t down_flag, uint32_t key);
+    void send_keyevents(KeymapSym::Keys keys);
 
 private:
     void rdp_input_clip_data(bytes_view data);
 
 public:
-    void rdp_input_synchronize(
-        uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2
-    ) override;
+    void rdp_input_synchronize(KeyLocks locks) override;
 
 private:
     void update_screen(Rect r, uint8_t incr);

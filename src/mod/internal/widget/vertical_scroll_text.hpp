@@ -43,9 +43,9 @@ public:
 
     Dimension get_optimal_dim() const override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
+    void rdp_input_mouse(int device_flags, int x, int y) override;
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2* keymap) override;
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void rdp_input_invalidate(Rect clip) override;
 

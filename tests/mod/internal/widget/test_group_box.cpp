@@ -77,8 +77,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "group_box_1.png");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
-                            wbutton.x() + 1, wbutton.y() + 1,
-                            nullptr);
+                            wbutton.x() + 1, wbutton.y() + 1);
 
     // ask to widget to redraw at it's current position
     wgroupbox.rdp_input_invalidate(Rect( wgroupbox.x()
@@ -145,8 +144,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "group_box_3.png");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
-                            wbutton.x() + 1, wbutton.y() + 1,
-                            nullptr);
+                            wbutton.x() + 1, wbutton.y() + 1);
 
     // ask to widget to redraw at it's current position
     wgroupbox.rdp_input_invalidate(Rect( wgroupbox.x()

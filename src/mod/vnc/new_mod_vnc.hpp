@@ -33,10 +33,16 @@ class Transport;
 class VNCMetrics;
 class AuthApi;
 class SessionLogApi;
+class KeyLayout;
 
 namespace gdi
 {
     class GraphicApi;
+}
+
+namespace kbdtypes
+{
+    enum class KeyLocks : uint8_t;
 }
 
 std::unique_ptr<mod_api> new_mod_vnc(
@@ -49,11 +55,11 @@ std::unique_ptr<mod_api> new_mod_vnc(
     FrontAPI& front,
     uint16_t front_width,
     uint16_t front_height,
-    int keylayout,
-    int key_flags,
     bool clipboard_up,
     bool clipboard_down,
     const char * encodings,
+    KeyLayout const& layout,
+    kbdtypes::KeyLocks locks,
     bool server_is_macos,
     bool send_alt_ksym,
     bool cursor_pseudo_encoding_supported,

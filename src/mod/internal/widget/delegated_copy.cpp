@@ -113,7 +113,7 @@ void WidgetDelegatedCopy::set_color(Color bg_color, Color fg_color)
     this->fg_color = fg_color;
 }
 
-void WidgetDelegatedCopy::rdp_input_mouse(int device_flags, int /*x*/, int /*y*/, Keymap2* /*unused*/)
+void WidgetDelegatedCopy::rdp_input_mouse(int device_flags, int /*x*/, int /*y*/)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && !this->is_active) {
         this->draw(

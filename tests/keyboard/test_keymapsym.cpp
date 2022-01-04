@@ -1,335 +1,270 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean
-
-   Unit test to keymap object
-   Using lib boost functions, some tests need to be added
-
+Product name: redemption, a FLOSS RDP proxy
+Copyright (C) Wallix 2021
+Author(s): Proxies Team
 */
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "keyboard/keymapsym.hpp"
+#include "keyboard/keylayouts.hpp"
 
-enum ScancodeState {
-    DOWN = 0,
-    UP   = 0x8000,
-    DOWN_EXT = 0x0100,
-    UP_EXT   = 0x8100
+
+namespace
+{
+
+struct Keysyms
+{
+    KeymapSym::Keys keys;
+
+    bool operator == (Keysyms const& other) const noexcept
+    {
+        if (keys.size() == other.keys.size()) {
+            auto p = other.keys.begin();
+            for (auto key : keys) {
+                if (key.down_flag != p->down_flag || key.keysym != p->keysym) {
+                    return false;
+                }
+                ++p;
+            }
+            return true;
+        }
+
+        return false;
+    }
 };
 
-struct check_key_events {
-    ScancodeState flags;   // input keyboard flags
-    uint8_t  code;         // key scancode, or 0 if there is another keysym to read from previous keys
-    uint16_t rflags;       // expected keymap flags (persistant flags)
-    uint32_t rkey;         // expected generated key (or 0 if no key to send,
-                           // like for deadkeys or char keys up)
-    int      downflag;     // 1: keydown, 0: keyup
+}
 
-};
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+# include "utils/sugar/int_to_chars.hpp"
+# include "test_only/test_framework/compare_collection.hpp"
+
+namespace
+{
+
+static ut::assertion_result test_comp_keysyms(Keysyms const& a, Keysyms const& b)
+{
+    ut::assertion_result ar(true);
+
+    if (REDEMPTION_UNLIKELY(!(a == b))) {
+        ar = false;
+
+        auto put = [&](std::ostream& out, array_view<KeymapSym::Key> keys){
+            for (auto key : keys) {
+
+                char uchar[] = " (x)";
+                auto to_ascii = [](char* s, uint32_t uni) -> char const* {
+                    if (' ' <= uni && uni <= '~') {
+                        s[2] = char(uni);
+                        return s;
+                    }
+                    return "";
+                };
+
+                out << "{" << (key.down_flag == KeymapSym::VncDownFlag::Down ? "down" : "up")
+                    << ", .ksym=0x" << int_to_fixed_hexadecimal_upper_zchars(key.keysym)
+                    << to_ascii(uchar, key.keysym) << "},";
+            }
+        };
+
+        auto& out = ar.message().stream();
+        out << "[";
+        ut::put_data_with_diff(out, a.keys, "!=", b.keys, put);
+        out << "]";
+    }
+
+    return ar;
+}
+
+}
+
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::Keysyms), (::Keysyms), ::test_comp_keysyms)
+#endif
+
+namespace
+{
+    constexpr uint16_t eacute = 0xa9c3 /* é */;
+
+    using Scancode = kbdtypes::Scancode;
+    using KbdFlags = kbdtypes::KbdFlags;
+    using KeyLocks = kbdtypes::KeyLocks;
+
+    const auto down = kbdtypes::KbdFlags();
+    const auto release = kbdtypes::KbdFlags::Release;
+    const auto extended = kbdtypes::KbdFlags::Extended;
+    const auto extended1 = kbdtypes::KbdFlags::Extended1;
+
+    KeymapSym::Key vnc_up(uint32_t uc) { return {uc, KeymapSym::VncDownFlag::Up}; }
+    KeymapSym::Key vnc_down(uint32_t uc) { return {uc, KeymapSym::VncDownFlag::Down}; }
+
+    template<class... Key>
+    Keysyms ksyms(Key... key)
+    {
+        KeymapSym::Keys keys;
+        (..., keys.push(key));
+        return {keys};
+    }
+
+    auto* layout_fr = find_layout_by_id(KeyLayout::KbdId(0x040C));
+}
+
+
+RED_AUTO_TEST_CASE(TestKeymapSymTounicode)
+{
+    KeymapSym keymap(*layout_fr, KeyLocks(), KeymapSym::IsApple::No, KeymapSym::IsUnix::No, false);
+
+    auto utf16_to_keysyms = [&keymap](KeymapSym::KbdFlags flag, uint16_t utf16) {
+        return Keysyms{keymap.utf16_to_keysyms(flag, utf16)};
+    };
+
+    auto scancode_to_keysyms = [&keymap](KbdFlags flags, Scancode sc) {
+        return Keysyms{keymap.scancode_to_keysyms(flags, sc)};
+    };
+
+    // null
+    RED_CHECK(utf16_to_keysyms(down, 0) == ksyms());
+    RED_CHECK(utf16_to_keysyms(release, 0) == ksyms());
+
+    // a
+    RED_CHECK(utf16_to_keysyms(down, 'a') == ksyms(vnc_down('a')));
+    RED_CHECK(utf16_to_keysyms(release, 'a') == ksyms(vnc_up('a')));
+
+    // é
+    RED_CHECK(utf16_to_keysyms(down, eacute) == ksyms(vnc_down(0x01000000 | eacute)));
+    RED_CHECK(utf16_to_keysyms(release, eacute) == ksyms(vnc_up(0x01000000 | eacute)));
+
+    // 🚀 (rocket)
+    RED_CHECK(utf16_to_keysyms(down, 0xd83d) == ksyms());
+    RED_CHECK(utf16_to_keysyms(down, 0xde80) == ksyms(vnc_down(0x01000000 | 0x1f680)));
+    RED_CHECK(utf16_to_keysyms(release, 0xd83d) == ksyms());
+    RED_CHECK(utf16_to_keysyms(release, 0xde80) == ksyms(vnc_up(0x01000000 | 0x1f680)));
+
+    // a (again)
+    RED_CHECK(utf16_to_keysyms(down, 'a') == ksyms(vnc_down('a')));
+    RED_CHECK(utf16_to_keysyms(release, 'a') == ksyms(vnc_up('a')));
+
+    // shift + altgr + 🚀 (rocket)
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LShift) == ksyms(vnc_down(0xffe1)));
+    RED_CHECK(scancode_to_keysyms(down | extended, Scancode::LAlt) == ksyms(vnc_down(0xffea)));
+    RED_CHECK(utf16_to_keysyms(down, 0xd83d) == ksyms());
+    RED_CHECK(utf16_to_keysyms(down, 0xde80) == ksyms(vnc_up(0xffea), vnc_down(0x01000000 | 0x1f680), vnc_down(0xffea)));
+    RED_CHECK(utf16_to_keysyms(release, 0xd83d) == ksyms());
+    RED_CHECK(utf16_to_keysyms(release, 0xde80) == ksyms(vnc_up(0xffea), vnc_up(0x01000000 | 0x1f680), vnc_down(0xffea)));
+    RED_CHECK(scancode_to_keysyms(release | extended, Scancode::LAlt) == ksyms(vnc_up(0xffea)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LShift) == ksyms(vnc_up(0xffe1)));
+}
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
-    uint8_t downflag = 0;
+    KeymapSym keymap(*layout_fr, KeyLocks(), KeymapSym::IsApple::No, KeymapSym::IsUnix::No, false);
 
-    RED_CHECK(not keymap.is_shift_pressed());
-
-    uint16_t keyboardFlags = 0 ; // key is not extended, key was up, key goes down
-    uint16_t keyCode = 54 ; // key is left shift
-    keymap.event(keyboardFlags, keyCode);
-    auto key = keymap.get_sym(downflag);
-    RED_CHECK_EQUAL(0, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(0xffe2, key); // Shift_R
-
-    RED_CHECK(keymap.is_shift_pressed());
-    RED_CHECK(keymap.is_left_shift_pressed());
-    RED_CHECK(not keymap.is_right_shift_pressed());
-
-    keyboardFlags = 0 ; // key is not extended, key was up, key goes down
-    keyCode = 16 ; // key is 'A'
-    keymap.event(keyboardFlags, keyCode);
-
-//    RED_CHECK(keymap.is_shift_pressed());
-//    RED_CHECK(keymap.is_left_shift_pressed());
-//    RED_CHECK(not keymap.is_right_shift_pressed());
-
-    RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
-
-    keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
-    keymap.event(keyboardFlags, 54); // key is left shift
-
-    RED_CHECK(not keymap.is_shift_pressed());
-    RED_CHECK(not keymap.is_left_shift_pressed());
-    RED_CHECK(not keymap.is_right_shift_pressed());
-
-    // shift was released, but not A (last char down goes 'a' for autorepeat)
-    keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
-    keyCode = 16 ; // key is 'A'
-    keymap.event(keyboardFlags, keyCode);
-
-    RED_CHECK_EQUAL(0xFFE2, keymap.get_sym(downflag));
-
-    RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
-
-    keyboardFlags = 0 ; // key is not extended, key was up, key goes down
-    keyCode = 0x10 ; // key is 'A'
-    keymap.event(keyboardFlags, keymap.get_sym(downflag));
-
-    // CAPSLOCK Down
-    // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    RED_CHECK(not keymap.is_caps_locked());
-    keymap.event(0, 0x3A);
-    RED_CHECK(keymap.is_caps_locked());
-
-    // CAPSLOCK Up
-    // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
-    keymap.event(0xc000, 0x3A);
-    RED_CHECK(keymap.is_caps_locked());
-
-    // Now I hit the 'A' key on french keyboard
-    keymap.event(0, 0x10);
-    keymap.event(0xc000, 0x10); // A up
-    RED_CHECK(keymap.is_caps_locked());
-    RED_CHECK_EQUAL(2, keymap.nb_sym_available());
-    RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
-    RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag);
-
-    keymap.event(0, 0x02);
-    RED_CHECK_EQUAL('&', keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
-
-    keymap.event(0, 0x36); // left shift down
-    RED_CHECK_EQUAL(0xffe2, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
-
-    keymap.event(0xc000, 0x36); // left shift up
-    RED_CHECK_EQUAL(0xffe2, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag);
-
-    keymap.event(0, 0x2A); // right shift down
-    RED_CHECK_EQUAL(0xffe1, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
-
-    keymap.event(0xc000, 0x2A); // right shift up
-    RED_CHECK_EQUAL(0xffe1, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag);
-
-    // CAPSLOCK Down
-    // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    RED_CHECK(keymap.is_caps_locked());
-    keymap.event(0, 0x3A); // capslock down
-    RED_CHECK(not keymap.is_caps_locked());
-    keymap.event(0xC000, 0x3A); // capslock up
-    RED_CHECK(not keymap.is_caps_locked());
-    // Capse Lock do not send anything: fully managed inside proxy
-    RED_CHECK_EQUAL(0, keymap.nb_sym_available());
-
-
-    // Now I hit the 'A' key on french keyboard
-    keymap.event(0, 0x10);
-    RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
-    keymap.event(0xc000, 0x10); // up
-    RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, keymap.nb_sym_available());
-}
-
-
-RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
-{
-    KeymapSym keymap(0x040C, 0, false, false, 0);
-    uint8_t downflag = 0;
-
-    // CAPSLOCK is not transmitted but has effect on keyboard (applied by Bastion)
-    // Is is really the right thing to do ?
-
-    check_key_events keys[] = {
-        {DOWN, 0x3A, 4, 0, 1},  // CAPSLOCK ON
-        {UP,   0x3A, 4, 0, 0},
-        {DOWN, 16,   4, 'A', 1}, // A
-        {UP,   16,   4, 'A', 0},
-        {DOWN, 0x2A, 4, 0xffe1, 1}, // SHIFT + A
-        {DOWN, 16, 4, 'a', 1},
-        {UP,   16, 4, 'a', 0},
-        {UP,   0x2A, 4, 0xffe1, 0},
-        {DOWN, 0x3A, 0, 0, 1},   // CAPSLOCK OFF
-        {UP,   0x3A, 0, 0, 0},
+    auto scancode_to_keysyms = [&keymap](KbdFlags flags, Scancode sc) {
+        return Keysyms{keymap.scancode_to_keysyms(flags, sc)};
     };
-    size_t i = 0;
-    for (auto k: keys){
-        i++;
-        BOOST_TEST_CONTEXT("Loop " << i << ": "
-                   << std::hex << static_cast<uint16_t>(k.flags) << ", "
-                   << std::dec << +k.code << ", "
-                   << std::hex << k.rflags << ", " << k.rkey){
-            keymap.event(k.flags, k.code);
-            RED_CHECK_EQUAL(k.rflags, keymap.key_flags);
-            RED_CHECK_EQUAL(k.rkey, keymap.get_sym(downflag));
-        }
-    }
-    RED_CHECK_EQUAL(0, keymap.nb_sym_available());
+
+    // a
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('a')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('a')));
+
+    // shift + a
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LShift) == ksyms(vnc_down(0xffe1)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('A')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('A')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LShift) == ksyms(vnc_up(0xffe1)));
+
+    // é
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x03)) == ksyms(vnc_down(0xe9)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x03)) == ksyms(vnc_up(0xe9)));
+
+    const uint16_t euro = 0x20ac /* € */;
+
+    // altgr + e (remove altgr, push €)
+    RED_CHECK(scancode_to_keysyms(down | extended, Scancode::LAlt) == ksyms(vnc_down(0xffea)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x12))
+        == ksyms(vnc_up(0xffea), vnc_down(0x01000000 | euro), vnc_down(0xffea)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x12))
+        == ksyms(vnc_up(0xffea), vnc_up(0x01000000 | euro), vnc_down(0xffea)));
+    RED_CHECK(scancode_to_keysyms(release | extended, Scancode::LAlt) == ksyms(vnc_up(0xffea)));
+
+    // ctrl + alt + e (remove ctrl+alt, push €)
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LCtrl) == ksyms(vnc_down(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LAlt) == ksyms(vnc_down(0xffe9)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x12))
+        == ksyms(vnc_up(0xffe9), vnc_up(0xffe3), vnc_down(0x01000000 | euro), vnc_down(0xffe9), vnc_down(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x12))
+        == ksyms(vnc_up(0xffe9), vnc_up(0xffe3), vnc_up(0x01000000 | euro), vnc_down(0xffe9), vnc_down(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LCtrl) == ksyms(vnc_up(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LAlt) == ksyms(vnc_up(0xffe9)));
+
+    // dead key
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x1a)) == ksyms());
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x1a)) == ksyms());
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x1a)) == ksyms(vnc_down('^'), vnc_up('^'), vnc_down('^')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x1a)) == ksyms(vnc_up('^')));
+
+    // end
+    RED_CHECK(scancode_to_keysyms(down | extended, Scancode(0x4F)) == ksyms(vnc_down(0xff57)));
+    RED_CHECK(scancode_to_keysyms(release | extended, Scancode(0x4F)) == ksyms(vnc_up(0xff57)));
+
+    // ctrl+alt+end -> ctrl+alt+del
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LCtrl) == ksyms(vnc_down(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LAlt) == ksyms(vnc_down(0xffe9)));
+    RED_CHECK(scancode_to_keysyms(down | extended, Scancode(0x4F)) == ksyms(vnc_down(0xffff)));
+    RED_CHECK(scancode_to_keysyms(release | extended, Scancode(0x4F)) == ksyms(vnc_up(0xffff)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LCtrl) == ksyms(vnc_up(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LAlt) == ksyms(vnc_up(0xffe9)));
+
+    // pause
+    RED_CHECK(scancode_to_keysyms(down | extended1, Scancode::LCtrl) == ksyms(vnc_down(0xff13)));
+    // 0x0000ff7f (numlocks) is acceptable ?
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x45)) == ksyms(vnc_down(0x0000ff7f)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x45)) == ksyms(vnc_up(0x0000ff7f)));
+    RED_CHECK(scancode_to_keysyms(release | extended1, Scancode::LCtrl) == ksyms(vnc_up(0xff13)));
 }
 
-
-//// With ALTGr
-//// AltGR down
-//KeymapSym::event(keyboardFlags=0x0100, keyCode=0x0038 flags=0x00a0)
-//KeymapSym::push_sym(sym=0000ffea) nbuf_sym=0
-//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x000b flags=0x00a0)
-//KeymapSym::push_sym(sym=00000040) nbuf_sym=0
-//// AltGR up
-//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x000b flags=0x00a0)
-//KeymapSym::push_sym(sym=00000040) nbuf_sym=0
-
-//KeymapSym::event(keyboardFlags=0x8100, keyCode=0x0038 flags=0x00a0)
-//KeymapSym::push_sym(sym=0000ffea) nbuf_sym=0
-
-//// With CTRL+Alt
-//// CTRL down
-//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x001d flags=0x00a0)
-//KeymapSym::push_sym(sym=0000ffe3) nbuf_sym=0
-//// ALT down
-//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x0038 flags=0x00a0)
-//KeymapSym::push_sym(sym=0000ffe9) nbuf_sym=0
-//// 0 down
-//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x000b flags=0x00a0)
-//KeymapSym::push_sym(sym=000000e0) nbuf_sym=0
-//// 0 up
-//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x000b flags=0x00a0)
-//// -> I get an agrave, the target server translate that to an arobas
-//KeymapSym::push_sym(sym=000000e0) nbuf_sym=0
-
-//// CTRL up
-//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x001d flags=0x00a0)
-//KeymapSym::push_sym(sym=0000ffe3) nbuf_sym=0
-//// ALT up
-//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x0038 flags=0x00a0)
-//KeymapSym::push_sym(sym=0000ffe9) nbuf_sym=0
-
-
-// KEYBOARD MAP WITH RDP SCANCODES
-// -------------------------------
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-// | 01 |  | 3B | 3C | 3D | 3E |  | 3F | 40 | 41 | 42 |  | 43 | 44 | 57 | 58 |  | 37 | 46 | 1D+45 |
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-//                                     ***  keycodes suffixed by 'x' are extended ***
-// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
-// | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E   |  | 52x| 47x| 49x|  | 45 | 35x| 37 | 4A  |
-// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
-// |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |      |  | 53x| 4Fx| 51x|  | 47 | 48 | 49 |     |
-// +------------------------------------------------------------------+  1C  |  +----+----+----+  +----+----+----| 4E  |
-// |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |     |                    | 4B | 4C | 4D |     |
-// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
-// |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |     36     |       | 48x|       | 4F | 50 | 51 |     |
-// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 1Cx |
-// |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
-// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
-
-RED_AUTO_TEST_CASE(TestKeymapSymEuro)
+RED_AUTO_TEST_CASE(TestKeymapMacOS)
 {
-    KeymapSym keymap(0x040C, 0, false, false, 0);
-    uint8_t downflag = 0;
+    KeymapSym keymap(*layout_fr, KeyLocks(), KeymapSym::IsApple::Yes, KeymapSym::IsUnix::No, false);
 
-    keymap.event(0x0000, 0x001d);
-    RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
+    auto scancode_to_keysyms = [&keymap](KbdFlags flags, Scancode sc) {
+        return Keysyms{keymap.scancode_to_keysyms(flags, sc)};
+    };
 
-    keymap.event(0x0000, 0x0038);
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
+    // a
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('q')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('q')));
 
-    keymap.event(0x0000, 0x0012); // 'e' down
+    // shift + a
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LShift) == ksyms(vnc_down(0xffe1)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('Q')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('Q')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LShift) == ksyms(vnc_up(0xffe1)));
 
-    // I get an E, which means the translation is done by target VNC server not here
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag)); // up
-    RED_CHECK_EQUAL(0, downflag);
-    RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag)); // up
-    RED_CHECK_EQUAL(0, downflag);
+    // ctrl
+    RED_CHECK(scancode_to_keysyms(down, Scancode::LCtrl) == ksyms(vnc_down(0xffe3)));
+    RED_CHECK(scancode_to_keysyms(release, Scancode::LCtrl) == ksyms(vnc_up(0xffe3)));
 
-    RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag)); // down
-    RED_CHECK_EQUAL(1, downflag);
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag)); // down
-    RED_CHECK_EQUAL(1, downflag);
-
-    RED_CHECK_EQUAL(0x65, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
-
-    keymap.event(0x8000, 0x0012); // 'e' up
-
-    RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
-
-    RED_CHECK_EQUAL(0, downflag); // up
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag); // up
-
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag); // down
-    RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag); // down
-
-    keymap.event(0x8000, 0x001d); // ctrl up
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-
-    RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag);
-
-    keymap.event(0x8000, 0x0038); // Alt up
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag);
-
-    keymap.event(0x8000, 0x0038); // Alt up
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag); // Alt up
+    // altgr + e
+    RED_CHECK(scancode_to_keysyms(down | extended, Scancode::LAlt) == ksyms(vnc_down(0xffea)));
+    RED_CHECK(scancode_to_keysyms(down, Scancode(0x12)) == ksyms(vnc_down('e')));
+    RED_CHECK(scancode_to_keysyms(release, Scancode(0x12)) == ksyms(vnc_up('e')));
+    RED_CHECK(scancode_to_keysyms(release | extended, Scancode::LAlt) == ksyms(vnc_up(0xffea)));
 }
 
-RED_AUTO_TEST_CASE(TestKeymapSymUpUp)
-{
-    KeymapSym keymap(0x040C, 0, false, false, 0);
-    uint8_t downflag = 0;
 
-    keymap.event(0x8000, 0x0038); // Alt up
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag);
-
-    keymap.event(0x8000, 0x0038); // Alt up
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, downflag); // Alt down
-}
-
-RED_AUTO_TEST_CASE(TestKeymapSymDownDown)
-{
-    KeymapSym keymap(0x040C, 0, false, false, 0);
-    uint8_t downflag = 0;
-
-    keymap.event(0x0000, 0x0038); // Alt down
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag);
-
-    keymap.event(0x0000, 0x0038); // Alt down
-    RED_CHECK_EQUAL(1, keymap.nb_sym_available());
-    RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(1, downflag); // Alt down
-}

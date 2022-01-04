@@ -376,7 +376,7 @@ private:
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
 
-    const uint32_t keylayout;
+    const KeyLayout::KbdId keylayout;
 
     std::unique_ptr<KeyboardShortcutBlocker> keyboard_shortcut_blocker_sp;
 
@@ -390,7 +390,8 @@ public:
         SessionLogApi& session_log,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
-        SessionProbeVirtualChannel::Callbacks & callbacks, uint32_t keylayout)
+        SessionProbeVirtualChannel::Callbacks & callbacks,
+        KeyLayout::KbdId keylayout)
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -416,13 +417,11 @@ public:
     , keylayout(keylayout)
     {}
 
-    bool scancode_mast_be_blocked(uint16_t keyboardFlags, uint16_t keyCode)
+    bool scancode_must_be_blocked(kbdtypes::KbdFlags keyboardFlags, kbdtypes::Scancode scancode)
     {
-        LOG(LOG_INFO, "mod_rdp::mod_rdp_channels::rdp_input_scancode: device_flags=0x%04X keyCode=0x%X", keyboardFlags, keyCode);
-
         if (this->keyboard_shortcut_blocker_sp)
         {
-            return this->keyboard_shortcut_blocker_sp->scancode_mast_be_blocked(keyboardFlags, keyCode);
+            return this->keyboard_shortcut_blocker_sp->scancode_must_be_blocked(keyboardFlags, scancode);
         }
 
         return false;
@@ -939,7 +938,8 @@ public:
                  !this->keyboard_shortcut_blocker_sp)
         {
             this->keyboard_shortcut_blocker_sp = std::make_unique<KeyboardShortcutBlocker>(
-                this->keylayout, parameters[0], bool(this->verbose & RDPVerbose::basic_trace));
+                bool(this->verbose & RDPVerbose::basic_trace));
+            this->keyboard_shortcut_blocker_sp->set_shortcuts(this->keylayout, parameters[0]);
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
@@ -1779,8 +1779,7 @@ class mod_rdp final : public mod_api, public rdp_api
 
     char client_name[128] = {};
 
-    const int key_flags;
-    int  last_key_flags_sent;
+    kbdtypes::KeyLocks last_key_locks;
     bool first_scancode = true;
 
     enum : uint8_t {
@@ -1819,8 +1818,6 @@ class mod_rdp final : public mod_api, public rdp_api
     uint32_t currentFrameId = 0;
 
     bool delayed_start_capture = false;
-
-    const bool experimental_fix_input_event_sync;
 
     const bool support_connection_redirection_during_recording;
 
@@ -1914,7 +1911,7 @@ class mod_rdp final : public mod_api, public rdp_api
 
     std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation;
 
-    uint8_t status_of_keyboard_toggle_keys = 0;
+    KeyLocks status_of_keyboard_toggle_keys {};
 
 public:
     using Verbose = RDPVerbose;
@@ -1969,8 +1966,7 @@ public:
                         session_log.report("FILESYSTEM_FULL", "100|unknown");
                     }
                 })
-        , key_flags(mod_rdp_params.key_flags)
-        , last_key_flags_sent(key_flags)
+        , last_key_locks(mod_rdp_params.key_locks)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , license_store(license_store)
@@ -1995,7 +1991,6 @@ public:
                 return client_support - disabled_orders;
             }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
         // info.order_caps.orderSupport
-        , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , gd(gd)
@@ -2400,12 +2395,19 @@ public:
         }
     }
 
-    void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
+    {
+        (void)keymap;
+        this->input_scancode(flags, scancode, event_time);
+    }
+
+private:
+    void input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time)
     {
         if ((UP_AND_RUNNING == this->connection_finalization_state)
-            && !this->input_event_disabled) {
-
-            if (this->first_scancode && !(device_flags & 0x8000)) {
+         && !this->input_event_disabled
+        ) {
+            if (this->first_scancode && !bool(flags & KbdFlags::Release)) {
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
                     if (!this->channels.session_probe_virtual_channel) {
@@ -2426,56 +2428,54 @@ public:
                      || this->channels.session_probe_virtual_channel->has_been_launched()
                     ) {
                         this->first_scancode = false;
-                        this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+                        this->send_input_synchronize(this->last_key_locks);
                     }
                 }
                 else
 #endif
                 {
                         this->first_scancode = false;
-                        this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+                        this->send_input_synchronize(this->last_key_locks);
                 }
             }
 
 #ifndef __EMSCRIPTEN__
-            if (!this->channels.scancode_mast_be_blocked(device_flags, param1))
-            {
-                this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+            if (!this->channels.scancode_must_be_blocked(flags, scancode)) {
+                this->send_input_scancode(event_time, flags, scancode);
             }
 
             IF_ENABLE_METRICS(key_pressed());
 
             if (this->channels.remote_programs_session_manager) {
-                this->channels.remote_programs_session_manager->input_scancode(param1, param2, device_flags);
+                this->channels.remote_programs_session_manager->input_scancode(flags, scancode);
             }
 #else
-            this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+            this->send_input_scancode(event_time, flags, scancode);
 #endif
         }
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+public:
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+            this->send_input_unicode(flag, unicode);
             IF_ENABLE_METRICS(key_pressed());
         }
     }
 
-    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
-        this->status_of_keyboard_toggle_keys = param1;
+    void rdp_input_synchronize(KeyLocks locks) override {
+        this->status_of_keyboard_toggle_keys = locks;
 
-        (void)time;
-        (void)param2;
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
+            this->send_input_synchronize(locks);
         }
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
+    void rdp_input_mouse(int device_flags, int x, int y) override {
         if (UP_AND_RUNNING == this->connection_finalization_state
          && !this->input_event_disabled
         ) {
-            this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+            this->send_input_mouse(device_flags, x, y);
 
 #ifndef __EMSCRIPTEN__
             IF_ENABLE_METRICS(mouse_event(device_flags, x, y));
@@ -3203,7 +3203,7 @@ public:
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
-                            rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+                            rdp_input_synchronize(this->last_key_locks);
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                 // sdata.log();
@@ -3368,7 +3368,7 @@ public:
 
                                         uint16_t LedFlags = sdata.payload.in_uint16_le();
 
-                                        this->front.set_keyboard_indicators(LedFlags);
+                                        this->front.set_keyboard_indicators(KeyLocks(LedFlags));
 
                                         assert(sdata.payload.get_current() == sdata.payload.get_data_end());
                                     }
@@ -3395,8 +3395,6 @@ public:
 
                             this->process_demand_active(sctrl);
 
-
-{
                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
                             auto resize_result = this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()});
@@ -3439,10 +3437,8 @@ public:
                                     this->send_fonts(2);
                                 }
 
-                                this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-                                    (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+                                this->send_input_synchronize(this->last_key_locks);
                             }
-}
 
                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         }
@@ -5238,8 +5234,8 @@ public:
                             {
                                 if (!failed) {
                                     LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
-                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
-                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
+                                    this->send_input_scancode(0, KbdFlags(), Scancode::Enter);
+                                    this->send_input_scancode(0, KbdFlags::Release, Scancode::Enter);
 
                                     if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
                                         event.alarm.reset_timeout(
@@ -5608,17 +5604,6 @@ public:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_fonts done");
     }
 
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) override
-    {
-        [[maybe_unused]] std::size_t channel_data_size = this->enable_fastpath_client_input_event
-            ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
-            : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
-
-        if (message_type == RDP_INPUT_SYNCHRONIZE) {
-            this->last_key_flags_sent = param1;
-        }
-    }
-
     void rdp_gdi_up_and_running() override
     {
         LOG(LOG_INFO, "mod_rdp::rdp_gdi_up_and_running()");
@@ -5655,8 +5640,7 @@ public:
             this->send_fonts(2);
         }
 
-        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-            (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+        this->send_input_synchronize(this->last_key_locks);
     }
 
     void rdp_gdi_down() override {}
@@ -6204,20 +6188,23 @@ public:
     {
         LOG(LOG_INFO, "mod_rdp::reset_keyboard_status()");
 
-        this->rdp_input_scancode(0xF, 0, 0x8000, 0, nullptr);
-        this->rdp_input_synchronize(0, 0, this->status_of_keyboard_toggle_keys, 0);
-        this->rdp_input_scancode(0xF, 0, 0x8000, 0, nullptr);
+        // release key pressed by session probe
 
-        this->rdp_input_scancode(0x2A, 0, 0x0000, 0, nullptr);
-        this->rdp_input_scancode(0x2A, 0, 0x8000, 0, nullptr);
+        this->input_scancode(KbdFlags::Release, Scancode::Tab, 0);
 
-        this->rdp_input_scancode(0x1D, 0, 0x0000, 0, nullptr);
-        this->rdp_input_scancode(0x1D, 0, 0x8000, 0, nullptr);
+        this->input_scancode(KbdFlags::NoFlags, Scancode::LShift, 0);
+        this->input_scancode(KbdFlags::Release, Scancode::LShift, 0);
 
-        this->rdp_input_scancode(0x38, 0, 0x0000, 0, nullptr);
-        this->rdp_input_scancode(0x38, 0, 0x8000, 0, nullptr);
+        this->input_scancode(KbdFlags::NoFlags, Scancode::LCtrl, 0);
+        this->input_scancode(KbdFlags::Release, Scancode::LCtrl, 0);
 
-        this->rdp_input_scancode(0x5B, 0, 0x8100, 0, nullptr);
+        this->input_scancode(KbdFlags::NoFlags, Scancode::LAlt, 0);
+        this->input_scancode(KbdFlags::Release, Scancode::LAlt, 0);
+
+        this->input_scancode(KbdFlags::NoFlags | KbdFlags::Extended, Scancode::LWin, 0);
+        this->input_scancode(KbdFlags::Release | KbdFlags::Extended, Scancode::LWin, 0);
+
+        this->rdp_input_synchronize(this->status_of_keyboard_toggle_keys);
     }
 
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
@@ -6341,6 +6328,56 @@ private:
         );
     }
 
+    void send_input_synchronize(KeyLocks locks)
+    {
+        this->last_key_locks = locks;
+
+        if (this->enable_fastpath_client_input_event) {
+            this->send_input_fastpath([&](OutStream & stream) {
+                FastPath::SynchronizeEvent_Send(stream, underlying_cast(locks));
+            });
+        }
+        else {
+            this->send_input_slowpath(0, RDP_INPUT_SYNCHRONIZE, 0, underlying_cast(locks), 0);
+        }
+    }
+
+    void send_input_scancode(uint32_t event_time, KbdFlags keyboardFlags, Scancode scancode)
+    {
+        if (this->enable_fastpath_client_input_event) {
+            this->send_input_fastpath([&](OutStream & stream) {
+                FastPath::KeyboardEvent_Send(stream, underlying_cast(keyboardFlags), underlying_cast(scancode));
+            });
+        }
+        else {
+            this->send_input_slowpath(event_time, RDP_INPUT_SCANCODE, underlying_cast(keyboardFlags), underlying_cast(scancode), 0);
+        }
+    }
+
+    void send_input_unicode(KbdFlags keyboardFlags, uint16_t unicode)
+    {
+        if (this->enable_fastpath_client_input_event) {
+            this->send_input_fastpath([&](OutStream & stream) {
+                FastPath::UniCodeKeyboardEvent_Send(stream, underlying_cast(keyboardFlags), unicode);
+            });
+        }
+        else {
+            this->send_input_slowpath(0, RDP_INPUT_UNICODE, underlying_cast(keyboardFlags), unicode, 0);
+        }
+    }
+
+    void send_input_mouse(uint16_t flags, uint16_t x, uint16_t y)
+    {
+        if (this->enable_fastpath_client_input_event) {
+            this->send_input_fastpath([&](OutStream & stream) {
+                FastPath::MouseEvent_Send(stream, flags, x, y);
+            });
+        }
+        else {
+            this->send_input_slowpath(0, RDP_INPUT_MOUSE, flags, x, y);
+        }
+    }
+
     std::size_t send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2)
     {
         std::size_t channel_data_size = 0;
@@ -6375,41 +6412,16 @@ private:
         return channel_data_size;
     }
 
-    std::size_t send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2)
+    template<class Writer>
+    void send_input_fastpath(Writer&& writer)
     {
-        std::size_t channel_data_size = 0;
-
-        (void)time;
         LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
             "mod_rdp::send_input_fastpath");
 
         write_packets(
             this->trans,
             [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
-
-                switch (message_type) {
-                case RDP_INPUT_SCANCODE:
-                    FastPath::KeyboardEvent_Send(stream, device_flags, param1);
-                    break;
-
-                case RDP_INPUT_UNICODE:
-                    FastPath::UniCodeKeyboardEvent_Send(stream, device_flags, param1);
-                    break;
-
-                case RDP_INPUT_SYNCHRONIZE:
-                    FastPath::SynchronizeEvent_Send(stream, param1);
-                    break;
-
-                case RDP_INPUT_MOUSE:
-                    FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
-                    break;
-
-                default:
-                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", unsigned(message_type));
-                    throw Error(ERR_RDP_FASTPATH);
-                }
-
-                channel_data_size = stream.tailroom();
+                writer(stream);
             },
             [&](StreamSize<256> /*maxlen*/, OutStream & fastpath_header, writable_bytes_view packet) {
                 FastPath::ClientInputEventPDU_Send out_cie(
@@ -6423,8 +6435,6 @@ private:
 
         LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
             "mod_rdp::send_input_fastpath done");
-
-        return channel_data_size;
     }
 };
 

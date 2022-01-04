@@ -58,7 +58,7 @@ public:
         std::conditional_t<(max > 8), uint16_t, uint8_t>
     >;
 
-    static constexpr bitfield mask = (sizeof(E) == max) ? ~bitfield{} : bitfield((1ull << (max + 1u)) - 1u);
+    static constexpr bitfield mask = (sizeof(E) == max) ? bitfield(~bitfield{}) : bitfield((1ull << (max + 1u)) - 1u);
 
     constexpr flags_t() = default;
 
@@ -81,7 +81,10 @@ public:
     constexpr void set(E idx) noexcept { this->value |= bit(idx); }
     constexpr void clear(E idx) noexcept { this->value &= ~bit(idx); }
 
+    constexpr void set_if(bool b, E idx) noexcept { this->value |= b ? bit(idx) : bitfield(); }
+
     constexpr void normalize() noexcept { this->value &= mask; }
+    [[nodiscard]] constexpr flags_t normalized() const noexcept { return flags_t(this->value & mask); }
 
     [[nodiscard]] constexpr bitfield as_uint() const noexcept { return this->value & mask; }
 
@@ -133,9 +136,9 @@ public:
 private:
     constexpr static bitfield bit(E idx) noexcept
     {
-        auto i = bitfield(idx);
+        auto i = unsigned(idx);
         assert(i < max);
-        return bitfield{1} << i;
+        return bitfield(1u << i);
     }
 
     bitfield value = 0;
