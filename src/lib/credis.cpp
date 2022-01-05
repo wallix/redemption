@@ -317,16 +317,14 @@ char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t length)
+std::size_t credis_buffer_pop(CRedisBuffer* buffer, std::size_t n)
 {
     SCOPED_TRACE;
 
-    if (endpos) {
-        std::size_t used = checked_int(endpos - buffer->buffer().as_charp());
-        buffer->force_buffer_size(used);
-    }
-
-    return char_ptr_cast(buffer->use(length).p);
+    auto length = buffer->buffer().size();
+    length -= std::min(n, length);
+    buffer->force_buffer_size(length);
+    return length;
 }
 
 REDEMPTION_LIB_EXPORT

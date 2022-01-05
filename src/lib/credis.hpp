@@ -50,12 +50,9 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length);
 
-    /// Allocate and use \p length bytes from position \p endpos.
-    /// When \p endpos is nullptr, this function is equivalent to
-    /// \c credis_buffer_alloc_fragment()
-    /// \post Data after \p endpos are unspecified.
+    /// \return new buffer length
     REDEMPTION_LIB_EXPORT
-    char* credis_buffer_realloc_at(CRedisBuffer* buffer, char* endpos, std::size_t length);
+    std::size_t credis_buffer_pop(CRedisBuffer* buffer, std::size_t n);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t length);

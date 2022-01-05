@@ -100,6 +100,7 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
     char* data;
     credis_buffer_reset(buffer, 5, 5, 0);
     data = credis_buffer_alloc_fragment(buffer, 3);
+    RED_CHECK(credis_buffer_get_data_view(buffer).size() == 3);
     memcpy(data, "abc", 3);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "abc"_av_ascii);
     credis_buffer_shrink_to(buffer, 2);
@@ -111,19 +112,21 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
         buffer, "preprepre", 9, "post", 4, &len);
     RED_CHECK(chars_view(data, len) == chars_view(nullptr));
 
-    data = credis_buffer_realloc_at(buffer, nullptr, 3);
+    data = credis_buffer_alloc_fragment(buffer, 9);
+    RED_CHECK(credis_buffer_get_data_view(buffer).size() == 11);
     *data++ = 'x';
-    data = credis_buffer_realloc_at(buffer, data, 3);
+    RED_CHECK(credis_buffer_pop(buffer, 8) == 3);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "abx"_av_ascii);
+    data = credis_buffer_alloc_fragment(buffer, 4);
+    RED_CHECK(credis_buffer_get_data_view(buffer).size() == 7);
     *data++ = 'y';
     *data++ = 'X';
     *data++ = 'Y';
-    data = credis_buffer_realloc_at(buffer, data, 1);
     *data++ = 'z';
+    RED_CHECK(credis_buffer_pop(buffer, 0) == 7);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "abxyXYz"_av_ascii);
-    data = credis_buffer_realloc_at(buffer, data, 10);
-    RED_CHECK(credis_buffer_get_data_view(buffer).size() == 17);
-    data = credis_buffer_realloc_at(buffer, data, 0);
-    RED_CHECK(credis_buffer_get_data_view(buffer) == "abxyXYz"_av_ascii);
+    RED_CHECK(credis_buffer_pop(buffer, 111) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == ""_av_ascii);
 
     credis_buffer_delete(buffer);
 }
