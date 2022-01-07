@@ -313,21 +313,25 @@ char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
 {
     SCOPED_TRACE;
 
-    return char_ptr_cast(buffer->use(length).p);
+    CHECK_NOTHROW(
+        return char_ptr_cast(buffer->use(length).p),
+        void(),
+        nullptr
+    );
 }
 
 REDEMPTION_LIB_EXPORT
-void credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n)
+int credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n)
 {
     SCOPED_TRACE;
 
     auto length = buffer->buffer().size();
     if (length < n) {
-        buffer->use(n - length);
+        return CHECK_NOTHROW_INT_R(buffer->use(n - length));
     }
-    else {
-        buffer->force_buffer_size(n);
-    }
+
+    buffer->force_buffer_size(n);
+    return 0;
 }
 
 REDEMPTION_LIB_EXPORT

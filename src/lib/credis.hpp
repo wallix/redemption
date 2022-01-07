@@ -51,7 +51,7 @@ extern "C"
     char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length);
 
     REDEMPTION_LIB_EXPORT
-    void credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n);
+    int credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n);
 
     /// \return new buffer length
     REDEMPTION_LIB_EXPORT
