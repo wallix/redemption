@@ -98,12 +98,14 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
 
     uint64_t len;
     char* data;
-    credis_buffer_reset(buffer, 5, 5, 0);
+    credis_buffer_reset(buffer, 0, 5, 5);
     data = credis_buffer_alloc_fragment(buffer, 3);
     RED_CHECK(credis_buffer_get_data_view(buffer).size() == 3);
     memcpy(data, "abc", 3);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "abc"_av_ascii);
-    credis_buffer_shrink_to(buffer, 2);
+    credis_buffer_set_size(buffer, 200);
+    RED_CHECK(credis_buffer_get_data_view(buffer).size() == 200);
+    credis_buffer_set_size(buffer, 2);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "ab"_av_ascii);
     data = credis_buffer_build_with_prefix_and_suffix(
         buffer, "pre", 3, "post", 4, &len);

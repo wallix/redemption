@@ -33,29 +33,29 @@ extern "C"
     struct CRedisBuffer;
     //@{
     REDEMPTION_LIB_EXPORT
-    CRedisBuffer* credis_buffer_new(std::size_t reserved_prefix,
-                                    std::size_t reserved_suffix,
-                                    std::size_t start_capacity);
+    CRedisBuffer* credis_buffer_new(std::size_t start_capacity,
+                                    std::size_t reserved_prefix,
+                                    std::size_t reserved_suffix);
 
     REDEMPTION_LIB_EXPORT
     void credis_buffer_delete(CRedisBuffer* buffer);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_reset(CRedisBuffer* buffer,
+                            std::size_t start_capacity,
                             std::size_t reserved_prefix,
-                            std::size_t reserved_suffix,
-                            std::size_t start_capacity);
+                            std::size_t reserved_suffix);
 
     /// Allocate and use \p length bytes.
     REDEMPTION_LIB_EXPORT
     char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length);
 
+    REDEMPTION_LIB_EXPORT
+    void credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n);
+
     /// \return new buffer length
     REDEMPTION_LIB_EXPORT
     std::size_t credis_buffer_pop(CRedisBuffer* buffer, std::size_t n);
-
-    REDEMPTION_LIB_EXPORT
-    int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t length);
 
     REDEMPTION_LIB_EXPORT
     int credis_buffer_push_cmd_header(CRedisBuffer* buffer, unsigned nargs);

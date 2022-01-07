@@ -91,9 +91,9 @@ struct CRedisBuffer
 
     CRedisBuffer() = default;
 
-    CRedisBuffer(std::size_t reserved_prefix, std::size_t reserved_suffix, std::size_t start_capacity)
+    CRedisBuffer(std::size_t start_capacity, std::size_t reserved_prefix, std::size_t reserved_suffix)
     {
-        reset(reserved_prefix, reserved_suffix, start_capacity);
+        reset(start_capacity, reserved_prefix, reserved_suffix);
     }
 
     void push_cmd_header(unsigned value)
@@ -222,7 +222,7 @@ struct CRedisBuffer
         reserved_suffix = 0;
     }
 
-    void reset(std::size_t reserved_prefix, std::size_t reserved_suffix, std::size_t capacity)
+    void reset(std::size_t capacity, std::size_t reserved_prefix, std::size_t reserved_suffix)
     {
         this->reserved_prefix = reserved_prefix;
         this->reserved_suffix = reserved_suffix;
@@ -272,16 +272,16 @@ extern "C"
 {
 
 REDEMPTION_LIB_EXPORT
-CRedisBuffer* credis_buffer_new(std::size_t reserved_prefix,
-                                std::size_t reserved_suffix,
-                                std::size_t start_capacity)
+CRedisBuffer* credis_buffer_new(std::size_t start_capacity,
+                                std::size_t reserved_prefix,
+                                std::size_t reserved_suffix)
 {
     SCOPED_TRACE;
 
     CHECK_NOTHROW(
-        return new(std::nothrow) CRedisBuffer(reserved_prefix,
-                                              reserved_suffix,
-                                              start_capacity),
+        return new(std::nothrow) CRedisBuffer(start_capacity,
+                                              reserved_prefix,
+                                              reserved_suffix),
         void(),
         nullptr
     );
@@ -297,14 +297,14 @@ void credis_buffer_delete(CRedisBuffer* buffer)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_reset(CRedisBuffer* buffer,
+                        std::size_t start_capacity,
                         std::size_t reserved_prefix,
-                        std::size_t reserved_suffix,
-                        std::size_t start_capacity)
+                        std::size_t reserved_suffix)
 {
     SCOPED_TRACE;
 
     return CHECK_NOTHROW_INT_R(
-        buffer->reset(reserved_prefix, reserved_suffix, start_capacity)
+        buffer->reset(start_capacity, reserved_prefix, reserved_suffix)
     );
 }
 
@@ -317,6 +317,20 @@ char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
 }
 
 REDEMPTION_LIB_EXPORT
+void credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n)
+{
+    SCOPED_TRACE;
+
+    auto length = buffer->buffer().size();
+    if (length < n) {
+        buffer->use(n - length);
+    }
+    else {
+        buffer->force_buffer_size(n);
+    }
+}
+
+REDEMPTION_LIB_EXPORT
 std::size_t credis_buffer_pop(CRedisBuffer* buffer, std::size_t n)
 {
     SCOPED_TRACE;
@@ -325,18 +339,6 @@ std::size_t credis_buffer_pop(CRedisBuffer* buffer, std::size_t n)
     length -= std::min(n, length);
     buffer->force_buffer_size(length);
     return length;
-}
-
-REDEMPTION_LIB_EXPORT
-int credis_buffer_shrink_to(CRedisBuffer* buffer, std::size_t length)
-{
-    SCOPED_TRACE;
-
-    if (length <= buffer->buffer().size()) {
-        buffer->force_buffer_size(length);
-        return 0;
-    }
-    return -1;
 }
 
 REDEMPTION_LIB_EXPORT
@@ -590,8 +592,9 @@ CRedisCmdSet* credis_cmd_set_new(char const* key_name,
 
     std::size_t cmd_set_end_len = detail::int_to_chars_buf_size + 2 /* number + \r\n */;
     CHECK_NOTHROW(
-        ret = new(voidp2) CRedisCmdSet(prefix_len + cmd_set_end_len,
-                                       suffix_len, start_capacity),
+        ret = new(voidp2) CRedisCmdSet(start_capacity,
+                                       prefix_len + cmd_set_end_len,
+                                       suffix_len),
         ::operator delete(raw_allocated),
         nullptr
     );
