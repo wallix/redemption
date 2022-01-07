@@ -1,3 +1,12 @@
+from enum import Enum
+
+class A(Enum):
+    v1 = 3
+    xxx = 4
+    yy = 3
+    Z = 4
+    Y = 5
+
 class MyType:
     __slot__ = ('_ctx')
 

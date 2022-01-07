@@ -60,6 +60,7 @@ end
 
 imported = {}
 lines = {}
+enum_lines = {}
 prefix = ''
 prefix_ctypes = ''
 
@@ -111,6 +112,12 @@ local defs = {
             t[4] = ': ' .. t[4]
         end
         local s = table.concat(t)
+        local content = genumvalues:match(t[5])
+        if content then
+            enum_lines[#enum_lines+1] = 'class ' .. t[2] .. '(Enum):'
+            enum_lines[#enum_lines+1] = content
+            enum_lines[#enum_lines+1] = '\n'
+        end
         lines[#lines+1] = '# ' .. s:gsub('\n ?', '\n# ')
     end,
     doc=function(s)
@@ -147,6 +154,26 @@ local defs = {
     strfunc=function(s)
         lines[#lines+1] = '# ' .. s:gsub('\n *', '\n#     ')
         gfunc:match(s)
+    end,
+}
+
+local enumdefs = {
+    values=function(t)
+        local xs = {}
+        local previous_value = -1
+        local values = {}
+        local num
+        for _,p in ipairs(t) do
+            if p[2] then
+                num = p[2]:gsub("'",'')
+                previous_value = tonumber(num) or xs[p[2]]
+            else
+                previous_value = previous_value + 1
+            end
+            xs[p[1]] = previous_value
+            values[#values+1] = '    ' .. p[1] .. ' = ' .. previous_value
+        end
+        return table.concat(values, '\n')
     end,
 }
 
@@ -205,6 +232,20 @@ local classdefs = {
 }
 
 -- http://www.inf.puc-rio.br/~roberto/lpeg/re.html
+
+local penumvalues = [=[
+
+start       <- S '{' {| (ws / comment / {| {id} S ('=' S {id} S)? |} ','?)+ |} -> values
+
+id          <- [_a-zA-Z0-9']+
+comment     <- comment1 / comment2
+comment1    <- '//' '/'? ' '? [^%nl]* %nl
+comment2    <- '/*' (!'*/' .)* '*/'
+
+ws          <- %s+
+S           <- %s*
+
+]=]
 
 local pcommun = [=[
 
@@ -296,6 +337,7 @@ end
 
 g = re.compile(p,defs)
 gfunc = re.compile(pfunc, gen_class and classdefs or defs)
+genumvalues = gen_class and re.compile(penumvalues, enumdefs) or {match=function(...) end}
 
 if not g:match(filecontents) then
     error('parsing error')
@@ -328,6 +370,13 @@ else
     end
 
     strings = {}
+
+    -- enums
+    if #enum_lines ~= 0 then
+        strings[#strings+1] = 'from enum import Enum\n\n'
+        strings[#strings+1] = table.concat(enum_lines, '\n')
+    end
+
     for _,classname in ipairs(classes) do
         strings[#strings+1] = 'class ' .. classname .. ":\n    __slot__ = ('_ctx')\n\n"
 
