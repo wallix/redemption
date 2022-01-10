@@ -169,12 +169,20 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
 {
     using namespace std::chrono_literals;
 
-    auto addr = "127.0.0.1"_zv;
-    int port = 4446;
+    /* Should be replaced by using RED_AUTO_TEST_CASE_WD test but
+       sockaddr_un::sun_path size is 108 max and can be truncated
+       in create_unix_server() if path is highest than this value */
+    struct SunPathWrapper
+    {
+        ~SunPathWrapper() noexcept { unlink(path.c_str()); }
+
+        zstring_view path;
+    } sun_path_wrapper { "/tmp/sockfile"_zv };
 
     unique_fd sck_server = invalid_fd();
     for (int i = 0; i < 5; ++i) {
-        sck_server = create_server(inet_addr(addr), port, EnableTransparentMode::No);
+        sck_server = create_unix_server(sun_path_wrapper.path,
+                                        EnableTransparentMode::No);
         if (sck_server.is_open()) {
             break;
         }
@@ -185,7 +193,10 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
 
     fcntl(sck_server.fd(), F_SETFL, fcntl(sck_server.fd(), F_GETFL) & ~O_NONBLOCK);
 
-    unique_fd client_fd = ip_connect(addr, port, DefaultConnectTag { });
+    unique_fd client_fd = local_connect(sun_path_wrapper.path,
+                                        std::chrono::milliseconds(1000),
+                                        3,
+                                        false);
     RED_REQUIRE(client_fd.is_open());
 
     sockaddr s {};
@@ -248,8 +259,6 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
 
     RED_REQUIRE(server_send("+ERR\r\n"_av));
 
-    // Some case, buffer is not sent when we try to read
-    std::this_thread::sleep_for(50ms);
     RED_CHECK(credis_transport_read_response_ok(redis) == Code::UnknownResponse);
     RED_CHECK(credis_transport_get_last_error_zmessage(redis) == "+ERR\r"_av_ascii);
 
