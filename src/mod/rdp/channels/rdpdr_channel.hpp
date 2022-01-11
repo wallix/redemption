@@ -454,6 +454,16 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }   // void announce_device(bool user_is_logged_on)
 
     public:
+        void process_server_announce_request(uint32_t total_length,
+            uint32_t flags, InStream& chunk)
+        {
+            (void)total_length;
+            (void)flags;
+            (void)chunk;
+
+            this->device_info_inventory.clear();
+        }
+
         void process_client_device_list_announce_request(
             uint32_t total_length, uint32_t flags, InStream& chunk)
         {
@@ -1965,8 +1975,8 @@ public:
     bool process_server_announce_request(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
+        this->device_redirection_manager.process_server_announce_request(
+            total_length, flags, chunk);
 
         rdpdr::ServerAnnounceRequest server_announce_request;
 
