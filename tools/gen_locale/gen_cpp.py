@@ -19,15 +19,75 @@ class LayoutInfo(NamedTuple):
     layout:KeyLayout
     keymaps:list[Keymap2]
 
-def load_layout_infos(layouts:list[KeyLayout], mods:dict,
+supported_mods = OrderedDict({
+    '': True,
+    'VK_SHIFT': True,
+    'VK_SHIFT VK_CAPITAL': True,
+    'VK_SHIFT VK_CAPITAL VK_NUMLOCK': True,
+    'VK_SHIFT VK_CONTROL': True,
+    'VK_SHIFT VK_CONTROL VK_MENU VK_CAPITAL': True,
+    'VK_SHIFT VK_CONTROL VK_MENU VK_CAPITAL VK_NUMLOCK': True,
+    'VK_SHIFT VK_CONTROL VK_MENU VK_NUMLOCK': True,
+    'VK_SHIFT VK_CONTROL VK_MENU': True,
+    'VK_SHIFT VK_NUMLOCK': True,
+    'VK_CAPITAL': True,
+    'VK_CAPITAL VK_NUMLOCK': True,
+    'VK_CONTROL': True,
+    'VK_CONTROL VK_MENU': True,
+    'VK_CONTROL VK_MENU VK_NUMLOCK': True,
+    'VK_CONTROL VK_MENU VK_CAPITAL': True,
+    'VK_CONTROL VK_MENU VK_CAPITAL VK_NUMLOCK': True,
+    'VK_NUMLOCK': True,
+    'VK_SHIFT VK_OEM_8': True,
+    'VK_OEM_8': True,
+})
+
+mods_to_mask = {
+    '': 0,
+    'VK_SHIFT': 1,
+    'VK_CONTROL': 2,
+    'VK_MENU': 4,
+    'VK_NUMLOCK': 8,
+    'VK_CAPITAL': 16,
+    'VK_OEM_8': 32,
+}
+
+supported_mods_mask_to_name = dict(
+    (sum(mods_to_mask[m] for m in mod.split(' ')), mod)
+    for mod in supported_mods
+)
+supported_mods_name_to_mask = dict( (v, k) for k,v in supported_mods_mask_to_name.items() )
+
+mods_with_capslock = [name for mods,name in supported_mods_mask_to_name.items() if mods & 16]
+
+capslock_to_nocapslock_mods = dict(
+    (mod, supported_mods_mask_to_name[supported_mods_name_to_mask[mod] & ~16])
+    for mod in mods_with_capslock
+)
+
+def load_layout_infos(layouts:list[KeyLayout],
                       unique_keymap:dict[Optional[tuple], int],
                       unique_deadkeys:dict[tuple, int]) -> list[LayoutInfo]:
     layouts2:list[LayoutInfo] = []
     for layout in layouts:
         keymaps = layout.keymaps
         keymap_for_layout = []
-        for mod in mods:
-            keymap = keymaps[mod]
+
+        keymaps_mods = [(keymaps[mod], mod) for mod in supported_mods]
+
+        # add capslock when missing
+        keymaps_by_mods = {mod:keymap for keymap,mod in keymaps_mods}
+        for i in range(128):
+            if all(not keymap[i]
+                   for keymap,mod in keymaps_mods
+                   if mod in mods_with_capslock):
+                for keymap,mod in keymaps_mods:
+                    if not keymap[i] and mod in mods_with_capslock:
+                        newmod = capslock_to_nocapslock_mods[mod]
+                        # if newmod in keymaps_by_mods:
+                        keymap[i] = keymaps_by_mods[newmod][i]
+
+        for keymap,mod in keymaps_mods:
             keys = []
             dkeys = []
             has_dkidx = False
@@ -51,34 +111,12 @@ def load_layout_infos(layouts:list[KeyLayout], mods:dict,
             idx = unique_keymap.setdefault((*keys,), len(unique_keymap))
             dkeys = (*dkeys[:128],) if has_dkidx else None
             keymap_for_layout.append(Keymap2(mod=mod, keymap=keymap, idx=idx, dkeymap=dkeys))
+
         layouts2.append(LayoutInfo(layout=layout, keymaps=keymap_for_layout))
     return layouts2
 
 
 layouts:list[KeyLayout] = parse_argv()
-
-supported_mods = OrderedDict({
-    '': True,
-    'VK_SHIFT': True,
-    'VK_SHIFT VK_CAPITAL': True,
-    'VK_SHIFT VK_CAPITAL VK_NUMLOCK': True,
-    'VK_SHIFT VK_CONTROL': True,
-    'VK_SHIFT VK_CONTROL VK_MENU VK_CAPITAL': True,
-    'VK_SHIFT VK_CONTROL VK_MENU VK_CAPITAL VK_NUMLOCK': True,
-    'VK_SHIFT VK_CONTROL VK_MENU VK_NUMLOCK': True,
-    'VK_SHIFT VK_CONTROL VK_MENU': True,
-    'VK_SHIFT VK_NUMLOCK': True,
-    'VK_CAPITAL': True,
-    'VK_CAPITAL VK_NUMLOCK': True,
-    'VK_CONTROL': True,
-    'VK_CONTROL VK_MENU': True,
-    'VK_CONTROL VK_MENU VK_NUMLOCK': True,
-    'VK_CONTROL VK_MENU VK_CAPITAL': True,
-    'VK_CONTROL VK_MENU VK_CAPITAL VK_NUMLOCK': True,
-    'VK_NUMLOCK': True,
-    'VK_SHIFT VK_OEM_8': True,
-    'VK_OEM_8': True,
-})
 
 error_messages = []
 for layout in layouts:
@@ -112,7 +150,7 @@ codepoint_to_char_table = {
 
 unique_keymap = {(None,)*256: 0,}
 unique_deadkeys = {}
-layouts2 = load_layout_infos(layouts, supported_mods, unique_keymap, unique_deadkeys)
+layouts2 = load_layout_infos(layouts, unique_keymap, unique_deadkeys)
 
 strings = [
     '#include "keyboard/keylayouts.hpp"\n\n',
@@ -193,17 +231,6 @@ for deadmap,idx in dktables.items():
         strings.append('\n')
     strings.append('};\n\n')
 
-
-mods_to_mask = {
-    '': 0,
-    'VK_SHIFT': 1,
-    'VK_CONTROL': 2,
-    'VK_MENU': 4,
-    'VK_NUMLOCK': 8,
-    'VK_CAPITAL': 16,
-    'VK_OEM_8': 32,
-}
-
 # prepare keymap_mod and dkeymap_mod
 unique_layout_keymap = {}
 unique_layout_dkeymap = {}
@@ -212,7 +239,7 @@ for layout in layouts2:
     mods_array = [0]*64
     dmods_array = [0]*64
     for mod, keymap, dkeymap, idx in layout.keymaps:
-        mask = sum(mods_to_mask[m] for m in mod.split(' '))
+        mask = supported_mods_name_to_mask[mod]
         mods_array[mask] = idx
         if dkeymap:
             dmods_array[mask] = dktables[dkeymap]
