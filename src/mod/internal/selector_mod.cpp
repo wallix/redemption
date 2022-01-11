@@ -21,6 +21,7 @@
 #include "mod/internal/selector_mod.hpp"
 #include "configs/config.hpp"
 #include "gdi/text_metrics.hpp"
+#include "gdi/osd_api.hpp"
 #include "keyboard/keymap.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/chars_to_int.hpp"
@@ -60,12 +61,14 @@ namespace
 SelectorMod::SelectorMod(
     SelectorModVariables ini,
     gdi::GraphicApi & drawable,
+    gdi::OsdApi& osd,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , ini(ini)
+    , osd(osd)
     , language_button(
         ini.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
@@ -140,6 +143,8 @@ void SelectorMod::acl_update(AclFieldMask const& /*acl_fields*/)
 
     this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
     this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
+
+    this->osd_banner_message();
 }
 
 void SelectorMod::ask_page()
@@ -153,6 +158,36 @@ void SelectorMod::ask_page()
     this->ini.ask<cfg::globals::target_user>();
     this->ini.ask<cfg::globals::target_device>();
     this->ini.ask<cfg::context::selector>();
+}
+
+void SelectorMod::osd_banner_message()
+{
+    if (this->ini.get<cfg::context::banner_message>().empty())
+    {
+        return;
+    }
+
+    // Show OSD banner message only after primary auth
+
+    gdi::OsdMsgUrgency omu = gdi::OsdMsgUrgency::NORMAL;
+
+    switch (this->ini.get<cfg::context::banner_type>())
+    {
+        case BannerType::info :
+            omu = gdi::OsdMsgUrgency::INFO;
+            break;
+        case BannerType::warn :
+            omu = gdi::OsdMsgUrgency::WARNING;
+            break;
+        case BannerType::alert :
+            omu = gdi::OsdMsgUrgency::ALERT;
+            break;
+    }
+
+    this->osd.display_osd_message(
+        this->ini.get<cfg::context::banner_message>(), omu);
+
+    this->ini.set<cfg::context::banner_message>("");
 }
 
 void SelectorMod::notify(Widget& widget, notify_event_t event)

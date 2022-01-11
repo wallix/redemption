@@ -27,6 +27,11 @@
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/language_button.hpp"
 
+namespace gdi
+{
+    class OsdApi;
+}
+
 using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
     vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
@@ -43,9 +48,10 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>,
+    vcfg::var<cfg::context::banner_type,                vcfg::accessmode::get>,
+    vcfg::var<cfg::context::banner_message,             vcfg::accessmode::get | vcfg::accessmode::set>
 >;
-
 
 class SelectorMod : public RailModBase, public NotifyApi
 {
@@ -53,6 +59,7 @@ public:
     SelectorMod(
         SelectorModVariables ini,
         gdi::GraphicApi & drawable,
+        gdi::OsdApi& osd,
         FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);
@@ -72,8 +79,11 @@ public:
 private:
     void refresh_device();
     void ask_page();
+    void osd_banner_message();
 
     SelectorModVariables ini;
+
+    gdi::OsdApi& osd;
 
     LanguageButton language_button;
 
