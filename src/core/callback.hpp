@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
