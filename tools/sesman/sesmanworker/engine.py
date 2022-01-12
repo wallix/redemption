@@ -152,6 +152,13 @@ class Engine(object):
             with manage_transaction(self.wabengine):
                 self.wabengine.save_session(self.avatar_id, timeout=timeout)
 
+            if self.session_id:
+                with manage_transaction(self.wabengine):
+                    self.wabengine.keepalive_session(
+                        self.session_id,
+                        timeout=timeout
+                    )
+
     def _post_authentication(self):
         self.avatar_id = self.wabengine.connect(timeout=60)
         self.update_user()
