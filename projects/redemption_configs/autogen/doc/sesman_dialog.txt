@@ -278,7 +278,7 @@ cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_e
 cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     Enable target connection on ipv6
 
-cfg::vnc_over_ssh::enable ⇐ vnc_over_ssh:enable   [bool]
+<sesman only> ⇐ vnc_over_ssh:enable   [bool]
 <sesman only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
 <sesman only> ⇐ vnc_over_ssh:ssh_login   [std::string]
     Login to be used for SSH tunneling.
@@ -385,7 +385,7 @@ cfg::context::selector_lines_per_page ⇔ selector_lines_per_page   [unsigned]
 cfg::context::selector_number_of_pages ⇐ selector_number_of_pages   [unsigned]
 cfg::context::target_password ⇔ target_password   [std::string]
 cfg::context::target_host ⇔ target_host   [std::string]
-cfg::context::tunneling_target_host ⇔ tunneling_target_host   [std::string]
+cfg::context::tunneling_target_host ⇐ tunneling_target_host   [std::string]
 cfg::context::target_str ⇐ target_str   [std::string]
 cfg::context::target_service ⇐ target_service   [std::string]
 cfg::context::target_port ⇐ target_port   [unsigned]

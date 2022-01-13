@@ -957,12 +957,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_ipv6 = 1
 
-[vnc_over_ssh]
-
-# value: 0 or 1
-#_hidden
-#enable = 0
-
 [metrics]
 
 # value: 0 or 1

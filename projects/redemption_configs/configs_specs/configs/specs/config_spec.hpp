@@ -679,7 +679,7 @@ void config_spec_definition(Writer && W)
 
     W.section(names{"vnc_over_ssh"}, [&]
     {
-        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"enable"}, set(false));
+        W.member(external, vnc_connpolicy, L, type_<bool>(), names{"enable"}, set(false));
         W.member(external, vnc_connpolicy, L, type_<types::unsigned_>(), names{"ssh_port"}, set(22));
         W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"ssh_login"}, desc{"Login to be used for SSH tunneling.\nCan defined as a Scenario Account in form 'account_name@domain_name[@device_name]'.\nIf Scenario Account resolution succeeds the login associated with this account will be used;\notherwise ssh_login will be used as is."});
         W.member(external, vnc_connpolicy, NL, type_<std::string>(), names{"ssh_password"}, desc{"Password to be used for SSH tunneling.\nCan defined as a Scenario Account in form 'account_name@domain_name[@device_name]'.\nIf Scenario Account resolution succeeds the password associated with this account will be used;\notherwise ssh_password will be used as is."});
@@ -946,7 +946,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, NL, type_<std::string>(), names{"target_password"});
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{"target_host"});
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{"tunneling_target_host"});
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"tunneling_target_host"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_str"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_service"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), names{"target_port"}, set(3389));

@@ -245,11 +245,6 @@ cp_spec = {
             'enable_ipv6', True
         ),
     },
-    'vnc_over_ssh': {
-        u'vnc_over_ssh:enable': (
-            'enable', False
-        ),
-    },
     'file_verification': {
         u'file_verification:enable_up': (
             'enable_up', False

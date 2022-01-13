@@ -21,25 +21,25 @@ namespace configs
         // inline constexpr int section3 = 21; /* all_target_mod */
         inline constexpr int section4 = 21; /* mod_rdp */
         inline constexpr int section5 = 99; /* mod_vnc */
-        inline constexpr int section6 = 107; /* vnc_over_ssh */
-        // inline constexpr int section7 = 108; /* metrics */
-        inline constexpr int section8 = 108; /* file_verification */
-        inline constexpr int section9 = 116; /* file_storage */
-        // inline constexpr int section10 = 117; /* icap_server_down */
-        // inline constexpr int section11 = 117; /* icap_server_up */
-        inline constexpr int section12 = 117; /* mod_replay */
-        // inline constexpr int section13 = 118; /* ocr */
-        inline constexpr int section14 = 118; /* video */
-        inline constexpr int section15 = 121; /* capture */
-        inline constexpr int section16 = 125; /* audit */
-        inline constexpr int section17 = 136; /* crypto */
-        // inline constexpr int section18 = 138; /* websocket */
-        // inline constexpr int section19 = 138; /* debug */
-        // inline constexpr int section20 = 138; /* remote_program */
-        inline constexpr int section21 = 138; /* translation */
-        // inline constexpr int section22 = 140; /* internal_mod */
-        inline constexpr int section23 = 140; /* context */
-        // inline constexpr int section24 = 225; /* theme */
+        // inline constexpr int section6 = 107; /* vnc_over_ssh */
+        // inline constexpr int section7 = 107; /* metrics */
+        inline constexpr int section8 = 107; /* file_verification */
+        inline constexpr int section9 = 115; /* file_storage */
+        // inline constexpr int section10 = 116; /* icap_server_down */
+        // inline constexpr int section11 = 116; /* icap_server_up */
+        inline constexpr int section12 = 116; /* mod_replay */
+        // inline constexpr int section13 = 117; /* ocr */
+        inline constexpr int section14 = 117; /* video */
+        inline constexpr int section15 = 120; /* capture */
+        inline constexpr int section16 = 124; /* audit */
+        inline constexpr int section17 = 135; /* crypto */
+        // inline constexpr int section18 = 137; /* websocket */
+        // inline constexpr int section19 = 137; /* debug */
+        // inline constexpr int section20 = 137; /* remote_program */
+        inline constexpr int section21 = 137; /* translation */
+        // inline constexpr int section22 = 139; /* internal_mod */
+        inline constexpr int section23 = 139; /* context */
+        // inline constexpr int section24 = 224; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2768,21 +2768,6 @@ namespace cfg
         type value { true };
     };
 
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: vnc_over_ssh:enable <br/>
-    /// default: false <br/>
-    struct vnc_over_ssh::enable {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 0};
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
 
     /// type: bool <br/>
     /// default: false <br/>
@@ -4196,11 +4181,11 @@ namespace cfg
         type value {  };
     };
     /// type: std::string <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::tunneling_target_host {
         static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section23 + 13};
@@ -5710,10 +5695,6 @@ struct mod_vnc
 , cfg::mod_vnc::enable_ipv6
 { static constexpr bool is_section = true; };
 
-struct vnc_over_ssh
-: cfg::vnc_over_ssh::enable
-{ static constexpr bool is_section = true; };
-
 struct metrics
 : cfg::metrics::log_interval
 , cfg::metrics::log_file_turnover_interval
@@ -5975,7 +5956,6 @@ struct VariablesConfiguration
 , cfg_section::all_target_mod
 , cfg_section::mod_rdp
 , cfg_section::mod_vnc
-, cfg_section::vnc_over_ssh
 , cfg_section::metrics
 , cfg_section::file_verification
 , cfg_section::file_storage
@@ -6102,7 +6082,6 @@ using VariablesAclPack = Pack<
 , cfg::mod_vnc::server_unix_alt
 , cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::mod_vnc::enable_ipv6
-, cfg::vnc_over_ssh::enable
 , cfg::file_verification::enable_up
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
@@ -6226,13 +6205,13 @@ using VariablesAclPack = Pack<
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
 , 0b1111111111111111111111111111101111111111111111111111111111111111
-, 0b1111111111111111111111111111110110111111011111111111110011111111
-, 0b0000000000000000000000000000000111111111111111111011111111111111
+, 0b1111111111111111111111111111111011011111101111111111111001111111
+, 0b0000000000000000000000000000000011111111111111111101111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000001000000000000000000000000000000000
+, 0b0000000000000000000000000000000100000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

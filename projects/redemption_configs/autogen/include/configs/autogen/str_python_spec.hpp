@@ -812,11 +812,6 @@ support_cursor_pseudo_encoding = boolean(default=True)
 #_hidden
 enable_ipv6 = boolean(default=True)
 
-[vnc_over_ssh]
-
-#_hidden
-enable = boolean(default=False)
-
 [metrics]
 
 #_advanced

@@ -227,10 +227,6 @@ namespace cfg
         struct enable_ipv6;
     };
 
-    struct vnc_over_ssh {
-        struct enable;
-    };
-
     struct metrics {
         struct enable_rdp_metrics;
         struct enable_vnc_metrics;
