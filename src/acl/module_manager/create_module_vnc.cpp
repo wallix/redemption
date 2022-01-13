@@ -236,10 +236,10 @@ ModPack create_mod_vnc(
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
-    unique_fd client_sck = ini.get<cfg::context::tunneling_target_host>().empty() ?
-        connect_to_target_host(ini, session_log, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>(),
+    unique_fd client_sck = ini.get<cfg::context::tunneling_target_host>().empty()
+        ? connect_to_target_host(ini, session_log, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>(),
             ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>())
-        : addr_connect_blocking(ini.get<cfg::context::tunneling_target_host>().c_str(), false);
+        : addr_connect_blocking(ini.get<cfg::context::tunneling_target_host>().c_str(), std::chrono::seconds(1), 1, false);
 
     bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
