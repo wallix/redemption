@@ -74,7 +74,13 @@ struct ConnectionPolicyWriterBase
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
             Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
-            auto& default_value = get_default<connpolicy::default_>(type, infos);
+
+            auto const& section = value_or<connpolicy::section>(
+                infos, connpolicy::section{section_names.connpolicy_name().c_str()});
+
+            if (this->section_names.emplace(section.name).second) {
+                this->ordered_section.emplace_back(section.name);
+            }
 
             std::string const& member_name = names.connpolicy_name();
 
@@ -87,10 +93,31 @@ struct ConnectionPolicyWriterBase
             python_spec_writer::write_type_info(comments, type);
             python_spec_writer::write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
+            // TODO remove ?
             this->python_spec.out << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
             auto connpolicy = connection_policy_t(infos);
+
+            auto get_value_of = [&](std::string const& file) -> auto const& {
+                if constexpr (is_t_convertible_v<Pack, connpolicy::default_>) {
+                    auto& default_values = get_t_elem<connpolicy::default_>(infos);
+                    using value_type = typename std::decay_t<decltype(default_values)>::type;
+                    value_type const* all_value = nullptr;
+                    for (auto& value : default_values.values) {
+                        if (value.connpolicy_name == file) {
+                            return value.value;
+                        }
+                        if (value.connpolicy_name.empty()) {
+                            all_value = &value.value;
+                        }
+                    }
+                    return all_value ? *all_value : default_values.values.front().value;
+                }
+                else {
+                    return get_default(type, infos);
+                }
+            };
 
             using attr1_t = spec::internal::attr;
             using attr2_t = connpolicy::internal::attr;
@@ -114,36 +141,32 @@ struct ConnectionPolicyWriterBase
             this->python_spec.out << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             this->python_spec.out << member_name << " = ";
-            python_spec_writer::write_type2(python_spec.out, enums, type, semantic_type, default_value);
-            this->python_spec.out << "\n\n";
+            auto s = this->python_spec.out.str();
+            this->python_spec.out.str("");
 
-            auto const& section = value_or<connpolicy::section>(
-                infos, connpolicy::section{section_names.connpolicy_name().c_str()});
+            for (auto const& file : connpolicy.files) {
+                python_spec_writer::write_type2(python_spec.out, enums, type, semantic_type, get_value_of(file));
+                this->python_spec.out << "\n\n";
 
-            if (this->section_names.emplace(section.name).second) {
-                this->ordered_section.emplace_back(section.name);
+                auto& content = this->file_map[file][section.name];
+                content += s;
+                content += this->python_spec.out.str();
+                this->python_spec.out.str("");
             }
 
             auto sesman_name = sesman_network_name(infos, section_names);
 
-            auto s = this->python_spec.out.str();
-            for (auto const& file : connpolicy.files) {
-                this->file_map[file][section.name] += s;
-            }
-
-            auto& buf = this->python_spec.out;
-            buf.str("");
             auto sesman_mem_key = str_concat(section.name, '/', sesman_name, '/', member_name);
             if (!this->sesman_mems.emplace(sesman_mem_key).second) {
                 throw std::runtime_error(str_concat("duplicate ", section.name, ' ', member_name));
             }
             if constexpr (is_convertible_v<Pack, not_external_attr_t>) {
-                sesman_default_map::python::write_type2(buf, enums, type, semantic_type, default_value);
+                sesman_default_map::python::write_type2(this->python_spec.out, enums, type, semantic_type, get_value_of({}));
                 str_append(this->sesman_file[section.name],
                            "        u'", sesman_name, "': (\n"
-                           "            '", member_name, "', ", buf.str(), "\n"
+                           "            '", member_name, "', ", this->python_spec.out.str(), "\n"
                            "        ),\n");
-                buf.str("");
+                this->python_spec.out.str("");
             }
         }
     }

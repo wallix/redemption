@@ -156,9 +156,11 @@ W.member(names{.cpp="fish", .ini="superfish", .sesman="netfish"}, ...);
 - `set(CPP_EXPR(MACRO_NAME))`: instead of `MACRO_NAME` (cf: `set(CPP_MACRO(HASH_PATH)))`)
 - `set(any_value)`
 - `connpolicy::set(any_value)`
+- `sesman::connection_policy{...}.set(any_value)`
 
 By default, initialized with `{}` (cf: `type value = {}`).
 
+Combination of connpolicy with `|`: `connpolicy::set(any_value) | sesman::connection_policy{"rdp"}.set(any_value)`.
 
 ## prefix
 

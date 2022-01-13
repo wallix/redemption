@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 #include <cassert>
 
@@ -252,17 +253,41 @@ namespace connpolicy
     template<class T>
     struct default_
     {
+        struct Value
+        {
+            T value;
+            std::string connpolicy_name;
+        };
+
         using type = T;
-        T value;
+        std::vector<Value> values;
     };
 
     template<class T>
+    default_<T> operator | (default_<T> const& a, default_<T> b)
+    {
+        for (auto& x : a.values) {
+            for (auto& y : b.values) {
+                if (x.connpolicy_name == y.connpolicy_name) {
+                    throw std::runtime_error("duplicated connpolicy_name on set()");
+                }
+            }
+        }
+        b.values.insert(b.values.begin(), a.values.begin(), a.values.end());
+        return b;
+    }
+
+    template<class T>
     default_<T> set(T const & x)
-    { return {x}; }
+    {
+        return {{typename default_<T>::Value{x, {}}}};
+    }
 
     template<std::size_t N>
     default_<std::string> set(char const (&x)[N])
-    { return {{std::string(x+0, x+N-1)}}; }
+    {
+        return {{default_<std::string>::Value{std::string(x+0, x+N-1), {}}}};
+    }
 
     namespace internal
     {
@@ -330,6 +355,22 @@ namespace sesman
         explicit connection_policy(std::string file)
         : files(1u, std::move(file))
         {}
+
+        template<class T>
+        connpolicy::default_<T> set(T const & x)
+        {
+            connpolicy::default_<T> d;
+            for (auto& file : files) {
+                d.values.push_back({x, file});
+            }
+            return d;
+        }
+
+        template<std::size_t N>
+        connpolicy::default_<std::string> set(char const (&x)[N])
+        {
+            return set(std::string(x+0, x+N-1));
+        }
     };
 
     inline connection_policy operator | (connection_policy const& x, connpolicy::internal::attr y)
