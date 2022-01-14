@@ -365,6 +365,7 @@ try:
             add_current_tag_changelog_file(current_tag)
             update_changelog_template()
         update_version_file(opts.tag)
+        update_conf_migration_tool(opts.tag)
 
         # tags and commits BEGIN
         if opts.git_commit:
