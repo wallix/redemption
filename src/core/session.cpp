@@ -401,7 +401,7 @@ private:
 
             auto timeout = (inactivity_timeout != inactivity_timeout.zero())
                 ? inactivity_timeout
-                : ini.get<cfg::globals::session_timeout>();
+                : ini.get<cfg::globals::base_inactivity_timeout>();
 
             inactivity.start(timeout);
         }
@@ -520,7 +520,7 @@ private:
 
         case ModuleName::confirm:
             log_proxy::set_user("");
-            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_display_message_mod();
             break;
 
@@ -532,25 +532,25 @@ private:
                 inactivity.start(timeout);
             }
             else {
-                inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+                inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             }
             mod_pack = mod_factory.create_display_link_mod();
             break;
 
         case ModuleName::valid:
             log_proxy::set_user("");
-            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_valid_message_mod();
             break;
 
         case ModuleName::challenge:
             log_proxy::set_user("");
-            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_dialog_challenge_mod();
             break;
 
         case ModuleName::selector:
-            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
 
             if (this->is_first_looping_on_mod_selector) {
                 this->is_first_looping_on_mod_selector = false;
@@ -591,7 +591,7 @@ private:
 
         case ModuleName::interactive_target:
             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
-            inactivity.start(this->ini.get<cfg::globals::session_timeout>());
+            inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_interactive_target_mod();
             break;
 

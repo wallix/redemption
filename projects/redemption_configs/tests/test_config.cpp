@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
@@ -389,7 +389,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(150,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::close_timeout>().count());
@@ -580,7 +580,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
@@ -743,7 +743,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
@@ -910,7 +910,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(7,                                ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(300,                              ini.get<cfg::globals::close_timeout>().count());
@@ -1053,7 +1053,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
@@ -1197,7 +1197,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
@@ -1326,7 +1326,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
@@ -1458,7 +1458,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(300,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());

@@ -558,18 +558,26 @@ class RedemptionConfigurationFile(ConfigurationFile):
         noneable_line_migration_func = None
         noneable_result_version = None
 
-        v_9_1_0 = RedemptionVersion("9.1.0")
-        if previous_version < v_9_1_0:
+        v_NEXT_TAG_STR = RedemptionVersion("NEXT_TAG")
+        if previous_version < v_NEXT_TAG_STR:
             noneable_line_migration_func =                                  \
-                self.__migrate_line_to_9_1_0, v_9_1_0
-            noneable_result_version = v_9_1_0
+                self.__migrate_line_to_NEXT_TAG_STR, v_NEXT_TAG_STR
+            noneable_result_version = v_NEXT_TAG_STR
 
         return noneable_line_migration_func, noneable_result_version
 
-    def __migrate_line_to_9_1_0(self, section_name, line):
+    def __migrate_line_to_NEXT_TAG_STR(self, section_name, line):
         keep_unchanged = True
         noneable_dest_section_name = None
         noneable_line_raw_data = None
+
+        if line.is_variable_declaration():
+            if "globals" == section_name:
+                if "session_timeout" == line.get_name():
+                    keep_unchanged = False
+                    noneable_dest_section_name = None
+                    noneable_line_raw_data =                                \
+                        f"base_inactivity_timeout = {line.get_value()}"
 
         return keep_unchanged, noneable_dest_section_name,                  \
             noneable_line_raw_data

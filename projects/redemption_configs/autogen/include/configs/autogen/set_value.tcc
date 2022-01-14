@@ -121,10 +121,10 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "session_timeout"_zv) {
+        else if (key == "base_inactivity_timeout"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::globals::session_timeout&>(this->variables).value,
+                static_cast<cfg::globals::base_inactivity_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::seconds>{},
                 value
             );

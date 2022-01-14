@@ -292,7 +292,7 @@ namespace cfg
     /// If value is set to 0, then session timeout value is unlimited. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 900 <br/>
-    struct globals::session_timeout {
+    struct globals::base_inactivity_timeout {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = std::chrono::seconds;
@@ -302,7 +302,7 @@ namespace cfg
     };
     /// No automatic disconnection due to inactivity, timer is set on target session. <br/>
     /// If value is between 1 and 30, then 30 is used. <br/>
-    /// If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used. <br/>
+    /// If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used. <br/>
     /// type: std::chrono::seconds <br/>
     /// connpolicy -> proxy    [name: session::inactivity_timeout] <br/>
     /// sesmanName: globals:inactivity_timeout <br/>
@@ -5489,7 +5489,7 @@ struct globals
 , cfg::globals::target_application_password
 , cfg::globals::authfile
 , cfg::globals::handshake_timeout
-, cfg::globals::session_timeout
+, cfg::globals::base_inactivity_timeout
 , cfg::globals::inactivity_timeout
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::authentication_timeout

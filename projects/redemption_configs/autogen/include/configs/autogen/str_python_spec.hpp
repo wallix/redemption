@@ -28,11 +28,11 @@ handshake_timeout = integer(min=0, default=10)
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then session timeout value is unlimited.
 # (in seconds)
-session_timeout = integer(min=0, default=900)
+base_inactivity_timeout = integer(min=0, default=900)
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.
+# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.
 # (in seconds)
 #_hidden
 inactivity_timeout = integer(min=0, default=0)

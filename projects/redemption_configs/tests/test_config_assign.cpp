@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::notimestamp>(true);
     ini.set<cfg::globals::port>(1);
-    ini.set<cfg::globals::session_timeout>(std::chrono::seconds{1});
+    ini.set<cfg::globals::base_inactivity_timeout>(std::chrono::seconds{1});
     ini.set_acl<cfg::globals::target>(cs);
     ini.set_acl<cfg::globals::target>(s);
     ini.set<cfg::globals::target_application>(cs);
