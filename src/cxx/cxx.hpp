@@ -47,25 +47,25 @@
 
 
 #if defined(__clang__)
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(x)     __attribute__((x))
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_(x)           // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG_(x)         __attribute__((x))
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_(x)               __attribute__((x))
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(x)     __attribute__((x))
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC(x)           // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG(x)         __attribute__((x))
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE(x)               __attribute__((x))
 #elif defined(__GNUC__)
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(x)     __attribute__((x))
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG_(x)         // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_(x)           __attribute__((x))
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_(x)               __attribute__((x))
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(x)     __attribute__((x))
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG(x)         // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC(x)           __attribute__((x))
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE(x)               __attribute__((x))
 #elif defined(_MSC_VER)
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(x)     // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG_(x)         // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_(x)           // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_(x)               __declspec(x)
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(x)     // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG(x)         // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC(x)           // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE(x)               __declspec(x)
 #else
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(x)     // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG_(x)         // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_(x)           // no-op
-#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_(x)               // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(x)     // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG(x)         // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC(x)           // no-op
+#  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE(x)               // no-op
 #endif
 
 
@@ -74,17 +74,17 @@
 
 
 #define REDEMPTION_CXX_ATTRIBUTE_NO_SANITIZE_ADDRESS \
-    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(no_sanitize_address)
+    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(no_sanitize_address)
 
 #define REDEMPTION_CXX_ATTRIBUTE_NO_SANITIZE_THREAD \
-    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(no_sanitize_thread)
+    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(no_sanitize_thread)
 
 #define REDEMPTION_CXX_ATTRIBUTE_NO_SANITIZE_MEMORY \
-    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(no_sanitize_memory)
+    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG(no_sanitize_memory)
 
 #define REDEMPTION_CXX_ATTRIBUTE_NO_SANITIZE_UNDEFINED                   \
-    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG_(no_sanitize("undefined")) \
-    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_(no_sanitize_undefined)
+    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG(no_sanitize("undefined")) \
+    REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC(no_sanitize_undefined)
 //@}
 
 
