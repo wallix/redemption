@@ -209,6 +209,15 @@ RED_AUTO_TEST_CASE(TestKeymap)
     RED_CHECK_EQ(event(release | 0x3a /* capslock */), values(KCode(0x3a), KFlags(0x8000), {}, KV::None));
     RED_CHECK_EQ(event(downnnn | 0x10 /*a*/), values(KCode(0x10), KFlags(), {'a'}, KV::KeyDown));
 
+    RED_CHECK_EQ(event(downnnn | 0x56 /*<*/), values(KCode(0x56), KFlags(), {'<'}, KV::KeyDown));
+    RED_CHECK_EQ(event(release | 0x56 /*<*/), values(KCode(0x56), KFlags(0x8000), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x3a /* capslock */), values(KCode(0x3a), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(release | 0x3a /* capslock */), values(KCode(0x3a), KFlags(0x8000), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x56 /*<*/), values(KCode(0x56), KFlags(), {'<'}, KV::KeyDown));
+    RED_CHECK_EQ(event(release | 0x56 /*<*/), values(KCode(0x56), KFlags(0x8000), {}, KV::None));
+    RED_CHECK_EQ(event(downnnn | 0x3a /* capslock */), values(KCode(0x3a), KFlags(), {}, KV::None));
+    RED_CHECK_EQ(event(release | 0x3a /* capslock */), values(KCode(0x3a), KFlags(0x8000), {}, KV::None));
+
 
     // key action
     RED_CHECK_EQ(event(downnnn | 0x0E /*backspace*/), values(KCode(0x0E), KFlags(), {'\b'}, KV::Backspace));
