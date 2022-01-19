@@ -563,7 +563,7 @@ class RedemptionConfigurationFile(ConfigurationFile):
         v_9_1_37d = RedemptionVersion("9.1.37d")
         if previous_version < v_9_1_37d:
             noneable_line_migration_func =                                  \
-                self.__migrate_line_to_9_1_37d, v_9_1_37d
+                self.__migrate_line_to_9_1_37d
             noneable_result_version = v_9_1_37d
 
         return noneable_line_migration_func, noneable_result_version
@@ -592,7 +592,7 @@ if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                       \
 
     copyfile('/var/wab/etc/rdp/rdpproxy.ini', '/var/wab/etc/rdp/rdpproxy.ini.work')
 
-    new_configuration_file = ConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini.work')
+    new_configuration_file = RedemptionConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini.work')
     new_configuration_file.migrate(old_redemption_version)
     new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
 
