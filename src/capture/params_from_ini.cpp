@@ -115,7 +115,7 @@ RedisParams redis_params_from_ini(const Inifile & ini)
         .db = ini.get<cfg::audit::redis_db>(),
         .timeout = ini.get<cfg::audit::redis_timeout>(),
         .tls = RedisParams::Tls{
-            .enable_tls = not ini.get<cfg::audit::redis_use_tls>(),
+            .enable_tls = ini.get<cfg::audit::redis_use_tls>(),
             .cert_file = ini.get<cfg::audit::redis_tls_cert>().c_str(),
             .key_file = ini.get<cfg::audit::redis_tls_key>().c_str(),
             .ca_cert_file = ini.get<cfg::audit::redis_tls_cacert>().c_str(),
