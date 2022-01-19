@@ -11,7 +11,9 @@
 ##
 
 from collections import OrderedDict
+from shutil import copyfile
 
+import os
 import sys
 import traceback
 
@@ -308,7 +310,7 @@ class ConfigurationFile:
         if configuration_file_line.is_variable_declaration():
             if self.__is_variable_exist(section_name,
                                         configuration_file_line.get_name()):
-                print("ConfigurationFile.migrate: "
+                print("ConfigurationFile.__add_variable: "
                      "A variable of the same name still exists in the "
                          "section: "
                     f"\"{str(configuration_file_line)}\"")
@@ -325,7 +327,7 @@ class ConfigurationFile:
         if len(self._content) > insert_position + 1 and                     \
            not self._content[insert_position + 1].is_empty():
             if self.__verbose:
-                print("ConfigurationFile.migrate: Insert blank line")
+                print("ConfigurationFile.__add_variable: Insert blank line")
 
             self._content[insert_position + 1].insert(insert_position,
                 ConfigurationFileLine("", self.__verbose))
@@ -581,3 +583,30 @@ class RedemptionConfigurationFile(ConfigurationFile):
 
         return keep_unchanged, noneable_dest_section_name,                  \
             noneable_line_raw_data
+
+
+def readall(filename):
+    with open(filename) as f:
+        return f.read()
+
+
+def writeall(filename, s):
+    with open(filename, "w+") as f:
+        f.write(s)
+            
+            
+if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                       \
+   os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
+    old_redemption_version = readall('/tmp/OLD_REDEMPTION_VERSION')
+    print(f"old_redemption_version={old_redemption_version}")
+   
+    copyfile('/var/wab/etc/rdp/rdpproxy.ini', '/var/wab/etc/rdp/rdpproxy.ini.work')
+    
+    new_configuration_file = ConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini.work')
+    new_configuration_file.migrate(old_redemption_version)
+    new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
+    
+    copyfile('/var/wab/etc/rdp/rdpproxy.ini', '/var/wab/etc/rdp/rdpproxy.ini.bak')
+    
+    os.rename('/var/wab/etc/rdp/rdpproxy.ini.work', '/var/wab/etc/rdp/rdpproxy.ini')
+
