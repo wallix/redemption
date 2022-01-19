@@ -585,28 +585,18 @@ class RedemptionConfigurationFile(ConfigurationFile):
             noneable_line_raw_data
 
 
-def readall(filename):
-    with open(filename) as f:
-        return f.read()
-
-
-def writeall(filename, s):
-    with open(filename, "w+") as f:
-        f.write(s)
-            
-            
 if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                       \
    os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
-    old_redemption_version = readall('/tmp/OLD_REDEMPTION_VERSION')
+    old_redemption_version = RedemptionVersion.fromfile('/tmp/OLD_REDEMPTION_VERSION')
     print(f"old_redemption_version={old_redemption_version}")
-   
+
     copyfile('/var/wab/etc/rdp/rdpproxy.ini', '/var/wab/etc/rdp/rdpproxy.ini.work')
-    
+
     new_configuration_file = ConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini.work')
     new_configuration_file.migrate(old_redemption_version)
     new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
-    
+
     copyfile('/var/wab/etc/rdp/rdpproxy.ini', '/var/wab/etc/rdp/rdpproxy.ini.bak')
-    
+
     os.rename('/var/wab/etc/rdp/rdpproxy.ini.work', '/var/wab/etc/rdp/rdpproxy.ini')
 
