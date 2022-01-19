@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/python3 -O
 # -*- coding: utf-8 -*-
 ##
 # Copyright (c) 2021 WALLIX. All rights reserved.
