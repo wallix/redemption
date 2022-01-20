@@ -560,14 +560,14 @@ class RedemptionConfigurationFile(ConfigurationFile):
         noneable_line_migration_func = None
         noneable_result_version = None
 
-        v_NEXT_TAG_STR = RedemptionVersion("NEXT_TAG")
-        if previous_version < v_NEXT_TAG_STR:
-            noneable_line_migration_func = self.__migrate_line_to_NEXT_TAG_STR
-            noneable_result_version = v_NEXT_TAG_STR
+        v_9_1_39 = RedemptionVersion("9.1.39")
+        if previous_version < v_9_1_39:
+            noneable_line_migration_func = self.__migrate_line_to_9_1_39
+            noneable_result_version = v_9_1_39
 
         return noneable_line_migration_func, noneable_result_version
 
-    def __migrate_line_to_NEXT_TAG_STR(self, section_name, line):
+    def __migrate_line_to_9_1_39(self, section_name, line):
         keep_unchanged = True
         noneable_dest_section_name = None
         noneable_line_raw_data = None
