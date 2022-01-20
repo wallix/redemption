@@ -419,7 +419,9 @@ class ConfigurationFile:
                     file=sys.stdout)
 
     def migrate(self, previous_version):
-        first_migration = True
+        content_is_changed = False
+
+        first_round_of_migration = True
 
         while True:
             line_migration_func, result_version =                           \
@@ -442,9 +444,11 @@ class ConfigurationFile:
                             line_migration_func(section_name,
                                 self._content[line_index])
                         if not keep_unchanged:
+                            content_is_changed = True
+
                             self._content[line_index].disable()
 
-                            if not first_migration:
+                            if not first_round_of_migration:
                                 self._content[line_index].mark_to_be_deleted()
 
                             if dest_section_name:
@@ -509,7 +513,7 @@ class ConfigurationFile:
             else:
                 break
 
-            first_migration = False
+            first_round_of_migration = False
 
         line_count = len(self._content)
         line_index = 0
@@ -522,6 +526,8 @@ class ConfigurationFile:
                 continue
 
             line_index += 1
+
+        return content_is_changed
 
     def _get_line_migration_func(self, previous_version):
         raise NotImplementedError(
@@ -590,16 +596,16 @@ if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                        \
         RedemptionVersion.fromfile('/tmp/OLD_REDEMPTION_VERSION')
     print(f"PreviousRedemptionVersion={old_redemption_version}")
 
-    copyfile('/var/wab/etc/rdp/rdpproxy.ini',                               \
-        '/var/wab/etc/rdp/rdpproxy.ini.work')
-
     new_configuration_file =                                                \
-        RedemptionConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini.work')
-    new_configuration_file.migrate(old_redemption_version)
-    new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
+        RedemptionConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini')
 
-    copyfile('/var/wab/etc/rdp/rdpproxy.ini',                               \
-        '/var/wab/etc/rdp/rdpproxy.ini.bak')
+    if new_configuration_file.migrate(old_redemption_version):
+        new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
 
-    os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',                         \
-        '/var/wab/etc/rdp/rdpproxy.ini')
+        copyfile('/var/wab/etc/rdp/rdpproxy.ini',                           \
+            '/var/wab/etc/rdp/rdpproxy.ini.' + str(old_redemption_version))
+
+        os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',                     \
+            '/var/wab/etc/rdp/rdpproxy.ini')
+
+        print(f"Configuration file updated")
