@@ -24,7 +24,7 @@ namespace cfg
         struct encryptionLevel;
         struct authfile;
         struct handshake_timeout;
-        struct session_timeout;
+        struct base_inactivity_timeout;
         struct inactivity_timeout;
         struct keepalive_grace_delay;
         struct authentication_timeout;

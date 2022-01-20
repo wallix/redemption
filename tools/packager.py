@@ -221,6 +221,16 @@ def update_version_file(newtag):
     writeall("include/main/version.hpp", out)
 
 
+def update_conf_migration_tool(newtag):
+    if os.path.exists("tools/conf_migration_tool/conf_migrate.py"):
+        newstr = newtag.replace(".", "_")
+        # Set tag version in tools/conf_migration_tool/conf_migrate.py
+        out = readall("tools/conf_migration_tool/conf_migrate.py")
+        out = out.replace("NEXT_TAG_STR", newstr)
+        out = out.replace("NEXT_TAG", newtag)
+        writeall("tools/conf_migration_tool/conf_migrate.py", out)
+
+
 def update_changelog_template():
     # write changelog
     changelog = "redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low\n\n"
@@ -356,6 +366,7 @@ try:
             add_current_tag_changelog_file(current_tag)
             update_changelog_template()
         update_version_file(opts.tag)
+        update_conf_migration_tool(opts.tag)
 
         # tags and commits BEGIN
         if opts.git_commit:
