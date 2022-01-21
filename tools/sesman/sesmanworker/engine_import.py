@@ -3,11 +3,7 @@
 # flake8: noqa
 
 from wabengine.common.exception import AuthenticationFailed
-from wabengine.common.exception import AuthenticationChallenged
-from wabengine.common.exception import MultiFactorAuthentication
 from wabengine.common.exception import LicenseException
-from wabengine.common.exception import MustChangePassword
-from wabengine.common.exception import AccountLocked
 from wabengine.common.exception import SessionAlreadyStopped
 from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
     PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, \
@@ -15,8 +11,7 @@ from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
 from wabconfig import Config
 from wabengine.client.checker import Checker
 from wallixconst.authentication import PASSWORD_VAULT, \
-    PASSWORD_INTERACTIVE, PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, \
-    KERBEROS_FORWARDING, PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
+    PASSWORD_INTERACTIVE, PASSWORD_MAPPING
 from wallixconst.account import AM_IL_DOMAIN
 from wallixconst.trace import LOCAL_TRACE_PATH_RDP
 from wabx509 import AuthX509

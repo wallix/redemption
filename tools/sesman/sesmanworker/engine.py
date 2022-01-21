@@ -29,7 +29,6 @@ try:
     )
     from wallixconst.account import AM_IL_DOMAIN
     from wallixconst.trace import LOCAL_TRACE_PATH_RDP
-    from wabx509 import AuthX509
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
     CRED_INDEX = "credentials"
@@ -1242,9 +1241,7 @@ class Engine(object):
             'time': time.ctime()
         }
 
-        Notify(self.wabengine,
-               CX_EQUIPMENT,
-               notif_data)
+        Notify(self.wabengine, CX_EQUIPMENT, notif_data)
 
         return self.session_id, self.start_time
 
