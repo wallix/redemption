@@ -105,6 +105,39 @@ if not (opts.build_package or (opts.update_version and opts.tag)):
     usage()
     sys.exit(1)
 
+if opts.update_version and opts.tag:
+    ret = subprocess.run(["git", "describe", "--tags"], capture_output=True)
+    if ret.returncode:
+        print(f"Unable to retrieve last tag information: {ret.returncode}")
+        sys.exit(1)
+
+    last_taginfo = ret.stdout.decode("utf-8").rstrip("\n")
+    ret = re.search("^\d+\.\d+.", last_taginfo)
+    if ret is None:
+        print( "Unable to retrieve the version number from last tag: "
+              f"{last_taginfo}")
+        sys.exit(1)
+    ret = ret.group(0)
+    if opts.tag.find(ret) != 0:
+        while True:
+            print("╔╗ ╔╗ ╔╗")
+            print("║║ ║║ ║║")
+            print("║║ ║║ ║║")
+            print("╚╝ ╚╝ ╚╝")
+            print("╔╗ ╔╗ ╔╗")
+            print("╚╝ ╚╝ ╚╝")
+
+            print( "The last tag number of the repository is not "
+                   "compatible with the new tag number!\n"
+                  f"    Last tag: {last_taginfo}\n"
+                  f"    New tag: {opts.tag}")
+            res = input("Do you want to continue? (y/n) ")
+
+            if 'n' == res:
+                sys.exit(1)
+            elif 'y' == res:
+                break
+
 # remove existing deban directory BEGIN
 try:
     shutil.rmtree("debian")
