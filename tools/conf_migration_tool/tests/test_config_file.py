@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
 import hashlib
 import os
 import unittest
 
-from conf_migrate import ConfigurationFile, ConfigurationFileLine,          \
-    RedemptionVersion
+from conf_migrate import (ConfigurationFile,
+                          ConfigurationFileLine,
+                          RedemptionVersion)
 
 class Test_ConfigurationFile(unittest.TestCase):
     def test_load_save(self):
@@ -18,12 +20,9 @@ class Test_ConfigurationFile(unittest.TestCase):
 
         configuration_file.save_to(target_file)
 
-        f = open(target_file, 'rb')
-
-        self.assertEqual(hashlib.md5(f.read()).hexdigest(),
-            'ffb503380ff480ced4c26ba4ce3b42bb')
-
-        f.close()
+        with open(target_file, 'rb') as f:
+            self.assertEqual(hashlib.md5(f.read()).hexdigest(),
+                             'ffb503380ff480ced4c26ba4ce3b42bb')
 
         os.remove(target_file)
 

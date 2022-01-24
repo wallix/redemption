@@ -1,8 +1,15 @@
+#!/usr/bin/env python3
 import unittest
 
-from conf_migrate import RedemptionVersion
+from conf_migrate import RedemptionVersion, RedemptionVersionError
 
 class Test_RedemptionVersion(unittest.TestCase):
+    def test_invalid_version(self):
+        with self.assertRaises(RedemptionVersionError):
+            RedemptionVersion("3.5")
+        with self.assertRaises(RedemptionVersionError):
+            RedemptionVersion("TEST")
+
     def test_operator_greater_than(self):
         v_3_5_9 = RedemptionVersion("3.5.9")
         v_3_5_10 = RedemptionVersion("3.5.10")
@@ -18,11 +25,6 @@ class Test_RedemptionVersion(unittest.TestCase):
         v_3_5_9d = RedemptionVersion("3.5.9d")
         self.assertFalse(v_3_5_9c > v_3_5_9d)
         self.assertTrue(v_3_5_9d > v_3_5_9c)
-
-        v_invalid = RedemptionVersion()
-        self.assertFalse(v_3_5_9 > v_invalid)
-        self.assertFalse(v_invalid > v_invalid)
-        self.assertTrue(v_invalid > v_3_5_9)
 
     def test_operator_less_than(self):
         v_3_5_9 = RedemptionVersion("3.5.9")
@@ -40,27 +42,14 @@ class Test_RedemptionVersion(unittest.TestCase):
         self.assertFalse(v_3_5_9d < v_3_5_9c)
         self.assertTrue(v_3_5_9c < v_3_5_9d)
 
-        v_invalid = RedemptionVersion()
-        self.assertFalse(v_invalid < v_3_5_9)
-        self.assertFalse(v_invalid < v_invalid)
-        self.assertTrue(v_3_5_9 < v_invalid)
-
-    def test_operator_init(self):
-        v_invalid = RedemptionVersion()
-        self.assertTrue(str(v_invalid), "(invalid)")
-
-        v_invalid_2 = RedemptionVersion("TEST")
-        self.assertTrue(str(v_invalid_2), "(invalid)")
-
     def test_operator_str(self):
-        v_3_5_9 = RedemptionVersion("3.5.9")
-        self.assertTrue(str(v_3_5_9), "3.5.9")
+        self.assertEqual(str(RedemptionVersion("3.5.9")), "3.5.9")
 
     def test_from_file(self):
         v_from_file = RedemptionVersion.fromfile(
             "./tests/fixtures/REDEMPTION_VERSION")
-        self.assertTrue(str(v_from_file), "9.1.17")
+        self.assertEqual(str(v_from_file), "9.1.17")
 
-        v_invalid_from_file = RedemptionVersion.fromfile(
-            "./tests/fixtures/REDEMPTION_VERSION")
-        self.assertTrue(str(v_invalid_from_file), "(invalid)")
+        with self.assertRaises(Exception):
+            RedemptionVersion.fromfile(
+                "./tests/fixtures/REDEMPTION_VERSION_KO")

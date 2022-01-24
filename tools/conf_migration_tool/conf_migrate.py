@@ -5,144 +5,52 @@
 # Licensed computer software. Property of WALLIX.
 # Product Name: WALLIX Bastion v9.0
 # Author(s): Raphael Zhou
-# Id: $Id$
-# URL: $URL$
 # Module description:  Sesman Worker
 ##
 
 from collections import OrderedDict
 from shutil import copyfile
+from typing import Tuple
 
 import os
+import re
 import sys
 import traceback
 
+rgx_version = re.compile('^(\d+)\.(\d+)\.(\d+)(.*)')
+
+class RedemptionVersionError(Exception):
+    pass
+
 class RedemptionVersion:
-    def __init__(self, version_string=None):
-        self.__major = -1
-        self.__minor = 0
-        self.__build = 0
-        self.__revision = ""
+    def __init__(self, version:str) -> None:
+        m = rgx_version.match(version)
+        if m is None:
+            raise RedemptionVersionError("RedemptionVersion: "
+                                         "Invalid version string format: "
+                                         + version)
 
-        if version_string:
-            try:
-                parts = version_string.split('.')
+        self.__major = int(m.group(1))
+        self.__minor = int(m.group(2))
+        self.__build = int(m.group(3))
+        self.__revision = m.group(4)
 
-                if len(parts) != 3:
-                    print(
-                         "RedemptionVersion.__init__: "
-                         "Invalid version string format: "
-                        f"\"{version_string}\"")
+    def __str__(self) -> str:
+        return f"{self.__major}.{self.__minor}.{self.__build}{self.__revision}"
 
-                    return
-
-                self.__major = int(parts[0])
-                self.__minor = int(parts[1])
-
-                revision_position =                                         \
-                    self.__class__.__get_first_revision_letter_pos(parts[2])
-                if -1 == revision_position:
-                    self.__build = int(parts[2])
-                else:
-                    self.__build = int(parts[2][:revision_position])
-                    self.__revision = parts[2][revision_position:]
-            except Exception as e:
-                _, exc_value, exc_traceback = sys.exc_info();
-                print(
-                     "RedemptionVersion.__init__: "
-                    f"{type(exc_value).__name__}")
-                traceback.print_tb(exc_traceback,
-                    file=sys.stdout)
-
-    def __str__(self):
-        if -1 == self.__major:
-            return "(invalid)"
-
-        return                                                              \
-            f"{self.__major}.{self.__minor}.{self.__build}{self.__revision}"
-
-    def __gt__(self, other):
-        if -1 == self.__major:
-            if -1 == other.__major:
-                return False
-
-            return True
-        elif -1 == other.__major:
-            return False
-        elif self.__major > other.__major:
-            return True
-        elif self.__major < other.__major:
-            return False
-        else:
-            if self.__minor > other.__minor:
-                return True
-            elif self.__minor < other.__minor:
-                return False
-            else:
-                if self.__build > other.__build:
-                    return True
-                elif self.__build < other.__build:
-                    return False
-                else:
-                    if self.__revision > other.__revision:
-                        return True
-                    else:
-                        return False
-
-    def __lt__(self, other):
-        if -1 == self.__major:
-            return False
-        if -1 == other.__major:
-            return True
-        elif self.__major < other.__major:
-            return True
-        elif self.__major > other.__major:
-            return False
-        else:
-            if self.__minor < other.__minor:
-                return True
-            elif self.__minor > other.__minor:
-                return False
-            else:
-                if self.__build < other.__build:
-                    return True
-                elif self.__build > other.__build:
-                    return False
-                else:
-                    if self.__revision < other.__revision:
-                        return True
-                    else:
-                        return False
+    def __lt__(self, other:'RedemptionVersion') -> bool:
+        return self.__part() < other.__part()
 
     @classmethod
-    def fromfile(cls, filename):
-        version_string = ""
+    def fromfile(cls, filename:str):
+        with open(filename) as f:
+            line = f.readline() # read first line
+            items = line.split()
+            version_string = items[1]
+            return cls(version_string)
 
-        try:
-            with open(filename) as f:
-                line = f.readline() # read first line
-
-                items = line.split()
-
-                version_string = items[1]
-
-        except Exception as e:
-            _, exc_value, exc_traceback = sys.exc_info();
-            print(
-                 "RedemptionVersion.fromfile: "
-                f"{type(exc_value).__name__}")
-            traceback.print_tb(exc_traceback,
-                file=sys.stdout)
-
-        return cls(version_string)
-
-    @classmethod
-    def __get_first_revision_letter_pos(cls, build_string):
-        for i in range(0, len(build_string)):
-            if build_string[i].isalpha():
-                return i
-
-        return -1
+    def __part(self) -> Tuple[int,int,int,str]:
+        return (self.__major, self.__minor, self.__build, self.__revision)
 
 class ConfigurationFileLine:
     def __init__(self, raw_data, verbose = False):
@@ -261,19 +169,16 @@ class ConfigurationFile:
 
         if filename:
             try:
-                f = open(filename, 'r', encoding='utf-8')
+                with open(filename, 'r', encoding='utf-8') as f:
+                    self.__filename = filename
 
-                self.__filename = filename
+                    for line_raw_data in f:
+                        if not line_raw_data:
+                            break
 
-                while True:
-                    line_raw_data = f.readline()
-                    if not line_raw_data:
-                        break
+                        self._content.append(
+                            ConfigurationFileLine(line_raw_data, self.__verbose))
 
-                    self._content.append(
-                        ConfigurationFileLine(line_raw_data, self.__verbose))
-
-                f.close()
             except Exception as e:
                 _, exc_value, exc_traceback = sys.exc_info();
                 print(
@@ -400,16 +305,13 @@ class ConfigurationFile:
     def save_to(self, filename):
         if filename:
             try:
-                f = open(filename, 'w', encoding='utf-8')
+                with open(filename, 'w', encoding='utf-8') as f:
+                    for line in self._content:
+                        if line.is_marked_to_be_deleted():
+                            continue
 
-                for line in self._content:
-                    if line.is_marked_to_be_deleted():
-                        continue
-
-                    line_raw_data = str(line).rstrip("\r\n") + "\n"
-                    f.write(f'{line_raw_data}')
-
-                f.close()
+                        line_raw_data = str(line).rstrip("\r\n") + "\n"
+                        f.write(f'{line_raw_data}')
             except Exception as e:
                 _, exc_value, exc_traceback = sys.exc_info();
                 print(
@@ -589,23 +491,30 @@ class RedemptionConfigurationFile(ConfigurationFile):
         return keep_unchanged, noneable_dest_section_name,                  \
             noneable_line_raw_data
 
+if __name__ == '__main__':
+    if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                    \
+       os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
+        try:
+            old_redemption_version =                                        \
+                RedemptionVersion.fromfile('/tmp/OLD_REDEMPTION_VERSION')
+        except Exception as e:
+            _, exc_value, exc_traceback = sys.exc_info();
+            print(f"RedemptionVersion.fromfile: {type(exc_value).__name__}")
+            traceback.print_tb(exc_traceback, file=sys.stdout)
+            exit(0)
 
-if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                        \
-   os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
-    old_redemption_version =                                                \
-        RedemptionVersion.fromfile('/tmp/OLD_REDEMPTION_VERSION')
-    print(f"PreviousRedemptionVersion={old_redemption_version}")
+        print(f"PreviousRedemptionVersion={old_redemption_version}")
 
-    new_configuration_file =                                                \
-        RedemptionConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini')
+        new_configuration_file =                                            \
+            RedemptionConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini')
 
-    if new_configuration_file.migrate(old_redemption_version):
-        new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
+        if new_configuration_file.migrate(old_redemption_version):
+            new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
 
-        copyfile('/var/wab/etc/rdp/rdpproxy.ini',                           \
-            '/var/wab/etc/rdp/rdpproxy.ini.' + str(old_redemption_version))
+            copyfile('/var/wab/etc/rdp/rdpproxy.ini',
+                     f'/var/wab/etc/rdp/rdpproxy.ini.{old_redemption_version}')
 
-        os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',                     \
-            '/var/wab/etc/rdp/rdpproxy.ini')
+            os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',
+                      '/var/wab/etc/rdp/rdpproxy.ini')
 
-        print(f"Configuration file updated")
+            print(f"Configuration file updated")
