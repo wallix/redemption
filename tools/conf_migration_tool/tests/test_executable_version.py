@@ -13,9 +13,12 @@ class Test_RedemptionVersion(unittest.TestCase):
     def test_operator_greater_than(self):
         v_3_5_9 = RedemptionVersion("3.5.9")
         v_3_5_10 = RedemptionVersion("3.5.10")
+        v_3_11_9 = RedemptionVersion("3.11.9")
         self.assertFalse(v_3_5_9 > v_3_5_9)
         self.assertFalse(v_3_5_9 > v_3_5_10)
         self.assertTrue(v_3_5_10 > v_3_5_9)
+        self.assertTrue(v_3_11_9 > v_3_5_9)
+        self.assertFalse(v_3_5_9 > v_3_11_9)
 
         v_3_5_9c = RedemptionVersion("3.5.9c")
         self.assertFalse(v_3_5_9 > v_3_5_9c)
@@ -29,9 +32,12 @@ class Test_RedemptionVersion(unittest.TestCase):
     def test_operator_less_than(self):
         v_3_5_9 = RedemptionVersion("3.5.9")
         v_3_5_10 = RedemptionVersion("3.5.10")
+        v_3_11_9 = RedemptionVersion("3.11.9")
         self.assertFalse(v_3_5_9 < v_3_5_9)
         self.assertFalse(v_3_5_10 < v_3_5_9)
         self.assertTrue(v_3_5_9 < v_3_5_10)
+        self.assertFalse(v_3_11_9 < v_3_5_9)
+        self.assertTrue(v_3_5_9 < v_3_11_9)
 
         v_3_5_9c = RedemptionVersion("3.5.9c")
         self.assertFalse(v_3_5_9c < v_3_5_9)
