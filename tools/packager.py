@@ -112,13 +112,13 @@ if opts.update_version and opts.tag:
         sys.exit(1)
 
     last_taginfo = ret.stdout.decode("utf-8").rstrip("\n")
-    ret = re.search("^\d+\.\d+.", last_taginfo)
+    ret = re.match("^\d+\.\d+\.", last_taginfo)
     if ret is None:
         print( "Unable to retrieve the version number from last tag: "
               f"{last_taginfo}")
         sys.exit(1)
     ret = ret.group(0)
-    if opts.tag.find(ret) != 0:
+    if not opts.tag.startswith(ret):
         while True:
             print("╔╗ ╔╗ ╔╗")
             print("║║ ║║ ║║")
