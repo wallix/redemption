@@ -4,7 +4,8 @@ import os
 import unittest
 
 from conf_migrate import (ConfigurationFile,
-                          ConfigurationFileLine,
+                          ConfigurationLine,
+                          read_configuration_lines,
                           RedemptionVersion)
 
 class Test_ConfigurationFile(unittest.TestCase):
@@ -16,7 +17,8 @@ class Test_ConfigurationFile(unittest.TestCase):
         except:
             pass
 
-        configuration_file = ConfigurationFile('./tests/fixtures/rdpproxy.ini')
+        config_lines = read_configuration_lines('./tests/fixtures/rdpproxy.ini')
+        configuration_file = ConfigurationFile(config_lines)
 
         configuration_file.save_to(target_file)
 
@@ -26,75 +28,36 @@ class Test_ConfigurationFile(unittest.TestCase):
 
         os.remove(target_file)
 
-class TestRedemptionConfigurationFile(ConfigurationFile):
-    def _get_line_migration_func(self, previous_version):
-        noneable_line_migration_func = None
-        noneable_result_version = None
+def test_migrate_line_to_9_0_0(section_name, line):
+    if line.is_variable_declaration():
+        if "section" == section_name:
+            if line.get_name() == "value_8_2_0":
+                return None, f"old_value = {line.get_value()}"
 
-        v_9_0_0 = RedemptionVersion("9.0.0")
-        v_9_1_0 = RedemptionVersion("9.1.0")
+            elif line.get_name() == "value_2_8_2_0":
+                return None, f"old_value_2 = {line.get_value()}"
 
-        if previous_version < v_9_0_0:
-            noneable_line_migration_func = self.__migrate_line_to_9_0_0
-            noneable_result_version = v_9_0_0
+def test_migrate_line_to_9_1_0(section_name, line):
+    if line.is_variable_declaration():
+        if "section" == section_name:
+            if line.get_name() == "old_value":
+                return None, f"new_value = {line.get_value()}"
 
-        elif previous_version < v_9_1_0:
-            noneable_line_migration_func = self.__migrate_line_to_9_1_0
-            noneable_result_version = v_9_1_0
+            elif line.get_name() == "old_value_2":
+                return "new_section", f"new_value_2 = {line.get_value()}"
 
-        return noneable_line_migration_func, noneable_result_version
-
-    def __migrate_line_to_9_0_0(self, section_name, line):
-        keep_unchanged = True
-        noneable_dest_section_name = None
-        noneable_line_raw_data = None
-
-        if line.is_variable_declaration():
-            if "section" == section_name:
-                if line.get_name() == "value_8_2_0":
-                    keep_unchanged = False
-                    noneable_dest_section_name = None
-                    noneable_line_raw_data =                                \
-                        f"old_value = {line.get_value()}"
-
-                elif line.get_name() == "value_2_8_2_0":
-                    keep_unchanged = False
-                    noneable_dest_section_name = None
-                    noneable_line_raw_data =                                \
-                        f"old_value_2 = {line.get_value()}"
-
-        return keep_unchanged, noneable_dest_section_name,                  \
-            noneable_line_raw_data
-
-    def __migrate_line_to_9_1_0(self, section_name, line):
-        keep_unchanged = True
-        noneable_dest_section_name = None
-        noneable_line_raw_data = None
-
-        if line.is_variable_declaration():
-            if "section" == section_name:
-                if line.get_name() == "old_value":
-                    keep_unchanged = False
-                    noneable_dest_section_name = None
-                    noneable_line_raw_data =                                \
-                        f"new_value = {line.get_value()}"
-
-                elif line.get_name() == "old_value_2":
-                    keep_unchanged = False
-                    noneable_dest_section_name = "new_section"
-                    noneable_line_raw_data =                                \
-                        f"new_value_2 = {line.get_value()}"
-
-        return keep_unchanged, noneable_dest_section_name,                  \
-            noneable_line_raw_data
+migration_funcs = (
+    (RedemptionVersion("9.0.0"), test_migrate_line_to_9_0_0),
+    (RedemptionVersion("9.1.0"), test_migrate_line_to_9_1_0),
+)
 
 class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_empty(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -104,20 +67,18 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
         expected_content = []
 
         self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
 
     def test_migrate_to_9_1_0_section_old_value(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value = 1234", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -125,9 +86,9 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value = 1234", verbose),
-            ConfigurationFileLine("new_value = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value = 1234", verbose),
+            ConfigurationLine("new_value = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -137,16 +98,16 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_b(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value = 1234", verbose)
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value = 1234", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -154,11 +115,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value = 1234", verbose),
-            ConfigurationFileLine("new_value = 1234", verbose)
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value = 1234", verbose),
+            ConfigurationLine("new_value = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -168,16 +129,16 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_c(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -185,11 +146,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value = 1234", verbose),
-            ConfigurationFileLine("new_value = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value = 1234", verbose),
+            ConfigurationLine("new_value = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -199,16 +160,16 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_d(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("old_value = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("old_value = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -216,11 +177,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("#old_value = 1234", verbose),
-            ConfigurationFileLine("new_value = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("#old_value = 1234", verbose),
+            ConfigurationLine("new_value = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -230,14 +191,14 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -245,11 +206,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -259,15 +220,15 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2_b(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -275,10 +236,10 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -288,16 +249,16 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2_c(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -305,11 +266,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -319,18 +280,18 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2_d(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -338,13 +299,13 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -354,15 +315,15 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2_e(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -370,11 +331,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -384,16 +345,16 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2_f(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -401,12 +362,12 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -416,18 +377,18 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_section_old_value_2_g(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("9.0.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
 
         if verbose:
             print(
@@ -435,13 +396,13 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#old_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -451,15 +412,15 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_from_8_2_0(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("value_8_2_0 = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("value_8_2_0 = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("8.2.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
 
         if verbose:
             print(
@@ -467,10 +428,10 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#value_8_2_0 = 1234", verbose),
-            ConfigurationFileLine("new_value = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#value_8_2_0 = 1234", verbose),
+            ConfigurationLine("new_value = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -480,15 +441,15 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_from_8_2_0_b(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("value_2_8_2_0 = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("value_2_8_2_0 = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("8.2.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
 
         if verbose:
             print(
@@ -496,11 +457,11 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#value_2_8_2_0 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#value_2_8_2_0 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -510,18 +471,18 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_from_8_2_0_c(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("other_value = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[other_section]", verbose),
-            ConfigurationFileLine("other_value = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("other_value = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[other_section]", verbose),
+            ConfigurationLine("other_value = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("8.2.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
 
         if verbose:
             print(
@@ -529,12 +490,12 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("other_value = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[other_section]", verbose),
-            ConfigurationFileLine("other_value = 1234", verbose),
-            ConfigurationFileLine("", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("other_value = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[other_section]", verbose),
+            ConfigurationLine("other_value = 1234", verbose),
+            ConfigurationLine("", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)
@@ -544,17 +505,17 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
     def test_migrate_to_9_1_0_from_8_2_0_d(self):
         verbose = False
 
-        configuration_file = TestRedemptionConfigurationFile(None, verbose)
+        configuration_file = ConfigurationFile([], verbose)
 
         configuration_file._content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("value_2_8_2_0 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[other_section]", verbose),
-            ConfigurationFileLine("other_value = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("value_2_8_2_0 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[other_section]", verbose),
+            ConfigurationLine("other_value = 1234", verbose)
         ]
 
-        configuration_file.migrate(RedemptionVersion("8.2.0"))
+        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
 
         if verbose:
             print(
@@ -562,14 +523,14 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
                 f"len(content)={len(configuration_file._content)}")
 
         expected_content = [
-            ConfigurationFileLine("[section]", verbose),
-            ConfigurationFileLine("#value_2_8_2_0 = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[other_section]", verbose),
-            ConfigurationFileLine("other_value = 1234", verbose),
-            ConfigurationFileLine("", verbose),
-            ConfigurationFileLine("[new_section]", verbose),
-            ConfigurationFileLine("new_value_2 = 1234", verbose)
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#value_2_8_2_0 = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[other_section]", verbose),
+            ConfigurationLine("other_value = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
         self.assertEqual(expected_content, configuration_file._content)

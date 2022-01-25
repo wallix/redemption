@@ -10,7 +10,8 @@
 
 from collections import OrderedDict
 from shutil import copyfile
-from typing import Tuple
+from enum import Enum
+from typing import List, Tuple, Optional, Union, Callable, Iterable
 
 import os
 import re
@@ -41,153 +42,118 @@ class RedemptionVersion:
     def __lt__(self, other:'RedemptionVersion') -> bool:
         return self.__part() < other.__part()
 
-    @classmethod
-    def fromfile(cls, filename:str):
+    def __le__(self, other:'RedemptionVersion') -> bool:
+        return self.__part() <= other.__part()
+
+    @staticmethod
+    def from_file(filename:str) -> 'RedemptionVersion':
         with open(filename) as f:
             line = f.readline() # read first line
             items = line.split()
             version_string = items[1]
-            return cls(version_string)
+            return RedemptionVersion(version_string)
 
     def __part(self) -> Tuple[int,int,int,str]:
         return (self.__major, self.__minor, self.__build, self.__revision)
 
-class ConfigurationFileLine:
-    def __init__(self, raw_data, verbose = False):
+class ConfigLineKind(Enum):
+    Empty = 1
+    Comment = 2
+    Section = 3
+    Variable = 4
+
+class ConfigurationLine:
+    def __init__(self, raw_data:str, verbose:bool=False) -> None:
         self.__raw_data = raw_data
 
         self.__verbose = verbose
 
-        self.__is_comment = False
-        self.__is_empty = False
-
-        self.__is_section_declaration = False
         self.__name = None
-
-        self.__is_variable_declaration = False
         self.__value = None
-
         self.__must_be_deleted = False
 
         striped_data = raw_data.strip()
-        striped_data_length = len(striped_data)
-        if 0 == striped_data_length:
-           self.__is_empty = True
-        elif '#' == striped_data[0]:
-           self.__is_comment = True
-        elif '[' == striped_data[0] and                                     \
-             ']' == striped_data[striped_data_length - 1]:
-           self.__is_section_declaration = True
-           self.__name = striped_data[1:striped_data_length - 1].strip()
-        else:
-            equal_position = striped_data.find('=')
-            if equal_position > -1:
-                self.__is_variable_declaration = True
-                self.__name = striped_data[:equal_position].strip()
-                self.__value = striped_data[equal_position + 1:].strip()
-            else:
-                raise AssertionError(
-                     "ConfigurationFile.__init__: Invalid format: "
-                    f"\"{self.raw_data}\"")
 
-    def __eq__(self, other):
+        if not striped_data:
+            self.__kind = ConfigLineKind.Empty
+        elif '#' == striped_data[0]:
+            self.__kind = ConfigLineKind.Comment
+        elif '[' == striped_data[0] and ']' == striped_data[-1]:
+            self.__kind = ConfigLineKind.Section
+            self.__name = striped_data[1:-1].strip()
+        else:
+            name, sep, value = striped_data.partition('=')
+            assert sep, f'Invalid format: \"{self.raw_data}\"'
+            self.__name = name.strip()
+            self.__value = value.strip()
+            self.__kind = ConfigLineKind.Variable
+
+    def __eq__(self, other:'ConfigurationLine') -> bool:
         if self.__verbose:
-            print(
-                 "ConfigurationFileLine::__eq__: "
-                f"self=\"{self.__raw_data}\" other=\"{other.__raw_data}\"")
+            print("ConfigurationLine::__eq__: "
+                  f"self=\"{self.__raw_data}\" other=\"{other.__raw_data}\"")
 
         return self.__raw_data == other.__raw_data
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__raw_data
 
-    def disable(self):
-        if self.__is_variable_declaration:
+    def disable(self) -> None:
+        if self.__kind == ConfigLineKind.Variable:
             self.__raw_data = "#" + self.__raw_data
+            self.__kind = ConfigLineKind.Comment
 
-            self.__is_comment = True
-
-            self.__is_section_declaration = False
             self.__name = None
-
-            self.__is_variable_declaration = False
             self.__value = None
 
-    def get_name(self):
-        if not self.__is_section_declaration and                            \
-           not self.__is_variable_declaration:
-            raise AssertionError(
-                 "ConfigurationFile.get_name: "
-                 "Not a section declaration or a variable declaration: "
-                f"\"{self.__raw_data}\"")
+    def get_name(self) -> str:
+        assert self.__kind == ConfigLineKind.Section \
+            or self.__kind == ConfigLineKind.Variable
 
         return self.__name
 
-    def get_value(self):
-        if not self.__is_variable_declaration:
-            raise AssertionError(
-                 "ConfigurationFile.get_value: "
-                f"Not a variable declaration: \"{self.__raw_data}\"")
+    def get_value(self) -> str:
+        assert self.__kind == ConfigLineKind.Variable
 
         return self.__value
 
-    def is_comment(self):
-        return self.__is_comment
+    def is_comment(self) -> bool:
+        return self.__kind == ConfigLineKind.Comment
 
-    def is_empty(self):
-        return self.__is_empty
+    def is_empty(self) -> bool:
+        return self.__kind == ConfigLineKind.Empty
 
-    def is_marked_to_be_deleted(self):
+    def is_marked_to_be_deleted(self) -> bool:
         if self.__verbose:
-            print(
-                 "ConfigurationFileLine::is_marked_to_be_deleted: "
-                f"\"{self.__raw_data}\" MustBeDeleted={'Yes' if self.__must_be_deleted else 'No'}")
+            print("ConfigurationLine::is_marked_to_be_deleted: "
+                 f"\"{self.__raw_data}\" MustBeDeleted={'Yes' if self.__must_be_deleted else 'No'}")
 
         return self.__must_be_deleted
 
-    def is_section_declaration(self):
-        return self.__is_section_declaration
+    def is_section_declaration(self) -> bool:
+        return self.__kind == ConfigLineKind.Section
 
-    def is_variable_declaration(self):
-        return self.__is_variable_declaration
+    def is_variable_declaration(self) -> bool:
+        return self.__kind == ConfigLineKind.Variable
 
-    def mark_to_be_deleted(self):
+    def mark_to_be_deleted(self) -> None:
         if self.__verbose:
-            print(
-                 "ConfigurationFileLine::mark_to_be_deleted: "
-                f"\"{self.__raw_data}\"")
+            print("ConfigurationLine::mark_to_be_deleted: "
+                 f"\"{self.__raw_data}\"")
 
-        if self.__is_comment:
+        if self.__kind == ConfigLineKind.Comment:
             self.__must_be_deleted = True
 
-class ConfigurationFile:
-    def __init__(self, filename = None, verbose = False):
-        self._content = []
-        self.__filename = None
+def read_configuration_lines(filename:str=None, verbose:bool=False) -> List[ConfigurationLine]:
+    with open(filename, encoding='utf-8') as f:
+        return [ConfigurationLine(line, verbose) for line in f]
 
+class ConfigurationFile:
+    def __init__(self, content:List[ConfigurationLine], verbose:bool=False) -> None:
+        self._content = content
         self.__verbose = verbose
 
-        if filename:
-            try:
-                with open(filename, 'r', encoding='utf-8') as f:
-                    self.__filename = filename
-
-                    for line_raw_data in f:
-                        if not line_raw_data:
-                            break
-
-                        self._content.append(
-                            ConfigurationFileLine(line_raw_data, self.__verbose))
-
-            except Exception as e:
-                _, exc_value, exc_traceback = sys.exc_info();
-                print(
-                     "ConfigurationFile.__init__: "
-                    f"{type(exc_value).__name__}")
-                traceback.print_tb(exc_traceback,
-                    file=sys.stdout)
-
-    def __add_variable(self, section_name, line_raw_data):
+    def __add_variable(self, section_name:str, line_raw_data:str) -> Tuple[int,int]:
         """
         Retourne -1 et 0 si une variable qui porte le même nom existe déjà
         dans la section. Déclenche une assertion si la line_raw_data
@@ -199,26 +165,18 @@ class ConfigurationFile:
 
         inserted_line_count = 0
 
-        configuration_file_line = ConfigurationFileLine(
-            line_raw_data, self.__verbose)
+        configuration_file_line = ConfigurationLine(line_raw_data, self.__verbose)
 
-        if configuration_file_line.is_section_declaration():
-            raise AssertionError(
-                 "ConfigurationFile.__add_variable: "
-                f"Cannot add a new section: \"{line_raw_data}\"")
-
-        if not section_name:
-            raise AssertionError(
-                 "ConfigurationFile.__add_variable: "
-                f"Section name is invalid or missing: \"{line_raw_data}\"")
+        assert not configuration_file_line.is_section_declaration(), \
+            f'Cannot add a new section: "{line_raw_data}"'
+        assert section_name, f'Section name is invalid or missing: "{line_raw_data}"'
 
         if configuration_file_line.is_variable_declaration():
             if self.__is_variable_exist(section_name,
                                         configuration_file_line.get_name()):
                 print("ConfigurationFile.__add_variable: "
-                     "A variable of the same name still exists in the "
-                         "section: "
-                    f"\"{str(configuration_file_line)}\"")
+                      "A variable of the same name still exists in the "
+                     f"section: \"{configuration_file_line}\"")
 
                 return -1, 0
 
@@ -226,7 +184,7 @@ class ConfigurationFile:
         inserted_line_count += ins_pos
 
         self._content.insert(insert_position,
-            ConfigurationFileLine(line_raw_data, self.__verbose))
+            ConfigurationLine(line_raw_data, self.__verbose))
         inserted_line_count += 1
 
         if len(self._content) > insert_position + 1 and                     \
@@ -235,12 +193,12 @@ class ConfigurationFile:
                 print("ConfigurationFile.__add_variable: Insert blank line")
 
             self._content[insert_position + 1].insert(insert_position,
-                ConfigurationFileLine("", self.__verbose))
+                ConfigurationLine("", self.__verbose))
             inserted_line_count += 1
 
         return insert_position, inserted_line_count
 
-    def __find_section_append_pos(self, section_name):
+    def __find_section_append_pos(self, section_name:str) -> Tuple[str,str]:
         """
         Retourne la position d'ajout de nouvelle élément dans une section.
         La section sera ajoutée à la fin du fichier si elle n'existe pas.
@@ -251,27 +209,23 @@ class ConfigurationFile:
         append_position = -1
         appended_line_count = 0
 
-        line_count = len(self._content)
         line_index = 0
         section_found = False
         in_section = False
-        while line_index < line_count:
-            if self._content[line_index].is_section_declaration():
-                in_section =                                                \
-                    (self._content[line_index].get_name() == section_name)
+        for line_index, line in enumerate(self._content):
+            if line.is_section_declaration():
+                in_section = (line.get_name() == section_name)
                 if in_section:
                     section_found = True
                     append_position = line_index + 1
-            elif self._content[line_index].is_variable_declaration() or     \
-                 self._content[line_index].is_empty() or                    \
-                 self._content[line_index].is_comment():
+            elif line.is_variable_declaration() or     \
+                 line.is_empty() or                    \
+                 line.is_comment():
                 if in_section:
                     append_position = line_index + 1
 
-            line_index += 1
-
         if -1 == append_position:
-            append_position = line_count
+            append_position = len(self._content)
 
         while append_position > 1 and                                       \
               self._content[append_position - 1].is_empty() and             \
@@ -286,23 +240,20 @@ class ConfigurationFile:
                     "Insert blank line")
 
             self._content.insert(append_position,
-                ConfigurationFileLine("", self.__verbose))
+                ConfigurationLine("", self.__verbose))
 
             append_position += 1
             appended_line_count += 1
 
         if not section_found:
             self._content.insert(append_position,
-                ConfigurationFileLine(f"[{section_name}]", self.__verbose))
+                ConfigurationLine(f"[{section_name}]", self.__verbose))
             append_position += 1
             appended_line_count += 1
 
         return append_position, appended_line_count
 
-    def save(self):
-        save_to(self.__filename)
-
-    def save_to(self, filename):
+    def save_to(self, filename:str) -> None:
         if filename:
             try:
                 with open(filename, 'w', encoding='utf-8') as f:
@@ -320,195 +271,157 @@ class ConfigurationFile:
                 traceback.print_tb(exc_traceback,
                     file=sys.stdout)
 
-    def migrate(self, previous_version):
+    def migrate(self, migration_defs:Iterable[Tuple[RedemptionVersion,
+                                                    Callable[(str, str),
+                                                             Optional[Tuple[Optional[str],
+                                                                            str]]]]],
+                previous_version:RedemptionVersion) -> None:
         content_is_changed = False
 
         first_round_of_migration = True
 
-        while True:
-            line_migration_func, result_version =                           \
-                self._get_line_migration_func(previous_version)
-            if line_migration_func:
-                line_count = len(self._content)
-                line_index = 0
-                section_name = None
-                while line_index < line_count:
-                    if self._content[line_index].is_section_declaration():
-                        section_name = self._content[line_index].get_name()
-                    elif self._content[line_index].is_variable_declaration():
-                        if not section_name:
-                            raise AssertionError(
-                                 "ConfigurationFile.migrate: "
-                                 "Not in a section: "
-                                f"\"{str(configuration_file_line)}\"")
+        migration_defs = sorted(migration_defs, key=lambda t: t[0])
 
-                        keep_unchanged, dest_section_name, line_raw_data =  \
-                            line_migration_func(section_name,
-                                self._content[line_index])
-                        if not keep_unchanged:
-                            content_is_changed = True
+        for result_version, line_migration_func in migration_defs:
+            if previous_version >= result_version:
+                continue
 
-                            self._content[line_index].disable()
+            line_count = len(self._content)
+            line_index = 0
+            section_name = None
+            while line_index < line_count:
+                if self._content[line_index].is_section_declaration():
+                    section_name = self._content[line_index].get_name()
+                elif self._content[line_index].is_variable_declaration():
+                    assert section_name, f'Not in a section: "{configuration_file_line}"'
 
-                            if not first_round_of_migration:
-                                self._content[line_index].mark_to_be_deleted()
+                    migrate_result = line_migration_func(
+                        section_name, self._content[line_index])
 
-                            if dest_section_name:
-                                insert_position, insert_count =             \
-                                    self.__add_variable(
-                                        dest_section_name,
-                                        line_raw_data)
+                    if migrate_result:
+                        dest_section_name, line_raw_data = migrate_result
 
-                                if -1 < insert_position:
-                                    if 1 > insert_count:
-                                        raise AssertionError(
-                                             "ConfigurationFile.migrate: "
-                                             "Invalid return values: "
-                                             "(insert_position="
-                                            f"{insert_position}, "
-                                            f"insert_count={insert_count})")
+                        content_is_changed = True
 
-                                    if insert_position == line_index:
-                                        raise AssertionError(
-                                             "ConfigurationFile.migrate: "
-                                             "Invalid insert position: "
-                                             "(insert_position="
-                                                f"{insert_position}, "
-                                                f"insert_count="
-                                                 "{insert_count})")
+                        self._content[line_index].disable()
 
-                                    if insert_position < line_index:
-                                        line_index += insert_count
+                        if not first_round_of_migration:
+                            self._content[line_index].mark_to_be_deleted()
 
-                                    line_count += insert_count
-                            elif line_raw_data:
-                                configuration_file_line =                   \
-                                    ConfigurationFileLine(line_raw_data,
-                                        self.__verbose)
+                        if dest_section_name:
+                            insert_position, insert_count =             \
+                                self.__add_variable(
+                                    dest_section_name,
+                                    line_raw_data)
 
-                                if configuration_file_line.is_section_declaration():
-                                    raise AssertionError(
-                                         "ConfigurationFile.migrate: "
-                                         "Should not insert a new section "
-                                             "with this method: "
-                                        f"\"{str(configuration_file_line)}\"")
+                            if -1 < insert_position:
+                                assert 1 <= insert_count, \
+                                    "Invalid return values: " \
+                                    "(insert_position=" \
+                                    f"{insert_position}, " \
+                                    f"insert_count={insert_count})"
 
-                                if configuration_file_line.is_variable_declaration() and \
-                                   self.__is_variable_exist(
-                                        dest_section_name,
-                                        configuration_file_line.get_name()):
-                                    print(
-                                         "ConfigurationFile.migrate: "
-                                         "A variable of the same name still "
-                                             "exists in the section: "
-                                        f"\"{str(configuration_file_line)}\"")
-                                else:
-                                    self._content.insert(line_index + 1,
-                                        configuration_file_line)
+                                assert insert_position != line_index, \
+                                    "Invalid insert position: " \
+                                    "(insert_position=" \
+                                    f"{insert_position}, " \
+                                    f"insert_count={insert_count})"
 
-                                    line_count += 1
-                                    line_index += 1
+                                if insert_position < line_index:
+                                    line_index += insert_count
 
-                    line_index += 1
+                                line_count += insert_count
+                        else:
+                            configuration_file_line =                   \
+                                ConfigurationLine(line_raw_data,
+                                    self.__verbose)
 
-                previous_version = result_version
-            else:
-                break
+                            assert not configuration_file_line.is_section_declaration(), \
+                                "Should not insert a new section with this method: " \
+                                f"\"{configuration_file_line}\""
+
+                            if configuration_file_line.is_variable_declaration() and \
+                                self.__is_variable_exist(
+                                    dest_section_name,
+                                    configuration_file_line.get_name()):
+                                print("ConfigurationFile.migrate: "
+                                      "A variable of the same name still "
+                                      "exists in the section: "
+                                     f"\"{configuration_file_line}\"")
+                            else:
+                                self._content.insert(line_index + 1,
+                                    configuration_file_line)
+
+                                line_count += 1
+                                line_index += 1
+
+                line_index += 1
+
+            previous_version = result_version
 
             first_round_of_migration = False
 
-        line_count = len(self._content)
-        line_index = 0
-        while line_index < line_count:
-            if self._content[line_index].is_marked_to_be_deleted():
-                self._content.pop(line_index)
-
-                line_count -= 1
-
-                continue
-
-            line_index += 1
+        self._content = [line for line in self._content
+                         if not line.is_marked_to_be_deleted()]
 
         return content_is_changed
 
-    def _get_line_migration_func(self, previous_version):
-        raise NotImplementedError(
-            "ConfigurationFile._get_line_migration_func: "
-            "Must override _get_line_migration_func")
-
-    def __is_variable_exist(self, section_name, variable_name):
+    def __is_variable_exist(self, section_name:Optional[str], variable_name:str) -> bool:
         """
         Retourne False si la variable n'existe pas dans la section, ou si la
             section n'existe pas. Sinon retourne True.
         """
 
-        line_count = len(self._content)
-        line_index = 0
         current_section_name = None
-        while line_index < line_count:
-            if self._content[line_index].is_section_declaration():
-                current_section_name = self._content[line_index].get_name()
-            elif self._content[line_index].is_variable_declaration():
-                if not current_section_name:
-                    raise AssertionError(
-                         "ConfigurationFile.__is_variable_exist: "
-                         "Not in a section: "
-                        f"\"{str(configuration_file_line)}\"")
+        for line in self._content:
+            if line.is_section_declaration():
+                current_section_name = line.get_name()
+            elif line.is_variable_declaration():
+                assert current_section_name, \
+                    f'Not in a section: "{configuration_file_line}"'
 
                 if current_section_name == section_name and                 \
-                   self._content[line_index].get_name() == variable_name:
+                   line.get_name() == variable_name:
                     return True
-
-            line_index += 1
 
         return False
 
-class RedemptionConfigurationFile(ConfigurationFile):
-    def _get_line_migration_func(self, previous_version):
-        noneable_line_migration_func = None
-        noneable_result_version = None
 
-        v_9_1_39 = RedemptionVersion("9.1.39")
-        if previous_version < v_9_1_39:
-            noneable_line_migration_func = self.__migrate_line_to_9_1_39
-            noneable_result_version = v_9_1_39
+def migrate_line_to_9_1_39(self, section_name:str, line:str) -> Optional[Tuple[Optional[str], str]]:
+    if line.is_variable_declaration():
+        if "globals" == section_name:
+            if "session_timeout" == line.get_name():
+                return None, f"base_inactivity_timeout = {line.get_value()}"
 
-        return noneable_line_migration_func, noneable_result_version
-
-    def __migrate_line_to_9_1_39(self, section_name, line):
-        keep_unchanged = True
-        noneable_dest_section_name = None
-        noneable_line_raw_data = None
-
-        if line.is_variable_declaration():
-            if "globals" == section_name:
-                if "session_timeout" == line.get_name():
-                    keep_unchanged = False
-                    noneable_dest_section_name = None
-                    noneable_line_raw_data =                                \
-                        f"base_inactivity_timeout = {line.get_value()}"
-
-        return keep_unchanged, noneable_dest_section_name,                  \
-            noneable_line_raw_data
+migration_defs = (
+    (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
+)
 
 if __name__ == '__main__':
     if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                    \
        os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
         try:
             old_redemption_version =                                        \
-                RedemptionVersion.fromfile('/tmp/OLD_REDEMPTION_VERSION')
+                RedemptionVersion.from_file('/tmp/OLD_REDEMPTION_VERSION')
         except Exception as e:
             _, exc_value, exc_traceback = sys.exc_info();
-            print(f"RedemptionVersion.fromfile: {type(exc_value).__name__}")
+            print(f"RedemptionVersion.from_file: {type(exc_value).__name__}")
             traceback.print_tb(exc_traceback, file=sys.stdout)
             exit(0)
 
         print(f"PreviousRedemptionVersion={old_redemption_version}")
 
-        new_configuration_file =                                            \
-            RedemptionConfigurationFile('/var/wab/etc/rdp/rdpproxy.ini')
+        try:
+            lines = read_configuration_lines('/var/wab/etc/rdp/rdpproxy.ini')
+        except Exception as e:
+            _, exc_value, exc_traceback = sys.exc_info();
+            print(f"read_configuration_lines: {type(exc_value).__name__}")
+            traceback.print_tb(exc_traceback, file=sys.stdout)
+            exit(0)
 
-        if new_configuration_file.migrate(old_redemption_version):
+        new_configuration_file = ConfigurationFile(lines)
+
+        if new_configuration_file.migrate(migration_defs, old_redemption_version):
             new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
 
             copyfile('/var/wab/etc/rdp/rdpproxy.ini',

@@ -52,10 +52,10 @@ class Test_RedemptionVersion(unittest.TestCase):
         self.assertEqual(str(RedemptionVersion("3.5.9")), "3.5.9")
 
     def test_from_file(self):
-        v_from_file = RedemptionVersion.fromfile(
+        v_from_file = RedemptionVersion.from_file(
             "./tests/fixtures/REDEMPTION_VERSION")
         self.assertEqual(str(v_from_file), "9.1.17")
 
         with self.assertRaises(Exception):
-            RedemptionVersion.fromfile(
+            RedemptionVersion.from_file(
                 "./tests/fixtures/REDEMPTION_VERSION_KO")
