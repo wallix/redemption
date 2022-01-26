@@ -163,8 +163,6 @@ class ConfigurationFile:
         (ligne vide) ainsi que le nombre de lignes ajoutées.
         """
 
-        inserted_line_count = 0
-
         configuration_file_line = ConfigurationLine(line_raw_data, self.__verbose)
 
         assert not configuration_file_line.is_section_declaration(), \
@@ -180,21 +178,11 @@ class ConfigurationFile:
 
                 return -1, 0
 
-        insert_position, ins_pos = self.__find_section_append_pos(section_name)
-        inserted_line_count += ins_pos
+        insert_position, inserted_line_count = self.__find_section_append_pos(section_name)
 
         self._content.insert(insert_position,
             ConfigurationLine(line_raw_data, self.__verbose))
         inserted_line_count += 1
-
-        if len(self._content) > insert_position + 1 and                     \
-           not self._content[insert_position + 1].is_empty():
-            if self.__verbose:
-                print("ConfigurationFile.__add_variable: Insert blank line")
-
-            self._content[insert_position + 1].insert(insert_position,
-                ConfigurationLine("", self.__verbose))
-            inserted_line_count += 1
 
         return insert_position, inserted_line_count
 
@@ -237,7 +225,7 @@ class ConfigurationFile:
            not self._content[append_position - 1].is_section_declaration():
             if self.__verbose:
                 print("ConfigurationFile.__find_section_append_pos: "
-                    "Insert blank line")
+                      "Insert blank line")
 
             self._content.insert(append_position,
                 ConfigurationLine("", self.__verbose))

@@ -3,6 +3,7 @@ import hashlib
 import os
 import unittest
 
+from typing import List
 from conf_migrate import (ConfigurationFile,
                           ConfigurationLine,
                           read_configuration_lines,
@@ -52,6 +53,16 @@ migration_funcs = (
 )
 
 class Test_RedemptionConfigurationFile(unittest.TestCase):
+    maxDiff = None
+
+    def assertConfLinesEqual(self,
+                             lines1:List[ConfigurationLine],
+                             lines2:List[ConfigurationLine]) -> None:
+        s1 = '\n'.join(map(str, lines1))
+        s2 = '\n'.join(map(str, lines2))
+        self.assertEqual(f'{s1}\nlen: {len(lines1)}',
+                         f'{s2}\nlen: {len(lines2)}')
+
     def test_migrate_to_9_1_0_empty(self):
         verbose = False
 
@@ -66,7 +77,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
 
         expected_content = []
 
-        self.assertEqual(expected_content, configuration_file._content)
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value(self):
         verbose = False
@@ -91,9 +102,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_b(self):
         verbose = False
@@ -122,9 +131,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_c(self):
         verbose = False
@@ -153,9 +160,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_d(self):
         verbose = False
@@ -184,9 +189,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2(self):
         verbose = False
@@ -213,9 +216,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2_b(self):
         verbose = False
@@ -242,9 +243,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2_c(self):
         verbose = False
@@ -273,9 +272,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2_d(self):
         verbose = False
@@ -308,9 +305,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2_e(self):
         verbose = False
@@ -338,9 +333,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2_f(self):
         verbose = False
@@ -370,9 +363,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_section_old_value_2_g(self):
         verbose = False
@@ -405,9 +396,39 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
+
+    def test_migrate_to_9_1_0_section_old_value_2_h(self):
+        verbose = False
+
+        configuration_file = ConfigurationFile([], verbose)
+
+        configuration_file._content = [
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("any_value = 1234", verbose),
+            ConfigurationLine("[other_section]", verbose),
+        ]
+
+        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
+
+        if verbose:
+            print(
+                 "test_migrate_to_9_1_0_section_old_value_2_h: "
+                f"len(content)={len(configuration_file._content)}")
+
+        expected_content = [
+            ConfigurationLine("[section]", verbose),
+            ConfigurationLine("#old_value_2 = 1234", verbose),
+            ConfigurationLine("[new_section]", verbose),
+            ConfigurationLine("any_value = 1234", verbose),
+            ConfigurationLine("", verbose),
+            ConfigurationLine("new_value_2 = 1234", verbose),
+            ConfigurationLine("[other_section]", verbose),
+        ]
+
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_from_8_2_0(self):
         verbose = False
@@ -434,9 +455,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_from_8_2_0_b(self):
         verbose = False
@@ -464,9 +483,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_from_8_2_0_c(self):
         verbose = False
@@ -498,9 +515,7 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
 
     def test_migrate_to_9_1_0_from_8_2_0_d(self):
         verbose = False
@@ -533,6 +548,4 @@ class Test_RedemptionConfigurationFile(unittest.TestCase):
             ConfigurationLine("new_value_2 = 1234", verbose)
         ]
 
-        self.assertEqual(expected_content, configuration_file._content)
-        self.assertEqual(len(expected_content),
-            len(configuration_file._content))
+        self.assertConfLinesEqual(expected_content, configuration_file._content)
