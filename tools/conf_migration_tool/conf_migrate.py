@@ -59,8 +59,8 @@ class RedemptionVersion:
 class ConfigLineKind(Enum):
     Empty = 1
     Comment = 2
-    Section = 3
-    Variable = 4
+    SectionDecl = 3
+    VariableDecl = 4
 
 class ConfigurationLine:
     def __init__(self, raw_data:str, verbose:bool=False) -> None:
@@ -79,14 +79,14 @@ class ConfigurationLine:
         elif '#' == striped_data[0]:
             self.__kind = ConfigLineKind.Comment
         elif '[' == striped_data[0] and ']' == striped_data[-1]:
-            self.__kind = ConfigLineKind.Section
+            self.__kind = ConfigLineKind.SectionDecl
             self.__name = striped_data[1:-1].strip()
         else:
             name, sep, value = striped_data.partition('=')
             assert sep, f'Invalid format: \"{self.raw_data}\"'
             self.__name = name.strip()
             self.__value = value.strip()
-            self.__kind = ConfigLineKind.Variable
+            self.__kind = ConfigLineKind.VariableDecl
 
     def __eq__(self, other:'ConfigurationLine') -> bool:
         if self.__verbose:
@@ -99,7 +99,7 @@ class ConfigurationLine:
         return self.__raw_data
 
     def disable(self) -> None:
-        if self.__kind == ConfigLineKind.Variable:
+        if self.__kind == ConfigLineKind.VariableDecl:
             self.__raw_data = "#" + self.__raw_data
             self.__kind = ConfigLineKind.Comment
 
@@ -107,13 +107,13 @@ class ConfigurationLine:
             self.__value = None
 
     def get_name(self) -> str:
-        assert self.__kind == ConfigLineKind.Section \
-            or self.__kind == ConfigLineKind.Variable
+        assert self.__kind == ConfigLineKind.SectionDecl \
+            or self.__kind == ConfigLineKind.VariableDecl
 
         return self.__name
 
     def get_value(self) -> str:
-        assert self.__kind == ConfigLineKind.Variable
+        assert self.__kind == ConfigLineKind.VariableDecl
 
         return self.__value
 
@@ -131,10 +131,10 @@ class ConfigurationLine:
         return self.__must_be_deleted
 
     def is_section_declaration(self) -> bool:
-        return self.__kind == ConfigLineKind.Section
+        return self.__kind == ConfigLineKind.SectionDecl
 
     def is_variable_declaration(self) -> bool:
-        return self.__kind == ConfigLineKind.Variable
+        return self.__kind == ConfigLineKind.VariableDecl
 
     def mark_to_be_deleted(self) -> None:
         if self.__verbose:
@@ -242,22 +242,13 @@ class ConfigurationFile:
         return append_position, appended_line_count
 
     def save_to(self, filename:str) -> None:
-        if filename:
-            try:
-                with open(filename, 'w', encoding='utf-8') as f:
-                    for line in self._content:
-                        if line.is_marked_to_be_deleted():
-                            continue
-
-                        line_raw_data = str(line).rstrip("\r\n") + "\n"
-                        f.write(f'{line_raw_data}')
-            except Exception as e:
-                _, exc_value, exc_traceback = sys.exc_info();
-                print(
-                     "ConfigurationFile.save_to: "
-                    f"{type(exc_value).__name__}")
-                traceback.print_tb(exc_traceback,
-                    file=sys.stdout)
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(
+                str(line).rstrip("\r\n")
+                for line in self._content
+                if not line.is_marked_to_be_deleted()
+            ))
+            f.write('\n')
 
     def migrate(self, migration_defs:Iterable[Tuple[RedemptionVersion,
                                                     Callable[(str, str),
@@ -385,37 +376,39 @@ migration_defs = (
     (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
 )
 
+class ExitWithSuccessWhenFailure:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if exc_type is None:
+            return
+
+        print(type(exc_value).__name__)
+        traceback.print_tb(exc_traceback, file=sys.stdout)
+        exit(0)
+
+
 if __name__ == '__main__':
     if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                    \
        os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
-        try:
-            old_redemption_version =                                        \
-                RedemptionVersion.from_file('/tmp/OLD_REDEMPTION_VERSION')
-        except Exception as e:
-            _, exc_value, exc_traceback = sys.exc_info();
-            print(f"RedemptionVersion.from_file: {type(exc_value).__name__}")
-            traceback.print_tb(exc_traceback, file=sys.stdout)
-            exit(0)
+        with ExitWithSuccessWhenFailure():
+            old_redemption_version = RedemptionVersion.from_file(
+                '/tmp/OLD_REDEMPTION_VERSION')
 
-        print(f"PreviousRedemptionVersion={old_redemption_version}")
+            print(f"PreviousRedemptionVersion={old_redemption_version}")
 
-        try:
             lines = read_configuration_lines('/var/wab/etc/rdp/rdpproxy.ini')
-        except Exception as e:
-            _, exc_value, exc_traceback = sys.exc_info();
-            print(f"read_configuration_lines: {type(exc_value).__name__}")
-            traceback.print_tb(exc_traceback, file=sys.stdout)
-            exit(0)
 
-        new_configuration_file = ConfigurationFile(lines)
+            new_configuration_file = ConfigurationFile(lines)
 
-        if new_configuration_file.migrate(migration_defs, old_redemption_version):
-            new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
+            if new_configuration_file.migrate(migration_defs, old_redemption_version):
+                new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
 
-            copyfile('/var/wab/etc/rdp/rdpproxy.ini',
-                     f'/var/wab/etc/rdp/rdpproxy.ini.{old_redemption_version}')
+                copyfile('/var/wab/etc/rdp/rdpproxy.ini',
+                        f'/var/wab/etc/rdp/rdpproxy.ini.{old_redemption_version}')
 
-            os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',
-                      '/var/wab/etc/rdp/rdpproxy.ini')
+                os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',
+                          '/var/wab/etc/rdp/rdpproxy.ini')
 
-            print(f"Configuration file updated")
+                print("Configuration file updated")

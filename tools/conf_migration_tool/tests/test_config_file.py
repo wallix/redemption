@@ -7,7 +7,14 @@ from typing import List
 from conf_migrate import (ConfigurationFile,
                           ConfigurationLine,
                           read_configuration_lines,
-                          RedemptionVersion)
+                          RedemptionVersion,
+                          ExitWithSuccessWhenFailure)
+
+class Test_ExitWithSuccessWhenFailure(unittest.TestCase):
+    def test_invoke_or_exit_with_success(self):
+        with ExitWithSuccessWhenFailure():
+            r = 3
+        self.assertEqual(r, 3)
 
 class Test_ConfigurationFile(unittest.TestCase):
     def test_load_save(self):
