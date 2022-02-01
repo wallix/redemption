@@ -56,6 +56,7 @@ ssh_login = string(default='')
 # otherwise ssh_password will be used as is.
 ssh_password = string(default='')
 
+# Reserved for debug only
 #_advanced
 tunneling_type = option('pxssh', 'pexpect', 'popen', default='pxssh')
 

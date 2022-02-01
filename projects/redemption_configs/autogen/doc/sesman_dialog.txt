@@ -291,6 +291,7 @@ cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     If Scenario Account resolution succeeds the password associated with this account will be used;
     otherwise ssh_password will be used as is.
 <sesman only> ⇐ vnc_over_ssh:tunneling_type   [VncTunnelingType ⇐ std::string]
+    Reserved for debug only
 
 
 cfg::file_verification::enable_up ⇐ file_verification:enable_up   [bool]

@@ -232,7 +232,7 @@ def ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
     )
     tunneling_command = (
         f"ssh {ssh_opts} "
-        f"-L {local_usocket_name}:127.0.0.1:{vnc_port} "
+        f"-L {local_usocket_name}:localhost:{vnc_port} "
         f"-l {ssh_login} {target_host}"
     )
     remove_file(local_usocket_name)
@@ -278,7 +278,7 @@ def pxssh_ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
             password=ssh_password,
             port=ssh_port,
             ssh_tunnels={
-                'local': [f'{local_usocket_name}:127.0.0.1:{vnc_port}']
+                'local': [f'{local_usocket_name}:localhost:{vnc_port}']
             }
         )
     except Exception as e:
