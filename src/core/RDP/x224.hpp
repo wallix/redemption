@@ -660,7 +660,7 @@ namespace X224
 
     inline void CR_Cookie_Log(const CR_Cookie & cookie);
     void CR_Cookie_Log(const CR_Cookie & cookie) {
-        LOG(LOG_INFO, "Connection Request cookie: (%zu) '%*s'", cookie.len, int(cookie.len), cookie.data);
+        LOG(LOG_INFO, "Connection Request cookie: (%zu) '%.*s'", cookie.len, int(cookie.len), cookie.data);
     }
 
     inline CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose);
