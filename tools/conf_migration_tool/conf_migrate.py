@@ -251,7 +251,7 @@ class ConfigurationFile:
             f.write('\n')
 
     def migrate(self, migration_defs:Iterable[Tuple[RedemptionVersion,
-                                                    Callable[(str, str),
+                                                    Callable[[str, str],
                                                              Optional[Tuple[Optional[str],
                                                                             str]]]]],
                 previous_version:RedemptionVersion) -> None:
