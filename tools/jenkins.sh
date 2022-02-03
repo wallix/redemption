@@ -32,6 +32,8 @@ show_duration()
     timestamp=$timestamp2
 }
 
+
+# lua analyzer
 if [[ $fast -eq 0 ]]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
     show_duration redemption-analyzer.sh
@@ -43,6 +45,20 @@ if [[ $fast -eq 0 ]]; then
         exit 1
     }
 fi
+
+
+python_test()
+{
+    pushd "$1"
+    ~/Python-3.7.3/python -m unittest discover -t . tests
+    popd
+
+    show_duration "$1"
+}
+
+python_test tools/sesman
+python_test tools/conf_migration_tool
+
 
 # jsclient (emscripten)
 pushd projects/jsclient
@@ -83,14 +99,14 @@ show_duration jsclient
 
 # BJAM Build Test
 echo -e "
-using gcc : 10.0 : g++-10 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using gcc : 10.0 : g++-11 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
 " > project-config.jam
 valgrind_compiler=gcc-8
-toolset_gcc=toolset=gcc-10
+toolset_gcc=toolset=gcc-11
 toolset_wab=toolset=gcc-8
-gcovbin=gcov-10
+gcovbin=gcov-11
 toolset_clang=toolset=clang
 
 export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
