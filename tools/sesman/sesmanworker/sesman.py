@@ -3036,9 +3036,10 @@ class Sesman():
         )
         if self.tun_process:
             _status = self.tun_process.start()
-            kv['tunneling_target_host'] = \
-                self.tun_process.sock_path
-            _status = self.tun_process.pre_connect()
+            if _status:
+                kv['tunneling_target_host'] = \
+                    self.tun_process.sock_path
+                _status = self.tun_process.pre_connect()
         if _status:
             _error = "No Error"
         return _status, _error
