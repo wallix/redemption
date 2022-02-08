@@ -17,5 +17,10 @@ extern "C" {
     using Func2 = char*(void* ctx, std::size_t n, char*);
 
     REDEMPTION_LIB_EXPORT int f4(Func1* f1, Func2* f2);
-    REDEMPTION_LIB_EXPORT int f4(Func1* f1, int n);
+    REDEMPTION_LIB_EXPORT int f5(Func1* f1, int n);
+
+    // string
+    REDEMPTION_LIB_EXPORT int f6(char const* str);
+    // buffer
+    REDEMPTION_LIB_EXPORT int f7(uint8_t const* buffer);
 }

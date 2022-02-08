@@ -1,4 +1,4 @@
-from ctypes import c_int, c_uint, c_uint8
+from ctypes import c_int, c_ubyte, c_uint
 
 # C enum
 # enum T1: int
@@ -22,7 +22,7 @@ f2.argtypes = [c_int]
 f2.restype = None
 
 # void f3(T3 x);
-f3.argtypes = [c_uint8]
+f3.argtypes = [c_ubyte]
 f3.restype = None
 
 # void f4(T4 x);

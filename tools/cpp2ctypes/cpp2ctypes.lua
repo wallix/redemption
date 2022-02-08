@@ -13,7 +13,7 @@ Or
 
 Then configure with
 
-    eval "$(luarocks path)
+    eval "$(luarocks path)"
 ]])
     os.exit(1)
 end
@@ -26,11 +26,16 @@ typemap = {
 }
 
 pytypemap = {
-    ['char*']='bytes',
+    ['uint8_t*']='bytes',
+    ['char*']='str',
     ['void']='None',
 }
 
-basetypes = {POINTER='POINTER', CFUNCTYPE='CFUNCTYPE'}
+basetypes = {
+    POINTER='POINTER',
+    CFUNCTYPE='CFUNCTYPE',
+    ['POINTER(c_char)']='POINTER',
+}
 
 do
     for _,v in pairs(typemap) do
@@ -38,6 +43,7 @@ do
     end
     typemap['void'] = 'None'
 
+    -- int and float types
     for ctype,pytype in pairs({
         ['int']='c_int',
         ['long']='c_long',
@@ -50,7 +56,7 @@ do
         ['int16_t']='c_int16',
         ['int32_t']='c_int32',
         ['int64_t']='c_int64',
-        ['uint8_t']='c_uint8',
+        ['uint8_t']='c_ubyte',
         ['uint16_t']='c_uint16',
         ['uint32_t']='c_uint32',
         ['uint64_t']='c_uint64',
@@ -71,6 +77,10 @@ do
     pytypemap['float'] = 'float'
     pytypemap['double'] = 'float'
     pytypemap['long double'] = 'float'
+
+    -- assume buffer type
+    typemap['uint8_t*'] = 'POINTER(c_char)'
+    basetypes['POINTER(c_char)'] = 'POINTER'
 end
 
 imported = {}
