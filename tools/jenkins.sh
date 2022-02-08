@@ -34,7 +34,7 @@ show_duration()
 
 
 # lua analyzer
-if [[ $fast -eq 0 ]]; then
+if (( $fast == 0 )); then
     ./tools/c++-analyzer/redemption-analyzer.sh
     show_duration redemption-analyzer.sh
 
@@ -44,26 +44,39 @@ if [[ $fast -eq 0 ]]; then
         echo 'Error: .po files are outdated (run bjam update-po)'
         exit 1
     }
+
+
+    # Python tests
+    # @{
+    python_test()
+    {
+        pushd "$1"
+        ~/Python-3.7.3/python -m unittest discover -t . tests
+        popd
+    }
+
+    python_test tools/sesman
+    python_test tools/conf_migration_tool
+
+    show_duration "python tests"
+    # @}
+
+
+    # Lua tests
+    # @{
+    eval "$(luarocks path)"
+
+    ./tools/cpp2ctypes/test.sh
+
+    show_duration "lua tests"
+    # @}
 fi
-
-
-python_test()
-{
-    pushd "$1"
-    ~/Python-3.7.3/python -m unittest discover -t . tests
-    popd
-
-    show_duration "$1"
-}
-
-python_test tools/sesman
-python_test tools/conf_migration_tool
 
 
 # jsclient (emscripten)
 pushd projects/jsclient
 source ~/emsdk/emsdk_env.sh
-if [[ $fast -eq 0 ]]; then
+if (( $fast == 0 )); then
     rm -rf bin
 fi
 #version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
@@ -115,7 +128,7 @@ export UBSAN_OPTIONS=print_stacktrace=1
 
 export BOOST_TEST_COLOR_OUTPUT=0
 
-if [[ $fast -eq 0 ]]; then
+if (( $fast == 0 )); then
     rm -rf bin
 else
     rm -rf bin/tmp/
@@ -167,7 +180,7 @@ build $toolset_wab cxxflags=-g -j2
 
 show_duration $toolset_wab
 
-if [[ $fast -eq 0 ]]; then
+if (( $fast == 0 )); then
     # valgrind
     #find ./bin/$gcc/release/tests/ -type d -exec \
     #  ./tools/c++-analyzer/valgrind -qd '{}' \;
@@ -186,7 +199,7 @@ set -o pipefail
 diff <(echo "$beforerun") <(rootlist) | while read l ; do
     echo "Jenkins:${diffline:-0}:0: warnings: $l [directory integrity]"
     ((++diffline))
-done || if [[ $fast -eq 1 ]]; then
+done || if (( $fast == 1 )); then
     # error with fast compilation
     echo "Directory integrity error: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
     exit 1
@@ -205,7 +218,7 @@ rm -r bin/clang*
 show_duration $toolset_clang
 
 
-if [[ $fast -eq 0 ]]; then
+if (( $fast == 0 )); then
     # debug with coverage
     # mkdir -p bin/htmlcov
     # GCOV_BIN="$gcovbin" OUTPUT_DIR=bin/htmlcov ./tools/gcovr.sh -q $toolset_gcc debug -s FAST_CHECK=1
@@ -243,7 +256,7 @@ if [[ $fast -eq 0 ]]; then
     show_duration clang-tidy
 fi
 
-if [[ $update -eq 1 ]]; then
+if (( $update == 1 )); then
     set -e
     # update targets.jam files
     bjam $toolset_gcc targets.jam
