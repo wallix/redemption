@@ -17,11 +17,11 @@ pytypemap = {
     ['void']='None',
 }
 
-basetypes = {POINTER=true}
+basetypes = {POINTER='POINTER', CFUNCTYPE='CFUNCTYPE'}
 
 do
     for _,v in pairs(typemap) do
-        basetypes[v] = true
+        basetypes[v] = v
     end
     typemap['void'] = 'None'
 
@@ -47,10 +47,12 @@ do
         ['double']='c_double',
         ['long double']='c_longdouble',
     }) do
-        typemap[ctype] = pytype
-        basetypes[pytype] = true
+        pointer = 'POINTER(' .. pytype .. ')'
         pytypemap[ctype] = 'int'
-        typemap[ctype .. '*'] = 'POINTER(' .. pytype .. ')'
+        typemap[ctype] = pytype
+        typemap[ctype .. '*'] = pointer
+        basetypes[pytype] = pytype
+        basetypes[pointer] = 'POINTER'
     end
 
     pytypemap['float'] = 'float'
@@ -68,7 +70,8 @@ function normalize_type(t)
     return t[2] and t[1] .. t[2] or t[1]
 end
 
-function newc2py(cname, t, isarray)
+-- t = { type:string, optional['*'] }
+function to_ctype(cname, t, isarray)
     local type = normalize_type(t) .. (isarray and '*' or '')
     local ctype = typemap[type]
     if not ctype and (t[2] == '*' or (not t[2] and isarray)) then
@@ -79,7 +82,12 @@ function newc2py(cname, t, isarray)
         error("Unknown type " .. type .. ' for ' .. cname)
     end
 
-    typemap[cname] = ctype
+    return ctype
+end
+
+-- t = { type:string, optional['*'] }
+function newc2py(cname, t, isarray)
+    typemap[cname] = to_ctype(cname, t, isarray)
 end
 
 function c2py(t)
@@ -96,7 +104,19 @@ end
 
 local defs = {
     using=function(t)
-        newc2py(t[1], t[2], t[3])
+        -- is a function pointer
+        if t[4] then
+            name = t[1]
+            types = {to_ctype(name, t[2])} -- result type
+            for _,x in ipairs(t[4]) do
+                types[#types+1] = to_ctype(name, x) -- param type
+            end
+            typemap[name..'*'] = name
+            imported['CFUNCTYPE'] = true
+            lines[#lines+1] = name .. ' = CFUNCTYPE(' .. table.concat(types, ', ') .. ')\n'
+        else
+            newc2py(t[1], t[2], t[3] ~= '')
+        end
     end,
     typedef=function(t)
         newc2py(t[2], t[1])
@@ -273,7 +293,10 @@ start       <- (!extern .)* extern S pattern
 extern      <- 'extern' ws '"C"' S '{'
 pattern     <- (S (function / using / endexpr))+
 function    <- "REDEMPTION_LIB_EXPORT" ws { [^;]+ ';' } -> strfunc
-using       <- "using " {| {id} S '=' S type S ({ '[' [^]]* ']' })? |} -> using S ';'
+using       <- "using " {| {id} S '=' S type S {( '[' [^]]* ']' )?} S using_fparams? |} -> using ';'
+using_fparams <- '(' S {| using_params |} S ')' S ('noexcept' S)? S
+using_params  <- (using_param (',' S)?)*
+using_param   <- S type S (id S)?
 typedef     <- "typedef " {| type ws {id} |} -> typedef S ';'
 endexpr     <- comment / forward / class / enum
 comment     <- comment1 / comment2
@@ -347,14 +370,21 @@ print("# ./tools/cpp2ctypes/cpp2ctypes.lua '" .. table.concat(arg, "' '") .. "'\
 
 if not gen_class then
     if #prefix_ctypes == 0 then
-        local t = {}
+        local kctypes, ctype = {}
         for k,_ in pairs(imported) do
-            if basetypes[k] then
-                t[#t+1] = k
+            ctype = basetypes[k]
+            if ctype then
+                kctypes[ctype] = true
             end
         end
-        table.sort(t)
-        print('from ctypes import ' .. table.concat(t, ', '))
+
+        local ctypes = {}
+        for k,_ in pairs(kctypes) do
+            ctypes[#ctypes+1] = k
+        end
+        table.sort(ctypes)
+
+        print('from ctypes import ' .. table.concat(ctypes, ', '))
         print()
     end
 
