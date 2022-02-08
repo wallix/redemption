@@ -1,7 +1,20 @@
 #!/usr/bin/env lua
 
 if not pcall(require, 're') then
-    io.stderr:write('Module not found.\nInstall re module with\n\n$ luarocks install --user re\n\nThen configure with\n\n$ eval "$(luarocks path)"\n')
+    io.stderr:write([[Module not found.
+
+Install re module with
+
+    luarocks install --local lpeg
+
+Or
+
+    luarocks --lua-version=5.1 install --local lpeg
+
+Then configure with
+
+    eval "$(luarocks path)
+]])
     os.exit(1)
 end
 re = require're'
