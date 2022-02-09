@@ -1,16 +1,19 @@
-from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_long, c_uint, c_ulonglong, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_char_p, c_int, c_long, c_uint, c_ulonglong, c_void_p
+
+lib = CDLL("funcs.so")
+
 
 # char const* version();
-version.argtypes = []
-version.restype = c_char_p
+lib.version.argtypes = []
+lib.version.restype = c_char_p
 
 # int f1(int a, unsigned b, unsigned long long c, long d);
-f1.argtypes = [c_int, c_uint, c_ulonglong, c_long]
-f1.restype = c_int
+lib.f1.argtypes = [c_int, c_uint, c_ulonglong, c_long]
+lib.f1.restype = c_int
 
 # long* f2(MyType* my, char* d);
-f2.argtypes = [c_void_p, c_char_p]
-f2.restype = POINTER(c_long)
+lib.f2.argtypes = [c_void_p, c_char_p]
+lib.f2.restype = POINTER(c_long)
 
 class CType_MyData(ctypes.Structure):
     _fields_ = [
@@ -19,18 +22,28 @@ class CType_MyData(ctypes.Structure):
     ]
 
 # void f3(MyData const * my);
-f3.argtypes = [POINTER(CType_MyData)]
-f3.restype = None
+lib.f3.argtypes = [POINTER(CType_MyData)]
+lib.f3.restype = None
 
 Func1 = CFUNCTYPE(c_char_p, c_void_p, POINTER(c_size_t))
 
 Func2 = CFUNCTYPE(c_char_p, c_void_p, c_size_t, c_char_p)
 
 # int f4(Func1* f1, Func2* f2);
-f4.argtypes = [Func1, Func2]
-f4.restype = c_int
+lib.f4.argtypes = [Func1, Func2]
+lib.f4.restype = c_int
 
-# int f4(Func1* f1, int n);
-f4.argtypes = [Func1, c_int]
-f4.restype = c_int
+# int f5(Func1* f1, int n);
+lib.f5.argtypes = [Func1, c_int]
+lib.f5.restype = c_int
+
+# string
+# int f6(char const* str);
+lib.f6.argtypes = [c_char_p]
+lib.f6.restype = c_int
+
+# buffer
+# int f7(uint8_t const* buffer);
+lib.f7.argtypes = [POINTER(c_char)]
+lib.f7.restype = c_int
 

@@ -1,15 +1,14 @@
 #!/usr/bin/env lua
 
-if not pcall(require, 're') then
+if not pcall(require, 're') or not pcall(require, 'argparse') then
     io.stderr:write([[Module not found.
 
 Install re module with
 
     luarocks install --local lpeg
+    luarocks install --local argparse
 
-Or
-
-    luarocks --lua-version=5.1 install --local lpeg
+(Specific lua version with `--lua-version=5.1`)
 
 Then configure with
 
@@ -18,6 +17,7 @@ Then configure with
     os.exit(1)
 end
 re = require're'
+argparse = require'argparse'
 
 typemap = {
     ['void*']='c_void_p',
@@ -87,7 +87,6 @@ imported = {}
 lines = {}
 enum_lines = {}
 prefix = ''
-prefix_ctypes = ''
 
 function normalize_type(t)
     return t[2] and t[1] .. t[2] or t[1]
@@ -177,7 +176,7 @@ local defs = {
     newclass=function(t)
         local name = t[1]
         local ctype = 'CType_' .. name
-        typemap[name..'*'] = prefix_ctypes .. 'POINTER(' .. ctype .. ')'
+        typemap[name..'*'] = 'POINTER(' .. ctype .. ')'
         lines[#lines+1] = 'class ' .. ctype .. '(ctypes.Structure):\n    _fields_ = ['
         for k,mem in ipairs(t[2]) do
             lines[#lines+1] = '        ("' .. mem[2] .. '", ' .. c2py(mem[1]) .. '),'
@@ -332,54 +331,53 @@ memvars     <- {| ( {| S (comment S)* type S {id} S ';' |} )* |}
 
 ]=] .. pcommun
 
-function usage()
-    io.stderr:write('Usage:\n' .. arg[0] .. ' [-c] <file.h> [prefix_lib] [prefix_ctypes] {type=ctype}...\n\n -c generate python class\n')
-end
 
-local gen_class = false
-local filecontents = ''
+local parser = argparse("cpp2ctypes", "Python library wrapper generator")
+parser:argument('header', 'header file'):args(1)
+parser:flag('-c --class', 'enable class generator')
+parser:option('-n --varname', 'python variable name'):default'lib'
+parser:option('-l --library', 'library name')
+parser:option('-t --type', 'custom type'):args'*':argname'type=ctypes'
 
--- parse cli
+local args = parser:parse()
+
+-- read header file
+local filecontents
 do
-    local iargc = 1
-
-    -- -c flag
-    if arg[iargc] == '-c' then
-        gen_class = true
-        iargc = iargc + 1
-    end
-
-    -- read file
-    local filename = arg[iargc]
-    if not filename then
-        usage()
-        return 1
-    end
-    local file,e = io.open(arg[iargc])
+    local file,e = io.open(args.header)
     if e then
-        usage()
-        error(e)
+        io.stderr:write(e .. '\n')
+        os.exit(1)
     end
     filecontents = file:read('*a')
     file:close()
+end
 
-    -- prefix_lib
-    prefix = arg[iargc+1] or ''
-
-    -- prefix_ctypes
-    if arg[iargc+2] then
-        prefix_ctypes = arg[iargc+2]
-        for k,v in pairs(typemap) do
-            typemap[k] = prefix_ctypes .. v
-        end
-    end
-
-    -- add ctypes types
-    for i=iargc+3,#arg do
-        local type, ctype = arg[i]:match('([^=]+)=(.*)')
+-- add user type/ctypes mapping
+if args.type then
+    for _,t in ipairs(args.type) do
+        local type, ctype = t:match('([^=]+)=(.*)')
         typemap[type] = ctype
     end
 end
+
+local library_path = args.library
+if not library_path then
+    -- get filename
+    local prefix = args.header:match('.*/')
+    if prefix then
+        library_path = args.header:sub(#prefix + 1)
+    else
+        library_path = args.header
+    end
+
+    -- replace suffix
+    local i = library_path:find('.hp?p?$')
+    library_path = library_path:sub(0, i) .. 'so'
+end
+
+local gen_class = args.class
+prefix = args.varname .. '.'
 
 g = re.compile(p,defs)
 gfunc = re.compile(pfunc, gen_class and classdefs or defs)
@@ -392,25 +390,23 @@ end
 print("# ./tools/cpp2ctypes/cpp2ctypes.lua '" .. table.concat(arg, "' '") .. "'\n")
 
 if not gen_class then
-    if #prefix_ctypes == 0 then
-        local kctypes, ctype = {}
-        for k,_ in pairs(imported) do
-            ctype = basetypes[k]
-            if ctype then
-                kctypes[ctype] = true
-            end
+    local kctypes, ctype = {}
+    for k,_ in pairs(imported) do
+        ctype = basetypes[k]
+        if ctype then
+            kctypes[ctype] = true
         end
-
-        local ctypes = {}
-        for k,_ in pairs(kctypes) do
-            ctypes[#ctypes+1] = k
-        end
-        table.sort(ctypes)
-
-        print('from ctypes import ' .. table.concat(ctypes, ', '))
-        print()
     end
 
+    local ctypes = {}
+    for k,_ in pairs(kctypes) do
+        ctypes[#ctypes+1] = k
+    end
+    table.sort(ctypes)
+
+    print('from ctypes import CDLL, ' .. table.concat(ctypes, ', '))
+    print()
+    print(args.varname .. ' = CDLL("' .. library_path .. '")\n')
     print(table.concat(lines, '\n'))
 else
     local common_prefix = function(s1, s2, maxlen)
@@ -462,7 +458,7 @@ else
             end
 
             -- call lib
-            strings[#strings+1] = 'lib.' .. prefix .. func[1] .. '('
+            strings[#strings+1] = prefix .. func[1] .. '('
             local params = {}
             if not isinit then
                 params[1] = 'self._ctx'
