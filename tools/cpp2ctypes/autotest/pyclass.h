@@ -16,4 +16,6 @@ extern "C" {
         Z,
         Y,
     };
+
+    REDEMPTION_LIB_EXPORT void my_type_foo(MyType* my, A a);
 }

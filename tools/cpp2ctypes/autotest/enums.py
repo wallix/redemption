@@ -2,7 +2,6 @@ from ctypes import CDLL, c_int, c_ubyte, c_uint
 
 lib = CDLL("enums.so")
 
-
 # C enum
 # enum T1: int
 #    {

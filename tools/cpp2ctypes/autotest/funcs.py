@@ -2,7 +2,6 @@ from ctypes import CDLL, CFUNCTYPE, POINTER, c_char_p, c_int, c_long, c_uint, c_
 
 lib = CDLL("funcs.so")
 
-
 # char const* version();
 lib.version.argtypes = []
 lib.version.restype = c_char_p

@@ -85,7 +85,8 @@ end
 
 imported = {}
 lines = {}
-enum_lines = {}
+-- {name, c-source}
+enums = {}
 prefix = ''
 
 function normalize_type(t)
@@ -154,12 +155,7 @@ local defs = {
             t[4] = ': ' .. t[4]
         end
         local s = table.concat(t)
-        local content = genumvalues:match(t[5])
-        if content then
-            enum_lines[#enum_lines+1] = 'class ' .. t[2] .. '(Enum):'
-            enum_lines[#enum_lines+1] = content
-            enum_lines[#enum_lines+1] = '\n'
-        end
+        enums[t[2]] = t[5]
         lines[#lines+1] = '# ' .. s:gsub('\n ?', '\n# ')
     end,
     doc=function(s)
@@ -381,7 +377,6 @@ prefix = args.varname .. '.'
 
 g = re.compile(p,defs)
 gfunc = re.compile(pfunc, gen_class and classdefs or defs)
-genumvalues = gen_class and re.compile(penumvalues, enumdefs) or {match=function(...) end}
 
 if not g:match(filecontents) then
     error('parsing error')
@@ -418,12 +413,56 @@ else
         return maxlen
     end
 
-    strings = {}
+    local to_pytype = function(t)
+        if enums[t] then
+            return t
+        end
+        return pytypemap[t] or ''
+    end
 
-    -- enums
-    if #enum_lines ~= 0 then
-        strings[#strings+1] = 'from enum import Enum\n\n'
-        strings[#strings+1] = table.concat(enum_lines, '\n')
+    local genumvalues = re.compile(penumvalues, enumdefs)
+
+    local strings = {}
+
+    -- TODO move to lib wrapper:
+    --[[
+        # lib wrapper
+
+        class CtypesEnum(IntEnum):
+            """A ctypes-compatible IntEnum superclass."""
+            @classmethod
+            def from_param(cls, obj):
+                return int(obj)
+
+        class MyEnum(CtypesEnum):
+            ZERO = 0
+            ONE = 1
+            TWO = 2
+
+        # class wrapper
+
+        MyEnum = lib.MyEnum
+
+        ...
+            def foo(self, a:MyEnum) -> None:
+                lib.use_enum(self._ctx, a)
+
+        /!\ fields of ctypes.Structure must be c_int (or other int).
+        /!\ Maybe special class with a magic method ?
+    ]]
+    -- declare enums
+    for type,c_source in pairs(enums) do
+        local content = genumvalues:match(c_source)
+        if content then
+            strings[#strings+1] = 'class ' .. type .. '(IntEnum):'
+            strings[#strings+1] = content
+            strings[#strings+1] = '\n'
+        end
+    end
+
+    -- has enum -> import Enum
+    if #strings ~= 0 then
+        strings = {'from enum import IntEnum\n\n', table.concat(strings, '\n')}
     end
 
     for _,classname in ipairs(classes) do
@@ -441,11 +480,11 @@ else
 
             -- func parameters
             for _,param in ipairs(func[3]) do
-                strings[#strings+1] = ', ' .. param[2] .. ':' .. (pytypemap[param[1]] or '')
+                strings[#strings+1] = ', ' .. param[2] .. ':' .. to_pytype(param[1])
             end
 
             -- result type
-            local resulttype = func[4] and 'None' or pytypemap[func[2]] or ''
+            local resulttype = func[4] and 'None' or to_pytype(func[2])
             strings[#strings+1] = ') -> ' .. resulttype .. ':\n        '
 
             local isinit = (func[4] == '__init__')

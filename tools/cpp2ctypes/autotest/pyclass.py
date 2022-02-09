@@ -21,4 +21,7 @@ class MyType:
     def get(self, default_value:int) -> int:
         return lib.my_type_get(self._ctx, default_value)
 
+    def foo(self, a:A) -> None:
+        lib.my_type_foo(self._ctx, a)
+
 
