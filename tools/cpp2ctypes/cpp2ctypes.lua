@@ -155,8 +155,16 @@ local defs = {
             t[4] = ': ' .. t[4]
         end
         local s = table.concat(t)
-        enums[t[2]] = t[5]
+        local content = genumvalues:match(t[5])
         lines[#lines+1] = '# ' .. s:gsub('\n ?', '\n# ')
+        if content then
+            enums[t[2]] = content
+            lines[#lines+1] = 'class ' .. t[2] .. '(IntEnum):'
+            lines[#lines+1] = content
+            lines[#lines+1] = '\n    def from_param(self) -> int:\n        return int(self)\n\n'
+        else
+            lines[#lines+1] = ''
+        end
     end,
     doc=function(s)
         if s == '@}' and lines[#lines] == '' then
@@ -377,6 +385,7 @@ prefix = args.varname .. '.'
 
 g = re.compile(p,defs)
 gfunc = re.compile(pfunc, gen_class and classdefs or defs)
+genumvalues = re.compile(penumvalues, enumdefs)
 
 if not g:match(filecontents) then
     error('parsing error')
@@ -399,7 +408,14 @@ if not gen_class then
     end
     table.sort(ctypes)
 
+    local strings = {}
+
     print('from ctypes import CDLL, ' .. table.concat(ctypes, ', '))
+    -- has enum -> import Enum
+    for type,content in pairs(enums) do
+        print('from enum import IntEnum')
+        break
+    end
     print()
     print(args.varname .. ' = CDLL("' .. library_path .. '")\n')
     print(table.concat(lines, '\n'))
@@ -420,49 +436,13 @@ else
         return pytypemap[t] or ''
     end
 
-    local genumvalues = re.compile(penumvalues, enumdefs)
-
     local strings = {}
 
-    -- TODO move to lib wrapper:
-    --[[
-        # lib wrapper
-
-        class CtypesEnum(IntEnum):
-            """A ctypes-compatible IntEnum superclass."""
-            @classmethod
-            def from_param(cls, obj):
-                return int(obj)
-
-        class MyEnum(CtypesEnum):
-            ZERO = 0
-            ONE = 1
-            TWO = 2
-
-        # class wrapper
-
-        MyEnum = lib.MyEnum
-
-        ...
-            def foo(self, a:MyEnum) -> None:
-                lib.use_enum(self._ctx, a)
-
-        /!\ fields of ctypes.Structure must be c_int (or other int).
-        /!\ Maybe special class with a magic method ?
-    ]]
-    -- declare enums
-    for type,c_source in pairs(enums) do
-        local content = genumvalues:match(c_source)
-        if content then
-            strings[#strings+1] = 'class ' .. type .. '(IntEnum):'
-            strings[#strings+1] = content
-            strings[#strings+1] = '\n'
-        end
-    end
-
-    -- has enum -> import Enum
-    if #strings ~= 0 then
-        strings = {'from enum import IntEnum\n\n', table.concat(strings, '\n')}
+    -- export Enum
+    for type,content in pairs(enums) do
+        strings[#strings+1] = content:gsub('^ *', '# ' .. type .. '.'):gsub('\n *', '\n# ' .. type .. '.')
+        strings[#strings+1] = '\n'
+        strings[#strings+1] = type .. ' = ' .. prefix .. type .. '\n\n'
     end
 
     for _,classname in ipairs(classes) do
@@ -498,14 +478,18 @@ else
 
             -- call lib
             strings[#strings+1] = prefix .. func[1] .. '('
-            local params = {}
+            local pyparams = {}
             if not isinit then
-                params[1] = 'self._ctx'
+                pyparams[1] = 'self._ctx'
             end
             for _,param in ipairs(func[3]) do
-                params[#params+1] = param[2]
+                if enums[param[1]] then
+                    pyparams[#pyparams+1] = 'int(' .. param[2] .. ')'
+                else
+                    pyparams[#pyparams+1] = param[2]
+                end
             end
-            strings[#strings+1] = table.concat(params, ', ')
+            strings[#strings+1] = table.concat(pyparams, ', ')
             strings[#strings+1] = ')'
 
             -- check context for __init__

@@ -1,4 +1,5 @@
 from ctypes import CDLL, c_int, c_ubyte, c_uint
+from enum import IntEnum
 
 lib = CDLL("enums.so")
 
@@ -8,13 +9,62 @@ lib = CDLL("enums.so")
 #        // bla bla
 #        A, B,
 #    }
+class T1(IntEnum):
+    A = 0
+    B = 1
+
+    def from_param(self) -> int:
+        return int(self)
+
+
 # enum T2 : int {A,B,}
+class T2(IntEnum):
+    A = 0
+    B = 1
+
+    def from_param(self) -> int:
+        return int(self)
+
+
 # enum T3 : uint8_t
+
 # enum [[nodiscard]] T4: unsigned{A,B,}
+class T4(IntEnum):
+    A = 0
+    B = 1
+
+    def from_param(self) -> int:
+        return int(self)
+
+
 # enum class
 # enum class T5: unsigned {A,B,}
+class T5(IntEnum):
+    A = 0
+    B = 1
+
+    def from_param(self) -> int:
+        return int(self)
+
+
 # enum class T6 : unsigned{A,B,}
+class T6(IntEnum):
+    A = 0
+    B = 1
+
+    def from_param(self) -> int:
+        return int(self)
+
+
 # enum class [[nodiscard]] T7 : unsigned {A,B,}
+class T7(IntEnum):
+    A = 0
+    B = 1
+
+    def from_param(self) -> int:
+        return int(self)
+
+
 # void f1(T1 x);
 lib.f1.argtypes = [c_int]
 lib.f1.restype = None

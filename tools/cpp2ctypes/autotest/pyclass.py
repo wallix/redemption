@@ -1,11 +1,9 @@
-from enum import Enum
-
-class A(Enum):
-    v1 = 3
-    xxx = 4
-    yy = 3
-    Z = 4
-    Y = 5
+# A.v1 = 3
+# A.xxx = 4
+# A.yy = 3
+# A.Z = 4
+# A.Y = 5
+A = lib.A
 
 class MyType:
     __slot__ = ('_ctx')
@@ -22,6 +20,6 @@ class MyType:
         return lib.my_type_get(self._ctx, default_value)
 
     def foo(self, a:A) -> None:
-        lib.my_type_foo(self._ctx, a)
+        lib.my_type_foo(self._ctx, int(a))
 
 
