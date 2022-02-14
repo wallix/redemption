@@ -1,4 +1,4 @@
-from ctypes import CDLL, CFUNCTYPE, POINTER, c_char_p, c_int, c_long, c_uint, c_ulonglong, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_long, c_size_t, c_uint, c_ulonglong, c_void_p
 
 lib = CDLL("funcs.so")
 
@@ -25,8 +25,10 @@ lib.f3.argtypes = [POINTER(CType_MyData)]
 lib.f3.restype = None
 
 Func1 = CFUNCTYPE(c_char_p, c_void_p, POINTER(c_size_t))
+lib.Func1 = Func1
 
 Func2 = CFUNCTYPE(c_char_p, c_void_p, c_size_t, c_char_p)
+lib.Func2 = Func2
 
 # int f4(Func1* f1, Func2* f2);
 lib.f4.argtypes = [Func1, Func2]

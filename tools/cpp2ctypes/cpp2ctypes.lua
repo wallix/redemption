@@ -19,27 +19,25 @@ end
 re = require're'
 argparse = require'argparse'
 
+-- C -> ctypes
 typemap = {
     ['void*']='c_void_p',
     ['char*']='c_char_p',
     ['char']='c_char',
 }
 
+-- C -> python
 pytypemap = {
     ['uint8_t*']='bytes',
     ['char*']='str',
     ['void']='None',
 }
 
-basetypes = {
-    POINTER='POINTER',
-    CFUNCTYPE='CFUNCTYPE',
-    ['POINTER(c_char)']='POINTER',
-}
+kimportable_ctypes = {}
 
 do
     for _,v in pairs(typemap) do
-        basetypes[v] = v
+        kimportable_ctypes[v] = true
     end
     typemap['void'] = 'None'
 
@@ -70,8 +68,7 @@ do
         pytypemap[ctype] = 'int'
         typemap[ctype] = pytype
         typemap[ctype .. '*'] = pointer
-        basetypes[pytype] = pytype
-        basetypes[pointer] = 'POINTER'
+        kimportable_ctypes[pytype] = true
     end
 
     pytypemap['float'] = 'float'
@@ -80,17 +77,27 @@ do
 
     -- assume buffer type
     typemap['uint8_t*'] = 'POINTER(c_char)'
-    basetypes['POINTER(c_char)'] = 'POINTER'
 end
 
 imported = {}
 lines = {}
--- {name, c-source}
+-- {[name]=c-source}
 enums = {}
+-- {[c-name]=ctype-name} => { ['Func*']='Func' }
+funcptrs = {}
 prefix = ''
 
 function normalize_type(t)
     return t[2] and t[1] .. t[2] or t[1]
+end
+
+function add_import(ctype)
+    if kimportable_ctypes[ctype] then
+        imported[ctype] = true
+    elseif ctype:match('^POINTER%(') then
+        add_import(ctype:sub(9, #ctype-1))
+        imported['POINTER'] = true
+    end
 end
 
 -- t = { type:string, optional['*'] }
@@ -105,6 +112,7 @@ function to_ctype(cname, t, isarray)
         error("Unknown type " .. type .. ' for ' .. cname)
     end
 
+    add_import(ctype)
     return ctype
 end
 
@@ -121,7 +129,7 @@ function c2py(t)
                         "'\nPlease, run with '" .. type .. "=MyPythonType'\n")
         os.exit(3)
     end
-    imported[ctype] = true
+    add_import(ctype)
     return ctype
 end
 
@@ -135,8 +143,10 @@ local defs = {
                 types[#types+1] = to_ctype(name, x) -- param type
             end
             typemap[name..'*'] = name
+            funcptrs[name..'*'] = name
             imported['CFUNCTYPE'] = true
-            lines[#lines+1] = name .. ' = CFUNCTYPE(' .. table.concat(types, ', ') .. ')\n'
+            lines[#lines+1] = name .. ' = CFUNCTYPE(' .. table.concat(types, ', ') .. ')'
+            lines[#lines+1] = prefix .. name .. ' = ' .. name .. '\n'
         else
             newc2py(t[1], t[2], t[3] ~= '')
         end
@@ -161,7 +171,8 @@ local defs = {
             enums[t[2]] = content
             lines[#lines+1] = 'class ' .. t[2] .. '(IntEnum):'
             lines[#lines+1] = content
-            lines[#lines+1] = '\n    def from_param(self) -> int:\n        return int(self)\n\n'
+            lines[#lines+1] = '\n    def from_param(self) -> int:\n        return int(self)\n'
+            lines[#lines+1] = prefix .. t[2] .. ' = ' .. t[2] .. '\n\n'
         else
             lines[#lines+1] = ''
         end
@@ -383,7 +394,7 @@ end
 local gen_class = args.class
 prefix = args.varname .. '.'
 
-g = re.compile(p,defs)
+g = re.compile(p, defs)
 gfunc = re.compile(pfunc, gen_class and classdefs or defs)
 genumvalues = re.compile(penumvalues, enumdefs)
 
@@ -396,10 +407,7 @@ print("# ./tools/cpp2ctypes/cpp2ctypes.lua '" .. table.concat(arg, "' '") .. "'\
 if not gen_class then
     local kctypes, ctype = {}
     for k,_ in pairs(imported) do
-        ctype = basetypes[k]
-        if ctype then
-            kctypes[ctype] = true
-        end
+        kctypes[k] = true
     end
 
     local ctypes = {}
@@ -429,9 +437,14 @@ else
         return maxlen
     end
 
+    local has_typing_callable = false
+
     local to_pytype = function(t)
         if enums[t] then
             return t
+        elseif funcptrs[t] then
+            has_typing_callable = true
+            return 'Callable'
         end
         return pytypemap[t] or ''
     end
@@ -485,6 +498,8 @@ else
             for _,param in ipairs(func[3]) do
                 if enums[param[1]] then
                     pyparams[#pyparams+1] = 'int(' .. param[2] .. ')'
+                elseif funcptrs[param[1]] then
+                    pyparams[#pyparams+1] = prefix .. funcptrs[param[1]] .. '(' .. param[2] .. ')'
                 else
                     pyparams[#pyparams+1] = param[2]
                 end
@@ -502,5 +517,8 @@ else
         end
     end
 
+    if has_typing_callable then
+        print('from typing import Callable\n')
+    end
     print(table.concat(strings))
 end
