@@ -293,13 +293,18 @@ def check_tunneling(engine, opts, target_host, target_port,
         return None
     try:
         ssh_port = opts.get("ssh_port")
-        ssh_login = engine.get_scenario_account_field(
-            "login", opts.get("ssh_login")
-        )
-        ssh_password = engine.get_scenario_account_field(
-            "password", opts.get("ssh_password")
-        )
-        tunneling_type = opts.get("type", "pxssh")
+        if opts.get("authentication_method") == "ssh_login_password":
+            ssh_login = opts.get("ssh_login")
+            ssh_password = opts.get("ssh_password")
+        else:
+            ssh_login = engine.get_scenario_account_field(
+                "login", opts.get("scenario_account")
+            )
+            ssh_password = engine.get_scenario_account_field(
+                "password", opts.get("scenario_account")
+            )
+
+        tunneling_type = opts.get("tunneling_type", "pxssh")
         tunneling_class = TunnelingProcessPXSSH
         if tunneling_type == "pexpect":
             tunneling_class = TunnelingProcessPEXPECTSSH

@@ -626,6 +626,19 @@ template<> struct is_valid_enum_value<VncTunnelingType>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
+enum class VncAuthenticationMethod : uint8_t
+{
+    // SSH Login/Password (static)
+    ssh_login_password = 0,
+    // Scenario Account (dynamic)
+    scenario_account = 1,
+};
+
+template<> struct is_valid_enum_value<VncAuthenticationMethod>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
+};
+
 enum class BannerType : uint8_t
 {
     info = 0,

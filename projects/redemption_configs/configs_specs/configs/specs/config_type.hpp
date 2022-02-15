@@ -260,6 +260,11 @@ inline void config_type_definition(type_enumerations & e)
         .value("popen")
     ;
 
+    e.enumeration_list("VncAuthenticationMethod")
+        .value("ssh_login_password", "SSH Login/Password (static)")
+        .value("scenario_account", "Scenario Account (dynamic)")
+    ;
+
     e.enumeration_list("BannerType")
       .value("info")
       .value("warn")

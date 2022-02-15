@@ -245,14 +245,16 @@ namespace configs
         "mod_rdp:krb_armoring_fallback_password"_zv,
         "vnc_over_ssh:enable"_zv,
         "vnc_over_ssh:ssh_port"_zv,
+        "vnc_over_ssh:authentication_method"_zv,
         "vnc_over_ssh:ssh_login"_zv,
         "vnc_over_ssh:ssh_password"_zv,
+        "vnc_over_ssh:scenario_account"_zv,
         "vnc_over_ssh:tunneling_type"_zv,
     };
 
 
 constexpr U64BitFlags<1> unused_connpolicy_loggable{ {
-  0b0000000000000000000000000000000000000000000000000000000101110111
+  0b0000000000000000000000000000000000000000000000000000011011110111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
