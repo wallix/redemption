@@ -376,23 +376,11 @@ migration_defs = (
     (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
 )
 
-class ExitWithSuccessWhenFailure:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if exc_type is None:
-            return
-
-        print(type(exc_value).__name__)
-        traceback.print_tb(exc_traceback, file=sys.stdout)
-        exit(0)
-
 
 if __name__ == '__main__':
     if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                    \
        os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
-        with ExitWithSuccessWhenFailure():
+        try:
             old_redemption_version = RedemptionVersion.from_file(
                 '/tmp/OLD_REDEMPTION_VERSION')
 
@@ -412,3 +400,7 @@ if __name__ == '__main__':
                           '/var/wab/etc/rdp/rdpproxy.ini')
 
                 print("Configuration file updated")
+        except Exception as e:
+            _, exc_value, exc_traceback = sys.exc_info()
+            print(type(exc_value).__name__)
+            traceback.print_tb(exc_traceback, file=sys.stdout)
