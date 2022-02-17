@@ -147,7 +147,7 @@ void config_spec_definition(Writer && W)
         "  18: MultiOpaqueRect\n"
         "  22: Polyline\n"
         "  25: EllipseSC\n"
-        "  27: GlyphIndex\n"
+        "  27: GlyphIndex"
     ;
 
     REDEMPTION_DIAGNOSTIC_PUSH()

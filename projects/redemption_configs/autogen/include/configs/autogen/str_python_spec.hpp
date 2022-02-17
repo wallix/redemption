@@ -289,9 +289,10 @@ enable_remotefx = boolean(default=True)
 #   18: MultiOpaqueRect
 #   22: Polyline
 #   25: EllipseSC
-#   27: GlyphIndex
+#   27: GlyphIndex<br/>
 # 
 # (values are comma-separated)
+# <br/>
 #_advanced
 disabled_orders = string(default='25')
 
@@ -337,9 +338,10 @@ open_session_timeout = integer(min=0, default=0)
 #   18: MultiOpaqueRect
 #   22: Polyline
 #   25: EllipseSC
-#   27: GlyphIndex
+#   27: GlyphIndex<br/>
 # 
 # (values are comma-separated)
+# <br/>
 #_hidden
 disabled_orders = string(default='')
 
@@ -1159,7 +1161,7 @@ listen_address = string(default=':3390')
 #_hidden
 fake_target_ip = string(default='')
 
-# - kbd / ocr when != 0
+# - kbd / ocr when != 0<br/>
 # 
 # (Wrm)
 # - pointer             = 0x0004
@@ -1170,6 +1172,7 @@ fake_target_ip = string(default='')
 # - bmp_cache           = 0x0200
 # - internal_buffer     = 0x0400
 # - sec_decrypted       = 0x1000
+# <br/>
 #_advanced
 #_hex
 capture = integer(min=0, default=0)
@@ -1199,7 +1202,7 @@ session = integer(min=0, default=0)
 # - bmp_info        = 0x00000800
 # - global_channel  = 0x00002000
 # - sec_decrypted   = 0x00004000
-# - keymap          = 0x00008004
+# - keymap          = 0x00008004<br/>
 # 
 # (Serializer)
 # - pointer             = 0x00040000
@@ -1210,6 +1213,7 @@ session = integer(min=0, default=0)
 # - bmp_cache           = 0x02000000
 # - internal_buffer     = 0x04000000
 # - sec_decrypted       = 0x10000000
+# <br/>
 #_advanced
 #_hex
 front = integer(min=0, default=0)

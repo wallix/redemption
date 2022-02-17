@@ -577,7 +577,24 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             write_type_info(comments, type);
             write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
-            this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
+            std::string str_comments = comments.str();
+
+            // replace "\n\n" with "<br/>\n"
+            std::string html_commants;
+            html_commants.reserve(str_comments.size());
+            for (char const& c : str_comments) {
+                if (c == '\n' && (&c)[1] == '\n') {
+                    html_commants += "<br/>\n";
+                }
+                else {
+                    html_commants += c;
+                }
+            }
+            if (html_commants.size() != str_comments.size()) {
+                html_commants += "<br/>";
+            }
+
+            this->out() << io_prefix_lines{html_commants.c_str(), "# ", "", 0};
             comments.str("");
 
             write_spec_attr(comments,
