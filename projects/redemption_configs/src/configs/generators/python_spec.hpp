@@ -451,6 +451,9 @@ static void htmlize(std::string& str)
         }
     }
     if (html.size() != str.size()) {
+        if (html.back() == '\n') {
+            html.pop_back();
+        }
         html += "<br/>";
     }
 
