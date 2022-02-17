@@ -420,6 +420,56 @@ void write_enumeration_value_description(std::ostream& out, type_enumerations& e
     }
 }
 
+static void htmlize(std::string& str)
+{
+    std::string html;
+
+    // replace '&' and '<' with "&amp;" and "&lt;"
+    for (char const& c : str) {
+        if (c == '&') {
+            html += "&amp;";
+        }
+        else if (c == '<') {
+            html += "&lt;";
+        }
+        else {
+            html += c;
+        }
+    }
+
+    str.clear();
+    html.swap(str);
+
+    // replace "\n\n" with "<br/>\n"
+    html.reserve(str.size());
+    for (char const& c : str) {
+        if (c == '\n' && (&c)[1] == '\n') {
+            html += "<br/>\n";
+        }
+        else {
+            html += c;
+        }
+    }
+    if (html.size() != str.size()) {
+        html += "<br/>";
+    }
+
+    str.clear();
+    html.swap(str);
+
+    // replace "  " at start line with "&nbsp; ;&nbsp; "
+    for (char const& c : str) {
+        if (c == '\n' && (&c)[1] == ' ' && (&c)[2] == ' ') {
+            html += "\n&nbsp; &nbsp; ";
+        }
+        else {
+            html += c;
+        }
+    }
+
+    html.swap(str);
+}
+
 template<class D>
 char const * get_value_name(type_enumeration const & e, D const& x)
 {
@@ -578,52 +628,9 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
             std::string str_comments = comments.str();
-            std::string html_comments;
+            htmlize(str_comments);
 
-            // replace '&' and '<' with "&amp;" and "&lt;"
-            for (char const& c : str_comments) {
-                if (c == '&') {
-                    html_comments += "&amp;";
-                }
-                else if (c == '<') {
-                    html_comments += "&lt;";
-                }
-                else {
-                    html_comments += c;
-                }
-            }
-
-            str_comments.clear();
-            html_comments.swap(str_comments);
-
-            // replace "\n\n" with "<br/>\n"
-            html_comments.reserve(str_comments.size());
-            for (char const& c : str_comments) {
-                if (c == '\n' && (&c)[1] == '\n') {
-                    html_comments += "<br/>\n";
-                }
-                else {
-                    html_comments += c;
-                }
-            }
-            if (html_comments.size() != str_comments.size()) {
-                html_comments += "<br/>";
-            }
-
-            str_comments.clear();
-            html_comments.swap(str_comments);
-
-            // replace "  " at start line with "&nbsp; ;&nbsp; "
-            for (char const& c : str_comments) {
-                if (c == '\n' && (&c)[1] == ' ' && (&c)[2] == ' ') {
-                    html_comments += "\n&nbsp; &nbsp; ";
-                }
-                else {
-                    html_comments += c;
-                }
-            }
-
-            this->out() << io_prefix_lines{html_comments.c_str(), "# ", "", 0};
+            this->out() << io_prefix_lines{str_comments.c_str(), "# ", "", 0};
             comments.str("");
 
             write_spec_attr(comments,

@@ -30,28 +30,28 @@ inactivity_timeout = integer(min=0, default=0)
 [session_log]
 
 # Keyboard Input Masking Level:
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked
-#   3: keyboard inputs are not logged
+# &nbsp; &nbsp;   0: keyboard input are not masked
+# &nbsp; &nbsp;   1: only passwords are masked
+# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
+# &nbsp; &nbsp;   3: keyboard inputs are not logged
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [rdp]
 
 # Disables supported drawing orders:
-#    0: DstBlt
-#    1: PatBlt
-#    2: ScrBlt
-#    3: MemBlt
-#    4: Mem3Blt
-#    8: LineTo
-#   15: MultiDstBlt
-#   16: MultiPatBlt
-#   17: MultiScrBlt
-#   18: MultiOpaqueRect
-#   22: Polyline
-#   25: EllipseSC
-#   27: GlyphIndex
+# &nbsp; &nbsp;    0: DstBlt
+# &nbsp; &nbsp;    1: PatBlt
+# &nbsp; &nbsp;    2: ScrBlt
+# &nbsp; &nbsp;    3: MemBlt
+# &nbsp; &nbsp;    4: Mem3Blt
+# &nbsp; &nbsp;    8: LineTo
+# &nbsp; &nbsp;   15: MultiDstBlt
+# &nbsp; &nbsp;   16: MultiPatBlt
+# &nbsp; &nbsp;   17: MultiScrBlt
+# &nbsp; &nbsp;   18: MultiOpaqueRect
+# &nbsp; &nbsp;   22: Polyline
+# &nbsp; &nbsp;   25: EllipseSC
+# &nbsp; &nbsp;   27: GlyphIndex
 # (values are comma-separated)
 #_advanced
 disabled_orders = string(default='')
@@ -118,9 +118,9 @@ force_smartcard_authentication = boolean(default=False)
 enable_ipv6 = boolean(default=True)
 
 # Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
-#   allow: Forward Console mode request from client to the target.
-#   force: Force Console mode on target regardless of client request.
-#   forbid: Block Console mode request from client.
+# &nbsp; &nbsp;   allow: Forward Console mode request from client to the target.
+# &nbsp; &nbsp;   force: Force Console mode on target regardless of client request.
+# &nbsp; &nbsp;   forbid: Block Console mode request from client.
 #_display_name=Console mode
 mode_console = option('allow', 'force', 'forbid', default='allow')
 
@@ -170,9 +170,9 @@ use_smart_launcher = boolean(default=True)
 enable_launch_mask = boolean(default=True)
 
 # Behavior on failure to launch Session Probe.
-#   0: ignore failure and continue.
-#   1: disconnect user.
-#   2: reconnect without Session Probe.
+# &nbsp; &nbsp;   0: ignore failure and continue.
+# &nbsp; &nbsp;   1: disconnect user.
+# &nbsp; &nbsp;   2: reconnect without Session Probe.
 on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
@@ -195,8 +195,8 @@ start_launch_timeout_timer_only_after_logon = boolean(default=True)
 keepalive_timeout = integer(min=0, max=60000, default=5000)
 
 #   0: ignore and continue
-#   1: disconnect user
-#   2: freeze connection and wait
+# &nbsp; &nbsp;   1: disconnect user
+# &nbsp; &nbsp;   2: freeze connection and wait
 on_keepalive_timeout = option(0, 1, 2, default=1)
 
 # End automatically a disconnected session.
@@ -211,11 +211,11 @@ enable_log = boolean(default=False)
 enable_log_rotation = boolean(default=False)
 
 #   1: Fatal
-#   2: Error
-#   3: Info
-#   4: Warning
-#   5: Debug
-#   6: Detail
+# &nbsp; &nbsp;   2: Error
+# &nbsp; &nbsp;   3: Info
+# &nbsp; &nbsp;   4: Warning
+# &nbsp; &nbsp;   5: Debug
+# &nbsp; &nbsp;   6: Detail
 #_advanced
 log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
@@ -272,7 +272,7 @@ memory_usage_limit = integer(min=0, max=200000000, default=0)
 cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
 
 #   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
-#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+# &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
 #_advanced
 cpu_usage_alarm_action = option(0, 1, default=0)
 
@@ -290,14 +290,14 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 update_disabled_features = boolean(default=True)
 
 #   0x000: none
-#   0x001: Java Access Bridge
-#   0x002: MS Active Accessbility
-#   0x004: MS UI Automation
-#   0x010: Inspect Edge location URL
-#   0x020: Inspect Chrome Address/Search bar
-#   0x040: Inspect Firefox Address/Search bar
-#   0x080: Monitor Internet Explorer event
-#   0x100: Inspect group membership of user
+# &nbsp; &nbsp;   0x001: Java Access Bridge
+# &nbsp; &nbsp;   0x002: MS Active Accessbility
+# &nbsp; &nbsp;   0x004: MS UI Automation
+# &nbsp; &nbsp;   0x010: Inspect Edge location URL
+# &nbsp; &nbsp;   0x020: Inspect Chrome Address/Search bar
+# &nbsp; &nbsp;   0x040: Inspect Firefox Address/Search bar
+# &nbsp; &nbsp;   0x080: Monitor Internet Explorer event
+# &nbsp; &nbsp;   0x100: Inspect group membership of user
 # Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_advanced
 #_hex
@@ -306,9 +306,9 @@ disabled_features = integer(min=0, max=511, default=352)
 enable_bestsafe_interaction = boolean(default=False)
 
 # For targets running WALLIX BestSafe only.
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
+# &nbsp; &nbsp;   0: User action will be accepted
+# &nbsp; &nbsp;   1: (Same thing as 'allow') 
+# &nbsp; &nbsp;   2: User action will be rejected
 on_account_manipulation = option(0, 1, 2, default=0)
 
 # The name of the environment variable pointing to the alternative directory to launch Session Probe.
@@ -344,48 +344,48 @@ windows_of_these_applications_as_unidentified_input_field = string(default='')
 server_cert_store = boolean(default=True)
 
 # Behavior of certificates check.
-#   0: fails if certificates doesn't match or miss.
-#   1: fails if certificate doesn't match, succeed if no known certificate.
-#   2: succeed if certificates exists (not checked), fails if missing.
-#   3: always succeed.
+# &nbsp; &nbsp;   0: fails if certificates doesn't match or miss.
+# &nbsp; &nbsp;   1: fails if certificate doesn't match, succeed if no known certificate.
+# &nbsp; &nbsp;   2: succeed if certificates exists (not checked), fails if missing.
+# &nbsp; &nbsp;   3: always succeed.
 # System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
 server_cert_check = option(0, 1, 2, 3, default=1)
 
 # Warn if check allow connexion to server.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -426,18 +426,18 @@ max_file_size_rejected = integer(min=0, default=256)
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-#   never: Never store transferred files.
-#   always: Always store transferred files.
-#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+# &nbsp; &nbsp;   never: Never store transferred files.
+# &nbsp; &nbsp;   always: Always store transferred files.
+# &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
 store_file = option('never', 'always', 'on_invalid_verification', default='never')
 
 [video]
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-#   0x0: none
-#   0x1: disable keyboard log in syslog
-#   0x2: disable keyboard log in recorded sessions
+# &nbsp; &nbsp;   0x0: none
+# &nbsp; &nbsp;   0x1: disable keyboard log in syslog
+# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
 # Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 #_hex
