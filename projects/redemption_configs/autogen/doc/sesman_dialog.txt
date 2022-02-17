@@ -280,16 +280,27 @@ cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
 <sesman only> ⇐ vnc_over_ssh:enable   [bool]
 <sesman only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
 <sesman only> ⇐ vnc_over_ssh:tunneling_credential_source   [VncTunnelingCredentialSource ⇐ std::string]
-    When invoking VNC-over-SSH with credential provided in this Connection Policy, the fields Ssh login and Ssh password must be filled.
-    The Scenario Account name must be provided when the Scenario Account is selected as the credential source.
+    When invoking VNC_over_SSH with the credentials provided in this connection policy, the Ssh login and Ssh password fields must be filled in.
+    The scenario account name must be provided when the scenario account is selected as the credential source.
 <sesman only> ⇐ vnc_over_ssh:ssh_login   [std::string]
     Login to be used for SSH tunneling.
 <sesman only> ⇐ vnc_over_ssh:ssh_password   [std::string]
     Password to be used for SSH tunneling.
 <sesman only> ⇐ vnc_over_ssh:scenario_account_name   [std::string]
-    In form 'account_name@domain_name[@[device_name]]'.
+    With the following syntax: 'account_name@domain_name[@[device_name]]'.
+    
+    Syntax for using global domain scenario account:
+      account_name@global_domain_name
+    
+    Syntax for using local domain scenario account (with automatic device name deduction):
+      account_name@local_domain_name@
+      (recommended syntax)
+    
+    Syntax for using local domain scenario account:
+      account_name@local_domain_name@device_name
+      (The device name provided in the scenario account name must match the device name of the target)
 <sesman only> ⇐ vnc_over_ssh:tunneling_type   [VncTunnelingType ⇐ std::string]
-    Reserved for debug only
+    Only for debugging purposes.
 
 
 cfg::file_verification::enable_up ⇐ file_verification:enable_up   [bool]

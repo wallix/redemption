@@ -683,16 +683,29 @@ void config_spec_definition(Writer && W)
         W.member(external, vnc_connpolicy, L, type_<types::unsigned_>(), names{"ssh_port"}, set(22));
 
         W.member(external, vnc_connpolicy, L, type_<VncTunnelingCredentialSource>(), spec::type_<std::string>(), names{"tunneling_credential_source"}, set(VncTunnelingCredentialSource::scenario_account), desc{
-            "When invoking VNC-over-SSH with credential provided in this Connection Policy, the fields Ssh login and Ssh password must be filled.\n"
-            "The Scenario Account name must be provided when the Scenario Account is selected as the credential source."
+            "When invoking VNC_over_SSH with the credentials provided in this connection policy, the Ssh login and Ssh password fields must be filled in.\n"
+            "The scenario account name must be provided when the scenario account is selected as the credential source."
         });
 
         W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"ssh_login"}, desc{"Login to be used for SSH tunneling."});
         W.member(external, vnc_connpolicy, NL, type_<std::string>(), names{"ssh_password"}, desc{"Password to be used for SSH tunneling."});
 
-        W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"scenario_account_name"}, desc{"In form 'account_name@domain_name[@[device_name]]'."});
+        W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"scenario_account_name"}, desc{
+            "With the following syntax: 'account_name@domain_name[@[device_name]]'.\n"
+            "\n"
+            "Syntax for using global domain scenario account:\n"
+            "  account_name@global_domain_name\n"
+            "\n"
+            "Syntax for using local domain scenario account (with automatic device name deduction):\n"
+            "  account_name@local_domain_name@\n"
+            "  (recommended syntax)\n"
+            "\n"
+            "Syntax for using local domain scenario account:\n"
+            "  account_name@local_domain_name@device_name\n"
+            "  (The device name provided in the scenario account name must match the device name of the target)"
+        });
 
-        W.member(external, vnc_connpolicy | advanced_in_connpolicy, L, type_<VncTunnelingType>(), spec::type_<std::string>(), names{"tunneling_type"}, set(VncTunnelingType::pxssh), desc{"Reserved for debug only"});
+        W.member(external, vnc_connpolicy | advanced_in_connpolicy, L, type_<VncTunnelingType>(), spec::type_<std::string>(), names{"tunneling_type"}, set(VncTunnelingType::pxssh), desc{"Only for debugging purposes."});
     });
 
     W.section("metrics", [&]
