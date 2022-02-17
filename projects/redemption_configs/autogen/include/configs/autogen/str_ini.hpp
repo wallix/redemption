@@ -343,7 +343,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   22: Polyline
 #   25: EllipseSC
 #   27: GlyphIndex
-# 
 #_advanced
 #disabled_orders = 25
 
@@ -395,7 +394,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   22: Polyline
 #   25: EllipseSC
 #   27: GlyphIndex
-# 
 #_hidden
 #disabled_orders = 
 

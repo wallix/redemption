@@ -56,7 +56,6 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 #   22: Polyline
 #   25: EllipseSC
 #   27: GlyphIndex
-# 
 # (values are comma-separated)
 #_advanced
 disabled_orders = string(default='')

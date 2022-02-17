@@ -53,9 +53,9 @@ authentication_timeout = integer(min=0, default=120)
 close_timeout = integer(min=0, default=600)
 
 # Session record options.
-#   0: No encryption (faster).
-#   1: No encryption, with checksum.
-#   2: Encryption enabled.
+# &nbsp; &nbsp;   0: No encryption (faster).
+# &nbsp; &nbsp;   1: No encryption, with checksum.
+# &nbsp; &nbsp;   2: Encryption enabled.
 # When session records are encrypted, they can be read only by the WAB where they have been generated.
 #_advanced
 trace_type = option(0, 1, 2, default=1)
@@ -133,10 +133,10 @@ enable_session_log = boolean(default=True)
 enable_arcsight_log = boolean(default=False)
 
 # Keyboard Input Masking Level:
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked
-#   3: keyboard inputs are not logged
+# &nbsp; &nbsp;   0: keyboard input are not masked
+# &nbsp; &nbsp;   1: only passwords are masked
+# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
+# &nbsp; &nbsp;   3: keyboard inputs are not logged
 #_hidden
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
@@ -210,20 +210,20 @@ bogus_user_id = boolean(default=True)
 disable_tsk_switch_shortcuts = boolean(default=False)
 
 # Specifies the highest compression package support available on the front side
-#   0: The RDP bulk compression is disabled
-#   1: RDP 4.0 bulk compression
-#   2: RDP 5.0 bulk compression
-#   3: RDP 6.0 bulk compression
-#   4: RDP 6.1 bulk compression
+# &nbsp; &nbsp;   0: The RDP bulk compression is disabled
+# &nbsp; &nbsp;   1: RDP 4.0 bulk compression
+# &nbsp; &nbsp;   2: RDP 5.0 bulk compression
+# &nbsp; &nbsp;   3: RDP 6.0 bulk compression
+# &nbsp; &nbsp;   4: RDP 6.1 bulk compression
 #_advanced
 rdp_compression = option(0, 1, 2, 3, 4, default=4)
 
 # Specifies the maximum color resolution (color depth) for client session:
-#   8: 8-bit
-#   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
-#   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
-#   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
-#   32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
+# &nbsp; &nbsp;   8: 8-bit
+# &nbsp; &nbsp;   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
+# &nbsp; &nbsp;   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
+# &nbsp; &nbsp;   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
+# &nbsp; &nbsp;   32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
@@ -261,8 +261,8 @@ bogus_ios_glyph_support_level = boolean(default=True)
 transform_glyph_to_bitmap = boolean(default=False)
 
 #   0: disabled
-#   1: pause key only
-#   2: all input events
+# &nbsp; &nbsp;   1: pause key only
+# &nbsp; &nbsp;   2: all input events
 bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)
 
 # (in milliseconds)
@@ -277,22 +277,20 @@ enable_osd_4_eyes = boolean(default=True)
 enable_remotefx = boolean(default=True)
 
 # Disables supported drawing orders:
-#    0: DstBlt
-#    1: PatBlt
-#    2: ScrBlt
-#    3: MemBlt
-#    4: Mem3Blt
-#    8: LineTo
-#   15: MultiDstBlt
-#   16: MultiPatBlt
-#   17: MultiScrBlt
-#   18: MultiOpaqueRect
-#   22: Polyline
-#   25: EllipseSC
-#   27: GlyphIndex<br/>
-# 
+# &nbsp; &nbsp;    0: DstBlt
+# &nbsp; &nbsp;    1: PatBlt
+# &nbsp; &nbsp;    2: ScrBlt
+# &nbsp; &nbsp;    3: MemBlt
+# &nbsp; &nbsp;    4: Mem3Blt
+# &nbsp; &nbsp;    8: LineTo
+# &nbsp; &nbsp;   15: MultiDstBlt
+# &nbsp; &nbsp;   16: MultiPatBlt
+# &nbsp; &nbsp;   17: MultiScrBlt
+# &nbsp; &nbsp;   18: MultiOpaqueRect
+# &nbsp; &nbsp;   22: Polyline
+# &nbsp; &nbsp;   25: EllipseSC
+# &nbsp; &nbsp;   27: GlyphIndex
 # (values are comma-separated)
-# <br/>
 #_advanced
 disabled_orders = string(default='25')
 
@@ -310,11 +308,11 @@ connection_retry_count = integer(min=1, max=10, default=3)
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
-#   0: The RDP bulk compression is disabled
-#   1: RDP 4.0 bulk compression
-#   2: RDP 5.0 bulk compression
-#   3: RDP 6.0 bulk compression
-#   4: RDP 6.1 bulk compression
+# &nbsp; &nbsp;   0: The RDP bulk compression is disabled
+# &nbsp; &nbsp;   1: RDP 4.0 bulk compression
+# &nbsp; &nbsp;   2: RDP 5.0 bulk compression
+# &nbsp; &nbsp;   3: RDP 6.0 bulk compression
+# &nbsp; &nbsp;   4: RDP 6.1 bulk compression
 #_advanced
 rdp_compression = option(0, 1, 2, 3, 4, default=4)
 
@@ -326,22 +324,20 @@ disconnect_on_logon_user_change = boolean(default=False)
 open_session_timeout = integer(min=0, default=0)
 
 # Disables supported drawing orders:
-#    0: DstBlt
-#    1: PatBlt
-#    2: ScrBlt
-#    3: MemBlt
-#    4: Mem3Blt
-#    8: LineTo
-#   15: MultiDstBlt
-#   16: MultiPatBlt
-#   17: MultiScrBlt
-#   18: MultiOpaqueRect
-#   22: Polyline
-#   25: EllipseSC
-#   27: GlyphIndex<br/>
-# 
+# &nbsp; &nbsp;    0: DstBlt
+# &nbsp; &nbsp;    1: PatBlt
+# &nbsp; &nbsp;    2: ScrBlt
+# &nbsp; &nbsp;    3: MemBlt
+# &nbsp; &nbsp;    4: Mem3Blt
+# &nbsp; &nbsp;    8: LineTo
+# &nbsp; &nbsp;   15: MultiDstBlt
+# &nbsp; &nbsp;   16: MultiPatBlt
+# &nbsp; &nbsp;   17: MultiScrBlt
+# &nbsp; &nbsp;   18: MultiOpaqueRect
+# &nbsp; &nbsp;   22: Polyline
+# &nbsp; &nbsp;   25: EllipseSC
+# &nbsp; &nbsp;   27: GlyphIndex
 # (values are comma-separated)
-# <br/>
 #_hidden
 disabled_orders = string(default='')
 
@@ -386,9 +382,9 @@ fast_path = boolean(default=True)
 server_redirection_support = boolean(default=False)
 
 # Client Address to send to target (in InfoPacket)
-#   0: Send 0.0.0.0
-#   1: Send proxy client address or target connexion
-#   2: Send user client address of front connexion
+# &nbsp; &nbsp;   0: Send 0.0.0.0
+# &nbsp; &nbsp;   1: Send proxy client address or target connexion
+# &nbsp; &nbsp;   2: Send user client address of front connexion
 #_advanced
 client_address_sent = option(0, 1, 2, default=0)
 
@@ -442,9 +438,9 @@ session_probe_use_smart_launcher = boolean(default=True)
 session_probe_enable_launch_mask = boolean(default=True)
 
 # Behavior on failure to launch Session Probe.
-#   0: ignore failure and continue.
-#   1: disconnect user.
-#   2: reconnect without Session Probe.
+# &nbsp; &nbsp;   0: ignore failure and continue.
+# &nbsp; &nbsp;   1: disconnect user.
+# &nbsp; &nbsp;   2: reconnect without Session Probe.
 #_hidden
 session_probe_on_launch_failure = option(0, 1, 2, default=1)
 
@@ -469,8 +465,8 @@ session_probe_start_launch_timeout_timer_only_after_logon = boolean(default=True
 session_probe_keepalive_timeout = integer(min=0, max=60000, default=5000)
 
 #   0: ignore and continue
-#   1: disconnect user
-#   2: freeze connection and wait
+# &nbsp; &nbsp;   1: disconnect user
+# &nbsp; &nbsp;   2: freeze connection and wait
 #_hidden
 session_probe_on_keepalive_timeout = option(0, 1, 2, default=1)
 
@@ -490,11 +486,11 @@ session_probe_enable_log = boolean(default=False)
 session_probe_enable_log_rotation = boolean(default=False)
 
 #   1: Fatal
-#   2: Error
-#   3: Info
-#   4: Warning
-#   5: Debug
-#   6: Detail
+# &nbsp; &nbsp;   2: Error
+# &nbsp; &nbsp;   3: Info
+# &nbsp; &nbsp;   4: Warning
+# &nbsp; &nbsp;   5: Debug
+# &nbsp; &nbsp;   6: Detail
 #_hidden
 session_probe_log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
@@ -560,7 +556,7 @@ session_probe_memory_usage_limit = integer(min=0, max=200000000, default=0)
 session_probe_cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
 
 #   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
-#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+# &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
 #_hidden
 session_probe_cpu_usage_alarm_action = option(0, 1, default=0)
 
@@ -578,14 +574,14 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 session_probe_update_disabled_features = boolean(default=True)
 
 #   0x000: none
-#   0x001: Java Access Bridge
-#   0x002: MS Active Accessbility
-#   0x004: MS UI Automation
-#   0x010: Inspect Edge location URL
-#   0x020: Inspect Chrome Address/Search bar
-#   0x040: Inspect Firefox Address/Search bar
-#   0x080: Monitor Internet Explorer event
-#   0x100: Inspect group membership of user
+# &nbsp; &nbsp;   0x001: Java Access Bridge
+# &nbsp; &nbsp;   0x002: MS Active Accessbility
+# &nbsp; &nbsp;   0x004: MS UI Automation
+# &nbsp; &nbsp;   0x010: Inspect Edge location URL
+# &nbsp; &nbsp;   0x020: Inspect Chrome Address/Search bar
+# &nbsp; &nbsp;   0x040: Inspect Firefox Address/Search bar
+# &nbsp; &nbsp;   0x080: Monitor Internet Explorer event
+# &nbsp; &nbsp;   0x100: Inspect group membership of user
 # Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
@@ -595,9 +591,9 @@ session_probe_disabled_features = integer(min=0, max=511, default=352)
 session_probe_bestsafe_integration = boolean(default=False)
 
 # For targets running WALLIX BestSafe only.
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
+# &nbsp; &nbsp;   0: User action will be accepted
+# &nbsp; &nbsp;   1: (Same thing as 'allow') 
+# &nbsp; &nbsp;   2: User action will be rejected
 #_hidden
 session_probe_on_account_manipulation = option(0, 1, 2, default=0)
 
@@ -639,59 +635,59 @@ application_driver_ie_script = string(max=256, default=')gen_config_ini" << (RED
 server_cert_store = boolean(default=True)
 
 # Behavior of certificates check.
-#   0: fails if certificates doesn't match or miss.
-#   1: fails if certificate doesn't match, succeed if no known certificate.
-#   2: succeed if certificates exists (not checked), fails if missing.
-#   3: always succeed.
+# &nbsp; &nbsp;   0: fails if certificates doesn't match or miss.
+# &nbsp; &nbsp;   1: fails if certificate doesn't match, succeed if no known certificate.
+# &nbsp; &nbsp;   2: succeed if certificates exists (not checked), fails if missing.
+# &nbsp; &nbsp;   3: always succeed.
 # System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
 #_hidden
 server_cert_check = option(0, 1, 2, 3, default=1)
 
 # Warn if check allow connexion to server.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate check raised some internal error.
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -782,11 +778,11 @@ clipboard_up = boolean(default=False)
 clipboard_down = boolean(default=False)
 
 # Sets the encoding types in which pixel data can be sent by the VNC server:
-#   0: Raw
-#   1: CopyRect
-#   2: RRE
-#   16: ZRLE
-#   -239 (0xFFFFFF11): Cursor pseudo-encoding
+# &nbsp; &nbsp;   0: Raw
+# &nbsp; &nbsp;   1: CopyRect
+# &nbsp; &nbsp;   2: RRE
+# &nbsp; &nbsp;   16: ZRLE
+# &nbsp; &nbsp;   -239 (0xFFFFFF11): Cursor pseudo-encoding
 # (values are comma-separated)
 #_advanced
 encodings = string(default='')
@@ -796,8 +792,8 @@ encodings = string(default='')
 server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')
 
 #   0: delayed
-#   1: duplicated
-#   2: continued
+# &nbsp; &nbsp;   1: duplicated
+# &nbsp; &nbsp;   2: continued
 #_advanced
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
@@ -895,9 +891,9 @@ tmpdir = string(max=4096, default='/tmp/')
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-#   never: Never store transferred files.
-#   always: Always store transferred files.
-#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+# &nbsp; &nbsp;   never: Never store transferred files.
+# &nbsp; &nbsp;   always: Always store transferred files.
+# &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
 #_hidden
 store_file = option('never', 'always', 'on_invalid_verification', default='never')
 
@@ -958,7 +954,7 @@ replay_on_loop = boolean(default=False)
 [ocr]
 
 #   1: v1
-#   2: v2
+# &nbsp; &nbsp;   2: v2
 version = option(1, 2, default=2)
 
 locale = option('latin', 'cyrillic', default='latin')
@@ -971,8 +967,8 @@ interval = integer(min=0, default=100)
 on_title_bar_only = boolean(default=True)
 
 # Expressed in percentage,
-#   0   - all of characters need be recognized
-#   100 - accept all results
+# &nbsp; &nbsp;   0   - all of characters need be recognized
+# &nbsp; &nbsp;   100 - accept all results
 #_advanced
 max_unrecog_char_rate = integer(min=0, max=100, default=40)
 
@@ -982,10 +978,10 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 capture_groupid = integer(min=0, default=33)
 
 # Specifies the type of data to be captured:
-#   0x00: none
-#   0x01: png
-#   0x02: wrm
-#   0x08: ocr
+# &nbsp; &nbsp;   0x00: none
+# &nbsp; &nbsp;   0x01: png
+# &nbsp; &nbsp;   0x02: wrm
+# &nbsp; &nbsp;   0x08: ocr
 # Note: values can be added (enable all: 0x01 + 0x02 + 0x08 = 0x0b)
 #_advanced
 #_hex
@@ -1019,45 +1015,45 @@ record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::R
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log".)
-#   0x0: none
-#   0x1: disable keyboard log in syslog
-#   0x2: disable keyboard log in recorded sessions
-#   0x4: disable keyboard log in recorded meta
+# &nbsp; &nbsp;   0x0: none
+# &nbsp; &nbsp;   0x1: disable keyboard log in syslog
+# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
+# &nbsp; &nbsp;   0x4: disable keyboard log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 disable_keyboard_log = integer(min=0, max=7, default=1)
 
 # Disable clipboard log:
-#   0x0: none
-#   0x1: disable clipboard log in syslog
-#   0x2: disable clipboard log in recorded sessions
-#   0x4: disable clipboard log in recorded meta
+# &nbsp; &nbsp;   0x0: none
+# &nbsp; &nbsp;   0x1: disable clipboard log in syslog
+# &nbsp; &nbsp;   0x2: disable clipboard log in recorded sessions
+# &nbsp; &nbsp;   0x4: disable clipboard log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 disable_clipboard_log = integer(min=0, max=7, default=1)
 
 # Disable (redirected) file system log:
-#   0x0: none
-#   0x1: disable (redirected) file system log in syslog
-#   0x2: disable (redirected) file system log in recorded sessions
-#   0x4: disable (redirected) file system log in recorded meta
+# &nbsp; &nbsp;   0x0: none
+# &nbsp; &nbsp;   0x1: disable (redirected) file system log in syslog
+# &nbsp; &nbsp;   0x2: disable (redirected) file system log in recorded sessions
+# &nbsp; &nbsp;   0x4: disable (redirected) file system log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 disable_file_system_log = integer(min=0, max=7, default=1)
 
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
-#   0: 24-bit
-#   1: 16-bit
+# &nbsp; &nbsp;   0: 24-bit
+# &nbsp; &nbsp;   1: 16-bit
 #_advanced
 wrm_color_depth_selection_strategy = option(0, 1, default=1)
 
 # The compression method of native video capture:
-#   0: no compression
-#   1: gzip
-#   2: snappy
+# &nbsp; &nbsp;   0: no compression
+# &nbsp; &nbsp;   1: gzip
+# &nbsp; &nbsp;   2: snappy
 #_advanced
 wrm_compression_algorithm = option(0, 1, 2, default=1)
 
@@ -1083,8 +1079,8 @@ ffmpeg_options = string(default='crf=35 preset=superfast')
 notimestamp = boolean(default=False)
 
 #   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
-#   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
-#   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
+# &nbsp; &nbsp;   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
+# &nbsp; &nbsp;   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
 smart_video_cropping = option(0, 1, 2, default=0)
 
 # Needed to play a video with corrupted Bitmap Update.
@@ -1325,8 +1321,8 @@ ffmpeg = integer(min=0, default=0)
 config = boolean(default=True)
 
 #   0: Off
-#   1: SimulateErrorRead
-#   2: SimulateErrorWrite
+# &nbsp; &nbsp;   1: SimulateErrorRead
+# &nbsp; &nbsp;   2: SimulateErrorWrite
 #_hidden
 mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 

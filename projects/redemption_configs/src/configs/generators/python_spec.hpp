@@ -594,6 +594,18 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
                 html_commants += "<br/>";
             }
 
+            // replace "  " at start line with "&nbsp; ;&nbsp; "
+            str_comments.clear();
+            html_commants.swap(str_comments);
+            for (char const& c : str_comments) {
+                if (c == '\n' && (&c)[1] == ' ' && (&c)[2] == ' ') {
+                    html_commants += "\n&nbsp; &nbsp; ";
+                }
+                else {
+                    html_commants += c;
+                }
+            }
+
             this->out() << io_prefix_lines{html_commants.c_str(), "# ", "", 0};
             comments.str("");
 
