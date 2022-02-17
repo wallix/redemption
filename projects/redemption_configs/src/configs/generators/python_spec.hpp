@@ -578,35 +578,52 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
             std::string str_comments = comments.str();
+            std::string html_comments;
+
+            // replace '&' and '<' with "&amp;" and "&lt;"
+            for (char const& c : str_comments) {
+                if (c == '&') {
+                    html_comments += "&amp;";
+                }
+                else if (c == '<') {
+                    html_comments += "&lt;";
+                }
+                else {
+                    html_comments += c;
+                }
+            }
+
+            str_comments.clear();
+            html_comments.swap(str_comments);
 
             // replace "\n\n" with "<br/>\n"
-            std::string html_commants;
-            html_commants.reserve(str_comments.size());
+            html_comments.reserve(str_comments.size());
             for (char const& c : str_comments) {
                 if (c == '\n' && (&c)[1] == '\n') {
-                    html_commants += "<br/>\n";
+                    html_comments += "<br/>\n";
                 }
                 else {
-                    html_commants += c;
+                    html_comments += c;
                 }
             }
-            if (html_commants.size() != str_comments.size()) {
-                html_commants += "<br/>";
+            if (html_comments.size() != str_comments.size()) {
+                html_comments += "<br/>";
             }
+
+            str_comments.clear();
+            html_comments.swap(str_comments);
 
             // replace "  " at start line with "&nbsp; ;&nbsp; "
-            str_comments.clear();
-            html_commants.swap(str_comments);
             for (char const& c : str_comments) {
                 if (c == '\n' && (&c)[1] == ' ' && (&c)[2] == ' ') {
-                    html_commants += "\n&nbsp; &nbsp; ";
+                    html_comments += "\n&nbsp; &nbsp; ";
                 }
                 else {
-                    html_commants += c;
+                    html_comments += c;
                 }
             }
 
-            this->out() << io_prefix_lines{html_commants.c_str(), "# ", "", 0};
+            this->out() << io_prefix_lines{html_comments.c_str(), "# ", "", 0};
             comments.str("");
 
             write_spec_attr(comments,
