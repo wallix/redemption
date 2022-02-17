@@ -3001,11 +3001,13 @@ class Sesman():
                 effective_krb_armoring_user = \
                     self.engine.get_scenario_account_field(
                         u'login', krb_armoring_account,
+                        force_device=False,
                         default=krb_armoring_fallback_user
                     )
                 effective_krb_armoring_password = \
                     self.engine.get_scenario_account_field(
                         u'password', krb_armoring_account,
+                        force_device=False,
                         default=krb_armoring_fallback_password
                     )
             else:

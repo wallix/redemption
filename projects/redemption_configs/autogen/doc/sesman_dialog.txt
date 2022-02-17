@@ -280,16 +280,14 @@ cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
 
 <sesman only> ⇐ vnc_over_ssh:enable   [bool]
 <sesman only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
-<sesman only> ⇐ vnc_over_ssh:authentication_method   [VncAuthenticationMethod ⇐ std::string]
-    When invoking VNC-over-SSH in SSH Login/Password mode, the fields Ssh login and Ssh password must be filled.
-    The name of Scenario account must be provided when Scenario account mode is selected.
-      ssh_login_password: SSH Login/Password (static)
-      scenario_account: Scenario Account (dynamic)
+<sesman only> ⇐ vnc_over_ssh:tunneling_credential_source   [VncTunnelingCredentialSource ⇐ std::string]
+    When invoking VNC-over-SSH with credential provided in this Connection Policy, the fields Ssh login and Ssh password must be filled.
+    The Scenario Account name must be provided when the Scenario Account is selected as the credential source.
 <sesman only> ⇐ vnc_over_ssh:ssh_login   [std::string]
     Login to be used for SSH tunneling.
 <sesman only> ⇐ vnc_over_ssh:ssh_password   [std::string]
     Password to be used for SSH tunneling.
-<sesman only> ⇐ vnc_over_ssh:scenario_account   [std::string]
+<sesman only> ⇐ vnc_over_ssh:scenario_account_name   [std::string]
     In form 'account_name@domain_name[@[device_name]]'.
 <sesman only> ⇐ vnc_over_ssh:tunneling_type   [VncTunnelingType ⇐ std::string]
     Reserved for debug only

@@ -682,15 +682,15 @@ void config_spec_definition(Writer && W)
         W.member(external, vnc_connpolicy, L, type_<bool>(), names{"enable"}, set(false));
         W.member(external, vnc_connpolicy, L, type_<types::unsigned_>(), names{"ssh_port"}, set(22));
 
-        W.member(external, vnc_connpolicy, L, type_<VncAuthenticationMethod>(), spec::type_<std::string>(), names{"authentication_method"}, set(VncAuthenticationMethod::scenario_account), desc{
-            "When invoking VNC-over-SSH in SSH Login/Password mode, the fields Ssh login and Ssh password must be filled.\n"
-            "The name of Scenario account must be provided when Scenario account mode is selected."
+        W.member(external, vnc_connpolicy, L, type_<VncTunnelingCredentialSource>(), spec::type_<std::string>(), names{"tunneling_credential_source"}, set(VncTunnelingCredentialSource::scenario_account), desc{
+            "When invoking VNC-over-SSH with credential provided in this Connection Policy, the fields Ssh login and Ssh password must be filled.\n"
+            "The Scenario Account name must be provided when the Scenario Account is selected as the credential source."
         });
 
         W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"ssh_login"}, desc{"Login to be used for SSH tunneling."});
         W.member(external, vnc_connpolicy, NL, type_<std::string>(), names{"ssh_password"}, desc{"Password to be used for SSH tunneling."});
 
-        W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"scenario_account"}, desc{"In form 'account_name@domain_name[@[device_name]]'."});
+        W.member(external, vnc_connpolicy, L, type_<std::string>(), names{"scenario_account_name"}, desc{"In form 'account_name@domain_name[@[device_name]]'."});
 
         W.member(external, vnc_connpolicy | advanced_in_connpolicy, L, type_<VncTunnelingType>(), spec::type_<std::string>(), names{"tunneling_type"}, set(VncTunnelingType::pxssh), desc{"Reserved for debug only"});
     });

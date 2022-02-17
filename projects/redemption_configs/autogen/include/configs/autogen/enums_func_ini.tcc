@@ -1907,37 +1907,37 @@ parse_error parse_from_cfg(VncTunnelingType & x, ::configs::spec_type<std::strin
         x, value, "bad value, expected: pxssh, pexpect, popen");
 }
 
-inline constexpr zstring_view enum_zstr_VncAuthenticationMethod[] {
-    "ssh_login_password"_zv,
+inline constexpr zstring_view enum_zstr_VncTunnelingCredentialSource[] {
+    "this_connection_policy"_zv,
     "scenario_account"_zv,
 };
 
-inline constexpr zstring_view enum_zint_VncAuthenticationMethod[] {
+inline constexpr zstring_view enum_zint_VncTunnelingCredentialSource[] {
     "0"_zv,
     "1"_zv,
 };
 
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
-    cfg_s_type<VncAuthenticationMethod> /*type*/,
-    VncAuthenticationMethod x
+    cfg_s_type<VncTunnelingCredentialSource> /*type*/,
+    VncTunnelingCredentialSource x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncAuthenticationMethod>::is_valid(uint8_t(x)));
-    return enum_zint_VncAuthenticationMethod[uint8_t(x)];
+    assert(is_valid_enum_value<VncTunnelingCredentialSource>::is_valid(uint8_t(x)));
+    return enum_zint_VncTunnelingCredentialSource[uint8_t(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
     cfg_s_type<std::string> /*type*/,
-    VncAuthenticationMethod x
+    VncTunnelingCredentialSource x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncAuthenticationMethod>::is_valid(uint8_t(x)));
-    return enum_zstr_VncAuthenticationMethod[uint8_t(x)];
+    assert(is_valid_enum_value<VncTunnelingCredentialSource>::is_valid(uint8_t(x)));
+    return enum_zstr_VncTunnelingCredentialSource[uint8_t(x)];
 }
 
-parse_error parse_from_cfg(VncAuthenticationMethod & x, ::configs::spec_type<VncAuthenticationMethod> /*type*/, bytes_view value)
+parse_error parse_from_cfg(VncTunnelingCredentialSource & x, ::configs::spec_type<VncTunnelingCredentialSource> /*type*/, bytes_view value)
 {
     using ul = uint8_t;
 
@@ -1950,20 +1950,20 @@ parse_error parse_from_cfg(VncAuthenticationMethod & x, ::configs::spec_type<Vnc
         return err;
     }
 
-    x = static_cast<VncAuthenticationMethod>(xi);
+    x = static_cast<VncTunnelingCredentialSource>(xi);
     return no_parse_error;
 }
 
 
-inline constexpr std::pair<chars_view, VncAuthenticationMethod> enum_str_value_VncAuthenticationMethod[] {
-    {"SSH_LOGIN_PASSWORD"_av, VncAuthenticationMethod::ssh_login_password},
-    {"SCENARIO_ACCOUNT"_av, VncAuthenticationMethod::scenario_account},
+inline constexpr std::pair<chars_view, VncTunnelingCredentialSource> enum_str_value_VncTunnelingCredentialSource[] {
+    {"THIS_CONNECTION_POLICY"_av, VncTunnelingCredentialSource::this_connection_policy},
+    {"SCENARIO_ACCOUNT"_av, VncTunnelingCredentialSource::scenario_account},
 };
 
-parse_error parse_from_cfg(VncAuthenticationMethod & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+parse_error parse_from_cfg(VncTunnelingCredentialSource & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
 {
-    return parse_str_value_pairs<enum_str_value_VncAuthenticationMethod>(
-        x, value, "bad value, expected: ssh_login_password, scenario_account");
+    return parse_str_value_pairs<enum_str_value_VncTunnelingCredentialSource>(
+        x, value, "bad value, expected: this_connection_policy, scenario_account");
 }
 
 inline constexpr zstring_view enum_zstr_BannerType[] {

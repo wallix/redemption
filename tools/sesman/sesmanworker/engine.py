@@ -1755,9 +1755,9 @@ class Engine(object):
             return login
         return "%s@%s" % (login, domain)
 
-    def get_scenario_account_field(self, field, param, default=None):
+    def get_scenario_account_field(self, field, param, force_device, default=None):
         from .parsers import resolve_scenario_account
-        return resolve_scenario_account(self, field, param, force_device=True,
+        return resolve_scenario_account(self, field, param, force_device,
                                         default=default)
 
     def get_crypto_methods(self):

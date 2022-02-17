@@ -293,15 +293,17 @@ def check_tunneling(engine, opts, target_host, target_port,
         return None
     try:
         ssh_port = opts.get("ssh_port")
-        if opts.get("authentication_method") == "ssh_login_password":
+        if opts.get("tunneling_credential_source") == "this_connection_policy":
             ssh_login = opts.get("ssh_login")
             ssh_password = opts.get("ssh_password")
         else:
             ssh_login = engine.get_scenario_account_field(
-                "login", opts.get("scenario_account")
+                field = "login", param = opts.get("scenario_account_name"),
+                force_device = True
             )
             ssh_password = engine.get_scenario_account_field(
-                "password", opts.get("scenario_account")
+                field = "password", param = opts.get("scenario_account_name"),
+                force_device = True
             )
 
         tunneling_type = opts.get("tunneling_type", "pxssh")

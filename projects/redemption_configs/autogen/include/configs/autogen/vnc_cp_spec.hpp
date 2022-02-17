@@ -48,11 +48,9 @@ enable = boolean(default=False)
 
 ssh_port = integer(min=0, default=22)
 
-# When invoking VNC-over-SSH in SSH Login/Password mode, the fields Ssh login and Ssh password must be filled.
-# The name of Scenario account must be provided when Scenario account mode is selected.
-#   ssh_login_password: SSH Login/Password (static)
-#   scenario_account: Scenario Account (dynamic)
-authentication_method = option('ssh_login_password', 'scenario_account', default='scenario_account')
+# When invoking VNC-over-SSH with credential provided in this Connection Policy, the fields Ssh login and Ssh password must be filled.
+# The Scenario Account name must be provided when the Scenario Account is selected as the credential source.
+tunneling_credential_source = option('this_connection_policy', 'scenario_account', default='scenario_account')
 
 # Login to be used for SSH tunneling.
 ssh_login = string(default='')
@@ -61,7 +59,7 @@ ssh_login = string(default='')
 ssh_password = string(default='')
 
 # In form 'account_name@domain_name[@[device_name]]'.
-scenario_account = string(default='')
+scenario_account_name = string(default='')
 
 # Reserved for debug only
 #_advanced
