@@ -317,7 +317,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
                           stderr=subprocess.STDOUT
                       ).communicate()[0].decode('utf-8').split('\n'))
 
-    if newtag.encode() in remote_tags:
+    if newtag in remote_tags:
         raise Exception('tag %s already exists (remote).' % newtag)
 # Check tag version END
 
