@@ -310,7 +310,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
     if newtag in locale_tags:
         raise Exception('tag %s already exists (locale).' % newtag)
 
-    remote_tags = map(lambda x: x.split(b'/')[-1],
+    remote_tags = map(lambda x: x.split('/')[-1],
                       subprocess.Popen(
                           [b"git", b"ls-remote", b"--tags", b"origin"],
                           stdout=subprocess.PIPE,
