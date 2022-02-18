@@ -305,7 +305,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
         [b"git", b"tag", b"--list"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
-    ).communicate()[0].split(b'\n')
+    ).communicate()[0].decode('utf-8').split('\n')
 
     if newtag in locale_tags:
         raise Exception('tag %s already exists (locale).' % newtag)
@@ -315,7 +315,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
                           [b"git", b"ls-remote", b"--tags", b"origin"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT
-                      ).communicate()[0].split(b'\n'))
+                      ).communicate()[0].decode('utf-8').split('\n'))
 
     if newtag.encode() in remote_tags:
         raise Exception('tag %s already exists (remote).' % newtag)
@@ -353,7 +353,7 @@ def check_last_version_commited_match_current_version(version):
     res = subprocess.Popen([b"git", b"describe", b"--tags"],
                            stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT).communicate()[0]
-    tag_describe = res.split(b"\n")[0]
+    tag_describe = res.decode('utf-8').split('\n')[0]
     if version != tag_describe:
         raise Exception(
             'Repository head mismatch current version '
