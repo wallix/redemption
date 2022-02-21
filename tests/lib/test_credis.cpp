@@ -161,6 +161,28 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
         "$2\r\nEX\r\n"
         "$1\r\n2\r\n"_av_ascii);
 
+    credis_cmd_set_free_buffer(cmd, 0);
+
+    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcde", 5) == 0);
+    data = credis_cmd_set_build_command(cmd, &len);
+    RED_CHECK(chars_view(data, len) ==
+        "*5\r\n"
+        "$3\r\nSET\r\n"
+        "$12\r\nmy_image_key\r\n"
+        "$5\r\nabcde\r\n"
+        "$2\r\nEX\r\n"
+        "$1\r\n2\r\n"_av_ascii);
+
+    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcde", 5) == 0);
+    data = credis_cmd_set_build_command(cmd, &len);
+    RED_CHECK(chars_view(data, len) ==
+        "*5\r\n"
+        "$3\r\nSET\r\n"
+        "$12\r\nmy_image_key\r\n"
+        "$10\r\nabcdeabcde\r\n"
+        "$2\r\nEX\r\n"
+        "$1\r\n2\r\n"_av_ascii);
+
     credis_cmd_set_delete(cmd);
 }
 

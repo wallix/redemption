@@ -590,6 +590,7 @@ CRedisCmdSet* credis_cmd_set_new(char const* key_name,
 
     void* voidp2 = std::align(alignof(CRedisCmdSet), sizeof(CRedisCmdSet), voidp, remaining);
     if (!voidp2) {
+        ::operator delete(raw_allocated);
         return nullptr;
     }
 
@@ -638,9 +639,9 @@ int credis_cmd_set_free_buffer(CRedisCmdSet* cmd, std::size_t start_capacity)
     std::size_t cmd_set_end_len = detail::int_to_chars_buf_size + 2 /* number + \r\n */;
 
     return CHECK_NOTHROW_INT_R(
-        cmd->reset(cmd->prefix().size() + cmd_set_end_len,
-                   cmd->suffix().size(),
-                   start_capacity)
+        cmd->reset(start_capacity,
+                   cmd->prefix_len + cmd_set_end_len,
+                   cmd->suffix_len)
     );
 }
 
