@@ -111,7 +111,7 @@ extern "C"
     //@{
     REDEMPTION_LIB_EXPORT
     CRedisCmdSet* credis_cmd_set_new(char const* key_name,
-                                     unsigned expiration_delay,
+                                     unsigned expiration_delay_in_seconds,
                                      std::size_t start_capacity);
 
     REDEMPTION_LIB_EXPORT

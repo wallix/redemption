@@ -517,7 +517,8 @@ struct CRedisCmdSet : CRedisBuffer
 
 namespace
 {
-    auto push_data = [](uint8_t* p, bytes_view av){
+    uint8_t* push_data(uint8_t* p, bytes_view av) noexcept
+    {
         std::memcpy(p, av.data(), av.size());
         return p + av.size();
     };
@@ -528,7 +529,7 @@ extern "C"
 
 REDEMPTION_LIB_EXPORT
 CRedisCmdSet* credis_cmd_set_new(char const* key_name,
-                                 unsigned expiration_delay,
+                                 unsigned expiration_delay_in_seconds,
                                  std::size_t start_capacity)
 {
     SCOPED_TRACE;
@@ -541,7 +542,7 @@ CRedisCmdSet* credis_cmd_set_new(char const* key_name,
     auto cmd_set3 = bytes_view(key);
     auto cmd_set4 = "\r\n$"_av;
 
-    auto expiration_delay_as_str = int_to_decimal_chars(expiration_delay);
+    auto expiration_delay_as_str = int_to_decimal_chars(expiration_delay_in_seconds);
     auto ex_arg0 = "\r\n$2\r\nEX\r\n$"_av;
     auto ex_arg1 = int_to_decimal_chars(expiration_delay_as_str.size());
     auto ex_arg2 = "\r\n"_av;
