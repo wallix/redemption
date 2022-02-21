@@ -43,6 +43,7 @@
 #include "utils/utf.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/select.hpp"
 
 #include <vector>
 #include <chrono>
@@ -272,8 +273,8 @@ public:
                 int const front_fd = trans.get_fd();
 
                 for (;;) {
-                    FD_ZERO(&rset);
-                    FD_SET(front_fd, &rset);
+                    io_fd_zero(rset);
+                    io_fd_set(front_fd, rset);
                     int status = select(front_fd + 1, &rset, nullptr, nullptr, nullptr);
                     time_base.monotonic_time = MonotonicTimePoint::clock::now();
                     if (status < 0) {
