@@ -420,7 +420,7 @@ void write_enumeration_value_description(std::ostream& out, type_enumerations& e
     }
 }
 
-static void htmlize(std::string& str)
+static std::string htmlize(std::string str)
 {
     std::string html;
 
@@ -470,7 +470,7 @@ static void htmlize(std::string& str)
         }
     }
 
-    html.swap(str);
+    return html;
 }
 
 template<class D>
@@ -630,10 +630,7 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             write_type_info(comments, type);
             write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
-            std::string str_comments = comments.str();
-            htmlize(str_comments);
-
-            this->out() << io_prefix_lines{str_comments.c_str(), "# ", "", 0};
+            this->out() << io_prefix_lines{htmlize(comments.str()).c_str(), "# ", "", 0};
             comments.str("");
 
             write_spec_attr(comments,

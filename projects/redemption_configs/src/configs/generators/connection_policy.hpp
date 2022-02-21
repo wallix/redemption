@@ -93,10 +93,7 @@ struct ConnectionPolicyWriterBase
             python_spec_writer::write_type_info(comments, type);
             python_spec_writer::write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
-            std::string str_comments = comments.str();
-            python_spec_writer::htmlize(str_comments);
-
-            this->python_spec.out << io_prefix_lines{str_comments.c_str(), "# ", "", 0};
+            this->python_spec.out << io_prefix_lines{python_spec_writer::htmlize(comments.str()).c_str(), "# ", "", 0};
             comments.str("");
 
             auto connpolicy = connection_policy_t(infos);
