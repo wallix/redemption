@@ -50,8 +50,8 @@ function init(args)
     types['OcrLocale'] = true
     types['ColorDepth'] = true
     types['KeyboardLogFlagsCP'] = true
-    types['VncTunnelingType'] = true
     types['VncAuthenticationMethod'] = true
+    types['VncTunnelingCredentialSource'] = true
 
     for _,v in ipairs(patternVar:match(utils.readall(variables_configuration_path))) do
         values[v[1]] = {
