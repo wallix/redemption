@@ -310,11 +310,21 @@ void mod_vnc::rdp_input_mouse(int device_flags, int x, int y)
     else if (device_flags & MOUSE_FLAG_BUTTON3) {
         this->mouse.click(out_stream, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
     }
-    else if (device_flags == MOUSE_FLAG_BUTTON4 || device_flags == 0x0278) {
-        this->mouse.scroll(out_stream, 1 << 3);
+    else if (device_flags & MOUSE_FLAG_WHEEL) {
+        if (device_flags & MOUSE_FLAG_WHEEL_NEGATIVE) {
+            this->mouse.scroll(out_stream, 1 << 4);
+        }
+        else {
+            this->mouse.scroll(out_stream, 1 << 3);
+        }
     }
-    else if (device_flags == MOUSE_FLAG_BUTTON5 || device_flags == 0x0388) {
-        this->mouse.scroll(out_stream, 1 << 4);
+    else if (device_flags & MOUSE_FLAG_HWHEEL) {
+        if (device_flags & MOUSE_FLAG_WHEEL_NEGATIVE) {
+            this->mouse.scroll(out_stream, 1 << 6);
+        }
+        else {
+            this->mouse.scroll(out_stream, 1 << 5);
+        }
     }
     else {
         return ;
