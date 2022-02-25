@@ -293,7 +293,7 @@ def check_tunneling(engine, opts, target_host, target_port,
         return None
     try:
         ssh_port = opts.get("ssh_port")
-        if opts.get("tunneling_credential_source") == "this_connection_policy":
+        if opts.get("tunneling_credential_source") == "static_login":
             ssh_login = opts.get("ssh_login")
             ssh_password = opts.get("ssh_password")
         else:

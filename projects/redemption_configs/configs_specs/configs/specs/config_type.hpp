@@ -261,7 +261,7 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("VncTunnelingCredentialSource")
-        .value("this_connection_policy")
+        .value("static_login")
         .value("scenario_account")
     ;
 

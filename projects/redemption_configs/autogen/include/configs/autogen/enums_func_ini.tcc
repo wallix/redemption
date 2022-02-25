@@ -1908,7 +1908,7 @@ parse_error parse_from_cfg(VncTunnelingType & x, ::configs::spec_type<std::strin
 }
 
 inline constexpr zstring_view enum_zstr_VncTunnelingCredentialSource[] {
-    "this_connection_policy"_zv,
+    "static_login"_zv,
     "scenario_account"_zv,
 };
 
@@ -1956,14 +1956,14 @@ parse_error parse_from_cfg(VncTunnelingCredentialSource & x, ::configs::spec_typ
 
 
 inline constexpr std::pair<chars_view, VncTunnelingCredentialSource> enum_str_value_VncTunnelingCredentialSource[] {
-    {"THIS_CONNECTION_POLICY"_av, VncTunnelingCredentialSource::this_connection_policy},
+    {"STATIC_LOGIN"_av, VncTunnelingCredentialSource::static_login},
     {"SCENARIO_ACCOUNT"_av, VncTunnelingCredentialSource::scenario_account},
 };
 
 parse_error parse_from_cfg(VncTunnelingCredentialSource & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_VncTunnelingCredentialSource>(
-        x, value, "bad value, expected: this_connection_policy, scenario_account");
+        x, value, "bad value, expected: static_login, scenario_account");
 }
 
 inline constexpr zstring_view enum_zstr_BannerType[] {

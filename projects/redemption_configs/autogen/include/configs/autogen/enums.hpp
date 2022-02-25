@@ -628,7 +628,7 @@ template<> struct is_valid_enum_value<VncTunnelingType>
 
 enum class VncTunnelingCredentialSource : uint8_t
 {
-    this_connection_policy = 0,
+    static_login = 0,
     scenario_account = 1,
 };
 
