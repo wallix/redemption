@@ -89,6 +89,8 @@
 #include "gdi/screen_functions.hpp"
 #include "gdi/osd_api.hpp"
 
+#include "keyboard/keymap.hpp"
+
 #ifndef __EMSCRIPTEN__
 // TODO: annoying as it introduces a dependency on openssl in rdp mod
 // see how to extract something more abstract where it's used
@@ -6435,6 +6437,15 @@ private:
 
         LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
             "mod_rdp::send_input_fastpath done");
+    }
+
+public:
+    void send_input(int/* time*/, int message_type, int device_flags, int param1, int/* param2*/)
+    {
+        if (RDP_INPUT_SCANCODE == message_type)
+        {
+            this->send_input_scancode(0, RdpInput::KbdFlags(device_flags), RdpInput::Scancode(param1));
+        }
     }
 };
 
