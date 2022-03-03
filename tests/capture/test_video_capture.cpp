@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureCroppedMP4, wd)
     RED_CHECK_IMG(wd.add_file("video-000004.png"), IMG_TEST_PATH "cropped_8s.png");
     RED_CHECK_IMG(wd.add_file("video-000005.png"), IMG_TEST_PATH "cropped_10s.png");
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 20021 +- 2000_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 27338 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 27338 +- 2500_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15267 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 19767 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000004.mp4"), 28044 +- 2000_v);
@@ -261,8 +261,8 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureCroppedX264, wd)
     RED_CHECK_IMG(wd.add_file("video-000009.png"), IMG_TEST_PATH "cropped_9s.png");
     RED_CHECK_IMG(wd.add_file("video-000010.png"), IMG_TEST_PATH "cropped_10s.png");
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 8584 +- 2000_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 15175 +- 2000_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15299 +- 2300_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 15175 +- 2100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 15299 +- 3000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000003.mp4"), 15576 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000004.mp4"), 11587 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000005.mp4"), 8264 +- 2000_v);
@@ -270,7 +270,7 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureCroppedX264, wd)
     RED_TEST_FILE_SIZE(wd.add_file("video-000007.mp4"), 15385 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000008.mp4"), 17622 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000009.mp4"), 17693 +- 2000_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000010.mp4"), 4980 +- 200_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000010.mp4"), 4980 +- 300_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureCroppedMP4_3, wd)
@@ -280,9 +280,9 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureCroppedMP4_3, wd)
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "cropped_2bis.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "cropped_5s.png");
     RED_CHECK_IMG(wd.add_file("video-000002.png"), IMG_TEST_PATH "cropped_10s.png");
-    RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 49021 +- 2500_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 46338 +- 3000_v);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 4980 +- 200_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 49021 +- 6000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000001.mp4"), 46338 +- 6000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000002.mp4"), 4980 +- 300_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureCroppedX264, wd)
