@@ -114,7 +114,7 @@ struct [[nodiscard]] WorkingDirectory
         SubDirectory(WorkingDirectory& wd, std::string fullpath, std::size_t dirname_pos);
     };
 
-    WorkingDirectory(std::string_view name = {}); /*NOLINT*/
+    WorkingDirectory(std::string_view name = ""); /*NOLINT*/
 
     WorkingDirectory(WorkingDirectory const&) = delete;
 

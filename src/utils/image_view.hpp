@@ -23,11 +23,10 @@
 #include <cstdint>
 
 #include "gdi/screen_info.hpp"
+#include "utils/colors.hpp"
 #include "utils/rect.hpp"
 #include "utils/sugar/cast.hpp"
 
-
-class BGRPalette;
 
 struct BitsOrBytePerPixel
 {
@@ -63,7 +62,7 @@ public:
         size_t line_size,
         BitsOrBytePerPixel bytes_or_byte_per_pixel,
         Storage storage,
-        BGRPalette const * palette = nullptr /*NOLINT*/
+        BGRPalette const * palette = &BGRPalette::classic_332() /*NOLINT*/
     ) noexcept
     : data_(data)
     , rowsize_(line_size)
@@ -141,7 +140,7 @@ struct WritableImageView : ImageView
         size_t line_size,
         BitsOrBytePerPixel bytes_or_byte_per_pixel,
         Storage storage,
-        BGRPalette const * palette = nullptr /*NOLINT*/
+        BGRPalette const * palette = &BGRPalette::classic_332() /*NOLINT*/
     ) noexcept
     : ImageView(data, width, height, line_size, bytes_or_byte_per_pixel, storage, palette)
     {}

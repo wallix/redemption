@@ -64,7 +64,7 @@ std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf)
 }
 
 WorkingFile::WorkingFile(std::string_view name)
-: WorkingFileBase(suffix_by_test({}))
+: WorkingFileBase(suffix_by_test(""))
 , start_error_count(RED_ERROR_COUNT())
 {
     recursive_delete_directory(this->c_str());

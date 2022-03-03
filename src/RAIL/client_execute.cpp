@@ -1205,7 +1205,7 @@ void ClientExecute::reset(bool soft)
 
     this->work_area_count = 0;
 
-    this->set_target_info(nullptr);
+    this->set_target_info(""_av);
 
     this->channel_ = nullptr;
 }   // reset

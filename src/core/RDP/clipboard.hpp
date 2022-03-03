@@ -264,7 +264,7 @@ static std::string generic_flags_to_string(FlagType flags, ToName to_name, Flag.
         return std::string("0x0");
     }
 
-    constexpr std::size_t frag_num = 5*sizeof...(flag);
+    constexpr std::size_t frag_num = 5 * sizeof...(flag);
     std::array<chars_view, frag_num> views;
     std::array<std::array<char, 32>, frag_num> buffers;
 
@@ -286,7 +286,11 @@ static std::string generic_flags_to_string(FlagType flags, ToName to_name, Flag.
             has_value = true;
         }
         else {
-            views_it += 5;
+            *views_it++ = ""_av;
+            *views_it++ = ""_av;
+            *views_it++ = ""_av;
+            *views_it++ = ""_av;
+            *views_it++ = ""_av;
         }
         ++buffer_it;
     };
