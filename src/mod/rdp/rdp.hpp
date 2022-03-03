@@ -6440,7 +6440,7 @@ private:
     }
 
 public:
-    void send_input(int/* time*/, int message_type, int device_flags, int param1, int/* param2*/)
+    void send_input(int/* time*/, int message_type, int device_flags, int param1, int/* param2*/) override
     {
         if (RDP_INPUT_SCANCODE == message_type)
         {
