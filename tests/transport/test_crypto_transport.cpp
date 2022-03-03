@@ -1354,9 +1354,12 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         #elif SNAPPY_VERSION < (1<<16|1<<8|4)
             " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
             " 27fa17cac1feda21f9b134d503e6292548a35925f0137474d896a3461b777b5a\n"_av
-        #else
+        #elif SNAPPY_VERSION < (1<<16|1<<8|9)
             " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
             " f5b6a73d68ac7405d988bbb60a88afd59b72a47bab2e03068573e7510451e801\n"_av
+        #else
+            " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
+            " 31c0065b2d4b084ec89a3d73f72128a46092c7c1706d63523ad81534bd56feae\n"_av
         #endif
         ;
         auto st = get_stat(encrypted_file);
