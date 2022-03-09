@@ -139,6 +139,11 @@ local defs = {
         if t[4] then
             name = t[1]
             types = {to_ctype(name, t[2])} -- result type
+            -- POINTER as result type is invalid...
+            if types[1] == 'POINTER(c_char)' then
+                types[1] = 'c_void_p'
+                add_import('c_void_p')
+            end
             for _,x in ipairs(t[4]) do
                 types[#types+1] = to_ctype(name, x) -- param type
             end
