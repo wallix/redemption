@@ -246,9 +246,6 @@ namespace
                                       || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
                                                            source_ip,
                                                            is_ipv6));
-            {
-                prevent_early_log = true;
-            }
 
             if (ini.get<cfg::debug::session>()){
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
