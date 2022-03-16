@@ -254,6 +254,7 @@ def pm_request(engine, request):
             account_name=acc_n,
             domain_name=domain_n,
             device_name=dev_n,
+            with_ssh_key=False,
             account_type='pm'
         )
         if res is not None:
@@ -2039,6 +2040,7 @@ class Sesman():
                 conn_opts = self.engine.get_target_conn_options(
                     physical_target
                 )
+                Logger().info("connect_to_target: conn_opts=%s" % conn_opts)
                 if (physical_proto_info.protocol == u'RDP'
                     or physical_proto_info.protocol == u'VNC'):
                     if physical_proto_info.protocol == u'RDP':
@@ -3026,6 +3028,7 @@ class Sesman():
 
     def _load_vnc_over_ssh_options(self, kv, conn_opts):
         from .tunneling_process import check_tunneling
+        Logger().info("_load_vnc_over_ssh_options: conn_opts=%s" % conn_opts)
         Logger().debug("CHECK TUNNELLING %s" %
                        conn_opts.get("vnc_over_ssh", {}).get("enable"))
         _status = False

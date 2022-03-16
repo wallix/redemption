@@ -1087,12 +1087,14 @@ class Engine(object):
         return None
 
     def get_account_infos_by_type(self, account_name, domain_name,
-                                  device_name, account_type=None):
+                                  device_name, with_ssh_key=False,
+                                  account_type=None):
         try:
             return self.checkout.check_account_by_type(
                 account_name=account_name,
                 domain_name=domain_name,
                 device_name=device_name,
+                with_ssh_key=with_ssh_key,
                 account_type=account_type
             )
         except Exception:
