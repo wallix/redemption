@@ -27,6 +27,7 @@ except Exception:
         def debug(self, msg):
             print(msg)
 
+from Crypto.PublicKey import RSA
 
 RANDOM_NAME_SIZE = 10
 CONNECTION_TIMEOUT = 5
@@ -305,6 +306,23 @@ def check_tunneling(engine, opts, target_host, target_port,
                 field = "password", param = opts.get("scenario_account_name"),
                 force_device = True
             )
+            ssh_key = engine.get_scenario_account_field(
+                field = "ssh_key", param = opts.get("scenario_account_name"),
+                force_device = True
+            )
+            Logger().info(f"check_tunneling: ssh_key={len(ssh_key)}")
+            if ssh_key:
+                #Logger().info(f"RSA.import={ssh_key['private_key']}")
+                try:
+                    rsa_key = RSA.importKey(ssh_key[0]['private_key'])
+                    Logger().info("Open file")
+                    with open('/var/tmp/wab/volatile/key.pem', 'wb') as f:
+                        os.chmod('/var/tmp/wab/volatile/key.pem', 0o400)
+                        pem_key = rsa_key.exportKey(passphrase='password')
+                        f.write(pem_key)
+                        f.close()
+                except Exception as e:
+                    Logger().info("check_tunneling: Exception=%s" % e)
 
         tunneling_type = opts.get("tunneling_type", "pxssh")
         tunneling_class = TunnelingProcessPXSSH
