@@ -11,7 +11,7 @@ import fcntl
 import shlex
 import binascii
 import string
-import random
+#import random
 from subprocess import Popen, PIPE
 from time import (
     monotonic as get_time,
@@ -28,6 +28,7 @@ except Exception:
             print(msg)
 
 from Crypto.PublicKey import RSA
+from Crypto.Random import random
 
 RANDOM_NAME_SIZE = 10
 CONNECTION_TIMEOUT = 5
@@ -315,10 +316,14 @@ def check_tunneling(engine, opts, target_host, target_port,
                 #Logger().info(f"RSA.import={ssh_key['private_key']}")
                 try:
                     rsa_key = RSA.importKey(ssh_key[0]['private_key'])
+                    alnum = ''.join(c for c in map(chr, range(256))
+                                    if c.isalnum() and c.isascii())
+                    passphrase = ''.join(random.choice(alnum) for _ in range(32))
+                    Logger().info(f"passphrase={passphrase}")
                     Logger().info("Open file")
                     with open('/var/tmp/wab/volatile/key.pem', 'wb') as f:
                         os.chmod('/var/tmp/wab/volatile/key.pem', 0o400)
-                        pem_key = rsa_key.exportKey(passphrase='password')
+                        pem_key = rsa_key.exportKey(passphrase=passphrase)
                         f.write(pem_key)
                         f.close()
                 except Exception as e:
