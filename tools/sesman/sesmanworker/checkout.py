@@ -262,15 +262,15 @@ class CheckoutEngine(object):
         table_creds = (self.pm_credentials if account_type == 'pm' else
                        self.scenario_credentials)
         right, creds = table_creds.get(account, (None, {}))
-        Logger().info(f"check_account_by_type: creds={creds}")
+        #Logger().info(f"check_account_by_type: creds={creds}")
         if not creds:
             Logger().debug("check_account_by_type: missing creds")
             return None
 
         has_password = True if creds.get(CRED_TYPE_PASSWORD) else False
-        Logger().info(f"check_account_by_type: has_password={has_password}")
+        #Logger().info(f"check_account_by_type: has_password={has_password}")
         has_ssh_key = True if creds.get(CRED_TYPE_SSH_KEY) else False
-        Logger().info(f"check_account_by_type: has_ssh_key={has_ssh_key}")
+        #Logger().info(f"check_account_by_type: has_ssh_key={has_ssh_key}")
 
         if not with_ssh_key and not has_password:
             Logger().debug("check_account_by_type: missing password")

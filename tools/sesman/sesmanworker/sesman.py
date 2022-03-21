@@ -3028,7 +3028,8 @@ class Sesman():
 
     def _load_vnc_over_ssh_options(self, kv, conn_opts):
         from .tunneling_process import check_tunneling
-        Logger().info("_load_vnc_over_ssh_options: conn_opts=%s" % conn_opts)
+        #Logger().info(f"_load_vnc_over_ssh_options: kv={kv}")
+        #Logger().info("_load_vnc_over_ssh_options: conn_opts=%s" % conn_opts)
         Logger().debug("CHECK TUNNELLING %s" %
                        conn_opts.get("vnc_over_ssh", {}).get("enable"))
         _status = False
@@ -3037,6 +3038,7 @@ class Sesman():
             self.engine, conn_opts.get("vnc_over_ssh"),
             self._physical_target_host,
             kv[u'target_port'],
+            filebase=kv[u'record_filebase'],
             sock_path_dir=SOCK_PATH_DIR
         )
         if self.tun_process:
@@ -3044,6 +3046,7 @@ class Sesman():
             if _status:
                 kv['tunneling_target_host'] = \
                     self.tun_process.sock_path
+                Logger().info("> > > > > Call pre_connect")
                 _status = self.tun_process.pre_connect()
         if _status:
             _error = "No Error"

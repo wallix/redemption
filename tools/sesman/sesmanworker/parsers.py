@@ -97,7 +97,7 @@ def resolve_scenario_account(enginei, field, param, force_device=True, default=N
     session_infos = enginei.get_target_login_info().get_target_dict()
     session_infos["user"] = enginei.get_username()
     acc_tuple = parse_account(param, session_infos, force_device)
-    Logger().info(f"resolve_scenario_account: acc_tuple={acc_tuple}")
+    #Logger().info(f"resolve_scenario_account: acc_tuple={acc_tuple}")
     if acc_tuple is None:
         return default
     acc_infos = enginei.get_account_infos_by_type(
@@ -111,5 +111,5 @@ def resolve_scenario_account(enginei, field, param, force_device=True, default=N
             param
         )
         return default
-    Logger().info("resolve_scenario_account: acc_infos=%s" % acc_infos)
+    #Logger().info("resolve_scenario_account: acc_infos=%s" % acc_infos)
     return acc_infos.get(field.lower())

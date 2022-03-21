@@ -57,9 +57,13 @@ def popen_command(command):
     return process
 
 
-def popen_sshpass_ssh(command, ssh_password):
-    command = f"sshpass -e {command}"
-    os.environ["SSHPASS"] = ssh_password
+def popen_sshpass_ssh(command, ssh_password_or_passphrase, use_passphrase):
+    Logger().info(f"> > > > > popen_sshpass_ssh: use_passphrase={use_passphrase}")
+    if use_passphrase:
+        command = f"sshpass -P passphrase -e {command}"
+    else:
+        command = f"sshpass -e {command}"
+    os.environ["SSHPASS"] = ssh_password_or_passphrase
     process = popen_command(command)
     if os.getenv("SSHPASS"):
         os.environ["SSHPASS"] = ""
@@ -72,14 +76,18 @@ def popen_sshpass_ssh(command, ssh_password):
 # setNonBlocking(p.stderr)
 
 
-def pexpect_prompt_ssh(command, ssh_password):
+def pexpect_prompt_ssh(command, ssh_password_or_passphrase, use_passphrase):
+    Logger().info(f"> > > > > pexpect_prompt_ssh: use_passphrase={use_passphrase}")
     px = None
     try:
         from pexpect import spawn, popen_spawn
         px = spawn(command)
         # px = popen_spawn.PopenSpawn(command)
-        px.expect("assword:")
-        px.sendline(f"{ssh_password}")
+        if use_passphrase:
+            px.expect("passphrase")
+        else:
+            px.expect("assword:")
+        px.sendline(f"{ssh_password_or_passphrase}")
     except Exception as e:
         Logger().info(f"Error {e}")
         px = None
@@ -118,7 +126,8 @@ class TunnelingProcessInterface:
 
 class TunnelingProcessSSH(TunnelingProcessInterface):
     def __init__(self, target_host, vnc_port, ssh_port,
-                 ssh_login, ssh_password, sock_path_dir=None, **kwargs):
+                 ssh_login, ssh_password, ssh_key,
+                 sock_path_dir=None, **kwargs):
         self.process = None
         self.sock_path = None
         self.target_host = target_host
@@ -129,6 +138,32 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
         self.sock_path_dir = sock_path_dir or "/tmp/"
         self._use_pexpect = False
         self.kwargs = kwargs
+
+        self.ssh_key_passphrase = ""
+        self.ssh_key_private_key_filename = ""
+
+        #Logger().info(f"check_tunneling: ssh_key={ssh_key}")
+        if ssh_key:
+            alnum = ''.join(c for c in map(chr, range(256))
+                            if c.isalnum() and c.isascii())
+            passphrase = ''.join(
+                random.choice(alnum) for _ in range(32))
+            Logger().info(f"passphrase={passphrase}")
+
+            private_key_filename = (
+                f"/var/tmp/wab/volatile/{random_name(RANDOM_NAME_SIZE)}"
+            )
+
+            with open(private_key_filename, 'wb') as f:
+                os.chmod(private_key_filename, 0o400)
+                Logger().info(f"> > > > > TunnelingProcessSSH: ssh_key={ssh_key}")
+                rsa_key = RSA.importKey(ssh_key[0]['private_key'])
+                pem_key = rsa_key.exportKey(passphrase=passphrase)
+                f.write(pem_key)
+                f.close()
+
+                self.ssh_key_passphrase = passphrase
+                self.ssh_key_private_key_filename = private_key_filename
 
     def _generate_sock_path(self):
         if self.sock_path is None:
@@ -143,14 +178,34 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
         self.process = ssh_tunneling_vnc(
             self.sock_path, self.target_host, self.vnc_port,
             self.ssh_port, self.ssh_login, self.ssh_password,
+            self.ssh_key_private_key_filename, self.ssh_key_passphrase,
             use_pexpect=self._use_pexpect,
         )
-        return self.process is not None
+
+
+        if self.process is not None:
+            return True
+
+        if self.ssh_key_private_key_filename:
+            os.remove(self.ssh_key_private_key_filename)
+
+        self.ssh_key_passphrase = ""
+        self.ssh_key_private_key_filename = ""
+
+        return False
 
     def pre_connect(self):
-        if not self.sock_path:
-            return False
-        return expect_connection_ready(self.sock_path)
+        Logger().info("> > > > > TunnelingProcessSSH.pre_connect")
+        try:
+            if not self.sock_path:
+                return False
+            return expect_connection_ready(self.sock_path)
+        finally:
+            if self.ssh_key_private_key_filename:
+                os.remove(self.ssh_key_private_key_filename)
+
+            self.ssh_key_passphrase = ""
+            self.ssh_key_private_key_filename = ""
 
     def _remove_socket_file(self):
         if self.sock_path is not None:
@@ -181,23 +236,36 @@ class TunnelingProcessPEXPECTSSH(TunnelingProcessSSH):
 
 class TunnelingProcessPXSSH(TunnelingProcessSSH):
     def __init__(self, target_host, vnc_port, ssh_port,
-                 ssh_login, ssh_password, sock_path_dir=None, **kwargs):
+                 ssh_login, ssh_password, ssh_key,
+                 sock_path_dir=None, **kwargs):
         TunnelingProcessSSH.__init__(
             self, target_host, vnc_port, ssh_port,
-            ssh_login, ssh_password, sock_path_dir,
+            ssh_login, ssh_password, ssh_key, sock_path_dir,
             **kwargs
         )
 
     def start(self):
+        Logger().info(f"> > > > > TunnelingProcessPXSSH.start: self.ssh_key_private_key_filename={self.ssh_key_private_key_filename}")
+        Logger().info(f"> > > > > TunnelingProcessPXSSH.start: self.ssh_key_passphrase={self.ssh_key_passphrase}")
+
         self._generate_sock_path()
         self.process = pxssh_ssh_tunneling_vnc(
             self.sock_path, self.target_host, self.vnc_port,
-            self.ssh_port, self.ssh_login, self.ssh_password
+            self.ssh_port, self.ssh_login, self.ssh_password,
+            self.ssh_key_private_key_filename, self.ssh_key_passphrase
         )
-        return self.process is not None
+        Logger().info(f"> > > > > TunnelingProcessPXSSH.start: self.process={self.process}")
+
+        if self.process is not None:
+            return True
+
+        TunnelingProcessSSH.pre_connect(self)
+
+        return False
 
     def pre_connect(self):
         # pxssh is blocking on connect
+        TunnelingProcessSSH.pre_connect(self)
         return True
 
     def stop(self):
@@ -217,51 +285,72 @@ class TunnelingProcessPXSSH(TunnelingProcessSSH):
 
 def ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
                       ssh_port, ssh_login, ssh_password,
+                      ssh_private_key_filename, ssh_private_key_passphrase,
                       use_pexpect=False):
     """
-    local_usocket_name : must be absolute path
-    target_host :        ssh and vnc host
-    vnc_port :           vnc port
-    ssh_port :           ssh port
-    ssh_login :          ssh login
-    ssh_password :       ssh password
+    local_usocket_name :         must be absolute path
+    target_host :                ssh and vnc host
+    vnc_port :                   vnc port
+    ssh_port :                   ssh port
+    ssh_login :                  ssh login
+    ssh_password :               ssh password
+    ssh_private_key_filename :   ssh private key filename
+    ssh_private_key_passphrase : ssh private key passphrase
     """
+    Logger().info("> > > > > ssh_tunneling_vnc")
     ssh_opts = (
         "-o UserKnownHostsFile=/dev/null "
         "-o StrictHostKeyChecking=no "
         "-N "
         f"-p {ssh_port}"
     )
-    tunneling_command = (
-        f"ssh {ssh_opts} "
-        f"-L {local_usocket_name}:localhost:{vnc_port} "
-        f"-l {ssh_login} {target_host}"
-    )
+    use_private_key = bool(ssh_private_key_filename) and bool(ssh_private_key_passphrase)
+    if use_private_key:
+        tunneling_command = (
+            f"ssh {ssh_opts} "
+            f"-L {local_usocket_name}:localhost:{vnc_port} "
+            f"-l {ssh_login} -i {ssh_private_key_filename} {target_host}"
+        )
+        password_or_passphrase = ssh_private_key_passphrase
+    else:
+        tunneling_command = (
+            f"ssh {ssh_opts} "
+            f"-L {local_usocket_name}:localhost:{vnc_port} "
+            f"-l {ssh_login} {target_host}"
+        )
+        password_or_passphrase = ssh_password
     remove_file(local_usocket_name)
-    Logger().debug(f"ssh_tunneling_vnc {tunneling_command}")
+    Logger().debug(f"> > > > > ssh_tunneling_vnc {tunneling_command}")
     try:
         process_fn = popen_sshpass_ssh
         if use_pexpect:
             process_fn = pexpect_prompt_ssh
-        process = process_fn(tunneling_command, ssh_password)
+        process = process_fn(tunneling_command, password_or_passphrase,
+            use_private_key)
     except Exception as e:
+        Logger().info(f"> > > > > ssh_tunneling_vnc: Exception={e}")
         Logger().info(f"Tunneling with "
                       f"{'Pexpect' if use_pexpect else 'Popen'} "
                       f"Error {e}")
         process = None
+    Logger().info("> > > > > ssh_tunneling_vnc: return")
     return process
 
 
 def pxssh_ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
-                            ssh_port, ssh_login, ssh_password):
+                            ssh_port, ssh_login, ssh_password,
+                            ssh_private_key_filename, ssh_private_key_passphrase):
     """
-    local_usocket_name : must be absolute path
-    target_host :        ssh and vnc host
-    vnc_port :           vnc port
-    ssh_port :           ssh port
-    ssh_login :          ssh login
-    ssh_password :       ssh password
+    local_usocket_name :         must be absolute path
+    target_host :                ssh and vnc host
+    vnc_port :                   vnc port
+    ssh_port :                   ssh port
+    ssh_login :                  ssh login
+    ssh_password :               ssh password
+    ssh_private_key_filename :   ssh private key filename
+    ssh_private_key_passphrase : ssh private key passphrase
     """
+    Logger().info("> > > > > pxssh_ssh_tunneling_vnc")
     from pexpect import pxssh
     p = None
     try:
@@ -272,24 +361,41 @@ def pxssh_ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
                 "UserKnownHostsFile": "/dev/null"
             }
         )
-        p.force_password = True
+        use_private_key = bool(ssh_private_key_filename) and bool(ssh_private_key_passphrase)
+        Logger().info(f"> > > > > pxssh_ssh_tunneling_vnc: use_private_key={use_private_key}")
+        if not use_private_key:
+            p.force_password = True
         remove_file(local_usocket_name)
-        p.login(
-            server=target_host,
-            username=ssh_login,
-            password=ssh_password,
-            port=ssh_port,
-            ssh_tunnels={
-                'local': [f'{local_usocket_name}:localhost:{vnc_port}']
-            }
-        )
+        if use_private_key:
+            Logger().info(f"> > > > > pxssh_ssh_tunneling_vnc: ssh_key={ssh_private_key_filename}")
+            Logger().info(f"> > > > > pxssh_ssh_tunneling_vnc: password={ssh_private_key_passphrase}")
+            p.login(
+                server=target_host,
+                username=ssh_login,
+                ssh_key=ssh_private_key_filename,
+                password=ssh_private_key_passphrase,
+                port=ssh_port,
+                ssh_tunnels={
+                    'local': [f'{local_usocket_name}:localhost:{vnc_port}']
+                }
+            )
+        else:
+            p.login(
+                server=target_host,
+                username=ssh_login,
+                password=ssh_password,
+                port=ssh_port,
+                ssh_tunnels={
+                    'local': [f'{local_usocket_name}:localhost:{vnc_port}']
+                }
+            )
     except Exception as e:
         Logger().info(f"Tunneling with PXSSH Error {e}")
         p = None
     return p
 
 
-def check_tunneling(engine, opts, target_host, target_port,
+def check_tunneling(engine, opts, target_host, target_port, filebase,
                     sock_path_dir=None):
     if not opts.get("enable"):
         return None
@@ -311,23 +417,6 @@ def check_tunneling(engine, opts, target_host, target_port,
                 field = "ssh_key", param = opts.get("scenario_account_name"),
                 force_device = True
             )
-            Logger().info(f"check_tunneling: ssh_key={len(ssh_key)}")
-            if ssh_key:
-                #Logger().info(f"RSA.import={ssh_key['private_key']}")
-                try:
-                    rsa_key = RSA.importKey(ssh_key[0]['private_key'])
-                    alnum = ''.join(c for c in map(chr, range(256))
-                                    if c.isalnum() and c.isascii())
-                    passphrase = ''.join(random.choice(alnum) for _ in range(32))
-                    Logger().info(f"passphrase={passphrase}")
-                    Logger().info("Open file")
-                    with open('/var/tmp/wab/volatile/key.pem', 'wb') as f:
-                        os.chmod('/var/tmp/wab/volatile/key.pem', 0o400)
-                        pem_key = rsa_key.exportKey(passphrase=passphrase)
-                        f.write(pem_key)
-                        f.close()
-                except Exception as e:
-                    Logger().info("check_tunneling: Exception=%s" % e)
 
         tunneling_type = opts.get("tunneling_type", "pxssh")
         tunneling_class = TunnelingProcessPXSSH
@@ -341,6 +430,7 @@ def check_tunneling(engine, opts, target_host, target_port,
             ssh_port=ssh_port,
             ssh_login=ssh_login,
             ssh_password=ssh_password,
+            ssh_key=ssh_key,
             sock_path_dir=sock_path_dir
         )
     except Exception:
