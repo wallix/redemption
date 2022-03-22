@@ -141,6 +141,7 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
 
         self.ssh_key_passphrase = ""
         self.ssh_key_private_key_filename = ""
+        self.ssh_key_certificate_filename = ""
 
         #Logger().info(f"check_tunneling: ssh_key={ssh_key}")
         if ssh_key:
@@ -153,17 +154,31 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
             private_key_filename = (
                 f"/var/tmp/wab/volatile/{random_name(RANDOM_NAME_SIZE)}"
             )
+            certificate_filename = private_key_filename + '.pub'
 
-            with open(private_key_filename, 'wb') as f:
-                os.chmod(private_key_filename, 0o400)
-                Logger().info(f"> > > > > TunnelingProcessSSH: ssh_key={ssh_key}")
-                rsa_key = RSA.importKey(ssh_key[0]['private_key'])
-                pem_key = rsa_key.exportKey(passphrase=passphrase)
-                f.write(pem_key)
-                f.close()
+            try:
+                with open(private_key_filename, 'wb') as f:
+                    os.chmod(private_key_filename, 0o400)
+                    Logger().info(f"> > > > > TunnelingProcessSSH: ssh_key={ssh_key}")
+                    rsa_key = RSA.importKey(ssh_key[0]['private_key'])
+                    pem_key = rsa_key.exportKey(passphrase=passphrase)
+                    f.write(pem_key)
+                    f.close()
 
-                self.ssh_key_passphrase = passphrase
-                self.ssh_key_private_key_filename = private_key_filename
+                    with open(certificate_filename, 'wb') as f2:
+                        os.chmod(certificate_filename, 0o400)
+                        f2.write(ssh_key[0]['certificate'].encode())
+                        f2.close()
+
+                        self.ssh_key_passphrase = passphrase
+                        self.ssh_key_private_key_filename = private_key_filename
+                        self.ssh_key_certificate_filename = certificate_filename
+            except Exception as e:
+                os.remove(private_key_filename)
+                os.remove(certificate_filename)
+
+                raise e
+
 
     def _generate_sock_path(self):
         if self.sock_path is None:
@@ -189,8 +204,12 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
         if self.ssh_key_private_key_filename:
             os.remove(self.ssh_key_private_key_filename)
 
+        if self.ssh_key_certificate_filename:
+            os.remove(self.ssh_key_certificate_filename)
+
         self.ssh_key_passphrase = ""
         self.ssh_key_private_key_filename = ""
+        self.ssh_key_certificate_filename = ""
 
         return False
 
@@ -204,8 +223,12 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
             if self.ssh_key_private_key_filename:
                 os.remove(self.ssh_key_private_key_filename)
 
+            if self.ssh_key_certificate_filename:
+                os.remove(self.ssh_key_certificate_filename)
+
             self.ssh_key_passphrase = ""
             self.ssh_key_private_key_filename = ""
+            self.ssh_key_certificate_filename = ""
 
     def _remove_socket_file(self):
         if self.sock_path is not None:
@@ -365,6 +388,8 @@ def pxssh_ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
         Logger().info(f"> > > > > pxssh_ssh_tunneling_vnc: use_private_key={use_private_key}")
         if not use_private_key:
             p.force_password = True
+        else:
+            Logger().info("> > > > > pxssh_ssh_tunneling_vnc: Do not force password")
         remove_file(local_usocket_name)
         if use_private_key:
             Logger().info(f"> > > > > pxssh_ssh_tunneling_vnc: ssh_key={ssh_private_key_filename}")
@@ -417,6 +442,9 @@ def check_tunneling(engine, opts, target_host, target_port, filebase,
                 field = "ssh_key", param = opts.get("scenario_account_name"),
                 force_device = True
             )
+
+        Logger().info("> > > > > To be removed!!!")
+        ssh_password = None
 
         tunneling_type = opts.get("tunneling_type", "pxssh")
         tunneling_class = TunnelingProcessPXSSH
