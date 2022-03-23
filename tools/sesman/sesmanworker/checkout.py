@@ -230,7 +230,7 @@ class CheckoutEngine(object):
         return return_status, infos
 
     def check_account_by_type(self, account_name, domain_name, device_name,
-                              account_type=None):
+                              with_ssh_key=False, account_type=None):
         """
         This function retrieve informations (credentials, login)
         of a scenario or password management account specified by its
@@ -262,13 +262,32 @@ class CheckoutEngine(object):
         table_creds = (self.pm_credentials if account_type == 'pm' else
                        self.scenario_credentials)
         right, creds = table_creds.get(account, (None, {}))
-        if not creds or not creds.get(CRED_TYPE_PASSWORD):
+        if not creds:
+            Logger().debug("check_account_by_type: missing creds")
+            return None
+
+        has_password = True if creds.get(CRED_TYPE_PASSWORD) else False
+        has_ssh_key = True if creds.get(CRED_TYPE_SSH_KEY) else False
+
+        if not with_ssh_key and not has_password:
             Logger().debug("check_account_by_type: missing password")
             return None
-        passwords = creds.get(CRED_TYPE_PASSWORD, [])
+
+        if not has_password and not has_ssh_key:
+            Logger().debug("check_account_by_type: missing password & ssh key")
+            return None
+
+        passwords = creds.get(CRED_TYPE_PASSWORD, []) if has_password else None
+
+        ssh_keys = [(cred.get(CRED_DATA_PRIVATE_KEY),
+                     cred.get("passphrase"),
+                     cred.get(CRED_DATA_SSH_CERTIFICATE))
+                    for cred in creds.get(CRED_TYPE_SSH_KEY, [])]
+
         a_infos = {
             'password': passwords[0] if passwords else None,
-            'login': creds.get(CRED_DATA_LOGIN, None)
+            'login': creds.get(CRED_DATA_LOGIN, None),
+            'ssh_key': ssh_keys[0] if ssh_keys else None
         }
         return a_infos
 
