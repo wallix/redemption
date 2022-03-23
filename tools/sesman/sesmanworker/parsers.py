@@ -101,6 +101,7 @@ def resolve_scenario_account(enginei, field, param, force_device=True, default=N
         return default
     acc_infos = enginei.get_account_infos_by_type(
         *acc_tuple,
+        with_ssh_key=True,
         account_type="scenario"
     )
     if acc_infos is None:

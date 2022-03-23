@@ -254,6 +254,7 @@ def pm_request(engine, request):
             account_name=acc_n,
             domain_name=domain_n,
             device_name=dev_n,
+            with_ssh_key=False,
             account_type='pm'
         )
         if res is not None:
