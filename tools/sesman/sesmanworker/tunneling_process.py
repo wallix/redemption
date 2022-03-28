@@ -10,8 +10,10 @@ import os
 import fcntl
 import shlex
 import binascii
+import pexpect
 import string
 from subprocess import Popen, PIPE
+import tempfile
 from time import (
     monotonic as get_time,
     sleep,
@@ -29,8 +31,61 @@ except Exception:
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 
+try:
+    from wallixconst.misc import VOLATILE_FOLDER
+except Exception:
+    VOLATILE_FOLDER = "/tmp"
+
+try:
+    from wabsshkeys.utils import openssh_pkcs1_passphrase_private
+except Exception:
+    def openssh_pkcs1_passphrase_private(key, passphrase=None):
+        """
+        transform an internal representation (pem) of a private key to an openssh
+        pkcs1 format with/without passphrase encryption
+        :param key: a string representing the key in pkcs1 pem format
+        :param passphrase: a string representing the passphrase used to cypher the
+            exported key
+        :return: a string representing the key in openssh pkcs1 pem format
+        """
+        if not passphrase:
+            return key
+        prk_fd, prk_path = tempfile.mkstemp(dir=VOLATILE_FOLDER)
+        if not isinstance(key, bytes):
+            key = key.encode('utf-8')
+        os.write(prk_fd, key)
+        os.close(prk_fd)
+        command = "{} -f {} -p".format(SSH_KEYGEN, prk_path)
+        new_passphrase = ".*Enter new passphrase.*"
+        confirm_passphrase = ".*Enter same passphrase again:"
+        ssh_keygen = pexpect.spawn(command)
+        i = ssh_keygen.expect([new_passphrase, pexpect.EOF])
+        if i == 0:
+            ssh_keygen.sendline(passphrase)
+        else:
+            msg = "Error setting the passphrase for the exported private key"
+            os.remove(prk_path)
+            raise RuntimeError(msg)
+        i = ssh_keygen.expect([confirm_passphrase, pexpect.EOF])
+        if i == 0:
+            ssh_keygen.sendline(passphrase)
+        else:
+            msg = "Error setting the passphrase for the exported private key"
+            os.remove(prk_path)
+            raise RuntimeError(msg)
+        ssh_keygen.expect([pexpect.EOF])
+        if ssh_keygen.isalive():
+            ssh_keygen.wait()
+        with open(prk_path, 'r') as f:
+            pem_key = f.read()
+        os.remove(prk_path)
+        return pem_key
+
+
 RANDOM_NAME_SIZE = 10
 CONNECTION_TIMEOUT = 5
+
+SSH_KEYGEN = "/usr/bin/ssh-keygen"
 
 
 def crypto_random_str_by_bytes_size(bytes_size):
@@ -114,8 +169,11 @@ def remove_file(file_path):
 
 
 def add_passphrase_to_private_key(private_key, passphrase):
-    in_key = RSA.importKey(private_key)
-    return in_key.exportKey(passphrase=passphrase)
+    try:
+        in_key = RSA.importKey(private_key)
+        return in_key.exportKey(passphrase=passphrase).decode("utf-8")
+    except Exception as e:
+        return openssh_pkcs1_passphrase_private(private_key, passphrase)
 
 
 class TunnelingProcessInterface:
@@ -157,13 +215,13 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
             passphrase = crypto_random_str_by_bytes_size(32)
 
             private_key_filename = (
-                f"/var/tmp/wab/volatile/"
-                f"{crypto_random_str_by_bytes_size(RANDOM_NAME_SIZE)}"
+                VOLATILE_FOLDER +
+                f"/{crypto_random_str_by_bytes_size(RANDOM_NAME_SIZE)}"
             )
             certificate_filename = private_key_filename + '.pub'
 
             try:
-                with open(private_key_filename, 'wb') as f:
+                with open(private_key_filename, 'w') as f:
                     os.chmod(private_key_filename, 0o400)
                     out_key = add_passphrase_to_private_key(
                         private_key=private_key,
