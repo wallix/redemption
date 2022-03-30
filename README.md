@@ -21,6 +21,7 @@ Support of:
 2. [Compilation](#compilation)
     1. [Special runtime variables (shell variable)](#special-runtime-variables-shell-variable)
     2. [Setting build variables](#setting-build-variables)
+        1. [Musl libc](#musl-libc)
     3. [Modes and options](#modes-and-options)
 3. [Run ReDemPtion](#run-redemption)
 4. [Convert .mwrm/.wrm capture to video](#convert-mwrmwrm-capture-to-video)
