@@ -47,6 +47,7 @@ To compile ReDemPtion you need the following packages:
 - libpng-dev (libpng12-dev (< Debian 10))
 - libbz2-dev
 - libffmpeg-dev (see below)
+- libgettext (when musl is used)
 - g++ >= 8.0 or clang++ >= 5.0 or other C++17 compiler
 
 ```sh
