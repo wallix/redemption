@@ -30,6 +30,8 @@ try:
     from wallixconst.account import AM_IL_DOMAIN
     from wallixconst.trace import LOCAL_TRACE_PATH_RDP
     from wallixredis import redis
+    from wabx509 import AuthX509
+    from wallixutils import is_cloud_configuration
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
     CRED_INDEX = "credentials"
@@ -73,6 +75,10 @@ from .addrutils import (
     is_ip_address,
     resolve_reverse_dns,
 )
+
+
+if is_cloud_configuration():
+    from wallixcloudbastion.utils import move_trace_immediately_as_process
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
 DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
@@ -1320,6 +1326,9 @@ class Engine(object):
                         check=self.trace_hash
                     )
                     self.trace_hash = None
+
+                    if is_cloud_configuration():
+                        move_trace_immediately_as_process(self.session_id)
         except SessionAlreadyStopped:
             pass
         except Exception:

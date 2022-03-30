@@ -314,11 +314,12 @@ class RTManager(object):
                 'redis_password': redis_config.get('password', ''),
                 'redis_db': redis_config.get('db', 0),
                 'redis_use_tls': use_tls,
+                'use_redis': True,
             }
             if use_tls:
-                data['redis_tls_key'] = redis_config['ssl_keyfile']
-                data['redis_tls_cert'] = redis_config['ssl_certfile']
-                data['redis_tls_cacert'] = redis_config['ssl_ca_certs']
+                data['redis_tls_key'] = redis_config.get('ssl_keyfile')
+                data['redis_tls_cert'] = redis_config.get('ssl_certfile')
+                data['redis_tls_cacert'] = redis_config.get('ssl_ca_certs')
             self.sesman.send_data(data)
 
     def stop(self):
