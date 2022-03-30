@@ -13,8 +13,8 @@ alias png : libpng z ;
 # gettext with musl
 if $(MUSL_LIBC) != 0
 {
-    lib gettext ;
-    MUSL_GETTEXT = <library>gettext ;
+    lib intl ;
+    MUSL_GETTEXT = <library>intl ;
 }
 
 
