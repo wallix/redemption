@@ -39,7 +39,7 @@ bool create_metrics_directory(const std::string & path)
 {
     if (0 != access(path.c_str(), F_OK)) {
         LOG(LOG_INFO, "Creation of %s directory to store metrics", path);
-        recursive_create_directory(path.c_str(), ACCESSPERMS, -1);
+        recursive_create_directory(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO, -1);
     }
 
     if (0 != access(path.c_str(), F_OK)) {
