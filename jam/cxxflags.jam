@@ -22,9 +22,6 @@ REDEMPTION_CXXFLAGS +=
     # <cxxflags>-Werror=return-type
     # <toolset>gcc:<cxxflags>-Werror=suggest-override
 
-    <define>_FILE_OFFSET_BITS=64
-    <define>_LARGEFILE64_SOURCE
-
     <conditional>@flags
 ;
 

@@ -152,12 +152,18 @@ Use `bjam --help` for more information.
 
 List with `bjam env_help`.
 
+Example with ffmpeg :
+
     bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
 
 Or with a shell variable
 
     export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
     bjam ....
+
+### Musl libc
+
+    bjam -s MUSL_LIBC=1 ...
 
 
 ## Modes and options

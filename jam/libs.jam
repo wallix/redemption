@@ -10,6 +10,14 @@ lib z ;
 alias png : libpng z ;
 
 
+# gettext with musl
+if $(MUSL_LIBC) != 0
+{
+    lib gettext ;
+    MUSL_GETTEXT = <library>gettext ;
+}
+
+
 ## ffmpeg {
 if $(NO_FFMPEG) = 0
 {

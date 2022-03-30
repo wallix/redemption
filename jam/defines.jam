@@ -15,6 +15,16 @@ rule setvar ( env : default )
     }
 }
 
+constant MUSL_LIBC : [ setvar MUSL_LIBC : 0 ] ;
+
+if $(MUSL_LIBC) != 0
+{
+    REDEMPTION_CXXFLAGS +=
+        <define>_FILE_OFFSET_BITS=64
+        <define>_LARGEFILE64_SOURCE
+    ;
+}
+
 INSTALLDIR_DEFAULT ?= "" ;
 PREFIX_DEFAULT ?= /usr/local ;
 ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;

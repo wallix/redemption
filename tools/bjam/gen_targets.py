@@ -120,6 +120,8 @@ sys_lib_assoc = dict((
         cxxflags=['$(BOOST_STACKTRACE_CXXFLAGS)'])),
     ('thread', Dep(
         linkflags=['<linkflags>-pthread'])),
+    ('libintl.h', Dep(
+        linkflags=['$(MUSL_GETTEXT)'])),
 ))
 sys_lib_prefix = (
     ('libavformat/', Dep(
