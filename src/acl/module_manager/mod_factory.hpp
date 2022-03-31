@@ -126,7 +126,7 @@ public:
             this->graphics,
             this->front,
             str_concat(
-                this->ini.get<cfg::video::replay_path>().as_string(),
+                this->ini.get<cfg::mod_replay::replay_path>().as_string(),
                 this->ini.get<cfg::globals::target_user>(),
                 ".mwrm"_av
             ),

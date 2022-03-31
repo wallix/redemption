@@ -943,6 +943,9 @@ filename_percent_encoding = boolean(default=False)
 
 [mod_replay]
 
+#_advanced
+replay_path = string(max=4096, default='/tmp/')
+
 # 0 - Wait for Escape, 1 - End session
 #_hidden
 on_end_of_data = boolean(default=False)
@@ -1000,9 +1003,6 @@ break_interval = integer(min=0, default=600)
 # Number of png captures to keep.
 #_advanced
 png_limit = integer(min=0, default=5)
-
-#_advanced
-replay_path = string(max=4096, default='/tmp/')
 
 #_hidden
 hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(')

@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
     RED_CHECK_EQUAL(0440,                             ini.get<cfg::video::file_permissions>().permissions_as_uint());
 
     RED_CHECK_EQUAL(TraceType::localfile_hashed,
@@ -394,7 +394,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(150,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
@@ -585,7 +585,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
@@ -748,7 +748,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
@@ -915,7 +915,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(300,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
@@ -1058,7 +1058,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
@@ -1202,7 +1202,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
@@ -1331,7 +1331,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
@@ -1463,7 +1463,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(300,                              ini.get<cfg::globals::authentication_timeout>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
     RED_CHECK_EQUAL(TraceType::localfile_hashed,      ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());

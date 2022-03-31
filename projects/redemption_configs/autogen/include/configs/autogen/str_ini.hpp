@@ -1110,6 +1110,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [mod_replay]
 
+# maxlen = 4096
+#_advanced
+#replay_path = /tmp/
+
 # 0 - Wait for Escape, 1 - End session
 # value: 0 or 1
 #_hidden
@@ -1176,10 +1180,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0
 #_advanced
 #png_limit = 5
-
-# maxlen = 4096
-#_advanced
-#replay_path = /tmp/
 
 # maxlen = 4096
 #_hidden

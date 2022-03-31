@@ -765,6 +765,7 @@ void config_spec_definition(Writer && W)
 
     W.section("mod_replay", [&]
     {
+        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), names{"replay_path"}, set("/tmp/"));
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"on_end_of_data"}, desc{"0 - Wait for Escape, 1 - End session"}, set(false));
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"replay_on_loop"}, desc{"0 - replay once, 1 - loop replay"}, set(false));
     });
@@ -791,8 +792,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::deci>>(), names{"png_interval"}, desc{"Frame interval."}, set(10));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"break_interval"}, desc{"Time between 2 wrm movies."}, set(600));
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"png_limit"}, desc{"Number of png captures to keep."}, set(5));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), names{"replay_path"}, set("/tmp/"));
 
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), names{"hash_path"}, set(CPP_EXPR(app_path(AppPath::Hash))));
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), names{"record_tmp_path"}, set(CPP_EXPR(app_path(AppPath::RecordTmp))));

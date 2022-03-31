@@ -3028,6 +3028,16 @@ namespace cfg
 
 
 
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// default: "/tmp/" <br/>
+    struct mod_replay::replay_path {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = ::configs::spec_types::directory_path;
+        using sesman_and_spec_type = ::configs::spec_types::directory_path;
+        using mapped_type = sesman_and_spec_type;
+        type value { "/tmp/" };
+    };
     /// 0 - Wait for Escape, 1 - End session <br/>
     /// type: bool <br/>
     /// default: false <br/>
@@ -3161,16 +3171,6 @@ namespace cfg
         using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value { 5 };
-    };
-    /// type: ::configs::spec_types::directory_path <br/>
-    /// default: "/tmp/" <br/>
-    struct video::replay_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
-        type value { "/tmp/" };
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// sesman ⇒ proxy <br/>
@@ -5724,7 +5724,8 @@ struct file_storage
 { static constexpr bool is_section = true; };
 
 struct mod_replay
-: cfg::mod_replay::on_end_of_data
+: cfg::mod_replay::replay_path
+, cfg::mod_replay::on_end_of_data
 , cfg::mod_replay::replay_on_loop
 { static constexpr bool is_section = true; };
 
@@ -5745,7 +5746,6 @@ struct video
 , cfg::video::capture_groupid
 , cfg::video::capture_flags
 , cfg::video::png_limit
-, cfg::video::replay_path
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
 , cfg::video::record_path

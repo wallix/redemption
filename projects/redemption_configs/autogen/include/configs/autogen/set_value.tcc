@@ -1719,6 +1719,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 12) {
         if (0) {}
+        else if (key == "replay_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_replay::replay_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
         else if (key == "on_end_of_data"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1828,14 +1836,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::video::png_limit&>(this->variables).value,
                 ::configs::spec_type<unsigned>{},
-                value
-            );
-        }
-        else if (key == "replay_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::replay_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
                 value
             );
         }

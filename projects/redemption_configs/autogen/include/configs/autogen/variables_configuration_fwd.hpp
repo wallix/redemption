@@ -256,6 +256,7 @@ namespace cfg
     };
 
     struct mod_replay {
+        struct replay_path;
         struct on_end_of_data;
         struct replay_on_loop;
     };
@@ -274,7 +275,6 @@ namespace cfg
         struct png_interval;
         struct break_interval;
         struct png_limit;
-        struct replay_path;
         struct hash_path;
         struct record_tmp_path;
         struct record_path;
