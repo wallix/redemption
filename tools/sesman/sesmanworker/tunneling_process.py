@@ -388,6 +388,7 @@ def ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
     )
     if use_private_key:
         ssh_opts += f" -i {ssh_private_key_filename}"
+        ssh_opts += f" -o PubkeyAcceptedKeyTypes=+ssh-dss"
 
     tunneling_command = (
         f"ssh {ssh_opts} "
@@ -434,7 +435,8 @@ def pxssh_ssh_tunneling_vnc(local_usocket_name, target_host, vnc_port,
             ignore_sighup=False,
             options={
                 "StrictHostKeyChecking": "no",
-                "UserKnownHostsFile": "/dev/null"
+                "UserKnownHostsFile": "/dev/null",
+                "PubkeyAcceptedKeyTypes": "+ssh-dss"
             }
         )
         use_private_key = (
