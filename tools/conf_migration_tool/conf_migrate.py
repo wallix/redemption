@@ -372,7 +372,7 @@ def migrate_line_to_9_1_39(self, section_name:str, line:ConfigurationLine) -> Op
             if "session_timeout" == line.get_name():
                 return None, f"base_inactivity_timeout = {line.get_value()}"
 
-def migrate_line_to_NEXT_TAG(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
+def migrate_line_to_9_1_69(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
     if line.is_variable_declaration():
         if "video" == section_name:
             if "replay_path" == line.get_name():
@@ -380,7 +380,7 @@ def migrate_line_to_NEXT_TAG(self, section_name:str, line:ConfigurationLine) -> 
 
 migration_defs = (
     (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
-    (RedemptionVersion(NEXT_TAG_STR), migrate_line_to_NEXT_TAG),
+    (RedemptionVersion("9.1.71"), migrate_line_to_9_1_69),
 )
 
 
