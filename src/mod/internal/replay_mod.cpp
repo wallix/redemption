@@ -47,13 +47,6 @@ struct ReplayMod::Reader
     : in_trans(
         [&]{
             std::vector<std::string> filenames;
-            auto pos = mwrm_filename.find_last_of('/');
-            if (pos == std::string::npos) {
-                pos = mwrm_filename.size();
-            }
-            else {
-                ++pos;
-            }
             MwrmFileData mwrm_data = load_mwrm_file_data(
                 mwrm_filename.c_str(),
                 this->cctx,
@@ -62,11 +55,21 @@ struct ReplayMod::Reader
             for (auto const& wrm : mwrm_data.wrms) {
                 if (file_exist(wrm.filename)) {
                     filenames.emplace_back(wrm.filename);
+                    LOG(LOG_INFO, "ReplayMod::Reader: Found %s", filenames.back());
                 }
                 else {
-                    filenames.emplace_back(str_concat(
-                        chars_view(mwrm_filename.data(), pos),
-                        wrm.filename));
+                    auto pos = mwrm_filename.find_last_of('/');
+                    if (pos != std::string::npos) {
+                        filenames.emplace_back(str_concat(
+                            chars_view(mwrm_filename).first(pos + 1),
+                            wrm.filename));
+                        LOG(LOG_INFO, "ReplayMod::Reader: Found %s -> %s",
+                            wrm.filename, filenames.back());
+                    }
+                    else {
+                        filenames.emplace_back(wrm.filename);
+                        LOG(LOG_INFO, "ReplayMod::Reader: Not found %s", filenames.back());
+                    }
                 }
             }
             return filenames;
