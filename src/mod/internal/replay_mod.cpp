@@ -101,6 +101,11 @@ struct ReplayMod::Reader
             &drawable, nullptr, nullptr, nullptr,
             nullptr, nullptr, nullptr);
     }
+
+    MonotonicTimePoint::duration current_duration() const
+    {
+        return reader.get_monotonic_time() - start_time_replay;
+    }
 };
 
 ReplayMod::ReplayMod(
@@ -127,9 +132,8 @@ ReplayMod::ReplayMod(
 
     auto action = [this](Event& ev){
         if (this->next_timestamp()) {
-            const auto replay_delay = this->internal_reader->reader.get_monotonic_time()
-                                    - this->internal_reader->start_time_replay;
-            ev.alarm.reset_timeout(replay_delay);
+            const auto duration = this->internal_reader->current_duration();
+            ev.alarm.reset_timeout(this->start_time + duration);
         }
         else if (this->replay_on_loop) {
             this->init_reader();
@@ -138,7 +142,6 @@ ReplayMod::ReplayMod(
         else if (!this->wait_for_escape) {
             ev.garbage = true;
             this->set_mod_signal(BACK_EVENT_STOP);
-            // throw Error(ERR_BACK_EVENT_NEXT);
         }
     };
 
