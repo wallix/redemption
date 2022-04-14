@@ -19,6 +19,7 @@ import traceback
 import json
 import re
 import sys
+import itertools
 from logger import Logger
 
 from struct import unpack_from, pack
@@ -2040,14 +2041,15 @@ class Sesman():
                 conn_opts = self.engine.get_target_conn_options(
                     physical_target
                 )
-                if (physical_proto_info.protocol == u'RDP'
-                    or physical_proto_info.protocol == u'VNC'):
-                    if physical_proto_info.protocol == u'RDP':
+                if physical_proto_info.protocol in ('RDP', 'VNC', 'JHRDP'):
+                    if physical_proto_info.protocol in ('RDP', 'JHRDP'):
                         kv[u'proxy_opt'] = ",".join(
                             physical_proto_info.subprotocols
                         )
 
-                    kv.update(self.fetch_connectionpolicy(conn_opts))
+                    conn_spec = cp_spec[physical_proto_info.protocol.lower()]
+                    kv.update(self._fetch_connectionpolicy(conn_spec[0], conn_opts))
+                    kv.update(conn_spec[1])
 
                 kv.update(self._load_kerberos_armoring_options(conn_opts))
 
@@ -2807,20 +2809,15 @@ class Sesman():
         }
         self.engine.update_session(**data_to_update)
 
-    def fetch_connectionpolicy(self, conn_opts):
-        connectionpolicy_kv = {}
+    def _fetch_connectionpolicy(self, conn_spec, conn_opts):
         # Logger().info(u"%s" % conn_opts)
-        for (section, matches) in cp_spec.items():
-            section_values = conn_opts.get(section)
-            if section_values is not None:
-                for (config_key, (cp_key, cp_value)) in matches.items():
-                    value = section_values.get(cp_key)
-                    if value is not None:
-                        connectionpolicy_kv[config_key] = value
-                    elif cp_value is not None:
-                        connectionpolicy_kv[config_key] = cp_value
-
-        return connectionpolicy_kv
+        def get_values(section_name, value_infos):
+            values = conn_opts.get(section_name, {})
+            return ((config_key, values.get(cp_key, default_value))
+                    for config_key, cp_key, default_value in value_infos)
+        return itertools.chain.from_iterable(
+            get_values(section_name, value_infos)
+            for section_name, value_infos in conn_spec.items())
 
     def kill_handler(self, signum, frame):
         # Logger().info("KILL_HANDLER = %s" % signum)

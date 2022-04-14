@@ -132,6 +132,7 @@ void config_spec_definition(Writer && W)
 
     auto rdp_connpolicy = sesman::connection_policy{"rdp"};
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
+    auto jh_connpolicy = sesman::connection_policy{"jhrdp"};
 
     char const* disabled_orders_desc =
         "Disables supported drawing orders:\n"
@@ -181,7 +182,12 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"handshake_timeout"}, desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"base_inactivity_timeout"}, desc{"No automatic disconnection due to inactivity, timer is set on primary authentication.\nIf value is between 1 and 30, then 30 is used.\nIf value is set to 0, then inactivity timeout value is unlimited."}, set(900));
-        W.member(hidden_in_gui, rdp_connpolicy | vnc_connpolicy, connpolicy::section{"session"}, L, type_<std::chrono::seconds>(), names{"inactivity_timeout"}, desc{"No automatic disconnection due to inactivity, timer is set on target session.\nIf value is between 1 and 30, then 30 is used.\nIf value is set to 0, then value set in \"Base inactivity timeout\" (in \"RDP Proxy\" configuration option) is used."}, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | vnc_connpolicy | jh_connpolicy, connpolicy::section{"session"},
+            L, type_<std::chrono::seconds>(), names{"inactivity_timeout"}, set(0), desc{
+                "No automatic disconnection due to inactivity, timer is set on target session.\n"
+                "If value is between 1 and 30, then 30 is used.\n"
+                "If value is set to 0, then value set in \"Base inactivity timeout\" (in \"RDP Proxy\" configuration option) is used."
+            });
         W.member(hidden_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"keepalive_grace_delay"}, desc{"Internal keepalive between sesman and rdp proxy"}, set(30));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"authentication_timeout"}, desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"close_timeout"}, desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
@@ -233,9 +239,8 @@ void config_spec_definition(Writer && W)
     {
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_session_log"}, set(true));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_arcsight_log"}, set(false));
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), names{"keyboard_input_masking_level"}, desc{
-            "Keyboard Input Masking Level:"
-        }, set(KeyboardInputMaskingLevel::password_and_unidentified));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<KeyboardInputMaskingLevel>(), names{"keyboard_input_masking_level"},
+            desc{"Keyboard Input Masking Level:"}, set(KeyboardInputMaskingLevel::password_and_unidentified));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"hide_non_printable_kbd_input"}, set(false));
     });
 
@@ -367,17 +372,20 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"open_session_timeout"}, set(0));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc});
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc});
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_nla"}, desc{"NLA authentication in secondary target."}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_nla"}, desc{"NLA authentication in secondary target."}, set(true), jh_connpolicy.always(false));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_kerberos"}, desc{
             "If enabled, NLA authentication will try Kerberos before NTLM.\n"
             "(if enable_nla is disabled, this value is ignored)."
         }, set(false));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<types::u32>(), names{"tls_min_level"}, desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<types::u32>(), names{"tls_max_level"}, desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), names{"cipher_string"}, desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."}, set("ALL"));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<bool>(), names{"show_common_cipher_list"}, desc{"Show common cipher list supported by client and server"}, set(false));
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy, L, type_<types::u32>(), names{"tls_min_level"},
+            desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy, L, type_<types::u32>(), names{"tls_max_level"},
+            desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy, L, type_<std::string>(), names{"cipher_string"},
+            desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."}, set("ALL"));
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"show_common_cipher_list"}, desc{"Show common cipher list supported by client and server"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"persistent_disk_bitmap_cache"}, desc{"Persistent Disk Bitmap Cache on the mod side."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"cache_waiting_list"}, desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
@@ -386,8 +394,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), names{"allow_channels"}, desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), names{"deny_channels"}, desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
 
-        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"allowed_dynamic_channels"}, desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."}, set("*"));
-        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"denied_dynamic_channels"}, desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"allowed_dynamic_channels"}, desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."}, set("*"));
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"denied_dynamic_channels"}, desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"fast_path"}, desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
 
@@ -414,7 +422,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"use_native_remoteapp_capability"}, desc{"As far as possible, use native RemoteApp capability"}, set(true));
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{"enable_session_probe"}, set(false), connpolicy::set(true));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{"enable_session_probe"}, set(false), rdp_connpolicy.set(true) | jh_connpolicy.always(false));
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(),
             names{
                 .all="session_probe_use_clipboard_based_launcher",
@@ -526,8 +534,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_ie_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
 
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), names{"server_cert_store"}, desc{"Keep known server certificates on WAB"}, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), names{"server_cert_check"}, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, co_cert, L, type_<bool>(), names{"server_cert_store"}, desc{"Keep known server certificates on WAB"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, co_cert, L, type_<ServerCertCheck>(), names{"server_cert_check"}, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
         struct P { char const * name; char const * desc; };
         for (P p : {
@@ -536,7 +544,7 @@ void config_spec_definition(Writer && W)
             P{"server_cert_success_message", "Warn that server certificate file was successfully checked."},
             P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
         }) {
-            W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_cert, L, type_<ServerNotification>(), names{p.name}, desc{p.desc}, set(ServerNotification::syslog));
+            W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, co_cert, L, type_<ServerNotification>(), names{p.name}, desc{p.desc}, set(ServerNotification::syslog));
         }
         W.member(hidden_in_gui, no_sesman, L, type_<ServerNotification>(), names{"server_cert_error_message"}, desc{"Warn that server certificate check raised some internal error."}, set(ServerNotification::syslog));
 
@@ -586,20 +594,20 @@ void config_spec_definition(Writer && W)
                          "NLA must be enabled."},
                  set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(),
                  names{"force_smartcard_authentication"},
                  desc{"NLA will be disabled.\n"
                          "Target must be set for interactive login, otherwise server connection may not be guaranteed.\n"
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable target connection on ipv6" }, set(true));
 
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), spec::type_<std::string>(), names{.all="mode_console", .display="Console mode"}, set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"auto_reconnection_on_losing_target_link"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"auto_reconnection_on_losing_target_link"}, set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"forward_client_build_number"},
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"forward_client_build_number"},
             desc{
                 "Forward the build number advertised by the client to the server. "
                 "If forwarding is disabled a default (static) build number will be sent to the server."
@@ -717,27 +725,27 @@ void config_spec_definition(Writer && W)
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), names{"socket_path"}, set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_up"}, desc{"Enable use of ICAP service for file verification on upload."});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_down"}, desc{"Enable use of ICAP service for file verification on download."});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"clipboard_text_up"}, desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"clipboard_text_down"}, desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"enable_up"}, desc{"Enable use of ICAP service for file verification on upload."});
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"enable_down"}, desc{"Enable use of ICAP service for file verification on download."});
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"clipboard_text_up"}, desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"clipboard_text_down"}, desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"block_invalid_file_up"}, desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."}, set(false));
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"block_invalid_file_down"}, desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"block_invalid_file_up"}, desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"block_invalid_file_down"}, desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."}, set(false));
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"block_invalid_clipboard_text_up"}, desc{"Block text transfer from client to server on invalid text verification.\nText verification on upload must be enabled via option Clipboard text up."}, set(false));
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"block_invalid_clipboard_text_down"}, desc{"Block text transfer from server to client on invalid text verification.\nText verification on download must be enabled via option Clipboard text down."}, set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"log_if_accepted"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"log_if_accepted"}, set(true));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), names{"max_file_size_rejected"}, desc{"If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."}, set(256));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), names{"max_file_size_rejected"}, desc{"If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."}, set(256));
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), names{"tmpdir"}, desc{"Temporary path used when files take up too much memory."}, set("/tmp/"));
     });
 
     W.section("file_storage", [&]
     {
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpStoreFile>(), spec::type_<std::string>(), names{"store_file"}, set(RdpStoreFile::never), desc{"Enable storage of transferred files (via RDP Clipboard)."});
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<RdpStoreFile>(), spec::type_<std::string>(), names{"store_file"}, set(RdpStoreFile::never), desc{"Enable storage of transferred files (via RDP Clipboard)."});
     });
 
     // for validator only
@@ -836,7 +844,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"fdx_path"});
 
-        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, connpolicy::section{"video"}, L, type_<KeyboardLogFlagsCP>{}, names{"disable_keyboard_log"}, desc{
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, connpolicy::section{"video"}, L, type_<KeyboardLogFlagsCP>{}, names{"disable_keyboard_log"}, desc{
             "Disable keyboard log:\n"
             "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }, disable_prefix_val, set(KeyboardLogFlagsCP::syslog));

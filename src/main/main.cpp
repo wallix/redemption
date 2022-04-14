@@ -293,6 +293,13 @@ int main(int argc, char** argv)
                 ;
             })),
 
+        cli::option("print-jhrdp-cp-spec").help("Show connection policy spec for jhrdp protocol")
+            .parser(cli::quit([]{
+                std::cout <<
+                    #include "configs/autogen/jhrdp_cp_spec.hpp"
+                ;
+            })),
+
         cli::option("print-vnc-cp-spec").help("Show connection policy spec for vnc protocol")
             .parser(cli::quit([]{
                 std::cout <<

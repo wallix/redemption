@@ -69,7 +69,7 @@ int main()
             "autogen/include/configs/autogen/max_str_buffer_size.hpp",
         }),
         ConnPolicy(
-            "autogen/spec/", {"rdp", "vnc"},
+            "autogen/spec/",
             "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py"
         ),
         SesmanDefaultMap("../../tools/sesman/sesmanworker/sesmanbacktoselector.py"),

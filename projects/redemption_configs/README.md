@@ -157,10 +157,17 @@ W.member(names{.cpp="fish", .ini="superfish", .sesman="netfish"}, ...);
 - `set(any_value)`
 - `connpolicy::set(any_value)`
 - `sesman::connection_policy{...}.set(any_value)`
+- `sesman::connection_policy{...}.always(any_value)`
 
 By default, initialized with `{}` (cf: `type value = {}`).
 
-Combination of connpolicy with `|`: `connpolicy::set(any_value) | sesman::connection_policy{"rdp"}.set(any_value)`.
+Combination of connpolicy with `|`:
+
+```cpp
+connpolicy::set(any_value) |
+sesman::connection_policy{"rdp"}.set(any_value) |
+sesman::connection_policy{"jhrdp"}.always(any_value)
+```
 
 ## prefix
 

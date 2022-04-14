@@ -272,6 +272,7 @@ public:
     {
         constexpr bool has_attr = (is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...);
         constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
+        constexpr bool has_conn_policy_value = (is_t_convertible_v<Ts, cfg_attributes::connpolicy::default_> || ...);
         constexpr bool has_sesman_io = (is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...);
         constexpr bool has_no_ini_no_gui = (is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)> || ...);
         constexpr int external_info = (detail_::external_attr_info<Ts>() | ...);
@@ -283,6 +284,8 @@ public:
         static_assert(has_attr, "spec::attr is missing");
         static_assert(has_conn_policy || has_sesman_io,
             "sesman::io or connection_policy are missing");
+        static_assert(!has_conn_policy_value || has_conn_policy,
+            "sesman::connection_policy::set/hidden_set are used but connpolicy is missing");
         static_assert(!(has_conn_policy && has_sesman_io),
             "has sesman::io with connection_policy");
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),

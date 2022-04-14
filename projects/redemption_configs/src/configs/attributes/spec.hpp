@@ -29,6 +29,8 @@
 
 #include <cassert>
 
+#include "utils/strutils.hpp"
+
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h>
 namespace cfg_attributes {
@@ -255,6 +257,7 @@ namespace connpolicy
     {
         struct Value
         {
+            bool always;
             T value;
             std::string connpolicy_name;
         };
@@ -266,13 +269,20 @@ namespace connpolicy
     template<class T>
     default_<T> operator | (default_<T> const& a, default_<T> b)
     {
+        if (a.values.empty() && b.values.empty()) {
+            throw std::runtime_error("duplicated connpolicy_name on set()");
+        }
+
         for (auto& x : a.values) {
             for (auto& y : b.values) {
                 if (x.connpolicy_name == y.connpolicy_name) {
-                    throw std::runtime_error("duplicated connpolicy_name on set()");
+                    throw std::runtime_error(str_concat(
+                        "duplicated connpolicy_name \"", x.connpolicy_name, "\" on set()"
+                    ));
                 }
             }
         }
+
         b.values.insert(b.values.begin(), a.values.begin(), a.values.end());
         return b;
     }
@@ -280,13 +290,13 @@ namespace connpolicy
     template<class T>
     default_<T> set(T const & x)
     {
-        return {{typename default_<T>::Value{x, {}}}};
+        return {{typename default_<T>::Value{false, x, {}}}};
     }
 
     template<std::size_t N>
     default_<std::string> set(char const (&x)[N])
     {
-        return {{default_<std::string>::Value{std::string(x+0, x+N-1), {}}}};
+        return {{default_<std::string>::Value{false, std::string(x+0, x+N-1), {}}}};
     }
 
     namespace internal
@@ -361,7 +371,17 @@ namespace sesman
         {
             connpolicy::default_<T> d;
             for (auto& file : files) {
-                d.values.push_back({x, file});
+                d.values.push_back({false, x, file});
+            }
+            return d;
+        }
+
+        template<class T>
+        connpolicy::default_<T> always(T const & x)
+        {
+            connpolicy::default_<T> d;
+            for (auto& file : files) {
+                d.values.push_back({true, x, file});
             }
             return d;
         }
