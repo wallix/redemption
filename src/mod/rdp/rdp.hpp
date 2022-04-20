@@ -1294,10 +1294,8 @@ public:
                 : int_to_chars_result();
 
             // Target informations
-            str_assign(this->session_probe.target_informations, application_params.target_application, ':');
-            if (!session_probe_params.is_public_session) {
-                this->session_probe.target_informations += application_params.primary_user_id;
-            }
+            str_assign(this->session_probe.target_informations, application_params.target_application, ':',
+                session_probe_params.is_public_session ? "" : application_params.primary_user_id);
 
             std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
 
