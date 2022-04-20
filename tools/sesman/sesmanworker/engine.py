@@ -1420,8 +1420,6 @@ class Engine(object):
 
     # RESTRICTIONS: NOTIFIER METHODS
     def pattern_found_notify(self, action, regex_found, current_line):
-        regex_found = regex_found
-        current_line = current_line
         self.session_diag = u'Restriction pattern detected (%s)' % current_line
         data = {
             "regexp": regex_found,
