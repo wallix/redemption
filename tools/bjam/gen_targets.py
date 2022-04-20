@@ -707,7 +707,7 @@ for name,aliases in dir_tests.items():
 explicit_rec = []
 for name,aliases in dir_rec_tests.items():
     explicit_rec.append(name)
-    sorted(aliases)
+    aliases = sorted(aliases)
     print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
 if explicit_no_rec:
