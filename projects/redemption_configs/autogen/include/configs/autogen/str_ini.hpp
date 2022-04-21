@@ -148,27 +148,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #enable_ipv6 = 1
 
-[session_log]
-
-# value: 0 or 1
-#enable_session_log = 1
-
-# value: 0 or 1
-#enable_arcsight_log = 0
-
-# Keyboard Input Masking Level:
-# min = 0, max = 3
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked
-#   3: keyboard inputs are not logged
-#_hidden
-#keyboard_input_masking_level = 2
-
-# value: 0 or 1
-#_advanced
-#hide_non_printable_kbd_input = 0
-
 [client]
 
 # bg-BG, bg-BG.latin, bs-Cy, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
@@ -360,6 +339,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #connection_retry_count = 3
 
+[remote_program]
+
+# value: 0 or 1
+#allow_resize_hosted_desktop = 1
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
@@ -494,236 +478,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #use_native_remoteapp_capability = 1
 
-# value: 0 or 1
-#_hidden
-#enable_session_probe = 0
-
-# Minimum supported server : Windows Server 2008.
-# Clipboard redirection should be remain enabled on Terminal Server.
-# value: 0 or 1
-#_hidden
-#session_probe_use_smart_launcher = 1
-
-# value: 0 or 1
-#_hidden
-#session_probe_enable_launch_mask = 1
-
-# Behavior on failure to launch Session Probe.
-# min = 0, max = 2
-#   0: ignore failure and continue.
-#   1: disconnect user.
-#   2: reconnect without Session Probe.
-#_hidden
-#session_probe_on_launch_failure = 1
-
-# This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
-# 0 to disable timeout.
-# min = 0, max = 300000
-# (in milliseconds)
-#_hidden
-#session_probe_launch_timeout = 40000
-
-# This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
-# 0 to disable timeout.
-# min = 0, max = 300000
-# (in milliseconds)
-#_hidden
-#session_probe_launch_fallback_timeout = 40000
-
-# Minimum supported server : Windows Server 2008.
-# value: 0 or 1
-#_hidden
-#session_probe_start_launch_timeout_timer_only_after_logon = 1
-
-# min = 0, max = 60000
-# (in milliseconds)
-#_hidden
-#session_probe_keepalive_timeout = 5000
-
-# min = 0, max = 2
-#   0: ignore and continue
-#   1: disconnect user
-#   2: freeze connection and wait
-#_hidden
-#session_probe_on_keepalive_timeout = 1
-
-# End automatically a disconnected session.
-# This option is recommended for Web applications running in Desktop mode.
-# Session Probe must be enabled to use this feature.
-# value: 0 or 1
-#_hidden
-#session_probe_end_disconnected_session = 0
-
-# value: 0 or 1
-#_advanced
-#session_probe_customize_executable_name = 0
-
-# value: 0 or 1
-#_hidden
-#session_probe_enable_log = 0
-
-# value: 0 or 1
-#_hidden
-#session_probe_enable_log_rotation = 0
-
-# min = 0, max = 6
-#   1: Fatal
-#   2: Error
-#   3: Info
-#   4: Warning
-#   5: Debug
-#   6: Detail
-#_hidden
-#session_probe_log_level = 5
-
-# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
-# 0 to disable timeout.
-# min = 0, max = 172800000
-# (in milliseconds)
-#_hidden
-#session_probe_disconnected_application_limit = 0
-
-# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
-# 0 to disable timeout.
-# min = 0, max = 172800000
-# (in milliseconds)
-#_hidden
-#session_probe_disconnected_session_limit = 0
-
-# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
-# 0 to disable timeout.
-# min = 0, max = 172800000
-# (in milliseconds)
-#_hidden
-#session_probe_idle_session_limit = 0
-
-# maxlen = 511
-#_hidden
-#session_probe_exe_or_file = ||CMD
-
-# maxlen = 511
-#_hidden
-#session_probe_arguments = )gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(
-
-# (in milliseconds)
-#_hidden
-#session_probe_clipboard_based_launcher_clipboard_initialization_delay = 2000
-
-# (in milliseconds)
-#_hidden
-#session_probe_clipboard_based_launcher_start_delay = 0
-
-# (in milliseconds)
-#_hidden
-#session_probe_clipboard_based_launcher_long_delay = 500
-
-# (in milliseconds)
-#_hidden
-#session_probe_clipboard_based_launcher_short_delay = 50
-
-# min = 0, max = 300000
-# (in milliseconds)
-#_hidden
-#session_probe_launcher_abort_delay = 2000
-
-# value: 0 or 1
-#_advanced
-#session_probe_allow_multiple_handshake = 0
-
-# value: 0 or 1
-#_hidden
-#session_probe_enable_crash_dump = 0
-
-# min = 0, max = 1000
-# min = 0
-#_hidden
-#session_probe_handle_usage_limit = 0
-
-# min = 0, max = 200000000
-# min = 0
-#_hidden
-#session_probe_memory_usage_limit = 0
-
-# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
-# The alarm is deactivated if this value is less than 200.
-# min = 0, max = 10000
-# min = 0
-#_hidden
-#session_probe_cpu_usage_alarm_threshold = 0
-
-# min = 0, max = 1
-#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
-#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
-#_hidden
-#session_probe_cpu_usage_alarm_action = 0
-
-# min = 0, max = 60000
-# (in milliseconds)
-#_hidden
-#session_probe_end_of_session_check_delay_time = 0
-
-# value: 0 or 1
-#_hidden
-#session_probe_ignore_ui_less_processes_during_end_of_session_check = 1
-
-# value: 0 or 1
-#_hidden
-#session_probe_childless_window_as_unidentified_input_field = 1
-
-# value: 0 or 1
-#_hidden
-#session_probe_update_disabled_features = 1
-
-# min = 0, max = 511
-#   0x000: none
-#   0x001: Java Access Bridge
-#   0x002: MS Active Accessbility
-#   0x004: MS UI Automation
-#   0x010: Inspect Edge location URL
-#   0x020: Inspect Chrome Address/Search bar
-#   0x040: Inspect Firefox Address/Search bar
-#   0x080: Monitor Internet Explorer event
-#   0x100: Inspect group membership of user
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
-#_hidden
-#_hex
-#session_probe_disabled_features = 352
-
-# value: 0 or 1
-#_hidden
-#session_probe_bestsafe_integration = 0
-
-# For targets running WALLIX BestSafe only.
-# min = 0, max = 2
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
-#_hidden
-#session_probe_on_account_manipulation = 0
-
-# The name of the environment variable pointing to the alternative directory to launch Session Probe.
-# If empty, the environment variable TMP will be used.
-# maxlen = 3
-#_hidden
-#session_probe_alternate_directory_environment_variable = 
-
-# If enabled, disconnected session can be recovered by a different primary user.
-# value: 0 or 1
-#_hidden
-#session_probe_public_session = 0
-
-# value: 0 or 1
-#_advanced
-#session_probe_at_end_of_session_freeze_connection_and_wait = 1
-
-# value: 0 or 1
-#_advanced
-#session_probe_enable_cleaner = 1
-
-# value: 0 or 1
-#_advanced
-#session_probe_clipboard_based_launcher_reset_keyboard_status = 1
-
 # maxlen = 256
 #_hidden
 #application_driver_exe_or_file = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(
@@ -743,76 +497,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # maxlen = 256
 #_hidden
 #application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
-
-# Keep known server certificates on WAB
-# value: 0 or 1
-#_hidden
-#server_cert_store = 1
-
-# Behavior of certificates check.
-# min = 0, max = 3
-#   0: fails if certificates doesn't match or miss.
-#   1: fails if certificate doesn't match, succeed if no known certificate.
-#   2: succeed if certificates exists (not checked), fails if missing.
-#   3: always succeed.
-# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-#_hidden
-#server_cert_check = 1
-
-# Warn if check allow connexion to server.
-# min = 0, max = 7
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-#server_access_allowed_message = 1
-
-# Warn that new server certificate file was created.
-# min = 0, max = 7
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-#server_cert_create_message = 1
-
-# Warn that server certificate file was successfully checked.
-# min = 0, max = 7
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-#server_cert_success_message = 1
-
-# Warn that server certificate file checking failed.
-# min = 0, max = 7
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-#server_cert_failure_message = 1
-
-# Warn that server certificate check raised some internal error.
-# min = 0, max = 7
-#   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-#server_cert_error_message = 1
 
 # Do not transmit client machine name or RDP server.
 # value: 0 or 1
@@ -907,6 +591,310 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #bogus_monitor_layout_treatment = 0
 
+[session_probe]
+
+# value: 0 or 1
+#_hidden
+#enable_session_probe = 0
+
+# maxlen = 511
+#_hidden
+#exe_or_file = ||CMD
+
+# maxlen = 511
+#_hidden
+#arguments = )gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(
+
+# Minimum supported server : Windows Server 2008.
+# Clipboard redirection should be remain enabled on Terminal Server.
+# value: 0 or 1
+#_hidden
+#use_smart_launcher = 1
+
+# value: 0 or 1
+#_hidden
+#enable_launch_mask = 1
+
+# Behavior on failure to launch Session Probe.
+# min = 0, max = 2
+#   0: ignore failure and continue.
+#   1: disconnect user.
+#   2: reconnect without Session Probe.
+#_hidden
+#on_launch_failure = 1
+
+# This parameter is used if on_launch_failure is 1 (disconnect user).
+# 0 to disable timeout.
+# min = 0, max = 300000
+# (in milliseconds)
+#_hidden
+#launch_timeout = 40000
+
+# This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+# 0 to disable timeout.
+# min = 0, max = 300000
+# (in milliseconds)
+#_hidden
+#launch_fallback_timeout = 40000
+
+# Minimum supported server : Windows Server 2008.
+# value: 0 or 1
+#_hidden
+#start_launch_timeout_timer_only_after_logon = 1
+
+# min = 0, max = 60000
+# (in milliseconds)
+#_hidden
+#keepalive_timeout = 5000
+
+# min = 0, max = 2
+#   0: ignore and continue
+#   1: disconnect user
+#   2: freeze connection and wait
+#_hidden
+#on_keepalive_timeout = 1
+
+# End automatically a disconnected session.
+# This option is recommended for Web applications running in Desktop mode.
+# Session Probe must be enabled to use this feature.
+# value: 0 or 1
+#_hidden
+#end_disconnected_session = 0
+
+# value: 0 or 1
+#_hidden
+#enable_log = 0
+
+# value: 0 or 1
+#_hidden
+#enable_log_rotation = 0
+
+# min = 0, max = 6
+#   1: Fatal
+#   2: Error
+#   3: Info
+#   4: Warning
+#   5: Debug
+#   6: Detail
+#_hidden
+#log_level = 5
+
+# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
+# 0 to disable timeout.
+# min = 0, max = 172800000
+# (in milliseconds)
+#_hidden
+#disconnected_application_limit = 0
+
+# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
+# 0 to disable timeout.
+# min = 0, max = 172800000
+# (in milliseconds)
+#_hidden
+#disconnected_session_limit = 0
+
+# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
+# 0 to disable timeout.
+# min = 0, max = 172800000
+# (in milliseconds)
+#_hidden
+#idle_session_limit = 0
+
+# (in milliseconds)
+#_hidden
+#smart_launcher_clipboard_initialization_delay = 2000
+
+# (in milliseconds)
+#_hidden
+#smart_launcher_start_delay = 0
+
+# (in milliseconds)
+#_hidden
+#smart_launcher_long_delay = 500
+
+# (in milliseconds)
+#_hidden
+#smart_launcher_short_delay = 50
+
+# min = 0, max = 300000
+# (in milliseconds)
+#_hidden
+#launcher_abort_delay = 2000
+
+# value: 0 or 1
+#_hidden
+#enable_crash_dump = 0
+
+# min = 0, max = 1000
+# min = 0
+#_hidden
+#handle_usage_limit = 0
+
+# min = 0, max = 200000000
+# min = 0
+#_hidden
+#memory_usage_limit = 0
+
+# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
+# The alarm is deactivated if this value is less than 200.
+# min = 0, max = 10000
+# min = 0
+#_hidden
+#cpu_usage_alarm_threshold = 0
+
+# min = 0, max = 1
+#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+#_hidden
+#cpu_usage_alarm_action = 0
+
+# min = 0, max = 60000
+# (in milliseconds)
+#_hidden
+#end_of_session_check_delay_time = 0
+
+# value: 0 or 1
+#_hidden
+#ignore_ui_less_processes_during_end_of_session_check = 1
+
+# value: 0 or 1
+#_hidden
+#childless_window_as_unidentified_input_field = 1
+
+# value: 0 or 1
+#_hidden
+#update_disabled_features = 1
+
+# min = 0, max = 511
+#   0x000: none
+#   0x001: Java Access Bridge
+#   0x002: MS Active Accessbility
+#   0x004: MS UI Automation
+#   0x010: Inspect Edge location URL
+#   0x020: Inspect Chrome Address/Search bar
+#   0x040: Inspect Firefox Address/Search bar
+#   0x080: Monitor Internet Explorer event
+#   0x100: Inspect group membership of user
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+#_hidden
+#_hex
+#disabled_features = 352
+
+# value: 0 or 1
+#_hidden
+#enable_bestsafe_interaction = 0
+
+# For targets running WALLIX BestSafe only.
+# min = 0, max = 2
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+#_hidden
+#on_account_manipulation = 0
+
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
+# If empty, the environment variable TMP will be used.
+# maxlen = 3
+#_hidden
+#alternate_directory_environment_variable = 
+
+# If enabled, disconnected session can be recovered by a different primary user.
+# value: 0 or 1
+#_hidden
+#public_session = 0
+
+# value: 0 or 1
+#_advanced
+#customize_executable_name = 0
+
+# value: 0 or 1
+#_advanced
+#allow_multiple_handshake = 0
+
+# value: 0 or 1
+#_advanced
+#at_end_of_session_freeze_connection_and_wait = 1
+
+# value: 0 or 1
+#_advanced
+#enable_cleaner = 1
+
+# value: 0 or 1
+#_advanced
+#clipboard_based_launcher_reset_keyboard_status = 1
+
+[server_cert]
+
+# Keep known server certificates on WAB
+# value: 0 or 1
+#_hidden
+#server_cert_store = 1
+
+# Behavior of certificates check.
+# min = 0, max = 3
+#   0: fails if certificates doesn't match or miss.
+#   1: fails if certificate doesn't match, succeed if no known certificate.
+#   2: succeed if certificates exists (not checked), fails if missing.
+#   3: always succeed.
+# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
+#_hidden
+#server_cert_check = 1
+
+# Warn if check allow connexion to server.
+# min = 0, max = 7
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+#server_access_allowed_message = 1
+
+# Warn that new server certificate file was created.
+# min = 0, max = 7
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+#server_cert_create_message = 1
+
+# Warn that server certificate file was successfully checked.
+# min = 0, max = 7
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+#server_cert_success_message = 1
+
+# Warn that server certificate file checking failed.
+# min = 0, max = 7
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+#server_cert_failure_message = 1
+
+# Warn that server certificate check raised some internal error.
+# min = 0, max = 7
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+#error_message = 1
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -955,174 +943,26 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_ipv6 = 1
 
-[metrics]
+[session_log]
+
+# value: 0 or 1
+#enable_session_log = 1
+
+# value: 0 or 1
+#enable_arcsight_log = 0
+
+# Keyboard Input Masking Level:
+# min = 0, max = 3
+#   0: keyboard input are not masked
+#   1: only passwords are masked
+#   2: passwords and unidentified texts are masked
+#   3: keyboard inputs are not logged
+#_hidden
+#keyboard_input_masking_level = 2
 
 # value: 0 or 1
 #_advanced
-#enable_rdp_metrics = 0
-
-# value: 0 or 1
-#_advanced
-#enable_vnc_metrics = 0
-
-# maxlen = 4096
-#_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
-
-# (in seconds)
-#_advanced
-#log_interval = 5
-
-# (in hours)
-#_advanced
-#log_file_turnover_interval = 24
-
-# signature key to digest log metrics header info
-#_advanced
-#sign_key = 
-
-[file_verification]
-
-#_hidden
-#socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
-
-# Enable use of ICAP service for file verification on upload.
-# value: 0 or 1
-#_hidden
-#enable_up = 0
-
-# Enable use of ICAP service for file verification on download.
-# value: 0 or 1
-#_hidden
-#enable_down = 0
-
-# Verify text data via clipboard from client to server.
-# File verification on upload must be enabled via option Enable up.
-# value: 0 or 1
-#_hidden
-#clipboard_text_up = 0
-
-# Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down.
-# value: 0 or 1
-#_hidden
-#clipboard_text_down = 0
-
-# Block file transfer from client to server on invalid file verification.
-# File verification on upload must be enabled via option Enable up.
-# value: 0 or 1
-#_hidden
-#block_invalid_file_up = 0
-
-# Block file transfer from server to client on invalid file verification.
-# File verification on download must be enabled via option Enable down.
-# value: 0 or 1
-#_hidden
-#block_invalid_file_down = 0
-
-# Block text transfer from client to server on invalid text verification.
-# Text verification on upload must be enabled via option Clipboard text up.
-# value: 0 or 1
-#_hidden
-#block_invalid_clipboard_text_up = 0
-
-# Block text transfer from server to client on invalid text verification.
-# Text verification on download must be enabled via option Clipboard text down.
-# value: 0 or 1
-#_hidden
-#block_invalid_clipboard_text_down = 0
-
-# value: 0 or 1
-#_hidden
-#log_if_accepted = 1
-
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-# Warning: This value affects the RAM used by the session.
-# min = 0
-#_hidden
-#max_file_size_rejected = 256
-
-# Temporary path used when files take up too much memory.
-# maxlen = 4096
-#_hidden
-#tmpdir = /tmp/
-
-[file_storage]
-
-# Enable storage of transferred files (via RDP Clipboard).
-#   never: Never store transferred files.
-#   always: Always store transferred files.
-#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
-#_hidden
-#store_file = never
-
-[icap_server_down]
-
-# Ip or fqdn of ICAP server
-#host = 
-
-# Port of ICAP server
-# min = 0
-#port = 1344
-
-# Service name on ICAP server
-#service_name = avscan
-
-# ICAP server uses tls
-# value: 0 or 1
-#tls = 0
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-# value: 0 or 1
-#_advanced
-#enable_x_context = 1
-
-# Filename sent to ICAP as percent encoding
-# value: 0 or 1
-#_advanced
-#filename_percent_encoding = 0
-
-[icap_server_up]
-
-# Ip or fqdn of ICAP server
-#host = 
-
-# Port of ICAP server
-# min = 0
-#port = 1344
-
-# Service name on ICAP server
-#service_name = avscan
-
-# ICAP server uses tls
-# value: 0 or 1
-#tls = 0
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-# value: 0 or 1
-#_advanced
-#enable_x_context = 1
-
-# Filename sent to ICAP as percent encoding
-# value: 0 or 1
-#_advanced
-#filename_percent_encoding = 0
-
-[mod_replay]
-
-# maxlen = 4096
-#_advanced
-#replay_path = /tmp/
-
-# 0 - Wait for Escape, 1 - End session
-# value: 0 or 1
-#_hidden
-#on_end_of_data = 0
-
-# 0 - replay once, 1 - loop replay
-# value: 0 or 1
-#_hidden
-#replay_on_loop = 0
+#hide_non_printable_kbd_input = 0
 
 [ocr]
 
@@ -1325,6 +1165,159 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #redis_timeout = 500
 
+[file_verification]
+
+#_hidden
+#socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
+
+# Enable use of ICAP service for file verification on upload.
+# value: 0 or 1
+#_hidden
+#enable_up = 0
+
+# Enable use of ICAP service for file verification on download.
+# value: 0 or 1
+#_hidden
+#enable_down = 0
+
+# Verify text data via clipboard from client to server.
+# File verification on upload must be enabled via option Enable up.
+# value: 0 or 1
+#_hidden
+#clipboard_text_up = 0
+
+# Verify text data via clipboard from server to client
+# File verification on download must be enabled via option Enable down.
+# value: 0 or 1
+#_hidden
+#clipboard_text_down = 0
+
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
+# value: 0 or 1
+#_hidden
+#block_invalid_file_up = 0
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+# value: 0 or 1
+#_hidden
+#block_invalid_file_down = 0
+
+# Block text transfer from client to server on invalid text verification.
+# Text verification on upload must be enabled via option Clipboard text up.
+# value: 0 or 1
+#_hidden
+#block_invalid_clipboard_text_up = 0
+
+# Block text transfer from server to client on invalid text verification.
+# Text verification on download must be enabled via option Clipboard text down.
+# value: 0 or 1
+#_hidden
+#block_invalid_clipboard_text_down = 0
+
+# value: 0 or 1
+#_hidden
+#log_if_accepted = 1
+
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
+# Warning: This value affects the RAM used by the session.
+# min = 0
+#_hidden
+#max_file_size_rejected = 256
+
+# Temporary path used when files take up too much memory.
+# maxlen = 4096
+#_hidden
+#tmpdir = /tmp/
+
+[file_storage]
+
+# Enable storage of transferred files (via RDP Clipboard).
+#   never: Never store transferred files.
+#   always: Always store transferred files.
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+#_hidden
+#store_file = never
+
+[icap_server_down]
+
+# Ip or fqdn of ICAP server
+#host = 
+
+# Port of ICAP server
+# min = 0
+#port = 1344
+
+# Service name on ICAP server
+#service_name = avscan
+
+# ICAP server uses tls
+# value: 0 or 1
+#tls = 0
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# value: 0 or 1
+#_advanced
+#enable_x_context = 1
+
+# Filename sent to ICAP as percent encoding
+# value: 0 or 1
+#_advanced
+#filename_percent_encoding = 0
+
+[icap_server_up]
+
+# Ip or fqdn of ICAP server
+#host = 
+
+# Port of ICAP server
+# min = 0
+#port = 1344
+
+# Service name on ICAP server
+#service_name = avscan
+
+# ICAP server uses tls
+# value: 0 or 1
+#tls = 0
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# value: 0 or 1
+#_advanced
+#enable_x_context = 1
+
+# Filename sent to ICAP as percent encoding
+# value: 0 or 1
+#_advanced
+#filename_percent_encoding = 0
+
+[metrics]
+
+# value: 0 or 1
+#_advanced
+#enable_rdp_metrics = 0
+
+# value: 0 or 1
+#_advanced
+#enable_vnc_metrics = 0
+
+# maxlen = 4096
+#_hidden
+#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
+
+# (in seconds)
+#_advanced
+#log_interval = 5
+
+# (in hours)
+#_advanced
+#log_file_turnover_interval = 24
+
+# signature key to digest log metrics header info
+#_advanced
+#sign_key = 
+
 [crypto]
 
 # (hexadecimal string of length 64)
@@ -1350,6 +1343,113 @@ R"gen_config_ini(## Config file for RDP proxy.
 # ${addr}:${port} or ${port} or ${unix_socket_path}
 #_hidden
 #listen_address = :3390
+
+[internal_mod]
+
+# Enable target edit field in login page.
+# value: 0 or 1
+#_advanced
+#enable_target_field = 1
+
+[mod_replay]
+
+# maxlen = 4096
+#_advanced
+#replay_path = /tmp/
+
+# 0 - Wait for Escape, 1 - End session
+# value: 0 or 1
+#_hidden
+#on_end_of_data = 0
+
+# 0 - replay once, 1 - loop replay
+# value: 0 or 1
+#_hidden
+#replay_on_loop = 0
+
+[translation]
+
+# values: en, fr
+#_hidden
+#language = en
+
+# values: Auto, EN, FR
+#_advanced
+#login_language = Auto
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+# value: 0 or 1
+#enable_theme = 0
+
+# Logo displayed when theme is enabled
+#_image=/var/wab/images/rdp-oem-logo.png
+#logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#_adminkit
+#bgcolor = #081F60
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#fgcolor = #FFFFFF
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#separator_color = #CFD5EB
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#focus_color = #004D9C
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#error_color = #FFFF00
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#edit_bgcolor = #FFFFFF
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#edit_fgcolor = #000000
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#edit_focus_color = #004D9C
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#tooltip_bgcolor = #000000
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#tooltip_fgcolor = #FFFF9F
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#tooltip_border_color = #000000
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line1_bgcolor = #E9ECF6
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line1_fgcolor = #000000
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line2_bgcolor = #CFD5EB
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line2_fgcolor = #000000
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_selected_bgcolor = #4472C4
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_selected_fgcolor = #FFFFFF
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_focus_bgcolor = #004D9C
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_focus_fgcolor = #FFFFFF
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_label_bgcolor = #4472C4
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_label_fgcolor = #FFFFFF
 
 [debug]
 
@@ -1542,101 +1642,5 @@ R"gen_config_ini(## Config file for RDP proxy.
 # List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs
 #_advanced
 #probe_client_addresses = 
-
-[remote_program]
-
-# value: 0 or 1
-#allow_resize_hosted_desktop = 1
-
-[translation]
-
-# values: en, fr
-#_hidden
-#language = en
-
-# values: Auto, EN, FR
-#_advanced
-#login_language = Auto
-
-[internal_mod]
-
-# Enable target edit field in login page.
-# value: 0 or 1
-#_advanced
-#enable_target_field = 1
-
-[theme]
-
-# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
-# value: 0 or 1
-#enable_theme = 0
-
-# Logo displayed when theme is enabled
-#_image=/var/wab/images/rdp-oem-logo.png
-#logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#_adminkit
-#bgcolor = #081F60
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#fgcolor = #FFFFFF
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#separator_color = #CFD5EB
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#focus_color = #004D9C
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#error_color = #FFFF00
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#edit_bgcolor = #FFFFFF
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#edit_fgcolor = #000000
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#edit_focus_color = #004D9C
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#tooltip_bgcolor = #000000
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#tooltip_fgcolor = #FFFF9F
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#tooltip_border_color = #000000
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_line1_bgcolor = #E9ECF6
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_line1_fgcolor = #000000
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_line2_bgcolor = #CFD5EB
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_line2_fgcolor = #000000
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_selected_bgcolor = #4472C4
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_selected_fgcolor = #FFFFFF
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_focus_bgcolor = #004D9C
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_focus_fgcolor = #FFFFFF
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_label_bgcolor = #4472C4
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_label_fgcolor = #FFFFFF
 
 )gen_config_ini"

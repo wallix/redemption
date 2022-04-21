@@ -24,8 +24,10 @@
 #include "configs/enumeration.hpp"
 
 #include <type_traits>
-#include <string>
+#include <functional>
 #include <unordered_set>
+#include <vector>
+#include <string>
 #include <memory>
 
 
@@ -229,42 +231,67 @@ struct ConfigSpecWrapper
     {}
 
 private:
-    Names current_section_names {};
-    std::unordered_set<std::string> sections;
+    Names const * current_section_names = nullptr;
+    struct SectionInfo
+    {
+        Names names;
+        std::function<void()> mk_section;
+    };
+    std::vector<SectionInfo> section_makers;
+    std::unordered_set<std::string> section_names;
 
 public:
     void set_sections(std::initializer_list<char const*> l)
     {
-        if (!sections.empty()) {
-            throw std::runtime_error("set_sections() is alerady initialized");
-        }
-
         for (char const* section : l) {
-            sections.emplace(section);
+            if (!section_names.emplace(section).second) {
+                throw std::runtime_error(str_concat("set_sections(): duplicated section name: ", section));
+            }
+            section_makers.emplace_back().names.all = section;
         }
-    }
-
-    template<class Fn>
-    void section(Names&& names, Fn fn)
-    {
-        if (sections.find(names.all) == sections.end()) {
-            throw std::runtime_error("Unknown section '" + names.all + "'. Please use set_sections()");
-        }
-
-        current_section_names = std::move(names);
-        assert(current_section_names.sesman.empty());
-
-        dispatch([&](auto&... writer){
-            (writer.do_start_section(current_section_names), ...);
-            fn();
-            (writer.do_stop_section(current_section_names), ...);
-        });
     }
 
     template<class Fn>
     void section(char const* name, Fn fn)
     {
         section(Names{name}, fn);
+    }
+
+    template<class Fn>
+    void section(Names&& names, Fn fn)
+    {
+        assert(names.sesman.empty());
+
+        if (section_names.find(names.all) == section_names.end()) {
+            throw std::runtime_error(str_concat(
+                "Unknown section '", names.all, "'. Please add it in set_sections()"
+            ));
+        }
+
+        auto it = std::find_if(section_makers.begin(), section_makers.end(), [&](auto const& info){
+            return info.names.all == names.all;
+        });
+
+        if (it->mk_section) {
+            throw std::runtime_error(str_concat("'", names.all, "' is already set"));
+        }
+
+        it->names = std::move(names);
+        it->mk_section = [this, fn]{
+            dispatch([&](auto&... writer){
+                (writer.do_start_section(*current_section_names), ...);
+                fn();
+                (writer.do_stop_section(*current_section_names), ...);
+            });
+        };
+    }
+
+    void build()
+    {
+        for (auto& makers : section_makers) {
+            current_section_names = &makers.names;
+            makers.mk_section();
+        }
     }
 
     template<class... Ts>
@@ -308,7 +335,7 @@ public:
 
         dispatch([&](auto&... writer){
             (writer.evaluate_member(
-                current_section_names,
+                *current_section_names,
                 infos,
                 this->enums
             ), ...);

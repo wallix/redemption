@@ -2181,8 +2181,8 @@ public:
 
                 // LOG(LOG_INFO, "cert pem: %s", blob_str);
 
-                this->vars.set_acl<cfg::mod_rdp::server_cert>(blob_str);
-                this->vars.ask<cfg::mod_rdp::server_cert_response>();
+                this->vars.set_acl<cfg::server_cert::external_cert>(blob_str);
+                this->vars.ask<cfg::server_cert::external_response>();
 
                 return result;
             });
@@ -2386,9 +2386,9 @@ public:
     void acl_update(AclFieldMask const& acl_fields) override
     {
         if (this->enable_server_cert_external_validation
-         && acl_fields.has<cfg::mod_rdp::server_cert_response>()
+         && acl_fields.has<cfg::server_cert::external_response>()
         ) {
-            auto const& message = this->vars.get<cfg::mod_rdp::server_cert_response>();
+            auto const& message = this->vars.get<cfg::server_cert::external_response>();
 
             if (message == "Ok" || message == "ok") {
                 LOG(LOG_INFO, "Certificate was valid according to authentifier");

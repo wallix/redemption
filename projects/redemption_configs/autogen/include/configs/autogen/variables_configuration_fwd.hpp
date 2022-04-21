@@ -53,13 +53,6 @@ namespace cfg
         struct enable_ipv6;
     };
 
-    struct session_log {
-        struct enable_session_log;
-        struct enable_arcsight_log;
-        struct keyboard_input_masking_level;
-        struct hide_non_printable_kbd_input;
-    };
-
     struct client {
         struct keyboard_layout;
         struct keyboard_layout_proposals;
@@ -101,6 +94,10 @@ namespace cfg
         struct connection_retry_count;
     };
 
+    struct remote_program {
+        struct allow_resize_hosted_desktop;
+    };
+
     struct mod_rdp {
         struct rdp_compression;
         struct disconnect_on_logon_user_change;
@@ -134,60 +131,11 @@ namespace cfg
         struct use_client_provided_alternate_shell;
         struct use_client_provided_remoteapp;
         struct use_native_remoteapp_capability;
-        struct enable_session_probe;
-        struct session_probe_use_clipboard_based_launcher;
-        struct session_probe_enable_launch_mask;
-        struct session_probe_on_launch_failure;
-        struct session_probe_launch_timeout;
-        struct session_probe_launch_fallback_timeout;
-        struct session_probe_start_launch_timeout_timer_only_after_logon;
-        struct session_probe_keepalive_timeout;
-        struct session_probe_on_keepalive_timeout;
-        struct session_probe_end_disconnected_session;
-        struct session_probe_customize_executable_name;
-        struct session_probe_enable_log;
-        struct session_probe_enable_log_rotation;
-        struct session_probe_log_level;
-        struct session_probe_disconnected_application_limit;
-        struct session_probe_disconnected_session_limit;
-        struct session_probe_idle_session_limit;
-        struct session_probe_exe_or_file;
-        struct session_probe_arguments;
-        struct session_probe_clipboard_based_launcher_clipboard_initialization_delay;
-        struct session_probe_clipboard_based_launcher_start_delay;
-        struct session_probe_clipboard_based_launcher_long_delay;
-        struct session_probe_clipboard_based_launcher_short_delay;
-        struct session_probe_launcher_abort_delay;
-        struct session_probe_allow_multiple_handshake;
-        struct session_probe_enable_crash_dump;
-        struct session_probe_handle_usage_limit;
-        struct session_probe_memory_usage_limit;
-        struct session_probe_cpu_usage_alarm_threshold;
-        struct session_probe_cpu_usage_alarm_action;
-        struct session_probe_end_of_session_check_delay_time;
-        struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
-        struct session_probe_childless_window_as_unidentified_input_field;
-        struct session_probe_update_disabled_features;
-        struct session_probe_disabled_features;
-        struct session_probe_bestsafe_integration;
-        struct session_probe_on_account_manipulation;
-        struct session_probe_alternate_directory_environment_variable;
-        struct session_probe_public_session;
-        struct session_probe_at_end_of_session_freeze_connection_and_wait;
-        struct session_probe_enable_cleaner;
-        struct session_probe_clipboard_based_launcher_reset_keyboard_status;
         struct application_driver_exe_or_file;
         struct application_driver_script_argument;
         struct application_driver_chrome_dt_script;
         struct application_driver_chrome_uia_script;
         struct application_driver_ie_script;
-        struct server_cert_store;
-        struct server_cert_check;
-        struct server_access_allowed_message;
-        struct server_cert_create_message;
-        struct server_cert_success_message;
-        struct server_cert_failure_message;
-        struct server_cert_error_message;
         struct hide_client_name;
         struct bogus_ios_rdpdr_virtual_channel;
         struct enable_rdpdr_data_analysis;
@@ -197,9 +145,6 @@ namespace cfg
         struct experimental_fix_too_long_cookie;
         struct split_domain;
         struct wabam_uses_translated_remoteapp;
-        struct enable_server_cert_external_validation;
-        struct server_cert;
-        struct server_cert_response;
         struct session_shadowing_support;
         struct use_license_store;
         struct enable_remotefx;
@@ -213,6 +158,70 @@ namespace cfg
         struct bogus_monitor_layout_treatment;
         struct effective_krb_armoring_user;
         struct effective_krb_armoring_password;
+        struct remote_programs_disconnect_message_delay;
+        struct use_session_probe_to_launch_remote_program;
+    };
+
+    struct session_probe {
+        struct enable_session_probe;
+        struct exe_or_file;
+        struct arguments;
+        struct use_smart_launcher;
+        struct enable_launch_mask;
+        struct on_launch_failure;
+        struct launch_timeout;
+        struct launch_fallback_timeout;
+        struct start_launch_timeout_timer_only_after_logon;
+        struct keepalive_timeout;
+        struct on_keepalive_timeout;
+        struct end_disconnected_session;
+        struct enable_log;
+        struct enable_log_rotation;
+        struct log_level;
+        struct disconnected_application_limit;
+        struct disconnected_session_limit;
+        struct idle_session_limit;
+        struct smart_launcher_clipboard_initialization_delay;
+        struct smart_launcher_start_delay;
+        struct smart_launcher_long_delay;
+        struct smart_launcher_short_delay;
+        struct launcher_abort_delay;
+        struct enable_crash_dump;
+        struct handle_usage_limit;
+        struct memory_usage_limit;
+        struct cpu_usage_alarm_threshold;
+        struct cpu_usage_alarm_action;
+        struct end_of_session_check_delay_time;
+        struct ignore_ui_less_processes_during_end_of_session_check;
+        struct childless_window_as_unidentified_input_field;
+        struct update_disabled_features;
+        struct disabled_features;
+        struct enable_bestsafe_interaction;
+        struct on_account_manipulation;
+        struct alternate_directory_environment_variable;
+        struct public_session;
+        struct outbound_connection_monitoring_rules;
+        struct process_monitoring_rules;
+        struct extra_system_processes;
+        struct windows_of_these_applications_as_unidentified_input_field;
+        struct customize_executable_name;
+        struct allow_multiple_handshake;
+        struct at_end_of_session_freeze_connection_and_wait;
+        struct enable_cleaner;
+        struct clipboard_based_launcher_reset_keyboard_status;
+    };
+
+    struct server_cert {
+        struct server_cert_store;
+        struct server_cert_check;
+        struct server_access_allowed_message;
+        struct server_cert_create_message;
+        struct server_cert_success_message;
+        struct server_cert_failure_message;
+        struct error_message;
+        struct enable_external_validation;
+        struct external_cert;
+        struct external_response;
     };
 
     struct mod_vnc {
@@ -227,38 +236,11 @@ namespace cfg
         struct enable_ipv6;
     };
 
-    struct metrics {
-        struct enable_rdp_metrics;
-        struct enable_vnc_metrics;
-        struct log_dir_path;
-        struct log_interval;
-        struct log_file_turnover_interval;
-        struct sign_key;
-    };
-
-    struct file_verification {
-        struct socket_path;
-        struct enable_up;
-        struct enable_down;
-        struct clipboard_text_up;
-        struct clipboard_text_down;
-        struct block_invalid_file_up;
-        struct block_invalid_file_down;
-        struct block_invalid_clipboard_text_up;
-        struct block_invalid_clipboard_text_down;
-        struct log_if_accepted;
-        struct max_file_size_rejected;
-        struct tmpdir;
-    };
-
-    struct file_storage {
-        struct store_file;
-    };
-
-    struct mod_replay {
-        struct replay_path;
-        struct on_end_of_data;
-        struct replay_on_loop;
+    struct session_log {
+        struct enable_session_log;
+        struct enable_arcsight_log;
+        struct keyboard_input_masking_level;
+        struct hide_non_printable_kbd_input;
     };
 
     struct ocr {
@@ -267,6 +249,13 @@ namespace cfg
         struct interval;
         struct on_title_bar_only;
         struct max_unrecog_char_rate;
+    };
+
+    struct capture {
+        struct record_filebase;
+        struct record_subdirectory;
+        struct fdx_path;
+        struct disable_keyboard_log;
     };
 
     struct video {
@@ -294,13 +283,6 @@ namespace cfg
         struct file_permissions;
     };
 
-    struct capture {
-        struct record_filebase;
-        struct record_subdirectory;
-        struct fdx_path;
-        struct disable_keyboard_log;
-    };
-
     struct audit {
         struct rt_display;
         struct use_redis;
@@ -315,6 +297,34 @@ namespace cfg
         struct redis_timeout;
     };
 
+    struct file_verification {
+        struct socket_path;
+        struct enable_up;
+        struct enable_down;
+        struct clipboard_text_up;
+        struct clipboard_text_down;
+        struct block_invalid_file_up;
+        struct block_invalid_file_down;
+        struct block_invalid_clipboard_text_up;
+        struct block_invalid_clipboard_text_down;
+        struct log_if_accepted;
+        struct max_file_size_rejected;
+        struct tmpdir;
+    };
+
+    struct file_storage {
+        struct store_file;
+    };
+
+    struct metrics {
+        struct enable_rdp_metrics;
+        struct enable_vnc_metrics;
+        struct log_dir_path;
+        struct log_interval;
+        struct log_file_turnover_interval;
+        struct sign_key;
+    };
+
     struct crypto {
         struct encryption_key;
         struct sign_key;
@@ -324,40 +334,6 @@ namespace cfg
         struct enable_websocket;
         struct use_tls;
         struct listen_address;
-    };
-
-    struct debug {
-        struct fake_target_ip;
-        struct capture;
-        struct auth;
-        struct session;
-        struct front;
-        struct mod_rdp;
-        struct mod_vnc;
-        struct mod_internal;
-        struct sck_mod;
-        struct sck_front;
-        struct password;
-        struct compression;
-        struct cache;
-        struct ocr;
-        struct ffmpeg;
-        struct config;
-        struct mod_rdp_use_failure_simulation_socket_transport;
-        struct probe_client_addresses;
-    };
-
-    struct remote_program {
-        struct allow_resize_hosted_desktop;
-    };
-
-    struct translation {
-        struct language;
-        struct login_language;
-    };
-
-    struct internal_mod {
-        struct enable_target_field;
     };
 
     struct context {
@@ -409,10 +385,6 @@ namespace cfg
         struct pattern_notify;
         struct opt_message;
         struct login_message;
-        struct session_probe_outbound_connection_monitoring_rules;
-        struct session_probe_process_monitoring_rules;
-        struct session_probe_extra_system_processes;
-        struct session_probe_windows_of_these_applications_as_unidentified_input_field;
         struct disconnect_reason;
         struct disconnect_reason_ack;
         struct ip_target;
@@ -430,8 +402,6 @@ namespace cfg
         struct auth_command_rail_exec_arguments;
         struct auth_command_rail_exec_account;
         struct auth_command_rail_exec_password;
-        struct rail_disconnect_message_delay;
-        struct use_session_probe_to_launch_remote_program;
         struct session_probe_launch_error_message;
         struct close_box_extra_message;
         struct is_wabam;
@@ -450,6 +420,21 @@ namespace cfg
         struct smartcard_login;
         struct banner_message;
         struct banner_type;
+    };
+
+    struct internal_mod {
+        struct enable_target_field;
+    };
+
+    struct mod_replay {
+        struct replay_path;
+        struct on_end_of_data;
+        struct replay_on_loop;
+    };
+
+    struct translation {
+        struct language;
+        struct login_language;
     };
 
     struct theme {
@@ -476,6 +461,27 @@ namespace cfg
         struct selector_focus_fgcolor;
         struct selector_label_bgcolor;
         struct selector_label_fgcolor;
+    };
+
+    struct debug {
+        struct fake_target_ip;
+        struct capture;
+        struct auth;
+        struct session;
+        struct front;
+        struct mod_rdp;
+        struct mod_vnc;
+        struct mod_internal;
+        struct sck_mod;
+        struct sck_front;
+        struct password;
+        struct compression;
+        struct cache;
+        struct ocr;
+        struct ffmpeg;
+        struct config;
+        struct mod_rdp_use_failure_simulation_socket_transport;
+        struct probe_client_addresses;
     };
 
 } // namespace cfg

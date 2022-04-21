@@ -281,11 +281,11 @@ private:
          || e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG
          || e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG
         ) {
-            if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+            if (ini.get<cfg::session_probe::on_launch_failure>() ==
                     SessionProbeOnLaunchFailure::retry_without_session_probe)
             {
                 LOG(LOG_INFO, "Retry connection without session probe");
-                ini.set<cfg::mod_rdp::enable_session_probe>(false);
+                ini.set<cfg::session_probe::enable_session_probe>(false);
                 return EndSessionResult::retry;
             }
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));

@@ -62,10 +62,12 @@ namespace cfg_specs {
         void section(char const * name, F closure_section);
 
         template<class F>
-        void section(cfg_attributes::names_, F closure_section);
+        void section(cfg_attributes::names, F closure_section);
 
         template<class... Args>
         void member(Args...);
+
+        void build();
     };
 #else
 template<class Writer>
@@ -87,6 +89,8 @@ void config_spec_definition(Writer && W)
         "all_target_mod",
         "remote_program",
         "mod_rdp",
+        "session_probe",
+        "server_cert",
         "mod_vnc",
 
         "session_log",
@@ -156,6 +160,8 @@ void config_spec_definition(Writer && W)
 
     W.section("globals", [&]
     {
+        auto co_session = connpolicy::section{"session"};
+
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L,
             type_<std::chrono::milliseconds>(), names{"front_connection_time"},
             desc{"from incoming connection to \"up_and_running\" state"});
@@ -182,7 +188,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"handshake_timeout"}, desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"base_inactivity_timeout"}, desc{"No automatic disconnection due to inactivity, timer is set on primary authentication.\nIf value is between 1 and 30, then 30 is used.\nIf value is set to 0, then inactivity timeout value is unlimited."}, set(900));
-        W.member(hidden_in_gui, rdp_connpolicy | vnc_connpolicy | jh_connpolicy, connpolicy::section{"session"},
+        W.member(hidden_in_gui, rdp_connpolicy | vnc_connpolicy | jh_connpolicy, co_session,
             L, type_<std::chrono::seconds>(), names{"inactivity_timeout"}, set(0), desc{
                 "No automatic disconnection due to inactivity, timer is set on target session.\n"
                 "If value is between 1 and 30, then 30 is used.\n"
@@ -363,9 +369,6 @@ void config_spec_definition(Writer && W)
 
     W.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     {
-        auto co_probe = connpolicy::section{"session_probe"};
-        auto co_cert = connpolicy::section{"server_cert"};
-
         W.member(advanced_in_gui, no_sesman, L, type_<RdpCompression>{}, names{"rdp_compression"}, set(RdpCompression::rdp6_1));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"disconnect_on_logon_user_change"}, set(false));
@@ -422,131 +425,11 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"use_native_remoteapp_capability"}, desc{"As far as possible, use native RemoteApp capability"}, set(true));
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{"enable_session_probe"}, set(false), rdp_connpolicy.set(true) | jh_connpolicy.always(false));
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(),
-            names{
-                .all="session_probe_use_clipboard_based_launcher",
-                .ini="session_probe_use_smart_launcher",
-                .connpolicy="use_smart_launcher"},
-            desc{
-                "Minimum supported server : Windows Server 2008.\n"
-                "Clipboard redirection should be remain enabled on Terminal Server."},
-            set(true));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_enable_launch_mask", .connpolicy="enable_launch_mask"}, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnLaunchFailure>(), names{.all="session_probe_on_launch_failure", .connpolicy="on_launch_failure"}, set(SessionProbeOnLaunchFailure::disconnect_user));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{.all="session_probe_launch_timeout", .connpolicy="launch_timeout"}, desc{
-            "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
-            "0 to disable timeout."
-        }, set(40000));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{.all="session_probe_launch_fallback_timeout", .connpolicy="launch_fallback_timeout"}, desc{
-            "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
-            "0 to disable timeout."
-        }, set(40000));
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_start_launch_timeout_timer_only_after_logon", .connpolicy="start_launch_timeout_timer_only_after_logon"}, desc{
-            "Minimum supported server : Windows Server 2008."
-        }, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{.all="session_probe_keepalive_timeout", .connpolicy="keepalive_timeout"}, set(5000));
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnKeepaliveTimeout>(), names{.all="session_probe_on_keepalive_timeout", .connpolicy="on_keepalive_timeout"}, set(SessionProbeOnKeepaliveTimeout::disconnect_user));
-
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_end_disconnected_session", .connpolicy="end_disconnected_session"}, desc{
-            "End automatically a disconnected session.\n"
-            "This option is recommended for Web applications running in Desktop mode.\n"
-            "Session Probe must be enabled to use this feature."
-        }, set(false));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_customize_executable_name"}, set(false));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_enable_log", .connpolicy="enable_log"}, set(false));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_enable_log_rotation", .connpolicy="enable_log_rotation"}, set(false));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeLogLevel>(), names{.all="session_probe_log_level", .connpolicy="log_level"}, set(SessionProbeLogLevel::Debug));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{.all="session_probe_disconnected_application_limit", .connpolicy="disconnected_application_limit"}, desc{
-            "(Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.\n"
-            "0 to disable timeout."
-        }, set(0));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{.all="session_probe_disconnected_session_limit", .connpolicy="disconnected_session_limit"}, desc{
-            "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
-            "0 to disable timeout."
-        }, set(0));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{.all="session_probe_idle_session_limit", .connpolicy="idle_session_limit"}, desc{
-            "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
-            "0 to disable timeout."
-        }, set(0));
-
-        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), names{"session_probe_exe_or_file"}, set("||CMD"));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), names{"session_probe_arguments"}, set(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.all="session_probe_clipboard_based_launcher_clipboard_initialization_delay", .connpolicy="smart_launcher_clipboard_initialization_delay"}, set(2000));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.all="session_probe_clipboard_based_launcher_start_delay", .connpolicy="smart_launcher_start_delay"}, set(0));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.all="session_probe_clipboard_based_launcher_long_delay", .connpolicy="smart_launcher_long_delay"}, set(500));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.all="session_probe_clipboard_based_launcher_short_delay", .connpolicy="smart_launcher_short_delay"}, set(50));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{.all="session_probe_launcher_abort_delay", .connpolicy="launcher_abort_delay"}, set(2000));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_allow_multiple_handshake"}, set(false));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_enable_crash_dump", .connpolicy="enable_crash_dump"}, set(false));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 1000>>(), names{.all="session_probe_handle_usage_limit", .connpolicy="handle_usage_limit"}, set(0));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 200'000'000>>(), names{.all="session_probe_memory_usage_limit", .connpolicy="memory_usage_limit"}, set(0));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 10000>>(), names{.all="session_probe_cpu_usage_alarm_threshold", .connpolicy="cpu_usage_alarm_threshold"}, desc{
-            "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.\n"
-            "The alarm is deactivated if this value is less than 200."
-        }, set(0));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeCPUUsageAlarmAction>(), names{.all="session_probe_cpu_usage_alarm_action", .connpolicy="cpu_usage_alarm_action"}, set(SessionProbeCPUUsageAlarmAction::Restart));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{.all="session_probe_end_of_session_check_delay_time", .connpolicy="end_of_session_check_delay_time"}, set(0));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_ignore_ui_less_processes_during_end_of_session_check", .connpolicy="ignore_ui_less_processes_during_end_of_session_check"}, set(true));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_childless_window_as_unidentified_input_field", .connpolicy="childless_window_as_unidentified_input_field"}, set(true));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_update_disabled_features", .connpolicy="update_disabled_features"}, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), names{.all="session_probe_disabled_features", .connpolicy="disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
-
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_bestsafe_integration", .connpolicy="enable_bestsafe_interaction"}, set(false));
-
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), names{.all="session_probe_on_account_manipulation", .connpolicy="on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L,
-            type_<types::fixed_string<3>>(),
-            names{
-                .all="session_probe_alternate_directory_environment_variable",
-                .connpolicy="alternate_directory_environment_variable"},
-            desc{
-                "The name of the environment variable pointing to the alternative directory to launch Session Probe.\n"
-                "If empty, the environment variable TMP will be used."});
-
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.all="session_probe_public_session", .connpolicy="public_session"}, desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_at_end_of_session_freeze_connection_and_wait"}, set(true));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_enable_cleaner"}, set(true));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_clipboard_based_launcher_reset_keyboard_status"}, set(true));
-
-
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_exe_or_file"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_script_argument"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_chrome_dt_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_chrome_uia_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_ie_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
-
-
-        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, co_cert, L, type_<bool>(), names{"server_cert_store"}, desc{"Keep known server certificates on WAB"}, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, co_cert, L, type_<ServerCertCheck>(), names{"server_cert_check"}, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
-
-        struct P { char const * name; char const * desc; };
-        for (P p : {
-            P{"server_access_allowed_message", "Warn if check allow connexion to server."},
-            P{"server_cert_create_message", "Warn that new server certificate file was created."},
-            P{"server_cert_success_message", "Warn that server certificate file was successfully checked."},
-            P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
-        }) {
-            W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, co_cert, L, type_<ServerNotification>(), names{p.name}, desc{p.desc}, set(ServerNotification::syslog));
-        }
-        W.member(hidden_in_gui, no_sesman, L, type_<ServerNotification>(), names{"server_cert_error_message"}, desc{"Warn that server certificate check raised some internal error."}, set(ServerNotification::syslog));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"hide_client_name"}, desc{"Do not transmit client machine name or RDP server."}, set(false));
 
@@ -572,10 +455,6 @@ void config_spec_definition(Writer && W)
         }, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"wabam_uses_translated_remoteapp"}, set(false));
-
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"enable_server_cert_external_validation"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"server_cert"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"server_cert_response"}, desc{"empty string for wait, 'Ok' or error message"});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_shadowing_support"}, desc{"Enables Session Shadowing Support."}, set(true));
 
@@ -654,6 +533,151 @@ void config_spec_definition(Writer && W)
                 "Effective password to be used for armoring Kerberos tickets."
             }
         );
+
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(), names{"remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
+
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
+    });
+
+    W.section("session_probe", [&]
+    {
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_session_probe"}, set(false), rdp_connpolicy.set(true) | jh_connpolicy.always(false));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), names{"exe_or_file"}, set("||CMD"));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), names{"arguments"}, set(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+            names{"use_smart_launcher"},
+            desc{
+                "Minimum supported server : Windows Server 2008.\n"
+                "Clipboard redirection should be remain enabled on Terminal Server."},
+            set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_launch_mask"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<SessionProbeOnLaunchFailure>(), names{"on_launch_failure"}, set(SessionProbeOnLaunchFailure::disconnect_user));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launch_timeout"}, desc{
+            "This parameter is used if on_launch_failure is 1 (disconnect user).\n"
+            "0 to disable timeout."
+        }, set(40000));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launch_fallback_timeout"}, desc{
+            "This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
+            "0 to disable timeout."
+        }, set(40000));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"start_launch_timeout_timer_only_after_logon"}, desc{
+            "Minimum supported server : Windows Server 2008."
+        }, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{"keepalive_timeout"}, set(5000));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<SessionProbeOnKeepaliveTimeout>(), names{"on_keepalive_timeout"}, set(SessionProbeOnKeepaliveTimeout::disconnect_user));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"end_disconnected_session"}, desc{
+            "End automatically a disconnected session.\n"
+            "This option is recommended for Web applications running in Desktop mode.\n"
+            "Session Probe must be enabled to use this feature."
+        }, set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_log"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_log_rotation"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeLogLevel>(), names{"log_level"}, set(SessionProbeLogLevel::Debug));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"disconnected_application_limit"}, desc{
+            "(Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.\n"
+            "0 to disable timeout."
+        }, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"disconnected_session_limit"}, desc{
+            "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
+            "0 to disable timeout."
+        }, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"idle_session_limit"}, desc{
+            "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
+            "0 to disable timeout."
+        }, set(0));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_clipboard_initialization_delay"}, set(2000));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_start_delay"}, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_long_delay"}, set(500));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_short_delay"}, set(50));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launcher_abort_delay"}, set(2000));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_crash_dump"}, set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<types::u32, 0, 1000>>(), names{"handle_usage_limit"}, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<types::u32, 0, 200'000'000>>(), names{"memory_usage_limit"}, set(0));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<types::u32, 0, 10000>>(), names{"cpu_usage_alarm_threshold"}, desc{
+            "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.\n"
+            "The alarm is deactivated if this value is less than 200."
+        }, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeCPUUsageAlarmAction>(), names{"cpu_usage_alarm_action"}, set(SessionProbeCPUUsageAlarmAction::Restart));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{"end_of_session_check_delay_time"}, set(0));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"childless_window_as_unidentified_input_field"}, set(true));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"update_disabled_features"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeDisabledFeature>(), names{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_bestsafe_interaction"}, set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<SessionProbeOnAccountManipulation>(), names{"on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L,
+            type_<types::fixed_string<3>>(),
+            names{"alternate_directory_environment_variable"},
+            desc{
+                "The name of the environment variable pointing to the alternative directory to launch Session Probe.\n"
+                "If empty, the environment variable TMP will be used."});
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"public_session"}, desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
+
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), names{"outbound_connection_monitoring_rules"}, desc{
+            "Comma-separated rules\n"
+            "(Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)\n"
+            "(Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)\n"
+            "(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)\n"
+            "(Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"
+            "Session Probe must be enabled to use this feature."
+        });
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), names{"process_monitoring_rules"}, desc{
+            "Comma-separated rules (Ex.: $deny:Taskmgr)\n"
+            "@ = All child processes of Bastion Application (Ex.: $deny:@)\n"
+            "Session Probe must be enabled to use this feature."
+        });
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), names{"extra_system_processes"}, desc{"Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)"});
+
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), names{"windows_of_these_applications_as_unidentified_input_field"}, desc{"Comma-separated processes (Ex.: chrome.exe,ngf.exe)"});
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"customize_executable_name"}, set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"allow_multiple_handshake"}, set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"at_end_of_session_freeze_connection_and_wait"}, set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_cleaner"}, set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"clipboard_based_launcher_reset_keyboard_status"}, set(true));
+    });
+
+    W.section(names{"server_cert"}, [&]
+    {
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<bool>(), names{"server_cert_store"}, desc{"Keep known server certificates on WAB"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy, L, type_<ServerCertCheck>(), names{"server_cert_check"}, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
+
+        struct P { char const * name; char const * desc; };
+        for (P p : {
+            P{"server_access_allowed_message", "Warn if check allow connexion to server."},
+            P{"server_cert_create_message", "Warn that new server certificate file was created."},
+            P{"server_cert_success_message", "Warn that server certificate file was successfully checked."},
+            P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
+        }) {
+            W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<ServerNotification>(), names{p.name}, desc{p.desc}, set(ServerNotification::syslog));
+        }
+        W.member(hidden_in_gui, no_sesman, L, type_<ServerNotification>(), names{"error_message"}, desc{"Warn that server certificate check raised some internal error."}, set(ServerNotification::syslog));
+
+        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"enable_external_validation"});
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"external_cert"});
+        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"external_response"}, desc{"empty string for wait, 'Ok' or error message"});
     });
 
     W.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
@@ -839,12 +863,14 @@ void config_spec_definition(Writer && W)
 
     W.section("capture", [&]
     {
+        auto co_video = connpolicy::section{"video"};
+
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"record_filebase"}, desc{"basename without extension"});
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"record_subdirectory"}, desc{"subdirectory of record_path (video section)"});
 
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"fdx_path"});
 
-        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, connpolicy::section{"video"}, L, type_<KeyboardLogFlagsCP>{}, names{"disable_keyboard_log"}, desc{
+        W.member(no_ini_no_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, co_video, L, type_<KeyboardLogFlagsCP>{}, names{"disable_keyboard_log"}, desc{
             "Disable keyboard log:\n"
             "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }, disable_prefix_val, set(KeyboardLogFlagsCP::syslog));
@@ -947,9 +973,6 @@ void config_spec_definition(Writer && W)
 
     W.section("context", [&]
     {
-        auto co_rdp = connpolicy::section{"rdp"};
-        auto co_probe = connpolicy::section{"session_probe"};
-
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"psid"}, desc{"Proxy session log id"});
 
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<ColorDepth>(), names{.all="opt_bpp", .sesman="bpp"}, set(ColorDepth::depth24));
@@ -1023,23 +1046,6 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"login_message"});
 
-        W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.all="session_probe_outbound_connection_monitoring_rules", .connpolicy="outbound_connection_monitoring_rules"}, desc{
-            "Comma-separated rules\n"
-            "(Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)\n"
-            "(Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)\n"
-            "(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)\n"
-            "(Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"
-            "Session Probe must be enabled to use this feature."
-        });
-        W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.all="session_probe_process_monitoring_rules", .connpolicy="process_monitoring_rules"}, desc{
-            "Comma-separated rules (Ex.: $deny:Taskmgr)\n"
-            "@ = All child processes of Bastion Application (Ex.: $deny:@)\n"
-            "Session Probe must be enabled to use this feature."
-        });
-        W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.all="session_probe_extra_system_processes", .connpolicy="extra_system_processes"}, desc{"Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)"});
-
-        W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.all="session_probe_windows_of_these_applications_as_unidentified_input_field", .connpolicy="windows_of_these_applications_as_unidentified_input_field"}, desc{"Comma-separated processes (Ex.: chrome.exe,ngf.exe)"});
-
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"disconnect_reason"});
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), names{"disconnect_reason_ack"}, set(false));
 
@@ -1061,10 +1067,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_arguments"});
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_account"});
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, NL, type_<std::string>(), names{"auth_command_rail_exec_password"});
-
-        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, co_rdp, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(), names{.all="rail_disconnect_message_delay", .connpolicy="remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
-
-        W.member(no_ini_no_gui, rdp_connpolicy, co_rdp, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
 
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"session_probe_launch_error_message"});
 
@@ -1137,6 +1139,8 @@ void config_spec_definition(Writer && W)
     });
 
     REDEMPTION_DIAGNOSTIC_POP()
+
+    W.build();
 }
 
 }

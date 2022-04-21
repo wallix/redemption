@@ -6,68 +6,74 @@ void Inifile::ConfigurationHolder::set_section(zstring_view section) {
     else if (section == "globals"_zv) {
         this->section_id = 1;
     }
-    else if (section == "session_log"_zv) {
+    else if (section == "client"_zv) {
         this->section_id = 2;
     }
-    else if (section == "client"_zv) {
+    else if (section == "all_target_mod"_zv) {
         this->section_id = 3;
     }
-    else if (section == "all_target_mod"_zv) {
+    else if (section == "remote_program"_zv) {
         this->section_id = 4;
     }
     else if (section == "mod_rdp"_zv) {
         this->section_id = 5;
     }
-    else if (section == "mod_vnc"_zv) {
+    else if (section == "session_probe"_zv) {
         this->section_id = 6;
     }
-    else if (section == "metrics"_zv) {
+    else if (section == "server_cert"_zv) {
         this->section_id = 7;
     }
-    else if (section == "file_verification"_zv) {
+    else if (section == "mod_vnc"_zv) {
         this->section_id = 8;
     }
-    else if (section == "file_storage"_zv) {
+    else if (section == "session_log"_zv) {
         this->section_id = 9;
     }
-    else if (section == "icap_server_down"_zv) {
+    else if (section == "ocr"_zv) {
         this->section_id = 10;
     }
-    else if (section == "icap_server_up"_zv) {
+    else if (section == "video"_zv) {
         this->section_id = 11;
     }
-    else if (section == "mod_replay"_zv) {
+    else if (section == "audit"_zv) {
         this->section_id = 12;
     }
-    else if (section == "ocr"_zv) {
+    else if (section == "file_verification"_zv) {
         this->section_id = 13;
     }
-    else if (section == "video"_zv) {
+    else if (section == "file_storage"_zv) {
         this->section_id = 14;
     }
-    else if (section == "audit"_zv) {
+    else if (section == "icap_server_down"_zv) {
         this->section_id = 15;
     }
-    else if (section == "crypto"_zv) {
+    else if (section == "icap_server_up"_zv) {
         this->section_id = 16;
     }
-    else if (section == "websocket"_zv) {
+    else if (section == "metrics"_zv) {
         this->section_id = 17;
     }
-    else if (section == "debug"_zv) {
+    else if (section == "crypto"_zv) {
         this->section_id = 18;
     }
-    else if (section == "remote_program"_zv) {
+    else if (section == "websocket"_zv) {
         this->section_id = 19;
     }
-    else if (section == "translation"_zv) {
+    else if (section == "internal_mod"_zv) {
         this->section_id = 20;
     }
-    else if (section == "internal_mod"_zv) {
+    else if (section == "mod_replay"_zv) {
         this->section_id = 21;
     }
-    else if (section == "theme"_zv) {
+    else if (section == "translation"_zv) {
         this->section_id = 22;
+    }
+    else if (section == "theme"_zv) {
+        this->section_id = 23;
+    }
+    else if (section == "debug"_zv) {
+        this->section_id = 24;
     }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_WARNING, "unknown section [%s]", section);
@@ -337,46 +343,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 2) {
         if (0) {}
-        else if (key == "enable_session_log"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::session_log::enable_session_log&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "enable_arcsight_log"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::session_log::enable_arcsight_log&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "keyboard_input_masking_level"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value,
-                ::configs::spec_type<KeyboardInputMaskingLevel>{},
-                value
-            );
-        }
-        else if (key == "hide_non_printable_kbd_input"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::session_log::hide_non_printable_kbd_input&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
-    else if (this->section_id == 3) {
-        if (0) {}
         else if (key == "keyboard_layout_proposals"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -639,7 +605,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 4) {
+    else if (this->section_id == 3) {
         if (0) {}
         else if (key == "connection_establishment_timeout"_zv) {
             ::config_parse_and_log(
@@ -654,6 +620,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::all_target_mod::connection_retry_count&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::range<uint32_t, 1, 10>>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 4) {
+        if (0) {}
+        else if (key == "allow_resize_hosted_desktop"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::remote_program::allow_resize_hosted_desktop&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 value
             );
         }
@@ -865,342 +847,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "enable_session_probe"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::enable_session_probe&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_use_smart_launcher"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_use_clipboard_based_launcher&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_enable_launch_mask"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_enable_launch_mask&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_on_launch_failure"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_on_launch_failure&>(this->variables).value,
-                ::configs::spec_type<SessionProbeOnLaunchFailure>{},
-                value
-            );
-        }
-        else if (key == "session_probe_launch_timeout"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_launch_timeout&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_launch_fallback_timeout"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_start_launch_timeout_timer_only_after_logon"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_keepalive_timeout"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_on_keepalive_timeout"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_on_keepalive_timeout&>(this->variables).value,
-                ::configs::spec_type<SessionProbeOnKeepaliveTimeout>{},
-                value
-            );
-        }
-        else if (key == "session_probe_end_disconnected_session"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_end_disconnected_session&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_customize_executable_name"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_customize_executable_name&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_enable_log"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_enable_log&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_enable_log_rotation"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_enable_log_rotation&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_log_level"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_log_level&>(this->variables).value,
-                ::configs::spec_type<SessionProbeLogLevel>{},
-                value
-            );
-        }
-        else if (key == "session_probe_disconnected_application_limit"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_disconnected_application_limit&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_disconnected_session_limit"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_disconnected_session_limit&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_idle_session_limit"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_exe_or_file"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_exe_or_file&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_string>{},
-                value
-            );
-        }
-        else if (key == "session_probe_arguments"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_arguments&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_string>{},
-                value
-            );
-        }
-        else if (key == "session_probe_clipboard_based_launcher_clipboard_initialization_delay"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
-                value
-            );
-        }
-        else if (key == "session_probe_clipboard_based_launcher_start_delay"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
-                value
-            );
-        }
-        else if (key == "session_probe_clipboard_based_launcher_long_delay"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
-                value
-            );
-        }
-        else if (key == "session_probe_clipboard_based_launcher_short_delay"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
-                value
-            );
-        }
-        else if (key == "session_probe_launcher_abort_delay"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_launcher_abort_delay&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_allow_multiple_handshake"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_allow_multiple_handshake&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_enable_crash_dump"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_enable_crash_dump&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_handle_usage_limit"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_handle_usage_limit&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 1000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_memory_usage_limit"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 200000000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_cpu_usage_alarm_threshold"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 10000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_cpu_usage_alarm_action"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_cpu_usage_alarm_action&>(this->variables).value,
-                ::configs::spec_type<SessionProbeCPUUsageAlarmAction>{},
-                value
-            );
-        }
-        else if (key == "session_probe_end_of_session_check_delay_time"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_end_of_session_check_delay_time&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
-                value
-            );
-        }
-        else if (key == "session_probe_ignore_ui_less_processes_during_end_of_session_check"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_childless_window_as_unidentified_input_field"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_update_disabled_features"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_update_disabled_features&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_disabled_features"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_disabled_features&>(this->variables).value,
-                ::configs::spec_type<SessionProbeDisabledFeature>{},
-                value
-            );
-        }
-        else if (key == "session_probe_bestsafe_integration"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_bestsafe_integration&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_on_account_manipulation"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_on_account_manipulation&>(this->variables).value,
-                ::configs::spec_type<SessionProbeOnAccountManipulation>{},
-                value
-            );
-        }
-        else if (key == "session_probe_alternate_directory_environment_variable"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_alternate_directory_environment_variable&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_string>{},
-                value
-            );
-        }
-        else if (key == "session_probe_public_session"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_public_session&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_at_end_of_session_freeze_connection_and_wait"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_enable_cleaner"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_enable_cleaner&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_clipboard_based_launcher_reset_keyboard_status"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_reset_keyboard_status&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "application_driver_exe_or_file"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1238,62 +884,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::application_driver_ie_script&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
-                value
-            );
-        }
-        else if (key == "server_cert_store"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_cert_store&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "server_cert_check"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_cert_check&>(this->variables).value,
-                ::configs::spec_type<ServerCertCheck>{},
-                value
-            );
-        }
-        else if (key == "server_access_allowed_message"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_access_allowed_message&>(this->variables).value,
-                ::configs::spec_type<ServerNotification>{},
-                value
-            );
-        }
-        else if (key == "server_cert_create_message"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_cert_create_message&>(this->variables).value,
-                ::configs::spec_type<ServerNotification>{},
-                value
-            );
-        }
-        else if (key == "server_cert_success_message"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_cert_success_message&>(this->variables).value,
-                ::configs::spec_type<ServerNotification>{},
-                value
-            );
-        }
-        else if (key == "server_cert_failure_message"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_cert_failure_message&>(this->variables).value,
-                ::configs::spec_type<ServerNotification>{},
-                value
-            );
-        }
-        else if (key == "server_cert_error_message"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::server_cert_error_message&>(this->variables).value,
-                ::configs::spec_type<ServerNotification>{},
                 value
             );
         }
@@ -1457,6 +1047,414 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 6) {
         if (0) {}
+        else if (key == "enable_session_probe"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_session_probe&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "exe_or_file"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::exe_or_file&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                value
+            );
+        }
+        else if (key == "arguments"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::arguments&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                value
+            );
+        }
+        else if (key == "use_smart_launcher"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::use_smart_launcher&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_launch_mask"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_launch_mask&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "on_launch_failure"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::on_launch_failure&>(this->variables).value,
+                ::configs::spec_type<SessionProbeOnLaunchFailure>{},
+                value
+            );
+        }
+        else if (key == "launch_timeout"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::launch_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
+                value
+            );
+        }
+        else if (key == "launch_fallback_timeout"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::launch_fallback_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
+                value
+            );
+        }
+        else if (key == "start_launch_timeout_timer_only_after_logon"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::start_launch_timeout_timer_only_after_logon&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "keepalive_timeout"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::keepalive_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
+                value
+            );
+        }
+        else if (key == "on_keepalive_timeout"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::on_keepalive_timeout&>(this->variables).value,
+                ::configs::spec_type<SessionProbeOnKeepaliveTimeout>{},
+                value
+            );
+        }
+        else if (key == "end_disconnected_session"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::end_disconnected_session&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_log"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_log&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_log_rotation"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_log_rotation&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "log_level"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::log_level&>(this->variables).value,
+                ::configs::spec_type<SessionProbeLogLevel>{},
+                value
+            );
+        }
+        else if (key == "disconnected_application_limit"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::disconnected_application_limit&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
+                value
+            );
+        }
+        else if (key == "disconnected_session_limit"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::disconnected_session_limit&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
+                value
+            );
+        }
+        else if (key == "idle_session_limit"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::idle_session_limit&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
+                value
+            );
+        }
+        else if (key == "smart_launcher_clipboard_initialization_delay"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::smart_launcher_clipboard_initialization_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                value
+            );
+        }
+        else if (key == "smart_launcher_start_delay"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::smart_launcher_start_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                value
+            );
+        }
+        else if (key == "smart_launcher_long_delay"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::smart_launcher_long_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                value
+            );
+        }
+        else if (key == "smart_launcher_short_delay"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::smart_launcher_short_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                value
+            );
+        }
+        else if (key == "launcher_abort_delay"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::launcher_abort_delay&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
+                value
+            );
+        }
+        else if (key == "enable_crash_dump"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_crash_dump&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "handle_usage_limit"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::handle_usage_limit&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 1000>>{},
+                value
+            );
+        }
+        else if (key == "memory_usage_limit"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::memory_usage_limit&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 200000000>>{},
+                value
+            );
+        }
+        else if (key == "cpu_usage_alarm_threshold"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::cpu_usage_alarm_threshold&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 10000>>{},
+                value
+            );
+        }
+        else if (key == "cpu_usage_alarm_action"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::cpu_usage_alarm_action&>(this->variables).value,
+                ::configs::spec_type<SessionProbeCPUUsageAlarmAction>{},
+                value
+            );
+        }
+        else if (key == "end_of_session_check_delay_time"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::end_of_session_check_delay_time&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
+                value
+            );
+        }
+        else if (key == "ignore_ui_less_processes_during_end_of_session_check"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::ignore_ui_less_processes_during_end_of_session_check&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "childless_window_as_unidentified_input_field"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::childless_window_as_unidentified_input_field&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "update_disabled_features"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::update_disabled_features&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "disabled_features"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::disabled_features&>(this->variables).value,
+                ::configs::spec_type<SessionProbeDisabledFeature>{},
+                value
+            );
+        }
+        else if (key == "enable_bestsafe_interaction"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_bestsafe_interaction&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "on_account_manipulation"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::on_account_manipulation&>(this->variables).value,
+                ::configs::spec_type<SessionProbeOnAccountManipulation>{},
+                value
+            );
+        }
+        else if (key == "alternate_directory_environment_variable"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::alternate_directory_environment_variable&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                value
+            );
+        }
+        else if (key == "public_session"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::public_session&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "customize_executable_name"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::customize_executable_name&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "allow_multiple_handshake"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::allow_multiple_handshake&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "at_end_of_session_freeze_connection_and_wait"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::at_end_of_session_freeze_connection_and_wait&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_cleaner"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::enable_cleaner&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "clipboard_based_launcher_reset_keyboard_status"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::clipboard_based_launcher_reset_keyboard_status&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 7) {
+        if (0) {}
+        else if (key == "server_cert_store"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::server_cert_store&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "server_cert_check"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::server_cert_check&>(this->variables).value,
+                ::configs::spec_type<ServerCertCheck>{},
+                value
+            );
+        }
+        else if (key == "server_access_allowed_message"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::server_access_allowed_message&>(this->variables).value,
+                ::configs::spec_type<ServerNotification>{},
+                value
+            );
+        }
+        else if (key == "server_cert_create_message"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::server_cert_create_message&>(this->variables).value,
+                ::configs::spec_type<ServerNotification>{},
+                value
+            );
+        }
+        else if (key == "server_cert_success_message"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::server_cert_success_message&>(this->variables).value,
+                ::configs::spec_type<ServerNotification>{},
+                value
+            );
+        }
+        else if (key == "server_cert_failure_message"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::server_cert_failure_message&>(this->variables).value,
+                ::configs::spec_type<ServerNotification>{},
+                value
+            );
+        }
+        else if (key == "error_message"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::server_cert::error_message&>(this->variables).value,
+                ::configs::spec_type<ServerNotification>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 8) {
+        if (0) {}
         else if (key == "clipboard_up"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1535,173 +1533,37 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 7) {
-        if (0) {}
-        else if (key == "enable_rdp_metrics"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::metrics::enable_rdp_metrics&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "enable_vnc_metrics"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::metrics::enable_vnc_metrics&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "log_dir_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::metrics::log_dir_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                value
-            );
-        }
-        else if (key == "log_interval"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::metrics::log_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::seconds>{},
-                value
-            );
-        }
-        else if (key == "log_file_turnover_interval"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::metrics::log_file_turnover_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::hours>{},
-                value
-            );
-        }
-        else if (key == "sign_key"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::metrics::sign_key&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
-    else if (this->section_id == 8) {
-        if (0) {}
-        else if (key == "socket_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::socket_path&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
-        else if (key == "enable_up"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::enable_up&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "enable_down"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::enable_down&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "clipboard_text_up"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::clipboard_text_up&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "clipboard_text_down"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::clipboard_text_down&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "block_invalid_file_up"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::block_invalid_file_up&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "block_invalid_file_down"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::block_invalid_file_down&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "block_invalid_clipboard_text_up"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::block_invalid_clipboard_text_up&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "block_invalid_clipboard_text_down"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::block_invalid_clipboard_text_down&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "log_if_accepted"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "max_file_size_rejected"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::max_file_size_rejected&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "tmpdir"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::tmpdir&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
     else if (this->section_id == 9) {
         if (0) {}
-        else if (key == "store_file"_zv) {
+        else if (key == "enable_session_log"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::file_storage::store_file&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                static_cast<cfg::session_log::enable_session_log&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_arcsight_log"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_log::enable_arcsight_log&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "keyboard_input_masking_level"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value,
+                ::configs::spec_type<KeyboardInputMaskingLevel>{},
+                value
+            );
+        }
+        else if (key == "hide_non_printable_kbd_input"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_log::hide_non_printable_kbd_input&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 value
             );
         }
@@ -1712,44 +1574,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         }
     }
     else if (this->section_id == 10) {
-        // all members are external
-    }
-    else if (this->section_id == 11) {
-        // all members are external
-    }
-    else if (this->section_id == 12) {
-        if (0) {}
-        else if (key == "replay_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_replay::replay_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                value
-            );
-        }
-        else if (key == "on_end_of_data"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_replay::on_end_of_data&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "replay_on_loop"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
-    else if (this->section_id == 13) {
         if (0) {}
         else if (key == "version"_zv) {
             ::config_parse_and_log(
@@ -1797,7 +1621,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 14) {
+    else if (this->section_id == 11) {
         if (0) {}
         else if (key == "capture_groupid"_zv) {
             ::config_parse_and_log(
@@ -1981,7 +1805,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 15) {
+    else if (this->section_id == 12) {
         if (0) {}
         else if (key == "use_redis"_zv) {
             ::config_parse_and_log(
@@ -2069,7 +1893,189 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
+    else if (this->section_id == 13) {
+        if (0) {}
+        else if (key == "socket_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::socket_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "enable_up"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::enable_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_down"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::enable_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "clipboard_text_up"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::clipboard_text_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "clipboard_text_down"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::clipboard_text_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "block_invalid_file_up"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::block_invalid_file_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "block_invalid_file_down"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::block_invalid_file_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "block_invalid_clipboard_text_up"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::block_invalid_clipboard_text_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "block_invalid_clipboard_text_down"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::block_invalid_clipboard_text_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "log_if_accepted"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "max_file_size_rejected"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::max_file_size_rejected&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "tmpdir"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::tmpdir&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 14) {
+        if (0) {}
+        else if (key == "store_file"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_storage::store_file&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 15) {
+        // all members are external
+    }
     else if (this->section_id == 16) {
+        // all members are external
+    }
+    else if (this->section_id == 17) {
+        if (0) {}
+        else if (key == "enable_rdp_metrics"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::metrics::enable_rdp_metrics&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "enable_vnc_metrics"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::metrics::enable_vnc_metrics&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "log_dir_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::metrics::log_dir_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
+        else if (key == "log_interval"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::metrics::log_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::seconds>{},
+                value
+            );
+        }
+        else if (key == "log_file_turnover_interval"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::metrics::log_file_turnover_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::hours>{},
+                value
+            );
+        }
+        else if (key == "sign_key"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::metrics::sign_key&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 18) {
         if (0) {}
         else if (key == "encryption_key"_zv) {
             ::config_parse_and_log(
@@ -2093,7 +2099,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 17) {
+    else if (this->section_id == 19) {
         if (0) {}
         else if (key == "enable_websocket"_zv) {
             ::config_parse_and_log(
@@ -2125,175 +2131,55 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 18) {
-        if (0) {}
-        else if (key == "fake_target_ip"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::fake_target_ip&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
-        else if (key == "capture"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::capture&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "auth"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::auth&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "session"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::session&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "front"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::front&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "mod_rdp"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::mod_rdp&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "mod_vnc"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::mod_vnc&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "mod_internal"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::mod_internal&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "sck_mod"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::sck_mod&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "sck_front"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::sck_front&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "password"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::password&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "compression"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::compression&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "cache"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::cache&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "ocr"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::ocr&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "ffmpeg"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::ffmpeg&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "config"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::config&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "mod_rdp_use_failure_simulation_socket_transport"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::mod_rdp_use_failure_simulation_socket_transport&>(this->variables).value,
-                ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport>{},
-                value
-            );
-        }
-        else if (key == "probe_client_addresses"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::probe_client_addresses&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
-    else if (this->section_id == 19) {
-        if (0) {}
-        else if (key == "allow_resize_hosted_desktop"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::remote_program::allow_resize_hosted_desktop&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
     else if (this->section_id == 20) {
+        if (0) {}
+        else if (key == "enable_target_field"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::internal_mod::enable_target_field&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 21) {
+        if (0) {}
+        else if (key == "replay_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_replay::replay_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
+        else if (key == "on_end_of_data"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_replay::on_end_of_data&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "replay_on_loop"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 22) {
         if (0) {}
         else if (key == "language"_zv) {
             ::config_parse_and_log(
@@ -2317,23 +2203,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 21) {
-        if (0) {}
-        else if (key == "enable_target_field"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::internal_mod::enable_target_field&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
-        }
-    }
-    else if (this->section_id == 22) {
+    else if (this->section_id == 23) {
         if (0) {}
         else if (key == "enable_theme"_zv) {
             ::config_parse_and_log(
@@ -2516,6 +2386,158 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_label_fgcolor&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::rgb>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 24) {
+        if (0) {}
+        else if (key == "fake_target_ip"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::fake_target_ip&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "capture"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::capture&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "auth"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::auth&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "session"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::session&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "front"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::front&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "mod_rdp"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::mod_rdp&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "mod_vnc"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::mod_vnc&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "mod_internal"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::mod_internal&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "sck_mod"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::sck_mod&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "sck_front"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::sck_front&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "password"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::password&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "compression"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::compression&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "cache"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::cache&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "ocr"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::ocr&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "ffmpeg"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::ffmpeg&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "config"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::config&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "mod_rdp_use_failure_simulation_socket_transport"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::mod_rdp_use_failure_simulation_socket_transport&>(this->variables).value,
+                ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport>{},
+                value
+            );
+        }
+        else if (key == "probe_client_addresses"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::probe_client_addresses&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 value
             );
         }

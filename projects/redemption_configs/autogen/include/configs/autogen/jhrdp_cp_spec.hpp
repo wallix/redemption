@@ -31,15 +31,6 @@ vault_transformation_rule = string(default='')
 # (in seconds)
 inactivity_timeout = integer(min=0, default=0)
 
-[session_log]
-
-# Keyboard Input Masking Level:
-# &nbsp; &nbsp;   0: keyboard input are not masked
-# &nbsp; &nbsp;   1: only passwords are masked
-# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
-# &nbsp; &nbsp;   3: keyboard inputs are not logged
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
-
 [rdp]
 
 # Disables supported drawing orders:
@@ -149,6 +140,27 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 #_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
+[session_log]
+
+# Keyboard Input Masking Level:
+# &nbsp; &nbsp;   0: keyboard input are not masked
+# &nbsp; &nbsp;   1: only passwords are masked
+# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
+# &nbsp; &nbsp;   3: keyboard inputs are not logged
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
+
+[video]
+
+# Disable keyboard log:
+# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
+# &nbsp; &nbsp;   0x0: none
+# &nbsp; &nbsp;   0x1: disable keyboard log in syslog
+# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
+#_advanced
+#_hex
+disable_keyboard_log = integer(min=0, max=3, default=1)
+
 [file_verification]
 
 # Enable use of ICAP service for file verification on upload.
@@ -188,17 +200,5 @@ max_file_size_rejected = integer(min=0, default=256)
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
 store_file = option('never', 'always', 'on_invalid_verification', default='never')
-
-[video]
-
-# Disable keyboard log:
-# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-# &nbsp; &nbsp;   0x0: none
-# &nbsp; &nbsp;   0x1: disable keyboard log in syslog
-# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
-# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
-#_advanced
-#_hex
-disable_keyboard_log = integer(min=0, max=3, default=1)
 
 )xxxyyyzzz"

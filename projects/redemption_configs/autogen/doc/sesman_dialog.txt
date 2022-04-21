@@ -32,16 +32,10 @@ cfg::globals::is_rec ⇐ is_rec   [bool]
 cfg::globals::unicode_keyboard_event_support ⇐ unicode_keyboard_event_support   [bool]
 cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
 
-cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
-    Keyboard Input Masking Level:
-      0: keyboard input are not masked
-      1: only passwords are masked
-      2: passwords and unidentified texts are masked
-      3: keyboard inputs are not logged
-
 cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]
     If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
+
 
 
 cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]
@@ -97,134 +91,8 @@ cfg::mod_rdp::use_client_provided_remoteapp ⇐ mod_rdp:use_client_provided_remo
     As far as possible, use client-provided remote program (RemoteApp)
 cfg::mod_rdp::use_native_remoteapp_capability ⇐ mod_rdp:use_native_remoteapp_capability   [bool]
     As far as possible, use native RemoteApp capability
-cfg::mod_rdp::enable_session_probe ⇐ mod_rdp:enable_session_probe   [bool]
-cfg::mod_rdp::session_probe_use_clipboard_based_launcher ⇐ mod_rdp:session_probe_use_clipboard_based_launcher   [bool]
-    Minimum supported server : Windows Server 2008.
-    Clipboard redirection should be remain enabled on Terminal Server.
-cfg::mod_rdp::session_probe_enable_launch_mask ⇐ mod_rdp:session_probe_enable_launch_mask   [bool]
-cfg::mod_rdp::session_probe_on_launch_failure ⇐ mod_rdp:session_probe_on_launch_failure   [SessionProbeOnLaunchFailure]
-    Behavior on failure to launch Session Probe.
-      0: ignore failure and continue.
-      1: disconnect user.
-      2: reconnect without Session Probe.
-cfg::mod_rdp::session_probe_launch_timeout ⇐ mod_rdp:session_probe_launch_timeout   [std::chrono::milliseconds]
-    This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
-    0 to disable timeout.
-cfg::mod_rdp::session_probe_launch_fallback_timeout ⇐ mod_rdp:session_probe_launch_fallback_timeout   [std::chrono::milliseconds]
-    This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
-    0 to disable timeout.
-cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon ⇐ mod_rdp:session_probe_start_launch_timeout_timer_only_after_logon   [bool]
-    Minimum supported server : Windows Server 2008.
-cfg::mod_rdp::session_probe_keepalive_timeout ⇐ mod_rdp:session_probe_keepalive_timeout   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_on_keepalive_timeout ⇐ mod_rdp:session_probe_on_keepalive_timeout   [SessionProbeOnKeepaliveTimeout]
-      0: ignore and continue
-      1: disconnect user
-      2: freeze connection and wait
-cfg::mod_rdp::session_probe_end_disconnected_session ⇐ mod_rdp:session_probe_end_disconnected_session   [bool]
-    End automatically a disconnected session.
-    This option is recommended for Web applications running in Desktop mode.
-    Session Probe must be enabled to use this feature.
-cfg::mod_rdp::session_probe_enable_log ⇐ mod_rdp:session_probe_enable_log   [bool]
-cfg::mod_rdp::session_probe_enable_log_rotation ⇐ mod_rdp:session_probe_enable_log_rotation   [bool]
-cfg::mod_rdp::session_probe_log_level ⇐ mod_rdp:session_probe_log_level   [SessionProbeLogLevel]
-      1: Fatal
-      2: Error
-      3: Info
-      4: Warning
-      5: Debug
-      6: Detail
-cfg::mod_rdp::session_probe_disconnected_application_limit ⇐ mod_rdp:session_probe_disconnected_application_limit   [std::chrono::milliseconds]
-    (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
-    0 to disable timeout.
-cfg::mod_rdp::session_probe_disconnected_session_limit ⇐ mod_rdp:session_probe_disconnected_session_limit   [std::chrono::milliseconds]
-    This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
-    0 to disable timeout.
-cfg::mod_rdp::session_probe_idle_session_limit ⇐ mod_rdp:session_probe_idle_session_limit   [std::chrono::milliseconds]
-    This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
-    0 to disable timeout.
-cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_clipboard_initialization_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_start_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_long_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_short_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_launcher_abort_delay ⇐ mod_rdp:session_probe_launcher_abort_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_enable_crash_dump ⇐ mod_rdp:session_probe_enable_crash_dump   [bool]
-cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_usage_limit   [uint32_t]
-cfg::mod_rdp::session_probe_memory_usage_limit ⇐ mod_rdp:session_probe_memory_usage_limit   [uint32_t]
-cfg::mod_rdp::session_probe_cpu_usage_alarm_threshold ⇐ mod_rdp:session_probe_cpu_usage_alarm_threshold   [uint32_t]
-    As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
-    The alarm is deactivated if this value is less than 200.
-cfg::mod_rdp::session_probe_cpu_usage_alarm_action ⇐ mod_rdp:session_probe_cpu_usage_alarm_action   [SessionProbeCPUUsageAlarmAction]
-      0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
-      1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
-cfg::mod_rdp::session_probe_end_of_session_check_delay_time ⇐ mod_rdp:session_probe_end_of_session_check_delay_time   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check ⇐ mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
-cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field ⇐ mod_rdp:session_probe_childless_window_as_unidentified_input_field   [bool]
-cfg::mod_rdp::session_probe_update_disabled_features ⇐ mod_rdp:session_probe_update_disabled_features   [bool]
-cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled_features   [SessionProbeDisabledFeature]
-      0x000: none
-      0x001: Java Access Bridge
-      0x002: MS Active Accessbility
-      0x004: MS UI Automation
-      0x010: Inspect Edge location URL
-      0x020: Inspect Chrome Address/Search bar
-      0x040: Inspect Firefox Address/Search bar
-      0x080: Monitor Internet Explorer event
-      0x100: Inspect group membership of user
-    Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
-cfg::mod_rdp::session_probe_bestsafe_integration ⇐ mod_rdp:session_probe_bestsafe_integration   [bool]
-cfg::mod_rdp::session_probe_on_account_manipulation ⇐ mod_rdp:session_probe_on_account_manipulation   [SessionProbeOnAccountManipulation]
-    For targets running WALLIX BestSafe only.
-      0: User action will be accepted
-      1: (Same thing as 'allow') 
-      2: User action will be rejected
-cfg::mod_rdp::session_probe_alternate_directory_environment_variable ⇐ mod_rdp:session_probe_alternate_directory_environment_variable   [std::string(maxlen=3)]
-    The name of the environment variable pointing to the alternative directory to launch Session Probe.
-    If empty, the environment variable TMP will be used.
-cfg::mod_rdp::session_probe_public_session ⇐ mod_rdp:session_probe_public_session   [bool]
-    If enabled, disconnected session can be recovered by a different primary user.
-cfg::mod_rdp::server_cert_store ⇐ mod_rdp:server_cert_store   [bool]
-    Keep known server certificates on WAB
-cfg::mod_rdp::server_cert_check ⇐ mod_rdp:server_cert_check   [ServerCertCheck]
-    Behavior of certificates check.
-      0: fails if certificates doesn't match or miss.
-      1: fails if certificate doesn't match, succeed if no known certificate.
-      2: succeed if certificates exists (not checked), fails if missing.
-      3: always succeed.
-    System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-cfg::mod_rdp::server_access_allowed_message ⇐ mod_rdp:server_access_allowed_message   [ServerNotification]
-    Warn if check allow connexion to server.
-      0x0: nobody
-      0x1: message sent to syslog
-      0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-cfg::mod_rdp::server_cert_create_message ⇐ mod_rdp:server_cert_create_message   [ServerNotification]
-    Warn that new server certificate file was created.
-      0x0: nobody
-      0x1: message sent to syslog
-      0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-cfg::mod_rdp::server_cert_success_message ⇐ mod_rdp:server_cert_success_message   [ServerNotification]
-    Warn that server certificate file was successfully checked.
-      0x0: nobody
-      0x1: message sent to syslog
-      0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-cfg::mod_rdp::server_cert_failure_message ⇐ mod_rdp:server_cert_failure_message   [ServerNotification]
-    Warn that server certificate file checking failed.
-      0x0: nobody
-      0x1: message sent to syslog
-      0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::mod_rdp::enable_rdpdr_data_analysis ⇐ enable_rdpdr_data_analysis   [bool]
 cfg::mod_rdp::wabam_uses_translated_remoteapp ⇐ mod_rdp:wabam_uses_translated_remoteapp   [bool]
-cfg::mod_rdp::enable_server_cert_external_validation ⇐ enable_server_cert_external_validation   [bool]
-cfg::mod_rdp::server_cert ⇒ server_cert   [std::string]
-cfg::mod_rdp::server_cert_response ⇐ server_cert_response   [std::string]
-    empty string for wait, 'Ok' or error message
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.
 cfg::mod_rdp::enable_restricted_admin_mode ⇐ mod_rdp:enable_restricted_admin_mode   [bool]
@@ -260,6 +128,153 @@ cfg::mod_rdp::effective_krb_armoring_user ⇐ effective_krb_armoring_user   [std
     Effective username to be used for armoring Kerberos tickets.
 cfg::mod_rdp::effective_krb_armoring_password ⇐ effective_krb_armoring_password   [std::string]
     Effective password to be used for armoring Kerberos tickets.
+cfg::mod_rdp::remote_programs_disconnect_message_delay ⇐ mod_rdp:remote_programs_disconnect_message_delay   [std::chrono::milliseconds]
+    Delay before showing disconnect message after the last RemoteApp window is closed.
+cfg::mod_rdp::use_session_probe_to_launch_remote_program ⇐ mod_rdp:use_session_probe_to_launch_remote_program   [bool]
+    Use Session Probe to launch Remote Program as much as possible.
+
+cfg::session_probe::enable_session_probe ⇐ session_probe:enable_session_probe   [bool]
+cfg::session_probe::use_smart_launcher ⇐ session_probe:use_smart_launcher   [bool]
+    Minimum supported server : Windows Server 2008.
+    Clipboard redirection should be remain enabled on Terminal Server.
+cfg::session_probe::enable_launch_mask ⇐ session_probe:enable_launch_mask   [bool]
+cfg::session_probe::on_launch_failure ⇐ session_probe:on_launch_failure   [SessionProbeOnLaunchFailure]
+    Behavior on failure to launch Session Probe.
+      0: ignore failure and continue.
+      1: disconnect user.
+      2: reconnect without Session Probe.
+cfg::session_probe::launch_timeout ⇐ session_probe:launch_timeout   [std::chrono::milliseconds]
+    This parameter is used if on_launch_failure is 1 (disconnect user).
+    0 to disable timeout.
+cfg::session_probe::launch_fallback_timeout ⇐ session_probe:launch_fallback_timeout   [std::chrono::milliseconds]
+    This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+    0 to disable timeout.
+cfg::session_probe::start_launch_timeout_timer_only_after_logon ⇐ session_probe:start_launch_timeout_timer_only_after_logon   [bool]
+    Minimum supported server : Windows Server 2008.
+cfg::session_probe::keepalive_timeout ⇐ session_probe:keepalive_timeout   [std::chrono::milliseconds]
+cfg::session_probe::on_keepalive_timeout ⇐ session_probe:on_keepalive_timeout   [SessionProbeOnKeepaliveTimeout]
+      0: ignore and continue
+      1: disconnect user
+      2: freeze connection and wait
+cfg::session_probe::end_disconnected_session ⇐ session_probe:end_disconnected_session   [bool]
+    End automatically a disconnected session.
+    This option is recommended for Web applications running in Desktop mode.
+    Session Probe must be enabled to use this feature.
+cfg::session_probe::enable_log ⇐ session_probe:enable_log   [bool]
+cfg::session_probe::enable_log_rotation ⇐ session_probe:enable_log_rotation   [bool]
+cfg::session_probe::log_level ⇐ session_probe:log_level   [SessionProbeLogLevel]
+      1: Fatal
+      2: Error
+      3: Info
+      4: Warning
+      5: Debug
+      6: Detail
+cfg::session_probe::disconnected_application_limit ⇐ session_probe:disconnected_application_limit   [std::chrono::milliseconds]
+    (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
+    0 to disable timeout.
+cfg::session_probe::disconnected_session_limit ⇐ session_probe:disconnected_session_limit   [std::chrono::milliseconds]
+    This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
+    0 to disable timeout.
+cfg::session_probe::idle_session_limit ⇐ session_probe:idle_session_limit   [std::chrono::milliseconds]
+    This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
+    0 to disable timeout.
+cfg::session_probe::smart_launcher_clipboard_initialization_delay ⇐ session_probe:smart_launcher_clipboard_initialization_delay   [std::chrono::milliseconds]
+cfg::session_probe::smart_launcher_start_delay ⇐ session_probe:smart_launcher_start_delay   [std::chrono::milliseconds]
+cfg::session_probe::smart_launcher_long_delay ⇐ session_probe:smart_launcher_long_delay   [std::chrono::milliseconds]
+cfg::session_probe::smart_launcher_short_delay ⇐ session_probe:smart_launcher_short_delay   [std::chrono::milliseconds]
+cfg::session_probe::launcher_abort_delay ⇐ session_probe:launcher_abort_delay   [std::chrono::milliseconds]
+cfg::session_probe::enable_crash_dump ⇐ session_probe:enable_crash_dump   [bool]
+cfg::session_probe::handle_usage_limit ⇐ session_probe:handle_usage_limit   [uint32_t]
+cfg::session_probe::memory_usage_limit ⇐ session_probe:memory_usage_limit   [uint32_t]
+cfg::session_probe::cpu_usage_alarm_threshold ⇐ session_probe:cpu_usage_alarm_threshold   [uint32_t]
+    As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
+    The alarm is deactivated if this value is less than 200.
+cfg::session_probe::cpu_usage_alarm_action ⇐ session_probe:cpu_usage_alarm_action   [SessionProbeCPUUsageAlarmAction]
+      0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+      1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+cfg::session_probe::end_of_session_check_delay_time ⇐ session_probe:end_of_session_check_delay_time   [std::chrono::milliseconds]
+cfg::session_probe::ignore_ui_less_processes_during_end_of_session_check ⇐ session_probe:ignore_ui_less_processes_during_end_of_session_check   [bool]
+cfg::session_probe::childless_window_as_unidentified_input_field ⇐ session_probe:childless_window_as_unidentified_input_field   [bool]
+cfg::session_probe::update_disabled_features ⇐ session_probe:update_disabled_features   [bool]
+cfg::session_probe::disabled_features ⇐ session_probe:disabled_features   [SessionProbeDisabledFeature]
+      0x000: none
+      0x001: Java Access Bridge
+      0x002: MS Active Accessbility
+      0x004: MS UI Automation
+      0x010: Inspect Edge location URL
+      0x020: Inspect Chrome Address/Search bar
+      0x040: Inspect Firefox Address/Search bar
+      0x080: Monitor Internet Explorer event
+      0x100: Inspect group membership of user
+    Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+cfg::session_probe::enable_bestsafe_interaction ⇐ session_probe:enable_bestsafe_interaction   [bool]
+cfg::session_probe::on_account_manipulation ⇐ session_probe:on_account_manipulation   [SessionProbeOnAccountManipulation]
+    For targets running WALLIX BestSafe only.
+      0: User action will be accepted
+      1: (Same thing as 'allow') 
+      2: User action will be rejected
+cfg::session_probe::alternate_directory_environment_variable ⇐ session_probe:alternate_directory_environment_variable   [std::string(maxlen=3)]
+    The name of the environment variable pointing to the alternative directory to launch Session Probe.
+    If empty, the environment variable TMP will be used.
+cfg::session_probe::public_session ⇐ session_probe:public_session   [bool]
+    If enabled, disconnected session can be recovered by a different primary user.
+cfg::session_probe::outbound_connection_monitoring_rules ⇐ session_probe:outbound_connection_monitoring_rules   [std::string]
+    Comma-separated rules
+    (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)
+    (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)
+    (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)
+    (Ex. for backwards compatibility only: 10.1.0.0/16:22)
+    Session Probe must be enabled to use this feature.
+cfg::session_probe::process_monitoring_rules ⇐ session_probe:process_monitoring_rules   [std::string]
+    Comma-separated rules (Ex.: $deny:Taskmgr)
+    @ = All child processes of Bastion Application (Ex.: $deny:@)
+    Session Probe must be enabled to use this feature.
+cfg::session_probe::extra_system_processes ⇐ session_probe:extra_system_processes   [std::string]
+    Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
+cfg::session_probe::windows_of_these_applications_as_unidentified_input_field ⇐ session_probe:windows_of_these_applications_as_unidentified_input_field   [std::string]
+    Comma-separated processes (Ex.: chrome.exe,ngf.exe)
+
+cfg::server_cert::server_cert_store ⇐ server_cert:server_cert_store   [bool]
+    Keep known server certificates on WAB
+cfg::server_cert::server_cert_check ⇐ server_cert:server_cert_check   [ServerCertCheck]
+    Behavior of certificates check.
+      0: fails if certificates doesn't match or miss.
+      1: fails if certificate doesn't match, succeed if no known certificate.
+      2: succeed if certificates exists (not checked), fails if missing.
+      3: always succeed.
+    System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
+cfg::server_cert::server_access_allowed_message ⇐ server_cert:server_access_allowed_message   [ServerNotification]
+    Warn if check allow connexion to server.
+      0x0: nobody
+      0x1: message sent to syslog
+      0x2: User notified (through proxy interface)
+      0x4: admin notified (wab notification)
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+cfg::server_cert::server_cert_create_message ⇐ server_cert:server_cert_create_message   [ServerNotification]
+    Warn that new server certificate file was created.
+      0x0: nobody
+      0x1: message sent to syslog
+      0x2: User notified (through proxy interface)
+      0x4: admin notified (wab notification)
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+cfg::server_cert::server_cert_success_message ⇐ server_cert:server_cert_success_message   [ServerNotification]
+    Warn that server certificate file was successfully checked.
+      0x0: nobody
+      0x1: message sent to syslog
+      0x2: User notified (through proxy interface)
+      0x4: admin notified (wab notification)
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+cfg::server_cert::server_cert_failure_message ⇐ server_cert:server_cert_failure_message   [ServerNotification]
+    Warn that server certificate file checking failed.
+      0x0: nobody
+      0x1: message sent to syslog
+      0x2: User notified (through proxy interface)
+      0x4: admin notified (wab notification)
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+cfg::server_cert::enable_external_validation ⇐ enable_external_validation   [bool]
+cfg::server_cert::external_cert ⇒ external_cert   [std::string]
+cfg::server_cert::external_response ⇐ external_response   [std::string]
+    empty string for wait, 'Ok' or error message
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).
@@ -277,26 +292,42 @@ cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_e
 cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     Enable target connection on ipv6
 
-<sesman only> ⇐ vnc_over_ssh:enable   [bool]
-<sesman only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
-<sesman only> ⇐ vnc_over_ssh:tunneling_credential_source   [VncTunnelingCredentialSource ⇐ std::string]
-    static_login: Static values provided in "Ssh login" & "Ssh password" fields will be used to establish the SSH tunnel.
-    scenario_account: Scenario account provided in "Scenario account name" field will be used to establish the SSH tunnel. (Recommended)
-<sesman only> ⇐ vnc_over_ssh:ssh_login   [std::string]
-    Login to be used for SSH tunneling.
-<sesman only> ⇐ vnc_over_ssh:ssh_password   [std::string]
-    Password to be used for SSH tunneling.
-<sesman only> ⇐ vnc_over_ssh:scenario_account_name   [std::string]
-    With the following syntax: "account_name@domain_name[@[device_name]]".
-    
-    Syntax for using global domain scenario account:
-      "account_name@global_domain_name"
-    
-    Syntax for using local domain scenario account (with automatic device name deduction):
-      "account_name@local_domain_name@"
-<sesman only> ⇐ vnc_over_ssh:tunneling_type   [VncTunnelingType ⇐ std::string]
-    Only for debugging purposes.
+cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
+    Keyboard Input Masking Level:
+      0: keyboard input are not masked
+      1: only passwords are masked
+      2: passwords and unidentified texts are masked
+      3: keyboard inputs are not logged
 
+
+cfg::capture::record_filebase ⇐ record_filebase   [std::string]
+    basename without extension
+cfg::capture::record_subdirectory ⇐ record_subdirectory   [std::string]
+    subdirectory of record_path (video section)
+cfg::capture::fdx_path ⇒ fdx_path   [std::string]
+cfg::capture::disable_keyboard_log ⇐ capture:disable_keyboard_log   [KeyboardLogFlagsCP]
+    Disable keyboard log:
+    (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
+      0x0: none
+      0x1: disable keyboard log in syslog
+      0x2: disable keyboard log in recorded sessions
+    Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
+
+cfg::video::hash_path ⇐ hash_path   [::configs::spec_types::directory_path]
+cfg::video::record_tmp_path ⇐ record_tmp_path   [::configs::spec_types::directory_path]
+cfg::video::record_path ⇐ record_path   [::configs::spec_types::directory_path]
+
+cfg::audit::rt_display ⇐ rt_display   [bool]
+cfg::audit::use_redis ⇐ use_redis   [bool]
+cfg::audit::redis_address ⇐ redis_address   [std::string]
+cfg::audit::redis_port ⇐ redis_port   [unsigned]
+cfg::audit::redis_password ⇐ redis_password   [std::string]
+cfg::audit::redis_db ⇐ redis_db   [unsigned]
+cfg::audit::redis_use_tls ⇐ redis_use_tls   [bool]
+cfg::audit::redis_tls_cacert ⇐ redis_tls_cacert   [std::string]
+cfg::audit::redis_tls_cert ⇐ redis_tls_cert   [std::string]
+cfg::audit::redis_tls_key ⇐ redis_tls_key   [std::string]
+cfg::audit::redis_timeout ⇐ redis_timeout   [std::chrono::milliseconds]
 
 cfg::file_verification::enable_up ⇐ file_verification:enable_up   [bool]
     Enable use of ICAP service for file verification on upload.
@@ -327,48 +358,30 @@ cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile ⇐ st
 
 
 
-cfg::mod_replay::replay_on_loop ⇐ replay_on_loop   [bool]
-    0 - replay once, 1 - loop replay
-
-
-cfg::video::hash_path ⇐ hash_path   [::configs::spec_types::directory_path]
-cfg::video::record_tmp_path ⇐ record_tmp_path   [::configs::spec_types::directory_path]
-cfg::video::record_path ⇐ record_path   [::configs::spec_types::directory_path]
-
-cfg::capture::record_filebase ⇐ record_filebase   [std::string]
-    basename without extension
-cfg::capture::record_subdirectory ⇐ record_subdirectory   [std::string]
-    subdirectory of record_path (video section)
-cfg::capture::fdx_path ⇒ fdx_path   [std::string]
-cfg::capture::disable_keyboard_log ⇐ capture:disable_keyboard_log   [KeyboardLogFlagsCP]
-    Disable keyboard log:
-    (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-      0x0: none
-      0x1: disable keyboard log in syslog
-      0x2: disable keyboard log in recorded sessions
-    Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
-
-cfg::audit::rt_display ⇐ rt_display   [bool]
-cfg::audit::use_redis ⇐ use_redis   [bool]
-cfg::audit::redis_address ⇐ redis_address   [std::string]
-cfg::audit::redis_port ⇐ redis_port   [unsigned]
-cfg::audit::redis_password ⇐ redis_password   [std::string]
-cfg::audit::redis_db ⇐ redis_db   [unsigned]
-cfg::audit::redis_use_tls ⇐ redis_use_tls   [bool]
-cfg::audit::redis_tls_cacert ⇐ redis_tls_cacert   [std::string]
-cfg::audit::redis_tls_cert ⇐ redis_tls_cert   [std::string]
-cfg::audit::redis_tls_key ⇐ redis_tls_key   [std::string]
-cfg::audit::redis_timeout ⇐ redis_timeout   [std::chrono::milliseconds]
 
 cfg::crypto::encryption_key ⇐ encryption_key   [std::array<unsigned char, 32>]
 cfg::crypto::sign_key ⇐ sign_key   [std::array<unsigned char, 32>]
 
 
-
-
-cfg::translation::language ⇐ language   [Language ⇐ std::string]
-cfg::translation::login_language ⇒ login_language   [LoginLanguage ⇒ std::string]
-
+<sesman only> ⇐ vnc_over_ssh:enable   [bool]
+<sesman only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
+<sesman only> ⇐ vnc_over_ssh:tunneling_credential_source   [VncTunnelingCredentialSource ⇐ std::string]
+    static_login: Static values provided in "Ssh login" & "Ssh password" fields will be used to establish the SSH tunnel.
+    scenario_account: Scenario account provided in "Scenario account name" field will be used to establish the SSH tunnel. (Recommended)
+<sesman only> ⇐ vnc_over_ssh:ssh_login   [std::string]
+    Login to be used for SSH tunneling.
+<sesman only> ⇐ vnc_over_ssh:ssh_password   [std::string]
+    Password to be used for SSH tunneling.
+<sesman only> ⇐ vnc_over_ssh:scenario_account_name   [std::string]
+    With the following syntax: "account_name@domain_name[@[device_name]]".
+    
+    Syntax for using global domain scenario account:
+      "account_name@global_domain_name"
+    
+    Syntax for using local domain scenario account (with automatic device name deduction):
+      "account_name@local_domain_name@"
+<sesman only> ⇐ vnc_over_ssh:tunneling_type   [VncTunnelingType ⇐ std::string]
+    Only for debugging purposes.
 
 cfg::context::psid ⇒ psid   [std::string]
     Proxy session log id
@@ -424,21 +437,6 @@ cfg::context::pattern_kill ⇐ pattern_kill   [std::string]
 cfg::context::pattern_notify ⇐ pattern_notify   [std::string]
 cfg::context::opt_message ⇐ opt_message   [std::string]
 cfg::context::login_message ⇐ login_message   [std::string]
-cfg::context::session_probe_outbound_connection_monitoring_rules ⇐ context:session_probe_outbound_connection_monitoring_rules   [std::string]
-    Comma-separated rules
-    (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)
-    (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)
-    (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)
-    (Ex. for backwards compatibility only: 10.1.0.0/16:22)
-    Session Probe must be enabled to use this feature.
-cfg::context::session_probe_process_monitoring_rules ⇐ context:session_probe_process_monitoring_rules   [std::string]
-    Comma-separated rules (Ex.: $deny:Taskmgr)
-    @ = All child processes of Bastion Application (Ex.: $deny:@)
-    Session Probe must be enabled to use this feature.
-cfg::context::session_probe_extra_system_processes ⇐ context:session_probe_extra_system_processes   [std::string]
-    Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
-cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field ⇐ context:session_probe_windows_of_these_applications_as_unidentified_input_field   [std::string]
-    Comma-separated processes (Ex.: chrome.exe,ngf.exe)
 cfg::context::disconnect_reason ⇐ disconnect_reason   [std::string]
 cfg::context::disconnect_reason_ack ⇒ disconnect_reason_ack   [bool]
 cfg::context::recording_started ⇒ recording_started   [bool]
@@ -455,10 +453,6 @@ cfg::context::auth_command_rail_exec_working_dir ⇐ auth_command_rail_exec_work
 cfg::context::auth_command_rail_exec_arguments ⇐ auth_command_rail_exec_arguments   [std::string]
 cfg::context::auth_command_rail_exec_account ⇐ auth_command_rail_exec_account   [std::string]
 cfg::context::auth_command_rail_exec_password ⇐ auth_command_rail_exec_password   [std::string]
-cfg::context::rail_disconnect_message_delay ⇐ context:rail_disconnect_message_delay   [std::chrono::milliseconds]
-    Delay before showing disconnect message after the last RemoteApp window is closed.
-cfg::context::use_session_probe_to_launch_remote_program ⇐ context:use_session_probe_to_launch_remote_program   [bool]
-    Use Session Probe to launch Remote Program as much as possible.
 cfg::context::session_probe_launch_error_message ⇒ session_probe_launch_error_message   [std::string]
 cfg::context::is_wabam ⇐ is_wabam   [bool]
 cfg::context::pm_response ⇐ pm_response   [std::string]
@@ -478,5 +472,13 @@ cfg::context::banner_type ⇐ banner_type   [BannerType]
       0: info
       1: warn
       2: alert
+
+
+cfg::mod_replay::replay_on_loop ⇐ replay_on_loop   [bool]
+    0 - replay once, 1 - loop replay
+
+cfg::translation::language ⇐ language   [Language ⇐ std::string]
+cfg::translation::login_language ⇒ login_language   [LoginLanguage ⇒ std::string]
+
 
 

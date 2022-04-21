@@ -192,12 +192,12 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(40000,                            ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(5000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
@@ -320,10 +320,11 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "proxy_managed_drives=\n"
         "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
         "shell_working_directory=C:\\WINDOWS\\\n"
+        "[session_probe]\n"
         "enable_session_probe=true\n"
-        "session_probe_enable_launch_mask=false\n"
-        "session_probe_launch_timeout=0\n"
-        "session_probe_keepalive_timeout=0\n"
+        "enable_launch_mask=false\n"
+        "launch_timeout=0\n"
+        "keepalive_timeout=0\n"
         "\n"
         "[mod_vnc]\n"
         "clipboard_up=yes\n"
@@ -460,12 +461,12 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("C:\\WINDOWS\\NOTEPAD.EXE",       ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::clipboard_up>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
@@ -520,9 +521,10 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "bogus_sc_net_size=no\n"
         "proxy_managed_drives=*docs\n"
         "alternate_shell=\n"
+        "[session_probe]\n"
         "enable_session_probe=false\n"
-        "session_probe_launch_timeout=3000\n"
-        "session_probe_keepalive_timeout=6000\n"
+        "launch_timeout=3000\n"
+        "keepalive_timeout=6000\n"
         "[mod_replay]\n"
         "on_end_of_data=1\n"
         "[video]\n"
@@ -648,12 +650,12 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(3000,                             ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(6000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::utf8,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -695,8 +697,9 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
         "bogus_sc_net_size=yes\n"
         "proxy_managed_drives=*\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
+        "[session_probe]\n"
         "enable_session_probe=\n"
-        "session_probe_on_launch_failure=2\n"
+        "on_launch_failure=2\n"
         "[mod_replay]\n"
         "on_end_of_data=0\n"
         "[video]\n"
@@ -808,12 +811,12 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
                       ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(40000,                            ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(5000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -857,8 +860,9 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "bogus_sc_net_size=no\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
         "shell_working_directory=\n"
-        "session_probe_launch_timeout=6000\n"
-        "session_probe_keepalive_timeout=3000\n"
+        "[session_probe]\n"
+        "launch_timeout=6000\n"
+        "keepalive_timeout=3000\n"
         "[mod_replay]\n"
         "on_end_of_data=0\n"
         "[mod_vnc]\n"
@@ -975,12 +979,12 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
                       ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(6000,                             ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(3000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1012,6 +1016,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
         "persistent_disk_bitmap_cache=true\n"
         "cache_waiting_list=no\n"
         "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
+        "[session_probe]\n"
         "enable_session_probe=true\n"
         "\n"
     ;
@@ -1117,12 +1122,12 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(40000,                            ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(5000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1151,9 +1156,10 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
         "[mod_rdp]\n"
         "persist_bitmap_cache_on_disk=yes\n"
         "proxy_managed_drives=docs,apps\n"
-        "session_probe_launch_timeout=4000\n"
-        "session_probe_on_launch_failure=0\n"
-        "session_probe_keepalive_timeout=7000\n"
+        "[session_probe]\n"
+        "launch_timeout=4000\n"
+        "on_launch_failure=0\n"
+        "keepalive_timeout=7000\n"
         "[mod_vnc]\n"
         "bogus_clipboard_infinite_loop=0\n"
         "[debug]\n"
@@ -1261,12 +1267,12 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(4000,                             ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::ignore_and_continue,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(7000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1391,12 +1397,12 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(40000,                            ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(5000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1522,12 +1528,12 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(40000,                            ini.get<cfg::session_probe::launch_timeout>().count());
     RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
+                                                        ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(5000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());

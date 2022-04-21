@@ -372,15 +372,31 @@ def migrate_line_to_9_1_39(self, section_name:str, line:ConfigurationLine) -> Op
             if "session_timeout" == line.get_name():
                 return None, f"base_inactivity_timeout = {line.get_value()}"
 
-def migrate_line_to_9_1_69(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
+def migrate_line_to_9_1_71(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
     if line.is_variable_declaration():
-        if "video" == section_name:
-            if "replay_path" == line.get_name():
-                return 'mod_replay', f"replay_path = {line.get_value()}"
+        if 'rdp' == section_name:
+            varname = line.get_name()
+            if varname in (
+                'session_probe_exe_or_file',
+                'session_probe_arguments',
+                'session_probe_customize_executable_name',
+                'session_probe_allow_multiple_handshake',
+                'session_probe_at_end_of_session_freeze_connection_and_wait',
+                'session_probe_enable_cleaner',
+                'session_probe_clipboard_based_launcher_reset_keyboard_status',
+            ):
+                return 'session_probe', f'{varname[14:]} = {line.get_value()}'
+
+            if varname == 'session_probe_bestsafe_integration':
+                return 'session_probe', 'enable_bestsafe_interaction'
+
+        elif 'video' == section_name:
+            if 'replay_path' == line.get_name():
+                return 'mod_replay', f'replay_path = {line.get_value()}'
 
 migration_defs = (
     (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
-    (RedemptionVersion("9.1.71"), migrate_line_to_9_1_69),
+    (RedemptionVersion("9.1.71"), migrate_line_to_9_1_71),
 )
 
 

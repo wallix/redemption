@@ -126,23 +126,6 @@ rdp_keepalive_connection_interval = integer(min=0, default=0)
 # Warning: Service need to be manually restarted to take changes into account
 enable_ipv6 = boolean(default=True)
 
-[session_log]
-
-enable_session_log = boolean(default=True)
-
-enable_arcsight_log = boolean(default=False)
-
-# Keyboard Input Masking Level:
-# &nbsp; &nbsp;   0: keyboard input are not masked
-# &nbsp; &nbsp;   1: only passwords are masked
-# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
-# &nbsp; &nbsp;   3: keyboard inputs are not logged
-#_hidden
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
-
-#_advanced
-hide_non_printable_kbd_input = boolean(default=False)
-
 [client]
 
 # bg-BG, bg-BG.latin, bs-Cy, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
@@ -305,6 +288,10 @@ connection_establishment_timeout = integer(min=1000, max=10000, default=1000)
 #_advanced
 connection_retry_count = integer(min=1, max=10, default=3)
 
+[remote_program]
+
+allow_resize_hosted_desktop = boolean(default=True)
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
@@ -427,195 +414,6 @@ use_client_provided_remoteapp = boolean(default=False)
 use_native_remoteapp_capability = boolean(default=True)
 
 #_hidden
-enable_session_probe = boolean(default=False)
-
-# Minimum supported server : Windows Server 2008.
-# Clipboard redirection should be remain enabled on Terminal Server.
-#_hidden
-session_probe_use_smart_launcher = boolean(default=True)
-
-#_hidden
-session_probe_enable_launch_mask = boolean(default=True)
-
-# Behavior on failure to launch Session Probe.
-# &nbsp; &nbsp;   0: ignore failure and continue.
-# &nbsp; &nbsp;   1: disconnect user.
-# &nbsp; &nbsp;   2: reconnect without Session Probe.
-#_hidden
-session_probe_on_launch_failure = option(0, 1, 2, default=1)
-
-# This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
-# 0 to disable timeout.
-# (in milliseconds)
-#_hidden
-session_probe_launch_timeout = integer(min=0, max=300000, default=40000)
-
-# This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
-# 0 to disable timeout.
-# (in milliseconds)
-#_hidden
-session_probe_launch_fallback_timeout = integer(min=0, max=300000, default=40000)
-
-# Minimum supported server : Windows Server 2008.
-#_hidden
-session_probe_start_launch_timeout_timer_only_after_logon = boolean(default=True)
-
-# (in milliseconds)
-#_hidden
-session_probe_keepalive_timeout = integer(min=0, max=60000, default=5000)
-
-#   0: ignore and continue
-# &nbsp; &nbsp;   1: disconnect user
-# &nbsp; &nbsp;   2: freeze connection and wait
-#_hidden
-session_probe_on_keepalive_timeout = option(0, 1, 2, default=1)
-
-# End automatically a disconnected session.
-# This option is recommended for Web applications running in Desktop mode.
-# Session Probe must be enabled to use this feature.
-#_hidden
-session_probe_end_disconnected_session = boolean(default=False)
-
-#_advanced
-session_probe_customize_executable_name = boolean(default=False)
-
-#_hidden
-session_probe_enable_log = boolean(default=False)
-
-#_hidden
-session_probe_enable_log_rotation = boolean(default=False)
-
-#   1: Fatal
-# &nbsp; &nbsp;   2: Error
-# &nbsp; &nbsp;   3: Info
-# &nbsp; &nbsp;   4: Warning
-# &nbsp; &nbsp;   5: Debug
-# &nbsp; &nbsp;   6: Detail
-#_hidden
-session_probe_log_level = option(1, 2, 3, 4, 5, 6, default=5)
-
-# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
-# 0 to disable timeout.
-# (in milliseconds)
-#_hidden
-session_probe_disconnected_application_limit = integer(min=0, max=172800000, default=0)
-
-# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
-# 0 to disable timeout.
-# (in milliseconds)
-#_hidden
-session_probe_disconnected_session_limit = integer(min=0, max=172800000, default=0)
-
-# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
-# 0 to disable timeout.
-# (in milliseconds)
-#_hidden
-session_probe_idle_session_limit = integer(min=0, max=172800000, default=0)
-
-#_hidden
-session_probe_exe_or_file = string(max=511, default='||CMD')
-
-#_hidden
-session_probe_arguments = string(max=511, default=')gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(')
-
-# (in milliseconds)
-#_hidden
-session_probe_clipboard_based_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
-
-# (in milliseconds)
-#_hidden
-session_probe_clipboard_based_launcher_start_delay = integer(min=0, default=0)
-
-# (in milliseconds)
-#_hidden
-session_probe_clipboard_based_launcher_long_delay = integer(min=0, default=500)
-
-# (in milliseconds)
-#_hidden
-session_probe_clipboard_based_launcher_short_delay = integer(min=0, default=50)
-
-# (in milliseconds)
-#_hidden
-session_probe_launcher_abort_delay = integer(min=0, max=300000, default=2000)
-
-#_advanced
-session_probe_allow_multiple_handshake = boolean(default=False)
-
-#_hidden
-session_probe_enable_crash_dump = boolean(default=False)
-
-#_hidden
-session_probe_handle_usage_limit = integer(min=0, max=1000, default=0)
-
-#_hidden
-session_probe_memory_usage_limit = integer(min=0, max=200000000, default=0)
-
-# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
-# The alarm is deactivated if this value is less than 200.
-#_hidden
-session_probe_cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
-
-#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
-# &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
-#_hidden
-session_probe_cpu_usage_alarm_action = option(0, 1, default=0)
-
-# (in milliseconds)
-#_hidden
-session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
-
-#_hidden
-session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
-
-#_hidden
-session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
-
-#_hidden
-session_probe_update_disabled_features = boolean(default=True)
-
-#   0x000: none
-# &nbsp; &nbsp;   0x001: Java Access Bridge
-# &nbsp; &nbsp;   0x002: MS Active Accessbility
-# &nbsp; &nbsp;   0x004: MS UI Automation
-# &nbsp; &nbsp;   0x010: Inspect Edge location URL
-# &nbsp; &nbsp;   0x020: Inspect Chrome Address/Search bar
-# &nbsp; &nbsp;   0x040: Inspect Firefox Address/Search bar
-# &nbsp; &nbsp;   0x080: Monitor Internet Explorer event
-# &nbsp; &nbsp;   0x100: Inspect group membership of user
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
-#_hidden
-#_hex
-session_probe_disabled_features = integer(min=0, max=511, default=352)
-
-#_hidden
-session_probe_bestsafe_integration = boolean(default=False)
-
-# For targets running WALLIX BestSafe only.
-# &nbsp; &nbsp;   0: User action will be accepted
-# &nbsp; &nbsp;   1: (Same thing as 'allow') 
-# &nbsp; &nbsp;   2: User action will be rejected
-#_hidden
-session_probe_on_account_manipulation = option(0, 1, 2, default=0)
-
-# The name of the environment variable pointing to the alternative directory to launch Session Probe.
-# If empty, the environment variable TMP will be used.
-#_hidden
-session_probe_alternate_directory_environment_variable = string(max=3, default='')
-
-# If enabled, disconnected session can be recovered by a different primary user.
-#_hidden
-session_probe_public_session = boolean(default=False)
-
-#_advanced
-session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=True)
-
-#_advanced
-session_probe_enable_cleaner = boolean(default=True)
-
-#_advanced
-session_probe_clipboard_based_launcher_reset_keyboard_status = boolean(default=True)
-
-#_hidden
 application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(')
 
 #_hidden
@@ -629,69 +427,6 @@ application_driver_chrome_uia_script = string(max=256, default=')gen_config_ini"
 
 #_hidden
 application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
-
-# Keep known server certificates on WAB
-#_hidden
-server_cert_store = boolean(default=True)
-
-# Behavior of certificates check.
-# &nbsp; &nbsp;   0: fails if certificates doesn't match or miss.
-# &nbsp; &nbsp;   1: fails if certificate doesn't match, succeed if no known certificate.
-# &nbsp; &nbsp;   2: succeed if certificates exists (not checked), fails if missing.
-# &nbsp; &nbsp;   3: always succeed.
-# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-#_hidden
-server_cert_check = option(0, 1, 2, 3, default=1)
-
-# Warn if check allow connexion to server.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_access_allowed_message = integer(min=0, max=7, default=1)
-
-# Warn that new server certificate file was created.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_create_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate file was successfully checked.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_success_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate file checking failed.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_failure_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate check raised some internal error.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_error_message = integer(min=0, max=7, default=1)
 
 # Do not transmit client machine name or RDP server.
 hide_client_name = boolean(default=False)
@@ -769,6 +504,262 @@ forward_client_build_number = boolean(default=True)
 #_hidden
 bogus_monitor_layout_treatment = boolean(default=False)
 
+[session_probe]
+
+#_hidden
+enable_session_probe = boolean(default=False)
+
+#_hidden
+exe_or_file = string(max=511, default='||CMD')
+
+#_hidden
+arguments = string(max=511, default=')gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(')
+
+# Minimum supported server : Windows Server 2008.
+# Clipboard redirection should be remain enabled on Terminal Server.
+#_hidden
+use_smart_launcher = boolean(default=True)
+
+#_hidden
+enable_launch_mask = boolean(default=True)
+
+# Behavior on failure to launch Session Probe.
+# &nbsp; &nbsp;   0: ignore failure and continue.
+# &nbsp; &nbsp;   1: disconnect user.
+# &nbsp; &nbsp;   2: reconnect without Session Probe.
+#_hidden
+on_launch_failure = option(0, 1, 2, default=1)
+
+# This parameter is used if on_launch_failure is 1 (disconnect user).
+# 0 to disable timeout.
+# (in milliseconds)
+#_hidden
+launch_timeout = integer(min=0, max=300000, default=40000)
+
+# This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+# 0 to disable timeout.
+# (in milliseconds)
+#_hidden
+launch_fallback_timeout = integer(min=0, max=300000, default=40000)
+
+# Minimum supported server : Windows Server 2008.
+#_hidden
+start_launch_timeout_timer_only_after_logon = boolean(default=True)
+
+# (in milliseconds)
+#_hidden
+keepalive_timeout = integer(min=0, max=60000, default=5000)
+
+#   0: ignore and continue
+# &nbsp; &nbsp;   1: disconnect user
+# &nbsp; &nbsp;   2: freeze connection and wait
+#_hidden
+on_keepalive_timeout = option(0, 1, 2, default=1)
+
+# End automatically a disconnected session.
+# This option is recommended for Web applications running in Desktop mode.
+# Session Probe must be enabled to use this feature.
+#_hidden
+end_disconnected_session = boolean(default=False)
+
+#_hidden
+enable_log = boolean(default=False)
+
+#_hidden
+enable_log_rotation = boolean(default=False)
+
+#   1: Fatal
+# &nbsp; &nbsp;   2: Error
+# &nbsp; &nbsp;   3: Info
+# &nbsp; &nbsp;   4: Warning
+# &nbsp; &nbsp;   5: Debug
+# &nbsp; &nbsp;   6: Detail
+#_hidden
+log_level = option(1, 2, 3, 4, 5, 6, default=5)
+
+# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
+# 0 to disable timeout.
+# (in milliseconds)
+#_hidden
+disconnected_application_limit = integer(min=0, max=172800000, default=0)
+
+# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
+# 0 to disable timeout.
+# (in milliseconds)
+#_hidden
+disconnected_session_limit = integer(min=0, max=172800000, default=0)
+
+# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
+# 0 to disable timeout.
+# (in milliseconds)
+#_hidden
+idle_session_limit = integer(min=0, max=172800000, default=0)
+
+# (in milliseconds)
+#_hidden
+smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
+
+# (in milliseconds)
+#_hidden
+smart_launcher_start_delay = integer(min=0, default=0)
+
+# (in milliseconds)
+#_hidden
+smart_launcher_long_delay = integer(min=0, default=500)
+
+# (in milliseconds)
+#_hidden
+smart_launcher_short_delay = integer(min=0, default=50)
+
+# (in milliseconds)
+#_hidden
+launcher_abort_delay = integer(min=0, max=300000, default=2000)
+
+#_hidden
+enable_crash_dump = boolean(default=False)
+
+#_hidden
+handle_usage_limit = integer(min=0, max=1000, default=0)
+
+#_hidden
+memory_usage_limit = integer(min=0, max=200000000, default=0)
+
+# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
+# The alarm is deactivated if this value is less than 200.
+#_hidden
+cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
+
+#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+# &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+#_hidden
+cpu_usage_alarm_action = option(0, 1, default=0)
+
+# (in milliseconds)
+#_hidden
+end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
+
+#_hidden
+ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
+
+#_hidden
+childless_window_as_unidentified_input_field = boolean(default=True)
+
+#_hidden
+update_disabled_features = boolean(default=True)
+
+#   0x000: none
+# &nbsp; &nbsp;   0x001: Java Access Bridge
+# &nbsp; &nbsp;   0x002: MS Active Accessbility
+# &nbsp; &nbsp;   0x004: MS UI Automation
+# &nbsp; &nbsp;   0x010: Inspect Edge location URL
+# &nbsp; &nbsp;   0x020: Inspect Chrome Address/Search bar
+# &nbsp; &nbsp;   0x040: Inspect Firefox Address/Search bar
+# &nbsp; &nbsp;   0x080: Monitor Internet Explorer event
+# &nbsp; &nbsp;   0x100: Inspect group membership of user
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+#_hidden
+#_hex
+disabled_features = integer(min=0, max=511, default=352)
+
+#_hidden
+enable_bestsafe_interaction = boolean(default=False)
+
+# For targets running WALLIX BestSafe only.
+# &nbsp; &nbsp;   0: User action will be accepted
+# &nbsp; &nbsp;   1: (Same thing as 'allow') 
+# &nbsp; &nbsp;   2: User action will be rejected
+#_hidden
+on_account_manipulation = option(0, 1, 2, default=0)
+
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
+# If empty, the environment variable TMP will be used.
+#_hidden
+alternate_directory_environment_variable = string(max=3, default='')
+
+# If enabled, disconnected session can be recovered by a different primary user.
+#_hidden
+public_session = boolean(default=False)
+
+#_advanced
+customize_executable_name = boolean(default=False)
+
+#_advanced
+allow_multiple_handshake = boolean(default=False)
+
+#_advanced
+at_end_of_session_freeze_connection_and_wait = boolean(default=True)
+
+#_advanced
+enable_cleaner = boolean(default=True)
+
+#_advanced
+clipboard_based_launcher_reset_keyboard_status = boolean(default=True)
+
+[server_cert]
+
+# Keep known server certificates on WAB
+#_hidden
+server_cert_store = boolean(default=True)
+
+# Behavior of certificates check.
+# &nbsp; &nbsp;   0: fails if certificates doesn't match or miss.
+# &nbsp; &nbsp;   1: fails if certificate doesn't match, succeed if no known certificate.
+# &nbsp; &nbsp;   2: succeed if certificates exists (not checked), fails if missing.
+# &nbsp; &nbsp;   3: always succeed.
+# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
+#_hidden
+server_cert_check = option(0, 1, 2, 3, default=1)
+
+# Warn if check allow connexion to server.
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+server_access_allowed_message = integer(min=0, max=7, default=1)
+
+# Warn that new server certificate file was created.
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+server_cert_create_message = integer(min=0, max=7, default=1)
+
+# Warn that server certificate file was successfully checked.
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+server_cert_success_message = integer(min=0, max=7, default=1)
+
+# Warn that server certificate file checking failed.
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+server_cert_failure_message = integer(min=0, max=7, default=1)
+
+# Warn that server certificate check raised some internal error.
+# &nbsp; &nbsp;   0x0: nobody
+# &nbsp; &nbsp;   0x1: message sent to syslog
+# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_hidden
+#_hex
+error_message = integer(min=0, max=7, default=1)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -810,149 +801,22 @@ support_cursor_pseudo_encoding = boolean(default=True)
 #_hidden
 enable_ipv6 = boolean(default=True)
 
-[metrics]
+[session_log]
+
+enable_session_log = boolean(default=True)
+
+enable_arcsight_log = boolean(default=False)
+
+# Keyboard Input Masking Level:
+# &nbsp; &nbsp;   0: keyboard input are not masked
+# &nbsp; &nbsp;   1: only passwords are masked
+# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
+# &nbsp; &nbsp;   3: keyboard inputs are not logged
+#_hidden
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 #_advanced
-enable_rdp_metrics = boolean(default=False)
-
-#_advanced
-enable_vnc_metrics = boolean(default=False)
-
-#_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
-
-# (in seconds)
-#_advanced
-log_interval = integer(min=0, default=5)
-
-# (in hours)
-#_advanced
-log_file_turnover_interval = integer(min=0, default=24)
-
-# signature key to digest log metrics header info
-#_advanced
-sign_key = string(default='')
-
-[file_verification]
-
-#_hidden
-socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
-
-# Enable use of ICAP service for file verification on upload.
-#_hidden
-enable_up = boolean(default=False)
-
-# Enable use of ICAP service for file verification on download.
-#_hidden
-enable_down = boolean(default=False)
-
-# Verify text data via clipboard from client to server.
-# File verification on upload must be enabled via option Enable up.
-#_hidden
-clipboard_text_up = boolean(default=False)
-
-# Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down.
-#_hidden
-clipboard_text_down = boolean(default=False)
-
-# Block file transfer from client to server on invalid file verification.
-# File verification on upload must be enabled via option Enable up.
-#_hidden
-block_invalid_file_up = boolean(default=False)
-
-# Block file transfer from server to client on invalid file verification.
-# File verification on download must be enabled via option Enable down.
-#_hidden
-block_invalid_file_down = boolean(default=False)
-
-# Block text transfer from client to server on invalid text verification.
-# Text verification on upload must be enabled via option Clipboard text up.
-#_hidden
-block_invalid_clipboard_text_up = boolean(default=False)
-
-# Block text transfer from server to client on invalid text verification.
-# Text verification on download must be enabled via option Clipboard text down.
-#_hidden
-block_invalid_clipboard_text_down = boolean(default=False)
-
-#_hidden
-log_if_accepted = boolean(default=True)
-
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-# Warning: This value affects the RAM used by the session.
-#_hidden
-max_file_size_rejected = integer(min=0, default=256)
-
-# Temporary path used when files take up too much memory.
-#_hidden
-tmpdir = string(max=4096, default='/tmp/')
-
-[file_storage]
-
-# Enable storage of transferred files (via RDP Clipboard).
-# &nbsp; &nbsp;   never: Never store transferred files.
-# &nbsp; &nbsp;   always: Always store transferred files.
-# &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
-#_hidden
-store_file = option('never', 'always', 'on_invalid_verification', default='never')
-
-[icap_server_down]
-
-# Ip or fqdn of ICAP server
-host = string(default='')
-
-# Port of ICAP server
-port = integer(min=0, default=1344)
-
-# Service name on ICAP server
-service_name = string(default='avscan')
-
-# ICAP server uses tls
-tls = boolean(default=False)
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-#_advanced
-enable_x_context = boolean(default=True)
-
-# Filename sent to ICAP as percent encoding
-#_advanced
-filename_percent_encoding = boolean(default=False)
-
-[icap_server_up]
-
-# Ip or fqdn of ICAP server
-host = string(default='')
-
-# Port of ICAP server
-port = integer(min=0, default=1344)
-
-# Service name on ICAP server
-service_name = string(default='avscan')
-
-# ICAP server uses tls
-tls = boolean(default=False)
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-#_advanced
-enable_x_context = boolean(default=True)
-
-# Filename sent to ICAP as percent encoding
-#_advanced
-filename_percent_encoding = boolean(default=False)
-
-[mod_replay]
-
-#_advanced
-replay_path = string(max=4096, default='/tmp/')
-
-# 0 - Wait for Escape, 1 - End session
-#_hidden
-on_end_of_data = boolean(default=False)
-
-# 0 - replay once, 1 - loop replay
-#_hidden
-replay_on_loop = boolean(default=False)
+hide_non_printable_kbd_input = boolean(default=False)
 
 [ocr]
 
@@ -1128,6 +992,137 @@ redis_tls_key = string(default='')
 #_hidden
 redis_timeout = integer(min=0, default=500)
 
+[file_verification]
+
+#_hidden
+socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
+
+# Enable use of ICAP service for file verification on upload.
+#_hidden
+enable_up = boolean(default=False)
+
+# Enable use of ICAP service for file verification on download.
+#_hidden
+enable_down = boolean(default=False)
+
+# Verify text data via clipboard from client to server.
+# File verification on upload must be enabled via option Enable up.
+#_hidden
+clipboard_text_up = boolean(default=False)
+
+# Verify text data via clipboard from server to client
+# File verification on download must be enabled via option Enable down.
+#_hidden
+clipboard_text_down = boolean(default=False)
+
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
+#_hidden
+block_invalid_file_up = boolean(default=False)
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+#_hidden
+block_invalid_file_down = boolean(default=False)
+
+# Block text transfer from client to server on invalid text verification.
+# Text verification on upload must be enabled via option Clipboard text up.
+#_hidden
+block_invalid_clipboard_text_up = boolean(default=False)
+
+# Block text transfer from server to client on invalid text verification.
+# Text verification on download must be enabled via option Clipboard text down.
+#_hidden
+block_invalid_clipboard_text_down = boolean(default=False)
+
+#_hidden
+log_if_accepted = boolean(default=True)
+
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
+# Warning: This value affects the RAM used by the session.
+#_hidden
+max_file_size_rejected = integer(min=0, default=256)
+
+# Temporary path used when files take up too much memory.
+#_hidden
+tmpdir = string(max=4096, default='/tmp/')
+
+[file_storage]
+
+# Enable storage of transferred files (via RDP Clipboard).
+# &nbsp; &nbsp;   never: Never store transferred files.
+# &nbsp; &nbsp;   always: Always store transferred files.
+# &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+#_hidden
+store_file = option('never', 'always', 'on_invalid_verification', default='never')
+
+[icap_server_down]
+
+# Ip or fqdn of ICAP server
+host = string(default='')
+
+# Port of ICAP server
+port = integer(min=0, default=1344)
+
+# Service name on ICAP server
+service_name = string(default='avscan')
+
+# ICAP server uses tls
+tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
+
+# Filename sent to ICAP as percent encoding
+#_advanced
+filename_percent_encoding = boolean(default=False)
+
+[icap_server_up]
+
+# Ip or fqdn of ICAP server
+host = string(default='')
+
+# Port of ICAP server
+port = integer(min=0, default=1344)
+
+# Service name on ICAP server
+service_name = string(default='avscan')
+
+# ICAP server uses tls
+tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
+
+# Filename sent to ICAP as percent encoding
+#_advanced
+filename_percent_encoding = boolean(default=False)
+
+[metrics]
+
+#_advanced
+enable_rdp_metrics = boolean(default=False)
+
+#_advanced
+enable_vnc_metrics = boolean(default=False)
+
+#_hidden
+log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
+
+# (in seconds)
+#_advanced
+log_interval = integer(min=0, default=5)
+
+# (in hours)
+#_advanced
+log_file_turnover_interval = integer(min=0, default=24)
+
+# signature key to digest log metrics header info
+#_advanced
+sign_key = string(default='')
+
 [crypto]
 
 # (in hexadecimal format)
@@ -1151,6 +1146,106 @@ use_tls = boolean(default=True)
 # ${addr}:${port} or ${port} or ${unix_socket_path}
 #_hidden
 listen_address = string(default=':3390')
+
+[internal_mod]
+
+# Enable target edit field in login page.
+#_advanced
+enable_target_field = boolean(default=True)
+
+[mod_replay]
+
+#_advanced
+replay_path = string(max=4096, default='/tmp/')
+
+# 0 - Wait for Escape, 1 - End session
+#_hidden
+on_end_of_data = boolean(default=False)
+
+# 0 - replay once, 1 - loop replay
+#_hidden
+replay_on_loop = boolean(default=False)
+
+[translation]
+
+#_hidden
+language = option('en', 'fr', default='en')
+
+#_advanced
+login_language = option('Auto', 'EN', 'FR', default='Auto')
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+enable_theme = boolean(default=False)
+
+# Logo displayed when theme is enabled
+#_image=/var/wab/images/rdp-oem-logo.png
+logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#_adminkit
+bgcolor = string(default='#081F60')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+fgcolor = string(default='#FFFFFF')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+separator_color = string(default='#CFD5EB')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+focus_color = string(default='#004D9C')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+error_color = string(default='#FFFF00')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+edit_bgcolor = string(default='#FFFFFF')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+edit_fgcolor = string(default='#000000')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+edit_focus_color = string(default='#004D9C')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+tooltip_bgcolor = string(default='#000000')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+tooltip_fgcolor = string(default='#FFFF9F')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+tooltip_border_color = string(default='#000000')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line1_bgcolor = string(default='#E9ECF6')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line1_fgcolor = string(default='#000000')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line2_bgcolor = string(default='#CFD5EB')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line2_fgcolor = string(default='#000000')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_selected_bgcolor = string(default='#4472C4')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_selected_fgcolor = string(default='#FFFFFF')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_focus_bgcolor = string(default='#004D9C')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_focus_fgcolor = string(default='#FFFFFF')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_label_bgcolor = string(default='#4472C4')
+
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_label_fgcolor = string(default='#FFFFFF')
 
 [debug]
 
@@ -1328,96 +1423,5 @@ mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 # (values are comma-separated)
 #_advanced
 probe_client_addresses = string(default='')
-
-[remote_program]
-
-allow_resize_hosted_desktop = boolean(default=True)
-
-[translation]
-
-#_hidden
-language = option('en', 'fr', default='en')
-
-#_advanced
-login_language = option('Auto', 'EN', 'FR', default='Auto')
-
-[internal_mod]
-
-# Enable target edit field in login page.
-#_advanced
-enable_target_field = boolean(default=True)
-
-[theme]
-
-# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
-enable_theme = boolean(default=False)
-
-# Logo displayed when theme is enabled
-#_image=/var/wab/images/rdp-oem-logo.png
-logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#_adminkit
-bgcolor = string(default='#081F60')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-fgcolor = string(default='#FFFFFF')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-separator_color = string(default='#CFD5EB')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-focus_color = string(default='#004D9C')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-error_color = string(default='#FFFF00')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-edit_bgcolor = string(default='#FFFFFF')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-edit_fgcolor = string(default='#000000')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-edit_focus_color = string(default='#004D9C')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-tooltip_bgcolor = string(default='#000000')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-tooltip_fgcolor = string(default='#FFFF9F')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-tooltip_border_color = string(default='#000000')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line1_bgcolor = string(default='#E9ECF6')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line1_fgcolor = string(default='#000000')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line2_bgcolor = string(default='#CFD5EB')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line2_fgcolor = string(default='#000000')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_selected_bgcolor = string(default='#4472C4')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_selected_fgcolor = string(default='#FFFFFF')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_focus_bgcolor = string(default='#004D9C')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_focus_fgcolor = string(default='#FFFFFF')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_label_bgcolor = string(default='#4472C4')
-
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_label_fgcolor = string(default='#FFFFFF')
 
 )gen_config_ini"
