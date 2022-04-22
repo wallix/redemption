@@ -190,6 +190,15 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_params.vc_params.launcher_abort_delay                             = ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
 
+    mod_rdp_params.session_probe_params.clipboard_based_launcher.enable_launch_assistance_under_wabam
+                                                                                                   =    ini.get<cfg::context::is_wabam>()
+                                                                                                     && ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam>();
+    mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_virtual_channel_already_initialized_ptr
+                                                                                                   =   (   ini.get<cfg::context::is_wabam>()
+                                                                                                        && ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam>()
+                                                                                                        && ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization>())
+                                                                                                     ? &ini.get_mutable_ref<cfg::context::clipboard_virtual_channel_already_initialized>()
+                                                                                                     : nullptr;
     mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.start_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.long_delay_ms                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();

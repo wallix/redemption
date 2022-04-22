@@ -402,6 +402,9 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("||CMD"));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), "session_probe_arguments", set(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam", connpolicy::name{"enable_launch_assistance_under_wabam"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization", connpolicy::name{"wabam_bogus_clipboard_initialization"}, set(true));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", connpolicy::name{"smart_launcher_clipboard_initialization_delay"}, set(2000));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", connpolicy::name{"smart_launcher_start_delay"}, set(0));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", connpolicy::name{"smart_launcher_long_delay"}, set(500));
@@ -893,6 +896,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "clipboard_virtual_channel_already_initialized", set(false));
     });
 }
 

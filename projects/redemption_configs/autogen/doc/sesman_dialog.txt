@@ -134,6 +134,8 @@ cfg::mod_rdp::session_probe_disconnected_session_limit ⇐ mod_rdp:session_probe
 cfg::mod_rdp::session_probe_idle_session_limit ⇐ mod_rdp:session_probe_idle_session_limit   [std::chrono::milliseconds]
     This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
     0 to disable timeout.
+cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam ⇐ mod_rdp:session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam   [bool]
+cfg::mod_rdp::session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization ⇐ mod_rdp:session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization   [bool]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_clipboard_initialization_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_start_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_long_delay   [std::chrono::milliseconds]

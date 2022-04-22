@@ -176,6 +176,10 @@ struct SessionProbeVirtualChannelParams
 
 struct SessionProbeClipboardBasedLauncherParams
 {
+    bool enable_launch_assistance_under_wabam = false;
+
+    const bool * clipboard_virtual_channel_already_initialized_ptr = nullptr;
+
     std::chrono::milliseconds clipboard_initialization_delay_ms{};
     std::chrono::milliseconds start_delay_ms{};
     std::chrono::milliseconds long_delay_ms{};

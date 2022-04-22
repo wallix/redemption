@@ -40,6 +40,7 @@
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
 #include "configs/config.hpp"
+#include "core/RDP/clipboard.hpp"
 #include "core/RDP/GraphicUpdatePDU.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -2672,6 +2673,18 @@ public:
 
             InStream chunk({sec.payload.get_current(), chunk_size});
             cb.send_to_mod_channel(channel.name, chunk, length, flags);
+
+            if (channel.name == channel_names::cliprdr)
+            {
+                InStream chunk({sec.payload.get_current(), chunk_size});
+                if (sizeof(uint16_t) <= chunk_size
+                 && chunk.in_uint16_le() == RDPECLIP::CB_CLIP_CAPS)
+                {
+                    ini.set<cfg::context::clipboard_virtual_channel_already_initialized>(true);
+                    LOG(LOG_INFO, "Front::process_data_tpdu_running: clipboard_virtual_channel_already_initialized");
+                }
+            }
+
             sec.payload.in_skip_bytes(chunk_size);
         }
         else {

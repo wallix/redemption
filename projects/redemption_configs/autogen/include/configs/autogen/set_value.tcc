@@ -924,6 +924,22 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_clipboard_initialization_delay")) {
             ::configs::parse_and_log(
                 context, key,

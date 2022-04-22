@@ -490,6 +490,12 @@ session_probe_exe_or_file = string(max=511, default='||CMD')
 #_hidden
 session_probe_arguments = string(max=511, default=')gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(')
 
+#_hidden
+session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam = boolean(default=True)
+
+#_hidden
+session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization = boolean(default=True)
+
 # (is in millisecond)
 #_hidden
 session_probe_clipboard_based_launcher_clipboard_initialization_delay = integer(min=0, default=2000)

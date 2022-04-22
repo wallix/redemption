@@ -113,16 +113,53 @@ public:
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
             "SessionProbeClipboardBasedLauncher: "
+                "enable_launch_assistance_under_wabam=%s "
+                "wabam_bogus_clipboard_initialization=%s "
                 "clipboard_initialization_delay_ms=%lld "
                 "start_delay_ms=%lld "
                 "long_delay_ms=%lld "
                 "short_delay_ms=%lld",
+            this->params.enable_launch_assistance_under_wabam ? "yes" : "no",
+            this->params.clipboard_virtual_channel_already_initialized_ptr ? "yes" : "no",
             ms2ll(this->params.clipboard_initialization_delay_ms), ms2ll(this->params.start_delay_ms),
             ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
     }
 
     bool on_client_format_list_rejected() override {
         return restore_client_clipboard();
+    }
+
+    bool on_clipboard_capabilities() override {
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_clipboard_capabilities");
+
+        if (this->params.clipboard_virtual_channel_already_initialized_ptr &&
+            *this->params.clipboard_virtual_channel_already_initialized_ptr)
+        {
+            LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher: Suppport of WABAM bogus clipboard initialization.");
+
+            // Format List PDU.
+            {
+                StaticOutStream<256> out_s;
+                Cliprdr::format_list_serialize_with_header(
+                    out_s,
+                    Cliprdr::IsLongFormat(this->cliprdr_channel
+                        ? this->cliprdr_channel->use_long_format_names()
+                        : false),
+                    std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
+
+                InStream in_s(out_s.get_bytes());
+                const size_t totalLength = out_s.get_offset();
+                this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                              in_s,
+                                              totalLength,
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              | CHANNELS::CHANNEL_FLAG_LAST
+                                              | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+            }
+        }
+
+        return false;
     }
 
     bool on_clipboard_initialize() override {
@@ -221,7 +258,8 @@ public:
 
         switch (this->state) {
             case State::START:
-                if (!this->clipboard_initialized) {
+                if (!this->clipboard_initialized
+                 && !this->params.enable_launch_assistance_under_wabam) {
                     LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                         "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
 
@@ -716,6 +754,9 @@ public:
     }
 
     bool restore_client_clipboard() {
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> restore_client_clipboard");
+
         if (this->clipboard_initialized) {
             if (!this->clipboard_initialized_by_proxy && bool(this->current_client_format_list_pdu)) {
                 // Sends client Format List PDU to server

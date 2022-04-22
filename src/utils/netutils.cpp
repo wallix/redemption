@@ -34,6 +34,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include <limits>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>

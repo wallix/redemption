@@ -71,6 +71,7 @@ public:
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->clipboard_monitor_ready_notifier = launcher;
+        this->clipboard_capabilities_notifier  = launcher;
         this->clipboard_initialize_notifier    = launcher;
         this->format_list_notifier             = launcher;
         this->format_list_response_notifier    = launcher;
@@ -81,6 +82,16 @@ public:
     void DLP_antivirus_check_channels_files();
 
 private:
+    enum class InitializationState :  uint8_t {
+        WaitingServerMonitorReadyPDU,
+        WaitingClientClipboardCapabilitiesPDU,
+        WaitingClientTemporaryDirectoryPDUOrFormatListPDU,
+        WaitingClientFormatListPDU,
+        WaitingServerFormatListResponsePDU,
+        Ready
+    } initialization_state = InitializationState::WaitingServerMonitorReadyPDU;
+
+
     enum class StreamId : uint32_t;
     enum class FileGroupId : uint32_t;
 
@@ -91,6 +102,7 @@ private:
     const ClipboardVirtualChannelParams params;
 
     SessionProbeLauncher* clipboard_monitor_ready_notifier = nullptr;
+    SessionProbeLauncher* clipboard_capabilities_notifier  = nullptr;
     SessionProbeLauncher* clipboard_initialize_notifier    = nullptr;
     SessionProbeLauncher* format_list_notifier             = nullptr;
     SessionProbeLauncher* format_list_response_notifier    = nullptr;

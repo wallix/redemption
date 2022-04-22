@@ -58,6 +58,8 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_enable_log_rotation>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_disconnected_application_limit>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_disconnected_session_limit>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_idle_session_limit>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>;

@@ -207,6 +207,12 @@ disconnected_session_limit = integer(min=0, max=172800000, default=0)
 #_advanced
 idle_session_limit = integer(min=0, max=172800000, default=0)
 
+#_advanced
+enable_launch_assistance_under_wabam = boolean(default=True)
+
+#_advanced
+wabam_bogus_clipboard_initialization = boolean(default=True)
+
 # (is in millisecond)
 #_advanced
 smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)

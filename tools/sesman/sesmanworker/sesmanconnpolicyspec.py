@@ -137,6 +137,12 @@ cp_spec = {
         u'mod_rdp:session_probe_idle_session_limit': (
             'idle_session_limit', 0
         ),
+        u'mod_rdp:session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam': (
+            'enable_launch_assistance_under_wabam', True
+        ),
+        u'mod_rdp:session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization': (
+            'wabam_bogus_clipboard_initialization', True
+        ),
         u'mod_rdp:session_probe_clipboard_based_launcher_clipboard_initialization_delay': (
             'smart_launcher_clipboard_initialization_delay', 2000
         ),

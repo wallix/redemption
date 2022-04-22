@@ -153,6 +153,8 @@ namespace cfg {
         struct session_probe_idle_session_limit;
         struct session_probe_exe_or_file;
         struct session_probe_arguments;
+        struct session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam;
+        struct session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization;
         struct session_probe_clipboard_based_launcher_clipboard_initialization_delay;
         struct session_probe_clipboard_based_launcher_start_delay;
         struct session_probe_clipboard_based_launcher_long_delay;
@@ -444,6 +446,7 @@ namespace cfg {
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
+        struct clipboard_virtual_channel_already_initialized;
     };
 
 } // namespace cfg

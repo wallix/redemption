@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(205);
+constexpr authid_t MAX_AUTHID = authid_t(207);
 
 constexpr array_view_const_char const authstr[] = {
     "front_connection_time"_av,
@@ -71,6 +71,8 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:session_probe_disconnected_application_limit"_av,
     "mod_rdp:session_probe_disconnected_session_limit"_av,
     "mod_rdp:session_probe_idle_session_limit"_av,
+    "mod_rdp:session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam"_av,
+    "mod_rdp:session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization"_av,
     "mod_rdp:session_probe_clipboard_based_launcher_clipboard_initialization_delay"_av,
     "mod_rdp:session_probe_clipboard_based_launcher_start_delay"_av,
     "mod_rdp:session_probe_clipboard_based_launcher_long_delay"_av,

@@ -391,6 +391,20 @@
           "description": "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n0 to disable timeout."
         },
         {
+          "name": "enable_launch_assistance_under_wabam",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "wabam_bogus_clipboard_initialization",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "smart_launcher_clipboard_initialization_delay",
           "type": "integer",
           "min": 0,

@@ -291,6 +291,9 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.enable_log);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.enable_log_rotation);
 
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.clipboard_based_launcher.enable_launch_assistance_under_wabam);
+        RDP_PARAMS_LOG("<%p>",   static_cast<const void*>,
+                                                        session_probe_params.clipboard_based_launcher.clipboard_virtual_channel_already_initialized_ptr);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.start_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.long_delay_ms);

@@ -34,6 +34,8 @@ public:
 
     virtual bool on_client_format_list_rejected() = 0;
 
+    virtual bool on_clipboard_capabilities() = 0;
+
     virtual bool on_clipboard_initialize() = 0;
 
     virtual bool on_clipboard_monitor_ready() = 0;

@@ -574,6 +574,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_arguments = )gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(
 
+# value: 0 or 1
+#_hidden
+#session_probe_clipboard_based_launcher_enable_launch_assistance_under_wabam = 1
+
+# value: 0 or 1
+#_hidden
+#session_probe_clipboard_based_launcher_wabam_bogus_clipboard_initialization = 1
+
 # (is in millisecond)
 #_hidden
 #session_probe_clipboard_based_launcher_clipboard_initialization_delay = 2000
