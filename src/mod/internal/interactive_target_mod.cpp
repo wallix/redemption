@@ -40,7 +40,10 @@ InteractiveTargetMod::InteractiveTargetMod(
         this->ask_device, this->ask_login, this->ask_password,
         theme,
         TR(trkeys::target_info_required, language(vars)),
-        TR(trkeys::device, language(vars)), vars.get<cfg::globals::target_device>().c_str(),
+        TR(trkeys::device, language(vars)),
+        vars.get<cfg::globals::target_device>().empty()
+        ? vars.get<cfg::context::target_host>().c_str()
+        : vars.get<cfg::globals::target_device>().c_str(),
         TR(trkeys::login, language(vars)), vars.get<cfg::globals::target_user>().c_str(),
         TR(trkeys::password, language(vars)),
         font, &this->language_button)
