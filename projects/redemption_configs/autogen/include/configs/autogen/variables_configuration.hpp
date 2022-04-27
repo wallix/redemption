@@ -39,9 +39,9 @@ namespace configs
         inline constexpr int section21 = 142; /* context */
         // inline constexpr int section22 = 221; /* internal_mod */
         inline constexpr int section23 = 221; /* mod_replay */
-        inline constexpr int section24 = 222; /* translation */
-        // inline constexpr int section25 = 224; /* theme */
-        // inline constexpr int section26 = 224; /* debug */
+        inline constexpr int section24 = 223; /* translation */
+        // inline constexpr int section25 = 225; /* theme */
+        // inline constexpr int section26 = 225; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -4891,10 +4891,14 @@ namespace cfg
     };
 
     /// type: ::configs::spec_types::directory_path <br/>
+    /// sesman ⇒ proxy <br/>
     /// default: "/tmp/" <br/>
     struct mod_replay::replay_path {
-        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section23 + 0};
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
@@ -4920,7 +4924,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section23 + 0};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section23 + 1};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -6208,6 +6212,7 @@ using VariablesAclPack = Pack<
 , cfg::context::smartcard_login
 , cfg::context::banner_message
 , cfg::context::banner_type
+, cfg::mod_replay::replay_path
 , cfg::mod_replay::replay_on_loop
 , cfg::translation::language
 , cfg::translation::login_language
@@ -6218,7 +6223,7 @@ constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111011111111111111111111111111111111111111110111111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
 , 0b1111111111111111111111111111011011111101111111111100111111111111
-, 0b0000000000000000000000000000000011111111111111111110111111111111
+, 0b0000000000000000000000000000000111111111111111111110111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000

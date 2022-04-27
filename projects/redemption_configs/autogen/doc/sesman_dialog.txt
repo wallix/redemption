@@ -474,6 +474,7 @@ cfg::context::banner_type ⇐ banner_type   [BannerType]
       2: alert
 
 
+cfg::mod_replay::replay_path ⇐ replay_path   [::configs::spec_types::directory_path]
 cfg::mod_replay::replay_on_loop ⇐ replay_on_loop   [bool]
     0 - replay once, 1 - loop replay
 

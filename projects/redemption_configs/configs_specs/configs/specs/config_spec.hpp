@@ -797,7 +797,8 @@ void config_spec_definition(Writer && W)
 
     W.section("mod_replay", [&]
     {
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), names{"replay_path"}, set("/tmp/"));
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L,
+            type_<types::dirpath>(), names{"replay_path"}, set("/tmp/"));
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"on_end_of_data"}, desc{"0 - Wait for Escape, 1 - End session"}, set(false));
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"replay_on_loop"}, desc{"0 - replay once, 1 - loop replay"}, set(false));
     });
