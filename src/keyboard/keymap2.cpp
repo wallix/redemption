@@ -121,6 +121,10 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
             (ctrl ^ bool(this->keys_down[LEFT_ALT])) &&                         // Ctrl xor Alt
             !this->keys_down[RIGHT_ALT] &&
             this->keys_down[0x0F];                                              // Tab
+
+        this->is_session_scuttling_shortcut_pressed_ =
+            ctrl &&                                                             // Ctrl
+            this->keys_down[F12];                                               // F12
     }
 
     if (is_ctrl_pressed() && is_alt_pressed()

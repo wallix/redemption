@@ -130,6 +130,14 @@ private:
 public:
     bool is_application_switching_shortcut_pressed = false;
 
+private:
+    bool is_session_scuttling_shortcut_pressed_ = false;
+
+public:
+    bool is_session_scuttling_shortcut_pressed() const {
+        return this->is_session_scuttling_shortcut_pressed_;
+    }
+
 public:
     explicit Keymap2(uint32_t verbose = 0);
 

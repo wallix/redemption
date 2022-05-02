@@ -1127,6 +1127,18 @@ private:
                                 PerformAutomaticReconnection::Yes);
                         }
                     }
+                    else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+                        if (ini.get<cfg::mod_rdp::allow_session_reconnection_by_shortcut>()
+                         && mod_wrapper.get_mod().is_auto_reconnectable())
+                        {
+                            LOG(LOG_INFO, "Session::Session: Automatic reconnection required. ERR_AUTOMATIC_RECONNECTION_REQUIRED");
+
+                            run_session = this->retry_rdp(
+                                session_log, mod_factory, mod_wrapper,
+                                front, rail_client_execute,
+                                PerformAutomaticReconnection::Yes);
+                        }
+                    }
                     else {
                         // RemoteApp disconnection initiated by user
                         // ERR_DISCONNECT_BY_USER == e.id

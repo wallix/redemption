@@ -509,6 +509,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"auto_reconnection_on_losing_target_link"}, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"allow_session_reconnection_by_shortcut"}, set(false));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"forward_client_build_number"},
             desc{
                 "Forward the build number advertised by the client to the server. "

@@ -131,6 +131,9 @@ mode_console = option('allow', 'force', 'forbid', default='allow')
 #_advanced
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
+#_advanced
+allow_session_reconnection_by_shortcut = boolean(default=False)
+
 # Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
 #_advanced
 forward_client_build_number = boolean(default=True)

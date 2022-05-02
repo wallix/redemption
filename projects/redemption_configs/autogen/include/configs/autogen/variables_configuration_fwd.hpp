@@ -203,6 +203,7 @@ namespace cfg
         struct enable_ipv6;
         struct mode_console;
         struct auto_reconnection_on_losing_target_link;
+        struct allow_session_reconnection_by_shortcut;
         struct forward_client_build_number;
         struct bogus_monitor_layout_treatment;
         struct effective_krb_armoring_user;

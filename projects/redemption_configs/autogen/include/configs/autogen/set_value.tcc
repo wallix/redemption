@@ -1395,6 +1395,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "allow_session_reconnection_by_shortcut"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::allow_session_reconnection_by_shortcut&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "forward_client_build_number"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

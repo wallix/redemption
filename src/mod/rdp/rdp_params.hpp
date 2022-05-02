@@ -211,6 +211,8 @@ struct ModRDPParams
 
     ServerInfo* server_info_ref = nullptr;
 
+    bool allow_session_reconnection_by_shortcut = false;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -448,6 +450,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             allow_session_reconnection_by_shortcut);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

@@ -83,6 +83,9 @@ cp_spec = {
         u'mod_rdp:auto_reconnection_on_losing_target_link': (
             'auto_reconnection_on_losing_target_link', False
         ),
+        u'mod_rdp:allow_session_reconnection_by_shortcut': (
+            'allow_session_reconnection_by_shortcut', False
+        ),
         u'mod_rdp:forward_client_build_number': (
             'forward_client_build_number', True
         ),
