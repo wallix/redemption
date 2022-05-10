@@ -264,7 +264,6 @@ public:
             int port = checked_int(ini.get<cfg::context::target_port>());
             auto recv_timeout = std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>());
             auto connection_establishment_timeout = ini.get<cfg::all_target_mod::connection_establishment_timeout>();
-            int connection_retry_count = ini.get<cfg::all_target_mod::connection_retry_count>();
 
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
                 return new FinalSocketTransport( /*NOLINT*/
@@ -273,7 +272,6 @@ public:
                     ip_address,
                     port,
                     connection_establishment_timeout,
-                    connection_retry_count,
                     recv_timeout,
                     verbose,
                     error_message
@@ -292,7 +290,6 @@ public:
                 ip_address,
                 port,
                 connection_establishment_timeout,
-                connection_retry_count,
                 recv_timeout,
                 verbose,
                 error_message
@@ -727,7 +724,6 @@ ModPack create_mod_rdp(
         unique_fd ufd = addr_connect_blocking(
             socket_path.c_str(),
             ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
-            ini.get<cfg::all_target_mod::connection_retry_count>(),
             no_log_for_unix_socket);
         if (ufd) {
             file_validator = std::make_unique<RdpData::FileValidator>(
@@ -857,9 +853,9 @@ ModPack create_mod_rdp(
     mod_rdp_params.krb_armoring_user = ini.get<cfg::mod_rdp::effective_krb_armoring_user>().c_str();
     mod_rdp_params.krb_armoring_password = ini.get<cfg::mod_rdp::effective_krb_armoring_password>().c_str();
 
-    unique_fd client_sck =
-        connect_to_target_host(ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
-            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>());
+    unique_fd client_sck = connect_to_target_host(
+        ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
+        ini.get<cfg::all_target_mod::connection_establishment_timeout>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())

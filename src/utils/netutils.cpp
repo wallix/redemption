@@ -39,6 +39,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 #include <sys/types.h>
@@ -103,63 +104,58 @@ namespace
         return true;
     }
 
-    unique_fd connect_sck(int sck, std::chrono::milliseconds connection_establishment_timeout,
-                          int connection_retry_count, sockaddr & addr,
-                          socklen_t addr_len, const char * target, bool no_log,
+    unique_fd connect_sck(unique_fd sck, std::chrono::milliseconds connection_establishment_timeout,
+                          sockaddr & addr, socklen_t addr_len, const char * target, bool no_log,
                           char const** error_result = nullptr)
     {
-        fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+        int raw_sck = sck.fd();
 
-        int connection_establishment_timeout_ms = connection_establishment_timeout.count();
+        fcntl(raw_sck, F_SETFL, fcntl(raw_sck, F_GETFL) | O_NONBLOCK);
 
-        int trial = 0;
-        for (; trial < connection_retry_count ; trial++){
-            int const res = ::connect(sck, &addr, addr_len);
-            if (-1 != res){
-                // connection suceeded
-                break;
+        if (-1 == ::connect(raw_sck, &addr, addr_len)) {
+            int const err = errno;
+            if (err != EINPROGRESS && err != EALREADY) {
+                goto connection_error;
             }
 
-            int const err =  errno;
-            if (trial > 0){
-                char const* errmes = strerror(err);
-                if (error_result) {
-                    *error_result = errmes;
-                }
-                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, errmes);
+            fd_set fds;
+            io_fd_zero(fds);
+            io_fd_set(raw_sck, fds);
+            auto connection_establishment_timeout_ms = connection_establishment_timeout.count();
+            timeval timeout = {
+                connection_establishment_timeout_ms / 1000,
+                (connection_establishment_timeout_ms % 1000) * 1000
+            };
+            // exit select on timeout or connect or error
+            // connect will catch the actual error if any,
+            // no need to care of select result
+            int res = select(raw_sck+1, nullptr, &fds, nullptr, &timeout);
+            if (res != 1) {
+                goto connection_error;
             }
 
-            if ((err == EINPROGRESS) || (err == EALREADY)){
-                // try again
-                fd_set fds;
-                io_fd_zero(fds);
-                io_fd_set(sck, fds);
-                struct timeval timeout = {
-                    connection_establishment_timeout_ms / 1000,
-                    1000 * (connection_establishment_timeout_ms % 1000)
-                };
-                // exit select on timeout or connect or error
-                // connect will catch the actual error if any,
-                // no need to care of select result
-                select(sck+1, nullptr, &fds, nullptr, &timeout);
+            int sck_error = 0;
+            socklen_t optlen = sizeof(sck_error);
+            if (-1 == getsockopt(raw_sck, SOL_SOCKET, SO_ERROR, &sck_error, &optlen)) {
+                goto connection_error;
             }
-            else {
-                // real failure
-                trial = connection_retry_count;
-                break;
+
+            if (sck_error != 0) {
+                goto connection_error;
             }
         }
 
-        if (trial >= connection_retry_count){
-            if (error_result) {
-                *error_result = "All trials done";
-            }
-            LOG(LOG_ERR, "All trials done connecting to %s", target);
-            return unique_fd{-1};
-        }
+        LOG_IF(!no_log, LOG_INFO, "connection to %s succeeded : socket %d", target, raw_sck);
+        return sck;
 
-        LOG_IF(!no_log, LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
-        return unique_fd{sck};
+        connection_error:
+        int const err = errno;
+        char const* errmes = strerror(err);
+        if (error_result) {
+            *error_result = errmes;
+        }
+        LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, errmes);
+        return unique_fd{-1};
     }
 } // namespace
 
@@ -188,7 +184,6 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 unique_fd ip_connect_ipv4(const char *ip,
                           int port,
                           std::chrono::milliseconds establishment_timeout,
-                          int retry_count,
                           char const **error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
@@ -197,7 +192,7 @@ unique_fd ip_connect_ipv4(const char *ip,
     // the trial process include "socket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
-    int sck = socket(PF_INET, SOCK_STREAM, 0);
+    unique_fd sck { socket(PF_INET, SOCK_STREAM, 0) };
 
     union
     {
@@ -218,17 +213,15 @@ unique_fd ip_connect_ipv4(const char *ip,
             *error_result = error;
         }
         LOG(LOG_ERR, "Connecting to %s:%d failed", ip, port);
-        close(sck);
         return unique_fd{-1};
     }
 
     /* set snd buffer to at least 32 Kbytes */
-    if (!set_snd_buffer(sck, 32768)) {
+    if (!set_snd_buffer(sck.fd(), 32768)) {
         if (error_result) {
             *error_result = "Cannot set socket buffer size";
         }
         LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size", ip, port);
-        close(sck);
         return unique_fd{-1};
     }
 
@@ -237,9 +230,8 @@ unique_fd ip_connect_ipv4(const char *ip,
 
     bool const no_log = false;
 
-    return connect_sck(sck,
+    return connect_sck(std::move(sck),
                        establishment_timeout,
-                       retry_count,
                        u.s,
                        sizeof(u),
                        text_target,
@@ -250,13 +242,11 @@ unique_fd ip_connect_ipv4(const char *ip,
 unique_fd ip_connect_blocking(const char* ip,
                               int port,
                               std::chrono::milliseconds establishment_timeout,
-                              int retry_count,
                               char const** error_result)
 {
     auto fd = ip_connect(ip,
                          port,
                          establishment_timeout,
-                         retry_count,
                          error_result);
     if (fd) {
         const auto sck = fd.fd();
@@ -303,14 +293,12 @@ unique_fd ip_connect(const char *ip,
     return ip_connect(ip,
                       port,
                       std::chrono::milliseconds(1000),
-                      3,
                       error_result);
 }
 
 unique_fd ip_connect(const char *ip,
                      int port,
                      std::chrono::milliseconds establishment_timeout,
-                     int retry_count,
                      const char **error_result) noexcept
 {
     AddrInfoPtrWithDel_t addr_info_ptr =
@@ -318,7 +306,7 @@ unique_fd ip_connect(const char *ip,
 
     if (!addr_info_ptr)
     {
-        return unique_fd { -1 };
+        return unique_fd{-1};
     }
 
 
@@ -329,23 +317,24 @@ unique_fd ip_connect(const char *ip,
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
 
-    int sck = socket(addr_info_ptr->ai_family,
-                     addr_info_ptr->ai_socktype,
-                     addr_info_ptr->ai_protocol);
+    int raw_sck = socket(addr_info_ptr->ai_family,
+                         addr_info_ptr->ai_socktype,
+                         addr_info_ptr->ai_protocol);
 
-    if (sck == -1)
+    if (raw_sck == -1)
     {
         if (error_result)
         {
             *error_result = "Cannot create socket";
         }
         LOG(LOG_ERR, "socket failed : %s", ::strerror(errno));
-        close(sck);
-        return unique_fd { -1 };
+        return unique_fd{-1};
     }
 
+    unique_fd sck {raw_sck};
+
     /* set snd buffer to at least 32 Kbytes */
-    if (!set_snd_buffer(sck, 32768))
+    if (!set_snd_buffer(raw_sck, 32768))
     {
         if (error_result)
         {
@@ -355,7 +344,6 @@ unique_fd ip_connect(const char *ip,
             "Connecting to %s:%d failed : cannot set socket buffer size",
             ip,
             port);
-        close(sck);
         return unique_fd{-1};
     }
 
@@ -373,28 +361,20 @@ unique_fd ip_connect(const char *ip,
         {
             *error_result = "Cannot get ip address";
         }
-        LOG(LOG_ERR,
-            "getnameinfo failed : %s",
-            (res == EAI_SYSTEM) ?
-            ::strerror(errno) : ::gai_strerror(res));
-        close(sck);
-        return unique_fd { -1 };
+        LOG(LOG_ERR, "getnameinfo failed : %s",
+            (res == EAI_SYSTEM) ? ::strerror(errno) : ::gai_strerror(res));
+        return unique_fd{-1};
     }
 
     char text_target[2048] { };
 
-    snprintf(text_target,
-             sizeof(text_target),
-             "%s:%d (%s)",
-             ip,
-             port,
-             resolved_ip_addr);
+    snprintf(text_target, sizeof(text_target),
+             "%s:%d (%s)", ip, port, resolved_ip_addr);
 
     const bool no_log = false;
 
-    return connect_sck(sck,
+    return connect_sck(std::move(sck),
                        establishment_timeout,
-                       retry_count,
                        *addr_info_ptr->ai_addr,
                        addr_info_ptr->ai_addrlen,
                        text_target,
@@ -404,7 +384,6 @@ unique_fd ip_connect(const char *ip,
 
 unique_fd local_connect(const char* sck_name,
                         std::chrono::milliseconds establishment_timeout,
-                        int retry_count,
                         bool no_log)
 {
     LOG_IF(!no_log, LOG_INFO, "connecting to %s", sck_name);
@@ -412,10 +391,10 @@ unique_fd local_connect(const char* sck_name,
     // the trial process include "ocket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
-    int sck = socket(AF_UNIX, SOCK_STREAM, 0);
+    unique_fd sck { socket(AF_UNIX, SOCK_STREAM, 0) };
 
     /* set snd buffer to at least 32 Kbytes */
-    if (!set_snd_buffer(sck, 32768)) {
+    if (!set_snd_buffer(sck.fd(), 32768)) {
         return unique_fd{-1};
     }
 
@@ -430,26 +409,22 @@ unique_fd local_connect(const char* sck_name,
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    return connect_sck(sck,
+    return connect_sck(std::move(sck),
                        establishment_timeout,
-                       retry_count,
                        u.addr,
-                       static_cast<socklen_t>(offsetof(sockaddr_un, sun_path)
-                                              + len + 1u),
+                       checked_int(offsetof(sockaddr_un, sun_path) + len + 1u),
                        sck_name,
                        no_log);
 }
 
 unique_fd addr_connect(const char* addr,
                        std::chrono::milliseconds establishment_timeout,
-                       int retry_count,
                        bool no_log_for_unix_socket)
 {
     const char* pos = strchr(addr, ':');
     if (!pos) {
         return local_connect(addr,
                              establishment_timeout,
-                             retry_count,
                              no_log_for_unix_socket);
     }
 
@@ -466,12 +441,10 @@ unique_fd addr_connect(const char* addr,
 unique_fd addr_connect_blocking(
     const char* addr,
     std::chrono::milliseconds establishment_timeout,
-    int retry_count,
     bool no_log_for_unix_socket)
 {
     auto fd = addr_connect(addr,
                            establishment_timeout,
-                           retry_count,
                            no_log_for_unix_socket);
     if (fd) {
         const auto sck = fd.fd();

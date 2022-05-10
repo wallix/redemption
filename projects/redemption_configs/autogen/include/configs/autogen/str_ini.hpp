@@ -331,13 +331,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 1000, max = 10000
 # (in milliseconds)
 #_advanced
-#connection_establishment_timeout = 1000
-
-# Controls the number of reconnection attempts if there's a connection failure.
-# min = 1, max = 10
-# min = 0
-#_advanced
-#connection_retry_count = 3
+#connection_establishment_timeout = 3000
 
 [remote_program]
 

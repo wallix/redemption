@@ -91,7 +91,6 @@ namespace cfg
 
     struct all_target_mod {
         struct connection_establishment_timeout;
-        struct connection_retry_count;
     };
 
     struct remote_program {

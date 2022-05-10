@@ -783,7 +783,9 @@ private:
         FinalSocketTransport auth_trans(
             "Authentifier"_sck_name, unique_fd(auth_sck),
             ini.get<cfg::globals::authfile>(), 0,
-            std::chrono::milliseconds(1000), 3, std::chrono::seconds(1), SocketTransport::Verbose::none);
+            std::chrono::milliseconds(1000),
+            std::chrono::seconds(1),
+            SocketTransport::Verbose::none);
 
         auto& events = event_manager.get_events();
         EndSessionWarning end_session_warning(events);
@@ -1354,7 +1356,6 @@ public:
                 if (unique_fd client_sck = addr_connect_blocking(
                     this->ini.get<cfg::globals::authfile>().c_str(),
                     this->ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
-                    this->ini.get<cfg::all_target_mod::connection_retry_count>(),
                     prevent_early_log)
                 ) {
                     auth_sck = client_sck.release();
@@ -1494,7 +1495,6 @@ void session_start_sck(
         SocketType(
             name, std::move(sck), ""_av, 0,
             ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
-            ini.get<cfg::all_target_mod::connection_retry_count>(),
             ini.get<cfg::client::recv_timeout>(),
             static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
         ),

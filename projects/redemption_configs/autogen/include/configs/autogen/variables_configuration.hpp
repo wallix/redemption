@@ -985,25 +985,14 @@ namespace cfg
 
     /// The maximum time in milliseconds that the proxy will wait while attempting to connect to an target. <br/>
     /// type: std::chrono::milliseconds <br/>
-    /// default: 1000 <br/>
+    /// default: 3000 <br/>
     struct all_target_mod::connection_establishment_timeout {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>;
         using mapped_type = sesman_and_spec_type;
-        type value { 1000 };
-    };
-    /// Controls the number of reconnection attempts if there's a connection failure. <br/>
-    /// type: uint32_t <br/>
-    /// default: 3 <br/>
-    struct all_target_mod::connection_retry_count {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 1, 10>;
-        using mapped_type = sesman_and_spec_type;
-        type value { 3 };
+        type value { 3000 };
     };
 
     /// type: bool <br/>
@@ -5567,7 +5556,6 @@ struct client
 
 struct all_target_mod
 : cfg::all_target_mod::connection_establishment_timeout
-, cfg::all_target_mod::connection_retry_count
 { static constexpr bool is_section = true; };
 
 struct remote_program

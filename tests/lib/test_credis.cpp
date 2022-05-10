@@ -203,7 +203,7 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
 
     fcntl(sck_server.fd(), F_SETFL, fcntl(sck_server.fd(), F_GETFL) & ~O_NONBLOCK);
 
-    unique_fd client_fd = local_connect(sun_path, 1000ms, 3, false);
+    unique_fd client_fd = local_connect(sun_path, 1000ms, false);
     RED_REQUIRE(client_fd.is_open());
 
     sockaddr s {};

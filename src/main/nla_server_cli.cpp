@@ -265,7 +265,7 @@ public:
             buffer.trace_pdu = true;
             SocketTransport trans(
                 "front"_sck_name, std::move(sck_in), "127.0.0.1"_av, 3389,
-                std::chrono::milliseconds(1000), 3, std::chrono::milliseconds(100),
+                std::chrono::milliseconds(1000), std::chrono::milliseconds(100),
                 sck_verbose);
 
             try {

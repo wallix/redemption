@@ -282,11 +282,7 @@ disabled_orders = string(default='25')
 # The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
 # (in milliseconds)
 #_advanced
-connection_establishment_timeout = integer(min=1000, max=10000, default=1000)
-
-# Controls the number of reconnection attempts if there's a connection failure.
-#_advanced
-connection_retry_count = integer(min=1, max=10, default=3)
+connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
 
 [remote_program]
 

@@ -394,9 +394,16 @@ def migrate_line_to_9_1_71(self, section_name:str, line:ConfigurationLine) -> Op
             if 'replay_path' == line.get_name():
                 return 'mod_replay', f'replay_path = {line.get_value()}'
 
+def migrate_line_to_9_1_76(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
+    if line.is_variable_declaration():
+        if "all_target_mod" == section_name:
+            if "connection_retry_count" == line.get_name():
+                return None, None
+
 migration_defs = (
     (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
     (RedemptionVersion("9.1.71"), migrate_line_to_9_1_71),
+    (RedemptionVersion("9.1.76"), migrate_line_to_9_1_76),
 )
 
 
