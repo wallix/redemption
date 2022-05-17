@@ -625,6 +625,7 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
 
 void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
     //config.current_user_profil = 0;
+    config.info.build = 420;
     config.info.keylayout = KeyLayout::KbdId(0x040C);// 0x40C FR, 0x409 USA
     config.info.brush_cache_code = 0;
     config.info.screen_info.bpp = BitsPerPixel{24};
