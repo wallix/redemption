@@ -32,11 +32,9 @@
 
 
 SessionLogFile::SessionLogFile(
-    Inifile const& ini, CryptoContext& cctx, Random& rnd,
+    CryptoContext& cctx, Random& rnd,
     std::function<void (const Error &)> notify_error)
-: ini(ini)
-, cctx(cctx)
-, ct(cctx, rnd, std::move(notify_error))
+: ct(cctx, rnd, std::move(notify_error))
 {
     this->log6_buffer.reserve(512);
 }
@@ -67,37 +65,13 @@ void SessionLogFile::log6(std::time_t time_now, LogId id, KVLogList kv_list)
     this->ct.send("\n", 1);
 }
 
-void SessionLogFile::open_session_log()
+void SessionLogFile::open_session_log(
+    const char * const record_path, const char * const hash_path, int groupid,
+    FilePermissions file_permissions, bytes_view derivator)
 {
     assert(!this->ct.is_open());
 
-    this->cctx.set_master_key(this->ini.get<cfg::crypto::encryption_key>());
-    this->cctx.set_hmac_key(this->ini.get<cfg::crypto::sign_key>());
-    this->cctx.set_trace_type(this->ini.get<cfg::globals::trace_type>());
-
-    const int groupid = this->ini.get<cfg::video::capture_groupid>();
-    auto const& subdir = this->ini.get<cfg::capture::record_subdirectory>();
-    auto const& record_dir = this->ini.get<cfg::video::record_path>();
-    auto const& hash_dir = this->ini.get<cfg::video::hash_path>();
-    auto const& filebase = this->ini.get<cfg::capture::record_filebase>();
-
-    std::string record_path = str_concat(record_dir.as_string(), subdir, '/');
-    std::string hash_path = str_concat(hash_dir.as_string(), subdir, '/');
-
-    for (auto* s : {&record_path, &hash_path}) {
-        if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR,
-                "AclSerializer::start_session_log: Failed to create directory: \"%s\"", *s);
-        }
-    }
-
-    std::string basename = str_concat(filebase, ".log");
-    record_path += basename;
-    hash_path += basename;
-
-    this->ct.open(
-        record_path.c_str(), hash_path.c_str(), groupid,
-        this->ini.get<cfg::video::file_permissions>(), /*derivator=*/basename);
+    this->ct.open(record_path, hash_path, groupid, file_permissions, derivator);
     // force to create the file
     this->ct.send("", 0);
 }

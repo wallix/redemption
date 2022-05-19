@@ -64,28 +64,22 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     ini.set_acl<cfg::globals::target_user>("user1");
     ini.set_acl<cfg::globals::host>("10.10.13.12");
     ini.set<cfg::session_log::enable_arcsight_log>(true);
-    // ini.set_acl<cfg::globals::target_host>("13.12.10.10");
-    // ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
-    // ini.set_acl<cfg::globals::session_id>("0x520");
 
     auto logfile = wd.add_file("log5_6.log");
-    auto hashdir = wd.create_subdirectory("hash");
-    auto hashlog = hashdir.add_file("log5_6.log");
-
-    ini.set<cfg::capture::record_filebase>("log5_6");
-    ini.set<cfg::video::record_path>(wd.dirname().string());
-    ini.set<cfg::video::hash_path>(hashdir.dirname().string());
+    auto hashlog = wd.add_file("hash_log5_6.log");
 
     auto session_type = ""_av;
 
     auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
-    SessionLogFile log_file(ini, cctx, rnd, notify_error);
+    SessionLogFile log_file(cctx, rnd, notify_error);
     SiemLogger siem_logger;
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
-    log_file.open_session_log();
+    log_file.open_session_log(
+        logfile.c_str(), hashlog.c_str(),
+        33, FilePermissions(0664), "log5_6.log"_av);
 
     {
         ut::log_buffered logbuf;

@@ -109,9 +109,9 @@ class Session
         Inifile& ini;
     };
 
-    struct SessionLog final : private SessionLogApi
+    struct SecondarySession final : private SessionLogApi
     {
-        SessionLog(
+        SecondarySession(
             Inifile& ini,
             CryptoContext& cctx,
             Random& rnd,
@@ -119,13 +119,14 @@ class Session
             TimeBase const& time_base)
         : ini(ini)
         , probe_api(probe_api)
-        , log_file(ini, cctx, rnd, [&ini](Error const& error){
+        , time_base(time_base)
+        , cctx(cctx)
+        , log_file(cctx, rnd, [&ini](Error const& error){
             if (error.errnum == ENOSPC) {
                 // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
                 AclReport{ini}.report("FILESYSTEM_FULL", "100|unknown");
             }
         })
-        , time_base(time_base)
         {
             auto has_drive = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
             auto has_clipboard = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
@@ -135,15 +136,44 @@ class Session
         }
 
         [[nodiscard]]
-        SessionLogApi& open_session_log(std::string session_type)
+        SessionLogApi& open_secondary_session(std::string session_type)
         {
             assert(!this->is_open());
+
             this->session_type = std::move(session_type);
-            this->log_file.open_session_log();
+
+            this->cctx.set_master_key(this->ini.get<cfg::crypto::encryption_key>());
+            this->cctx.set_hmac_key(this->ini.get<cfg::crypto::sign_key>());
+            this->cctx.set_trace_type(this->ini.get<cfg::globals::trace_type>());
+
+            int const groupid = this->ini.get<cfg::video::capture_groupid>();
+            auto const& subdir = this->ini.get<cfg::capture::record_subdirectory>();
+            auto const& record_dir = this->ini.get<cfg::video::record_path>();
+            auto const& hash_dir = this->ini.get<cfg::video::hash_path>();
+            auto const& filebase = this->ini.get<cfg::capture::record_filebase>();
+
+            std::string record_path = str_concat(record_dir.as_string(), subdir, '/');
+            std::string hash_path = str_concat(hash_dir.as_string(), subdir, '/');
+
+            for (auto* s : {&record_path, &hash_path}) {
+                if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                    LOG(LOG_ERR,
+                        "Session::open_secondary_session: Failed to create directory: \"%s\"", *s);
+                }
+            }
+
+            std::string basename = str_concat(filebase, ".log");
+            record_path += basename;
+            hash_path += basename;
+
+            this->log_file.open_session_log(
+                record_path.c_str(), hash_path.c_str(), groupid,
+                this->ini.get<cfg::video::file_permissions>(), /*derivator=*/basename);
+
             return *this;
         }
 
-        void close_session_log()
+        void close_secondary_session()
         {
             assert(this->is_open());
             this->session_type.clear();
@@ -151,7 +181,7 @@ class Session
         }
 
         [[nodiscard]]
-        SessionLogApi& already_session_log()
+        SessionLogApi& get_secondary_session_log()
         {
             assert(this->is_open());
             return *this;
@@ -189,11 +219,12 @@ class Session
 
         Inifile& ini;
         gdi::CaptureProbeApi& probe_api;
+        TimeBase const& time_base;
+        CryptoContext & cctx;
         std::string session_type;
         LogCategoryFlags dont_log {};
         SiemLogger siem_logger;
         SessionLogFile log_file;
-        TimeBase const& time_base;
     };
 
     struct Select
@@ -411,7 +442,7 @@ private:
     std::string session_type;
 
     void next_backend_module(
-        ModuleName next_state, SessionLog& session_log,
+        ModuleName next_state, SecondarySession& secondary_session,
         ModFactory & mod_factory, ModWrapper& mod_wrapper,
         Inactivity& inactivity, KeepAlive& keepalive,
         Front& front, ClientExecute& rail_client_execute,
@@ -427,7 +458,7 @@ private:
             LOG(LOG_INFO, "Exited from target connection");
             mod_wrapper.disconnect();
             front.must_be_stop_capture();
-            session_log.close_session_log();
+            secondary_session.close_secondary_session();
         }
         else {
             mod_wrapper.disconnect();
@@ -462,12 +493,12 @@ private:
                 {
                     case SecondarySessionType::RDP:
                         mod_pack = mod_factory.create_rdp_mod(
-                            session_log.open_session_log("RDP"),
+                            secondary_session.open_secondary_session("RDP"),
                             PerformAutomaticReconnection::No);
                         break;
                     case SecondarySessionType::VNC:
                         mod_pack = mod_factory.create_vnc_mod(
-                            session_log.open_session_log("VNC"));
+                            secondary_session.open_secondary_session("VNC"));
                         break;
                 }
                 this->ini.set<cfg::context::auth_error_message>("");
@@ -475,11 +506,11 @@ private:
                 return;
             }
             catch (Error const& /*error*/) {
-                this->secondary_session_creation_failed(session_log);
+                this->secondary_session_creation_failed(secondary_session);
                 mod_pack = mod_factory.create_transition_mod();
             }
             catch (...) {
-                this->secondary_session_creation_failed(session_log);
+                this->secondary_session_creation_failed(secondary_session);
                 throw;
             }
         };
@@ -609,15 +640,15 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    void secondary_session_creation_failed(SessionLog & session_log)
+    void secondary_session_creation_failed(SecondarySession & secondary_session)
     {
-        session_log.already_session_log().log6(LogId::SESSION_CREATION_FAILED, {});
-        session_log.close_session_log();
+        secondary_session.get_secondary_session_log().log6(LogId::SESSION_CREATION_FAILED, {});
+        secondary_session.close_secondary_session();
         this->ini.set_acl<cfg::context::module>(ModuleName::close);
     }
 
     bool retry_rdp(
-        SessionLog & session_log, ModFactory & mod_factory,
+        SecondarySession & secondary_session, ModFactory & mod_factory,
         ModWrapper & mod_wrapper, Front & front,
         ClientExecute & rail_client_execute,
         PerformAutomaticReconnection perform_automatic_reconnection)
@@ -637,21 +668,21 @@ private:
 
         mod_wrapper.disconnect();
 
-        SessionLogApi& session_log_api = session_log.already_session_log();
+        SessionLogApi& session_log = secondary_session.get_secondary_session_log();
         try {
             this->target_connection_start_time = MonotonicTimePoint::clock::now();
-            mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log_api, perform_automatic_reconnection));
+            mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log, perform_automatic_reconnection));
             this->ini.set<cfg::context::auth_error_message>("");
             return true;
         }
         catch (Error const& /*error*/) {
             front.must_be_stop_capture();
-            this->secondary_session_creation_failed(session_log);
+            this->secondary_session_creation_failed(secondary_session);
             mod_wrapper.set_mod(next_state, mod_factory.create_transition_mod());
         }
         catch (...) {
             front.must_be_stop_capture();
-            this->secondary_session_creation_failed(session_log);
+            this->secondary_session_creation_failed(secondary_session);
         }
 
         return false;
@@ -795,7 +826,7 @@ private:
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SessionLog session_log(ini, cctx, rnd, front, event_manager.get_time_base());
+        SecondarySession secondary_session(ini, cctx, rnd, front, event_manager.get_time_base());
 
         using namespace std::chrono_literals;
 
@@ -1067,7 +1098,7 @@ private:
 
                     this->next_backend_module(
                         std::exchange(next_module, ModuleName::UNKNOWN),
-                        session_log, mod_factory, mod_wrapper,
+                        secondary_session, mod_factory, mod_wrapper,
                         inactivity, keepalive, front, rail_client_execute,
                         event_manager);
                 }
@@ -1138,7 +1169,7 @@ private:
                             );
 
                             run_session = this->retry_rdp(
-                                session_log, mod_factory, mod_wrapper,
+                                secondary_session, mod_factory, mod_wrapper,
                                 front, rail_client_execute,
                                 PerformAutomaticReconnection::Yes);
                         }
@@ -1182,7 +1213,7 @@ private:
                                     this->ini.set_acl<cfg::context::module>(ModuleName::close);
                                 }
                                 this->next_backend_module(
-                                    ModuleName::close, session_log, mod_factory,
+                                    ModuleName::close, secondary_session, mod_factory,
                                     mod_wrapper, inactivity, keepalive, front,
                                     rail_client_execute, event_manager);
                                 run_session = true;
@@ -1211,14 +1242,14 @@ private:
                         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
                         ini.set_acl<cfg::context::target_host>(host);
                         auto message = str_concat(change_user, '@', host);
-                        session_log.report("SERVER_REDIRECTION", message.c_str());
+                        secondary_session.report("SERVER_REDIRECTION", message.c_str());
                     }
                     [[fallthrough]];
 
                     // TODO: should we put some counter to avoid retrying indefinitely?
                     case EndSessionResult::retry:
                         run_session = this->retry_rdp(
-                            session_log, mod_factory, mod_wrapper,
+                            secondary_session, mod_factory, mod_wrapper,
                             front, rail_client_execute,
                             PerformAutomaticReconnection::No);
                         break;
@@ -1226,7 +1257,7 @@ private:
                     // TODO: should we put some counter to avoid retrying indefinitely?
                     case EndSessionResult::reconnection:
                         run_session = this->retry_rdp(
-                            session_log, mod_factory, mod_wrapper,
+                            secondary_session, mod_factory, mod_wrapper,
                             front, rail_client_execute,
                             PerformAutomaticReconnection::Yes);
                         break;

@@ -39,20 +39,20 @@ class SessionLogFile
 {
 public:
     SessionLogFile(
-        const Inifile & ini, CryptoContext & cctx, Random & rnd,
+        CryptoContext & cctx, Random & rnd,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();
 
     void log6(std::time_t time_now, LogId id, KVLogList kv_list);
 
-    void open_session_log();
+    void open_session_log(
+        const char * const record_path, const char * const hash_path, int groupid,
+        FilePermissions file_permissions, bytes_view derivator);
 
     void close_session_log();
 
 private:
-    const Inifile & ini;
-    CryptoContext & cctx;
     OutCryptoTransport ct;
     std::string log6_buffer;
 };
