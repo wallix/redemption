@@ -24,9 +24,7 @@ from logger import Logger
 
 from struct import unpack_from, pack
 from select import select
-from time import time
-from time import ctime
-from time import mktime
+from time import time, ctime, mktime
 from datetime import datetime
 import socket
 from socket import gethostname
@@ -40,18 +38,25 @@ from .sesmanbacktoselector import (
     back_to_selector_default_sent
 )
 
-from .engine import LOCAL_TRACE_PATH_RDP
-from .engine import SOCK_PATH_DIR
-from .engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
-    APPROVAL_PENDING, APPROVAL_NONE
-from .engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
-from .engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
-from .engine import TargetContext
+from .engine import (LOCAL_TRACE_PATH_RDP,
+                     SOCK_PATH_DIR,
+                     APPROVAL_ACCEPTED,
+                     APPROVAL_REJECTED,
+                     APPROVAL_PENDING,
+                     APPROVAL_NONE,
+                     APPREQ_REQUIRED,
+                     APPREQ_OPTIONAL,
+                     PASSWORD_VAULT,
+                     PASSWORD_INTERACTIVE,
+                     PASSWORD_MAPPING,
+                     TargetContext,
+                     RDP,
+                     VNC
+                     )
 
 import syslog
 
-from .logtime import logtimer
-from .logtime import logtime_function_pause
+from .logtime import logtimer, logtime_function_pause
 
 # Python 2.7 compatibility layer
 if sys.version_info[0] < 3:
@@ -2041,13 +2046,15 @@ class Sesman():
                 conn_opts = self.engine.get_target_conn_options(
                     physical_target
                 )
-                if physical_proto_info.protocol in ('RDP', 'VNC', 'JHRDP'):
-                    if physical_proto_info.protocol in ('RDP', 'JHRDP'):
+                if physical_proto_info.protocol in (RDP, VNC):
+                    if physical_proto_info.protocol == RDP:
                         kv[u'proxy_opt'] = ",".join(
                             physical_proto_info.subprotocols
                         )
 
-                    conn_spec = cp_spec[physical_proto_info.protocol.lower()]
+                    conn_type = physical_target['connection_policy_type']
+                    conn_spec = cp_spec[conn_type.lower()]
+
                     kv.update(self._fetch_connectionpolicy(conn_spec[0], conn_opts))
                     kv.update(conn_spec[1])
 

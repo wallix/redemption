@@ -136,7 +136,7 @@ void config_spec_definition(Writer && W)
 
     auto rdp_connpolicy = sesman::connection_policy{"rdp"};
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
-    auto jh_connpolicy = sesman::connection_policy{"jhrdp"};
+    auto jh_connpolicy = sesman::connection_policy{"rdp-jumphost"};
 
     char const* disabled_orders_desc =
         "Disables supported drawing orders:\n"

@@ -22,6 +22,7 @@ try:
         FILESYSTEM_FULL,
     )
     from wabconfig import Config
+    from wallixconst.protocol import RDP, VNC # noqa: F401
     from wallixconst.authentication import (  # noqa: F401
         PASSWORD_VAULT,
         PASSWORD_INTERACTIVE,
@@ -41,6 +42,8 @@ except Exception:
     try:
         from .fake.proxyengine import *
         import os
+        RDP = 'RDP'
+        VNC = 'VNC'
         LOCAL_TRACE_PATH_RDP = os.getenv('LOCAL_TRACE_PATH_RDP') or u'/var/wab/recorded/rdp/'
         SOCK_PATH_DIR = "/tmp/"
         Logger().info("================================")

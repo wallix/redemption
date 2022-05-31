@@ -166,7 +166,7 @@ Combination of connpolicy with `|`:
 ```cpp
 connpolicy::set(any_value) |
 sesman::connection_policy{"rdp"}.set(any_value) |
-sesman::connection_policy{"jhrdp"}.always(any_value)
+sesman::connection_policy{"rdp-jumphost"}.always(any_value)
 ```
 
 ## prefix
