@@ -45,7 +45,7 @@ namespace python
     template<class T>
     void write_type(std::ostream& out, type_<std::string>, T const& x)
     {
-        out << "u'" << io_quoted2{x} << "'";
+        out << "'" << io_quoted2{x} << "'";
     }
 
     template<class T>
@@ -63,10 +63,10 @@ namespace python
     void write_type(std::ostream& out, type_<types::fixed_string<n>>, T const& x)
     {
         if constexpr (std::is_same_v<types::fixed_string<n>, T>) {
-            out << "u''";
+            out << "''";
         }
         else {
-            out << "u'" << io_quoted2{x} << "'";
+            out << "'" << io_quoted2{x} << "'";
         }
     }
 
@@ -75,10 +75,10 @@ namespace python
     write_type(std::ostream& out, type_<types::list<Int>>, T const& x)
     {
         if constexpr (std::is_same_v<types::list<Int>, T>) {
-            out << "u''";
+            out << "''";
         }
         else {
-            out << "u'" << io_quoted2{x} << "'";
+            out << "'" << io_quoted2{x} << "'";
         }
     }
 
@@ -174,7 +174,7 @@ public:
             bool is_enum_parser = false;
             auto semantic_type = python_spec_writer::get_semantic_type(sesman_type, infos, &is_enum_parser);
 
-            this->buf << "    u'" << names.sesman_name() << "': ";
+            this->buf << "    '" << names.sesman_name() << "': ";
             python::write_type2(this->buf, enums, sesman_type, semantic_type, get_default(sesman_type, infos));
             this->buf << ",\n";
             if (sesman::constants::proxy_to_sesman == value_or<sesman_io_t>(infos,
