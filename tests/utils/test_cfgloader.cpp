@@ -148,7 +148,11 @@ RED_AUTO_TEST_CASE_WF(TestCfgloader, wf)
         PUSH("  [b bb]\n", SectionOrKeyValue("b bb"_zv)),
         PUSH("  [aa]  \n", SectionOrKeyValue("aa"_zv)),
         PUSH("v = [d] a\n", SectionOrKeyValue("v"_zv, "[d] a"_zv)),
-        PUSH("v3 = x", SectionOrKeyValue("v3"_zv, "x"_zv)),
+        PUSH("v3 = x\n", SectionOrKeyValue("v3"_zv, "x"_zv)),
+        PUSH("[section]a=3\n", SectionOrKeyValue("section"_zv)),
+        PUSH("",               SectionOrKeyValue("a"_zv, "3"_zv)),
+        PUSH("[section2]#c\n", SectionOrKeyValue("section2"_zv)),
+        PUSH("b=4", SectionOrKeyValue("b"_zv, "4"_zv)),
     };
 
     Cfg cfg(funcs, PUSH_F(SectionOrKeyValue()));

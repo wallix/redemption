@@ -1,551 +1,262 @@
 #!/usr/bin/env python3
-import hashlib
-import os
 import unittest
+import os
 
-from typing import List
-from conf_migrate import (ConfigurationFile,
-                          ConfigurationLine,
-                          read_configuration_lines,
-                          RedemptionVersion)
+from typing import List, Union, Tuple, NamedTuple
+from conf_migrate import (parse_configuration,
+                          migration_filter,
+                          migration_def_to_actions,
+                          fragments_to_spans_of_sections,
+                          migrate,
+                          migrate_file,
+                          RedemptionVersion,
+                          UpdateItem,
+                          RemoveItem,
+                          MoveSection,
+                          ConfigKind,
+                          ConfigurationFragment)
 
-class Test_ConfigurationFile(unittest.TestCase):
-    def test_load_save(self):
-        target_file = './rdpproxy.sav'
 
-        try:
-            os.remove(target_file)
-        except:
-            pass
-
-        config_lines = read_configuration_lines('./tests/fixtures/rdpproxy.ini')
-        configuration_file = ConfigurationFile(config_lines)
-
-        configuration_file.save_to(target_file)
-
-        with open(target_file, 'rb') as f:
-            self.assertEqual(hashlib.md5(f.read()).hexdigest(),
-                             'ffb503380ff480ced4c26ba4ce3b42bb')
-
-        os.remove(target_file)
-
-def test_migrate_line_to_9_0_0(section_name, line):
-    if line.is_variable_declaration():
-        if "section" == section_name:
-            if line.get_name() == "value_8_2_0":
-                return None, f"old_value = {line.get_value()}"
-
-            elif line.get_name() == "value_2_8_2_0":
-                return None, f"old_value_2 = {line.get_value()}"
-
-def test_migrate_line_to_9_1_0(section_name, line):
-    if line.is_variable_declaration():
-        if "section" == section_name:
-            if line.get_name() == "old_value":
-                return None, f"new_value = {line.get_value()}"
-
-            elif line.get_name() == "old_value_2":
-                return "new_section", f"new_value_2 = {line.get_value()}"
-
-migration_funcs = (
-    (RedemptionVersion("9.0.0"), test_migrate_line_to_9_0_0),
-    (RedemptionVersion("9.1.0"), test_migrate_line_to_9_1_0),
-)
-
-class Test_RedemptionConfigurationFile(unittest.TestCase):
+class TestMigration(unittest.TestCase):
     maxDiff = None
 
-    def assertConfLinesEqual(self,
-                             lines1:List[ConfigurationLine],
-                             lines2:List[ConfigurationLine]) -> None:
-        s1 = '\n'.join(map(str, lines1))
-        s2 = '\n'.join(map(str, lines2))
-        self.assertEqual(f'{s1}\nlen: {len(lines1)}',
-                         f'{s2}\nlen: {len(lines2)}')
-
-    def test_migrate_to_9_1_0_empty(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_empty: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = []
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value = 1234", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value = 1234", verbose),
-            ConfigurationLine("new_value = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_b(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value = 1234", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_b: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value = 1234", verbose),
-            ConfigurationLine("new_value = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_c(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_c: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value = 1234", verbose),
-            ConfigurationLine("new_value = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_d(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("old_value = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_d: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("#old_value = 1234", verbose),
-            ConfigurationLine("new_value = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_b(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_b: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_c(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_c: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_d(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_d: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_e(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_e: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_f(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_f: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_g(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_g: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_section_old_value_2_h(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("any_value = 1234", verbose),
-            ConfigurationLine("[other_section]", verbose),
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("9.0.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_section_old_value_2_h: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#old_value_2 = 1234", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("any_value = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose),
-            ConfigurationLine("[other_section]", verbose),
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_from_8_2_0(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("value_8_2_0 = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_from_8_2_0: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#value_8_2_0 = 1234", verbose),
-            ConfigurationLine("new_value = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_from_8_2_0_b(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("value_2_8_2_0 = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_from_8_2_0_b: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#value_2_8_2_0 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_from_8_2_0_c(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("other_value = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[other_section]", verbose),
-            ConfigurationLine("other_value = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_from_8_2_0_c: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("other_value = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[other_section]", verbose),
-            ConfigurationLine("other_value = 1234", verbose),
-            ConfigurationLine("", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
-
-    def test_migrate_to_9_1_0_from_8_2_0_d(self):
-        verbose = False
-
-        configuration_file = ConfigurationFile([], verbose)
-
-        configuration_file._content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("value_2_8_2_0 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[other_section]", verbose),
-            ConfigurationLine("other_value = 1234", verbose)
-        ]
-
-        configuration_file.migrate(migration_funcs, RedemptionVersion("8.2.0"))
-
-        if verbose:
-            print(
-                 "test_migrate_to_9_1_0_from_8_2_0_d: "
-                f"len(content)={len(configuration_file._content)}")
-
-        expected_content = [
-            ConfigurationLine("[section]", verbose),
-            ConfigurationLine("#value_2_8_2_0 = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[other_section]", verbose),
-            ConfigurationLine("other_value = 1234", verbose),
-            ConfigurationLine("", verbose),
-            ConfigurationLine("[new_section]", verbose),
-            ConfigurationLine("new_value_2 = 1234", verbose)
-        ]
-
-        self.assertConfLinesEqual(expected_content, configuration_file._content)
+    def test_parse_configuration(self):
+        self.assertEqual(parse_configuration('[section]\n# bla bla\nkey = value'), [
+            ConfigurationFragment('[section]', ConfigKind.Section, 'section'),
+            ConfigurationFragment('\n', ConfigKind.NewLine),
+            ConfigurationFragment('# bla bla', ConfigKind.Comment),
+            ConfigurationFragment('\n', ConfigKind.NewLine),
+            ConfigurationFragment('key = value', ConfigKind.KeyValue, 'key', 'value'),
+        ])
+        self.assertEqual(parse_configuration('  [section]  \n  # bla bla\n  key  =  value  '), [
+            ConfigurationFragment('  [section]  ', ConfigKind.Section, 'section'),
+            ConfigurationFragment('\n', ConfigKind.NewLine),
+            ConfigurationFragment('  # bla bla', ConfigKind.Comment),
+            ConfigurationFragment('\n', ConfigKind.NewLine),
+            ConfigurationFragment('  key  =  value  ', ConfigKind.KeyValue, 'key', 'value'),
+        ])
+        self.assertEqual(parse_configuration('[section]  key  =  value \nline error\nkey2=va lu e2 '), [
+            ConfigurationFragment('[section]  ', ConfigKind.Section, 'section'),
+            ConfigurationFragment('key  =  value ', ConfigKind.KeyValue, 'key', 'value'),
+            ConfigurationFragment('\n', ConfigKind.NewLine),
+            ConfigurationFragment('line error', ConfigKind.Unknown),
+            ConfigurationFragment('\n', ConfigKind.NewLine),
+            ConfigurationFragment('key2=va lu e2 ', ConfigKind.KeyValue, 'key2', 'va lu e2'),
+        ])
+
+    def test_migration_filter(self):
+        c1 = (RedemptionVersion('9.1.30'), dict())
+        c2 = (RedemptionVersion('9.1.32'), dict())
+        c3 = (RedemptionVersion('9.1.34'), dict())
+        desc = (c1, c2, c3)
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.29')), [c1,c2,c3])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.30')), [c2,c3])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.31')), [c2,c3])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.32')), [c3])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.33')), [c3])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.34')), [])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.35')), [])
+
+    def test_fragments_to_spans_of_sections(self):
+        ini = '''
+        [sec1] a=a
+        [sec2] a=a
+        [sec3] a=a
+        [sec2]
+        b=b
+        c=c
+        [sec4]
+        d=d
+        '''
+
+        self.assertEqual(fragments_to_spans_of_sections(parse_configuration(ini)), {
+            'sec1': [(1, 3)],
+            'sec2': [(4, 6), (10, 15)],
+            'sec3': [(7, 9)],
+            'sec4': [(16, 19)],
+        })
+
+    def test_migrate(self):
+        ini = (
+            '[moved_section]\n'
+            'moved_key_to_removed_section=va\n'
+            'moved_key_to_new_section=vb\n'
+            'moved_key_to_new_section_and_renamed_key_to_cc=vc\n'
+            'moved_key_to_new_section5=vd\n'
+            '\n'
+            '[sec1]\n'
+            'moved_key=vva\n'
+            'updated_value=old_b_value\n'
+            'removed_key=vvc\n'
+            'd=vvd\n'
+            'e=vve\n'
+            '\n'
+            '[removed_section]\n'
+            'a=vvva\n'
+            'b=vvvb\n'
+            '\n'
+            '[sec4]\n'
+            'x=y\n'
+        )
+
+        migrate_def = {
+            'sec1': {
+                'moved_key': UpdateItem(key='moved_key_to_a'),
+                'updated_value': UpdateItem(values={'old_b_value': 'new_b'}),
+                'removed_key': RemoveItem(),
+            },
+            'moved_section': (MoveSection('new_moved_section'), {
+                'moved_key_to_removed_section': UpdateItem(section='removed_section'),
+                'aa': UpdateItem(section='removed_section', key='new_aa',
+                                  values={'old_b_value': 'new_value'}),
+                'moved_key_to_new_section': UpdateItem(section='sec4'),
+                'moved_key_to_new_section_and_renamed_key_to_cc': UpdateItem(section='sec1', key='cc'),
+                'moved_key_to_new_section5': UpdateItem(section='sec5'),
+            }),
+            'removed_section': RemoveItem(),
+        }
+
+        fragments = parse_configuration(ini)
+
+        self.assertEqual(migration_def_to_actions(fragments, migrate_def), (
+            # renamed_sections
+            [('moved_section', 'new_moved_section')],
+            # renamed_keys
+            [
+                ('sec1', 'moved_key', 'moved_key_to_a', 'vva'),
+                ('sec1', 'updated_value', 'updated_value', 'new_b')
+            ],
+            # moved_keys
+            [
+                ('moved_section', 'moved_key_to_removed_section',
+                 'removed_section', 'moved_key_to_removed_section', 'va'),
+                ('moved_section', 'moved_key_to_new_section',
+                 'sec4', 'moved_key_to_new_section', 'vb'),
+                ('moved_section', 'moved_key_to_new_section_and_renamed_key_to_cc',
+                 'sec1', 'cc', 'vc'),
+                ('moved_section', 'moved_key_to_new_section5',
+                 'sec5', 'moved_key_to_new_section5', 'vd'),
+            ],
+            # removed_sections
+            ['removed_section'],
+            # removed_keys
+            [('sec1', 'removed_key')]
+        ))
+
+        self.assertEqual(migrate(fragments, {}), (False, fragments))
+
+        self.assertEqual(migrate(fragments, migrate_def), (True, [
+            ConfigurationFragment('#[moved_section]', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('[new_moved_section]', kind=ConfigKind.Section, value1='new_moved_section'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#moved_key_to_removed_section=va', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#moved_key_to_new_section=vb', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#moved_key_to_new_section_and_renamed_key_to_cc=vc', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#moved_key_to_new_section5=vd', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('[sec1]', kind=ConfigKind.Section, value1='sec1'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('cc=vc', kind=ConfigKind.KeyValue, value1='cc', value2='vc'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#moved_key=vva', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('moved_key_to_a=vva', kind=ConfigKind.KeyValue,
+                                  value1='moved_key_to_a', value2='vva'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#updated_value=old_b_value', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('updated_value=new_b', kind=ConfigKind.KeyValue,
+                                  value1='updated_value', value2='new_b'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#removed_key=vvc', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('d=vvd', kind=ConfigKind.KeyValue, value1='d', value2='vvd'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('e=vve', kind=ConfigKind.KeyValue, value1='e', value2='vve'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#[removed_section]', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#a=vvva', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('#b=vvvb', kind=ConfigKind.Comment),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('[sec4]', kind=ConfigKind.Section, value1='sec4'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('moved_key_to_new_section=vb', kind=ConfigKind.KeyValue,
+                                  value1='moved_key_to_new_section', value2='vb'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('x=y', kind=ConfigKind.KeyValue, value1='x', value2='y'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('[removed_section]', kind=ConfigKind.Section, value1='removed_section'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('moved_key_to_removed_section=va', kind=ConfigKind.KeyValue,
+                                  value1='moved_key_to_removed_section', value2='va'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('[sec5]', kind=ConfigKind.Section, value1='sec5'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+            ConfigurationFragment('moved_key_to_new_section5=vd', kind=ConfigKind.KeyValue,
+                                  value1='moved_key_to_new_section5', value2='vd'),
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),        ]
+        ))
+
+    def test_migrate_file(self):
+        ini_filename = '/tmp/test_config_file.ini'
+
+        with open(ini_filename, 'w', encoding='utf-8') as f:
+            f.write(
+                '[globals]\n'
+                'session_timeout = 1000\n'
+                '\n'
+                '[rdp]\n'
+                'session_probe_exe_or_file=notepad\n'
+                'depth=15\n'
+                '\n'
+                '[video]\n'
+                'replay_path=/tmp/\n'
+                '\n'
+                '[all_target_mod]\n'
+                'connection_retry_count=3\n')
+
+        version = RedemptionVersion('9.1.38')
+
+        self.assertEqual(True, migrate_file(
+            version,
+            ini_filename=ini_filename,
+            temporary_ini_filename=f'{ini_filename}.work',
+            saved_ini_filename=f'{ini_filename}.{version}'))
+
+        with open(ini_filename, encoding='utf-8') as f:
+            self.assertEqual(f.read(),
+                '[globals]\n'
+                '#session_timeout = 1000\n'
+                'base_inactivity_timeout=1000\n'
+                '\n'
+                '[rdp]\n'
+                '#session_probe_exe_or_file=notepad\n'
+                'depth=15\n'
+                '\n'
+                '[video]\n'
+                '#replay_path=/tmp/\n'
+                '\n'
+                '[all_target_mod]\n'
+                '#connection_retry_count=3\n'
+                '\n'
+                '[session_probe]\n'
+                'exe_or_file=notepad\n'
+                '\n'
+                '[mod_replay]\n'
+                'replay_path=/tmp/\n')
+
+        os.remove(ini_filename)
+        os.remove(f'{ini_filename}.{version}')

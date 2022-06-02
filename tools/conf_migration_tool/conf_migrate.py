@@ -10,26 +10,28 @@
 
 from collections import OrderedDict
 from shutil import copyfile
-from enum import Enum
-from typing import List, Tuple, Optional, Union, Callable, Iterable
+from enum import Enum, IntEnum
+from typing import List, Tuple, Dict, Optional, Union, Iterable, NamedTuple, Generator
 
 import os
 import re
 import sys
 import traceback
+import itertools
 
-rgx_version = re.compile('^(\d+)\.(\d+)\.(\d+)(.*)')
+rgx_version = re.compile(r'^(\d+)\.(\d+)\.(\d+)(.*)')
+
 
 class RedemptionVersionError(Exception):
     pass
 
+
 class RedemptionVersion:
-    def __init__(self, version:str) -> None:
+    def __init__(self, version: str) -> None:
         m = rgx_version.match(version)
         if m is None:
-            raise RedemptionVersionError("RedemptionVersion: "
-                                         "Invalid version string format: "
-                                         + version)
+            raise RedemptionVersionError(
+                f"Invalid version string format: {version}")
 
         self.__major = int(m.group(1))
         self.__minor = int(m.group(2))
@@ -39,398 +41,395 @@ class RedemptionVersion:
     def __str__(self) -> str:
         return f"{self.__major}.{self.__minor}.{self.__build}{self.__revision}"
 
-    def __lt__(self, other:'RedemptionVersion') -> bool:
+    def __lt__(self, other: 'RedemptionVersion') -> bool:
         return self.__part() < other.__part()
 
-    def __le__(self, other:'RedemptionVersion') -> bool:
+    def __le__(self, other: 'RedemptionVersion') -> bool:
         return self.__part() <= other.__part()
 
     @staticmethod
-    def from_file(filename:str) -> 'RedemptionVersion':
+    def from_file(filename: str) -> 'RedemptionVersion':
         with open(filename) as f:
-            line = f.readline() # read first line
+            line = f.readline()  # read first line
             items = line.split()
             version_string = items[1]
             return RedemptionVersion(version_string)
 
-    def __part(self) -> Tuple[int,int,int,str]:
+    def __part(self) -> Tuple[int, int, int, str]:
         return (self.__major, self.__minor, self.__build, self.__revision)
 
-class ConfigLineKind(Enum):
-    Empty = 1
+
+class ConfigKind(IntEnum):
+    Unknown = 0
+    NewLine = 1
     Comment = 2
-    SectionDecl = 3
-    VariableDecl = 4
+    Section = 3
+    KeyValue = 4
 
-class ConfigurationLine:
-    def __init__(self, raw_data:str, verbose:bool=False) -> None:
-        self.__raw_data = raw_data
 
-        self.__verbose = verbose
+rgx_ini_parser = re.compile(
+    r'(\n)|'
+    r'[ \t]*(#)[^\n]*|'
+    r'[ \t]*\[[ \t]*(.+?)[ \t]*\][ \t]*|'
+    r'[ \t]*([^\s]+)[ \t]*=[ \t]*(.*?)[ \t]*(?=\n|$)|'
+    r'[^\n]+')
 
-        self.__name = None
-        self.__value = None
-        self.__must_be_deleted = False
 
-        striped_data = raw_data.strip()
+novalue = ''
 
-        if not striped_data:
-            self.__kind = ConfigLineKind.Empty
-        elif '#' == striped_data[0]:
-            self.__kind = ConfigLineKind.Comment
-        elif '[' == striped_data[0] and ']' == striped_data[-1]:
-            self.__kind = ConfigLineKind.SectionDecl
-            self.__name = striped_data[1:-1].strip()
-        else:
-            name, sep, value = striped_data.partition('=')
-            assert sep, f'Invalid format: \"{self.raw_data}\"'
-            self.__name = name.strip()
-            self.__value = value.strip()
-            self.__kind = ConfigLineKind.VariableDecl
 
-    def __eq__(self, other:'ConfigurationLine') -> bool:
-        if self.__verbose:
-            print("ConfigurationLine::__eq__: "
-                  f"self=\"{self.__raw_data}\" other=\"{other.__raw_data}\"")
+class ConfigurationFragment(NamedTuple):
+    text: str
+    kind: ConfigKind
+    value1: str = novalue
+    value2: str = novalue
 
-        return self.__raw_data == other.__raw_data
 
-    def __str__(self) -> str:
-        return self.__raw_data
+newline_fragment = ConfigurationFragment('\n', ConfigKind.NewLine)
 
-    def disable(self) -> None:
-        if self.__kind == ConfigLineKind.VariableDecl:
-            self.__raw_data = "#" + self.__raw_data
-            self.__kind = ConfigLineKind.Comment
 
-            self.__name = None
-            self.__value = None
+def _to_fragment(m: re.Match) -> ConfigurationFragment:
+    # new line
+    if m.start(1) != -1:
+        return newline_fragment
 
-    def get_name(self) -> str:
-        assert self.__kind == ConfigLineKind.SectionDecl \
-            or self.__kind == ConfigLineKind.VariableDecl
+    # comment
+    if m.start(2) != -1:
+        return ConfigurationFragment(
+            m.group(0), ConfigKind.Comment
+        )
 
-        return self.__name
+    # section
+    if m.start(3) != -1:
+        return ConfigurationFragment(
+            m.group(0), ConfigKind.Section,
+            m.group(3)
+        )
 
-    def get_value(self) -> str:
-        assert self.__kind == ConfigLineKind.VariableDecl
+    # variable
+    if m.start(4) != -1:
+        return ConfigurationFragment(
+            m.group(0), ConfigKind.KeyValue,
+            m.group(4),
+            m.group(5),
+        )
 
-        return self.__value
+    return ConfigurationFragment(m.group(0), ConfigKind.Unknown)
 
-    def is_comment(self) -> bool:
-        return self.__kind == ConfigLineKind.Comment
 
-    def is_empty(self) -> bool:
-        return self.__kind == ConfigLineKind.Empty
+ConfigurationFragmentListType = List[ConfigurationFragment]
 
-    def is_marked_to_be_deleted(self) -> bool:
-        if self.__verbose:
-            print("ConfigurationLine::is_marked_to_be_deleted: "
-                 f"\"{self.__raw_data}\" MustBeDeleted={'Yes' if self.__must_be_deleted else 'No'}")
 
-        return self.__must_be_deleted
+def parse_configuration(content: str) -> ConfigurationFragmentListType:
+    return list(map(_to_fragment, rgx_ini_parser.finditer(content)))
 
-    def is_section_declaration(self) -> bool:
-        return self.__kind == ConfigLineKind.SectionDecl
 
-    def is_variable_declaration(self) -> bool:
-        return self.__kind == ConfigLineKind.VariableDecl
-
-    def mark_to_be_deleted(self) -> None:
-        if self.__verbose:
-            print("ConfigurationLine::mark_to_be_deleted: "
-                 f"\"{self.__raw_data}\"")
-
-        if self.__kind == ConfigLineKind.Comment:
-            self.__must_be_deleted = True
-
-def read_configuration_lines(filename:str=None, verbose:bool=False) -> List[ConfigurationLine]:
+def parse_configuration_from_file(filename: str) -> Tuple[str, ConfigurationFragmentListType]:
     with open(filename, encoding='utf-8') as f:
-        return [ConfigurationLine(line, verbose) for line in f]
+        content = f.read()
+        return (content, parse_configuration(content))
 
-class ConfigurationFile:
-    def __init__(self, content:List[ConfigurationLine], verbose:bool=False) -> None:
-        self._content = content
-        self.__verbose = verbose
 
-    def __add_variable(self, section_name:str, line_raw_data:str) -> Tuple[int,int]:
-        """
-        Retourne -1 et 0 si une variable qui porte le même nom existe déjà
-        dans la section. Déclenche une assertion si la line_raw_data
-        represente une nouvelle section. Sinon, ajouter une nouvelle ligne
-        vide a la fin de la section concernée, puis ajouter la ligne concernée
-        en-dessous, ensuite retourner la position de la premier ligne ajoutée
-        (ligne vide) ainsi que le nombre de lignes ajoutées.
-        """
+class UpdateItem(NamedTuple):
+    section: Optional[str] = None
+    key: Optional[str] = None
+    values: Optional[Dict[str, str]] = None
 
-        configuration_file_line = ConfigurationLine(line_raw_data, self.__verbose)
+    def __call__(self, section: str, key: str, value: str) -> Tuple[str, str, str]:
+        if self.section is not None:
+            section = self.section
+        if self.key is not None:
+            key = self.key
+        if self.values is not None:
+            value = self.values.get(value, value)
+        return section, key, value
 
-        assert not configuration_file_line.is_section_declaration(), \
-            f'Cannot add a new section: "{line_raw_data}"'
-        assert section_name, f'Section name is invalid or missing: "{line_raw_data}"'
 
-        if configuration_file_line.is_variable_declaration():
-            if self.__is_variable_exist(section_name,
-                                        configuration_file_line.get_name()):
-                print("ConfigurationFile.__add_variable: "
-                      "A variable of the same name still exists in the "
-                     f"section: \"{configuration_file_line}\"")
+class RemoveItem:
+    pass
 
-                return -1, 0
 
-        insert_position, inserted_line_count = self.__find_section_append_pos(section_name)
+class MoveSection(NamedTuple):
+    name: str
 
-        self._content.insert(insert_position,
-            ConfigurationLine(line_raw_data, self.__verbose))
-        inserted_line_count += 1
 
-        return insert_position, inserted_line_count
+MigrationKeyOrderType = Union[RemoveItem, UpdateItem]
+MigrationSectionOrderType = Union[RemoveItem,
+                                  MoveSection,
+                                  Dict[str, MigrationKeyOrderType],
+                                  Iterable[Union[MoveSection,
+                                                 Dict[str, MigrationKeyOrderType]]]]
+MigrationDescType = Dict[str, MigrationSectionOrderType]
 
-    def __find_section_append_pos(self, section_name:str) -> Tuple[str,str]:
-        """
-        Retourne la position d'ajout de nouvelle élément dans une section.
-        La section sera ajoutée à la fin du fichier si elle n'existe pas.
-        La méthode assure qu'il y a une ligne vide devant la position
-        d'insertion si la section contient d'autres valeurs.
-        """
+MigrationType = Tuple[RedemptionVersion, MigrationDescType]
 
-        append_position = -1
-        appended_line_count = 0
 
-        line_index = 0
-        section_found = False
-        in_section = False
-        for line_index, line in enumerate(self._content):
-            if line.is_section_declaration():
-                in_section = (line.get_name() == section_name)
-                if in_section:
-                    section_found = True
-                    append_position = line_index + 1
-            elif line.is_variable_declaration() or     \
-                 line.is_empty() or                    \
-                 line.is_comment():
-                if in_section:
-                    append_position = line_index + 1
+def migration_filter(migration_defs: Iterable[MigrationType],
+                     previous_version: RedemptionVersion) -> List[MigrationType]:
+    migration_defs = sorted(migration_defs, key=lambda t: t[0])
 
-        if -1 == append_position:
-            append_position = len(self._content)
+    for i, t in enumerate(migration_defs):
+        if previous_version >= t[0]:
+            continue
 
-        while append_position > 1 and                                       \
-              self._content[append_position - 1].is_empty() and             \
-              (self._content[append_position - 2].is_empty() or             \
-               self._content[append_position - 2].is_section_declaration()):
-            append_position -= 1
+        return migration_defs[i:]
 
-        if not self._content[append_position - 1].is_empty() and            \
-           not self._content[append_position - 1].is_section_declaration():
-            if self.__verbose:
-                print("ConfigurationFile.__find_section_append_pos: "
-                      "Insert blank line")
+    return []
 
-            self._content.insert(append_position,
-                ConfigurationLine("", self.__verbose))
 
-            append_position += 1
-            appended_line_count += 1
+def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
+                             migration_def: MigrationDescType
+                             ) -> Tuple[
+                                 List[Tuple[str, str]],  # renamed_sections
+                                 # section, old_key, new_key, new_value
+                                 List[Tuple[str, str, str, str]],  # renamed_keys
+                                 # old_section, old_key, new_section, new_key, new_value
+                                 List[Tuple[str, str, str, str, str]],  # moved_keys
+                                 List[str],  # removed_sections
+                                 List[Tuple[str, str]],  # removed_keys
+                                ]:
+    section = ''
+    original_section = ''
+    migration_key_desc = None
+    renamed_sections: List[Tuple[str, str]] = []
+    renamed_keys: List[Tuple[str, str, str, str]] = []
+    moved_keys: List[Tuple[str, str, str, str, str]] = []
+    removed_sections: List[str] = []
+    removed_keys: List[Tuple[str, str]] = []
 
-        if not section_found:
-            self._content.insert(append_position,
-                ConfigurationLine(f"[{section_name}]", self.__verbose))
-            append_position += 1
-            appended_line_count += 1
+    for fragment in fragments:
+        if fragment.kind == ConfigKind.KeyValue:
+            if migration_key_desc:
+                order = migration_key_desc.get(fragment.value1)
+                if order is None:
+                    pass
+                elif isinstance(order, RemoveItem):
+                    removed_keys.append((section, fragment.value1))
+                elif isinstance(order, UpdateItem):
+                    t = order(section, fragment.value1, fragment.value2)
+                    if t[0] == section:
+                        renamed_keys.append((original_section, fragment.value1, t[1], t[2]))
+                    else:
+                        moved_keys.append((original_section, fragment.value1, *t))
 
-        return append_position, appended_line_count
+        elif fragment.kind == ConfigKind.Section:
+            migration_key_desc = None
+            section = fragment.value1
+            original_section = section
+            order = migration_def.get(section)
 
-    def save_to(self, filename:str) -> None:
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(
-                str(line).rstrip("\r\n")
-                for line in self._content
-                if not line.is_marked_to_be_deleted()
-            ))
-            f.write('\n')
+            if order is None:
+                pass
+            elif isinstance(order, RemoveItem):
+                removed_sections.append(section)
+            elif isinstance(order, MoveSection):
+                renamed_sections.append((section, order.name))
+            elif isinstance(order, dict):
+                migration_key_desc = order
+            else:
+                for order in order:
+                    if isinstance(order, MoveSection):
+                        renamed_sections.append((section, order.name))
+                        section = order.name
+                    else:
+                        migration_key_desc = order
 
-    def migrate(self, migration_defs:Iterable[Tuple[RedemptionVersion,
-                                                    Callable[[str, str],
-                                                             Optional[Tuple[Optional[str],
-                                                                            str]]]]],
-                previous_version:RedemptionVersion) -> None:
-        content_is_changed = False
+    return renamed_sections, renamed_keys, moved_keys, removed_sections, removed_keys
 
-        first_round_of_migration = True
 
-        migration_defs = sorted(migration_defs, key=lambda t: t[0])
+def fragments_to_spans_of_sections(fragments: Iterable[ConfigurationFragment]) -> Dict[str, List[Tuple[int, int]]]:
+    start = 0
+    section = ''
+    section_spans: Dict[str, List[Tuple[int, int]]] = dict()
 
-        for result_version, line_migration_func in migration_defs:
-            if previous_version >= result_version:
+    i = 0
+    for i, fragment in enumerate(fragments):
+        if fragment.kind == ConfigKind.Section:
+            if start < i-1:
+                section_spans.setdefault(section, []).append((start, i-1))
+            section = fragment.value1
+            start = i
+    if start < i-1:
+        section_spans.setdefault(section, []).append((start, i-1))
+
+    return section_spans
+
+
+def migrate(fragments: List[ConfigurationFragment],
+            migration_def: MigrationDescType) -> Tuple[bool, List[ConfigurationFragment]]:
+    renamed_sections, renamed_keys, moved_keys, removed_sections, removed_keys \
+        = migration_def_to_actions(fragments, migration_def)
+
+    if not (renamed_sections or renamed_keys or moved_keys or removed_sections or removed_keys):
+        return (False, fragments)
+
+    reinject_fragments: Dict[int, Iterable[ConfigurationFragment]] = dict()
+    section_spans = fragments_to_spans_of_sections(fragments)
+
+    def iter_from_spans(spans) -> Iterable[int]:
+        return (i for span in spans for i in range(span[0], span[1]))
+
+    def iter_key_fragment(section_name: str,
+                          kind: ConfigKind,
+                          key_name: str
+                          ) -> Generator[Tuple[int, ConfigurationFragment], None, None]:
+        for i in iter_from_spans(section_spans.get(section_name, ())):
+            fragment: ConfigurationFragment = fragments[i]
+            if fragment.kind != ConfigKind.KeyValue or key_name != fragment.value1:
                 continue
+            yield i, fragment
 
-            line_count = len(self._content)
-            line_index = 0
-            section_name = None
-            while line_index < line_count:
-                if self._content[line_index].is_section_declaration():
-                    section_name = self._content[line_index].get_name()
-                elif self._content[line_index].is_variable_declaration():
-                    assert section_name, f'Not in a section: "{configuration_file_line}"'
+    for section, old_key, new_key, new_value in renamed_keys:
+        for i, fragment in iter_key_fragment(section, ConfigKind.KeyValue, old_key):
+            reinject_fragments[i] = (
+                ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),
+                newline_fragment,
+                ConfigurationFragment(f'{new_key}={new_value}', ConfigKind.KeyValue,
+                                      new_key, new_value),
+            )
 
-                    migrate_result = line_migration_func(
-                        section_name, self._content[line_index])
+    for section in removed_sections:
+        for i in iter_from_spans(section_spans.get(section, ())):
+            fragment = fragments[i]
+            if fragment.kind in (ConfigKind.KeyValue, ConfigKind.Section):
+                # if fragment.kind == ConfigKind.Section:
+                #     del section_spans[section]
+                reinject_fragments[i] = (
+                    ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),)
 
-                    if migrate_result:
-                        dest_section_name, line_raw_data = migrate_result
+    for t in itertools.chain(removed_keys, moved_keys):
+        for i, fragment in iter_key_fragment(t[0], ConfigKind.KeyValue, t[1]):
+            reinject_fragments[i] = (
+                ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),)
 
-                        content_is_changed = True
+    for old_section, new_section in renamed_sections:
+        spans = section_spans.get(old_section, ())
+        if spans:
+            for istart, _ in spans:
+                reinject_fragments[istart] = (
+                    ConfigurationFragment(f'#{fragments[istart].text}', ConfigKind.Comment),
+                    newline_fragment,
+                    ConfigurationFragment(f'[{new_section}]', ConfigKind.Section, new_section),
+                )
 
-                        self._content[line_index].disable()
+    added_keys: Dict[str, List[ConfigurationFragment]] = dict()
 
-                        if not first_round_of_migration:
-                            self._content[line_index].mark_to_be_deleted()
+    for old_section, old_key, new_section, new_key, new_value in moved_keys:
+        for _ in iter_key_fragment(old_section, ConfigKind.KeyValue, old_key):
+            added_keys.setdefault(new_section, []).extend((
+                newline_fragment,
+                ConfigurationFragment(f'{new_key}={new_value}', ConfigKind.KeyValue,
+                                      new_key, new_value),
+                newline_fragment,
+            ))
 
-                        if dest_section_name:
-                            insert_position, insert_count =             \
-                                self.__add_variable(
-                                    dest_section_name,
-                                    line_raw_data)
+    result_fragments: List[ConfigurationFragment] = []
 
-                            if -1 < insert_position:
-                                assert 1 <= insert_count, \
-                                    "Invalid return values: " \
-                                    "(insert_position=" \
-                                    f"{insert_position}, " \
-                                    f"insert_count={insert_count})"
+    # insert a key in a section
+    for i, fragment in enumerate(fragments):
+        added_fragments = reinject_fragments.get(i, (fragment,))
 
-                                assert insert_position != line_index, \
-                                    "Invalid insert position: " \
-                                    "(insert_position=" \
-                                    f"{insert_position}, " \
-                                    f"insert_count={insert_count})"
+        section = None
+        for x in added_fragments:
+            if x.kind == ConfigKind.Section:
+                section = x.value1
+                break
 
-                                if insert_position < line_index:
-                                    line_index += insert_count
+        result_fragments.extend(added_fragments)
+        if section:
+            key = added_keys.get(section)
+            if key:
+                result_fragments.extend(key)
+                added_keys[section] = []
 
-                                line_count += insert_count
-                        else:
-                            configuration_file_line =                   \
-                                ConfigurationLine(line_raw_data,
-                                    self.__verbose)
+    # add new section
+    for section, keys in added_keys.items():
+        if keys:
+            result_fragments.extend((
+                newline_fragment,
+                ConfigurationFragment(f'[{section}]', ConfigKind.Section, section),
+            ))
+            result_fragments.extend(keys)
 
-                            assert not configuration_file_line.is_section_declaration(), \
-                                "Should not insert a new section with this method: " \
-                                f"\"{configuration_file_line}\""
-
-                            if configuration_file_line.is_variable_declaration() and \
-                                self.__is_variable_exist(
-                                    dest_section_name,
-                                    configuration_file_line.get_name()):
-                                print("ConfigurationFile.migrate: "
-                                      "A variable of the same name still "
-                                      "exists in the section: "
-                                     f"\"{configuration_file_line}\"")
-                            else:
-                                self._content.insert(line_index + 1,
-                                    configuration_file_line)
-
-                                line_count += 1
-                                line_index += 1
-
-                line_index += 1
-
-            previous_version = result_version
-
-            first_round_of_migration = False
-
-        self._content = [line for line in self._content
-                         if not line.is_marked_to_be_deleted()]
-
-        return content_is_changed
-
-    def __is_variable_exist(self, section_name:Optional[str], variable_name:str) -> bool:
-        """
-        Retourne False si la variable n'existe pas dans la section, ou si la
-            section n'existe pas. Sinon retourne True.
-        """
-
-        current_section_name = None
-        for line in self._content:
-            if line.is_section_declaration():
-                current_section_name = line.get_name()
-            elif line.is_variable_declaration():
-                assert current_section_name, \
-                    f'Not in a section: "{configuration_file_line}"'
-
-                if current_section_name == section_name and                 \
-                   line.get_name() == variable_name:
-                    return True
-
-        return False
+    return (True, result_fragments)
 
 
-def migrate_line_to_9_1_39(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
-    if line.is_variable_declaration():
-        if "globals" == section_name:
-            if "session_timeout" == line.get_name():
-                return None, f"base_inactivity_timeout = {line.get_value()}"
+migration_defs: List[MigrationType] = [
+    (RedemptionVersion('9.1.39'), {
+        'globals': {
+            'session_timeout': UpdateItem(key='base_inactivity_timeout'),
+        },
+    }),
+    (RedemptionVersion("9.1.71"), {
+        'rdp': dict(itertools.chain(
+            (
+                (key, UpdateItem(section='session_probe', key=key[14:]))
+                for key in ('session_probe_exe_or_file',
+                            'session_probe_arguments',
+                            'session_probe_customize_executable_name',
+                            'session_probe_allow_multiple_handshake',
+                            'session_probe_at_end_of_session_freeze_connection_and_wait',
+                            'session_probe_enable_cleaner',
+                            'session_probe_clipboard_based_launcher_reset_keyboard_status',)
+            ),
+            (
+                ('session_probe_bestsafe_integration', UpdateItem(section='session_probe',
+                                                                   key='enable_bestsafe_interaction')),
+            )
+        )),
+        'video': {
+            'replay_path': UpdateItem(section='mod_replay'),
+        },
+    }),
+    (RedemptionVersion("9.1.76"), {
+        'all_target_mod': {
+            'connection_retry_count': RemoveItem(),
+        },
+    }),
+]
 
-def migrate_line_to_9_1_71(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
-    if line.is_variable_declaration():
-        if 'rdp' == section_name:
-            varname = line.get_name()
-            if varname in (
-                'session_probe_exe_or_file',
-                'session_probe_arguments',
-                'session_probe_customize_executable_name',
-                'session_probe_allow_multiple_handshake',
-                'session_probe_at_end_of_session_freeze_connection_and_wait',
-                'session_probe_enable_cleaner',
-                'session_probe_clipboard_based_launcher_reset_keyboard_status',
-            ):
-                return 'session_probe', f'{varname[14:]} = {line.get_value()}'
 
-            if varname == 'session_probe_bestsafe_integration':
-                return 'session_probe', 'enable_bestsafe_interaction'
+def migrate_file(version: RedemptionVersion,
+                 ini_filename: str,
+                 temporary_ini_filename: str,
+                 saved_ini_filename: str,
+                 ) -> bool:
+    _, fragments = parse_configuration_from_file(ini_filename)
 
-        elif 'video' == section_name:
-            if 'replay_path' == line.get_name():
-                return 'mod_replay', f'replay_path = {line.get_value()}'
+    is_changed = False
+    for _, desc in migration_filter(migration_defs, version):
+        is_updated, fragments = migrate(fragments, desc)
+        is_changed = is_changed or is_updated
 
-def migrate_line_to_9_1_76(self, section_name:str, line:ConfigurationLine) -> Optional[Tuple[Optional[str], str]]:
-    if line.is_variable_declaration():
-        if "all_target_mod" == section_name:
-            if "connection_retry_count" == line.get_name():
-                return None, None
+    if is_changed:
+        with open(temporary_ini_filename, 'w', encoding='utf-8') as f:
+            f.write(''.join(fragment.text for fragment in fragments))
 
-migration_defs = (
-    (RedemptionVersion("9.1.39"), migrate_line_to_9_1_39),
-    (RedemptionVersion("9.1.71"), migrate_line_to_9_1_71),
-    (RedemptionVersion("9.1.76"), migrate_line_to_9_1_76),
-)
+        copyfile(ini_filename, saved_ini_filename)
+
+        os.rename(temporary_ini_filename, ini_filename)
+
+    return is_changed
 
 
 if __name__ == '__main__':
-    if os.path.exists('/tmp/OLD_REDEMPTION_VERSION') and                    \
-       os.path.exists('/var/wab/etc/rdp/rdpproxy.ini'):
-        try:
-            old_redemption_version = RedemptionVersion.from_file(
-                '/tmp/OLD_REDEMPTION_VERSION')
+    if len(sys.argv) != 4 or sys.argv[1] not in ('-s', '-f'):
+        print(f'{sys.argv[0]} {{-s|-f}} version ini_filename\n'
+              '  -s   <version> is a output format of redemption --version\n'
+              '  -f   <version> is a version of redemption',
+              file=sys.stderr)
+        exit(1)
 
-            print(f"PreviousRedemptionVersion={old_redemption_version}")
+    ini_filename = sys.argv[3]
+    if sys.argv[1] == '-f':
+        old_version = RedemptionVersion.from_file(sys.argv[2])
+    else:
+        old_version = RedemptionVersion(sys.argv[2])
 
-            lines = read_configuration_lines('/var/wab/etc/rdp/rdpproxy.ini')
+    print(f"PreviousRedemptionVersion={old_version}")
 
-            new_configuration_file = ConfigurationFile(lines)
-
-            if new_configuration_file.migrate(migration_defs, old_redemption_version):
-                new_configuration_file.save_to('/var/wab/etc/rdp/rdpproxy.ini.work')
-
-                copyfile('/var/wab/etc/rdp/rdpproxy.ini',
-                        f'/var/wab/etc/rdp/rdpproxy.ini.{old_redemption_version}')
-
-                os.rename('/var/wab/etc/rdp/rdpproxy.ini.work',
-                          '/var/wab/etc/rdp/rdpproxy.ini')
-
-                print("Configuration file updated")
-        except Exception as e:
-            _, exc_value, exc_traceback = sys.exc_info()
-            print(type(exc_value).__name__)
-            traceback.print_tb(exc_traceback, file=sys.stdout)
+    if migrate_file(old_version,
+                    ini_filename=ini_filename,
+                    temporary_ini_filename=f'{ini_filename}.work',
+                    saved_ini_filename=f'{ini_filename}.{old_version}'):
+        print("Configuration file updated")
