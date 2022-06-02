@@ -1378,11 +1378,16 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
                 " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n");
-        #else
+        #elif SNAPPY_VERSION < (1<<16|1<<8|9)
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
                 " f79f3df59b22338f876b0a084b5c55f7a894c97b4fbf197b3afbfae0e951d862\n");
+        #else
+            RED_CHECK_EQ(hash_buf,
+                "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
+                " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
+                " d30d058585b8e0ed030c1aa9ad457d7378080aa0c02688d4b7ccbb7cc77cce58\n");
         #endif
     }
 
