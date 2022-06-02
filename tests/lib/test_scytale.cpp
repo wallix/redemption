@@ -33,6 +33,8 @@
 #include <string_view>
 #include <fstream>
 
+#include <snappy.h> // for SNAPPY_VERSION
+
 
 using namespace std::string_view_literals;
 
