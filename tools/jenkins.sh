@@ -23,20 +23,11 @@ fi
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
-# use libstdc++-8 with clang-8 because version 9 fails with -D_GLIBCXX_DEBUG (ok with clang-9)
-libstdcxx_compact_version=8
-rm -rf libstdc++-compact/
-mkdir -p \
-    libstdc++-compact/include/c++ \
-    libstdc++-compact/lib/gcc/x86_64-unknown-linux-gnu
-ln -s /usr/include/c++/$libstdcxx_compact_version libstdc++-compact/include/c++
-ln -s /usr/lib/gcc/x86_64-linux-gnu/$libstdcxx_compact_version libstdc++-compact/lib/gcc/x86_64-unknown-linux-gnu
-
 # BJAM Build Test
-echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 8.0 : clang++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING --gcc-toolchain=libstdc++-compact ;" > project-config.jam
+echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
-toolset_clang=toolset=clang-8.0
+toolset_clang=toolset=clang
 export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
 export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
 export FFMPEG_LINK_MODE=static
@@ -123,7 +114,7 @@ if [ $fast -eq 0 ]; then
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy-8 ./tools/c++-analyzer/clang-tidy \
+    CLANG_TIDY=clang-tidy ./tools/c++-analyzer/clang-tidy \
       | sed -E '/^(.+\/|)modules\//,/\^/d'
 
 
