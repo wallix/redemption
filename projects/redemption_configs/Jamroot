@@ -55,7 +55,7 @@ R"xxxyyyzzz(' > autogen/include/configs/autogen/rdp_cp_spec.hpp
 //
 
 R"xxxyyyzzz(' > autogen/include/configs/autogen/jhrdp_cp_spec.hpp
-    cat autogen/spec/jhrdp.spec >> autogen/include/configs/autogen/jhrdp_cp_spec.hpp
+    cat autogen/spec/rdp-jumphost.spec >> autogen/include/configs/autogen/jhrdp_cp_spec.hpp
     echo ')xxxyyyzzz"' >> autogen/include/configs/autogen/jhrdp_cp_spec.hpp
 
     # auto gen VNC connection policy
