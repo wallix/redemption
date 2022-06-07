@@ -91,7 +91,7 @@ cfg::mod_rdp::use_client_provided_remoteapp ⇐ mod_rdp:use_client_provided_remo
     As far as possible, use client-provided remote program (RemoteApp)
 cfg::mod_rdp::use_native_remoteapp_capability ⇐ mod_rdp:use_native_remoteapp_capability   [bool]
     As far as possible, use native RemoteApp capability
-cfg::mod_rdp::enable_rdpdr_data_analysis ⇐ enable_rdpdr_data_analysis   [bool]
+cfg::mod_rdp::enable_rdpdr_data_analysis ⇐ mod_rdp:enable_rdpdr_data_analysis   [bool]
 cfg::mod_rdp::wabam_uses_translated_remoteapp ⇐ mod_rdp:wabam_uses_translated_remoteapp   [bool]
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.

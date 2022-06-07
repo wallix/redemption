@@ -67,6 +67,9 @@ allowed_dynamic_channels = string(default='*')
 #_advanced
 denied_dynamic_channels = string(default='')
 
+#_advanced
+enable_rdpdr_data_analysis = boolean(default=True)
+
 # NLA will be disabled.
 # Target must be set for interactive login, otherwise server connection may not be guaranteed.
 # Smartcard device must be available on client desktop.

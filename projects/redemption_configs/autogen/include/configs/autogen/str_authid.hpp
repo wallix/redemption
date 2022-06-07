@@ -52,7 +52,7 @@ namespace configs
         "mod_rdp:use_client_provided_alternate_shell"_zv,
         "mod_rdp:use_client_provided_remoteapp"_zv,
         "mod_rdp:use_native_remoteapp_capability"_zv,
-        "enable_rdpdr_data_analysis"_zv,
+        "mod_rdp:enable_rdpdr_data_analysis"_zv,
         "mod_rdp:wabam_uses_translated_remoteapp"_zv,
         "mod_rdp:enable_remotefx"_zv,
         "mod_rdp:enable_restricted_admin_mode"_zv,

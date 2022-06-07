@@ -500,7 +500,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #bogus_ios_rdpdr_virtual_channel = 1
 
 # value: 0 or 1
-#_advanced
+#_hidden
 #enable_rdpdr_data_analysis = 1
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.

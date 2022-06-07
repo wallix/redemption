@@ -1540,7 +1540,8 @@ namespace cfg
         type value { true };
     };
     /// type: bool <br/>
-    /// sesman ⇒ proxy <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:enable_rdpdr_data_analysis <br/>
     /// default: true <br/>
     struct mod_rdp::enable_rdpdr_data_analysis {
         static constexpr bool is_sesman_to_proxy = true;
