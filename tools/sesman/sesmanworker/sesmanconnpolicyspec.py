@@ -58,6 +58,9 @@ cp_spec = {
         u'mod_rdp:use_native_remoteapp_capability': (
             'use_native_remoteapp_capability', True
         ),
+        u'mod_rdp:enable_rdpdr_data_analysis': (
+            'enable_rdpdr_data_analysis', True
+        ),
         u'mod_rdp:wabam_uses_translated_remoteapp': (
             'wabam_uses_translated_remoteapp', False
         ),

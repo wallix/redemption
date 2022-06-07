@@ -99,6 +99,8 @@ use_client_provided_remoteapp = boolean(default=False)
 # As far as possible, use native RemoteApp capability
 use_native_remoteapp_capability = boolean(default=True)
 
+enable_rdpdr_data_analysis = boolean(default=True)
+
 wabam_uses_translated_remoteapp = boolean(default=False)
 
 # Enables support of the remoteFX codec.

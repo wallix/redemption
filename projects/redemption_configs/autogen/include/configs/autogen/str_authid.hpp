@@ -92,7 +92,7 @@ namespace configs
         "mod_rdp:server_cert_create_message"_zv,
         "mod_rdp:server_cert_success_message"_zv,
         "mod_rdp:server_cert_failure_message"_zv,
-        "enable_rdpdr_data_analysis"_zv,
+        "mod_rdp:enable_rdpdr_data_analysis"_zv,
         "mod_rdp:wabam_uses_translated_remoteapp"_zv,
         "enable_server_cert_external_validation"_zv,
         "server_cert"_zv,

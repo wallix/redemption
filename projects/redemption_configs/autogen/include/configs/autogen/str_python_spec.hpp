@@ -684,7 +684,7 @@ hide_client_name = boolean(default=False)
 
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 
-#_advanced
+#_hidden
 enable_rdpdr_data_analysis = boolean(default=True)
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.

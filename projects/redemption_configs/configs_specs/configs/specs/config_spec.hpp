@@ -463,7 +463,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"bogus_ios_rdpdr_virtual_channel"}, set(true));
 
-        W.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"enable_rdpdr_data_analysis"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"enable_rdpdr_data_analysis"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::milliseconds>(), names{"remoteapp_bypass_legal_notice_delay"}, desc{
             "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"

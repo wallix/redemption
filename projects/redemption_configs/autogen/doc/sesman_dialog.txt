@@ -214,7 +214,7 @@ cfg::mod_rdp::server_cert_failure_message ⇐ mod_rdp:server_cert_failure_messag
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-cfg::mod_rdp::enable_rdpdr_data_analysis ⇐ enable_rdpdr_data_analysis   [bool]
+cfg::mod_rdp::enable_rdpdr_data_analysis ⇐ mod_rdp:enable_rdpdr_data_analysis   [bool]
 cfg::mod_rdp::wabam_uses_translated_remoteapp ⇐ mod_rdp:wabam_uses_translated_remoteapp   [bool]
 cfg::mod_rdp::enable_server_cert_external_validation ⇐ enable_server_cert_external_validation   [bool]
 cfg::mod_rdp::server_cert ⇒ server_cert   [std::string]
