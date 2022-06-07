@@ -161,7 +161,7 @@ public:
     template<class Pack>
     void evaluate_member(Names const& /*section_names*/, Pack const& infos, type_enumerations& enums)
     {
-        if constexpr (is_convertible_v<Pack, decltype(sesman::constants::is_target_ctx)>)
+        if constexpr (is_convertible_v<Pack, decltype(sesman::constants::reset_back_to_selector)>)
         {
             Names const& names = infos;
             auto sesman_type = get_type<spec::type_>(infos);

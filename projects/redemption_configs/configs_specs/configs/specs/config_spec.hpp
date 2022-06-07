@@ -28,7 +28,7 @@
 
 #include "include/debug_verbose_description.hpp"
 
-#include "keyboard/keymap2.hpp" // Keymap2::keylayouts()
+#include "keyboard/keylayouts.hpp" // Keymap2::keylayouts()
 #include "utils/colors.hpp"
 #include "utils/file_permissions.hpp"
 
@@ -114,24 +114,24 @@ void config_spec_definition(Writer && W)
 
     W.section("globals", [&]
     {
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L,
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
             type_<std::chrono::milliseconds>(), names{"front_connection_time"},
             desc{"from incoming connection to \"up_and_running\" state"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L,
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
             type_<std::chrono::milliseconds>(), names{"target_connection_time"},
             desc{"from Module rdp creation to \"up_and_running\" state"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{.cpp="nla_auth_user", .sesman="nla_login"});
-        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), names{.cpp="auth_user", .sesman="login"});
-        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), names{.cpp="host", .sesman="ip_client"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{.cpp="target", .sesman="ip_target"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_device"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"device_id"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"primary_user_id"});
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{.cpp="target_user", .sesman="target_login"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_application"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_application_account"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, NL, type_<std::string>(), names{"target_application_password"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{.cpp="nla_auth_user", .sesman="nla_login"});
+        W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<std::string>(), names{.cpp="auth_user", .sesman="login"});
+        W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<std::string>(), names{.cpp="host", .sesman="ip_client"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{.cpp="target", .sesman="ip_target"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"target_device"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"device_id"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"primary_user_id"});
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<std::string>(), names{.cpp="target_user", .sesman="target_login"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"target_application"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"target_application_account"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, NL, type_<std::string>(), names{"target_application_password"});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"glyph_cache"}, set(false));
         W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"port"}, desc{"Warning: Service will be automatically restarted and active sessions will be disconnected\nThe port set in this field must not be already used, otherwise the service will not run."}, set(3389));
@@ -145,13 +145,13 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"authentication_timeout"}, desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"close_timeout"}, desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
 
-        W.member(advanced_in_gui, sesman_to_proxy, is_target_ctx, L, type_<TraceType>(), names{"trace_type"}, set(TraceType::localfile_hashed));
+        W.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<TraceType>(), names{"trace_type"}, set(TraceType::localfile_hashed));
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::ip_string>(), names{"listen_address"}, set("0.0.0.0"));
         W.member(iptables_in_gui, no_sesman, L, type_<bool>(), names{"enable_transparent_mode"}, desc{"Allow Transparent mode."}, set(false));
         W.member(advanced_in_gui | password_in_gui, no_sesman, L, type_<types::fixed_string<254>>(), names{"certificate_password"}, desc{"Proxy certificate password."}, set("inquisition"));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), names{"is_rec"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"is_rec"}, set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_bitmap_update"}, desc{"Support of Bitmap Update."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_close_box"}, desc{"Show close screen."}, set(true));
@@ -169,9 +169,9 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"new_pointer_update_support"}, set(true));
 
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"unicode_keyboard_event_support"}, set(true));
+        W.member(ini_and_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"unicode_keyboard_event_support"}, set(true));
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, names{"mod_recv_timeout"}, set(1000));
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, names{"mod_recv_timeout"}, set(1000));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_enable_serializer_data_block_size_limit"},set(false));
 
@@ -200,10 +200,10 @@ void config_spec_definition(Writer && W)
 
     W.section("client", [&]
     {
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::unsigned_>(), names{"keyboard_layout"}, set(0));
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<types::unsigned_>(), names{"keyboard_layout"}, set(0));
         std::string keyboard_layout_proposals_desc;
-        for (auto const* k : Keymap2::keylayouts()) {
-            keyboard_layout_proposals_desc += k->locale_name;
+        for (auto const& k : keylayouts()) {
+            keyboard_layout_proposals_desc += k.name;
             keyboard_layout_proposals_desc += ", ";
         }
         if (!keyboard_layout_proposals_desc.empty()) {
@@ -231,7 +231,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_neg_request"}, desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_user_id"}, desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"disable_tsk_switch_shortcuts"}, desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."}, set(false));
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"disable_tsk_switch_shortcuts"}, desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<RdpCompression>{}, names{"rdp_compression"}, set(RdpCompression::rdp6_1));
 
@@ -308,8 +308,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"cache_waiting_list"}, desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"persist_bitmap_cache_on_disk"}, desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), names{"allow_channels"}, desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), names{"deny_channels"}, desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::list<std::string>>(), names{"allow_channels"}, desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::list<std::string>>(), names{"deny_channels"}, desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
 
         W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"allowed_dynamic_channels"}, desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."}, set("*"));
         W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), names{"denied_dynamic_channels"}, desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
@@ -322,17 +322,17 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), names{"load_balance_info"}, desc{"Load balancing information"});
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{.cpp="bogus_sc_net_size", .sesman="rdp_bogus_sc_net_size"}, desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, set(true));
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{.cpp="bogus_sc_net_size", .sesman="rdp_bogus_sc_net_size"}, desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, set(true));
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), names{"proxy_managed_drives"});
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::list<std::string>>(), names{"proxy_managed_drives"});
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"ignore_auth_channel"}, set(false));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"ignore_auth_channel"}, set(false));
         W.member(ini_and_gui, no_sesman, L, type_<types::fixed_string<7>>(), names{"auth_channel"}, set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
         W.member(ini_and_gui, no_sesman, L, type_<types::fixed_string<7>>(), names{"checkout_channel"}, set(""), desc{"Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel."});
 
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"alternate_shell"});
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"shell_arguments"});
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"shell_working_directory"});
+        W.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"alternate_shell"});
+        W.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"shell_arguments"});
+        W.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"shell_working_directory"});
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"use_client_provided_alternate_shell"}, desc{"As far as possible, use client-provided initial program (Alternate Shell)"}, set(false));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"use_client_provided_remoteapp"}, desc{"As far as possible, use client-provided remote program (RemoteApp)"}, set(false));
@@ -463,7 +463,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"bogus_ios_rdpdr_virtual_channel"}, set(true));
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"enable_rdpdr_data_analysis"}, set(true));
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"enable_rdpdr_data_analysis"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::milliseconds>(), names{"remoteapp_bypass_legal_notice_delay"}, desc{
             "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
@@ -486,9 +486,9 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), names{"wabam_uses_translated_remoteapp"}, set(false));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"enable_server_cert_external_validation"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"server_cert"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"server_cert_response"}, desc{"empty string for wait, 'Ok' or error message"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"enable_server_cert_external_validation"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"server_cert"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"server_cert_response"}, desc{"empty string for wait, 'Ok' or error message"});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_shadowing_support"}, desc{"Enables Session Shadowing Support."}, set(true));
 
@@ -557,12 +557,12 @@ void config_spec_definition(Writer && W)
                 "Fallback password to be used for armoring Kerberos tickets."
             }
         );
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"effective_krb_armoring_user"},
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"effective_krb_armoring_user"},
             desc{
                 "Effective username to be used for armoring Kerberos tickets."
             }
         );
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, NL, type_<std::string>(), names{"effective_krb_armoring_password"},
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<std::string>(), names{"effective_krb_armoring_password"},
             desc{
                 "Effective password to be used for armoring Kerberos tickets."
             }
@@ -571,8 +571,8 @@ void config_spec_definition(Writer && W)
 
     W.section(names{.cpp="mod_vnc", .connpolicy="vnc"}, [&]
     {
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"clipboard_up"}, desc{"Enable or disable the clipboard from client (client to server)."});
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"clipboard_down"}, desc{"Enable or disable the clipboard from server (server to client)."});
+        W.member(ini_and_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"clipboard_up"}, desc{"Enable or disable the clipboard from client (client to server)."});
+        W.member(ini_and_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"clipboard_down"}, desc{"Enable or disable the clipboard from server (server to client)."});
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::list<types::int_>>(), names{"encodings"}, desc{
             "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
@@ -583,12 +583,12 @@ void config_spec_definition(Writer && W)
             "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
         });
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<ClipboardEncodingType>(), spec::type_<std::string>(),
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<ClipboardEncodingType>(), spec::type_<std::string>(),
             names{.cpp="server_clipboard_encoding_type", .sesman="vnc_server_clipboard_encoding_type"},
             desc{"VNC server clipboard data encoding type."},
             set(ClipboardEncodingType::latin1));
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<VncBogusClipboardInfiniteLoop>(), names{.cpp="bogus_clipboard_infinite_loop", .sesman="vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
+        W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<VncBogusClipboardInfiniteLoop>(), names{.cpp="bogus_clipboard_infinite_loop", .sesman="vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"server_is_macos"}, set(false));
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), names{"server_unix_alt"}, set(false));
@@ -661,7 +661,7 @@ void config_spec_definition(Writer && W)
     W.section("mod_replay", [&]
     {
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"on_end_of_data"}, desc{"0 - Wait for Escape, 1 - End session"}, set(false));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"replay_on_loop"}, desc{"0 - replay once, 1 - loop replay"}, set(false));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"replay_on_loop"}, desc{"0 - replay once, 1 - loop replay"}, set(false));
     });
 
     W.section("ocr", [&]
@@ -689,9 +689,9 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), names{"replay_path"}, set("/tmp/"));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), names{"hash_path"}, set(CPP_EXPR(app_path(AppPath::Hash))));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), names{"record_tmp_path"}, set(CPP_EXPR(app_path(AppPath::RecordTmp))));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), names{"record_path"}, set(CPP_EXPR(app_path(AppPath::Record))));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::dirpath>(), names{"hash_path"}, set(CPP_EXPR(app_path(AppPath::Hash))));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::dirpath>(), names{"record_tmp_path"}, set(CPP_EXPR(app_path(AppPath::RecordTmp))));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::dirpath>(), names{"record_path"}, set(CPP_EXPR(app_path(AppPath::Record))));
 
         W.member(advanced_in_gui, no_sesman, L, type_<KeyboardLogFlags>{}, names{"disable_keyboard_log"}, desc{
             "Disable keyboard log:\n"
@@ -702,7 +702,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<FileSystemLogFlags>(), names{"disable_file_system_log"}, desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
 
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), names{"rt_display"}, set(false));
+        W.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"rt_display"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<ColorDepthSelectionStrategy>{}, names{"wrm_color_depth_selection_strategy"}, set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, L, type_<WrmCompressionAlgorithm>{}, names{"wrm_compression_algorithm"}, set(WrmCompressionAlgorithm::gzip));
@@ -731,10 +731,10 @@ void config_spec_definition(Writer && W)
 
     W.section("capture", [&]
     {
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"record_filebase"}, desc{"basename without extension"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"record_subdirectory"}, desc{"subdirectory of record_path (video section)"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"record_filebase"}, desc{"basename without extension"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"record_subdirectory"}, desc{"subdirectory of record_path (video section)"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"fdx_path"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"fdx_path"});
 
         W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, connpolicy::section{"video"}, L, type_<KeyboardLogFlagsCP>{}, names{"disable_keyboard_log"}, desc{
             "Disable keyboard log:\n"
@@ -744,8 +744,8 @@ void config_spec_definition(Writer && W)
 
     W.section("crypto", [&]
     {
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, NL, type_<types::fixed_binary<32>>(), names{"encryption_key"}, set(default_key));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, NL, type_<types::fixed_binary<32>>(), names{"sign_key"}, set(default_key));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<types::fixed_binary<32>>(), names{"encryption_key"}, set(default_key));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<types::fixed_binary<32>>(), names{"sign_key"}, set(default_key));
     });
 
     W.section("websocket", [&]
@@ -802,9 +802,9 @@ void config_spec_definition(Writer && W)
 
     W.section("translation", [&]
     {
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<Language>{}, spec::type_<std::string>(), names{"language"}, set(Language::en));
+        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<Language>{}, spec::type_<std::string>(), names{"language"}, set(Language::en));
 
-        W.member(advanced_in_gui, proxy_to_sesman, not_target_ctx, L, type_<LoginLanguage>(), spec::type_<std::string>(), names{"login_language"}, set(LoginLanguage::Auto));
+        W.member(advanced_in_gui, proxy_to_sesman, reset_back_to_selector, L, type_<LoginLanguage>(), spec::type_<std::string>(), names{"login_language"}, set(LoginLanguage::Auto));
     });
 
     W.section("internal_mod", [&]
@@ -818,73 +818,73 @@ void config_spec_definition(Writer && W)
         auto co_rdp = connpolicy::section{"rdp"};
         auto co_probe = connpolicy::section{"session_probe"};
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"psid"}, desc{"Proxy session log id"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"psid"}, desc{"Proxy session log id"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<ColorDepth>(), names{.cpp="opt_bpp", .sesman="bpp"}, set(ColorDepth::depth24));
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::u16>(), names{.cpp="opt_height", .sesman="height"}, set(600));
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::u16>(), names{.cpp="opt_width", .sesman="width"}, set(800));
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<ColorDepth>(), names{.cpp="opt_bpp", .sesman="bpp"}, set(ColorDepth::depth24));
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<types::u16>(), names{.cpp="opt_height", .sesman="height"}, set(600));
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<types::u16>(), names{.cpp="opt_width", .sesman="width"}, set(800));
 
         // auth_error_message is left as std::string type because SocketTransport and ReplayMod
         // take it as argument on constructor and modify it as a std::string
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"auth_error_message"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"selector"}, set(false));
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), names{"selector_current_page"}, set(1));
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"selector_device_filter"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"selector_group_filter"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"selector_proto_filter"});
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), names{"selector_lines_per_page"}, set(0));
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), names{"selector_number_of_pages"}, set(1));
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"selector"}, set(false));
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<types::unsigned_>(), names{"selector_current_page"}, set(1));
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"selector_device_filter"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"selector_group_filter"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"selector_proto_filter"});
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<types::unsigned_>(), names{"selector_lines_per_page"}, set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<types::unsigned_>(), names{"selector_number_of_pages"}, set(1));
 
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, NL, type_<std::string>(), names{"target_password"});
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{"target_host"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_str"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"target_service"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), names{"target_port"}, set(3389));
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{.cpp="target_protocol", .sesman="proto_dest"}, set("RDP"));
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, NL, type_<std::string>(), names{"target_password"});
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<std::string>(), names{"target_host"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"target_str"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"target_service"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<types::unsigned_>(), names{"target_port"}, set(3389));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{.cpp="target_protocol", .sesman="proto_dest"}, set("RDP"));
 
-        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, NL, type_<std::string>(), names{"password"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"nla_password_hash"});
+        W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, NL, type_<std::string>(), names{"password"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"nla_password_hash"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"reporting"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"reporting"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, VNL, type_<std::string>(), names{"auth_channel_answer"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"auth_channel_target"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, VNL, type_<std::string>(), names{"auth_channel_answer"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"auth_channel_target"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"message"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"message"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), names{"accept_message"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), names{"display_message"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<bool>(), names{"accept_message"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<bool>(), names{"display_message"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"rejected"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"rejected"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"keepalive"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"keepalive"}, set(false));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"session_id"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"session_id"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::chrono::seconds>(), names{.cpp="end_date_cnx", .sesman="timeclose"}, set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::chrono::seconds>(), names{.cpp="end_date_cnx", .sesman="timeclose"}, set(0));
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"real_target_device"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"real_target_device"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"authentication_challenge"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"authentication_challenge"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"ticket"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"comment"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"duration"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::chrono::minutes>(), names{"duration_max"}, set(0));
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"waitinforeturn"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), names{"showform"}, set(false));
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), names{"formflag"}, set(0));
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"ticket"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"comment"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"duration"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::chrono::minutes>(), names{"duration_max"}, set(0));
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"waitinforeturn"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"showform"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<types::unsigned_>(), names{"formflag"}, set(0));
 
-        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<ModuleName>(), spec::type_<std::string>(), names{"module"}, set(ModuleName::login));
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"proxy_opt"});
+        W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<ModuleName>(), spec::type_<std::string>(), names{"module"}, set(ModuleName::login));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"proxy_opt"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"pattern_kill"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"pattern_notify"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"pattern_kill"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"pattern_notify"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"opt_message"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"opt_message"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"login_message"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"login_message"});
 
         W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.cpp="session_probe_outbound_connection_monitoring_rules", .connpolicy="outbound_connection_monitoring_rules"}, desc{
             "Comma-separated rules\n"
@@ -903,57 +903,57 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.cpp="session_probe_windows_of_these_applications_as_unidentified_input_field", .connpolicy="windows_of_these_applications_as_unidentified_input_field"}, desc{"Comma-separated processes (Ex.: chrome.exe,ngf.exe)"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"disconnect_reason"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), names{"disconnect_reason_ack"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"disconnect_reason"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<bool>(), names{"disconnect_reason_ack"}, set(false));
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"ip_target"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<bool>(), names{"recording_started"}, set(false));
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<bool>(), names{"rt_ready"}, set(false));
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<bool>(), names{"recording_started"}, set(false));
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<bool>(), names{"rt_ready"}, set(false));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"auth_notify"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"auth_notify"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::unsigned_>(), names{"auth_notify_rail_exec_flags"});
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"auth_notify_rail_exec_exe_or_file"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<types::u16>(), names{"auth_command_rail_exec_exec_result"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<types::u16>(), names{"auth_command_rail_exec_flags"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_original_exe_or_file"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_exe_or_file"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_working_dir"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_arguments"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command_rail_exec_account"});
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, NL, type_<std::string>(), names{"auth_command_rail_exec_password"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<types::unsigned_>(), names{"auth_notify_rail_exec_flags"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"auth_notify_rail_exec_exe_or_file"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::u16>(), names{"auth_command_rail_exec_exec_result"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::u16>(), names{"auth_command_rail_exec_flags"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command_rail_exec_original_exe_or_file"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command_rail_exec_exe_or_file"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command_rail_exec_working_dir"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command_rail_exec_arguments"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command_rail_exec_account"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<std::string>(), names{"auth_command_rail_exec_password"});
 
         W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, co_rdp, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(), names{.cpp="rail_disconnect_message_delay", .connpolicy="remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
 
         W.member(no_ini_no_gui, rdp_connpolicy, co_rdp, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), names{"session_probe_launch_error_message"});
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"session_probe_launch_error_message"});
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"close_box_extra_message"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"is_wabam"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"is_wabam"}, set(false));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"pm_response"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"pm_request"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"pm_response"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"pm_request"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<types::u32>(), names{"native_session_id"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<types::u32>(), names{"native_session_id"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<bool>(), names{"rd_shadow_available"}, set(false));
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<bool>(), names{"rd_shadow_available"}, set(false));
 
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), names{"rd_shadow_userdata"});
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"rd_shadow_type"});
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<std::string>(), names{"rd_shadow_userdata"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"rd_shadow_type"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<types::u32>(), names{"rd_shadow_invitation_error_code"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"rd_shadow_invitation_error_message"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"rd_shadow_invitation_id"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"rd_shadow_invitation_addr"});
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<types::u16>(), names{"rd_shadow_invitation_port"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<types::u32>(), names{"rd_shadow_invitation_error_code"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"rd_shadow_invitation_error_message"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"rd_shadow_invitation_id"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"rd_shadow_invitation_addr"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<types::u16>(), names{"rd_shadow_invitation_port"});
 
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), names{"rail_module_host_mod_is_active"}, set(false));
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"smartcard_login"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"smartcard_login"});
     });
 
     W.section("theme", [&]
