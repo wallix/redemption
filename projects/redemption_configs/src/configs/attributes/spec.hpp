@@ -418,8 +418,8 @@ namespace sesman
 
     inline namespace constants
     {
-        inline constexpr internal::is_target_context_t<internal::is_target_context(true)> is_target_ctx{};
-        inline constexpr internal::is_target_context_t<internal::is_target_context(false)> not_target_ctx{};
+        inline constexpr internal::is_target_context_t<internal::is_target_context(true)> no_reset_back_to_selector{};
+        inline constexpr internal::is_target_context_t<internal::is_target_context(false)> reset_back_to_selector{};
     }
 }
 

@@ -70,12 +70,12 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 - `sesman_rw` (`proxy_to_sesman + sesman_to_proxy`)
 
 
-### is_target_context (sesman::constants::*)
+### no_reset_back_to_selector/reset_back_to_selector (sesman::constants::*)
 
 Only with `proxy_to_sesman`, `sesman_to_proxy` and `sesman_rw`. Sesman should send value before the connection to target.
 
-- `is_target_ctx`
-- `not_target_ctx`
+- `reset_back_to_selector`
+- `no_reset_back_to_selector`
 
 
 

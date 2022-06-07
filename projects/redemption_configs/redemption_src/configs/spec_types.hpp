@@ -138,10 +138,7 @@ namespace spec_types
             }
             else {
                 if (this->path.front() != '/') {
-                    if (not(this->path.size() >= 2
-                     && this->path[0] == '.'
-                     && this->path[1] == '/')
-                    ) {
+                    if (this->path[0] != '.' || this->path[1] != '/') {
                         this->path.insert(0, "./");
                     }
                 }
