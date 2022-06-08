@@ -556,6 +556,16 @@ namespace detail
 
 namespace arg_parsers
 {
+    inline Res arg_parse(short& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(unsigned short& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
     inline Res arg_parse(int& result, char const * s)
     {
         return detail::arg_parse_int(result, s);

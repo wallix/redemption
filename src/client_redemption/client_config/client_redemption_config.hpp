@@ -227,9 +227,6 @@ struct ClientRedemptionConfig
 
     uint8_t mod_state = MOD_RDP;
 
-    int rdp_width = 800;
-    int rdp_height = 600;
-
     std::string full_capture_file_name;
     bool        is_full_capturing = false;
     bool        is_full_replaying = false;

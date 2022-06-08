@@ -111,6 +111,9 @@ void ClientConfig::writeWindowsData(WindowsData & config)
 
 void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedemptionConfig & config)
 {
+    config.info.screen_info.width = 800;
+    config.info.screen_info.height = 600;
+
      auto options = cli::options(
         cli::helper("Client ReDemPtion Help menu."),
 
@@ -297,10 +300,10 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         cli::helper("========= Client ========="),
 
         cli::option("width").help("Set screen width")
-        .parser(cli::arg_location(config.rdp_width)),
+        .parser(cli::arg_location(config.info.screen_info.width)),
 
         cli::option("height").help("Set screen height")
-        .parser(cli::arg_location(config.rdp_height)),
+        .parser(cli::arg_location(config.info.screen_info.height)),
 
         cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24, 32)")
         .argname("bit_per_pixel")
@@ -593,8 +596,8 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
             "keylayout ", int_to_decimal_chars(underlying_cast(config.info.keylayout)), "\n"
             "brush_cache_code ", int_to_decimal_chars(config.info.brush_cache_code), "\n"
             "bpp ", int_to_decimal_chars(underlying_cast(config.info.screen_info.bpp)), "\n"
-            "width ", int_to_decimal_chars(config.rdp_width), "\n"
-            "height ", int_to_decimal_chars(config.rdp_height), "\n"
+            "width ", int_to_decimal_chars(config.info.screen_info.width), "\n"
+            "height ", int_to_decimal_chars(config.info.screen_info.height), "\n"
             "rdp5_performanceflags ", int_to_decimal_chars(config.info.rdp5_performanceflags), "\n"
             "monitorCount ", int_to_decimal_chars(config.info.cs_monitor.monitorCount), "\n"
             "span ", int_to_decimal_chars(config.is_spanning), "\n"
@@ -756,10 +759,10 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                     config.info.screen_info.bpp = checked_int(std::stoi(info));
                 } else
                 if (tag == "width") {
-                    config.rdp_width = std::stoi(info);
+                    config.info.screen_info.width = std::stoi(info);
                 } else
                 if (tag == "height") {
-                    config.rdp_height = std::stoi(info);
+                    config.info.screen_info.height = std::stoi(info);
                 } else
                 if (tag == "monitorCount") {
                     config.info.cs_monitor.monitorCount = std::stoi(info);
