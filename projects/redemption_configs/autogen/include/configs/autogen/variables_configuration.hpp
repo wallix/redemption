@@ -18,26 +18,26 @@ namespace configs
         inline constexpr int section0 = 0; /* globals */
         inline constexpr int section1 = 18; /* session_log */
         inline constexpr int section2 = 19; /* client */
-        // inline constexpr int section3 = 21; /* all_target_mod */
-        inline constexpr int section4 = 21; /* mod_rdp */
-        inline constexpr int section5 = 97; /* mod_vnc */
-        // inline constexpr int section6 = 105; /* metrics */
-        inline constexpr int section7 = 105; /* file_verification */
-        inline constexpr int section8 = 113; /* file_storage */
-        // inline constexpr int section9 = 114; /* icap_server_down */
-        // inline constexpr int section10 = 114; /* icap_server_up */
-        inline constexpr int section11 = 114; /* mod_replay */
-        // inline constexpr int section12 = 115; /* ocr */
-        inline constexpr int section13 = 115; /* video */
-        inline constexpr int section14 = 119; /* capture */
-        inline constexpr int section15 = 123; /* crypto */
-        // inline constexpr int section16 = 125; /* websocket */
-        // inline constexpr int section17 = 125; /* debug */
-        // inline constexpr int section18 = 125; /* remote_program */
-        inline constexpr int section19 = 125; /* translation */
-        // inline constexpr int section20 = 127; /* internal_mod */
-        inline constexpr int section21 = 127; /* context */
-        // inline constexpr int section22 = 207; /* theme */
+        inline constexpr int section3 = 21; /* all_target_mod */
+        inline constexpr int section4 = 22; /* mod_rdp */
+        inline constexpr int section5 = 98; /* mod_vnc */
+        // inline constexpr int section6 = 106; /* metrics */
+        inline constexpr int section7 = 106; /* file_verification */
+        inline constexpr int section8 = 114; /* file_storage */
+        // inline constexpr int section9 = 115; /* icap_server_down */
+        // inline constexpr int section10 = 115; /* icap_server_up */
+        inline constexpr int section11 = 115; /* mod_replay */
+        // inline constexpr int section12 = 116; /* ocr */
+        inline constexpr int section13 = 116; /* video */
+        inline constexpr int section14 = 120; /* capture */
+        inline constexpr int section15 = 124; /* crypto */
+        // inline constexpr int section16 = 126; /* websocket */
+        // inline constexpr int section17 = 126; /* debug */
+        // inline constexpr int section18 = 126; /* remote_program */
+        inline constexpr int section19 = 126; /* translation */
+        // inline constexpr int section20 = 128; /* internal_mod */
+        inline constexpr int section21 = 128; /* context */
+        // inline constexpr int section22 = 208; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -1039,6 +1039,22 @@ namespace cfg
         using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 1, 10>;
         using mapped_type = sesman_and_spec_type;
         type value { 3 };
+    };
+    /// This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default. <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: all_target_mod:tcp_user_timeout <br/>
+    /// default: 0 <br/>
+    struct all_target_mod::tcp_user_timeout {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 0};
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 3600000>;
+        using mapped_type = sesman_and_spec_type;
+        type value { 0 };
     };
 
     /// type: RdpCompression <br/>
@@ -5322,6 +5338,7 @@ struct client
 struct all_target_mod
 : cfg::all_target_mod::connection_establishment_timeout
 , cfg::all_target_mod::connection_retry_count
+, cfg::all_target_mod::tcp_user_timeout
 { static constexpr bool is_section = true; };
 
 struct mod_rdp
@@ -5731,6 +5748,7 @@ using VariablesAclPack = Pack<
 , cfg::session_log::keyboard_input_masking_level
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts
+, cfg::all_target_mod::tcp_user_timeout
 , cfg::mod_rdp::disabled_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos
@@ -5922,14 +5940,14 @@ using VariablesAclPack = Pack<
 
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
-, 0b1110011111111111111111111111111011111111111111111111111111111111
-, 0b1011111111111111111111111111111111111111111101101111101111111111
-, 0b0000000000000000000000000000000000000000000000000111111111111111
+, 0b1100111111111111111111111111110111111111111111111111111111111111
+, 0b0111111111111111111111111111111111111111111011011111011111111111
+, 0b0000000000000000000000000000000000000000000000001111111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000010000000000000000000
+, 0b0000000000000000000000000000000000000000000100000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

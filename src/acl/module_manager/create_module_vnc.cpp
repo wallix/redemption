@@ -118,6 +118,7 @@ public:
                       , checked_int(ini.get<cfg::context::target_port>())
                       , ini.get<cfg::all_target_mod::connection_establishment_timeout>()
                       , ini.get<cfg::all_target_mod::connection_retry_count>()
+                      , ini.get<cfg::all_target_mod::tcp_user_timeout>()
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
     , mod(
@@ -249,7 +250,8 @@ ModPack create_mod_vnc(
 
     unique_fd client_sck =
         connect_to_target_host(ini, session_log, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>(),
-            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>());
+            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>(),
+            ini.get<cfg::all_target_mod::tcp_user_timeout>());
 
     bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
         && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));

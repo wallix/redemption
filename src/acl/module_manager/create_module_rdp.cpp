@@ -271,6 +271,7 @@ public:
                     name, std::move(sck), ip_address, port,
                     ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
                     ini.get<cfg::all_target_mod::connection_retry_count>(),
+                    ini.get<cfg::all_target_mod::tcp_user_timeout>(),
                     recv_timeout, verbose, error_message
                 );
             }
@@ -285,6 +286,7 @@ public:
                 name, std::move(sck), ip_address, port,
                 ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
                 ini.get<cfg::all_target_mod::connection_retry_count>(),
+                ini.get<cfg::all_target_mod::tcp_user_timeout>(),
                 recv_timeout, verbose, error_message
             );
         }())
@@ -861,7 +863,8 @@ ModPack create_mod_rdp(
 
     unique_fd client_sck =
         connect_to_target_host(ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
-            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>());
+            ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>(),
+            ini.get<cfg::all_target_mod::tcp_user_timeout>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())

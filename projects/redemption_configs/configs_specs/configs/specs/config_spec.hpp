@@ -279,6 +279,10 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::range<types::u32, 1, 10>>(), names{"connection_retry_count"}, desc{
             "Controls the number of reconnection attempts if there's a connection failure."
         }, set(3));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 3'600'000>>{}, names{"tcp_user_timeout"}, desc{
+            "This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default."
+        }, set(0));
     });
 
     W.section(names{.cpp="mod_rdp", .connpolicy="rdp"}, [&]

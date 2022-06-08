@@ -86,17 +86,28 @@ namespace
                         SOL_SOCKET,
                         SO_SNDBUF,
                         &snd_buffer_size, sizeof(snd_buffer_size))){
-                    LOG(LOG_WARNING, "setsockopt failed with errno = %d (%s)", errno, strerror(errno));
+                    LOG(LOG_WARNING, "setsockopt(SOL_SOCKET, SO_SNDBUF) failed with errno = %d (%s)", errno, strerror(errno));
                     return false;
                 }
             }
         }
         else {
-            LOG(LOG_WARNING, "getsockopt failed with errno = %d (%s)", errno, strerror(errno));
+            LOG(LOG_WARNING, "getsockopt(SOL_SOCKET, SO_SNDBUF) failed with errno = %d (%s)", errno, strerror(errno));
             return false;
         }
 
         return true;
+    }
+
+    void set_tcp_user_timeout(int sck, std::chrono::milliseconds timeout)
+    {
+        unsigned int tcp_user_timeout = timeout.count();
+        if (-1 == setsockopt(sck,
+                IPPROTO_TCP,
+                TCP_USER_TIMEOUT,
+                &tcp_user_timeout, sizeof(tcp_user_timeout))){
+            LOG(LOG_WARNING, "setsockopt(IPPROTO_TCP, TCP_USER_TIMEOUT) failed with errno = %d (%s)", errno, strerror(errno));
+        }
     }
 
     unique_fd connect_sck(int sck, std::chrono::milliseconds connection_establishment_timeout,
@@ -178,7 +189,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 
 unique_fd ip_connect(const char* ip, int port,
     std::chrono::milliseconds connection_establishment_timeout,
-    int connection_retry_count, char const** error_result)
+    int connection_retry_count, std::chrono::milliseconds tcp_user_timeout, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -219,6 +230,10 @@ unique_fd ip_connect(const char* ip, int port,
         LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size", ip, port);
         close(sck);
         return unique_fd{-1};
+    }
+
+    if (tcp_user_timeout.count()) {
+        set_tcp_user_timeout(sck, tcp_user_timeout);
     }
 
     char text_target[256];
@@ -263,6 +278,7 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
                                         int port,
                                         std::chrono::milliseconds connection_establishment_timeout,
                                         int connection_retry_count,
+                                        std::chrono::milliseconds tcp_user_timeout,
                                         const char **error_result) noexcept
 {
     AddrInfoPtrWithDel_t addr_info_ptr =
@@ -308,6 +324,10 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
             port);
         close(sck);
         return unique_fd{-1};
+    }
+
+    if (tcp_user_timeout.count()) {
+        set_tcp_user_timeout(sck, tcp_user_timeout);
     }
 
     char resolved_ip_addr[NI_MAXHOST] { };
@@ -406,7 +426,8 @@ unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
     const std::chrono::milliseconds connection_establishment_timeout = std::chrono::milliseconds(1000);
     const int connection_retry_count = 1;
     return ip_connect(ip.c_str(), int(port),
-        connection_establishment_timeout, connection_retry_count);
+        connection_establishment_timeout, connection_retry_count,
+        std::chrono::milliseconds::zero());
 }
 
 

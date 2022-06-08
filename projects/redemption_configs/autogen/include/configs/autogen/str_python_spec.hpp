@@ -300,6 +300,11 @@ connection_establishment_timeout = integer(min=1000, max=10000, default=1000)
 #_advanced
 connection_retry_count = integer(min=1, max=10, default=3)
 
+# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# (in milliseconds)
+#_hidden
+tcp_user_timeout = integer(min=0, max=3600000, default=0)
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side

@@ -36,6 +36,13 @@ inactivity_timeout = integer(min=0, default=0)
 #   3: keyboard inputs are not logged
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
+[all_target_mod]
+
+# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# (in milliseconds)
+#_advanced
+tcp_user_timeout = integer(min=0, max=3600000, default=0)
+
 [rdp]
 
 # Disables supported drawing orders:

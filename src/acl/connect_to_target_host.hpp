@@ -42,7 +42,8 @@
 inline unique_fd connect_to_target_host(
     Inifile & ini, SessionLogApi& session_log,
     trkeys::TrKey const& authentification_fail, bool enable_ipv6,
-    std::chrono::milliseconds connection_establishment_timeout, int connection_retry_count)
+    std::chrono::milliseconds connection_establishment_timeout, int connection_retry_count,
+    std::chrono::milliseconds tcp_user_timeout)
 {
     auto throw_error = [&ini, &session_log](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
@@ -92,7 +93,8 @@ inline unique_fd connect_to_target_host(
                  "%s",
                  inet_ntoa(s4_sin_addr));
         client_sck = ip_connect(ip, port,
-            connection_establishment_timeout, connection_retry_count, &error_message);
+            connection_establishment_timeout, connection_retry_count,
+            tcp_user_timeout, &error_message);
     }
     else
     {
@@ -118,7 +120,8 @@ inline unique_fd connect_to_target_host(
         }
 
         client_sck = ip_connect_both_ipv4_and_ipv6(ip, port,
-            connection_establishment_timeout, connection_retry_count, &error_message);
+            connection_establishment_timeout, connection_retry_count,
+            tcp_user_timeout, &error_message);
     }
 
     if (!client_sck.is_open())

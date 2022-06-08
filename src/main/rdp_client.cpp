@@ -174,7 +174,8 @@ int main(int argc, char** argv)
 
     /* SocketTransport mod_trans */
     auto sck = ip_connect(target_device.c_str(), target_port,
-        connection_establishment_timeout_ms, connection_retry_count);
+        connection_establishment_timeout_ms, connection_retry_count,
+        std::chrono::milliseconds::zero());
     if (!sck.is_open()) {
         return 1;
     }
@@ -194,6 +195,7 @@ int main(int argc, char** argv)
         is_vnc ? "VNC Server"_sck_name : "RDP Server"_sck_name,
         std::move(sck), target_device,
         target_port, connection_establishment_timeout_ms, connection_retry_count,
+        std::chrono::seconds::zero(),
         std::chrono::seconds(1),
         safe_cast<SocketTransport::Verbose>(uint32_t(verbose >> 32)), nullptr);
 

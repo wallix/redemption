@@ -19,6 +19,11 @@ cp_spec = {
             'keyboard_input_masking_level', 2
         ),
     },
+    'all_target_mod': {
+        u'all_target_mod:tcp_user_timeout': (
+            'tcp_user_timeout', 0
+        ),
+    },
     'rdp': {
         u'mod_rdp:disabled_orders': (
             'disabled_orders', u''

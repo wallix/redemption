@@ -31,6 +31,7 @@ namespace configs
         "session_log:keyboard_input_masking_level"_zv,
         "keyboard_layout"_zv,
         "disable_tsk_switch_shortcuts"_zv,
+        "all_target_mod:tcp_user_timeout"_zv,
         "mod_rdp:disabled_orders"_zv,
         "mod_rdp:enable_nla"_zv,
         "mod_rdp:enable_kerberos"_zv,

@@ -99,6 +99,7 @@ namespace cfg
     struct all_target_mod {
         struct connection_establishment_timeout;
         struct connection_retry_count;
+        struct tcp_user_timeout;
     };
 
     struct mod_rdp {

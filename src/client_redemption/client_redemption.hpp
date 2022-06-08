@@ -505,7 +505,8 @@ public:
 
         unique_fd unique_client_sck = ip_connect(
             this->config.target_IP.c_str(), this->config.port,
-            connection_establishment_timeout, connection_retry_count);
+            connection_establishment_timeout, connection_retry_count,
+            std::chrono::milliseconds::zero());
 
         this->client_sck = unique_client_sck.fd();
 
@@ -521,6 +522,7 @@ public:
                     this->config.port,
                     connection_establishment_timeout,
                     connection_retry_count,
+                    std::chrono::milliseconds::zero(),
                     std::chrono::seconds(1),
                     SocketTransport::Verbose(),
                     &this->error_message);

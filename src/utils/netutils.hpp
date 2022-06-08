@@ -55,7 +55,9 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
 unique_fd ip_connect(const char* ip, int port,
     std::chrono::milliseconds connection_establishment_timeout,
-    int connection_retry_count, char const** error_result = nullptr);
+    int connection_retry_count,
+    std::chrono::milliseconds tcp_user_timeout,
+    char const** error_result = nullptr);
 
 [[nodiscard]]
 AddrInfoPtrWithDel_t resolve_both_ipv4_and_ipv6_address
@@ -63,7 +65,8 @@ AddrInfoPtrWithDel_t resolve_both_ipv4_and_ipv6_address
 
 unique_fd ip_connect_both_ipv4_and_ipv6
 (const char* ip, int port, std::chrono::milliseconds connection_establishment_timeout,
- int connection_retry_count, const char **error_result = nullptr) noexcept;
+ int connection_retry_count,
+ std::chrono::milliseconds tcp_user_timeout, const char **error_result = nullptr) noexcept;
 
 unique_fd local_connect(const char* sck_name, bool no_log);
 
