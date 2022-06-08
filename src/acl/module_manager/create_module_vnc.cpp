@@ -26,7 +26,6 @@
 #include "core/client_info.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "mod/metrics_hmac.hpp"
-#include "mod/vnc/vnc.hpp"
 #include "mod/vnc/vnc_metrics.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "transport/socket_transport.hpp"

@@ -34,7 +34,6 @@
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
 #include "mod/mod_api.hpp"
-#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
 #include "utils/region.hpp"
@@ -46,10 +45,9 @@
 #include "utils/timebase.hpp"
 
 
-#define INTERNAL_MODULE_WINDOW_ID    40000
+constexpr uint32_t INTERNAL_MODULE_WINDOW_ID = 40000;
 
-#define AUXILIARY_WINDOW_ID          40001
-
+constexpr uint32_t AUXILIARY_WINDOW_ID = 40001;
 
 constexpr uint16_t MINIMUM_WINDOW_WIDTH = 640;
 constexpr uint16_t MINIMUM_WINDOW_HEIGHT = 480;

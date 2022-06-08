@@ -312,7 +312,7 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
     std::string copy_directory = directory;
     char * pSearch;
 
-    for (char * pTemp = &copy_directory[0]
+    for (char * pTemp = copy_directory.data()
         ; (status == 0) && ((pSearch = strchr(pTemp, '/')) != nullptr)
         ; pTemp = pSearch + 1) {
         if (pSearch == pTemp) {

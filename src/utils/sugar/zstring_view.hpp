@@ -105,6 +105,11 @@ struct zstring_view
         return std::string_view(c_str(), size());
     }
 
+    [[nodiscard]] constexpr chars_view to_av() const noexcept
+    {
+        return chars_view(c_str(), size());
+    }
+
     [[nodiscard]] std::string to_string() const
     {
         return std::string(c_str(), size());

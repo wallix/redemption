@@ -38,7 +38,6 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "utils/redirection_info.hpp"
-#include "configs/config.hpp"
 #include "gdi/osd_api.hpp"
 
 //#define GENERATE_TESTING_DATA

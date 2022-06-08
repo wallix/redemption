@@ -704,14 +704,13 @@ enum {
     , LOGON_WARNING                = 0x00000003
 };
 
-struct LogonErrorsInfo_Recv {
-    uint32_t ErrorNotificationData;
-    uint32_t ErrorNotificationType;
+struct LogonErrorsInfo_Recv
+{
+    uint32_t ErrorNotificationData = 0;
+    uint32_t ErrorNotificationType = 0;
 
-    explicit LogonErrorsInfo_Recv(InStream & stream) :
-    ErrorNotificationData(0),
-    ErrorNotificationType(0) {
-
+    explicit LogonErrorsInfo_Recv(InStream & stream)
+    {
         // ErrorNotificationData(4) + ErrorNotificationType(4)
         ::check_throw(stream, 8, "Logon Info Field", ERR_RDP_DATA_TRUNCATED);
 

@@ -56,7 +56,7 @@ namespace RDP
 class FileToGraphic
 {
     uint8_t stream_buf[65536];
-    InStream stream;
+    InStream stream {stream_buf};
 
     CompressionInTransportBuilder compression_builder;
 
@@ -72,19 +72,19 @@ private:
 
     std::unique_ptr<BmpCache> bmp_cache;
     GlyphCache     gly_cache;
-    PointerCache   ptr_cache;
+    PointerCache   ptr_cache {PointerCache::MAX_POINTER_COUNT};
 
     // variables used to read batch of orders "chunks"
-    uint32_t chunk_size;
-    WrmChunkType chunk_type;
-    uint16_t chunk_count;
-    uint16_t remaining_order_count;
+    uint32_t chunk_size = 0;
+    WrmChunkType chunk_type = WrmChunkType::INVALID_CHUNK;
+    uint16_t chunk_count = 0;
+    uint16_t remaining_order_count = 0;
 
     // total number of RDP orders read from the start of the movie
     // (non orders chunks are counted as 1 order)
-    uint32_t total_orders_count;
+    uint32_t total_orders_count = 0;
 
-    MonotonicTimePoint record_now;
+    MonotonicTimePoint record_now {};
 
     MonotonicTimePoint monotonic_real_time {};
     RealTimePoint last_real_time {};
@@ -128,10 +128,10 @@ private:
     fixed_ptr_array<gdi::RelayoutApi, 8> relayout_consumers;
     fixed_ptr_array<gdi::ResizeApi, 8> resize_consumers;
 
-    bool meta_ok;
-    bool timestamp_ok;
-    uint16_t mouse_x;
-    uint16_t mouse_y;
+    bool meta_ok = false;
+    bool timestamp_ok = false;
+    uint16_t mouse_x = 0;
+    uint16_t mouse_y = 0;
 
     WrmMetaChunk info {};
 
@@ -183,7 +183,8 @@ public:
 
         Order NewOrExistingWindow;
         Order DeletedWindow;
-    } statistics;
+    };
+    Statistics statistics {};
 
     using Verbose = FileToGraphicVerbose;
 

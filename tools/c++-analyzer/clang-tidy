@@ -99,6 +99,7 @@ else
 -modernize-use-trailing-return-type,
 -readability-avoid-const-params-in-decls,
 -readability-braces-around-statements,
+-readability-identifier-length,
 -readability-implicit-bool-conversion,
 -readability-magic-numbers,
 -readability-non-const-parameter,
@@ -112,7 +113,8 @@ fi
 ${CLANG_TIDY:=clang-tidy} $fix -checks="$checkers" \
 -config='{CheckOptions: [
 {key: llvm-namespace-comment.ShortNamespaceLines, value: 10},
-{key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL}
+{key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL},
+{key: modernize-use-override.IgnoreDestructors, value: true}
 ]}' \
 -header-filter='.*' \
 $(find src/ -name '*.cpp' \

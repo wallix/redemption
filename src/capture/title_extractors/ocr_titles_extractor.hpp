@@ -36,9 +36,6 @@ struct OcrTitlesExtractor
 {
     OcrTitlesExtractor(bool title_bar_only, uint8_t max_unrecog_char_rate, ocr::fonts::LocaleId locale_id)
     : locale_id(locale_id)
-    , font_id(-1u)
-    , title_color_id_selected(ocr::uninitialized_titlebar_color_id)
-    , font_id_selected(-1u)
     , title_bar_only(title_bar_only)
     , max_unrecog_char_rate(max_unrecog_char_rate)
     {
@@ -183,9 +180,9 @@ private:
     ocr::ExtractTitles extractor;
 
     ocr::fonts::LocaleId locale_id;
-    unsigned font_id;
-    unsigned title_color_id_selected;
-    unsigned int font_id_selected;
+    unsigned font_id = -1u;
+    unsigned title_color_id_selected = ocr::uninitialized_titlebar_color_id;
+    unsigned font_id_selected = -1u;
     char letters_find[10];
 
     bool    title_bar_only;

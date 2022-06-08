@@ -31,7 +31,6 @@
 #include "acl/license_api.hpp"
 #include "core/client_info.hpp"
 #include "utils/timebase.hpp"
-#include "acl/auth_api.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"

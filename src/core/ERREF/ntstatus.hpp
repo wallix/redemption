@@ -22,7 +22,6 @@
 #pragma once
 
 #include <cinttypes>
-#include <cinttypes>
 
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"

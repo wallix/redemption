@@ -282,12 +282,11 @@ namespace SlowPath {
 //  field MUST be ignored.
 
     struct KeyboardEvent_Recv {
-        uint16_t keyboardFlags;
-        uint16_t keyCode;
+        uint16_t keyboardFlags = 0;
+        uint16_t keyCode = 0;
 
         explicit KeyboardEvent_Recv(InStream & stream)
-        : keyboardFlags(0)
-        , keyCode(0) {
+        {
             const unsigned expected =
                 6; // keyboardFlags(2) + keyCode(2) + pad2Octets(2)
             if (!stream.in_check_rem(expected)) {

@@ -85,9 +85,9 @@ public:
     void set_master_derivator(bytes_view derivator)
     {
         if ((this->master_key_loaded || !this->master_derivator.empty())
-         && not (this->master_derivator.size() == derivator.size()
-           && std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
-        )) {
+         && not std::equal(derivator.begin(), derivator.end(),
+                           this->master_derivator.begin(), this->master_derivator.end())
+        ) {
             LOG(LOG_ERR, "CryptoContext: master derivator is already defined");
             throw Error(ERR_WRM_INVALID_INIT_CRYPT);
         }

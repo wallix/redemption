@@ -226,11 +226,11 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, names{"mod_recv_timeout"}, set(1000));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_enable_serializer_data_block_size_limit"},set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_enable_serializer_data_block_size_limit"}, set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_support_resize_session_during_recording"},set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_support_resize_session_during_recording"}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"support_connection_redirection_during_recording"},set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"support_connection_redirection_during_recording"}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::milliseconds>(), names{"rdp_keepalive_connection_interval"}, desc{
             "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"

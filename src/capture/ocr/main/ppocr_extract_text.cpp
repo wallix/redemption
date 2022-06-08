@@ -171,7 +171,7 @@ int main(int argc, char** argv)
         }
 
         if (argc > 4) {
-            if (!('d' == argv[4][0] && !argv[4][1])) {
+            if ('d' != argv[4][0] || argv[4][1]) {
                 usage(argv);
                 return 4;
             }

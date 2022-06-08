@@ -48,7 +48,6 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/monotonic_time_to_real_time.hpp"
 #include "utils/drawable.hpp"
-#include "utils/ref.hpp"
 
 #include <cstddef>
 

@@ -690,8 +690,8 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-131957,wab-4-2-4.yourdomain,1914.mwrm",
-        "--hash-path", FIXTURES_PATH "/verifier/hash/",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/", // NOLINT
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/", // NOLINT
         "--verbose", "10",
     };
 
@@ -718,8 +718,8 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026"
             "-132156,wab-4-2-4.yourdomain,9904.mwrm",
-        "--hash-path", FIXTURES_PATH "/verifier/hash/",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/", // NOLINT
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/", // NOLINT
         "--verbose", "10",
     };
 
@@ -736,10 +736,10 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/verifier/recorded/"
+            FIXTURES_PATH "/verifier/recorded/" // NOLINT
             "toto@10.10.43.13,Administrateur@QA@cible"
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/", // NOLINT
         "-o",
             output.c_str(),
         "--chunk",
@@ -826,9 +826,9 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/kpd_input.mwrm",
+            FIXTURES_PATH "/kpd_input.mwrm", // NOLINT
         "--config-file",
-            FIXTURES_PATH "/disable_kbd_input_in_meta.ini",
+            FIXTURES_PATH "/disable_kbd_input_in_meta.ini", // NOLINT
         "--mwrm-path", FIXTURES_PATH,
         "-o",
             output.c_str(),
@@ -856,7 +856,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/resizing-capture-0.mwrm",
+            FIXTURES_PATH "/resizing-capture-0.mwrm", // NOLINT
         "--mwrm-path", FIXTURES_PATH,
         "-o",
             output.c_str(),
@@ -883,7 +883,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/resizing-capture-1.mwrm",
+            FIXTURES_PATH "/resizing-capture-1.mwrm", // NOLINT
         "--mwrm-path", FIXTURES_PATH,
         "-o",
             output.c_str(),
@@ -910,9 +910,9 @@ RED_AUTO_TEST_CASE_WD(TestMetaCapture, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/verifier/recorded/meta_message.mwrm",
+            FIXTURES_PATH "/verifier/recorded/meta_message.mwrm", // NOLINT
         "--mwrm-path",
-            FIXTURES_PATH "/verifier/recorded/",
+            FIXTURES_PATH "/verifier/recorded/", // NOLINT
         "-o", output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
@@ -943,11 +943,11 @@ RED_AUTO_TEST_CASE_WD(TestMetaCaptureDisableKbdInput, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/verifier/recorded/meta_message.mwrm",
+            FIXTURES_PATH "/verifier/recorded/meta_message.mwrm", // NOLINT
         "--mwrm-path",
             FIXTURES_PATH "/verifier/recorded/",
         "--config-file",
-            FIXTURES_PATH "/disable_kbd_input_in_meta.ini",
+            FIXTURES_PATH "/disable_kbd_input_in_meta.ini", // NOLINT
         "-o", output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
@@ -976,11 +976,11 @@ RED_AUTO_TEST_CASE_WD(TestVideoCroppedV1, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/multimon_remoteapp/recorder/secondary_screen_to_left.mwrm",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/secondary_screen_to_left.mwrm", // NOLINT
         "--mwrm-path",
-            FIXTURES_PATH "/multimon_remoteapp/recorder/",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/", // NOLINT
         "--config-file",
-            FIXTURES_PATH "/smart_video_cropping_v1.ini",
+            FIXTURES_PATH "/smart_video_cropping_v1.ini", // NOLINT
         "-o", output.c_str(),
         "-f",
         "-S",
@@ -1002,11 +1002,11 @@ RED_AUTO_TEST_CASE_WD(TestVideoCroppedV2, wd)
         "recorder.py",
         "redrec",
         "-i",
-            FIXTURES_PATH "/multimon_remoteapp/recorder/secondary_screen_to_left.mwrm",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/secondary_screen_to_left.mwrm", // NOLINT
         "--mwrm-path",
-            FIXTURES_PATH "/multimon_remoteapp/recorder/",
+            FIXTURES_PATH "/multimon_remoteapp/recorder/", // NOLINT
         "--config-file",
-            FIXTURES_PATH "/smart_video_cropping_v2.ini",
+            FIXTURES_PATH "/smart_video_cropping_v2.ini", // NOLINT
         "-o", output.c_str(),
         "-f",
         "-S",

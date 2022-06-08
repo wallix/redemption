@@ -41,8 +41,7 @@ public:
         char license_index[2048] = {};
         ::snprintf(license_index, sizeof(license_index) - 1, "0x%08X_%s_%s_%s", version, scope, company_name, product_id);
         license_index[sizeof(license_index) - 1] = '\0';
-        std::replace_if(std::begin(license_index), std::end(license_index),
-                        [](unsigned char c) { return (' ' == c); }, '-');
+        std::replace(std::begin(license_index), std::end(license_index), ' ', '-');
         LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license(): LicenseIndex=\"%s\"", license_index);
 
         char filename[4096] = {};

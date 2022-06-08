@@ -80,7 +80,6 @@ if (( $fast == 0 )); then
     rm -rf bin
 fi
 #version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
-# version=11
 echo "using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 if [[ ! -d system_include/boost ]]; then
     mkdir -p system_include
@@ -112,7 +111,7 @@ show_duration jsclient
 
 # BJAM Build Test
 echo -e "
-using gcc : 10.0 : g++-11 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using gcc : 11.0 : g++-11 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
 " > project-config.jam

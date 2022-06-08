@@ -324,15 +324,14 @@ namespace X224
 
     // Factory read full TPDU, other layers are just using what was read by factory
     // Also decode enough data to know the type of packet we are dealing with (TPDU type or fastpath)
-    struct RecvFactory {
-        int    type;
-        size_t length;
-        bool   fast_path;
+    struct RecvFactory
+    {
+        int    type = 0;
+        size_t length = 0;
+        bool   fast_path = false;
 
         RecvFactory(Transport & t, uint8_t ** end, size_t bufsize)
-                : type(0)
-                , length(0)
-                , fast_path(false) {
+        {
             size_t nbbytes = 0;
             Parse data(*end);
             // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error

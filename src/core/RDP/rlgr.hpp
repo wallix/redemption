@@ -19,6 +19,8 @@
 
    Run-Length Golomb-Rice compression
 */
+#pragma once
+
 #include <cstdint>
 
 /**

@@ -637,7 +637,7 @@ ocrypto::Result ocrypto::write(bytes_view data)
         available_size = data.size();
     }
     // Append and update pos pointer
-    ::memcpy(this->buf + this->pos, &data[0], available_size);
+    ::memcpy(this->buf + this->pos, data.data(), available_size);
     this->pos += available_size;
     // If buffer is full, flush it to disk
     size_t towrite = 0;

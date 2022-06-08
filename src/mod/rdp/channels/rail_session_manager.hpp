@@ -36,7 +36,6 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
 #include "utils/timebase.hpp"

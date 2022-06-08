@@ -41,7 +41,6 @@
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
-#include "acl/auth_api.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "core/channels_authorizations.hpp"

@@ -73,12 +73,12 @@ private:
     Inifile & ini;
 
     std::string osd_message;
-    bool allow_disable_osd_message;
+    bool allow_disable_osd_message = false;
     Rect clip;
     RDPColor color;
     RDPColor background_color;
     bool is_disable_by_input = false;
-    bool bogus_refresh_rect_ex;
+    bool bogus_refresh_rect_ex = false;
     const Font & glyphs;
     Keymap & keymap;
 
@@ -101,8 +101,6 @@ public:
     , rail_client_execute(rail_client_execute)
     , palette(palette)
     , ini(ini)
-    , allow_disable_osd_message(false)
-    , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
     , keymap(keymap)
     , time_base(time_base)

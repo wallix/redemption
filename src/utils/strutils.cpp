@@ -49,20 +49,20 @@ bool ends_case_with(chars_view str, chars_view suffix) noexcept
 }
 
 
-std::size_t strlcpy(char* dest, chars_view src, std::size_t n) noexcept
+std::size_t strlcpy(char* dest, chars_view src, std::size_t buflen) noexcept
 {
     auto const nsrc = src.size();
-    if (n) {
-        auto const ncp = std::min(n-1u, nsrc);
-        std::memcpy(dest, src.data(), ncp);
-        dest[ncp] = 0;
+    if (buflen) {
+        auto const n = std::min(buflen-1u, nsrc);
+        std::memcpy(dest, src.data(), n);
+        dest[n] = 0;
     }
     return nsrc;
 }
 
-std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept
+std::size_t strlcpy(char* dest, char const* src, std::size_t buflen) noexcept
 {
-    return strlcpy(dest, chars_view{src, strlen(src)}, n);
+    return strlcpy(dest, chars_view{src, strlen(src)}, buflen);
 }
 
 

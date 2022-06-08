@@ -5,7 +5,6 @@
 #include "rgb8.hpp"
 
 #include "mln/image/image2d.hh"
-#include "cxx/diagnostic.hpp"
 
 #include <vector>
 #include <cstdlib>

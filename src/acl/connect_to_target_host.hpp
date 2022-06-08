@@ -31,6 +31,7 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/netutils.hpp"
+#include "utils/strutils.hpp"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -88,10 +89,7 @@ inline unique_fd connect_to_target_host(
             throw_error(error_message, 1);
         }
 
-        snprintf(resolved_ip_addr,
-                 sizeof(resolved_ip_addr),
-                 "%s",
-                 inet_ntoa(s4_sin_addr));
+        utils::strlcpy(resolved_ip_addr, inet_ntoa(s4_sin_addr));
         client_sck = ip_connect_ipv4(ip,
                                      port,
                                      connection_establishment_timeout,

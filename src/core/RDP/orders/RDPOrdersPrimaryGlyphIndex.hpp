@@ -513,7 +513,7 @@ public:
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = common.str(buffer, sz,
-            !(!common.clip.contains(this->bk) || ((this->op.cx > 1) && !common.clip.contains(this->op))));
+            common.clip.contains(this->bk) && (this->op.cx <= 1 || common.clip.contains(this->op)));
         lg += snprintf( buffer + lg, sz - lg
                       , "glyphIndex(cache_id=%.2x "
                         "fl_accel=%d ui_charinc=%d f_op_redundant=%d "

@@ -63,7 +63,6 @@ struct KeyModFlags
         set_if(bool(locks & KeyLocks::CapsLock), KeyMod::CapsLock);
         // set_if(bool(locks & KeyLocks::KanaLock), KeyMod::KanaLock);
         set_if(bool(locks & KeyLocks::ScrollLock), KeyMod::ScrollLock);
-
     }
 
     bool test(KeyMod mod) const noexcept

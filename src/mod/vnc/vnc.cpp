@@ -23,7 +23,6 @@
 
 #include "mod/vnc/vnc.hpp"
 #include "mod/vnc/dsm.hpp"
-#include "mod/vnc/dsm.hpp"
 #include "mod/vnc/vnc_metrics.hpp"
 #include "mod/vnc/newline_convert.hpp"
 #include "core/log_id.hpp"

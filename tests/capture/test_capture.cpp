@@ -43,7 +43,6 @@ REDEMPTION_DIAGNOSTIC_POP()
 #include "utils/strutils.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/sugar/int_to_chars.hpp"
-#include "test_only/lcg_random.hpp"
 #include "test_only/ostream_buffered.hpp"
 #include "test_only/transport/test_transport.hpp"
 

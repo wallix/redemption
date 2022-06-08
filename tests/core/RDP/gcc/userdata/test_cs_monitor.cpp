@@ -24,7 +24,7 @@
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 
-#define TS_MONITOR_PRIMARY 0x00000001
+constexpr uint32_t TS_MONITOR_PRIMARY = 0x00000001;
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
 {

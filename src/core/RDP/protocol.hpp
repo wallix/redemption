@@ -398,17 +398,14 @@ struct UpdatePaletteData_Recv {
 
 struct ConfirmActivePDU_Send {
     OutStream & payload;
-    uint16_t   offset_lengthCombinedCapabilities;
-    uint16_t   offset_numberCapabilities;
-    uint16_t   numberCapabilities;
-    uint16_t   offset_capabilitySets;
+    uint16_t   offset_lengthCombinedCapabilities = 0;
+    uint16_t   offset_numberCapabilities = 0;
+    uint16_t   numberCapabilities = 0;
+    uint16_t   offset_capabilitySets = 0;
 
     explicit ConfirmActivePDU_Send(OutStream & stream)
         : payload(stream)
-        , offset_lengthCombinedCapabilities(0)
-        , offset_numberCapabilities(0)
-        , numberCapabilities(0)
-        , offset_capabilitySets(0) {
+    {
     }
 
     void emit_begin(uint32_t shareId) {

@@ -36,7 +36,6 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
-#include "mod/internal/rail_module_host_mod.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
 #include "acl/module_manager/create_module_metrics.hpp"

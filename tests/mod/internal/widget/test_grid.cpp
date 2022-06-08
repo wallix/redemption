@@ -62,8 +62,6 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_wh(640, 480);
     wgrid.set_xy(x, y);
 
-    uint16_t   widget_count     = 0;
-
     for (uint16_t line_index = 0; line_index < line_number; line_index++) {
         for (uint16_t column_index = 0; column_index < column_number; column_index++) {
             char text[256];
@@ -84,7 +82,6 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
             w->set_wh(dim);
 
             wgrid.set_widget(line_index, column_index, std::move(w));
-            widget_count++;
         }
     }
 

@@ -48,12 +48,13 @@ bool ends_with(chars_view str, chars_view suffix) noexcept;
 bool ends_case_with(chars_view str, chars_view suffix) noexcept;
 
 /**
- * Copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
+ * Copies up to \c buflen - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
  * \return total length of the string they tried to create.
+ * \note when \c buflen is 0, no copy is performed
  * @{
  */
-std::size_t strlcpy(char* dest, chars_view src, std::size_t n) noexcept;
-std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept;
+std::size_t strlcpy(char* dest, chars_view src, std::size_t buflen) noexcept;
+std::size_t strlcpy(char* dest, char const* src, std::size_t buflen) noexcept;
 
 template<std::size_t N>
 inline std::size_t strlcpy(char (&dest)[N], chars_view src) noexcept

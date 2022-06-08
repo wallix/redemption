@@ -184,7 +184,9 @@ namespace detail
 }
 #endif
 
-#define LOG_IF(cond, priority, ...) if (REDEMPTION_UNLIKELY(cond)) LOG(priority, __VA_ARGS__)
+#define LOG_IF(cond, priority, ...)                                              \
+    if (REDEMPTION_UNLIKELY(cond)) /*NOLINT(readability-simplify-boolean-expr)*/ \
+        LOG(priority, __VA_ARGS__)
 
 #if defined(LOG_UNCHECKED_FORMAT)
 namespace compiler_aux_

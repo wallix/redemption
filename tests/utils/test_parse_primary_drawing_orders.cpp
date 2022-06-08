@@ -24,7 +24,7 @@
 #include "test_only/log_buffered.hpp"
 
 #include "utils/parse_primary_drawing_orders.hpp"
-#include "utils/parse_primary_drawing_orders.hpp"
+
 
 RED_AUTO_TEST_CASE(TestPrimaryDrawaingOrders)
 {

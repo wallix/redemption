@@ -275,7 +275,7 @@ Widget::Color WidgetSelector::get_bg_color() const
     return this->bg_color;
 }
 
-#define COLUMN_EXPANSION_BUTTON_PLACE_HOLDER 18
+constexpr uint16_t COLUMN_EXPANSION_BUTTON_PLACE_HOLDER = 18;
 
 void WidgetSelector::rearrange()
 {

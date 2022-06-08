@@ -1484,13 +1484,12 @@ namespace LIC
         // ClientUserName BLOB to keep track of licenses issued to clients.
 
 
-        uint16_t license_size;
-        uint8_t * license_data;
-        uint8_t * hwid;
-        uint8_t * signature;
+        uint16_t license_size = 0;
+        uint8_t * license_data = nullptr;
+        uint8_t * hwid = nullptr;
+        uint8_t * signature = nullptr;
 
-        explicit NewLicenseRequest_Recv(InStream & stream) : license_size(0), license_data(nullptr),
-                hwid(nullptr), signature(nullptr)
+        explicit NewLicenseRequest_Recv(InStream & stream)
         {
             const unsigned expected =
                 /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +

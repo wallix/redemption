@@ -659,10 +659,10 @@ private:
 
     Random & gen;
 
-    const bool fastpath_support;         // choice of programmer
-    bool server_fastpath_update_support; // choice of programmer + capability of client
-    bool tls_client_active;
-    int clientRequestedProtocols;
+    const bool fastpath_support;                 // choice of programmer
+    bool server_fastpath_update_support = false; // choice of programmer + capability of client
+    bool tls_client_active = true;
+    int clientRequestedProtocols = X224::PROTOCOL_RDP;
 
     std::unique_ptr<NegoServer> nego_server;
 
@@ -839,9 +839,6 @@ public:
     , cctx(cctx)
     , gen(gen)
     , fastpath_support(fp_support)
-    , server_fastpath_update_support(false)
-    , tls_client_active(true)
-    , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , acl_report(acl_report)
     , events_guard(events)
     , rdp_keepalive_connection_interval(
@@ -1366,7 +1363,7 @@ public:
         else {
             LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
         }
-        if (!(this->state == FRONT_UP_AND_RUNNING)) {
+        if (this->state != FRONT_UP_AND_RUNNING) {
             LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }

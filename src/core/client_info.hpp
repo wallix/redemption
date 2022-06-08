@@ -49,6 +49,7 @@
 #include "gdi/screen_info.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/strutils.hpp"
 
 struct ClientInfo
 {
@@ -238,8 +239,8 @@ struct ClientInfo
          && ::strcasestr(infoPacket.zAlternateShell().c_str(), DUMMY_REMOTEAPP ":")
             != infoPacket.zAlternateShell().c_str()
         ) {
-            snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.zAlternateShell().c_str());
-            snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.zWorkingDirectory().c_str());
+            utils::strlcpy(this->alternate_shell, infoPacket.zAlternateShell().to_av());
+            utils::strlcpy(this->working_dir, infoPacket.zWorkingDirectory().to_av());
         }
 
         this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;

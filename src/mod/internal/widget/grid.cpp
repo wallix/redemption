@@ -25,7 +25,7 @@
 #include "utils/monotonic_clock.hpp"
 
 
-#define COLUMN_WIDTH_CORRECTOR 6
+constexpr uint16_t COLUMN_WIDTH_CORRECTOR = 6;
 
 WidgetGrid::Widgets::Widgets(uint16_t nb_rows, uint16_t nb_columns)
 : nb_rows(nb_rows)

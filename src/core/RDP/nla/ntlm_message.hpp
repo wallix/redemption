@@ -28,7 +28,6 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/serialize.hpp"
 
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
