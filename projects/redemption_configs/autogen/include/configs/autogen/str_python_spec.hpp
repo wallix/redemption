@@ -284,6 +284,11 @@ disabled_orders = string(default='25')
 #_advanced
 connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
 
+# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# (in milliseconds)
+#_hidden
+tcp_user_timeout = integer(min=0, max=3600000, default=0)
+
 [remote_program]
 
 allow_resize_hosted_desktop = boolean(default=True)

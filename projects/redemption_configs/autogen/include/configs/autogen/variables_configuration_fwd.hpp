@@ -91,6 +91,7 @@ namespace cfg
 
     struct all_target_mod {
         struct connection_establishment_timeout;
+        struct tcp_user_timeout;
     };
 
     struct remote_program {

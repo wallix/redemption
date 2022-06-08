@@ -815,6 +815,7 @@ private:
             "Authentifier"_sck_name, unique_fd(auth_sck),
             ini.get<cfg::globals::authfile>(), 0,
             std::chrono::milliseconds(1000),
+            std::chrono::milliseconds::zero(),
             std::chrono::seconds(1),
             SocketTransport::Verbose::none);
 
@@ -1526,6 +1527,7 @@ void session_start_sck(
         SocketType(
             name, std::move(sck), ""_av, 0,
             ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+            ini.get<cfg::all_target_mod::tcp_user_timeout>(),
             ini.get<cfg::client::recv_timeout>(),
             static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
         ),

@@ -70,6 +70,7 @@ private:
 
     std::chrono::milliseconds recv_timeout;
     std::chrono::milliseconds connection_establishment_timeout;
+    std::chrono::milliseconds tcp_user_timeout;
 
     struct AsyncBuf
     {
@@ -93,6 +94,7 @@ public:
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
     SocketTransport(Name name, unique_fd sck, chars_view ip_address, int port,
                     std::chrono::milliseconds connection_establishment_timeout,
+                    std::chrono::milliseconds tcp_user_timeout,
                     std::chrono::milliseconds recv_timeout,
                     Verbose verbose,
                     std::string *error_message = nullptr);

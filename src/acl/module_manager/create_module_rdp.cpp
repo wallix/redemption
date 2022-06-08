@@ -264,6 +264,7 @@ public:
             int port = checked_int(ini.get<cfg::context::target_port>());
             auto recv_timeout = std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>());
             auto connection_establishment_timeout = ini.get<cfg::all_target_mod::connection_establishment_timeout>();
+            auto tcp_user_timeout = ini.get<cfg::all_target_mod::tcp_user_timeout>();
 
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
                 return new FinalSocketTransport( /*NOLINT*/
@@ -272,6 +273,7 @@ public:
                     ip_address,
                     port,
                     connection_establishment_timeout,
+                    tcp_user_timeout,
                     recv_timeout,
                     verbose,
                     error_message
@@ -290,6 +292,7 @@ public:
                 ip_address,
                 port,
                 connection_establishment_timeout,
+                tcp_user_timeout,
                 recv_timeout,
                 verbose,
                 error_message
@@ -855,7 +858,8 @@ ModPack create_mod_rdp(
 
     unique_fd client_sck = connect_to_target_host(
         ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
-        ini.get<cfg::all_target_mod::connection_establishment_timeout>());
+        ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+        ini.get<cfg::all_target_mod::tcp_user_timeout>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())

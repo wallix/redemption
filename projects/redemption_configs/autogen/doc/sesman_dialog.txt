@@ -36,6 +36,8 @@ cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]
     If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 
+cfg::all_target_mod::tcp_user_timeout ⇐ all_target_mod:tcp_user_timeout   [std::chrono::milliseconds]
+    This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
 
 
 cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]

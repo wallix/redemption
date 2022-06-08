@@ -49,6 +49,7 @@ enum class WsTransport::State : char
 WsTransport::WsTransport(
     Name name, unique_fd sck, chars_view ip_address, int port,
     std::chrono::milliseconds connection_establishment_timeout,
+    std::chrono::milliseconds tcp_user_timeout,
     std::chrono::milliseconds recv_timeout,
     UseTls use_tls, TlsOptions tls_options,
     Verbose verbose, std::string * error_message)
@@ -57,6 +58,7 @@ WsTransport::WsTransport(
                   ip_address,
                   port,
                   connection_establishment_timeout,
+                  tcp_user_timeout,
                   recv_timeout,
                   verbose,
                   error_message)

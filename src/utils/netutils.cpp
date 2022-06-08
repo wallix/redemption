@@ -91,17 +91,28 @@ namespace
                         SOL_SOCKET,
                         SO_SNDBUF,
                         &snd_buffer_size, sizeof(snd_buffer_size))){
-                    LOG(LOG_WARNING, "setsockopt failed with errno = %d (%s)", errno, strerror(errno));
+                    LOG(LOG_WARNING, "setsockopt(SOL_SOCKET, SO_SNDBUF) failed with errno = %d (%s)", errno, strerror(errno));
                     return false;
                 }
             }
         }
         else {
-            LOG(LOG_WARNING, "getsockopt failed with errno = %d (%s)", errno, strerror(errno));
+            LOG(LOG_WARNING, "getsockopt(SOL_SOCKET, SO_SNDBUF) failed with errno = %d (%s)", errno, strerror(errno));
             return false;
         }
 
         return true;
+    }
+
+    void set_tcp_user_timeout(int sck, std::chrono::milliseconds timeout)
+    {
+        unsigned int tcp_user_timeout = timeout.count();
+        if (-1 == setsockopt(sck,
+                IPPROTO_TCP,
+                TCP_USER_TIMEOUT,
+                &tcp_user_timeout, sizeof(tcp_user_timeout))){
+            LOG(LOG_WARNING, "setsockopt(IPPROTO_TCP, TCP_USER_TIMEOUT) failed with errno = %d (%s)", errno, strerror(errno));
+        }
     }
 
     unique_fd connect_sck(unique_fd sck, std::chrono::milliseconds connection_establishment_timeout,
@@ -184,6 +195,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 unique_fd ip_connect_ipv4(const char *ip,
                           int port,
                           std::chrono::milliseconds establishment_timeout,
+                          std::chrono::milliseconds tcp_user_timeout,
                           char const **error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
@@ -225,6 +237,10 @@ unique_fd ip_connect_ipv4(const char *ip,
         return unique_fd{-1};
     }
 
+    if (tcp_user_timeout.count()) {
+        set_tcp_user_timeout(sck.fd(), tcp_user_timeout);
+    }
+
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
@@ -242,11 +258,13 @@ unique_fd ip_connect_ipv4(const char *ip,
 unique_fd ip_connect_blocking(const char* ip,
                               int port,
                               std::chrono::milliseconds establishment_timeout,
+                              std::chrono::milliseconds tcp_user_timeout,
                               char const** error_result)
 {
     auto fd = ip_connect(ip,
                          port,
                          establishment_timeout,
+                         tcp_user_timeout,
                          error_result);
     if (fd) {
         const auto sck = fd.fd();
@@ -293,12 +311,14 @@ unique_fd ip_connect(const char *ip,
     return ip_connect(ip,
                       port,
                       std::chrono::milliseconds(1000),
+                      std::chrono::milliseconds::zero(),
                       error_result);
 }
 
 unique_fd ip_connect(const char *ip,
                      int port,
                      std::chrono::milliseconds establishment_timeout,
+                     std::chrono::milliseconds tcp_user_timeout,
                      const char **error_result) noexcept
 {
     AddrInfoPtrWithDel_t addr_info_ptr =
@@ -345,6 +365,10 @@ unique_fd ip_connect(const char *ip,
             ip,
             port);
         return unique_fd{-1};
+    }
+
+    if (tcp_user_timeout.count()) {
+        set_tcp_user_timeout(raw_sck, tcp_user_timeout);
     }
 
     char resolved_ip_addr[NI_MAXHOST] { };

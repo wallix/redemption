@@ -118,6 +118,7 @@ public:
                        ini.get<cfg::context::target_host>(),
                        checked_int(ini.get<cfg::context::target_port>()),
                        ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+                       ini.get<cfg::all_target_mod::tcp_user_timeout>(),
                        std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>()),
                        verbose, error_message)
     , mod(
@@ -239,7 +240,8 @@ ModPack create_mod_vnc(
         ? connect_to_target_host(
             ini, session_log, trkeys::authentification_vnc_fail,
             ini.get<cfg::mod_vnc::enable_ipv6>(),
-            ini.get<cfg::all_target_mod::connection_establishment_timeout>())
+            ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+            ini.get<cfg::all_target_mod::tcp_user_timeout>())
         : addr_connect_blocking(
             ini.get<cfg::context::tunneling_target_host>().c_str(),
             std::chrono::seconds(1), false);

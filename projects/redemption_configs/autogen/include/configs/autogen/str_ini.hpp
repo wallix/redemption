@@ -333,6 +333,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #connection_establishment_timeout = 3000
 
+# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# min = 0, max = 3600000
+# (in milliseconds)
+#_hidden
+#tcp_user_timeout = 0
+
 [remote_program]
 
 # value: 0 or 1

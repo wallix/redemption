@@ -522,6 +522,7 @@ public:
                     this->config.target_IP,
                     this->config.port,
                     std::chrono::milliseconds(1000),
+                    std::chrono::milliseconds::zero(),
                     std::chrono::seconds(1),
                     SocketTransport::Verbose(),
                     &this->error_message);
