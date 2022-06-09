@@ -21,6 +21,7 @@ Author(s): Proxies Team
 #include "utils/uninit_buffer.hpp"
 
 #include <new>
+#include <utility>
 
 #include <cstring>
 

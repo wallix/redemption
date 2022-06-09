@@ -32,6 +32,7 @@
 #include "cxx/diagnostic.hpp"
 
 #include <memory>
+#include <utility>
 #include <cstring>
 
 #include <fcntl.h>
