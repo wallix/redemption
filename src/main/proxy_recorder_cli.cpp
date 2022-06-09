@@ -105,7 +105,7 @@ public:
                 "back"_sck_name,
                 ip_connect(this->targetHost.c_str(), this->targetPort,
                     connection_establishment_timeout, connection_retry_count,
-                    const std::chrono::milliseconds::zero()),
+                    std::chrono::milliseconds::zero()),
                 this->targetHost, this->targetPort,
                 connection_establishment_timeout, connection_retry_count,
                 std::chrono::milliseconds::zero(), std::chrono::milliseconds(100), sck_verbose);
