@@ -1473,11 +1473,6 @@ bool mod_vnc::draw_event_impl()
 
 
         switch (this->front.server_resize({align4(this->width), this->height, this->bpp})){
-        case FrontAPI::ResizeResult::instant_done:
-            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
-            // no resizing needed
-            this->state = DO_INITIAL_CLEAR_SCREEN;
-            break;
         case FrontAPI::ResizeResult::remoteapp:
         case FrontAPI::ResizeResult::remoteapp_done:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "resizing remoteapp");
@@ -1486,6 +1481,7 @@ bool mod_vnc::draw_event_impl()
             }
             // RZ: Continue with FrontAPI::ResizeResult::no_need
             [[fallthrough]];
+        case FrontAPI::ResizeResult::instant_done:
         case FrontAPI::ResizeResult::no_need:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
             // no resizing needed

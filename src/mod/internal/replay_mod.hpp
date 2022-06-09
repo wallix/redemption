@@ -53,8 +53,6 @@ public:
              , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture);
 
-    bool next_timestamp();
-
     ~ReplayMod();
 
     void rdp_input_invalidate(Rect /*rect*/) override {}
@@ -65,9 +63,9 @@ public:
 
     void rdp_input_synchronize(KeyLocks locks) override { (void)locks; }
 
-    void rdp_gdi_up_and_running() override {}
+    void rdp_gdi_up_and_running() override;
 
-    void rdp_gdi_down() override {}
+    void rdp_gdi_down() override;
 
     [[nodiscard]] Dimension get_dim() const override;
 
@@ -80,6 +78,7 @@ public:
     void acl_update(AclFieldMask const&/* acl_fields*/) override {}
 
 private:
+    bool next_timestamp();
     void init_reader();
 
     MonotonicTimePoint start_time;
@@ -99,5 +98,7 @@ private:
     bool const replay_on_loop;
     bool const play_video_with_corrupted_bitmap;
 
-    EventsGuard events_guards;
+    EventRef timer_event;
+    TimeBase const& time_base_ref;
+    MonotonicTimePoint gdi_down_time;
 };

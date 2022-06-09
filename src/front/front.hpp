@@ -986,11 +986,12 @@ public:
 
             if (this->client_info.remote_program) {
                 this->front_must_notify_resize = true;
-                res = res == ResizeResult::done ? ResizeResult::remoteapp_done : ResizeResult::remoteapp;
+                res = (res == ResizeResult::done)
+                    ? ResizeResult::remoteapp_done
+                    : ResizeResult::remoteapp;
             }
         }
 
-        // resizing not necessary
         return res;
     }
 
