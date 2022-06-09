@@ -176,6 +176,8 @@ struct SessionProbeVirtualChannelParams
     bool launch_application_driver_then_terminate = false;
 
     bool enable_self_cleaner = false;
+
+    std::string target_ip;
 };
 
 

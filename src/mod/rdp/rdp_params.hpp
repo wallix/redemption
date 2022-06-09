@@ -336,6 +336,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.on_account_manipulation);
 
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.alternate_directory_environment_variable);
+
+        RDP_PARAMS_LOG("%s",     RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.target_ip);
 #endif
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
