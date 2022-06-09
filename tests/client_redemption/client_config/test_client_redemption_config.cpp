@@ -64,8 +64,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
     RED_CHECK(not config.is_recording);
     RED_CHECK(not config.is_spanning);
-    RED_CHECK_EQUAL(config.rdp_width, 800);
-    RED_CHECK_EQUAL(config.rdp_height, 600);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 800);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
     RED_CHECK(config.full_capture_file_name == ""sv);
@@ -153,8 +153,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.rDPSoundConfig.wVersion, 0x06);
 
     // RDPPARAM
-    RED_CHECK_EQUAL(config.modRDPParamsData.rdp_width, 0);
-    RED_CHECK_EQUAL(config.modRDPParamsData.rdp_height, 0);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 800);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK(config.modRDPParamsData.enable_tls);
     RED_CHECK(config.modRDPParamsData.enable_nla);
     RED_CHECK(not config.modRDPParamsData.enable_sound);
@@ -235,8 +235,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
     RED_CHECK(not config.is_recording);
     RED_CHECK(not config.is_spanning);
-    RED_CHECK_EQUAL(config.rdp_width, 1600);
-    RED_CHECK_EQUAL(config.rdp_height, 900);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 1600);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 900);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, ""sv);
@@ -273,8 +273,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.SHARE_DIR, "/home"sv);
 
     // CLIENT INFO
-    RED_CHECK_EQUAL(config.info.screen_info.width, 800);
-    RED_CHECK_EQUAL(config.info.screen_info.height, 600);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 1600);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 900);
     RED_CHECK_EQUAL(config.info.keylayout, KeyLayout::KbdId(0x040C));
     RED_CHECK(not config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 0);
@@ -324,8 +324,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rDPSoundConfig.wVersion, 0x06);
 
     // RDPPARAM
-    RED_CHECK_EQUAL(config.modRDPParamsData.rdp_width, 0);
-    RED_CHECK_EQUAL(config.modRDPParamsData.rdp_height, 0);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 1600);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 900);
     RED_CHECK(config.modRDPParamsData.enable_tls);
     RED_CHECK(config.modRDPParamsData.enable_nla);
     RED_CHECK(config.modRDPParamsData.enable_sound);
@@ -376,8 +376,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
     RED_CHECK(not config.is_recording);
     RED_CHECK(not config.is_spanning);
-    RED_CHECK_EQUAL(config.rdp_width, 800);
-    RED_CHECK_EQUAL(config.rdp_height, 600);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 800);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, ""sv);
@@ -419,8 +419,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
     RED_CHECK(not config.is_recording);
     RED_CHECK(not config.is_spanning);
-    RED_CHECK_EQUAL(config.rdp_width, 800);
-    RED_CHECK_EQUAL(config.rdp_height, 600);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 800);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, "");
@@ -557,8 +557,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
     ClientConfig::set_config(argc, argv, config);
 
-    RED_CHECK_EQUAL(config.rdp_width, 1600);
-    RED_CHECK_EQUAL(config.rdp_height, 900);
+    RED_CHECK_EQUAL(config.info.screen_info.width, 800);
+    RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK_EQUAL(config.info.keylayout, KeyLayout::KbdId(0x040D));
     RED_CHECK(config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 2);
