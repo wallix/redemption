@@ -209,7 +209,8 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_close_box"}, desc{"Show close screen."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_osd"}, set(true));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_osd_display_remote_target"}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_osd_display_remote_target"}, set(true),
+            desc{"Show target address with F12."});
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"enable_wab_integration"}, set((CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
 
@@ -222,7 +223,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"new_pointer_update_support"}, set(true));
 
-        W.member(ini_and_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"unicode_keyboard_event_support"}, set(true));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"unicode_keyboard_event_support"}, set(true));
 
         W.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, names{"mod_recv_timeout"}, set(1000));
 

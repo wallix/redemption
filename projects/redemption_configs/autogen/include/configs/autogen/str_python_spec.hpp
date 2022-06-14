@@ -82,6 +82,7 @@ enable_close_box = boolean(default=True)
 #_advanced
 enable_osd = boolean(default=True)
 
+# Show target address with F12.
 #_advanced
 enable_osd_display_remote_target = boolean(default=True)
 

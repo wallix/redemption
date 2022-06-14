@@ -91,6 +91,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_osd = 1
 
+# Show target address with F12.
 # value: 0 or 1
 #_advanced
 #enable_osd_display_remote_target = 1

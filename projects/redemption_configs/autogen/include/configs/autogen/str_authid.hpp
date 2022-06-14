@@ -26,7 +26,6 @@ namespace configs
         "globals:inactivity_timeout"_zv,
         "trace_type"_zv,
         "is_rec"_zv,
-        "unicode_keyboard_event_support"_zv,
         "mod_recv_timeout"_zv,
         "keyboard_layout"_zv,
         "disable_tsk_switch_shortcuts"_zv,
