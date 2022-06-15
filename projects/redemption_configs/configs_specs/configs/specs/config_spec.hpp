@@ -363,7 +363,7 @@ void config_spec_definition(Writer && W)
             "The maximum time in milliseconds that the proxy will wait while attempting to connect to an target."
         }, set(3000));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 3'600'000>>{}, names{"tcp_user_timeout"}, desc{
+        W.member(hidden_in_gui, rdp_connpolicy | jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 3'600'000>>{}, names{"tcp_user_timeout"}, desc{
             "This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default."
         }, set(0));
     });

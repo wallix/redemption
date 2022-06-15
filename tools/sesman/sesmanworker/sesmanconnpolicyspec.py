@@ -113,6 +113,9 @@ cp_spec = {
     'session': {
         ('globals:inactivity_timeout', 'inactivity_timeout', 0),
     },
+    'all_target_mod': {
+        ('all_target_mod:tcp_user_timeout', 'tcp_user_timeout', 0),
+    },
     'rdp': {
         ('mod_rdp:disabled_orders', 'disabled_orders', ''),
         ('mod_rdp:tls_min_level', 'tls_min_level', 0),
