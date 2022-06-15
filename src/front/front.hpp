@@ -983,7 +983,9 @@ public:
 
             if (this->client_info.remote_program) {
                 this->front_must_notify_resize = true;
-                res = res == ResizeResult::wait_response ? ResizeResult::remoteapp_wait_response : ResizeResult::remoteapp_wait_response;
+                res = (res == ResizeResult::wait_response)
+                    ? ResizeResult::remoteapp_wait_response
+                    : ResizeResult::remoteapp;
             }
         }
 
