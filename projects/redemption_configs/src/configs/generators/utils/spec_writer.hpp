@@ -321,9 +321,9 @@ public:
             static_assert((is_convertible_v<Ts, detail_::hidden_in_gui_t> || ...),
                 "sesman::connection_policy only with:\n- spec::constants::no_ini_no_gui\n- spec::constants::hidden_in_gui\n- spec::constants::external");
         }
-        constexpr bool is_target_context = (is_convertible_v<Ts, cfg_attributes::sesman::internal::is_target_context> || ...);
-        static_assert(has_conn_policy ? !is_target_context : is_target_context == !has_no_sesman,
-            "sesman::is_target_context is missing or specified with no_sesman");
+        constexpr bool reset_back_to_selector = (is_convertible_v<Ts, cfg_attributes::sesman::internal::reset_back_to_selector> || ...);
+        static_assert(has_conn_policy ? !reset_back_to_selector : reset_back_to_selector == !has_no_sesman,
+            "sesman::reset_back_to_selector is missing or specified with no_sesman");
 
 
         using external_attr = detail_::external_attr_t<has_external>;

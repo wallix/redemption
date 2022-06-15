@@ -4,7 +4,7 @@
         2. [spec_attr (spec::constants::*)](#spec_attr-specconstants)
     2. [Sesman (sesman::*)](#sesman-sesman)
         1. [sesman_io (sesman::constants::*)](#sesman_io-sesmanconstants)
-        2. [is_target_context (sesman::constants::*)](#is_target_context-sesmanconstants)
+        2. [(no_)reset_back_to_selector (sesman::constants::*)](#no_reset_back_to_selector-sesmanconstants)
     3. [Connection Policy (connpolicy::*)](#connection-policy-connpolicy)
         1. [connpolicy_attr (connpolicy::constants::*)](#connpolicy_attr-connpolicyconstants)
     4. [Cpp (cpp::*)](#cpp-cpp)
@@ -70,7 +70,7 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 - `sesman_rw` (`proxy_to_sesman + sesman_to_proxy`)
 
 
-### no_reset_back_to_selector/reset_back_to_selector (sesman::constants::*)
+### (no_)reset_back_to_selector (sesman::constants::*)
 
 Only with `proxy_to_sesman`, `sesman_to_proxy` and `sesman_rw`. Sesman should send value before the connection to target.
 
