@@ -52,13 +52,14 @@ public:
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                                 , std::size_t total_length, int flags) = 0;
 
-    enum class ResizeResult {
-        no_need = 0,
-        done    = 1,
-        fail    = -1,
-        instant_done = 2,
-        remoteapp = 3,
-        remoteapp_done = 4
+    enum class [[nodiscard]] ResizeResult
+    {
+        fail = -1,
+        no_need,
+        wait_response,
+        instant_done,
+        remoteapp,
+        remoteapp_wait_response,
     };
     virtual ResizeResult server_resize(ScreenInfo screen_server) = 0;
 

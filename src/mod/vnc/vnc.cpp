@@ -1478,7 +1478,7 @@ bool mod_vnc::draw_event_impl()
             this->state = DO_INITIAL_CLEAR_SCREEN;
             break;
         case FrontAPI::ResizeResult::remoteapp:
-        case FrontAPI::ResizeResult::remoteapp_done:
+        case FrontAPI::ResizeResult::remoteapp_wait_response:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "resizing remoteapp");
             if (this->rail_client_execute) {
                 this->rail_client_execute->adjust_window_to_mod();
@@ -1490,7 +1490,7 @@ bool mod_vnc::draw_event_impl()
             // no resizing needed
             this->state = DO_INITIAL_CLEAR_SCREEN;
             break;
-        case FrontAPI::ResizeResult::done:
+        case FrontAPI::ResizeResult::wait_response:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "resizing done");
             // resizing done
             this->state = WAIT_CLIENT_UP_AND_RUNNING;

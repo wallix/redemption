@@ -977,13 +977,13 @@ public:
                     this->send_demand_active();
                     this->send_monitor_layout();
                     this->is_first_memblt = true;
-                    res = ResizeResult::done;
+                    res = ResizeResult::wait_response;
                 }
             }
 
             if (this->client_info.remote_program) {
                 this->front_must_notify_resize = true;
-                res = res == ResizeResult::done ? ResizeResult::remoteapp_done : ResizeResult::remoteapp;
+                res = res == ResizeResult::wait_response ? ResizeResult::remoteapp_wait_response : ResizeResult::remoteapp_wait_response;
             }
         }
 

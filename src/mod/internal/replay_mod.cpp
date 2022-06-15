@@ -88,8 +88,8 @@ struct ReplayMod::Reader
             case FrontAPI::ResizeResult::no_need:
             case FrontAPI::ResizeResult::instant_done:
             case FrontAPI::ResizeResult::remoteapp:
-            case FrontAPI::ResizeResult::remoteapp_done:
-            case FrontAPI::ResizeResult::done:
+            case FrontAPI::ResizeResult::remoteapp_wait_response:
+            case FrontAPI::ResizeResult::wait_response:
                 break;
             case FrontAPI::ResizeResult::fail:
                 // resizing failed

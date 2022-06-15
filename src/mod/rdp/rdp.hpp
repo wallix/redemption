@@ -3486,16 +3486,16 @@ public:
                                         " change client resolution to match server resolution");
                                     throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                 }
-                                case FrontAPI::ResizeResult::done:
+                                case FrontAPI::ResizeResult::wait_response:
                                 case FrontAPI::ResizeResult::instant_done:
                                 case FrontAPI::ResizeResult::no_need:
                                 case FrontAPI::ResizeResult::remoteapp:
-                                case FrontAPI::ResizeResult::remoteapp_done:
+                                case FrontAPI::ResizeResult::remoteapp_wait_response:
                                     break;
                             }
 
-                            if (resize_result != FrontAPI::ResizeResult::done
-                            and resize_result != FrontAPI::ResizeResult::remoteapp_done) {
+                            if (resize_result != FrontAPI::ResizeResult::wait_response
+                            and resize_result != FrontAPI::ResizeResult::remoteapp_wait_response) {
                                 this->send_confirm_active(drawable);
                                 this->send_synchronise();
                                 this->send_control(RDP_CTL_COOPERATE);
