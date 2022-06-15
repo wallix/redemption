@@ -76,8 +76,8 @@ public:
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
         if (this->config.mod_state != ClientRedemptionConfig::MOD_VNC) {
             if (this->config.is_spanning) {
-                this->config.rdp_width  = this->qt_graphic.screen_max_width;
-                this->config.rdp_height = this->qt_graphic.screen_max_height;
+                this->config.info.screen_info.width  = this->qt_graphic.screen_max_width;
+                this->config.info.screen_info.height = this->qt_graphic.screen_max_height;
 
                 this->config.modVNCParamsData.width = this->qt_graphic.screen_max_width;
                 this->config.modVNCParamsData.height = this->qt_graphic.screen_max_height;
@@ -85,8 +85,8 @@ public:
 
             switch (this->config.mod_state) {
                 case ClientRedemptionConfig::MOD_RDP:
-                    this->config.info.screen_info.width  = this->config.rdp_width;
-                    this->config.info.screen_info.height = this->config.rdp_height;
+                    this->config.info.screen_info.width  = this->config.info.screen_info.width;
+                    this->config.info.screen_info.height = this->config.info.screen_info.height;
                     break;
 
                 case ClientRedemptionConfig::MOD_VNC:

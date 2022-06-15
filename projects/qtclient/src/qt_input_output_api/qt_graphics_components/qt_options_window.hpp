@@ -528,7 +528,7 @@ public:
         if ( indexBpp != -1 ) {
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
-        int indexResolution = this->_resolutionComboBox.findData(this->config->rdp_width);
+        int indexResolution = this->_resolutionComboBox.findData(this->config->info.screen_info.width);
         if ( indexResolution != -1 ) {
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
@@ -617,8 +617,8 @@ public:
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
-        this->config->rdp_width  = std::stoi(resolution.substr(0, pos));
-        this->config->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->config->info.screen_info.width  = std::stoi(resolution.substr(0, pos));
+        this->config->info.screen_info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
         this->config->enable_remotefx = this->_remoteFxCheckBox.isChecked();
         this->config->is_spanning = this->_spanCheckBox.isChecked();
         this->config->info.rdp5_performanceflags = 0;
