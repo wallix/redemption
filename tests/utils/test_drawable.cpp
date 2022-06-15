@@ -276,9 +276,7 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     TimestampTracer timestamp_tracer;
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED));
 
-    time_t rawtime;
-    time(&rawtime);
-    struct tm now;
+    struct tm now {};
 
     now.tm_sec  =  51;
     now.tm_min  =  11;
