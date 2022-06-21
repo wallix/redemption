@@ -81,10 +81,10 @@ struct Event
             this->reset_timeout(this->now + delay);
         }
 
-        // void stop_alarm()
-        // {
-        //     this->active_timer = false;
-        // }
+        void pause()
+        {
+            this->active_timer = false;
+        }
 
         bool is_active() const
         {

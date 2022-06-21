@@ -22,6 +22,7 @@ Author(s): Wallix Team
 #include "capture/file_to_graphic.hpp"
 #include "core/front_api.hpp"
 #include "core/events.hpp"
+#include "gdi/resize_api.hpp"
 #include "utils/timebase.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/strutils.hpp"
@@ -30,7 +31,7 @@ Author(s): Wallix Team
 #include "transport/mwrm_file_data.hpp"
 
 
-struct ReplayMod::Reader
+struct ReplayMod::Reader : gdi::ResizeApi
 {
     CryptoContext cctx;
 
@@ -38,8 +39,12 @@ struct ReplayMod::Reader
 
     InMultiCryptoTransport in_trans;
     FileToGraphic reader;
+    FrontAPI& front;
+    bool wait_resize_response = false;
 
     Reader(
+        gdi::GraphicApi & drawable,
+        FrontAPI & front,
         std::string const& mwrm_filename,
         bool play_video_with_corrupted_bitmap,
         Verbose debug_capture)
@@ -68,7 +73,7 @@ struct ReplayMod::Reader
                     }
                     else {
                         filenames.emplace_back(wrm.filename);
-                        LOG(LOG_INFO, "ReplayMod::Reader: Not found %s", filenames.back());
+                        LOG(LOG_ERR, "ReplayMod::Reader: Not found %s", filenames.back());
                     }
                 }
             }
@@ -77,34 +82,40 @@ struct ReplayMod::Reader
         this->cctx,
         InCryptoTransport::EncryptionMode::NotEncrypted)
     , reader(this->in_trans, play_video_with_corrupted_bitmap, debug_capture)
+    , front(front)
     {
         this->start_time_replay = this->reader.get_monotonic_time();
-    }
 
-    void server_resize(gdi::GraphicApi & drawable, FrontAPI & front)
-    {
-        auto& info = this->reader.get_wrm_info();
-        switch (front.server_resize({info.width , info.height , info.bpp})) {
-            case FrontAPI::ResizeResult::no_need:
-            case FrontAPI::ResizeResult::instant_done:
-            case FrontAPI::ResizeResult::remoteapp:
-            case FrontAPI::ResizeResult::remoteapp_wait_response:
-            case FrontAPI::ResizeResult::wait_response:
-                break;
-            case FrontAPI::ResizeResult::fail:
-                // resizing failed
-                LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
-                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
-        }
-
-        this->reader.add_consumer(
+        reader.add_consumer(
             &drawable, nullptr, nullptr, nullptr,
-            nullptr, nullptr, nullptr);
+            nullptr, nullptr, /*resize=*/this
+        );
+
+        this->resize(this->reader.get_wrm_info().width, this->reader.get_wrm_info().height);
     }
 
     MonotonicTimePoint::duration current_duration() const
     {
         return reader.get_monotonic_time() - start_time_replay;
+    }
+
+    void resize(uint16_t width, uint16_t height) override
+    {
+        switch (this->front.server_resize({width, height, this->reader.get_wrm_info().bpp})) {
+            case FrontAPI::ResizeResult::remoteapp_wait_response:
+            case FrontAPI::ResizeResult::wait_response:
+                this->wait_resize_response = true;
+                break;
+
+            case FrontAPI::ResizeResult::instant_done:
+            case FrontAPI::ResizeResult::remoteapp:
+            case FrontAPI::ResizeResult::no_need:
+                break;
+
+            case FrontAPI::ResizeResult::fail:
+                LOG(LOG_ERR, "Older RDP client can't resize to server asked resolution, disconnecting");
+                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+        }
     }
 };
 
@@ -126,11 +137,9 @@ ReplayMod::ReplayMod(
 , wait_for_escape(wait_for_escape)
 , replay_on_loop(replay_on_loop)
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
-, events_guards(events)
-{
-    this->init_reader();
-
-    auto action = [this](Event& ev){
+, timer_event(events.event_creator().create_event_timeout(
+    "replay", this, events.get_monotonic_time(),
+    [this](Event& ev){
         if (this->next_timestamp()) {
             const auto duration = this->internal_reader->current_duration();
             ev.alarm.reset_timeout(this->start_time + duration);
@@ -143,9 +152,11 @@ ReplayMod::ReplayMod(
             ev.garbage = true;
             this->set_mod_signal(BACK_EVENT_STOP);
         }
-    };
-
-    this->events_guards.create_event_timeout("replay", this->events_guards.get_monotonic_time(), action);
+    }
+))
+, time_base_ref(events.get_time_base())
+{
+    this->init_reader();
 }
 
 ReplayMod::~ReplayMod() = default;
@@ -159,6 +170,10 @@ bool ReplayMod::next_timestamp()
     try {
         while ((has_order = reader.next_order())) {
             reader.interpret_order();
+            if (this->internal_reader->wait_resize_response) {
+                this->internal_reader->wait_resize_response = false;
+                break;
+            }
             if (previous != reader.get_monotonic_time()) {
                 break;
             }
@@ -168,7 +183,6 @@ bool ReplayMod::next_timestamp()
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
             this->auth_error_message = "The recorded file is inaccessible or corrupted!";
             this->set_mod_signal(BACK_EVENT_NEXT);
-            // throw Error(ERR_BACK_EVENT_NEXT);
             has_order = false;
         }
         else {
@@ -183,12 +197,35 @@ void ReplayMod::init_reader()
 {
     LOG(LOG_INFO, "Playing %s", this->replay_path);
 
+    this->start_time = this->time_base_ref.monotonic_time;
+
     this->internal_reader = std::make_unique<Reader>(
+        this->drawable,
+        this->front,
         this->replay_path,
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
-    this->start_time = this->events_guards.get_monotonic_time();
-    this->internal_reader->server_resize(this->drawable, this->front);
+}
+
+void ReplayMod::rdp_gdi_up_and_running()
+{
+    if (auto* timer = this->timer_event.get_optional_event()) {
+        LOG(LOG_DEBUG, "ReplayMod::rdp_gdi_up_and_running()");
+        auto no_gdi_delay = this->time_base_ref.monotonic_time - this->gdi_down_time;
+        this->start_time += no_gdi_delay;
+
+        const auto duration = this->internal_reader->current_duration();
+        timer->alarm.reset_timeout(this->start_time + duration);
+    }
+}
+
+void ReplayMod::rdp_gdi_down()
+{
+    if (auto* timer = this->timer_event.get_optional_event()) {
+        LOG(LOG_DEBUG, "ReplayMod::rdp_gdi_down()");
+        timer->alarm.pause();
+        this->gdi_down_time = this->time_base_ref.monotonic_time;
+    }
 }
 
 void ReplayMod::rdp_input_scancode(
