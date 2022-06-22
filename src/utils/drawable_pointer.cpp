@@ -29,38 +29,10 @@ Author(s): Proxies Team
 #include <cstddef>
 #include <cstring>
 
-namespace
-{
-    ImageView create_img(
-        uint16_t width, uint16_t height, uint8_t const* data,
-        unsigned line_bytes, BytesPerPixel bytes_per_pixel,
-        ImageView::Storage storage) noexcept
-    {
-        return ImageView(
-            data,
-            width,
-            height,
-            line_bytes,
-            bytes_per_pixel,
-            storage,
-            &BGRPalette::classic_332()
-        );
-    }
-} // anonymous namespace
 
 DrawablePointer::DrawablePointer() :
-    image_data_view_data(create_img(0,
-                                    0,
-                                    nullptr,
-                                    0,
-                                    BytesPerPixel{3},
-                                    ImageView::Storage::BottomToTop)),
-    image_data_view_mask(create_img(0,
-                                    0,
-                                    nullptr,
-                                    0,
-                                    BytesPerPixel{3},
-                                    ImageView::Storage::BottomToTop))
+    image_data_view_data(ImageView::create_null_view()),
+    image_data_view_mask(ImageView::create_null_view())
 {
     static_assert(std::size_t(RdpPointer::DATA_SIZE) == sizeof(this->data));
     static_assert(MAX_WIDTH * MAX_HEIGHT * Drawable::Bpp == sizeof(BufferSaver));
@@ -111,12 +83,12 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
 
             storage = ImageView::Storage::TopToBottom;
 
-            this->image_data_view_data = create_img(this->width,
-                                                    this->height,
-                                                    this->data,
-                                                    this->width * 3,
-                                                    BytesPerPixel(3),
-                                                    storage);
+            this->image_data_view_data = ImageView(this->data,
+                                                   this->width,
+                                                   this->height,
+                                                   this->width * 3,
+                                                   BytesPerPixel(3),
+                                                   storage);
             break;
         }
 
@@ -153,12 +125,12 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
 
             storage = ImageView::Storage::TopToBottom;
 
-            this->image_data_view_data = create_img(this->width,
-                                                    this->height,
-                                                    this->data,
-                                                    this->width * 3,
-                                                    BytesPerPixel(3),
-                                                    storage);
+            this->image_data_view_data = ImageView(this->data,
+                                                   this->width,
+                                                   this->height,
+                                                   this->width * 3,
+                                                   BytesPerPixel(3),
+                                                   storage);
             break;
         }
 
@@ -172,12 +144,18 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
                 this->width * underlying_cast(bytes_per_pixel));
 
             ::memcpy(this->data, pointer_data.data(), pointer_data.size());
-            this->image_data_view_data = create_img(this->width,
-                                                    this->height,
-                                                    this->data,
-                                                    line_bytes,
-                                                    bytes_per_pixel,
-                                                    storage);
+            this->image_data_view_data = ImageView(this->data,
+                                                   this->width,
+                                                   this->height,
+                                                   line_bytes,
+                                                   bytes_per_pixel,
+                                                   storage);
+
+            // ignore mask with 32 bits (use alpha)
+            if (bits_per_pixel == BitsPerPixel::BitsPP32) {
+                this->image_data_view_mask = ImageView::create_null_view();
+                return;
+            }
             break;
         }
 
@@ -206,12 +184,12 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
     /* xorMask doesn't contain alpha channel info,
         so we will skip the 4th byte on each pixel
         on reading with BytesPerPixel{3} rather than BytesPerPixel{4} */
-    this->image_data_view_mask = create_img(this->width,
-                                            this->height,
-                                            this->mask,
-                                            this->width * 3,
-                                            BytesPerPixel{3},
-                                            storage);
+    this->image_data_view_mask = ImageView(this->mask,
+                                           this->width,
+                                           this->height,
+                                           this->width * 3,
+                                           BytesPerPixel{3},
+                                           storage);
 }
 
 void DrawablePointer::trace_mouse(Drawable& drawable, BufferSaver& drawable_buffer) const
@@ -240,11 +218,15 @@ void DrawablePointer::trace_mouse(Drawable& drawable, BufferSaver& drawable_buff
                        rect_intersect.cx,
                        rect_intersect.cy);
 
-    drawable.mem_blt_ex(rect_intersect,
-                        this->image_data_view_mask.sub_view(rect_sub_view),
-                        0,
-                        0,
-                        0x88);
+    // nullptr with cursor 32 bits
+    if (this->image_data_view_mask.data()) {
+        drawable.mem_blt_ex(rect_intersect,
+                            this->image_data_view_mask.sub_view(rect_sub_view),
+                            0,
+                            0,
+                            0x88);
+    }
+
     drawable.mem_blt_ex(rect_intersect,
                         this->image_data_view_data.sub_view(rect_sub_view),
                         0,
