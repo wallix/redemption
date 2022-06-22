@@ -111,7 +111,25 @@ namespace impl
     }
 
     using python_spec_writer::impl::stringize_integral;
-    using python_spec_writer::impl::quoted2;
+
+    inline char const * ini_str(types::dirpath const &) { return ""; }
+    inline python_spec_writer::impl::exprio ini_str(cfg_attributes::cpp::expr e) { return {e.value}; }
+    template<class T> char const * ini_str(types::list<T>) { return ""; }
+    template<unsigned n> char const * ini_str(types::fixed_string<n>) { return ""; }
+
+    template<class T> io_quoted2 ini_str(T const & s)
+    {
+        if constexpr (std::is_convertible_v<T, std::string_view>) {
+            auto str = std::string_view(s);
+            auto pos = str.find_first_of("\"'\\");
+            if (pos != std::string_view::npos) {
+                throw std::runtime_error(str_concat(
+                    "value with invalid caracter ", str[pos], " in ", str
+                ));
+            }
+        }
+        return s;
+    }
 
     using python_spec_writer::impl::CssColor;
 }
@@ -122,7 +140,7 @@ void write_type(std::ostream& out, type_enumerations&, type_<bool>, T x)
 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<std::string>, T const & s)
-{ out << impl::quoted2(s); }
+{ out << impl::ini_str(s); }
 
 template<class Int, class T>
 std::enable_if_t<
@@ -146,26 +164,22 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_binary
 
 template<unsigned N, class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_string<N>>, T const & x)
-{ out << impl::quoted2(x); }
+{ out << impl::ini_str(x); }
 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::dirpath>, T const & x)
-{ out << impl::quoted2(x); }
+{ out << impl::ini_str(x); }
 
 inline void write_type(std::ostream& out, type_enumerations&, type_<types::rgb>, uint32_t x)
 { out << impl::CssColor(x); }
 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::ip_string>, T const & x)
-{ out << impl::quoted2(x); }
+{ out << impl::ini_str(x); }
 
 template<class T, class L>
 void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L const & s)
-{
-    if (!is_empty(s)) {
-        out << impl::quoted2(s);
-    }
-}
+{ out << impl::ini_str(s); }
 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<FilePermissions>, T const & x)
