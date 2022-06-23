@@ -150,10 +150,6 @@ private:
     std::stringstream out_string;
 };
 
-inline void write_type(std::ostream& out, type_<types::u16>) { out << "uint16_t"; }
-inline void write_type(std::ostream& out, type_<types::u32>) { out << "uint32_t"; }
-inline void write_type(std::ostream& out, type_<types::u64>) { out << "uint64_t"; }
-
 template<unsigned N>
 void write_type(std::ostream& out, type_<types::fixed_binary<N>>) { out << "std::array<unsigned char, " << N << ">"; }
 

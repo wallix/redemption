@@ -44,6 +44,7 @@ struct type_enumeration
         bool exclude = false;
 
         char const * get_name() const { return alias ? alias : name; }
+        char const * get_desc() const { return desc ? desc : ""; }
     };
 
     char const * name;
@@ -60,6 +61,9 @@ struct type_enumeration
     , info(info)
     , cat(cat)
     {}
+
+    char const * get_desc() const { return desc ? desc : ""; }
+    char const * get_info() const { return info ? info : ""; }
 
     uint64_t min() const
     {
