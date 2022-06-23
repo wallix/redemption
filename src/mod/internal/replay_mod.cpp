@@ -57,26 +57,26 @@ struct ReplayMod::Reader : gdi::ResizeApi
                 this->cctx,
                 InCryptoTransport::EncryptionMode::NotEncrypted);
             filenames.reserve(mwrm_data.wrms.size());
+            auto const pos = mwrm_filename.find_last_of('/');
+
             for (auto const& wrm : mwrm_data.wrms) {
                 if (file_exist(wrm.filename)) {
                     filenames.emplace_back(wrm.filename);
                     LOG(LOG_INFO, "ReplayMod::Reader: Found %s", filenames.back());
                 }
+                else if (pos != std::string::npos) {
+                    filenames.emplace_back(str_concat(
+                        chars_view(mwrm_filename).first(pos + 1),
+                        wrm.filename));
+                    LOG(LOG_INFO, "ReplayMod::Reader: Found %s -> %s",
+                        wrm.filename, filenames.back());
+                }
                 else {
-                    auto pos = mwrm_filename.find_last_of('/');
-                    if (pos != std::string::npos) {
-                        filenames.emplace_back(str_concat(
-                            chars_view(mwrm_filename).first(pos + 1),
-                            wrm.filename));
-                        LOG(LOG_INFO, "ReplayMod::Reader: Found %s -> %s",
-                            wrm.filename, filenames.back());
-                    }
-                    else {
-                        filenames.emplace_back(wrm.filename);
-                        LOG(LOG_ERR, "ReplayMod::Reader: Not found %s", filenames.back());
-                    }
+                    filenames.emplace_back(wrm.filename);
+                    LOG(LOG_ERR, "ReplayMod::Reader: Not found %s", filenames.back());
                 }
             }
+
             return filenames;
         }(),
         this->cctx,
@@ -88,10 +88,10 @@ struct ReplayMod::Reader : gdi::ResizeApi
 
         reader.add_consumer(
             &drawable, nullptr, nullptr, nullptr,
-            nullptr, nullptr, /*resize=*/this
+            nullptr, nullptr, /*resize_ptr=*/this
         );
 
-        this->resize(this->reader.get_wrm_info().width, this->reader.get_wrm_info().height);
+        this->server_resize(this->reader.get_wrm_info().width, this->reader.get_wrm_info().height);
     }
 
     MonotonicTimePoint::duration current_duration() const
@@ -100,6 +100,12 @@ struct ReplayMod::Reader : gdi::ResizeApi
     }
 
     void resize(uint16_t width, uint16_t height) override
+    {
+        this->server_resize(width, height);
+    }
+
+private:
+    void server_resize(uint16_t width, uint16_t height)
     {
         switch (this->front.server_resize({width, height, this->reader.get_wrm_info().bpp})) {
             case FrontAPI::ResizeResult::remoteapp_wait_response:
