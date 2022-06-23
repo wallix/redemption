@@ -664,8 +664,14 @@ void config_spec_definition(Writer && W)
 
     W.section(names{"server_cert"}, [&]
     {
-        W.member(hidden_in_gui, rdp_and_jh_connpolicy, L, type_<bool>(), names{"server_cert_store"}, desc{"Keep known server certificates on WAB"}, set(true));
-        W.member(hidden_in_gui, rdp_and_jh_connpolicy, L, type_<ServerCertCheck>(), names{"server_cert_check"}, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"server_cert_store"},
+            desc{"Keep known server certificates on WAB"},
+            jh_without_rdp_connpolicy.always(false),
+            set(true));
+
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<ServerCertCheck>(), names{"server_cert_check"},
+            jh_without_rdp_connpolicy.always(ServerCertCheck::always_succeed),
+            set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
         struct P { char const * name; char const * desc; };
         for (P p : {
