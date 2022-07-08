@@ -284,7 +284,7 @@ class ACLPassthrough():
         kv[u'login'] = self.shared.get(u'target_login')
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"
-        kv[u'session_id'] = "0000"
+        kv[u'session_id'] = str(datetime.now())
         kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else 'INTERNAL'
         kv[u'mode_console'] = u"allow"
         kv[u'target_password'] = self.shared.get(u'target_password')
