@@ -123,6 +123,8 @@ sys_lib_assoc = dict((
         linkflags=['<linkflags>-pthread'])),
     ('libintl.h', Dep(
         linkflags=['$(MUSL_GETTEXT)'])),
+    ('hs/hs.h', Dep(
+        linkflags=['<library>hyperscan'])),
 ))
 sys_lib_prefix = (
     ('libavformat/', Dep(

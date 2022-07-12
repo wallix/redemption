@@ -12,6 +12,7 @@ exe rdpproxy :
   <library>crypto
   <library>ffmpeg
   <library>gssapi_krb5
+  <library>hyperscan
   <library>krb5
   <library>openssl
   <library>png
@@ -36,7 +37,8 @@ exe rdpproxy :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -154,7 +156,6 @@ exe rdpproxy :
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -481,6 +482,7 @@ lib libredrec :
   <library>app_path_exe.o
   <library>crypto
   <library>ffmpeg
+  <library>hyperscan
   <library>log.o
   <library>openssl
   <library>png
@@ -495,7 +497,8 @@ lib libredrec :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/regions_capture.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -522,7 +525,6 @@ lib libredrec :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
@@ -783,6 +785,7 @@ test-run tests/capture/test_capture :
   <library>app_path_test.o
   <library>crypto
   <library>ffmpeg
+  <library>hyperscan
   <library>openssl
   <library>png
   <library>ppocr
@@ -793,7 +796,8 @@ test-run tests/capture/test_capture :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -818,7 +822,6 @@ test-run tests/capture/test_capture :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
@@ -1022,11 +1025,21 @@ test-run tests/capture/test_wrm_capture :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <define>ZLIB_CONST
 ;
-test-run tests/capture/utils/test_match_finder :
-  $(REDEMPTION_TEST_PATH)/capture/utils/test_match_finder.cpp
+test-run tests/capture/utils/test_pattern_searcher :
+  $(REDEMPTION_TEST_PATH)/capture/utils/test_pattern_searcher.cpp
 :
-  <library>src/capture/utils/match_finder.o
-  <library>src/utils/pattutils.o
+  <library>hyperscan
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run tests/capture/utils/test_pattutils :
+  $(REDEMPTION_TEST_PATH)/capture/utils/test_pattutils.cpp
+:
+  <library>src/capture/utils/pattutils.o
   <library>src/utils/strutils.o
 ;
 test-run tests/client_mods/test_rdp_client_large_pointer :
@@ -2288,6 +2301,7 @@ test-run tests/front/test_front :
   <library>crypto
   <library>ffmpeg
   <library>gssapi_krb5
+  <library>hyperscan
   <library>krb5
   <library>openssl
   <library>png
@@ -2304,7 +2318,8 @@ test-run tests/front/test_front :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -2359,7 +2374,6 @@ test-run tests/front/test_front :
   <library>src/utils/keyboard_shortcut_blocker.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -2463,6 +2477,7 @@ test-run tests/lib/test_do_recorder :
   <library>app_path_test.o
   <library>crypto
   <library>ffmpeg
+  <library>hyperscan
   <library>openssl
   <library>png
   <library>ppocr
@@ -2476,7 +2491,8 @@ test-run tests/lib/test_do_recorder :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/regions_capture.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -2504,7 +2520,6 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/hexadecimal_string_to_buffer.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
@@ -4197,18 +4212,6 @@ test-run tests/proxy_recorder/test_proxy_recorder :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(MUSL_GETTEXT)
 ;
-test-run tests/regex/test_regex :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex.cpp
-:
-;
-test-run tests/regex/test_regex_parser :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_parser.cpp
-:
-;
-test-run tests/regex/test_regex_state :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_state.cpp
-:
-;
 test-run tests/server/test_mstsc_client :
   $(REDEMPTION_TEST_PATH)/server/test_mstsc_client.cpp
 :
@@ -4216,6 +4219,7 @@ test-run tests/server/test_mstsc_client :
   <library>crypto
   <library>ffmpeg
   <library>gssapi_krb5
+  <library>hyperscan
   <library>krb5
   <library>openssl
   <library>png
@@ -4229,7 +4233,8 @@ test-run tests/server/test_mstsc_client :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -4264,7 +4269,6 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
@@ -4287,6 +4291,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>crypto
   <library>ffmpeg
   <library>gssapi_krb5
+  <library>hyperscan
   <library>krb5
   <library>openssl
   <library>png
@@ -4300,7 +4305,8 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -4335,7 +4341,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
@@ -4358,6 +4363,7 @@ test-run tests/server/test_rdesktop_client :
   <library>crypto
   <library>ffmpeg
   <library>gssapi_krb5
+  <library>hyperscan
   <library>krb5
   <library>openssl
   <library>png
@@ -4371,7 +4377,8 @@ test-run tests/server/test_rdesktop_client :
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/redis.o
   <library>src/capture/session_update_buffer.o
-  <library>src/capture/utils/match_finder.o
+  <library>src/capture/utils/pattern_searcher.o
+  <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
@@ -4406,7 +4413,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
@@ -5014,12 +5020,6 @@ test-run tests/utils/test_parse_server_message :
   $(REDEMPTION_TEST_PATH)/utils/test_parse_server_message.cpp
 :
 ;
-test-run tests/utils/test_pattutils :
-  $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
-:
-  <library>src/utils/pattutils.o
-  <library>src/utils/strutils.o
-;
 test-run tests/utils/test_png :
   $(REDEMPTION_TEST_PATH)/utils/test_png.cpp
 :
@@ -5158,7 +5158,8 @@ obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/r
 obj src/capture/redis.o : $(REDEMPTION_SRC_PATH)/capture/redis.cpp ;
 obj src/capture/regions_capture.o : $(REDEMPTION_SRC_PATH)/capture/regions_capture.cpp : <define>ZLIB_CONST ;
 obj src/capture/session_update_buffer.o : $(REDEMPTION_SRC_PATH)/capture/session_update_buffer.cpp ;
-obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
+obj src/capture/utils/pattern_searcher.o : $(REDEMPTION_SRC_PATH)/capture/utils/pattern_searcher.cpp ;
+obj src/capture/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/capture/utils/pattutils.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
@@ -5301,7 +5302,6 @@ obj src/utils/local_err_msg.o : $(REDEMPTION_SRC_PATH)/utils/local_err_msg.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/parse_primary_drawing_orders.o : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
-obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/primitives/primitives.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 obj src/utils/primitives/primitives_sse2.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives_sse2.cpp ;
@@ -5344,7 +5344,8 @@ alias test_regions_capture : tests/capture/test_regions_capture ;
 alias test_session_update_buffer : tests/capture/test_session_update_buffer ;
 alias test_video_capture : tests/capture/test_video_capture ;
 alias test_wrm_capture : tests/capture/test_wrm_capture ;
-alias test_match_finder : tests/capture/utils/test_match_finder ;
+alias test_pattern_searcher : tests/capture/utils/test_pattern_searcher ;
+alias test_pattutils : tests/capture/utils/test_pattutils ;
 alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_pointer ;
 alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
@@ -5527,9 +5528,6 @@ alias test_vnc : tests/mod/vnc/test_vnc ;
 alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
 alias test_extract_user_domain : tests/proxy_recorder/test_extract_user_domain ;
 alias test_proxy_recorder : tests/proxy_recorder/test_proxy_recorder ;
-alias test_regex : tests/regex/test_regex ;
-alias test_regex_parser : tests/regex/test_regex_parser ;
-alias test_regex_state : tests/regex/test_regex_state ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
 alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
 alias test_rdesktop_client : tests/server/test_rdesktop_client ;
@@ -5617,7 +5615,6 @@ alias test_netutils : tests/utils/test_netutils ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse_primary_drawing_orders : tests/utils/test_parse_primary_drawing_orders ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
-alias test_pattutils : tests/utils/test_pattutils ;
 alias test_png : tests/utils/test_png ;
 alias test_recording_progress : tests/utils/test_recording_progress ;
 alias test_rect : tests/utils/test_rect ;
@@ -5665,7 +5662,8 @@ alias tests/capture.norec :
   tests/capture/test_wrm_capture
 ;
 alias tests/capture/utils.norec :
-  tests/capture/utils/test_match_finder
+  tests/capture/utils/test_pattern_searcher
+  tests/capture/utils/test_pattutils
 ;
 alias tests/client_mods.norec :
   tests/client_mods/test_rdp_client_large_pointer
@@ -5911,11 +5909,6 @@ alias tests/proxy_recorder.norec :
   tests/proxy_recorder/test_extract_user_domain
   tests/proxy_recorder/test_proxy_recorder
 ;
-alias tests/regex.norec :
-  tests/regex/test_regex
-  tests/regex/test_regex_parser
-  tests/regex/test_regex_state
-;
 alias tests/server.norec :
   tests/server/test_mstsc_client
   tests/server/test_mstsc_client_rdp50bulk
@@ -6020,7 +6013,6 @@ alias tests/utils.norec :
   tests/utils/test_parse
   tests/utils/test_parse_primary_drawing_orders
   tests/utils/test_parse_server_message
-  tests/utils/test_pattutils
   tests/utils/test_png
   tests/utils/test_recording_progress
   tests/utils/test_rect
@@ -6057,7 +6049,6 @@ alias tests :
   tests/lib
   tests/mod
   tests/proxy_recorder
-  tests/regex
   tests/server
   tests/transport
   tests/utils
@@ -6195,9 +6186,6 @@ alias tests/mod/vnc :
 alias tests/proxy_recorder :
   tests/proxy_recorder.norec
 ;
-alias tests/regex :
-  tests/regex.norec
-;
 alias tests/server :
   tests/server.norec
 ;
@@ -6274,7 +6262,6 @@ explicit
   tests/mod/vnc/encoder.norec
   tests/mod/vnc.norec
   tests/proxy_recorder.norec
-  tests/regex.norec
   tests/server.norec
   tests/system/linux/system.norec
   tests/transport.norec
@@ -6326,7 +6313,6 @@ explicit
   tests/mod/vnc/encoder
   tests/mod/vnc
   tests/proxy_recorder
-  tests/regex
   tests/server
   tests/system/linux/system
   tests/system/linux

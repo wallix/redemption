@@ -653,6 +653,12 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 
 RED_AUTO_TEST_CASE(TestPattern)
 {
+    CapturePattern cap_pattern{
+        CapturePattern::Filters{.is_ocr = true, .is_kbd = false},
+        CapturePattern::PatternType::reg,
+        ".de."_av
+    };
+
     for (int i = 0; i < 2; ++i) {
         struct : NullSessionLog
         {
@@ -666,7 +672,7 @@ RED_AUTO_TEST_CASE(TestPattern)
             }
         } report_message;
         Capture::PatternsChecker checker(
-            report_message, PatternParams{i ? nullptr : ".de.", i ? ".de." : nullptr, 0});
+            report_message, {&cap_pattern, i ? 1u : 0u}, {&cap_pattern, i ? 0u : 1u});
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
 
@@ -2230,6 +2236,31 @@ RED_AUTO_TEST_CASE(TestReload)
     }
 }
 
+RED_AUTO_TEST_CASE(TestUtf8KbdBuffer)
+{
+    Utf8KbdBuffer buffer;
+    constexpr auto str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"_av;
+    static_assert(str.size() == 62);
+
+    buffer.push(str);
+    RED_TEST(buffer.get(str.size()) == str);
+    RED_TEST(buffer.get(str.size() * 2) == str);
+    RED_TEST(buffer.get(str.size() / 2) == str.drop_front(str.size() / 2));
+
+    buffer.push(str);
+    RED_TEST(buffer.get(str.size()) == str);
+    RED_TEST(buffer.get(str.size() * 2) == str_concat(str, str));
+    RED_TEST(buffer.get(str.size() * 3) == str_concat(str, str));
+    RED_TEST(buffer.get(str.size() / 2) == str.drop_front(str.size() / 2));
+
+    buffer.push("+=/*"_av);
+    RED_TEST(buffer.get(128) == str_concat(str, str, "+=/*"_av));
+    RED_TEST(buffer.get(129) == str_concat(str, str, "+=/*"_av));
+
+    buffer.push("a"_av);
+    RED_TEST(buffer.get(10) == "56789+=/*a"_av);
+}
+
 struct ReportMessage : NullSessionLog
 {
     std::string s;
@@ -2330,7 +2361,12 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         }
     } report_message;
 
-    Capture::PatternKbd kbd_capture(&report_message, "$kbd:abcd", nullptr, /*verbose=*/false);
+    CapturePattern cap_pattern{
+        CapturePattern::Filters{.is_ocr = false, .is_kbd = true},
+        CapturePattern::PatternType::reg,
+        "abcd"_av
+    };
+    Capture::PatternKbd kbd_capture(report_message, {&cap_pattern, 1}, {});
 
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
@@ -2362,7 +2398,12 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     } report_message;
 
-    Capture::PatternKbd kbd_capture(&report_message, "$kbd:ab/cd", nullptr, /*verbose=*/false);
+    CapturePattern cap_pattern{
+        CapturePattern::Filters{.is_ocr = false, .is_kbd = true},
+        CapturePattern::PatternType::reg,
+        "ab/cd"_av
+    };
+    Capture::PatternKbd kbd_capture(report_message, {&cap_pattern, 1}, {});
 
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
@@ -2448,19 +2489,6 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     ::dump_png24(png_trans, d, true);
     RED_TEST(png_trans.size() == 107);
 }
-
-
-RED_AUTO_TEST_CASE(TestPatternSearcher)
-{
-    PatternSearcher searcher(utils::MatchFinder::KBD_INPUT, "$kbd:e", /*verbose=*/false);
-    bool check = false;
-    auto report = [&](auto& /*dummy*/, auto& /*dummy*/){ check = true; };
-    searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check); check = false;
-    searcher.test_uchar(ZStrUtf8Char('a'), report); RED_CHECK(!check);
-    // #15241: Pattern detection crash
-    searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check);
-}
-
 
 RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 {

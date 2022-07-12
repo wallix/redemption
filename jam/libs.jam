@@ -7,6 +7,7 @@ lib libpng : : <name>png ;
 lib openssl : : <name>ssl ;
 lib snappy ;
 lib z ;
+lib hyperscan : : <name>hs ;
 alias png : libpng z ;
 
 

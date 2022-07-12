@@ -47,12 +47,13 @@ To compile ReDemPtion you need the following packages:
 - libsnappy-dev
 - libpng-dev (libpng12-dev (< Debian 10))
 - libbz2-dev
+- libhyperscan-dev
 - libffmpeg-dev (see below)
 - libgettext (when musl is used)
 - g++ >= 8.0 or clang++ >= 5.0 or other C++17 compiler
 
 ```sh
-apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng-dev libbz2-dev
+apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng-dev libbz2-dev libhyperscan-dev
 ```
 
 Submodule ($ `git submodule update --init`):
