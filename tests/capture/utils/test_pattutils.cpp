@@ -20,7 +20,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "utils/pattutils.hpp"
+#include "capture/utils/pattutils.hpp"
 
 RED_AUTO_TEST_CASE(TestKbdPattern)
 {

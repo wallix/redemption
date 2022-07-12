@@ -44,6 +44,7 @@
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/ranges.hpp"
+#include "utils/sugar/split.hpp"
 
 #include "utils/scaled_image24.hpp"
 #include "utils/colors.hpp"
@@ -77,7 +78,7 @@
 
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
-#include "capture/utils/match_finder.hpp"
+#include "capture/utils/pattern_searcher.hpp"
 #include "utils/video_cropper.hpp"
 #include "utils/drawable_pointer.hpp"
 
@@ -106,166 +107,9 @@ struct ZStrUtf8Char
         buf_char[char_len] = 0;
     }
 
-    [[nodiscard]] uint8_t const* data() const noexcept { return buf_char; }
-    [[nodiscard]] uint8_t size() const noexcept { return char_len; }
-
-    [[nodiscard]] uint8_t const* begin() const noexcept { return data(); }
-    [[nodiscard]] uint8_t const* end() const noexcept { return data() + size(); }
-};
-
-class PatternSearcher
-{
-    struct TextSearcher
+    chars_view av() const noexcept
     {
-        re::Regex::PartOfText searcher;
-        re::Regex::range_matches matches;
-
-        void reset(re::Regex & rgx) {
-            this->searcher = rgx.part_of_text_search(false);
-        }
-
-        bool next(ZStrUtf8Char const& utf8_char) {
-            return re::Regex::match_success == this->searcher.next(char_ptr_cast(utf8_char.data()));
-        }
-
-        re::Regex::range_matches const & match_result(re::Regex & rgx) {
-            this->matches.clear();
-            return rgx.match_result(this->matches, false);
-        }
-    };
-
-    class Utf8KbdData
-    {
-        static constexpr const size_t buf_len = 128;
-
-        uint8_t kbd_data[buf_len] = { 0 };
-        uint8_t * p = kbd_data;
-        uint8_t * beg = p;
-
-        uint8_t * data_begin() {
-            using std::begin;
-            return begin(this->kbd_data);
-        }
-        uint8_t * data_end() {
-            using std::end;
-            return end(this->kbd_data);
-        }
-
-    public:
-        [[nodiscard]] uint8_t const * get_data() const {
-            return this->beg;
-        }
-
-        void reset() {
-            this->p = this->kbd_data;
-            this->beg = this->p;
-        }
-
-        void push_utf8_char(ZStrUtf8Char const& utf8_char) {
-            if (static_cast<size_t>(this->data_end() - this->beg) < utf8_char.size() + 1u) {
-                std::size_t pchar_len = 0;
-                do {
-                    size_t const len = UTF8CharNbBytes(this->beg);
-                    size_t const tailroom = this->data_end() - this->beg;
-                    if (tailroom < len) {
-                        this->beg = this->data_begin() + (len - tailroom);
-                    }
-                    else {
-                        this->beg += len;
-                    }
-                    pchar_len += len;
-                } while (pchar_len < utf8_char.size() + 1u);
-            }
-
-            for (uint8_t c : utf8_char) {
-                *this->p = c;
-                ++this->p;
-                if (this->p == this->data_end()) {
-                    this->p = this->data_begin();
-                }
-            }
-            *this->p = 0;
-        }
-
-        void linearize() {
-            if (!this->is_linearized()) {
-                std::rotate(this->data_begin(), this->beg, this->data_end());
-                auto const diff = this->beg - this->p;
-                this->p = this->data_end() - diff;
-                this->beg = this->data_begin();
-            }
-        }
-
-        [[nodiscard]] bool is_linearized() const {
-            return this->beg <= this->p;
-        }
-    };
-
-    utils::MatchFinder::NamedRegexArray regexes_filter;
-    std::unique_ptr<TextSearcher[]> regexes_searcher;
-    Utf8KbdData utf8_kbd_data;
-
-public:
-    explicit PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, bool verbose) {
-        utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose,
-            utils::MatchFinder::WithCapture(true));
-        auto const count_regex = this->regexes_filter.size();
-        if (count_regex) {
-            this->regexes_searcher = std::make_unique<TextSearcher[]>(count_regex);
-            auto searcher_it = this->regexes_searcher.get();
-            for (auto & named_regex : this->regexes_filter) {
-                searcher_it->reset(named_regex.regex);
-                ++searcher_it;
-            }
-        }
-    }
-
-    void rewind_search() {
-        TextSearcher * test_searcher_it = this->regexes_searcher.get();
-        for (utils::MatchFinder::NamedRegex & named_regex : this->regexes_filter) {
-            test_searcher_it->reset(named_regex.regex);
-            ++test_searcher_it;
-        }
-    }
-
-    template<class Report>
-    bool test_uchar(ZStrUtf8Char const& utf8_char, Report report)
-    {
-        if (utf8_char.size() == 0) {
-            return false;
-        }
-
-        bool has_notify = false;
-
-        utf8_kbd_data.push_utf8_char(utf8_char);
-        TextSearcher * test_searcher_it = this->regexes_searcher.get();
-
-        for (utils::MatchFinder::NamedRegex & named_regex : this->regexes_filter) {
-            if (test_searcher_it->next(utf8_char)) {
-                utf8_kbd_data.linearize();
-                char const * char_kbd_data = ::char_ptr_cast(utf8_kbd_data.get_data());
-                if (named_regex.regex.search_with_matches(char_kbd_data)) {
-                    auto & match_result = test_searcher_it->match_result(named_regex.regex);
-                    auto str = (!match_result.empty() && match_result[0].first)
-                        ? match_result[0].first
-                        : char_kbd_data;
-                    report(named_regex.name, str);
-                    has_notify = true;
-                }
-                test_searcher_it->reset(named_regex.regex);
-            }
-
-            ++test_searcher_it;
-        }
-        if (has_notify) {
-            utf8_kbd_data.reset();
-        }
-
-        return has_notify;
-    }
-
-    [[nodiscard]] bool is_empty() const {
-        return this->regexes_filter.empty();
+        return {char_ptr_cast(buf_char), char_len};
     }
 };
 
@@ -324,52 +168,123 @@ inline time_t to_time_t(MonotonicTimePoint t, MonotonicTimeToRealTime monotonic_
     return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 }
 
+struct FilesystemFullReporter
+{
+    SessionLogApi* session_log;
+
+    void operator()(const Error & error) const
+    {
+        if (session_log && error.errnum == ENOSPC) {
+            session_log->report("FILESYSTEM_FULL", "100|unknown");
+        }
+    }
+};
+
+void report_pattern(
+    char const* type, SessionLogApi& session_log,
+    PatternSearcher::PatternFound found, chars_view data)
+{
+    char message[4096];
+    snprintf(message, sizeof(message), "$%s:%.*s|%.*s",
+        type,
+        static_cast<int>(found.pattern.size()), found.pattern.data(),
+        static_cast<int>(data.size()), data.data());
+    utils::back(message) = '\0';
+
+    LogId logid = LogId::NOTIFY_PATTERN_DETECTED;
+    char const* findpattern = "FINDPATTERN_NOTIFY";
+
+    if (found.is_pattern_kill) {
+        logid = LogId::KILL_PATTERN_DETECTED;
+        findpattern = "FINDPATTERN_KILL";
+    }
+
+    session_log.log6(logid, {KVLog("pattern"_av, std::string_view{message})});
+    session_log.report(findpattern, message);
+}
+
+class Utf8KbdBuffer
+{
+    static constexpr const uint64_t buf_len = 128;
+
+    char kbd_data[buf_len] = { 0 };
+    uint64_t total_len = 0;
+    char * p = kbd_data;
+
+public:
+    void push(chars_view utf8_char)
+    {
+        auto remaining = static_cast<std::size_t>(std::end(kbd_data) - p);
+        if (REDEMPTION_UNLIKELY(remaining < utf8_char.size())) {
+            std::size_t n = std::min(remaining, utf8_char.size());
+            memcpy(p, utf8_char.data(), n);
+            p = kbd_data;
+            utf8_char = utf8_char.drop_front(n);
+        }
+
+        memcpy(p, utf8_char.data(), utf8_char.size());
+        p += utf8_char.size();
+        total_len += utf8_char.size();
+    }
+
+    chars_view get(uint64_t match_len)
+    {
+        auto len = static_cast<std::size_t>(p - kbd_data);
+        if (len >= match_len) {
+            return {p-match_len, p};
+        }
+        if (p != std::end(kbd_data) && total_len > buf_len) {
+            std::rotate(kbd_data, p, std::end(kbd_data));
+            p = std::end(kbd_data);
+            return {p-std::min(match_len, buf_len), p};
+        }
+        return {kbd_data, p};
+    }
+};
+
 } // anonymous namespace
+
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
 class Capture::PatternKbd final : public gdi::KbdInputApi
 {
-    SessionLogApi * session_log;
-    PatternSearcher pattern_kill;
-    PatternSearcher pattern_notify;
-
 public:
     explicit PatternKbd(
-        SessionLogApi * session_log,
-        char const * str_pattern_kill, char const * str_pattern_notify,
-        bool verbose)
-    : session_log(session_log)
-    , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                   str_pattern_kill && session_log ? str_pattern_kill : nullptr, verbose)
-    , pattern_notify(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                     str_pattern_notify && session_log ? str_pattern_notify : nullptr, verbose)
+        SessionLogApi& session_log,
+        array_view<CapturePattern> cap_patterns_kill,
+        array_view<CapturePattern> cap_patterns_notify)
+    : patterns(cap_patterns_kill, cap_patterns_notify, CapturePattern::CaptureType::kbd)
+    , session_log(session_log)
     {}
 
-    [[nodiscard]] bool contains_pattern() const {
-        return !this->pattern_kill.is_empty() || !this->pattern_notify.is_empty();
+    [[nodiscard]] bool has_pattern() const
+    {
+        return !this->patterns.has_pattern();
     }
 
-    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override {
+    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override
+    {
         bool can_be_sent_to_server = true;
 
         filtering_kbd_input(
             uchar,
-            [this, &can_be_sent_to_server](ZStrUtf8Char utf8_char) {
+            [this, &can_be_sent_to_server](uint32_t uchar) {
+                ZStrUtf8Char utf8_char_buf{uchar};
+                auto utf8_char = utf8_char_buf.av();
                 if (utf8_char.size() > 0) {
-                    if (!this->pattern_kill.is_empty()) {
-                        can_be_sent_to_server &= !this->test_pattern(
-                            utf8_char, this->pattern_kill, true
-                        );
-                    }
-                    if (!this->pattern_notify.is_empty()) {
-                        this->test_pattern(utf8_char, this->pattern_notify, false);
+                    utf8_kbd_buffer.push(utf8_char);
+                    for (auto result : patterns.scan(utf8_char)) {
+                        if (result.is_pattern_kill) {
+                            can_be_sent_to_server = false;
+                        }
+                        auto text = utf8_kbd_buffer.get(result.match_len);
+                        report_pattern("kbd", session_log, result, text);
                     }
                 }
             },
             [this](chars_view const & /*noprintable_char*/) {
-                this->pattern_kill.rewind_search();
-                this->pattern_notify.rewind_search();
+                this->patterns.reset_kbd_streams();
             },
             nofilter_slash{}
         );
@@ -377,28 +292,13 @@ public:
         return can_be_sent_to_server;
     }
 
-    void enable_kbd_input_mask(bool /*enable*/) override {
-    }
+    void enable_kbd_input_mask(bool /*enable*/) override
+    {}
 
 private:
-    bool test_pattern(
-        ZStrUtf8Char const& utf8_char,
-        PatternSearcher & searcher, bool is_pattern_kill
-    ) {
-        return searcher.test_uchar(
-            utf8_char,
-            [&, this](std::string const & pattern, char const * str) {
-                assert(this->session_log);
-                utils::MatchFinder::report(
-                    *this->session_log,
-                    is_pattern_kill,
-                    utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                    pattern.c_str(),
-                    str
-                );
-            }
-        );
-    }
+    PatternSearcher patterns;
+    Utf8KbdBuffer utf8_kbd_buffer;
+    SessionLogApi& session_log;
 };
 REDEMPTION_DIAGNOSTIC_POP()
 
@@ -600,45 +500,28 @@ REDEMPTION_DIAGNOSTIC_POP()
 
 class Capture::PatternsChecker : ::noncopyable
 {
-    utils::MatchFinder::NamedRegexArray regexes_filter_kill;
-    utils::MatchFinder::NamedRegexArray regexes_filter_notify;
+    PatternSearcher patterns;
     SessionLogApi& session_log;
 
 public:
-    explicit PatternsChecker(SessionLogApi& session_log, PatternParams const & params)
-    : session_log(session_log)
+    explicit PatternsChecker(
+        SessionLogApi& session_log,
+        array_view<CapturePattern> cap_patterns_kill,
+        array_view<CapturePattern> cap_patterns_notify)
+    : patterns(cap_patterns_kill, cap_patterns_notify, CapturePattern::CaptureType::ocr)
+    , session_log(session_log)
+    {}
+
+    [[nodiscard]] bool has_pattern() const
     {
-        auto without_capture = utils::MatchFinder::WithCapture(false);
-        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            params.pattern_kill, this->regexes_filter_kill, params.verbose, without_capture);
-
-        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            params.pattern_notify, this->regexes_filter_notify, params.verbose, without_capture);
+        return !this->patterns.has_pattern();
     }
 
-    [[nodiscard]] bool contains_pattern() const {
-        return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
-    }
-
-    void title_changed(chars_view str) {
+    void title_changed(chars_view str)
+    {
         assert(str.data() && not str.empty());
-        this->check_filter(this->regexes_filter_kill, str.data());
-        this->check_filter(this->regexes_filter_notify, str.data());
-    }
-
-private:
-    void check_filter(utils::MatchFinder::NamedRegexArray & regexes_filter, char const * str) {
-        if (regexes_filter.begin()) {
-            utils::MatchFinder::NamedRegexArray::iterator first = regexes_filter.begin();
-            utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
-            for (; first != last; ++first) {
-                if (first->search(str)) {
-                    utils::MatchFinder::report(this->session_log,
-                        &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
-                        utils::MatchFinder::ConfigureRegexes::OCR,
-                        first->name.c_str(), str);
-                }
-            }
+        for (auto result : patterns.scan(str)) {
+            report_pattern("ocr", session_log, result, str);
         }
     }
 };
@@ -1387,6 +1270,31 @@ Capture::Capture(
         this->meta_capture_obj = std::make_unique<MetaCaptureImpl>(capture_params, meta_params);
     }
 
+    std::vector<CapturePattern> cap_patterns;
+    std::size_t nb_patt_kill = 0;
+
+    // parse pattern_kill and pattern_notify
+    if ((this->capture_drawable && capture_pattern_checker) || capture_kbd) {
+        cap_patterns.reserve(64);
+        auto parse = [&cap_patterns, &pattern_params](char const* patterns){
+            if (!patterns) {
+                return;
+            }
+            for (auto pattern : get_lines(patterns, capture_pattern_separator)) {
+                LOG_IF(pattern_params.verbose, LOG_INFO, "filter=\"%.*s\"",
+                    static_cast<int>(pattern.size()), pattern.data());
+
+                CapturePattern const cap_pattern = parse_capture_pattern(pattern);
+                if (not cap_pattern.pattern().empty()) {
+                    cap_patterns.push_back(cap_pattern);
+                }
+            }
+        };
+        parse(pattern_params.pattern_kill);
+        nb_patt_kill = cap_patterns.size();
+        parse(pattern_params.pattern_notify);
+    }
+
     if (this->capture_drawable) {
         this->gds.emplace_back(this->gd_drawable);
 
@@ -1479,8 +1387,11 @@ Capture::Capture(
 
         if (capture_pattern_checker) {
             this->patterns_checker = std::make_unique<PatternsChecker>(
-                *capture_params.session_log, pattern_params);
-            if (!this->patterns_checker->contains_pattern()) {
+                *capture_params.session_log,
+                array_view{cap_patterns}.first(nb_patt_kill),
+                array_view{cap_patterns}.drop_front(nb_patt_kill)
+            );
+            if (!this->patterns_checker->has_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
             }
@@ -1543,12 +1454,12 @@ Capture::Capture(
         }
 
         this->pattern_kbd_capture_obj = std::make_unique<PatternKbd>(
-            capture_params.session_log,
-            pattern_params.pattern_kill,
-            pattern_params.pattern_notify,
-            pattern_params.verbose);
+            *capture_params.session_log,
+            array_view{cap_patterns}.first(nb_patt_kill),
+            array_view{cap_patterns}.drop_front(nb_patt_kill)
+        );
 
-        if (this->pattern_kbd_capture_obj->contains_pattern()) {
+        if (this->pattern_kbd_capture_obj->has_pattern()) {
             this->kbds.emplace_back(*this->pattern_kbd_capture_obj);
         }
         else {
