@@ -109,6 +109,9 @@ cp_spec = {
         u'mod_rdp:krb_armoring_fallback_password': (
             'krb_armoring_fallback_password', u''
         ),
+        u'mod_rdp:ignore_password_field_of_server_redirection_packet': (
+            'ignore_password_field_of_server_redirection_packet', True
+        ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
         ),
