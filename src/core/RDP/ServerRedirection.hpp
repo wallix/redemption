@@ -493,7 +493,7 @@ struct ServerRedirectionPDU {
         }
         LOG(level, "%s", "}");
     }
-    void export_to_redirection_info(RedirectionInfo & rinfo) {
+    void export_to_redirection_info(RedirectionInfo & rinfo, bool ignore_password_field) {
 
         rinfo.valid = !(this->Noredirect());
         rinfo.dont_store_username = this->DontStoreUsername();
@@ -518,7 +518,7 @@ struct ServerRedirectionPDU {
             UTF16toUTF8(this->UserName, this->UserNameLength / 2,
                         rinfo.username, sizeof(rinfo.username));
         }
-        if (this->PasswordLength > 0) {
+        if (this->PasswordLength > 0 && !ignore_password_field) {
             UTF16toUTF8(this->Password, this->PasswordLength / 2,
                         rinfo.password, sizeof(rinfo.password));
         }

@@ -20,28 +20,28 @@ namespace configs
         inline constexpr int section2 = 19; /* all_target_mod */
         // inline constexpr int section3 = 20; /* remote_program */
         inline constexpr int section4 = 20; /* mod_rdp */
-        inline constexpr int section5 = 56; /* session_probe */
-        inline constexpr int section6 = 95; /* server_cert */
-        inline constexpr int section7 = 104; /* mod_vnc */
-        inline constexpr int section8 = 112; /* session_log */
-        // inline constexpr int section9 = 113; /* ocr */
-        inline constexpr int section10 = 113; /* capture */
-        inline constexpr int section11 = 117; /* video */
-        inline constexpr int section12 = 120; /* audit */
-        inline constexpr int section13 = 131; /* file_verification */
-        inline constexpr int section14 = 139; /* file_storage */
-        // inline constexpr int section15 = 140; /* icap_server_down */
-        // inline constexpr int section16 = 140; /* icap_server_up */
-        // inline constexpr int section17 = 140; /* metrics */
-        inline constexpr int section18 = 140; /* crypto */
-        // inline constexpr int section19 = 142; /* websocket */
-        // inline constexpr int section20 = 142; /* vnc_over_ssh */
-        inline constexpr int section21 = 142; /* context */
-        // inline constexpr int section22 = 221; /* internal_mod */
-        inline constexpr int section23 = 221; /* mod_replay */
-        inline constexpr int section24 = 223; /* translation */
-        // inline constexpr int section25 = 225; /* theme */
-        // inline constexpr int section26 = 225; /* debug */
+        inline constexpr int section5 = 57; /* session_probe */
+        inline constexpr int section6 = 96; /* server_cert */
+        inline constexpr int section7 = 105; /* mod_vnc */
+        inline constexpr int section8 = 113; /* session_log */
+        // inline constexpr int section9 = 114; /* ocr */
+        inline constexpr int section10 = 114; /* capture */
+        inline constexpr int section11 = 118; /* video */
+        inline constexpr int section12 = 121; /* audit */
+        inline constexpr int section13 = 132; /* file_verification */
+        inline constexpr int section14 = 140; /* file_storage */
+        // inline constexpr int section15 = 141; /* icap_server_down */
+        // inline constexpr int section16 = 141; /* icap_server_up */
+        // inline constexpr int section17 = 141; /* metrics */
+        inline constexpr int section18 = 141; /* crypto */
+        // inline constexpr int section19 = 143; /* websocket */
+        // inline constexpr int section20 = 143; /* vnc_over_ssh */
+        inline constexpr int section21 = 143; /* context */
+        // inline constexpr int section22 = 222; /* internal_mod */
+        inline constexpr int section23 = 222; /* mod_replay */
+        inline constexpr int section24 = 224; /* translation */
+        // inline constexpr int section25 = 226; /* theme */
+        // inline constexpr int section26 = 226; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -1859,6 +1859,21 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 35};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { true };
+    };
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:ignore_password_field_of_server_redirection_packet <br/>
+    /// default: true <br/>
+    struct mod_rdp::ignore_password_field_of_server_redirection_packet {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 36};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -5639,6 +5654,7 @@ struct mod_rdp
 , cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::remote_programs_disconnect_message_delay
 , cfg::mod_rdp::use_session_probe_to_launch_remote_program
+, cfg::mod_rdp::ignore_password_field_of_server_redirection_packet
 { static constexpr bool is_section = true; };
 
 struct session_probe
@@ -6050,6 +6066,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::effective_krb_armoring_password
 , cfg::mod_rdp::remote_programs_disconnect_message_delay
 , cfg::mod_rdp::use_session_probe_to_launch_remote_program
+, cfg::mod_rdp::ignore_password_field_of_server_redirection_packet
 , cfg::session_probe::enable_session_probe
 , cfg::session_probe::use_smart_launcher
 , cfg::session_probe::enable_launch_mask
@@ -6225,13 +6242,13 @@ using VariablesAclPack = Pack<
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111011111111111111111111111111111111111111110111111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
-, 0b1111111111111111111111111111011011111101111111111100111111111111
-, 0b0000000000000000000000000000000111111111111111111110111111111111
+, 0b1111111111111111111111111110110111111011111111111001111111111111
+, 0b0000000000000000000000000000001111111111111111111101111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000100000000000000000000000000000000000
+, 0b0000000000000000000000000001000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

@@ -163,6 +163,9 @@ remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
 
+#_advanced
+ignore_password_field_of_server_redirection_packet = boolean(default=True)
+
 [session_probe]
 
 enable_session_probe = boolean(default=True)
