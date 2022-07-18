@@ -571,10 +571,6 @@ void config_spec_definition(Writer && W)
                 "Effective password to be used for armoring Kerberos tickets."
             }
         );
-
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"ignore_password_field_of_server_redirection_packet"},
-            set(true));
     });
 
     W.section(names{.cpp="mod_vnc", .connpolicy="vnc"}, [&]

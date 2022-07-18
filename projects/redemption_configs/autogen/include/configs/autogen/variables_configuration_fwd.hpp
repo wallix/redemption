@@ -213,7 +213,6 @@ namespace cfg
         struct bogus_monitor_layout_treatment;
         struct effective_krb_armoring_user;
         struct effective_krb_armoring_password;
-        struct ignore_password_field_of_server_redirection_packet;
     };
 
     struct mod_vnc {

@@ -763,9 +763,6 @@ forward_client_build_number = boolean(default=True)
 #_hidden
 bogus_monitor_layout_treatment = boolean(default=False)
 
-#_hidden
-ignore_password_field_of_server_redirection_packet = boolean(default=True)
-
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

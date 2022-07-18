@@ -160,9 +160,6 @@ krb_armoring_fallback_user = string(default='')
 #_advanced
 krb_armoring_fallback_password = string(default='')
 
-#_advanced
-ignore_password_field_of_server_redirection_packet = boolean(default=True)
-
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (in milliseconds)
 #_advanced
