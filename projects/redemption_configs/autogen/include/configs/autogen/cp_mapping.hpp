@@ -42,7 +42,6 @@ cp_spec = {
         ('mod_rdp:bogus_monitor_layout_treatment', 'bogus_monitor_layout_treatment', False),
         ('mod_rdp:remote_programs_disconnect_message_delay', 'remote_programs_disconnect_message_delay', 3000),
         ('mod_rdp:use_session_probe_to_launch_remote_program', 'use_session_probe_to_launch_remote_program', True),
-        ('mod_rdp:ignore_password_field_of_server_redirection_packet', 'ignore_password_field_of_server_redirection_packet', True),
     },
     'session_probe': {
         ('session_probe:enable_session_probe', 'enable_session_probe', True),

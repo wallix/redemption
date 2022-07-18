@@ -1989,8 +1989,6 @@ class mod_rdp final : public mod_api, public rdp_api
         }
     };
 
-    bool const ignore_password_field_of_server_redirection_packet;
-
     std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation;
 
     KeyLocks status_of_keyboard_toggle_keys {};
@@ -2101,7 +2099,6 @@ public:
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
         , metrics(metrics)
         , file_validator_service(file_validator_service)
-        , ignore_password_field_of_server_redirection_packet(mod_rdp_params.ignore_password_field_of_server_redirection_packet)
         #endif
     {
         #ifdef __EMSCRIPTEN__
@@ -3550,8 +3547,7 @@ public:
                             ServerRedirectionPDU server_redirect;
                             server_redirect.receive(sctrl.payload);
                             sctrl.payload.in_skip_bytes(1);
-                            server_redirect.export_to_redirection_info(this->redir_info,
-                                this->ignore_password_field_of_server_redirection_packet);
+                            server_redirect.export_to_redirection_info(this->redir_info);
                             this->server_redirection_packet_received = true;
                             if (bool(this->verbose & RDPVerbose::connection)){
                                 server_redirect.log(LOG_INFO, "Got Packet");

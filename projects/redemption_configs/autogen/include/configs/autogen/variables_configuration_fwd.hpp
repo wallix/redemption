@@ -160,7 +160,6 @@ namespace cfg
         struct effective_krb_armoring_password;
         struct remote_programs_disconnect_message_delay;
         struct use_session_probe_to_launch_remote_program;
-        struct ignore_password_field_of_server_redirection_packet;
     };
 
     struct session_probe {

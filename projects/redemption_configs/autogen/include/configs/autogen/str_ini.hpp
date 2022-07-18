@@ -592,10 +592,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #bogus_monitor_layout_treatment = 0
 
-# value: 0 or 1
-#_hidden
-#ignore_password_field_of_server_redirection_packet = 1
-
 [session_probe]
 
 # value: 0 or 1

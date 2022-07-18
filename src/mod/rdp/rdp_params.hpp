@@ -212,8 +212,6 @@ struct ModRDPParams
 
     ServerInfo* server_info_ref = nullptr;
 
-    bool ignore_password_field_of_server_redirection_packet = true;
-
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -451,8 +449,6 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
-
-        RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_password_field_of_server_redirection_packet);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

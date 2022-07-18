@@ -665,9 +665,6 @@ ModPack create_mod_rdp(
     mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
         = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
 
-    mod_rdp_params.ignore_password_field_of_server_redirection_packet =
-        ini.get<cfg::mod_rdp::ignore_password_field_of_server_redirection_packet>();
-
     mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
     mod_rdp_params.file_system_params.smartcard_passthrough        = smartcard_passthrough;
     mod_rdp_params.forward_client_build_number = ini.get<cfg::mod_rdp::forward_client_build_number>();
