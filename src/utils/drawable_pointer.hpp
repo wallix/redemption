@@ -20,6 +20,7 @@ Author(s): Proxies Team
 
 #pragma once
 
+#include "core/RDP/rdp_pointer.hpp"
 #include "utils/image_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
@@ -29,11 +30,6 @@ class Drawable;
 
 class DrawablePointer : noncopyable
 {
-    enum {
-          MAX_WIDTH  = 96
-        , MAX_HEIGHT = 96
-    };
-
     uint16_t cursor_x = 0;
     uint16_t cursor_y = 0;
     uint16_t hotspot_x = 0;
@@ -42,14 +38,17 @@ class DrawablePointer : noncopyable
     uint16_t width = 0;
     uint16_t height = 0;
 
-    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 4]; // 96 pixels per line * 96 lines * 4 bytes per pixel
-    uint8_t mask[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
+    // * 4 bytes per pixel (32 bits)
+    uint8_t data[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 4];
+    // * 3 bytes per pixel (mask is not used when 32 bits)
+    uint8_t mask[(RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3 + 7) / 8];
 
     ImageView image_data_view_data;
     ImageView image_data_view_mask;
 
 public:
-    using BufferSaver = uint8_t[MAX_WIDTH * MAX_HEIGHT * 3];
+    // buffer on Drawable
+    using BufferSaver = uint8_t[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3];
 
     DrawablePointer();
 

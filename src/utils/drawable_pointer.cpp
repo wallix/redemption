@@ -23,7 +23,6 @@ Author(s): Proxies Team
 #include "utils/image_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/drawable.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 
 #include <cstdint>
 #include <cstddef>
@@ -35,7 +34,6 @@ DrawablePointer::DrawablePointer() :
     image_data_view_mask(ImageView::create_null_view())
 {
     static_assert(std::size_t(RdpPointer::DATA_SIZE) == sizeof(this->data));
-    static_assert(MAX_WIDTH * MAX_HEIGHT * Drawable::Bpp == sizeof(BufferSaver));
 }
 
 DrawablePointer::DrawablePointer(RdpPointerView const& cursor)
