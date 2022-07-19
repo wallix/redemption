@@ -420,6 +420,7 @@ namespace cfg
         struct smartcard_login;
         struct banner_message;
         struct banner_type;
+        struct redirection_password_or_cookie;
     };
 
     struct internal_mod {

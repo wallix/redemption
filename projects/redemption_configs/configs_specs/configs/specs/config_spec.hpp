@@ -1106,6 +1106,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"banner_message"});
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<BannerType>(), names{"banner_type"});
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::vector<uint8_t>>(), names{"redirection_password_or_cookie"});
     });
 
     W.section("theme", [&]

@@ -4880,6 +4880,15 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
+    /// type: std::vector&lt;uint8_t> <br/>
+    /// default: {} <br/>
+    struct context::redirection_password_or_cookie {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = std::vector<uint8_t>;
+        using mapped_type = type;
+        type value {  };
+    };
 
     /// Enable target edit field in login page. <br/>
     /// type: bool <br/>
@@ -5871,6 +5880,7 @@ struct context
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::smartcard_login
 , cfg::context::banner_message
+, cfg::context::redirection_password_or_cookie
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width

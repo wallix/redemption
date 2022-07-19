@@ -30,7 +30,9 @@ struct RedirectionInfo {
     uint32_t session_id = 0;
     uint8_t host[513] {};
     uint8_t username[257] {};
-    uint8_t password[257] {};
+
+    std::vector<uint8_t> password_or_cookie;
+
     uint8_t domain[257] {};
     uint8_t lb_info[513] {};
     uint32_t lb_info_length = 0;
@@ -45,14 +47,14 @@ struct RedirectionInfo {
     void log(int level, const char * message) const {
         LOG(level
             , "%s: RedirectionInfo(valid=%s, session_id=%u, host='%s', username='%s',"
-            " password='%s', domain='%s', LoadBalanceInfoLength=%u,"
+            " password_or_cookie='%s', domain='%s', LoadBalanceInfoLength=%u,"
             " dont_store_username=%s, server_tsv_capable=%s, smart_card_logon=%s)"
             , message
             , this->valid?"true":"false"
             , this->session_id
             , this->host
             , this->username
-            , (this->password[0] == 0)?"<null>":"<hidden>"
+            , (this->password_or_cookie.size() == 0)?"<null>":"<hidden>"
             , this->domain
             , this->lb_info_length
             , this->dont_store_username?"true":"false"
