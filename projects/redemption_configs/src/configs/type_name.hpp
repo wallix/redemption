@@ -26,6 +26,7 @@
 #include <cstddef>
 #include <cstring>
 #include <chrono>
+#include <vector>
 
 #include "configs/attributes/spec.hpp"
 
@@ -88,6 +89,7 @@ namespace detail
     TYPE_NAME_I(std::chrono::milliseconds);
     TYPE_NAME_I(std::chrono::duration<unsigned, std::ratio<1, 10>>);
     TYPE_NAME_I(std::chrono::duration<unsigned, std::ratio<1, 100>>);
+    TYPE_NAME_I(std::vector<uint8_t>);
 
 #undef TYPE_NAME_I
 }

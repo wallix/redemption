@@ -5613,6 +5613,17 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: std::vector<uint8_t> <br/>
+    /// value{} <br/>
+    struct context::redirection_password_or_cookie {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "redirection_password_or_cookie";
+        using type = std::vector<uint8_t>;
+        using mapped_type = type;
+        type value{};
+    };
 
 } // namespace cfg
 
@@ -6021,6 +6032,7 @@ struct context
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::smartcard_login
+, cfg::context::redirection_password_or_cookie
 , cfg::context::selector_current_page
 , cfg::context::selector_lines_per_page
 , cfg::context::selector_number_of_pages

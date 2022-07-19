@@ -125,6 +125,7 @@ void ModuleManager::create_mod_rdp(
       , this->theme
       , server_auto_reconnect_packet
       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+      , std::move(ini.get_mutable_ref<cfg::context::redirection_password_or_cookie>())
       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
       //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
     );

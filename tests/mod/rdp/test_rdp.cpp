@@ -210,6 +210,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+                               , std::move(ini.get_mutable_ref<cfg::context::redirection_password_or_cookie>())
                                , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -324,6 +325,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+                               , std::move(ini.get_mutable_ref<cfg::context::redirection_password_or_cookie>())
                                , RDPVerbose{}
                                );
     mod_rdp_params.enable_tls                      = false;

@@ -229,6 +229,7 @@ int main(int argc, char** argv)
     ini.set<cfg::mod_rdp::server_redirection_support>(true);
     std::array<unsigned char, 28> server_auto_reconnect_packet;
     std::string close_box_extra_message;
+    std::vector<uint8_t> redirection_password_or_cookie;
     Theme theme;
     Font font;
 
@@ -242,6 +243,7 @@ int main(int argc, char** argv)
         , theme
         , server_auto_reconnect_packet
         , close_box_extra_message
+        , std::move(redirection_password_or_cookie)
         , to_verbose_flags(verbose));
 
     mod_rdp_params.device_id                  = "device_id";

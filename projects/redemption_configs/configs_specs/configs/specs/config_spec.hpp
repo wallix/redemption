@@ -893,6 +893,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::vector<uint8_t>>(), "redirection_password_or_cookie");
     });
 }
 

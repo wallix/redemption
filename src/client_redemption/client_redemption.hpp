@@ -109,6 +109,7 @@ public:
     Theme theme;
     Font font;
     std::string close_box_extra_message_ref;
+    std::vector<uint8_t> redirection_password_or_cookie;
 
     //  Remote App
     ClientExecute rail_client_execute;
@@ -378,6 +379,7 @@ public:
                   , this->theme
                   , this->server_auto_reconnect_packet_ref
                   , this->close_box_extra_message_ref
+                  , std::move(this->redirection_password_or_cookie)
                   , this->config.verbose
                 );
 
