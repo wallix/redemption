@@ -759,6 +759,8 @@ private:
     uint8_t AlternateShell[512]{};
     uint8_t WorkingDir[512]{};
 
+    std::vector<uint8_t> redirection_password_or_cookie;
+
 public:
     ExtendedInfoPacket extendedInfoPacket {}; // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
@@ -827,6 +829,14 @@ public:
         this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS/* | INFO_NOAUDIOPLAYBACK*/ );
     }
 
+    void set_redirection_password_or_cookie(std::vector<uint8_t>&& password_or_cookie) {
+        this->redirection_password_or_cookie = std::move(password_or_cookie);
+
+        this->flags &= ~INFO_PASSWORD_IS_SC_PIN;
+        this->flags |= INFO_AUTOLOGON;
+    }
+
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
@@ -845,7 +855,13 @@ public:
         *unicodeFieldSizesPos++ = out_unistr(stream, this->Domain, this->cbDomain);
         *unicodeFieldSizesPos++ = out_unistr(stream, this->UserName, this->cbUserName);
         if (flags & INFO_AUTOLOGON){
-            *unicodeFieldSizesPos++ = out_unistr(stream, this->Password, this->cbPassword);
+            if (this->redirection_password_or_cookie.size() == 0){
+                *unicodeFieldSizesPos++ = out_unistr(stream, this->Password, this->cbPassword);
+            }
+            else{
+                *unicodeFieldSizesPos++ = this->redirection_password_or_cookie.size() - 2;
+                stream.out_copy_bytes(&this->redirection_password_or_cookie[0], this->redirection_password_or_cookie.size());
+            }
         }
         else{
             ++unicodeFieldSizesPos;

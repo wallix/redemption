@@ -5007,6 +5007,15 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
+    /// type: std::vector&lt;uint8_t> <br/>
+    /// default: {} <br/>
+    struct context::redirection_password_or_cookie {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = std::vector<uint8_t>;
+        using mapped_type = type;
+        type value {  };
+    };
 
     /// Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc) <br/>
     /// type: bool <br/>
@@ -5642,6 +5651,7 @@ struct context
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::smartcard_login
+, cfg::context::redirection_password_or_cookie
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width

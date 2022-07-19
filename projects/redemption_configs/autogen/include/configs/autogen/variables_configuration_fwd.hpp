@@ -432,6 +432,7 @@ namespace cfg
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
+        struct redirection_password_or_cookie;
     };
 
     struct theme {

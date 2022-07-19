@@ -178,6 +178,7 @@ RdpNegociation::RdpNegociation(
     , logon_info(logon_info)
     , front(front)
     , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
+    , redirection_password_or_cookie(std::move(mod_rdp_params.redirection_password_or_cookie))
     , keylayout(info.keylayout)
     , console_session(info.console_session)
     , front_bpp(info.screen_info.bpp)
@@ -1611,6 +1612,13 @@ void RdpNegociation::send_client_info_pdu()
                             , this->performanceFlags
                             , this->clientAddr
                             );
+    if (this->redirection_password_or_cookie.size())
+    {
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+            "RdpNegociation: Use redirection password or cookie");
+
+        infoPacket.set_redirection_password_or_cookie(std::move(this->redirection_password_or_cookie));
+    }
     infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
     infoPacket.flags |= this->info_packet_extra_flags;
     if (bool(this->rdp_compression)) {

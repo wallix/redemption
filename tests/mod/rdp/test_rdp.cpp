@@ -119,6 +119,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 #endif
 
     std::string close_box_extra_message;
+    std::vector<uint8_t> redirection_password_or_cookie;
     Theme theme;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
@@ -131,6 +132,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , theme
                                , server_auto_reconnect_packet
                                , close_box_extra_message
+                               , std::move(redirection_password_or_cookie)
                                , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";

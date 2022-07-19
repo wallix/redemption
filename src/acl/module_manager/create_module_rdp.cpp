@@ -537,6 +537,7 @@ ModPack create_mod_rdp(
       , theme
       , server_auto_reconnect_packet
       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+      , std::move(ini.get_mutable_ref<cfg::context::redirection_password_or_cookie>())
       , rdp_verbose
     );
 

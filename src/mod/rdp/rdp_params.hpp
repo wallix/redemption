@@ -212,6 +212,8 @@ struct ModRDPParams
 
     ServerInfo* server_info_ref = nullptr;
 
+    std::vector<uint8_t> redirection_password_or_cookie;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -227,6 +229,7 @@ struct ModRDPParams
                 , Theme const & theme
                 , std::array<uint8_t, 28>& server_auto_reconnect_packet_ref
                 , std::string& close_box_extra_message_ref
+                , std::vector<uint8_t>&& redirection_password_or_cookie
                 , RDPVerbose verbose
                 )
         : target_user(target_user)
@@ -240,6 +243,7 @@ struct ModRDPParams
         , theme(theme)
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , close_box_extra_message_ref(close_box_extra_message_ref)
+        , redirection_password_or_cookie(std::move(redirection_password_or_cookie))
         , verbose(verbose)
     { }
 

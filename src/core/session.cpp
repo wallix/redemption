@@ -1182,7 +1182,6 @@ private:
                     case EndSessionResult::redirection: {
                         // SET new target in ini
                         const char * host = char_ptr_cast(redir_info.host);
-                        const char * password = char_ptr_cast(redir_info.password);
                         const char * username = char_ptr_cast(redir_info.username);
                         const char * change_user = "";
                         if (redir_info.dont_store_username && username[0] != 0) {
@@ -1190,10 +1189,14 @@ private:
                             ini.set_acl<cfg::globals::target_user>(username);
                             change_user = username;
                         }
-                        if (password[0] != 0) {
-                            LOG(LOG_INFO, "SrvRedir: Change target password");
-                            ini.set_acl<cfg::context::target_password>(password);
-                        }
+                        if (redir_info.password_or_cookie.size())
+                        {
+                            LOG(LOG_INFO, "SrvRedir: password or cookie");
+                            std::vector<uint8_t>& redirection_password_or_cookie =
+                                ini.get_mutable_ref<cfg::context::redirection_password_or_cookie>();
+
+                            redirection_password_or_cookie = std::move(redir_info.password_or_cookie);
+                         }
                         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
                         ini.set_acl<cfg::context::target_host>(host);
                         auto message = str_concat(change_user, '@', host);

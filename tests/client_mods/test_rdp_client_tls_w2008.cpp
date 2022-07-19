@@ -97,6 +97,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     std::string close_box_extra_message;
+    std::vector<uint8_t> redirection_password_or_cookie;
     Theme theme;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
@@ -111,6 +112,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , theme
                                , server_auto_reconnect_packet
                                , close_box_extra_message
+                               , std::move(redirection_password_or_cookie)
                                , RDPVerbose(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -228,6 +230,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     std::string close_box_extra_message;
+    std::vector<uint8_t> redirection_password_or_cookie;
     Theme theme;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
@@ -242,6 +245,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , theme
                                , server_auto_reconnect_packet
                                , close_box_extra_message
+                               , std::move(redirection_password_or_cookie)
                                , RDPVerbose(0)
                                );
     mod_rdp_params.device_id                       = "device_id";

@@ -519,8 +519,9 @@ struct ServerRedirectionPDU {
                         rinfo.username, sizeof(rinfo.username));
         }
         if (this->PasswordLength > 0) {
-            UTF16toUTF8(this->Password, this->PasswordLength / 2,
-                        rinfo.password, sizeof(rinfo.password));
+            LOG(LOG_INFO, "ServerRedirection: Password or cookie received");
+
+            rinfo.password_or_cookie.assign(this->Password, this->Password + this->PasswordLength);
         }
         if (this->DomainLength > 0) {
             UTF16toUTF8(this->Domain, this->DomainLength / 2,
@@ -573,12 +574,10 @@ struct ServerRedirectionPDU {
             this->UserNameLength = field_length;
             this->RedirFlags |= LB_USERNAME;
         }
-        if (rinfo.password[0] != 0) {
-            utf8_len = UTF8Len(rinfo.password);
-            std::string rinfo_password(char_ptr_cast(rinfo.password));
-            field_length = UTF8toUTF16(rinfo_password, this->Password, utf8_len * 2);
-            this->PasswordLength = field_length;
-            this->RedirFlags |= LB_PASSWORD;
+        if (rinfo.password_or_cookie.size()) {
+            uint32_t const passlen = std::min(rinfo.password_or_cookie.size(), sizeof(this->Password));
+            memcpy(this->Password, &rinfo.password_or_cookie[0], passlen);
+            this->PasswordLength = passlen;
         }
         if (rinfo.domain[0] != 0) {
             utf8_len = UTF8Len(rinfo.domain);
