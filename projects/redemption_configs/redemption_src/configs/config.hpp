@@ -82,6 +82,7 @@ namespace configs
 #include "utils/redirection_info.hpp"
 #include <string>
 #include <chrono>
+#include <vector>
 //@}
 
 #include "config_variant.hpp"
