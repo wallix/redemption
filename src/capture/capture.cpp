@@ -194,16 +194,12 @@ void report_pattern(
         static_cast<int>(data.size()), data.data());
     utils::back(message) = '\0';
 
-    LogId logid = LogId::NOTIFY_PATTERN_DETECTED;
-    char const* findpattern = "FINDPATTERN_NOTIFY";
-
-    if (found.is_pattern_kill) {
-        logid = LogId::KILL_PATTERN_DETECTED;
-        findpattern = "FINDPATTERN_KILL";
-    }
-
-    session_log.log6(logid, {KVLog("pattern"_av, std::string_view{message})});
-    session_log.report(findpattern, message);
+    session_log.log6(
+        found.is_pattern_kill ? LogId::KILL_PATTERN_DETECTED : LogId::NOTIFY_PATTERN_DETECTED,
+        {KVLog("pattern"_av, std::string_view{message})});
+    session_log.report(
+        found.is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY",
+        message);
 }
 
 class Utf8KbdBuffer
