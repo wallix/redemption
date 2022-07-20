@@ -384,6 +384,7 @@ class Sesman():
         self.engine = engine.Engine()
 
         self.effective_login = None
+        self.source_connection_id = None
 
         # shared should be read from sesman but never written
         # except when sending
@@ -1131,6 +1132,8 @@ class Sesman():
             if wab_login.startswith('_OTP_'):
                 method = "OTP"
                 real_wab_login = self.engine.get_username()
+                # Use OTP as source connection_id
+                self.source_connection_id = wab_login
                 self.rdplog.update_context(self.shared.get(u'psid'),
                                            real_wab_login)
                 if re.search('WALLIX Access Manager',
@@ -1942,7 +1945,8 @@ class Sesman():
             session_id, start_time, error_msg = self.engine.start_session(
                 selected_target,
                 self.pid,
-                self.effective_login
+                self.effective_login,
+                source_connection_id=self.source_connection_id
             )
             if session_id is None:
                 _status, _error = False, \
