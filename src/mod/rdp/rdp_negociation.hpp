@@ -40,7 +40,7 @@
 #include "acl/auth_api.hpp"
 #include "keyboard/keylayout.hpp"
 
-#include <functional> // std::reference_wrapper
+#include <vector>
 #include <memory>
 #include <array>
 
