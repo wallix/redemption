@@ -17,7 +17,7 @@ do
       * ';\n        static constexpr bool is_proxy_to_sesman = ' * C(peg.word)
     ))^0)
 
-    patternVarSearch = Ct(After( Ct(C(P'get' + 'set_acl' + 'set' + 'ask')
+    patternVarSearch = Ct(After( Ct(C(P'get_mutable_ref' + 'get' + 'set_acl' + 'set' + 'ask')
                                     * '<cfg::' * C(Ident) * S'>')
                                + '(cfg::' * C(Ident) * (P'()' + '{}')
                                )^0)
@@ -74,7 +74,7 @@ function file(content)
                     t.get = true
                 elseif v[1] == 'ask' then
                     t.ask = true
-                else
+                elseif v[1] ~= 'get_mutable_ref' then
                     t.set = true
                 end
             else
