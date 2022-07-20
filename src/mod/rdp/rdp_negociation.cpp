@@ -54,6 +54,7 @@
 
 #include "system/tls_check_certificate.hpp"
 
+#include <functional>
 #include <cstring>
 
 

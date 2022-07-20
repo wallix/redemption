@@ -30,6 +30,8 @@
 #include "utils/log_siem.hpp"
 #include "main/version.hpp"
 
+#include <functional>
+
 
 SessionLogFile::SessionLogFile(
     CryptoContext& cctx, Random& rnd,

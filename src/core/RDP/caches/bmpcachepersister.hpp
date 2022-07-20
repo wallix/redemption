@@ -29,6 +29,7 @@
 #include "utils/sugar/int_to_chars.hpp"
 
 #include <unordered_map>
+#include <functional>
 
 
 namespace RDP {
