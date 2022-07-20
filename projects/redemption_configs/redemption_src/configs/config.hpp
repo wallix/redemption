@@ -40,6 +40,7 @@
 #include "utils/file_permissions.hpp"
 #include <string>
 #include <chrono>
+#include <vector>
 //@}
 
 #include "config_variant.hpp"
