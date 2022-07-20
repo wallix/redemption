@@ -36,6 +36,7 @@
 #include <cstdint>
 #include <cinttypes>
 #include <algorithm> // std::min
+#include <vector>
 
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)

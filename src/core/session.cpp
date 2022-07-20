@@ -51,6 +51,7 @@
 #include <cerrno>
 #include <cstring>
 #include <charconv>
+#include <vector>
 
 #include <arpa/inet.h>
 #include <fcntl.h>

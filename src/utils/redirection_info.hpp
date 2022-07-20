@@ -23,6 +23,7 @@
 
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
+#include <vector>
 
 
 struct RedirectionInfo {
