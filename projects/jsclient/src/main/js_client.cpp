@@ -369,6 +369,7 @@ public:
             theme,
             server_auto_reconnect_packet,
             close_box_extra_message,
+            {},
             verbose);
 
         rdp_params.server_info_ref = &server_info;
