@@ -156,14 +156,17 @@ PatternSearcher::PatternSearcher(
     mem_len += is_kbd ? sizeof(hs_stream_t*) * len : 0;     // streams
 
     d = new((::operator new(mem_len))) D{
-        .nb_call = 0,
-        .total_len = 0,
-        .db = nullptr,
-        .scratch = nullptr,
-        .nb_pattern = len,
-        .nb_stream = 0,
-        .nb_pattern_kill = nb_kill,
-        .is_kbd = is_kbd,
+        0,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        len,
+        0,
+        nb_kill,
+        is_kbd,
     };
 
     hs_stream_t** streams = reinterpret_cast<hs_stream_t**>(d + 1);
@@ -181,9 +184,9 @@ PatternSearcher::PatternSearcher(
         auto patt = cap_pattern.pattern();
 
         *internal_scan_results++ = {
-            .pattern = {str_patterns, patt.size()},
-            .call_id = 0,
-            .offset_data = 0,
+            {str_patterns, patt.size()},
+            0,
+            0,
         };
 
         memcpy(str_patterns, patt.data(), patt.size());
