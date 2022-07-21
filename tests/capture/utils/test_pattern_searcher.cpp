@@ -129,80 +129,80 @@ RED_TEST_DISPATCH_COMPARISON_EQ((), (::PatternResults), (::PatternResults), ::te
 RED_AUTO_TEST_CASE(TestPatternSearcherKbd1)
 {
     CapturePattern cap_patterns1[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "a"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "a"_av},
     };
     PatternSearcher searcher(cap_patterns1, {}, CapturePattern::CaptureType::kbd);
     RED_CHECK(PatternResults(searcher.scan("xy"_av)) == PatternResults());
     RED_CHECK(PatternResults(searcher.scan("zabcd"_av)) == PattResultA(
-        {.pattern="a"_av, .id=0, .is_pattern_kill=1, .match_len=4},
+        {"a"_av, 0, 1, 4},
     ));
 }
 
 RED_AUTO_TEST_CASE(TestPatternSearcherKbd2)
 {
     CapturePattern cap_patterns1[]{
-        {CapturePattern::Filters{.is_ocr=false, .is_kbd=true},  CapturePattern::PatternType::reg, "a"_av},
-        {CapturePattern::Filters{.is_ocr=false, .is_kbd=true},  CapturePattern::PatternType::reg, "b"_av},
-        {CapturePattern::Filters{.is_ocr=false, .is_kbd=false}, CapturePattern::PatternType::reg, "c"_av},
-        {CapturePattern::Filters{.is_ocr=true,  .is_kbd=false}, CapturePattern::PatternType::reg, "d"_av},
+        {CapturePattern::Filters{false, true},  CapturePattern::PatternType::reg, "a"_av},
+        {CapturePattern::Filters{false, true},  CapturePattern::PatternType::reg, "b"_av},
+        {CapturePattern::Filters{false, false}, CapturePattern::PatternType::reg, "c"_av},
+        {CapturePattern::Filters{true,  false}, CapturePattern::PatternType::reg, "d"_av},
     };
     CapturePattern cap_patterns2[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "c"_av},
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "x"_av},
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "de"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "c"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "x"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "de"_av},
     };
     PatternSearcher searcher(cap_patterns1, cap_patterns2, CapturePattern::CaptureType::kbd);
     RED_CHECK(PatternResults(searcher.scan("xy"_av)) == PattResultA(
-        {.pattern="x"_av, .id=3, .is_pattern_kill=0, .match_len=2},
+        {"x"_av, 3, 0, 2},
     ));
     RED_CHECK(PatternResults(searcher.scan("zabcd"_av)) == PattResultA(
-        {.pattern="a"_av, .id=0, .is_pattern_kill=1, .match_len=4},
-        {.pattern="b"_av, .id=1, .is_pattern_kill=1, .match_len=3},
-        {.pattern="c"_av, .id=2, .is_pattern_kill=0, .match_len=2},
+        {"a"_av, 0, 1, 4},
+        {"b"_av, 1, 1, 3},
+        {"c"_av, 2, 0, 2},
     ));
     RED_CHECK(PatternResults(searcher.scan("ef"_av)) == PattResultA(
-        {.pattern="de"_av, .id=4, .is_pattern_kill=0, .match_len=3},
+        {"de"_av, 4, 0, 3},
     ));
     RED_CHECK(PatternResults(searcher.scan("de"_av)) == PattResultA(
-        {.pattern="de"_av, .id=4, .is_pattern_kill=0, .match_len=2},
+        {"de"_av, 4, 0, 2},
     ));
 }
 
 RED_AUTO_TEST_CASE(TestPatternSearcherOcr1)
 {
     CapturePattern cap_patterns1[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "a"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "a"_av},
     };
     CapturePattern cap_patterns2[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::exact_reg, ".?.?c"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::exact_reg, ".?.?c"_av},
     };
     PatternSearcher searcher(cap_patterns1, cap_patterns2, CapturePattern::CaptureType::ocr);
     RED_CHECK(PatternResults(searcher.scan("zabcd"_av)) == PattResultA(
-        {.pattern="a"_av, .id=0, .is_pattern_kill=1, .match_len=0},
+        {"a"_av, 0, 1, 0},
     ));
     RED_CHECK(PatternResults(searcher.scan("zbcd"_av)) == PatternResults());
     RED_CHECK(PatternResults(searcher.scan("zbc"_av)) == PattResultA(
-        {.pattern=".?.?c"_av, .id=1, .is_pattern_kill=0, .match_len=0},
+        {".?.?c"_av, 1, 0, 0},
     ));
 }
 
 RED_AUTO_TEST_CASE(TestPatternSearcherOcr2)
 {
     CapturePattern cap_patterns1[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "^é+$"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "^é+$"_av},
     };
     PatternSearcher searcher(cap_patterns1, {}, CapturePattern::CaptureType::ocr);
     RED_CHECK(PatternResults(searcher.scan("ééé"_av)) == PattResultA(
-        {.pattern="^é+$"_av, .id=0, .is_pattern_kill=1, .match_len=0},
+        {"^é+$"_av, 0, 1, 0},
     ));
 }
 
 RED_AUTO_TEST_CASE(TestPatternSearcherWithInvalidRegex1)
 {
     CapturePattern cap_patterns1[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "??"_av},
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "a"_av},
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "**"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "??"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "a"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "**"_av},
     };
     tu::log_buffered log;
     PatternSearcher searcher(cap_patterns1, {}, CapturePattern::CaptureType::ocr);
@@ -213,15 +213,15 @@ RED_AUTO_TEST_CASE(TestPatternSearcherWithInvalidRegex1)
         "ERR -- PatternsSearcher::PatternsSearcher(): '*""*' "
             "failed compilation with error: Invalid repeat at index 0.\n");
     RED_CHECK(PatternResults(searcher.scan("zabcd"_av)) == PattResultA(
-        {.pattern="a"_av, .id=0, .is_pattern_kill=1, .match_len=0},
+        {"a"_av, 0, 1, 0},
     ));
 }
 
 RED_AUTO_TEST_CASE(TestPatternSearcherWithInvalidRegex2)
 {
     CapturePattern cap_patterns1[]{
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "??"_av},
-        {CapturePattern::Filters{.is_ocr=true, .is_kbd=true}, CapturePattern::PatternType::reg, "**"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "??"_av},
+        {CapturePattern::Filters{true, true}, CapturePattern::PatternType::reg, "**"_av},
     };
     tu::log_buffered log;
     PatternSearcher searcher(cap_patterns1, {}, CapturePattern::CaptureType::kbd);
