@@ -813,7 +813,7 @@ namespace Mwrm3
             static decltype(auto) unserialize(bytes_view buf, F&& f, FError&& ferror)
             {
                 using namespace detail::readers;
-                u8mask m;
+                u8mask m {};
                 return detail::unserialize<Type::WrmState>(buf, f, ferror,
                     group(file_size(), seconds(), shadow_ref{m}),
                     group(m.optional_for<quick_hash, 0>()),
@@ -895,7 +895,7 @@ namespace Mwrm3
                 using namespace detail::readers;
                 u16str_ref original_filename;
                 u16str_ref tfl_filename;
-                u8mask m;
+                u8mask m {};
                 return detail::unserialize<type>(buf, f, ferror,
                     group(
                         file_id(),
