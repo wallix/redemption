@@ -73,7 +73,6 @@ private:
     Inifile & ini;
 
     std::string osd_message;
-    bool allow_disable_osd_message = false;
     Rect clip;
     RDPColor color;
     RDPColor background_color;
@@ -164,7 +163,6 @@ public:
                        message,
                        '\n',
                        TR(trkeys::disable_osd, language(this->ini)));
-            this->allow_disable_osd_message = true;
             this->is_disable_by_input = true;
             this->prepare_osd_message(omu);
             this->draw_osd_message();
@@ -277,7 +275,6 @@ private:
                     }
                     if (!msg.empty()) {
                         this->osd_message = std::move(msg);
-                        this->allow_disable_osd_message = false;
                         this->is_disable_by_input = false;
                         this->prepare_osd_message(gdi::OsdMsgUrgency::NORMAL);
                         this->draw_osd_message();
@@ -490,7 +487,7 @@ private:
         int16_t dy = padh;
         uint32_t i = 0;
 
-        while (i < lines.size() - 1)
+        while (i < lines.size())
         {
             gdi::server_draw_text(
                 drawable,
@@ -503,21 +500,6 @@ private:
                 color_ctx,
                 this->clip);
             dy += padh;
-        }
-
-        if (this->allow_disable_osd_message)
-        {
-            gdi::server_draw_text(
-                drawable,
-                this->glyphs,
-                osd_rect.x + padw,
-                dy + 4,
-                lines[i].str,
-                color_encode(BGRColor(BLACK),
-                             this->client_info.screen_info.bpp),
-                this->background_color,
-                color_ctx,
-                this->clip);
         }
 
         this->clip = Rect();
