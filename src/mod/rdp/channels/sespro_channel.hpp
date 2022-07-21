@@ -1296,8 +1296,7 @@ public:
                                         trkeys::process_interrupted_security_policies,
                                         int(parameters_[1].size()), parameters_[1].data());
 
-                                    std::string string_message = message;
-                                    this->callbacks.display_osd_message(string_message);
+                                    this->callbacks.display_osd_message(message);
                                 }
                             }
                         }
