@@ -244,12 +244,10 @@ private:
             if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (scancode == Scancode::F12)) {
                 bool const f12_released = bool(flags & KbdFlags::Release);
                 if (this->target_info_is_shown && f12_released) {
-                    LOG(LOG_INFO, "Hide info");
                     this->clear_osd_message();
                     this->target_info_is_shown = false;
                 }
                 else if (!this->target_info_is_shown && !f12_released) {
-                    LOG(LOG_INFO, "Show info");
                     std::string msg;
                     msg.reserve(64);
                     if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
