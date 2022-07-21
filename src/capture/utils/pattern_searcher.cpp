@@ -116,6 +116,10 @@ PatternSearcher::PatternSearcher(
     });
     transformed_str_len += str_len;
 
+    if (!len) {
+        return ;
+    }
+
     static_assert(sizeof(char*) >= sizeof(unsigned));
 
     struct CompileArrays
@@ -315,11 +319,12 @@ PatternSearcher::~PatternSearcher()
 
 bool PatternSearcher::has_pattern() const
 {
-    return d->nb_pattern > 0;
+    return d && d->nb_pattern > 0;
 }
 
 void PatternSearcher::reset_kbd_streams()
 {
+    assert(d);
     auto* scratch = d->scratch;
     for (hs_stream_t* stream : d->av_streams()) {
         hs_reset_stream(stream, 0, scratch, nullptr, nullptr);
@@ -328,6 +333,7 @@ void PatternSearcher::reset_kbd_streams()
 
 array_view<PatternSearcher::PatternFound> PatternSearcher::scan(chars_view str)
 {
+    assert(d);
     struct Ctx
     {
         unsigned long long call_id;
