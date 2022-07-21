@@ -1652,7 +1652,6 @@ public:
     void rdp_gdi_up_and_running() override;
     void rdp_gdi_down() override {}
 
-private:
     [[nodiscard]] bool is_up_and_running() const override {
         return (UP_AND_RUNNING == this->state);
     }

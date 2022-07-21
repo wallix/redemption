@@ -178,7 +178,10 @@ public:
     }
 
     // from mod_api
-    [[nodiscard]] bool is_up_and_running() const override { return false; }
+    [[nodiscard]] bool is_up_and_running() const override
+    {
+        return this->mod.is_up_and_running();
+    }
 
     // from mod_api
     // support auto-reconnection
