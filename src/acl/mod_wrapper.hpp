@@ -73,9 +73,11 @@ private:
     Inifile & ini;
 
     std::string osd_message;
+
     Rect clip;
     RDPColor color;
     RDPColor background_color;
+    bool allow_disable_osd_message = false;
     bool is_disable_by_input = false;
     bool bogus_refresh_rect_ex = false;
     const Font & glyphs;
@@ -155,16 +157,42 @@ public:
     void display_osd_message(std::string_view message,
                              gdi::OsdMsgUrgency omu = gdi::OsdMsgUrgency::NORMAL) override
     {
-        if (message != this->osd_message) {
-            this->clear_osd_message();
-        }
+        this->clear_osd_message();
+
         if (!message.empty()) {
+            std::string_view prefix;
+            BitsPerPixel bpp = this->client_info.screen_info.bpp;
+
+            this->background_color = color_encode(LIGHT_YELLOW, bpp);
+
+            switch (omu)
+            {
+            case gdi::OsdMsgUrgency::NORMAL:
+                this->color = color_encode(BLACK, bpp);
+                break;
+
+            case gdi::OsdMsgUrgency::INFO:
+                this->color = color_encode(BLUE, bpp);
+                prefix = "INFO: ";
+                break;
+
+            case gdi::OsdMsgUrgency::WARNING:
+                this->color = color_encode(ORANGE, bpp);
+                prefix = "WARNING: ";
+                break;
+
+            case gdi::OsdMsgUrgency::ALERT:
+                this->color = color_encode(RED, bpp);
+                prefix = "ALERT: ";
+                break;
+            }
+
             str_assign(this->osd_message,
-                       message,
-                       '\n',
+                       prefix, message, '\n',
                        TR(trkeys::disable_osd, language(this->ini)));
+            this->allow_disable_osd_message = true;
             this->is_disable_by_input = true;
-            this->prepare_osd_message(omu);
+            this->prepare_osd_message();
             this->draw_osd_message();
         }
     }
@@ -273,8 +301,12 @@ private:
                     }
                     if (!msg.empty()) {
                         this->osd_message = std::move(msg);
+                        this->allow_disable_osd_message = false;
                         this->is_disable_by_input = false;
-                        this->prepare_osd_message(gdi::OsdMsgUrgency::NORMAL);
+                        auto bpp = this->client_info.screen_info.bpp;
+                        this->color = color_encode(BLACK, bpp);
+                        this->background_color = color_encode(LIGHT_YELLOW, bpp);
+                        this->prepare_osd_message();
                         this->draw_osd_message();
                     }
 
@@ -357,88 +389,39 @@ private:
     static constexpr int padw = 16;
     static constexpr int padh = 16;
 
-    void prepare_osd_message(gdi::OsdMsgUrgency omu)
+    void prepare_osd_message()
     {
         this->bogus_refresh_rect_ex
           = (this->ini.get<cfg::globals::bogus_refresh_rect>()
          && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
          && (this->client_info.cs_monitor.monitorCount > 1));
 
-        BGRColor bgr_color;
-        BGRColor bgr_background_color;
-
-        switch (omu)
-        {
-           case gdi::OsdMsgUrgency::NORMAL :
-               bgr_color = BLACK;
-               bgr_background_color = LIGHT_YELLOW;
-               break;
-           case gdi::OsdMsgUrgency::INFO :
-               bgr_color = BLUE;
-               bgr_background_color = LIGHT_YELLOW;
-               this->osd_message.insert(0, "INFO: ");
-               break;
-           case gdi::OsdMsgUrgency::WARNING :
-               bgr_color = ORANGE;
-               bgr_background_color = LIGHT_YELLOW;
-               this->osd_message.insert(0, "WARNING: ");
-               break;
-           case gdi::OsdMsgUrgency::ALERT :
-               bgr_color = RED;
-               bgr_background_color = LIGHT_YELLOW;
-               this->osd_message.insert(0, "ALERT: ");
-               break;
-        }
-
-        this->color = color_encode(bgr_color,
-                                   this->client_info.screen_info.bpp);
-        this->background_color = color_encode(bgr_background_color,
-                                              this->client_info.screen_info.bpp);
+        int16_t dx = 0;
+        uint16_t w = this->client_info.screen_info.width;
 
         if (this->client_info.remote_program
-            && (this->winapi == static_cast<windowing_api *>(&this->rail_client_execute)))
+         && (this->winapi == static_cast<windowing_api *>(&this->rail_client_execute)))
         {
-            Rect current_work_area_rect =
-                this->rail_client_execute.get_current_work_area_rect();
-
-            this->line_metrics =
-                gdi::MultiLineTextMetrics(this->glyphs,
-                                          this->osd_message.c_str(),
-                                          current_work_area_rect.cx - padw);
-
-            int w = this->line_metrics.max_width() + padw * 2;
-            int h = this->line_metrics.lines().size()
-                * this->glyphs.max_height()
-                + padh
-                * 2;
-
-            this->clip = Rect(
-                current_work_area_rect.x + (
-                   current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
-                0,
-                w,
-                h);
+            Rect rect = this->rail_client_execute.get_current_work_area_rect();
+            w = rect.cx;
+            dx = rect.x;
         }
-        else
-        {
-            this->line_metrics =
-                gdi::MultiLineTextMetrics(this->glyphs,
-                                          this->osd_message.c_str(),
-                                          this->client_info.screen_info.width - padw);
 
-            int w = this->line_metrics.max_width() + padw * 2;
-            int h = this->line_metrics.lines().size()
-                * this->glyphs.max_height()
-                + padh
-                * 2;
+        this->line_metrics = gdi::MultiLineTextMetrics(this->glyphs,
+                                                       this->osd_message.c_str(),
+                                                       w - padw);
 
-            this->clip = Rect(
-                this->client_info.screen_info.width < w ?
-                    0 : (this->client_info.screen_info.width - w) / 2,
-                0,
-                w,
-                h);
-        }
+        unsigned line_width = this->line_metrics.max_width() + padw * 2;
+        unsigned line_height = this->line_metrics.lines().size() * this->glyphs.max_height()
+                             + padh * 2
+                             + (this->allow_disable_osd_message ? 4 : 0)
+                             ;
+
+        this->clip = Rect(
+            dx + w < line_width ? 0 : (w - line_width) / 2,
+            0,
+            line_width,
+            line_height);
 
         this->set_protected_rect(this->clip);
 
@@ -452,12 +435,12 @@ private:
         auto rect = this->get_protected_rect();
         this->set_protected_rect(Rect{});
         this->get_graphics().begin_update();
-        this->draw_osd_message_impl(this->get_graphics(), rect);
+        this->draw_osd_message_impl(this->get_graphics(), rect.x);
         this->get_graphics().end_update();
         this->set_protected_rect(rect);
     }
 
-    void draw_osd_message_impl(gdi::GraphicApi & drawable, Rect osd_rect)
+    void draw_osd_message_impl(gdi::GraphicApi & drawable, int16_t x)
     {
         if (this->clip.isempty()) {
             return ;
@@ -467,37 +450,51 @@ private:
 
         drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
-        RDPLineTo line_ileft(1, this->clip.x, this->clip.y, this->clip.x, this->clip.y + this->clip.cy - 1,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_ileft, this->clip, color_ctx);
-        RDPLineTo line_ibottom(1, this->clip.x, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_ibottom, this->clip, color_ctx);
+        auto draw_line = [&](int startx, int starty, int endx, int endy){
+            RDPLineTo line_ileft(1, startx, starty, endx, endy,
+                                 encode_color24()(BLACK), 0x0D,
+                                 RDPPen(0, 0, encode_color24()(BLACK)));
+            drawable.draw(line_ileft, this->clip, color_ctx);
+        };
 
-        RDPLineTo line_iright(1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_iright, this->clip, color_ctx);
-        RDPLineTo line_etop(1, this->clip.x + this->clip.cx - 1, this->clip.y, this->clip.x, this->clip.y,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_etop, this->clip, color_ctx);
+        draw_line(clip.x, clip.y, clip.x, clip.y + clip.cy - 1);
+        draw_line(clip.x, clip.y + clip.cy - 1, clip.x + clip.cx - 1, clip.y + clip.cy - 1);
+        draw_line(clip.x + clip.cx - 1, clip.y + clip.cy - 1, clip.x + clip.cx - 1, clip.y);
+        draw_line(clip.x + clip.cx - 1, clip.y, clip.x, clip.y);
 
         auto lines = this->line_metrics.lines();
         int16_t dy = padh;
-        uint32_t i = 0;
 
-        while (i < lines.size())
-        {
+        if (this->allow_disable_osd_message) {
+            lines = lines.drop_back(1);
+        }
+
+        for (auto const& line : lines) {
             gdi::server_draw_text(
                 drawable,
                 this->glyphs,
-                osd_rect.x + padw,
+                x + padw,
                 dy,
-                lines[i++].str,
+                line.str,
                 this->color,
                 this->background_color,
                 color_ctx,
                 this->clip);
-            dy += padh;
+            dy += this->glyphs.max_height();
+        }
+
+        if (this->allow_disable_osd_message) {
+            gdi::server_draw_text(
+                drawable,
+                this->glyphs,
+                x + padw,
+                dy + 4,
+                this->line_metrics.lines().back().str,
+                color_encode(BGRColor(BLACK),
+                             this->client_info.screen_info.bpp),
+                this->background_color,
+                color_ctx,
+                this->clip);
         }
 
         this->clip = Rect();
