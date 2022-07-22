@@ -23,6 +23,7 @@
 #include "core/session.hpp"
 #include "core/session_events.hpp"
 #include "core/pid_file.hpp"
+#include "core/listen.hpp"
 
 #include "acl/session_inactivity.hpp"
 #include "acl/acl_serializer.hpp"
@@ -277,9 +278,121 @@ class Session
         fd_set wfds;
     };
 
+    struct NullAclReport final : AclReportApi
+    {
+        void report(const char * reason, const char * message) override
+        {
+            (void)reason;
+            (void)message;
+        }
+    };
+
+    struct Front2Ctx
+    {
+        unique_fd listen_sck = invalid_fd();
+        int conn_sck = -1;
+        Event* event = nullptr;
+
+        CryptoContext cctx;
+        UdevRandom rnd;
+        Inifile ini;
+        std::unique_ptr<Transport> transport;
+        std::unique_ptr<Bouncer2Mod> bouncer;
+        TpduBuffer rbuf;
+
+        static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
+
+        bool is_started() const noexcept
+        {
+            return event;
+        }
+
+        ~Front2Ctx()
+        {
+            if (is_started()) {
+                remove(sck_patch.c_str());
+            }
+        }
+
+        void start(EventContainer& event_container)
+        {
+            LOG(LOG_DEBUG, "start");
+
+            assert(!event);
+
+            listen_sck = create_unix_server(sck_patch, EnableTransparentMode::No);
+            if (!listen_sck.is_open()) {
+                // TODO
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+
+            LOG(LOG_DEBUG, "start ok");
+
+            configuration_load(ini.configuration_holder(), app_path(AppPath::CfgIni).c_str());
+
+            event = &event_container.event_creator().create_event_fd_without_timeout(
+                "Front2Server", this, listen_sck.fd(),
+                [this, &event_container](Event& event) {
+                    LOG(LOG_DEBUG, "guest connection");
+                    union
+                    {
+                        struct sockaddr s;
+                        struct sockaddr_storage ss;
+                        struct sockaddr_in s4;
+                        struct sockaddr_in6 s6;
+                    } u;
+                    unsigned int sin_size = sizeof(u);
+                    memset(&u, 0, sin_size);
+
+                    conn_sck = accept(listen_sck.fd(), &u.s, &sin_size);
+                    listen_sck.close();
+                    remove(sck_patch.c_str());
+
+                    event.garbage = true;
+
+                    if (conn_sck == -1) {
+                        // TODO
+                        throw Error(ERR_SOCKET_CONNECT_FAILED);
+                    }
+
+                    static NullAclReport null_acl_report;
+                    static null_mod nullmod;
+
+                    using namespace std::chrono_literals;
+
+                    transport = std::make_unique<FinalSocketTransport>(
+                        "Front2"_sck_name, unique_fd(conn_sck), ""_av, 0,
+                        3s, 3s, 3s, SocketTransport::Verbose::basic, nullptr);
+
+                    ini.set<cfg::debug::front>(0xFFFFFFFFu);
+                    auto front = std::make_unique<Front>(
+                        event_container, null_acl_report,
+                        *transport, rnd, ini, cctx, ini.get<cfg::client::fast_path>());
+
+                    this->event = &event_container.event_creator().create_event_fd_without_timeout(
+                        "Front2Client", this, conn_sck,
+                        [this, front = std::move(front), &event_container](Event& /*event*/) {
+                            LOG(LOG_DEBUG, "Front2Client read");
+                            mod_api* mod = &nullmod;
+                            if (front->is_up_and_running()) {
+                                if (!bouncer) {
+                                    bouncer = std::make_unique<Bouncer2Mod>(*front, event_container, 800, 600);
+                                }
+                                mod = bouncer.get();
+                            }
+                            front_process(rbuf, *front, *transport, *mod);
+                            LOG(LOG_DEBUG, "< Front2Client read");
+                        }
+                    );
+                }
+            );
+        }
+    };
+
     Inifile & ini;
     PidFile & pid_file;
     SessionVerbose verbose;
+    Front2Ctx front2;
 
 private:
     enum class EndSessionResult
@@ -1137,6 +1250,13 @@ private:
                     if (front.has_user_activity) {
                         inactivity.activity();
                         front.has_user_activity = false;
+                    }
+
+                    if (mod_wrapper.is_up_and_running()
+                     && mod_wrapper.current_mod == ModuleName::RDP
+                     && !front2.is_started()
+                    ) {
+                        front2.start(events);
                     }
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){
