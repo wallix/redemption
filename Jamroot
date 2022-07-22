@@ -285,7 +285,7 @@ make ppocr_resources :
 #
 actions gen_gettext_mo
 {
-    ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/gen_msg_catalog.py -C -p $(REDEMPTION_PUBLIC_PATH)/tools/i18n/ -b $(<).d
+    $(REDEMPTION_PUBLIC_PATH)/tools/i18n/gen_msg_catalog.py -C -p $(REDEMPTION_PUBLIC_PATH)/tools/i18n/ -b $(<).d
     :>$(<)
 }
 actions make_gettext_install
@@ -299,14 +299,14 @@ make install-gettext : locale : @make_gettext_install ;
 
 explicit locale ;
 make locale :
-  ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/po/fr/redemption.po
-  ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/po/en/redemption.po
+  $(REDEMPTION_PUBLIC_PATH)/tools/i18n/po/fr/redemption.po
+  $(REDEMPTION_PUBLIC_PATH)/tools/i18n/po/en/redemption.po
 : @gen_gettext_mo ;
 
 
 actions update_gettext_po
 {
-    cd ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/
+    cd $(REDEMPTION_PUBLIC_PATH)/tools/i18n/
     ./gen_msg_catalog.py -p . -e
     ./gen_msg_catalog.py -p . -M
 }
