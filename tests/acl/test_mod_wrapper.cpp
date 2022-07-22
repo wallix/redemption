@@ -14,7 +14,7 @@
 #include "acl/mod_wrapper.hpp"
 
 
-#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod_wrapper/"
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/acl/"
 
 namespace
 {
