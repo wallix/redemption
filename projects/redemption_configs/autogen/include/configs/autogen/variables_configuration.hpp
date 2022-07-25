@@ -37,11 +37,11 @@ namespace configs
         // inline constexpr int section19 = 141; /* websocket */
         // inline constexpr int section20 = 141; /* vnc_over_ssh */
         inline constexpr int section21 = 141; /* context */
-        // inline constexpr int section22 = 219; /* internal_mod */
-        inline constexpr int section23 = 219; /* mod_replay */
-        inline constexpr int section24 = 221; /* translation */
-        // inline constexpr int section25 = 223; /* theme */
-        // inline constexpr int section26 = 223; /* debug */
+        // inline constexpr int section22 = 225; /* internal_mod */
+        inline constexpr int section23 = 225; /* mod_replay */
+        inline constexpr int section24 = 227; /* translation */
+        // inline constexpr int section25 = 229; /* theme */
+        // inline constexpr int section26 = 229; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -4800,6 +4800,90 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
+    /// type: std::string <br/>
+    /// sesman ⇔ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_userdata {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 75};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇒ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_type {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 76};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: uint32_t <br/>
+    /// sesman ⇐ proxy <br/>
+    /// default: 0 <br/>
+    struct context::session_sharing_invitation_error_code {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 77};
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_invitation_error_message {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 78};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_invitation_id {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 79};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_invitation_addr {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 80};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
     /// type: bool <br/>
     /// default: false <br/>
     struct context::rail_module_host_mod_is_active {
@@ -4817,7 +4901,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 75};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 81};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4831,7 +4915,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 76};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 82};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4845,7 +4929,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 77};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 83};
         using type = BannerType;
         using sesman_and_spec_type = BannerType;
         using mapped_type = sesman_and_spec_type;
@@ -5847,6 +5931,11 @@ struct context
 , cfg::context::rd_shadow_invitation_error_message
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
+, cfg::context::session_sharing_userdata
+, cfg::context::session_sharing_type
+, cfg::context::session_sharing_invitation_error_message
+, cfg::context::session_sharing_invitation_id
+, cfg::context::session_sharing_invitation_addr
 , cfg::context::smartcard_login
 , cfg::context::banner_message
 , cfg::context::redirection_password_or_cookie
@@ -5876,6 +5965,7 @@ struct context
 , cfg::context::rd_shadow_available
 , cfg::context::rd_shadow_invitation_error_code
 , cfg::context::rd_shadow_invitation_port
+, cfg::context::session_sharing_invitation_error_code
 , cfg::context::rail_module_host_mod_is_active
 , cfg::context::banner_type
 { static constexpr bool is_section = true; };
@@ -6189,6 +6279,12 @@ using VariablesAclPack = Pack<
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::rd_shadow_invitation_port
+, cfg::context::session_sharing_userdata
+, cfg::context::session_sharing_type
+, cfg::context::session_sharing_invitation_error_code
+, cfg::context::session_sharing_invitation_error_message
+, cfg::context::session_sharing_invitation_id
+, cfg::context::session_sharing_invitation_addr
 , cfg::context::smartcard_login
 , cfg::context::banner_message
 , cfg::context::banner_type
@@ -6203,7 +6299,7 @@ constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111101111111111111111111111111111111111111111011111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
 , 0b1111111111111111111111111111110101111110111111111110011111111111
-, 0b0000000000000000000000000000000001111111111111111111101111111111
+, 0b0000000000000000000000000001111111111111111111111111101111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000

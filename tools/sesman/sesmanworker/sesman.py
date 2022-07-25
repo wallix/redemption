@@ -2327,6 +2327,7 @@ class Sesman():
                                     self._manage_pm()
 
                                 self.handle_shadowing()
+                                self.handle_session_sharing()
 
                                 if self.shared.get(u'reporting'):
                                     report_status = self.handle_reporting()
@@ -2775,6 +2776,28 @@ class Sesman():
             self.shared["rd_shadow_invitation_addr"] = None
             self.shared["rd_shadow_invitation_port"] = None
 
+    def handle_session_sharing(self):
+        if self.shared.get("session_sharing_invitation_error_code"):
+            session_sharing_token = {
+                "native_session_sharing": True,
+                "shadow_id":
+                self.shared.get("session_sharing_invitation_id"),
+                "shadow_ip":
+                self.shared.get("session_sharing_invitation_addr"),
+                "shadow_port": 0,  # force 0 to use Unix Socket
+            }
+            self.engine.shadow_response(
+                errcode=self.shared.get("session_sharing_invitation_error_code"),
+                errmsg=self.shared.get("session_sharing_invitation_error_message"),
+                token=session_sharing_token,
+                userdata=self.shared.get("session_sharing_userdata")
+            )
+            self.shared["session_sharing_userdata"] = None
+            self.shared["session_sharing_invitation_error_code"] = 0
+            self.shared["session_sharing_invitation_error_message"] = None
+            self.shared["session_sharing_invitation_id"] = None
+            self.shared["session_sharing_invitation_addr"] = None
+
     def handle_auth_notify(self, physical_target):
         if self.shared.get(u'auth_notify') == u'rail_exec':
             Logger().info(
@@ -2894,6 +2917,14 @@ class Sesman():
             self.send_data({
                 u'rd_shadow_type': res,
                 u'rd_shadow_userdata': userdata
+            })
+        res = params.get("session_sharing_type")
+        if res:
+            userdata = params.get("session_sharing_userdata")
+            Logger().debug("sending _shadow_type=%s" % res)
+            self.send_data({
+                u'session_sharing_type': res,
+                u'session_sharing_userdata': userdata
             })
 
     def parse_app(self, value):

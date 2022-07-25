@@ -414,6 +414,12 @@ namespace cfg
         struct rd_shadow_invitation_id;
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
+        struct session_sharing_userdata;
+        struct session_sharing_type;
+        struct session_sharing_invitation_error_code;
+        struct session_sharing_invitation_error_message;
+        struct session_sharing_invitation_id;
+        struct session_sharing_invitation_addr;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
         struct banner_message;

@@ -1098,6 +1098,14 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"rd_shadow_invitation_addr"});
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<types::u16>(), names{"rd_shadow_invitation_port"});
 
+        W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_userdata"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_type"});
+
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<types::u32>(), names{"session_sharing_invitation_error_code"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_invitation_error_message"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_invitation_id"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_invitation_addr"});
+
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), names{"rail_module_host_mod_is_active"}, set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"smartcard_login"});
