@@ -1749,6 +1749,18 @@ void Capture::add_graphic(gdi::GraphicApi & gd)
     }
 }
 
+void Capture::remove_graphic(gdi::GraphicApi & gd)
+{
+    if (this->capture_drawable) {
+        for (auto it = gds.begin(); it != gds.end(); ++it) {
+            if (&it->get() == &gd) {
+                gds.erase(it);
+                break;
+            }
+        }
+    }
+}
+
 Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
     MonotonicTimePoint now,
     uint16_t cursor_x, uint16_t cursor_y

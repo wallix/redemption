@@ -133,7 +133,7 @@ class GraphicToFile
     Rect rail_window_rect;
 
     PointerCache::SourcePointersView ptr_cache;
-    std::array<bool, PointerCache::Cache::original_max_entries> ptr_cached {};
+    std::array<bool, PointerCache::Mapping::original_max_entries> ptr_cached {};
 
 public:
     GraphicToFile(MonotonicTimePoint now

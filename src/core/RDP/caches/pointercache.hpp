@@ -52,17 +52,18 @@ public:
 
     private:
         std::array<RdpPointer, MAX_POINTER_COUNT> const& pointers;
+        friend class PointerCache;
     };
 
 private:
     static constexpr std::size_t RESERVED_POINTER_COUNT = std::size_t(PredefinedPointer::COUNT);
 
 public:
-    using Cache = CacheIndexMapping<MAX_POINTER_COUNT + RESERVED_POINTER_COUNT, uint16_t>;
-    using CacheResult = Cache::CacheResult;
+    using Mapping = CacheIndexMapping<MAX_POINTER_COUNT + RESERVED_POINTER_COUNT, uint16_t>;
+    using CacheResult = Mapping::CacheResult;
 
     explicit PointerCache(uint16_t pointer_cache_entries)
-    : cache(pointer_cache_entries)
+    : mapping(pointer_cache_entries)
     {}
 
     constexpr static uint16_t max_size() noexcept
@@ -75,14 +76,14 @@ public:
         auto idx = cache_idx.cache_index();
         check(idx, max_size());
         pointers[idx] = cursor;
-        cache.insert(idx);
+        mapping.insert(idx);
     }
 
     CacheResult use(gdi::CachePointerIndex cache_idx) noexcept
     {
         auto idx = cache_idx.cache_index();
         check(idx, max_size() + RESERVED_POINTER_COUNT);
-        return cache.use(idx);
+        return mapping.use(idx);
     }
 
     RdpPointer const& pointer(gdi::CachePointerIndex cache_idx) const noexcept
@@ -93,6 +94,11 @@ public:
     SourcePointersView source_pointers_view() const noexcept
     {
         return SourcePointersView{pointers};
+    }
+
+    void set_pointers(SourcePointersView pointers)
+    {
+        this->pointers = pointers.pointers;
     }
 
 private:
@@ -106,6 +112,6 @@ private:
         }
     }
 
-    Cache cache;
+    Mapping mapping;
     std::array<RdpPointer, MAX_POINTER_COUNT> pointers;
 };  // struct PointerCache
