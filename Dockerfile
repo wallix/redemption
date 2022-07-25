@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 # Install build dependencies
 RUN apt-get -qq update && apt-get install -y g++ libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev \
     libgssglue-dev libsnappy-dev libpng-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
-    libx264-dev libbz2-dev && apt-get install -y git
+    libx264-dev libbz2-dev libhyperscan-dev && apt-get install -y git
 # Create build directory
 RUN mkdir -p /gcc/
 # Set container working directory
