@@ -21,7 +21,7 @@ RUN bjam --toolset=gcc variant=release install --prefix=/usr/local || echo "done
 
 FROM ubuntu:20.04
 # Install runtime dependencies
-RUN apt-get -qq update && apt-get install -y python3 libgssapi-krb5-2 libpng16-16 libsnappy1v5
+RUN apt-get -qq update && apt-get install -y python3 libgssapi-krb5-2 libpng16-16 libsnappy1v5 libhyperscan-dev ffmpeg
 # Copy built rdpporxy
 COPY --from=0 /usr/local /usr/local
 # Copy built rdpproxy configuration
