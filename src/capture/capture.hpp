@@ -123,6 +123,7 @@ public:
     [[nodiscard]] bool has_graphic_api() const;
 
     void add_graphic(gdi::GraphicApi & gd);
+    void remove_graphic(gdi::GraphicApi & gd);
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now,

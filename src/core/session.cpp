@@ -297,7 +297,7 @@ class Session
         UdevRandom rnd;
         Inifile ini;
         std::unique_ptr<Transport> transport;
-        std::unique_ptr<Bouncer2Mod> bouncer;
+        bool is_synchronized = false;
         TpduBuffer rbuf;
 
         static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
@@ -314,7 +314,7 @@ class Session
             }
         }
 
-        void start(EventContainer& event_container)
+        void start(EventContainer& event_container, Front& front, Callback& callback)
         {
             LOG(LOG_DEBUG, "start");
 
@@ -332,7 +332,7 @@ class Session
 
             event = &event_container.event_creator().create_event_fd_without_timeout(
                 "Front2Server", this, listen_sck.fd(),
-                [this, &event_container](Event& event) {
+                [this, &event_container, &front, &callback](Event& event) {
                     LOG(LOG_DEBUG, "guest connection");
                     union
                     {
@@ -364,23 +364,28 @@ class Session
                         "Front2"_sck_name, unique_fd(conn_sck), ""_av, 0,
                         3s, 3s, 3s, SocketTransport::Verbose::basic, nullptr);
 
-                    ini.set<cfg::debug::front>(0xFFFFFFFFu);
-                    auto front = std::make_unique<Front>(
+                    auto front2 = std::make_unique<Front>(
                         event_container, null_acl_report,
-                        *transport, rnd, ini, cctx, ini.get<cfg::client::fast_path>());
+                        *transport, rnd, ini, cctx, ini.get<cfg::client::fast_path>(),
+                        Front::GuestParameters{
+                            .is_guest = true,
+                            .screen_info = front.get_client_info().screen_info
+                        });
 
                     this->event = &event_container.event_creator().create_event_fd_without_timeout(
                         "Front2Client", this, conn_sck,
-                        [this, front = std::move(front), &event_container](Event& /*event*/) {
+                        [this, &front, front2 = std::move(front2), &callback](Event& /*event*/) {
                             LOG(LOG_DEBUG, "Front2Client read");
-                            mod_api* mod = &nullmod;
-                            if (front->is_up_and_running()) {
-                                if (!bouncer) {
-                                    bouncer = std::make_unique<Bouncer2Mod>(*front, event_container, 800, 600);
-                                }
-                                mod = bouncer.get();
+                            if (!is_synchronized && front2->is_up_and_running()) {
+                                front.copy_caches_to(*front2);
+                                // TODO remove front2 when destroyed
+                                front.add_graphic(*front2);
+                                auto screen = front.get_client_info().screen_info;
+                                callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
+                                is_synchronized = true;
                             }
-                            front_process(rbuf, *front, *transport, *mod);
+                            // TODO callback wrap send_to_mod_channel() for sending error
+                            front_process(rbuf, *front2, *transport, callback);
                             LOG(LOG_DEBUG, "< Front2Client read");
                         }
                     );
@@ -996,7 +1001,6 @@ private:
             try {
                 acl_serial.send_acl_data();
 
-
                 loop_state = LoopState::Select;
 
                 auto* pmod_trans = mod_wrapper.get_mod_transport();
@@ -1256,7 +1260,7 @@ private:
                      && mod_wrapper.current_mod == ModuleName::RDP
                      && !front2.is_started()
                     ) {
-                        front2.start(events);
+                        front2.start(events, front, mod_wrapper.get_callback());
                     }
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){

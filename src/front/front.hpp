@@ -104,7 +104,7 @@
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
-#include "gdi/graphic_api.hpp"
+#include "gdi/graphic_dispatcher.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "transport/file_transport.hpp"
@@ -562,6 +562,16 @@ private:
             return this->get_graphics().graphics_update_pdu;
         }
 
+        PointerCache& get_raw_pointer_cache()
+        {
+            return this->get_graphics().pointer_cache;
+        }
+
+        PointerCache const& get_raw_pointer_cache() const
+        {
+            return this->get_graphics().pointer_cache;
+        }
+
         ~GraphicsPointer()
         {
             if (this->is_initialized) {
@@ -594,8 +604,19 @@ private:
     };
 
 private:
+    gdi::GraphicDispatcher gd_dispatcher;
     GraphicsPointer orders;
     not_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
+
+    not_null_ptr<gdi::GraphicApi> get_internal_gd()
+    {
+        if (gd_dispatcher.graphics().size() > 1) {
+            return &gd_dispatcher;
+        }
+        else {
+            return &this->orders.graphics_update_pdu();
+        }
+    }
 
     void set_gd(gdi::GraphicApi * new_gd) {
         this->gd = new_gd;
@@ -621,7 +642,6 @@ private:
    // TODO: this should be extracted from the class
     Transport & trans;
 
-private:
     uint16_t userid = 0;
     uint8_t pub_mod[512];
     uint8_t pri_exp[512];
@@ -704,6 +724,8 @@ private:
     size_t channel_list_index = 0;
 
     Rect rail_window_rect;
+
+    const bool is_guest;
 
 public:
     bool is_up_and_running() const noexcept
@@ -823,12 +845,19 @@ public:
     [[nodiscard]] BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
 public:
+    struct GuestParameters
+    {
+        bool is_guest;
+        ScreenInfo screen_info;
+    };
+
     Front( EventContainer& events
          , AclReportApi & acl_report
          , Transport & trans
          , Random & gen
          , Inifile & ini
          , CryptoContext & cctx
+         , GuestParameters guest_parameter = {}
          )
     : verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(default_layout())
@@ -849,7 +878,10 @@ public:
     )
     , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
+    , is_guest(guest_parameter.is_guest)
     {
+        client_info.screen_info = guest_parameter.screen_info;
+
         using namespace std::literals::chrono_literals;
 
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
@@ -1226,7 +1258,7 @@ public:
             this->capture->force_flush(this->events_guard.get_monotonic_time(), this->mouse_x, this->mouse_y);
             this->capture.reset();
             this->capture_timer.garbage();
-            this->set_gd(this->orders.graphics_update_pdu());
+            this->set_gd(this->get_internal_gd());
             return true;
         }
         return false;
@@ -1336,7 +1368,7 @@ private:
           , this->mppc_enc.get()
           , this->verbose
         );
-        this->set_gd(this->orders.graphics_update_pdu());
+        this->set_gd(this->get_internal_gd());
     }
 
 public:
@@ -1576,8 +1608,35 @@ public:
                             cs_core.log("Front::incoming: Received from Client");
                         }
 
-                        this->client_info.screen_info.width     = cs_core.desktopWidth;
-                        this->client_info.screen_info.height    = cs_core.desktopHeight;
+                        if (!this->is_guest) {
+                            this->client_info.screen_info.width     = cs_core.desktopWidth;
+                            this->client_info.screen_info.height    = cs_core.desktopHeight;
+                            this->client_info.screen_info.bpp = BitsPerPixel{8};
+                            switch (cs_core.postBeta2ColorDepth) {
+                            case GCC::UserData::RNS_UD_COLOR_8BPP:
+                                /*
+                                this->client_info.bpp =
+                                    (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                                */
+                                this->client_info.screen_info.bpp = (
+                                        (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
+                                        ? BitsPerPixel{32}
+                                        : BitsPerPixel{checked_int(cs_core.highColorDepth)}
+                                    );
+                            break;
+                            case GCC::UserData::RNS_UD_COLOR_16BPP_555:
+                                this->client_info.screen_info.bpp = BitsPerPixel{15};
+                            break;
+                            case GCC::UserData::RNS_UD_COLOR_16BPP_565:
+                                this->client_info.screen_info.bpp = BitsPerPixel{16};
+                            break;
+                            case GCC::UserData::RNS_UD_COLOR_24BPP:
+                                this->client_info.screen_info.bpp = BitsPerPixel{24};
+                            break;
+                            default:
+                            break;
+                            }
+                        }
                         this->client_info.keylayout = safe_int(cs_core.keyboardLayout);
                         this->client_info.build     = cs_core.clientBuild;
                         for (size_t i = 0; i < 15 ; i++) {
@@ -1585,31 +1644,6 @@ public:
                         }
                         this->client_info.hostname[15] = 0;
                         //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
-                        this->client_info.screen_info.bpp = BitsPerPixel{8};
-                        switch (cs_core.postBeta2ColorDepth) {
-                        case GCC::UserData::RNS_UD_COLOR_8BPP:
-                            /*
-                            this->client_info.bpp =
-                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
-                            */
-                            this->client_info.screen_info.bpp = (
-                                      (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
-                                    ? BitsPerPixel{32}
-                                    : BitsPerPixel{checked_int(cs_core.highColorDepth)}
-                                );
-                        break;
-                        case GCC::UserData::RNS_UD_COLOR_16BPP_555:
-                            this->client_info.screen_info.bpp = BitsPerPixel{15};
-                        break;
-                        case GCC::UserData::RNS_UD_COLOR_16BPP_565:
-                            this->client_info.screen_info.bpp = BitsPerPixel{16};
-                        break;
-                        case GCC::UserData::RNS_UD_COLOR_24BPP:
-                            this->client_info.screen_info.bpp = BitsPerPixel{24};
-                        break;
-                        default:
-                        break;
-                        }
                         LOG(LOG_INFO, "Client Color Depth is %d", int(this->client_info.screen_info.bpp));
 
                         if (bool(this->ini.get<cfg::client::max_color_depth>())) {
@@ -3464,8 +3498,10 @@ private:
                     // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
                     if (!this->client_info.screen_info.width || !this->client_info.screen_info.height)
                     {
-                        this->client_info.screen_info.width  = this->client_info.bitmap_caps.desktopWidth;
-                        this->client_info.screen_info.height = this->client_info.bitmap_caps.desktopHeight;
+                        if (!this->is_guest) {
+                            this->client_info.screen_info.width  = this->client_info.bitmap_caps.desktopWidth;
+                            this->client_info.screen_info.height = this->client_info.bitmap_caps.desktopHeight;
+                        }
                     }
                 }
                 break;
@@ -4345,7 +4381,7 @@ private:
                     this->set_gd(this->capture.get());
                 }
                 else {
-                    this->set_gd(this->orders.graphics_update_pdu());
+                    this->set_gd(this->get_internal_gd());
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
@@ -5194,6 +5230,41 @@ private:
                      this->focus_on_unidentified_input_field) ||
                     this->consent_ui_is_visible || this->session_locked || mask_unidentified_data
                 );
+        }
+    }
+
+public:
+    void copy_caches_to(Front& front) const
+    {
+        auto pointers = this->orders.get_raw_pointer_cache().source_pointers_view();
+        front.orders.get_raw_pointer_cache().set_pointers(pointers);
+    }
+
+    void add_graphic(gdi::GraphicApi& gd)
+    {
+        if (this->capture && this->capture->has_graphic_api()) {
+            this->capture->add_graphic(gd);
+        }
+        else {
+            if (this->gd_dispatcher.graphics().empty()) {
+                this->set_gd(this->gd_dispatcher);
+                this->gd_dispatcher.add_graphic(this->orders.graphics_update_pdu());
+            }
+            this->gd_dispatcher.add_graphic(gd);
+        }
+    }
+
+    void remove_graphic(gdi::GraphicApi& gd)
+    {
+        if (this->capture && this->capture->has_graphic_api()) {
+            this->capture->remove_graphic(gd);
+        }
+        else {
+            this->gd_dispatcher.remove_graphic(gd);
+            if (this->gd_dispatcher.graphics().size() == 1) {
+                this->gd_dispatcher.clear();
+                this->set_gd(this->orders.graphics_update_pdu());
+            }
         }
     }
 };
