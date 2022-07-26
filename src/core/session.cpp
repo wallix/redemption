@@ -67,6 +67,8 @@
 #include <cstdlib>
 
 
+using namespace std::chrono_literals;
+
 namespace
 {
 
@@ -290,18 +292,59 @@ class Session
 
     struct Front2Ctx
     {
+        struct Front2 final : private SocketTransport, public Front
+        {
+            Front2(
+                unique_fd conn_sck,
+                EventContainer& event_container,
+                Front& front,
+                Inifile& ini,
+                UdevRandom& rnd)
+            : SocketTransport(
+                "Front2"_sck_name, std::move(conn_sck), ""_av, 0,
+                3s, 3s, 3s, SocketTransport::Verbose()/*TODO debug::session_sharing_front*/, nullptr)
+            , Front(event_container, null_acl_report,
+                *this, rnd, ini, cctx, ini.get<cfg::client::fast_path>(),
+                Front::GuestParameters{
+                    .is_guest = true,
+                    .screen_info = front.get_client_info().screen_info
+            })
+            {}
+
+            Transport& get_transport()
+            {
+                return *this;
+            }
+
+            Front& get_front()
+            {
+                return *this;
+            }
+
+        private:
+            NullAclReport null_acl_report;
+            null_mod nullmod;
+            CryptoContext cctx;
+        };
+
+        std::unique_ptr<Front2> front2;
+
         unique_fd listen_sck = invalid_fd();
         int conn_sck = -1;
         Event* event = nullptr;
 
-        CryptoContext cctx;
         UdevRandom rnd;
         Inifile ini;
-        std::unique_ptr<Transport> transport;
         bool is_synchronized = false;
         TpduBuffer rbuf;
 
+
+
+
         static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
+
+
+
 
         bool is_started() const noexcept
         {
@@ -315,7 +358,7 @@ class Session
             }
         }
 
-        void start(EventContainer& event_container, Front& front, Callback& callback)
+        void start(EventContainer& event_container, Front& front, Callback& callback, UdevRandom& rnd)
         {
             LOG(LOG_DEBUG, "start");
 
@@ -329,11 +372,14 @@ class Session
 
             LOG(LOG_DEBUG, "start ok");
 
+            // TODO add timer before auto-close
+
+            // TODO copy ini
             configuration_load(ini.configuration_holder(), app_path(AppPath::CfgIni).c_str());
 
             event = &event_container.event_creator().create_event_fd_without_timeout(
                 "Front2Server", this, listen_sck.fd(),
-                [this, &event_container, &front, &callback](Event& event) {
+                [this, &event_container, &front, &callback, &rnd](Event& event) {
                     LOG(LOG_DEBUG, "guest connection");
                     union
                     {
@@ -356,43 +402,64 @@ class Session
                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                     }
 
-                    static NullAclReport null_acl_report;
-                    static null_mod nullmod;
-
-                    using namespace std::chrono_literals;
-
-                    transport = std::make_unique<FinalSocketTransport>(
-                        "Front2"_sck_name, unique_fd(conn_sck), ""_av, 0,
-                        3s, 3s, 3s, SocketTransport::Verbose::basic, nullptr);
-
-                    auto front2 = std::make_unique<Front>(
-                        event_container, null_acl_report,
-                        *transport, rnd, ini, cctx, ini.get<cfg::client::fast_path>(),
-                        Front::GuestParameters{
-                            .is_guest = true,
-                            .screen_info = front.get_client_info().screen_info
-                        });
+                    front2 = std::make_unique<Front2>(
+                        unique_fd(conn_sck), event_container, front, ini, rnd);
 
                     this->event = &event_container.event_creator().create_event_fd_without_timeout(
                         "Front2Client", this, conn_sck,
-                        [this, &front, front2 = std::move(front2), &callback](Event& /*event*/) {
-                            LOG(LOG_DEBUG, "Front2Client read");
-                            if (!is_synchronized && front2->is_up_and_running()) {
+                        [this, &front, &callback](Event& event) {
+                            try {
+                                front_process(rbuf, *front2, front2->get_transport(), callback);
+                            }
+                            catch (...) {
+                                stop(front);
+                                event.garbage = true;
+                                return ;
+                            }
+
+                            if (REDEMPTION_LIKELY(is_synchronized)) {
+                                return ;
+                            }
+
+                            if (front2->is_up_and_running()) {
                                 front.copy_caches_to(*front2);
-                                // TODO remove front2 when destroyed
                                 front.add_graphic(*front2);
                                 auto screen = front.get_client_info().screen_info;
                                 callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
+                                // TODO sync locks
                                 is_synchronized = true;
                             }
-                            // TODO callback wrap send_to_mod_channel() for sending error
-                            front_process(rbuf, *front2, *transport, callback);
-                            LOG(LOG_DEBUG, "< Front2Client read");
                         }
                     );
                 }
             );
         }
+
+        void stop(Front& front)
+        {
+            if (listen_sck.is_open()) {
+                listen_sck.close();
+                remove(sck_patch);
+            }
+
+            if (event) {
+                event->garbage = true;
+                event = nullptr;
+            }
+
+            if (front2) {
+                front.remove_graphic(*front2);
+                try {
+                    front2->get_front().disconnect();
+                    front2->get_transport().disconnect();
+                }
+                catch (...) {
+                }
+                front2.reset();
+            }
+        }
+
+    private:
     };
 
     Inifile & ini;
@@ -573,6 +640,7 @@ private:
             LOG(LOG_INFO, "Exited from target connection");
             mod_wrapper.disconnect();
             front.must_be_stop_capture();
+            front2.stop(front);
             secondary_session.close_secondary_session();
         }
         else {
@@ -976,8 +1044,6 @@ private:
 
         SecondarySession secondary_session(ini, cctx, rnd, front, event_manager.get_time_base());
 
-        using namespace std::chrono_literals;
-
         enum class LoopState
         {
             AclSend,
@@ -1261,7 +1327,7 @@ private:
                      && mod_wrapper.current_mod == ModuleName::RDP
                      && !front2.is_started()
                     ) {
-                        front2.start(events, front, mod_wrapper.get_callback());
+                        front2.start(events, front, mod_wrapper.get_callback(), rnd);
                     }
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){
