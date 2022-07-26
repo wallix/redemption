@@ -292,23 +292,42 @@ class Session
 
     struct Front2Ctx
     {
-        struct Front2 final : private SocketTransport, public Front
+        struct Front2Data
+        {
+            bool is_synchronized = false;
+            TpduBuffer rbuf;
+            Inifile ini;
+
+            Front2Data(Inifile& original_ini)
+            {
+                original_ini.copy_variables_to(ini);
+            }
+
+            Inifile& get_ini()
+            {
+                return ini;
+            }
+        };
+
+        struct Front2 final : private SocketTransport, Front2Data, Front
         {
             Front2(
                 unique_fd conn_sck,
                 EventContainer& event_container,
                 Front& front,
-                Inifile& ini,
+                Inifile& original_ini,
                 UdevRandom& rnd)
             : SocketTransport(
                 "Front2"_sck_name, std::move(conn_sck), ""_av, 0,
                 3s, 3s, 3s, SocketTransport::Verbose()/*TODO debug::session_sharing_front*/, nullptr)
+            , Front2Data(original_ini)
             , Front(event_container, null_acl_report,
-                *this, rnd, ini, cctx, ini.get<cfg::client::fast_path>(),
+                *this, rnd, get_ini(), cctx, get_ini().get<cfg::client::fast_path>(),
                 Front::GuestParameters{
                     .is_guest = true,
                     .screen_info = front.get_client_info().screen_info
-            })
+                }
+            )
             {}
 
             Transport& get_transport()
@@ -328,29 +347,17 @@ class Session
         };
 
         std::unique_ptr<Front2> front2;
-
         unique_fd listen_sck = invalid_fd();
-        int conn_sck = -1;
         Event* event = nullptr;
 
-        UdevRandom rnd;
-        Inifile ini;
-        bool is_synchronized = false;
-        TpduBuffer rbuf;
-
-
-
-
         static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
-
-
-
 
         bool is_started() const noexcept
         {
             return event;
         }
 
+        // TODO remove this
         ~Front2Ctx()
         {
             if (is_started()) {
@@ -358,7 +365,9 @@ class Session
             }
         }
 
-        void start(EventContainer& event_container, Front& front, Callback& callback, UdevRandom& rnd)
+        void start(
+            EventContainer& event_container, Front& front, Callback& callback,
+            UdevRandom& rnd, Inifile& original_ini)
         {
             LOG(LOG_DEBUG, "start");
 
@@ -374,12 +383,9 @@ class Session
 
             // TODO add timer before auto-close
 
-            // TODO copy ini
-            configuration_load(ini.configuration_holder(), app_path(AppPath::CfgIni).c_str());
-
             event = &event_container.event_creator().create_event_fd_without_timeout(
                 "Front2Server", this, listen_sck.fd(),
-                [this, &event_container, &front, &callback, &rnd](Event& event) {
+                [this, &event_container, &front, &callback, &rnd, &original_ini](Event& event) {
                     LOG(LOG_DEBUG, "guest connection");
                     union
                     {
@@ -391,7 +397,7 @@ class Session
                     unsigned int sin_size = sizeof(u);
                     memset(&u, 0, sin_size);
 
-                    conn_sck = accept(listen_sck.fd(), &u.s, &sin_size);
+                    int conn_sck = accept(listen_sck.fd(), &u.s, &sin_size);
                     listen_sck.close();
                     remove(sck_patch.c_str());
 
@@ -403,13 +409,13 @@ class Session
                     }
 
                     front2 = std::make_unique<Front2>(
-                        unique_fd(conn_sck), event_container, front, ini, rnd);
+                        unique_fd(conn_sck), event_container, front, original_ini, rnd);
 
                     this->event = &event_container.event_creator().create_event_fd_without_timeout(
                         "Front2Client", this, conn_sck,
                         [this, &front, &callback](Event& event) {
                             try {
-                                front_process(rbuf, *front2, front2->get_transport(), callback);
+                                front_process(front2->rbuf, *front2, front2->get_transport(), callback);
                             }
                             catch (...) {
                                 stop(front);
@@ -417,7 +423,7 @@ class Session
                                 return ;
                             }
 
-                            if (REDEMPTION_LIKELY(is_synchronized)) {
+                            if (REDEMPTION_LIKELY(front2->is_synchronized)) {
                                 return ;
                             }
 
@@ -427,7 +433,7 @@ class Session
                                 auto screen = front.get_client_info().screen_info;
                                 callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
                                 // TODO sync locks
-                                is_synchronized = true;
+                                front2->is_synchronized = true;
                             }
                         }
                     );
@@ -1327,7 +1333,7 @@ private:
                      && mod_wrapper.current_mod == ModuleName::RDP
                      && !front2.is_started()
                     ) {
-                        front2.start(events, front, mod_wrapper.get_callback(), rnd);
+                        front2.start(events, front, mod_wrapper.get_callback(), rnd, ini);
                     }
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){
