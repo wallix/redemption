@@ -69,6 +69,8 @@ public:
 
     virtual void set_keyboard_indicators(kbdtypes::KeyLocks key_locks) { (void)key_locks; }
 
+    virtual void send_savesessioninfo() {}
+
     ////////////////////////////////
     // Session Probe.
 
@@ -78,10 +80,6 @@ public:
     virtual void set_focus_on_unidentified_input_field(bool /*unused*/) {}
     virtual void set_consent_ui_visible(bool /*unused*/) {}
     virtual void set_session_locked(bool /*unused*/) {}
-
-    ////////////////////////////////
-    // RemoteApp.
-    virtual void send_savesessioninfo() {}
 
     [[nodiscard]] virtual KeyLayout const& get_keylayout() const
     {

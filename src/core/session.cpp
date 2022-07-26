@@ -298,7 +298,7 @@ class Session
             TpduBuffer rbuf;
             Inifile ini;
 
-            Front2Data(Inifile& original_ini)
+            Front2Data(Inifile const& original_ini)
             {
                 original_ini.copy_variables_to(ini);
             }
@@ -315,7 +315,7 @@ class Session
                 unique_fd conn_sck,
                 EventContainer& event_container,
                 Front& front,
-                Inifile& original_ini,
+                Inifile const& original_ini,
                 UdevRandom& rnd)
             : SocketTransport(
                 "Front2"_sck_name, std::move(conn_sck), ""_av, 0,
@@ -367,7 +367,7 @@ class Session
 
         void start(
             EventContainer& event_container, Front& front, Callback& callback,
-            UdevRandom& rnd, Inifile& original_ini)
+            UdevRandom& rnd, Inifile const& original_ini)
         {
             LOG(LOG_DEBUG, "start");
 
@@ -1329,8 +1329,8 @@ private:
                         front.has_user_activity = false;
                     }
 
-                    if (mod_wrapper.is_up_and_running()
-                     && mod_wrapper.current_mod == ModuleName::RDP
+                    if (mod_wrapper.is_connected()
+                     && mod_wrapper.is_up_and_running()
                      && !front2.is_started()
                     ) {
                         front2.start(events, front, mod_wrapper.get_callback(), rnd, ini);
