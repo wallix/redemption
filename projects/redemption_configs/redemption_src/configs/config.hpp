@@ -316,6 +316,11 @@ public:
         return {*this};
     }
 
+    void copy_variables_to(Inifile& ini) const
+    {
+        ini.variables = variables;
+    }
+
 private:
     struct AuthIdBoolTable
     {
