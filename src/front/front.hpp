@@ -2248,7 +2248,7 @@ public:
     }
 
 
-    void license_packet(bytes_view tpdu, Transport & answer_trans)
+    void license_packet(bytes_view tpdu)
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
             "Front::incoming: WAITING_FOR_ANSWER_TO_LICENSE");
@@ -2372,7 +2372,7 @@ public:
         break;
         }
         // we don't return a license, instead we return a message saying that no license is OK
-        this->send_valid_client_license_data(answer_trans);
+        this->send_valid_client_license_data();
 
         // license packet received, proceed with capabilities exchange
         LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
@@ -2975,7 +2975,7 @@ public:
         break;
 
         case WAITING_FOR_ANSWER_TO_LICENSE:
-            this->license_packet(tpdu, this->trans);
+            this->license_packet(tpdu);
 
             // Capabilities Exchange
             // ---------------------
@@ -3013,49 +3013,36 @@ public:
         }
     }
 
-    void send_valid_client_license_data(Transport & answer_trans) {
-
-        uint16_t channelId = GCC::MCS_GLOBAL_CHANNEL;
-        auto userid = this->userid;
-
+    void send_valid_client_license_data()
+    {
         auto data_writer = [this](StreamSize<24> /*maxlen*/, OutStream & sec_header) {
-                // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+            // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
-                /* some compilers need unsigned char to avoid warnings */
-                uint8_t lic2[16] = {
-                    0xff,                   // bMsgType : ERROR_ALERT
-                    0x02,                   // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
-                    0x10, 0x00,             // wMsgSize: 16 bytes including preamble
-                    0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
-                    0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
-                    0x28, 0x14,             // wBlobType : ignored because wBlobLen is 0
-                    0x00, 0x00              // wBlobLen  : 0
-                };
-                SEC::Sec_Send sec(
-                    sec_header, make_writable_array_view(lic2),
-                    SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0
-                );
-                (void)sec;
-
-                if (bool(this->verbose & Verbose::global_channel)) {
-                    LOG(LOG_INFO, "Front::send_valid_client_license_data: Sec clear payload to send:");
-                    hexdump_d(lic2, sizeof(lic2));
-                }
-
-                sec_header.out_copy_bytes(lic2, sizeof(lic2));
+            /* some compilers need unsigned char to avoid warnings */
+            uint8_t lic2[16] = {
+                0xff,                   // bMsgType : ERROR_ALERT
+                0x02,                   // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
+                0x10, 0x00,             // wMsgSize: 16 bytes including preamble
+                0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
+                0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
+                0x28, 0x14,             // wBlobType : ignored because wBlobLen is 0
+                0x00, 0x00              // wBlobLen  : 0
             };
+            SEC::Sec_Send sec(
+                sec_header, make_writable_array_view(lic2),
+                SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0
+            );
+            (void)sec;
 
-        write_packets(
-            answer_trans,
-            data_writer,
-            [channelId, userid](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_sz) {
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, packet_sz,
-                    MCS::PER_ENCODING
-                );
-                (void)mcs;
-            },
-            X224::write_x224_dt_tpdu_fn{}
-        );
+            if (bool(this->verbose & Verbose::global_channel)) {
+                LOG(LOG_INFO, "Front::send_valid_client_license_data: Sec clear payload to send:");
+                hexdump_d(lic2, sizeof(lic2));
+            }
+
+            sec_header.out_copy_bytes(lic2, sizeof(lic2));
+        };
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, data_writer);
     }
 
     template<class DataWriter>
