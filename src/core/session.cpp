@@ -1760,6 +1760,7 @@ public:
         log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
 
         front.must_be_stop_capture();
+        front2.stop(front);
     }
 
     Session(Session const &) = delete;
