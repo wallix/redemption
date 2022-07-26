@@ -4527,6 +4527,25 @@ public:
     void set_keyboard_indicators(kbdtypes::KeyLocks key_locks) override
     {
         this->keymap.set_locks(key_locks);
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        bool compression_support = bool(this->ini.get<cfg::client::rdp_compression>())
+            ? this->client_info.rdp_compression
+            : false;
+
+        StaticOutStream<4> data;
+
+        data.out_uint16_le(0);
+        data.out_uint16_le(safe_int(key_locks));
+
+        stream.copy_to_head(data.get_produced_bytes());
+
+        ::send_share_data_ex(
+            this->trans, PDUTYPE2_SET_KEYBOARD_INDICATORS, compression_support,
+            this->mppc_enc.get(), this->share_id, this->encryptionLevel,
+            this->encrypt, this->userid, stream,
+            bool(this->verbose & (Verbose::basic_trace | Verbose::sec_decrypted)));
     }
 
 private:
