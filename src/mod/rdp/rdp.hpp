@@ -3445,6 +3445,9 @@ public:
                                         LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                             LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
 
+                                        check_throw(sdata.payload, 4, "PDUTYPE2_SET_KEYBOARD_INDICATORS",
+                                            ERR_STREAM_MEMORY_TOO_SMALL);
+
                                         sdata.payload.in_skip_bytes(2); // UnitId(2)
 
                                         uint16_t LedFlags = sdata.payload.in_uint16_le();
