@@ -315,7 +315,8 @@ class Session
                 EventContainer& event_container,
                 Front& front,
                 Inifile const& original_ini,
-                UdevRandom& rnd)
+                UdevRandom& rnd,
+                std::string_view session_sharing_invitation_id)
             : SocketTransport(
                 "Front2"_sck_name, std::move(conn_sck), ""_av, 0,
                 3s, 3s, 3s, SocketTransport::Verbose()/*TODO debug::session_sharing_front*/, nullptr)
@@ -324,7 +325,8 @@ class Session
                 *this, rnd, get_ini(), cctx, get_ini().get<cfg::client::fast_path>(),
                 Front::GuestParameters{
                     .is_guest = true,
-                    .screen_info = front.get_client_info().screen_info
+                    .screen_info = front.get_client_info().screen_info,
+                    .session_sharing_invitation_id = session_sharing_invitation_id
                 }
             )
             {}
@@ -347,6 +349,7 @@ class Session
 
         std::unique_ptr<Front2> front2;
         unique_fd listen_sck = invalid_fd();
+        std::string session_sharing_invitation_id;
         Event* event = nullptr;
 
         static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
@@ -366,17 +369,23 @@ class Session
 
         void start(
             EventContainer& event_container, Front& front, Callback& callback,
-            UdevRandom& rnd, Inifile const& original_ini)
+            UdevRandom& rnd, Inifile& original_ini)
         {
-            LOG(LOG_DEBUG, "start");
-
             assert(!event);
 
             listen_sck = create_unix_server(sck_patch, EnableTransparentMode::No);
             if (!listen_sck.is_open()) {
-                // TODO
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
+                LOG(LOG_DEBUG, "Front2::start() create server error");
+                original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(checked_int(errno));
+                original_ini.set_acl<cfg::context::session_sharing_invitation_error_message>(strerror(errno));
+                return ;
             }
+
+            original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(0u);
+            // TODO
+            session_sharing_invitation_id = "abc";
+            original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
+            original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_patch);
 
             LOG(LOG_DEBUG, "start ok");
 
@@ -408,7 +417,8 @@ class Session
                     }
 
                     front2 = std::make_unique<Front2>(
-                        unique_fd(conn_sck), event_container, front, original_ini, rnd);
+                        unique_fd(conn_sck), event_container, front, original_ini, rnd,
+                        session_sharing_invitation_id);
 
                     this->event = &event_container.event_creator().create_event_fd_without_timeout(
                         "Front2Client", this, conn_sck,
@@ -427,9 +437,15 @@ class Session
                             }
 
                             if (front2->is_up_and_running()) {
+                                auto const& client_info = front.get_client_info();
+                                if (session_sharing_invitation_id != client_info.password) {
+                                    LOG(LOG_ERR, "Front2: bad credential of session sharing");
+                                    throw Error(ERR_SESSION_SHARING_CREDENTIAL);
+                                }
+
                                 front.copy_caches_to(*front2);
                                 front.add_graphic(*front2);
-                                auto screen = front.get_client_info().screen_info;
+                                auto screen = client_info.screen_info;
                                 callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
                                 // TODO sync locks
                                 front2->is_synchronized = true;
