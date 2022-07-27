@@ -1257,6 +1257,16 @@ private:
                             back_event = std::max(back_event, mod.get_mod_signal());
                         }
                     }
+
+                    if (has_field(cfg::context::session_sharing_type())) {
+                        if (front.is_up_and_running()
+                         && mod_wrapper.is_connected()
+                         && mod_wrapper.is_up_and_running()
+                         && !front2.is_started()
+                        ) {
+                            front2.start(events, front, mod_wrapper.get_callback(), rnd, ini);
+                        }
+                    }
                 }
 
 
@@ -1327,13 +1337,6 @@ private:
                     if (front.has_user_activity) {
                         inactivity.activity();
                         front.has_user_activity = false;
-                    }
-
-                    if (mod_wrapper.is_connected()
-                     && mod_wrapper.is_up_and_running()
-                     && !front2.is_started()
-                    ) {
-                        front2.start(events, front, mod_wrapper.get_callback(), rnd, ini);
                     }
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){
