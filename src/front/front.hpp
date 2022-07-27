@@ -424,7 +424,8 @@ private:
 
             if (ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
                 ini.get<cfg::client::persist_bitmap_cache_on_disk>() &&
-                bmp_cache.has_cache_persistent()) {
+                bmp_cache.has_cache_persistent()
+            ) {
                 // Generates the name of file.
                 char cache_filename[2048];
                 ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/client/PDBC-%s-%d",
@@ -726,6 +727,7 @@ private:
     Rect rail_window_rect;
 
     const bool is_guest;
+    const std::string session_sharing_invitation_id;
 
 public:
     bool is_up_and_running() const noexcept
@@ -849,6 +851,7 @@ public:
     {
         bool is_guest;
         ScreenInfo screen_info;
+        std::string_view session_sharing_invitation_id;
     };
 
     Front( EventContainer& events
@@ -879,6 +882,7 @@ public:
     , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     , is_guest(guest_parameter.is_guest)
+    , session_sharing_invitation_id(guest_parameter.session_sharing_invitation_id)
     {
         client_info.screen_info = guest_parameter.screen_info;
 
