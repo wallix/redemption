@@ -254,8 +254,6 @@ private:
 
         struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU
         {
-            size_t max_data_block_size;
-
             PrivateGraphicsUpdatePDU(
                 OrderCaps & client_order_caps
               , Transport & trans
@@ -275,6 +273,7 @@ private:
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
+              , int& input_front_id
               , RDPSerializerVerbose verbose
             )
             : GraphicsUpdatePDU(
@@ -297,8 +296,8 @@ private:
               , compression
               , verbose
             )
-            , max_data_block_size(max_data_block_size)
             , client_order_caps(client_order_caps)
+            , input_front_id(input_front_id)
             {}
 
             using GraphicsUpdatePDU::draw;
@@ -373,7 +372,15 @@ private:
                 }
             }
 
+            void cached_pointer(gdi::CachePointerIndex cache_idx) override
+            {
+                if (this->input_front_id == 0) {
+                    GraphicsUpdatePDU::cached_pointer(cache_idx);
+                }
+            }
+
             OrderCaps & client_order_caps;
+            int& input_front_id;
         };
 
         PrivateGraphicsUpdatePDU graphics_update_pdu;
@@ -390,6 +397,7 @@ private:
           , size_t max_data_block_size
           , bool fastpath_support
           , rdp_mppc_enc * mppc_enc
+          , int& input_front_id
           , Verbose verbose
         )
         : bmp_cache(
@@ -480,6 +488,7 @@ private:
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
+          , input_front_id
           , safe_cast<RDPSerializerVerbose>(underlying_cast(verbose) >> 16)
         )
         {}
@@ -499,6 +508,7 @@ private:
           , size_t max_data_block_size
           , bool fastpath_support
           , rdp_mppc_enc * mppc_enc
+          , int& input_front_id
           , Verbose verbose
         ) {
             if (this->is_initialized) {
@@ -508,7 +518,7 @@ private:
 
             new (&this->u.graphics) Graphics(
                 client_order_caps, client_info, trans, userid, shareid, encryptionLevel, encrypt,
-                ini, max_data_block_size, fastpath_support, mppc_enc, verbose
+                ini, max_data_block_size, fastpath_support, mppc_enc, input_front_id, verbose
             );
             this->is_initialized = true;
         }
@@ -883,6 +893,7 @@ public:
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     , is_guest(guest_parameter.is_guest)
     , session_sharing_invitation_id(guest_parameter.session_sharing_invitation_id)
+    , input_front_id(guest_parameter.is_guest)
     {
         client_info.screen_info = guest_parameter.screen_info;
 
@@ -1047,6 +1058,7 @@ public:
     void cached_pointer(gdi::CachePointerIndex cache_idx) override
     {
         this->gd->cached_pointer(cache_idx);
+        this->last_pointer_cache_idx = cache_idx;
     }
 
     void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
@@ -1370,6 +1382,7 @@ private:
           , this->max_data_block_size
           , this->server_fastpath_update_support
           , this->mppc_enc.get()
+          , this->input_front_id
           , this->verbose
         );
         this->set_gd(this->get_internal_gd());
@@ -2462,19 +2475,7 @@ public:
                         "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                         me.pointerFlags, me.xPos, me.yPos);
 
-                    this->mouse_x = me.xPos;
-                    this->mouse_y = me.yPos;
-                    if (this->state == FRONT_UP_AND_RUNNING) {
-                        cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos);
-                        this->has_user_activity = true;
-                    }
-
-                    if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
-                                            SlowPath::PTRFLAGS_BUTTON2 |
-                                            SlowPath::PTRFLAGS_BUTTON3)) &&
-                        !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                        this->possible_active_window_change();
-                    }
+                    this->input_mouse(me.xPos, me.yPos, me.pointerFlags, cb);
                 }
                 break;
 
@@ -2487,15 +2488,7 @@ public:
                         "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                         me.pointerFlags, me.xPos, me.yPos);
 
-                    if (this->state == FRONT_UP_AND_RUNNING) {
-                        this->has_user_activity = true;
-                    }
-
-                    if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
-                                            SlowPath::PTRXFLAGS_BUTTON2)) &&
-                        !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                        this->possible_active_window_change();
-                    }
+                    this->input_extended_mouse(me.pointerFlags);
                 }
                 break;
 
@@ -2524,10 +2517,7 @@ public:
                         "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
                         uke.unicodeCode);
 
-                    if (this->state == FRONT_UP_AND_RUNNING) {
-                        cb.rdp_input_unicode(checked_int(uke.spKeyboardFlags), uke.unicodeCode);
-                        this->has_user_activity = true;
-                    }
+                    this->input_event_unicode(checked_int(uke.spKeyboardFlags), uke.unicodeCode, cb);
                 }
                 break;
 
@@ -4114,19 +4104,7 @@ private:
                             LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                                 "Front::process_data: Slow-Path INPUT_EVENT_MOUSE eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
-                            this->mouse_x = me.xPos;
-                            this->mouse_y = me.yPos;
-                            if (this->state == FRONT_UP_AND_RUNNING) {
-                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos);
-                                this->has_user_activity = true;
-                            }
-
-                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
-                                                    SlowPath::PTRFLAGS_BUTTON2 |
-                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
-                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                                this->possible_active_window_change();
-                            }
+                            this->input_mouse(me.xPos, me.yPos, me.pointerFlags, cb);
                         }
                         break;
 
@@ -4137,16 +4115,7 @@ private:
 
                             LOG(LOG_WARNING, "Front::process_data: Unexpected Slow-Path INPUT_EVENT_MOUSEX eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
-
-                            if (this->state == FRONT_UP_AND_RUNNING) {
-                                this->has_user_activity = true;
-                            }
-
-                            if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
-                                                    SlowPath::PTRXFLAGS_BUTTON2)) &&
-                                !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                                this->possible_active_window_change();
-                            }
+                            this->input_extended_mouse(me.pointerFlags);
                         }
                         break;
 
@@ -4174,10 +4143,7 @@ private:
                                 "Front::process_data: Slow-Path INPUT_EVENT_UNICODE eventTime=%u unicodeCode=0x%04X",
                                 ie.eventTime, uke.unicodeCode);
                             // happens when client gets focus and sends key modifier info
-                            if (this->state == FRONT_UP_AND_RUNNING) {
-                                cb.rdp_input_unicode(checked_int(uke.keyboardFlags), uke.unicodeCode);
-                                this->has_user_activity = true;
-                            }
+                            this->input_event_unicode(checked_int(uke.keyboardFlags), uke.unicodeCode, cb);
                         }
                         break;
 
@@ -5175,7 +5141,30 @@ private:
             if (this->ini.get<cfg::client::disable_tsk_switch_shortcuts>() && this->keymap.is_tsk_switch_shortcut()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
-            else {
+            else if (this->front2 && this->keymap.is_session_sharing_take_control()) {
+                this->input_front_id = 0;
+                this->gd->cached_pointer(this->last_pointer_cache_idx);
+                this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+                  ::cached_pointer(PredefinedPointer::SlashedCircle);
+                this->front2->input_front_id = 1;
+                cb.rdp_input_synchronize(this->keymap.locks());
+            }
+            else if (this->front2 && this->keymap.is_session_sharing_give_control()) {
+                this->gd->cached_pointer(PredefinedPointer::SlashedCircle);
+                this->input_front_id = 1;
+                this->front2->input_front_id = 0;
+                this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+                  ::cached_pointer(this->last_pointer_cache_idx);
+                cb.rdp_input_synchronize(this->front2->keymap.locks());
+            }
+            else if (this->front2 && this->keymap.is_session_sharing_common_control()) {
+                this->input_front_id = 0;
+                this->front2->input_front_id = 0;
+                this->gd->cached_pointer(this->last_pointer_cache_idx);
+                this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+                  ::cached_pointer(this->last_pointer_cache_idx);
+            }
+            else if (this->input_front_id == 0) {
                 bool send_to_mod = !this->capture;
                 if (!send_to_mod) {
                     auto const now = this->events_guard.get_monotonic_time();
@@ -5216,6 +5205,52 @@ private:
         }
     }
 
+    void input_event_unicode(RdpInput::KbdFlags flag, uint16_t unicode, Callback & cb)
+    {
+        if (this->state == FRONT_UP_AND_RUNNING) {
+            if (this->input_front_id == 0) {
+                cb.rdp_input_unicode(flag, unicode);
+            }
+            this->has_user_activity = true;
+        }
+    }
+
+    void input_mouse(uint16_t x, uint16_t y, uint16_t pointer_flags, Callback & cb)
+    {
+        this->mouse_x = x;
+        this->mouse_y = y;
+        this->has_user_activity = true;
+
+        if (this->state == FRONT_UP_AND_RUNNING && this->input_front_id == 0) {
+            cb.rdp_input_mouse(pointer_flags, x, y);
+
+            if ((pointer_flags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                  SlowPath::PTRFLAGS_BUTTON2 |
+                                  SlowPath::PTRFLAGS_BUTTON3))
+             && !(pointer_flags & SlowPath::PTRFLAGS_DOWN)
+            ) {
+                this->possible_active_window_change();
+            }
+        }
+    }
+
+    void input_extended_mouse(uint16_t /*pointer_flags*/)
+    {
+        this->has_user_activity = true;
+
+        // if (this->state == FRONT_UP_AND_RUNNING && this->input_front_id == 0) {
+        // }
+
+        // if (this->input_front_id == 0) {
+        //     if ((pointer_flags & (SlowPath::PTRXFLAGS_BUTTON1 |
+        //                           SlowPath::PTRXFLAGS_BUTTON2))
+        //      && !(pointer_flags & SlowPath::PTRXFLAGS_DOWN)
+        //     ) {
+        //         this->possible_active_window_change();
+        //     }
+        // }
+    }
+
     void update_keyboard_input_mask_state() {
         const ::KeyboardInputMaskingLevel keyboard_input_masking_level =
             this->ini.get<cfg::session_log::keyboard_input_masking_level>();
@@ -5237,7 +5272,38 @@ private:
         }
     }
 
+private:
+    // TODO for multi sharing
+    int input_front_id = 0;
+    Front* front2 = nullptr;
+    gdi::CachePointerIndex last_pointer_cache_idx = PredefinedPointer::Normal;
+
 public:
+    void add_guest(Front& front2)
+    {
+        assert(!this->front2);
+
+        this->front2 = &front2;
+        front2.orders.graphics_update_pdu().GraphicsUpdatePDU
+            ::cached_pointer(PredefinedPointer::SlashedCircle);
+        front2.input_front_id = 1;
+
+        this->copy_caches_to(front2);
+        this->add_graphic(front2);
+    }
+
+    void remove_guest(Front& front2)
+    {
+        assert(this->front2 == &front2);
+        this->front2 = nullptr;
+        this->remove_graphic(front2);
+        if (this->input_front_id != 0) {
+            this->input_front_id = 0;
+            this->cached_pointer(this->last_pointer_cache_idx);
+        }
+    }
+
+private:
     void copy_caches_to(Front& front) const
     {
         auto pointers = this->orders.get_raw_pointer_cache().source_pointers_view();

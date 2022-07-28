@@ -103,6 +103,9 @@ struct Keymap
 
     bool is_tsk_switch_shortcut() const noexcept;
     bool is_app_switching_shortcut() const noexcept;
+    bool is_session_sharing_take_control() const noexcept;
+    bool is_session_sharing_give_control() const noexcept;
+    bool is_session_sharing_common_control() const noexcept;
 
     bool is_alt_pressed() const noexcept;
     bool is_ctrl_pressed() const noexcept;

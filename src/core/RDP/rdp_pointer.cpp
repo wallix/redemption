@@ -287,6 +287,149 @@ RdpPointerView pointer_loader_32x32(InStream & stream)
 namespace
 {
 
+// void debug_show_raw_pointer(
+//     BitsPerPixel data_bpp, const BGRPalette & palette,
+//     uint16_t width, uint16_t height,
+//     const uint8_t * xor_mask_data, const uint8_t * and_mask_data)
+// {
+//     switch (data_bpp)
+//     {
+//     case BitsPerPixel{1}:
+//     {
+//         LOG(LOG_INFO, "debug_show_raw_pointer(): 1 bit par pixel curosor");
+//
+//         {
+//             const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(width));
+//             const uint8_t * src_last_line       = xor_mask_data + ((height-1) * src_line_bytes);
+//
+//             for (unsigned int i = 0; i < height; ++i) {
+//                 std::string debug_data;
+//                 const uint8_t* src  = src_last_line - i * src_line_bytes;
+//
+//                 unsigned char bit_count = 7;
+//                 for (unsigned int j = 0; j < width ; ++j) {
+//                     unsigned databit = *src & (1 << bit_count);
+//                     if (databit) {
+//                         debug_data += "X";
+//                     }
+//                     else {
+//                         debug_data += ".";
+//                     }
+//                     src       = src + ((bit_count==0)?1:0);
+//                     bit_count = (bit_count - 1) & 7;
+//                 }
+//                 LOG(LOG_INFO, "%s", debug_data.c_str());
+//             }
+//         }
+//
+//         {
+//             const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
+//             const uint8_t * src_last_mask_line  = and_mask_data + ((height-1) * src_mask_line_bytes);
+//
+//             for (unsigned int i = 0; i < height; ++i) {
+//                 std::string debug_data;
+//                 const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
+//
+//                 unsigned char mask_bit_count = 7;
+//                 for (unsigned int j = 0; j < width ; ++j) {
+//                     unsigned databit = *src_mask & (1 << mask_bit_count);
+//                     if (databit) {
+//                         debug_data += "M";
+//                     }
+//                     else {
+//                         debug_data += ".";
+//                     }
+//                     src_mask       = src_mask + ((mask_bit_count==0) ? 1 : 0);
+//                     mask_bit_count = (mask_bit_count - 1) & 7;
+//                 }
+//                 LOG(LOG_INFO, "%s", debug_data.c_str());
+//             }
+//         }
+//     }
+//     break;
+//
+//     case BitsPerPixel{4}:
+//     // {
+//     //     for (unsigned i = 0; i < length_xor_mask ; i++) {
+//     //         const uint8_t px = xor_mask_data[i];
+//     //         // target cursor will receive 8 bits input at once
+//     //         ::out_bytes_le(cursor_data + 6 * i,     3, palette[(px >> 4) & 0xF].as_u32());
+//     //         ::out_bytes_le(cursor_data + 6 * i + 3, 3, palette[ px       & 0xF].as_u32());
+//     //     }
+//     //     memcpy(cursor_mask, and_mask_data, length_and_mask);
+//     // }
+//     break;
+//
+//     case BitsPerPixel{8}:
+//     case BitsPerPixel{15}:
+//     case BitsPerPixel{16}:
+//     case BitsPerPixel{24}:
+//     case BitsPerPixel{32}:
+//     {
+//         LOG(LOG_INFO, "debug_show_raw_pointer(): %u bits par pixel curosor", data_bpp);
+//
+//         uint8_t BPP = nb_bytes_per_pixel(data_bpp);
+//         const unsigned int src_xor_line_length_in_byte = width * BPP;
+//         const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
+//
+//         for (unsigned int i0 = 0; i0 < height; ++i0) {
+//             std::string debug_data;
+//             const uint8_t* src  = xor_mask_data + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
+//
+//             for (unsigned int i1 = 0; i1 < width; ++i1) {
+//                 RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
+//                 src += BPP;
+//                 if (color_decode(px, data_bpp, palette).as_u32()) {
+//                     debug_data += "X";
+//                 }
+//                 else {
+//                     debug_data += ".";
+//                 }
+//             }
+//             LOG(LOG_INFO, "%s", debug_data.c_str());
+//         }
+//
+//         {
+//             const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
+//             const uint8_t * src_last_mask_line  = and_mask_data + ((height-1) * src_mask_line_bytes);
+//
+//             for (unsigned int i = 0; i < height; ++i) {
+//                 std::string debug_data;
+//                 const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
+//
+//                 unsigned char mask_bit_count = 7;
+//                 for (unsigned int j = 0; j < width ; ++j) {
+//                     unsigned databit = *src_mask & (1 << mask_bit_count);
+//                     if (databit) {
+//                         debug_data += "M";
+//                     }
+//                     else {
+//                         debug_data += ".";
+//                     }
+//                     src_mask       = src_mask + ((mask_bit_count==0) ? 1 : 0);
+//                     mask_bit_count = (mask_bit_count - 1) & 7;
+//                 }
+//                 LOG(LOG_INFO, "%s", debug_data.c_str());
+//             }
+//         }
+//     }
+//     break;
+//     default:
+//         // TODO : force some cursor if that happen
+//         LOG(LOG_INFO, "debug_show_raw_pointer(): color depth not supported %u", data_bpp);
+//     break;
+//     }
+// }
+//
+// void debug_show_raw_pointer(RdpPointerView const& cursor)
+// {
+//     debug_show_raw_pointer(
+//         cursor.xor_bits_per_pixel(), BGRPalette::classic_332(),
+//         cursor.dimensions().width, cursor.dimensions().height,
+//         cursor.xor_mask().data(), cursor.and_mask().data()
+//     );
+// }
+
 constexpr RdpPointer predefined_pointer(
     const uint16_t width, const uint16_t height, const char * def,
     const uint16_t hsx, const uint16_t hsy)
@@ -651,6 +794,42 @@ constexpr auto system_normal_pointer_v = predefined_pointer(32, 32,
     , 10, 10
 );
 
+constexpr auto slashed_circle_pointer_v = predefined_pointer(32, 32,
+    /* 0000 */ "................................"
+    /* 0060 */ "............XXXXXXXX............"
+    /* 00c0 */ "..........XX++++++++XX.........."
+    /* 0120 */ "........XX++++++++++++XX........"
+    /* 0180 */ ".......X++++++++++++++++X......."
+    /* 01e0 */ "......X++++++XXXXXX++++++X......"
+    /* 0240 */ ".....X+++++XX......XX+++++X....."
+    /* 02a0 */ "....X++++XX.........X++++++X...."
+    /* 0300 */ "...X++++X..........X++++++++X..."
+    /* 0360 */ "...X+++X..........X++++X++++X..."
+    /* 03c0 */ "..X++++X.........X+++++XX++++X.."
+    /* 0420 */ "..X+++X.........X+++++X..X+++X.."
+    /* 0480 */ ".X+++X.........X+++++X...X++++X."
+    /* 04e0 */ ".X+++X........X+++++X.....X+++X."
+    /* 0540 */ ".X+++X.......X+++++X......X+++X."
+    /* 05a0 */ ".X+++X......X+++++X.......X+++X."
+    /* 0600 */ ".X+++X.....X+++++X........X+++X."
+    /* 0660 */ ".X+++X....X+++++X.........X+++X."
+    /* 06c0 */ ".X+++X...X+++++X..........X+++X."
+    /* 0720 */ ".X++++X.X+++++X..........X++++X."
+    /* 0780 */ "..X+++XX+++++X...........X+++X.."
+    /* 07e0 */ "..X+++++++++X...........X++++X.."
+    /* 0840 */ "...X+++++++X............X+++X..."
+    /* 08a0 */ "...X++++++X............X++++X..."
+    /* 0900 */ "....X+++++X..........XX++++X...."
+    /* 0960 */ ".....X+++++X.......XX+++++X....."
+    /* 09c0 */ "......X+++++XXXXXXX++++++X......"
+    /* 0a20 */ ".......X++++++++++++++++X......."
+    /* 0a80 */ "........XX++++++++++++XX........"
+    /* 0ae0 */ "..........XX++++++++XX.........."
+    /* 0b40 */ "............XXXXXXXX............"
+    /* 0ba0 */ "................................"
+    , 15, 16
+);
+
 } // anonymous namespace
 
 RdpPointer const& normal_pointer() noexcept { return normal_pointer_v; }
@@ -662,12 +841,14 @@ RdpPointer const& size_WE_pointer() noexcept { return size_WE_pointer_v; }
 RdpPointer const& dot_pointer() noexcept { return dot_pointer_v; }
 RdpPointer const& null_pointer() noexcept { return null_pointer_v; }
 RdpPointer const& system_normal_pointer() noexcept { return system_normal_pointer_v; }
+RdpPointer const& slashed_circle_pointer() noexcept { return slashed_circle_pointer_v; }
 
 RdpPointer const& predefined_pointer_to_pointer(PredefinedPointer pointer) noexcept
 {
     switch (pointer)
     {
         case PredefinedPointer::SystemNormal: return system_normal_pointer();
+        case PredefinedPointer::SlashedCircle: return slashed_circle_pointer();
         case PredefinedPointer::Edit: return edit_pointer();
         case PredefinedPointer::Null: return null_pointer();
         case PredefinedPointer::Dot:  return dot_pointer();

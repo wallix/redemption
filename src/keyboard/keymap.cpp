@@ -323,6 +323,24 @@ bool Keymap::is_app_switching_shortcut() const noexcept
     return alt_01u(_key_mods) || ctrl_01u(_key_mods, rctrl_is_ctrl);
 }
 
+bool Keymap::is_session_sharing_take_control() const noexcept
+{
+    return _decoded_key.keycode == KeyCode::F9
+        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+}
+
+bool Keymap::is_session_sharing_give_control() const noexcept
+{
+    return _decoded_key.keycode == KeyCode::F10
+        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+}
+
+bool Keymap::is_session_sharing_common_control() const noexcept
+{
+    return _decoded_key.keycode == KeyCode::F11
+        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+}
+
 bool Keymap::is_alt_pressed() const noexcept
 {
     return bool(alt_01u(_key_mods));
