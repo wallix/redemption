@@ -444,7 +444,6 @@ class Session
                                     throw Error(ERR_SESSION_SHARING_CREDENTIAL);
                                 }
 
-                                // TODO sync locks
                                 front2->is_synchronized = true;
                                 front.add_guest(*front2);
                                 auto screen = client_info.screen_info;
