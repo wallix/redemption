@@ -296,6 +296,7 @@ RdpPointer const& size_WE_pointer() noexcept;
 RdpPointer const& dot_pointer() noexcept;
 RdpPointer const& null_pointer() noexcept;
 RdpPointer const& system_normal_pointer() noexcept;
+RdpPointer const& slashed_circle_pointer() noexcept;
 
 enum class PredefinedPointer : uint8_t
 {
@@ -308,6 +309,7 @@ enum class PredefinedPointer : uint8_t
     NESW,
     NWSE,
     WE,
+    SlashedCircle,
 
     COUNT,
 };

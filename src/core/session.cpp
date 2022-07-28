@@ -444,12 +444,11 @@ class Session
                                     throw Error(ERR_SESSION_SHARING_CREDENTIAL);
                                 }
 
-                                front.copy_caches_to(*front2);
-                                front.add_graphic(*front2);
-                                auto screen = client_info.screen_info;
-                                callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
                                 // TODO sync locks
                                 front2->is_synchronized = true;
+                                front.add_guest(*front2);
+                                auto screen = client_info.screen_info;
+                                callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
                             }
                         }
                     );
@@ -470,7 +469,10 @@ class Session
             }
 
             if (front2) {
-                front.remove_graphic(*front2);
+                if (front2->is_synchronized) {
+                    front.remove_guest(*front2);
+                }
+
                 try {
                     front2->get_front().disconnect();
                     front2->get_transport().disconnect();
