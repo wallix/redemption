@@ -105,6 +105,7 @@
 #include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_dispatcher.hpp"
+#include "gdi/screen_functions.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "transport/file_transport.hpp"
@@ -5127,6 +5128,53 @@ public:
     }
 
 private:
+    void session_sharing_take_control(Callback & cb)
+    {
+        this->input_front_id = 0;
+        this->gd->cached_pointer(this->last_pointer_cache_idx);
+        this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+            ::cached_pointer(PredefinedPointer::SlashedCircle);
+        this->front2->input_front_id = 1;
+        cb.rdp_input_synchronize(this->keymap.locks());
+    }
+
+    void session_sharing_give_control(Callback & cb)
+    {
+        this->gd->cached_pointer(PredefinedPointer::SlashedCircle);
+        this->input_front_id = 1;
+        this->front2->input_front_id = 0;
+        this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+            ::cached_pointer(this->last_pointer_cache_idx);
+        cb.rdp_input_synchronize(this->front2->keymap.locks());
+    }
+
+    void session_sharing_common_control()
+    {
+        this->input_front_id = 0;
+        this->front2->input_front_id = 0;
+        this->gd->cached_pointer(this->last_pointer_cache_idx);
+        this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+            ::cached_pointer(this->last_pointer_cache_idx);
+    }
+
+    void session_sharing_toggle_graphics(Callback & cb)
+    {
+        if (this->front2->front2_old_gd) {
+            this->front2->set_gd(this->front2->front2_old_gd);
+            this->front2->front2_old_gd = nullptr;
+            cb.rdp_input_invalidate({0, 0, client_info.screen_info.width, client_info.screen_info.height});
+        }
+        else {
+            auto& gd = this->front2->orders.graphics_update_pdu();
+            gdi_freeze_screen(gd, {client_info.screen_info.width, client_info.screen_info.height});
+            this->session_sharing_take_control(cb);
+            gd.sync();
+            this->front2->null_gd_with_new_pointer.gd = &gd;
+            this->front2->front2_old_gd = this->front2->gd;
+            this->front2->set_gd(this->front2->null_gd_with_new_pointer);
+        }
+    }
+
     void input_event_scancode(
         Keymap::KbdFlags kbdFlags, Keymap::Scancode scancode,
         Callback & cb, uint32_t event_time
@@ -5141,37 +5189,33 @@ private:
             if (this->ini.get<cfg::client::disable_tsk_switch_shortcuts>() && this->keymap.is_tsk_switch_shortcut()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
-            else if (this->front2 && this->keymap.is_session_sharing_take_control()) {
-                this->input_front_id = 0;
-                this->gd->cached_pointer(this->last_pointer_cache_idx);
-                this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
-                  ::cached_pointer(PredefinedPointer::SlashedCircle);
-                this->front2->input_front_id = 1;
-                cb.rdp_input_synchronize(this->keymap.locks());
+            else if (this->front2 && !this->front2->front2_old_gd
+                  && this->keymap.is_session_sharing_take_control()
+            ) {
+                this->session_sharing_take_control(cb);
             }
-            else if (this->front2 && this->keymap.is_session_sharing_give_control()) {
-                this->gd->cached_pointer(PredefinedPointer::SlashedCircle);
-                this->input_front_id = 1;
-                this->front2->input_front_id = 0;
-                this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
-                  ::cached_pointer(this->last_pointer_cache_idx);
-                cb.rdp_input_synchronize(this->front2->keymap.locks());
+            else if (this->front2 && !this->front2->front2_old_gd
+                  && this->keymap.is_session_sharing_give_control()
+            ) {
+                this->session_sharing_give_control(cb);
             }
-            else if (this->front2 && this->keymap.is_session_sharing_common_control()) {
-                this->input_front_id = 0;
-                this->front2->input_front_id = 0;
-                this->gd->cached_pointer(this->last_pointer_cache_idx);
-                this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
-                  ::cached_pointer(this->last_pointer_cache_idx);
+            else if (this->front2 && !this->front2->front2_old_gd
+                  && this->keymap.is_session_sharing_common_control()
+            ) {
+                this->session_sharing_common_control();
             }
             else if (this->front2 && this->keymap.is_session_sharing_kill_guest()) {
                 this->front2->disconnect();
+            }
+            else if (this->front2 && this->keymap.is_session_sharing_toggle_graphics()) {
+                this->session_sharing_toggle_graphics(cb);
             }
             else if (this->input_front_id == 0) {
                 bool send_to_mod = !this->capture;
                 if (!send_to_mod) {
                     auto const now = this->events_guard.get_monotonic_time();
                     auto const& uchars = decoded_keys.uchars;
+                    LOG(LOG_DEBUG, "%d %d", uchars[0], uchars[1]);
                     if (uchars[0] && uchars[1]) {
                         send_to_mod = this->capture->kbd_input(now, uchars[0])
                                    || this->capture->kbd_input(now, uchars[1]);
@@ -5276,6 +5320,18 @@ private:
     }
 
 private:
+    struct NullGdWithNewPointer : gdi::NullGraphic
+    {
+        void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+        {
+            this->gd->new_pointer(cache_idx, cursor);
+        }
+
+        gdi::GraphicApi* gd = nullptr;
+    };
+
+    gdi::GraphicApi* front2_old_gd = nullptr;
+    NullGdWithNewPointer null_gd_with_new_pointer;
     // TODO for multi sharing
     int input_front_id = 0;
     Front* front2 = nullptr;
