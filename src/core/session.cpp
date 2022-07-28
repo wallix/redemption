@@ -332,7 +332,7 @@ class Session
             )
             {}
 
-            Transport& get_transport()
+            SocketTransport& get_transport()
             {
                 return *this;
             }
@@ -488,7 +488,7 @@ class Session
     Inifile & ini;
     PidFile & pid_file;
     SessionVerbose verbose;
-    Front2Ctx front2;
+    Front2Ctx front2_ctx;
 
 private:
     enum class EndSessionResult
@@ -663,7 +663,7 @@ private:
             LOG(LOG_INFO, "Exited from target connection");
             mod_wrapper.disconnect();
             front.must_be_stop_capture();
-            front2.stop(front);
+            front2_ctx.stop(front);
             secondary_session.close_secondary_session();
         }
         else {
@@ -1094,23 +1094,36 @@ private:
                 loop_state = LoopState::Select;
 
                 auto* pmod_trans = mod_wrapper.get_mod_transport();
-                const bool front_has_data_to_write    = front_trans.has_data_to_write();
-                const bool front_has_tls_pending_data = front_trans.has_tls_pending_data();
-                const bool mod_trans_is_valid         = pmod_trans
-                                                     && pmod_trans->get_fd() != INVALID_SOCKET;
-                const bool mod_has_data_to_write      = mod_trans_is_valid
-                                                     && pmod_trans->has_data_to_write();
-                const bool mod_has_tls_pending_data   = mod_trans_is_valid
-                                                     && pmod_trans->has_tls_pending_data();
+                const bool front_has_data_to_write     = front_trans.has_data_to_write();
+                const bool front_has_tls_pending_data  = front_trans.has_tls_pending_data();
+                const bool front2_has_data_to_write    = front2_ctx.front2
+                                                      && front2_ctx.front2->get_transport().has_data_to_write();
+                const bool front2_has_tls_pending_data = front2_ctx.front2
+                                                      && front2_ctx.front2->get_transport().has_tls_pending_data();
+                const bool mod_trans_is_valid          = pmod_trans
+                                                      && pmod_trans->get_fd() != INVALID_SOCKET;
+                const bool mod_has_data_to_write       = mod_trans_is_valid
+                                                      && pmod_trans->has_data_to_write();
+                const bool mod_has_tls_pending_data    = mod_trans_is_valid
+                                                      && pmod_trans->has_tls_pending_data();
 
                 Select ioswitch;
 
                 // writing pending, do not read anymore (excepted acl)
-                if (REDEMPTION_UNLIKELY(mod_has_data_to_write || front_has_data_to_write)) {
+                if (REDEMPTION_UNLIKELY(mod_has_data_to_write
+                                     || front_has_data_to_write
+                                     || front2_has_data_to_write)
+                ) {
                     if (front_has_data_to_write) {
                         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                             LOG_INFO, "Session: Front has data to write");
                         ioswitch.set_write_sck(front_trans.get_fd());
+                    }
+
+                    if (front2_has_data_to_write) {
+                        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                            LOG_INFO, "Session: Front2 has data to write");
+                        ioswitch.set_write_sck(front2_ctx.front2->get_transport().get_fd());
                     }
 
                     if (mod_has_data_to_write) {
@@ -1126,7 +1139,7 @@ private:
                 ioswitch.set_read_sck(auth_sck);
 
                 if (ioswitch.select(NextDelay(
-                    mod_has_tls_pending_data || front_has_tls_pending_data,
+                    mod_has_tls_pending_data || front_has_tls_pending_data || front2_has_tls_pending_data,
                     event_manager
                 ).timeout()) < 0) {
                     if (errno != EINTR) {
@@ -1139,6 +1152,12 @@ private:
                         break;
                     }
                     continue;
+                }
+
+                if (front2_has_tls_pending_data) {
+                    LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                        LOG_INFO, "Session: Front2 has tls pending data");
+                    ioswitch.set_read_sck(front2_ctx.front2->get_transport().get_fd());
                 }
 
                 if (front_has_tls_pending_data) {
@@ -1174,9 +1193,17 @@ private:
 
                 loop_state = LoopState::Front;
 
-                if (REDEMPTION_UNLIKELY(front_has_data_to_write)) {
-                    if (ioswitch.is_set_for_writing(front_trans.get_fd())) {
-                        front_trans.send_waiting_data();
+                if (REDEMPTION_UNLIKELY(front_has_data_to_write || front2_has_data_to_write)) {
+                    if (front_has_data_to_write) {
+                        if (ioswitch.is_set_for_writing(front_trans.get_fd())) {
+                            front_trans.send_waiting_data();
+                        }
+                    }
+
+                    if (front2_has_data_to_write) {
+                        if (ioswitch.is_set_for_writing(front2_ctx.front2->get_transport().get_fd())) {
+                            front_trans.send_waiting_data();
+                        }
                     }
                 }
                 else if (ioswitch.is_set_for_reading(front_trans.get_fd())) {
@@ -1279,9 +1306,9 @@ private:
                         if (front.is_up_and_running()
                          && mod_wrapper.is_connected()
                          && mod_wrapper.is_up_and_running()
-                         && !front2.is_started()
+                         && !front2_ctx.is_started()
                         ) {
-                            front2.start(events, front, mod_wrapper.get_callback(), rnd, ini);
+                            front2_ctx.start(events, front, mod_wrapper.get_callback(), rnd, ini);
                         }
                     }
                 }
@@ -1780,7 +1807,7 @@ public:
         log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
 
         front.must_be_stop_capture();
-        front2.stop(front);
+        front2_ctx.stop(front);
     }
 
     Session(Session const &) = delete;
