@@ -5164,6 +5164,9 @@ private:
                 this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
                   ::cached_pointer(this->last_pointer_cache_idx);
             }
+            else if (this->front2 && this->keymap.is_session_sharing_kill_guest()) {
+                this->front2->disconnect();
+            }
             else if (this->input_front_id == 0) {
                 bool send_to_mod = !this->capture;
                 if (!send_to_mod) {

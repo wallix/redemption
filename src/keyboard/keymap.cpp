@@ -341,6 +341,12 @@ bool Keymap::is_session_sharing_common_control() const noexcept
         && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
 }
 
+bool Keymap::is_session_sharing_kill_guest() const noexcept
+{
+    return _decoded_key.keycode == KeyCode::F5
+        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+}
+
 bool Keymap::is_alt_pressed() const noexcept
 {
     return bool(alt_01u(_key_mods));
