@@ -2419,6 +2419,24 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
     RED_CHECK(report_message.is_killed);
 }
 
+RED_AUTO_TEST_CASE(TestKbdEnableWithoutPattern)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    test_capture_context("resizing-capture-1", CaptureFlags::ocr,
+        800, 600, record_wd, hash_wd,
+        KbdLogParams{true, false, false, false},
+        [](Capture& capture, Rect /*scr*/) {
+            MonotonicTimePoint now{1000s};
+            capture.kbd_input(now, 95);
+        }
+    );
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
+}
+
 RED_AUTO_TEST_CASE(TestSample0WRM)
 {
     int fd = ::open(FIXTURES_PATH "/sample0.wrm", O_RDONLY);
