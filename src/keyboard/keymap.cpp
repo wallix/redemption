@@ -326,24 +326,35 @@ bool Keymap::is_app_switching_shortcut() const noexcept
 bool Keymap::is_session_sharing_take_control() const noexcept
 {
     return _decoded_key.keycode == KeyCode::F9
+        && !bool(_decoded_key.flags & KbdFlags::Release)
         && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
 }
 
 bool Keymap::is_session_sharing_give_control() const noexcept
 {
     return _decoded_key.keycode == KeyCode::F10
+        && !bool(_decoded_key.flags & KbdFlags::Release)
         && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
 }
 
 bool Keymap::is_session_sharing_common_control() const noexcept
 {
     return _decoded_key.keycode == KeyCode::F11
+        && !bool(_decoded_key.flags & KbdFlags::Release)
         && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
 }
 
 bool Keymap::is_session_sharing_kill_guest() const noexcept
 {
     return _decoded_key.keycode == KeyCode::F5
+        && !bool(_decoded_key.flags & KbdFlags::Release)
+        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+}
+
+bool Keymap::is_session_sharing_toggle_graphics() const noexcept
+{
+    return _decoded_key.keycode == KeyCode::F8
+        && !bool(_decoded_key.flags & KbdFlags::Release)
         && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
 }
 
