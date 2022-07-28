@@ -259,7 +259,7 @@ public:
 
     [[nodiscard]] bool has_pattern() const
     {
-        return !this->patterns.has_pattern();
+        return this->patterns.has_pattern();
     }
 
     bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override
@@ -513,7 +513,7 @@ public:
 
     [[nodiscard]] bool has_pattern() const
     {
-        return !this->patterns.has_pattern();
+        return this->patterns.has_pattern();
     }
 
     void title_changed(chars_view str)
