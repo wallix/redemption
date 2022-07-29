@@ -89,11 +89,6 @@ SessionVerbose operator & (SessionVerbose x, SessionVerbose y) noexcept
 
 class Session
 {
-    SessionVerbose verbose() const
-    {
-        return safe_cast<SessionVerbose>(this->ini.get<cfg::debug::session>());
-    }
-
     struct AclReport final : AclReportApi
     {
         AclReport(Inifile& ini) : ini(ini) {}
@@ -285,6 +280,7 @@ class Session
 
     Inifile & ini;
     PidFile & pid_file;
+    SessionVerbose verbose;
 
 private:
     enum class EndSessionResult
@@ -449,7 +445,7 @@ private:
         Front& front, ClientExecute& rail_client_execute,
         EventManager& event_manager)
     {
-        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+        LOG_IF(bool(this->verbose & SessionVerbose::Trace),
             LOG_INFO, "Current Mod is %s Previous %s",
             get_module_name(mod_wrapper.current_mod),
             get_module_name(next_state)
@@ -771,7 +767,7 @@ private:
             event_manager.set_time_base(current_time_base());
             event_manager.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
-                bool(this->verbose() & SessionVerbose::Event));
+                bool(this->verbose & SessionVerbose::Event));
 
             if (num) {
                 assert(io_fd_isset(sck, fds));
@@ -812,7 +808,7 @@ private:
             str_append(username, '@', domain);
         }
 
-        LOG_IF(bool(this->verbose() & SessionVerbose::Trace), LOG_INFO,
+        LOG_IF(bool(this->verbose & SessionVerbose::Trace), LOG_INFO,
             "Session::flush_acl_auth_info(auth_user=%s)", username);
 
         this->ini.set_acl<cfg::globals::auth_user>(username);
@@ -839,7 +835,7 @@ private:
         ModWrapper& mod_wrapper, ModFactory& mod_factory
     )
     {
-        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+        LOG_IF(bool(this->verbose & SessionVerbose::Trace),
             LOG_INFO, "Session: Main loop");
 
         assert(auth_sck != INVALID_SOCKET);
@@ -906,13 +902,13 @@ private:
                 // writing pending, do not read anymore (excepted acl)
                 if (REDEMPTION_UNLIKELY(mod_has_data_to_write || front_has_data_to_write)) {
                     if (front_has_data_to_write) {
-                        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                        LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                             LOG_INFO, "Session: Front has data to write");
                         ioswitch.set_write_sck(front_trans.get_fd());
                     }
 
                     if (mod_has_data_to_write) {
-                        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                        LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                             LOG_INFO, "Session: Mod has data to write");
                         ioswitch.set_write_sck(pmod_trans->get_fd());
                     }
@@ -940,13 +936,13 @@ private:
                 }
 
                 if (front_has_tls_pending_data) {
-                    LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                    LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                         LOG_INFO, "Session: Front has tls pending data");
                     ioswitch.set_read_sck(front_trans.get_fd());
                 }
 
                 if (mod_has_tls_pending_data) {
-                    LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                    LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                         LOG_INFO, "Session: Mod has tls pending data");
                     ioswitch.set_read_sck(pmod_trans->get_fd());
                 }
@@ -1087,14 +1083,14 @@ private:
 
                     event_manager.execute_events(
                         [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd); },
-                        bool(this->verbose() & SessionVerbose::Event));
+                        bool(this->verbose & SessionVerbose::Event));
 
                     back_event = mod_wrapper.get_mod_signal();
                 }
                 else {
                     event_manager.execute_events(
                         [](int /*fd*/){ return false; },
-                        bool(this->verbose() & SessionVerbose::Event));
+                        bool(this->verbose & SessionVerbose::Event));
                 }
 
 
@@ -1370,6 +1366,7 @@ public:
     Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool prevent_early_log)
     : ini(ini)
     , pid_file(pid_file)
+    , verbose(safe_cast<SessionVerbose>(ini.get<cfg::debug::session>()))
     {
         CryptoContext cctx;
         UdevRandom rnd;
@@ -1409,7 +1406,7 @@ public:
         TpduBuffer rbuf;
         int auth_sck = INVALID_SOCKET;
 
-        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+        LOG_IF(bool(this->verbose & SessionVerbose::Trace),
             LOG_INFO, "Session: Wait front.is_up_and_running()");
 
         try {
