@@ -793,6 +793,38 @@ private:
         }
     }
 
+    void acl_auth_info(ClientInfo const& client_info)
+    {
+        LOG(LOG_INFO, "Session: Keyboard Layout = 0x%x", client_info.keylayout);
+        this->ini.set_acl<cfg::client::keyboard_layout>(safe_int(client_info.keylayout));
+
+        this->ini.set_acl<cfg::context::opt_width>(client_info.screen_info.width);
+        this->ini.set_acl<cfg::context::opt_height>(client_info.screen_info.height);
+        this->ini.set_acl<cfg::context::opt_bpp>(safe_int(client_info.screen_info.bpp));
+
+        std::string username = client_info.username;
+        std::string_view domain = client_info.domain;
+        std::string_view password = client_info.password;
+        if (not domain.empty()
+         && username.find('@') == std::string::npos
+         && username.find('\\') == std::string::npos
+        ) {
+            str_append(username, '@', domain);
+        }
+
+        LOG_IF(bool(this->verbose() & SessionVerbose::Trace), LOG_INFO,
+            "Session::flush_acl_auth_info(auth_user=%s)", username);
+
+        this->ini.set_acl<cfg::globals::auth_user>(username);
+        this->ini.ask<cfg::context::selector>();
+        this->ini.ask<cfg::globals::target_user>();
+        this->ini.ask<cfg::globals::target_device>();
+        this->ini.ask<cfg::context::target_protocol>();
+        if (!password.empty()) {
+            this->ini.set_acl<cfg::context::password>(password);
+        }
+    }
+
     enum class EndLoopState
     {
         ImmediateDisconnection,
@@ -1438,6 +1470,8 @@ public:
 
             return ;
         }
+
+        this->acl_auth_info(front.get_client_info());
 
         try {
             Theme theme;
