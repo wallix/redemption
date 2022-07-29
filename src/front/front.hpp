@@ -1062,7 +1062,6 @@ public:
                : BitsPerPixel{24};
     }
 
-    // ===========================================================================
     bool can_be_start_capture(SessionLogApi & session_log) override
     {
         using namespace std::literals::chrono_literals;
@@ -1111,6 +1110,8 @@ public:
         }
 
         bool const capture_pattern_checker = this->has_ocr_pattern_check();
+
+        // Must be synchronized with SessionFront::can_be_start_capture()
 
         CaptureFlags const capture_flags =
             (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
@@ -1204,14 +1205,6 @@ public:
            });
 
         this->update_keyboard_input_mask_state();
-
-        if (capture_wrm) {
-            this->ini.set_acl<cfg::context::recording_started>(true);
-        }
-
-        if (capture_png && !this->ini.get<cfg::context::rt_ready>()){
-            this->ini.set_acl<cfg::context::rt_ready>(true);
-        }
 
         for (auto&& kv_event : this->session_update_buffer) {
             this->capture->session_update(kv_event.time, kv_event.id, kv_event.kv_list);
