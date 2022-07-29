@@ -45,13 +45,13 @@ public:
     Krb5Creds()
     {
         krb5_error_code ret;
-        
+
         // initialize context
         ret = krb5_init_context(&this->ctx);
         if (ret)
         {
             LOG(LOG_ERR, "Failed to initialize Kerberos context");
-        }   
+        }
     }
 
     ~Krb5Creds()
@@ -80,7 +80,7 @@ public:
             LOG(LOG_ERR, "Failed to allocate initial credentials options structure (%d)", ret);
 
             goto cleanup;
-        } 
+        }
 
         // resolve keytab
         if (keytab_name)
@@ -111,7 +111,7 @@ public:
             LOG(LOG_ERR, "Failed to resolve cache name");
 
             goto cleanup;
-        } 
+        }
 
         // configure FAST
         ret = configure_fast(fast_cache_name, opts);
@@ -149,9 +149,9 @@ public:
 
             goto cleanup;
         }
-        
+
         LOG(LOG_INFO, "Credentials cached to %s", cache_name ? cache_name : "default cache");
-        
+
     cleanup:
         if (opts) krb5_get_init_creds_opt_free(this->ctx, opts);
         if (ccache) krb5_cc_close(this->ctx, ccache);
@@ -178,7 +178,7 @@ public:
             LOG(LOG_ERR, "Failed to allocate initial credentials options structure (%d)", ret);
 
             goto cleanup;
-        } 
+        }
 
         // resolve cache name
         ret = resolve_cache_name(cache_name, &ccache);
@@ -187,7 +187,7 @@ public:
             LOG(LOG_ERR, "Failed to resolve cache name");
 
             goto cleanup;
-        } 
+        }
 
         // configure FAST
         ret = configure_fast(fast_cache_name, opts);
@@ -226,7 +226,7 @@ public:
 
             goto cleanup;
         }
-        
+
         LOG(LOG_INFO, "Credentials cached to %s", cache_name ? cache_name : "default cache");
 
     cleanup:
@@ -250,7 +250,7 @@ public:
             LOG(LOG_ERR, "Failed to resolve cache name");
 
             return ret;
-        } 
+        }
 
         // destroy credentials cache
         ret = krb5_cc_destroy(this->ctx, ccache);
@@ -345,7 +345,7 @@ private:
         if (ret)
         {
             LOG(LOG_ERR, "Failed to parse principal name '%s' (%d)", principal_name, ret);
-            
+
             return ret;
         }
 
@@ -406,9 +406,10 @@ private:
 // };
 
 
-inline gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc()
+inline gss_OID_desc gss_spnego_krb5_mechanism_oid_desc()
 {
-    return { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) }; /*NOLINT*/
+    void const* oid = "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02";
+    return { 9, const_cast<void *>(oid) }; /*NOLINT*/
 }
 
 // SecPkgContext_Sizes ContextSizes;

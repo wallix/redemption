@@ -283,7 +283,7 @@ class rdpCredsspServerKerberos final
             input_tok.length = input_buffer.size();
             input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-            gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+            gss_OID_desc desired_mech = gss_spnego_krb5_mechanism_oid_desc();
             if (!this->mech_available(&desired_mech)) {
                 LOG(LOG_ERR, "Desired Mech unavailable");
                 return SEC_E_CRYPTO_SYSTEM_INVALID;
@@ -367,7 +367,7 @@ class rdpCredsspServerKerberos final
             input_tok.length = input_buffer.size();
             input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-            gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+            gss_OID_desc desired_mech = gss_spnego_krb5_mechanism_oid_desc();
             if (!this->mech_available(&desired_mech)) {
                 LOG(LOG_ERR, "Desired Mech unavailable");
                 return SEC_E_CRYPTO_SYSTEM_INVALID;
