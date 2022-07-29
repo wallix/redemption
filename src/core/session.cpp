@@ -323,7 +323,7 @@ class Session
                 3s, 3s, 3s, SocketTransport::Verbose()/*TODO debug::session_sharing_front*/, nullptr)
             , Front2Data(original_ini)
             , Front(event_container, null_acl_report,
-                *this, rnd, get_ini(), cctx, get_ini().get<cfg::client::fast_path>(),
+                *this, rnd, get_ini(), cctx,
                 Front::GuestParameters{
                     .is_guest = true,
                     .screen_info = front.get_client_info().screen_info,
@@ -1121,7 +1121,7 @@ private:
                     }
 
                     if (front2_has_data_to_write) {
-                        LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                        LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                             LOG_INFO, "Session: Front2 has data to write");
                         ioswitch.set_write_sck(front2_ctx.front2->get_transport().get_fd());
                     }
@@ -1155,7 +1155,7 @@ private:
                 }
 
                 if (front2_has_tls_pending_data) {
-                    LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
+                    LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                         LOG_INFO, "Session: Front2 has tls pending data");
                     ioswitch.set_read_sck(front2_ctx.front2->get_transport().get_fd());
                 }
