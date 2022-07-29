@@ -429,18 +429,20 @@ class Session
                             catch (...) {
                                 stop(front);
                                 event.garbage = true;
-                                return ;
+                                return;
                             }
 
                             if (REDEMPTION_LIKELY(front2->is_synchronized)) {
-                                return ;
+                                return;
                             }
 
                             if (front2->is_up_and_running()) {
                                 auto const& client_info = front.get_client_info();
                                 if (session_sharing_invitation_id != client_info.password) {
                                     LOG(LOG_ERR, "Front2: bad credential of session sharing");
-                                    throw Error(ERR_SESSION_SHARING_CREDENTIAL);
+                                    stop(front);
+                                    event.garbage = true;
+                                    return;
                                 }
 
                                 front2->is_synchronized = true;
