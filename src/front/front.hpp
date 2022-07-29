@@ -829,7 +829,6 @@ public:
          , Random & gen
          , Inifile & ini
          , CryptoContext & cctx
-         , bool fp_support // If true, fast-path must be supported
          )
     : verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(default_layout())
@@ -838,7 +837,7 @@ public:
     , ini(ini)
     , cctx(cctx)
     , gen(gen)
-    , fastpath_support(fp_support)
+    , fastpath_support(ini.get<cfg::client::fast_path>())
     , acl_report(acl_report)
     , events_guard(events)
     , rdp_keepalive_connection_interval(

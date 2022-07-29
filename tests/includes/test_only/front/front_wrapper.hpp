@@ -41,8 +41,7 @@ public:
         AclReportApi& acl_report,
         Transport & trans,
         Random & gen,
-        Inifile & ini,
-        bool fp_support // If true, fast-path must be supported
+        Inifile & ini
     );
 
     ~FrontWrapper();

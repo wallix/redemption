@@ -37,10 +37,9 @@ struct FrontWrapper::D
         AclReportApi& acl_report,
         Transport & trans,
         Random & gen,
-        Inifile & ini,
-        bool fp_support // If true, fast-path must be supported
+        Inifile & ini
     )
-    : front(events, acl_report, trans, gen, ini, cctx, fp_support)
+    : front(events, acl_report, trans, gen, ini, cctx)
     , trans(trans)
     {}
 
@@ -154,10 +153,9 @@ FrontWrapper::FrontWrapper(
     AclReportApi& acl_report,
     Transport & trans,
     Random & gen,
-    Inifile & ini,
-    bool fp_support // If true, fast-path must be supported
+    Inifile & ini
 )
-: d(new D{events, acl_report, trans, gen, ini, fp_support}) /* NOLINT */
+: d(new D{events, acl_report, trans, gen, ini}) /* NOLINT */
 {}
 
 FrontWrapper::~FrontWrapper()

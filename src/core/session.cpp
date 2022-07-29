@@ -1422,7 +1422,7 @@ public:
 
         AclReport acl_report{ini};
         SessionFront front(event_manager.get_events(), acl_report,
-            front_trans, rnd, ini, cctx, ini.get<cfg::client::fast_path>()
+            front_trans, rnd, ini, cctx
         );
         front.ini_ptr = &ini;
         front.target_connection_start_time_ptr = &this->target_connection_start_time;

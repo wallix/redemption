@@ -116,13 +116,11 @@ RED_AUTO_TEST_CASE(TestFront)
 
     LCGRandom gen1;
 
-    const bool fastpath_support = false;
-
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
     ini.set<cfg::client::bogus_user_id>(false);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
-    ini.set<cfg::client::fast_path>(fastpath_support);
+    ini.set<cfg::client::fast_path>(false);
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
@@ -133,7 +131,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_TEST_PASSPOINT();
 
-    MyFront front(events, session_log, front_trans, gen1, ini , fastpath_support);
+    MyFront front(events, session_log, front_trans, gen1, ini);
     null_mod no_mod;
 
     gdi::NullOsd osd;

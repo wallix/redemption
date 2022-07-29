@@ -98,10 +98,9 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::disabled_orders>("4,15,16,17,18");
 
     LCGRandom gen;
-    const bool fastpath_support = true;
     EventContainer events;
     NullSessionLog session_log;
-    FrontWrapper front(events, session_log, front_trans, gen, ini, fastpath_support);
+    FrontWrapper front(events, session_log, front_trans, gen, ini);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {

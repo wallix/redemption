@@ -96,12 +96,12 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::globals::large_pointer_support>(false);
     ini.set<cfg::globals::unicode_keyboard_event_support>(false);
     ini.set<cfg::client::disabled_orders>("4,15,16,17,18");
+    ini.set<cfg::client::fast_path>(false);
 
     LCGRandom gen;
-    const bool fastpath_support = false;
     EventContainer events;
     NullSessionLog session_log;
-    FrontWrapper front(events, session_log, front_trans, gen, ini, fastpath_support);
+    FrontWrapper front(events, session_log, front_trans, gen, ini);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {
