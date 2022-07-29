@@ -2418,7 +2418,11 @@ public:
                         num_events = 4;
                     }
 
-                    this->input_event_scancode(ke, cb, 0);
+                    this->input_event_scancode(
+                        Keymap::KbdFlags(ke.spKeyboardFlags),
+                        Keymap::Scancode(ke.keyCode),
+                        cb, 0
+                    );
                 }
                 break;
 
@@ -4126,7 +4130,11 @@ private:
                                 "Front::process_data: Slow-Path INPUT_EVENT_SCANCODE eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
                                 ie.eventTime, ke.keyboardFlags, ke.keyCode);
 
-                            this->input_event_scancode(ke, cb, ie.eventTime);
+                            this->input_event_scancode(
+                                Keymap::KbdFlags(ke.keyboardFlags),
+                                Keymap::Scancode(ke.keyCode),
+                                cb, ie.eventTime
+                            );
                         }
                         break;
 
@@ -5125,22 +5133,10 @@ public:
     }
 
 private:
-    template<class KeyboardEvent_Recv>
-    void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, uint32_t event_time) {
-        struct KeyboardFlags {
-            static Keymap::KbdFlags get(SlowPath::KeyboardEvent_Recv const & ke)
-            {
-                return Keymap::KbdFlags(ke.keyboardFlags);
-            }
-            static Keymap::KbdFlags get(FastPath::KeyboardEvent_Recv const & ke)
-            {
-                return Keymap::KbdFlags(ke.spKeyboardFlags);
-            }
-        };
-
-        Keymap::Scancode const scancode = checked_int{ke.keyCode};
-        Keymap::KbdFlags const kbdFlags = KeyboardFlags::get(ke);
-
+    void input_event_scancode(
+        Keymap::KbdFlags kbdFlags, Keymap::Scancode scancode,
+        Callback & cb, uint32_t event_time
+    ) {
         Keymap::DecodedKeys decoded_keys = this->keymap.event(kbdFlags, scancode);
         LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
             "Front::input_event_scancode: keycode=%02X flags=0x%04X uchars={0x%04X, 0x%04X} mods=%04X",
