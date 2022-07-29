@@ -110,8 +110,6 @@
     f(ERR_RDP_INTERNAL)                                      \
     f(ERR_RDP_NEGOTIATION)                                   \
                                                              \
-    fv(ERR_SESSION_SHARING_CREDENTIAL, 9000)                 \
-                                                             \
     fv(ERR_VNC, 10000)                                       \
     f(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER)       \
     fv(ERR_VNC_CONNECTION_ERROR, 10005)                      \
