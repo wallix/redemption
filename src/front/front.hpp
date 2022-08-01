@@ -2848,14 +2848,12 @@ public:
 
         std::vector<uint8_t> result = this->nego_server->credssp.authenticate_next(data);
 
-        if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
-            bytes_view username_utf16 = this->nego_server->credssp.authenticate.UserName.buffer;
-            LOG(LOG_INFO, "NegoServer sending nla username");
-            this->ini.set_acl<cfg::globals::nla_auth_user>(UTF16toResizableUTF8<std::string>(username_utf16));
-            this->ini.ask<cfg::context::nla_password_hash>();
+        if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD) {
+            LOG(LOG_INFO, "NTLM NegoServer Authentication Failed");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
         }
 
-        if (not result.empty()){
+        if (not result.empty()) {
             trans.send(result);
         }
 

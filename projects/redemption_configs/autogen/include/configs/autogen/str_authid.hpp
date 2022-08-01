@@ -12,7 +12,6 @@ namespace configs
     constexpr zstring_view const authstr[] = {
         "front_connection_time"_zv,
         "target_connection_time"_zv,
-        "nla_login"_zv,
         "login"_zv,
         "ip_client"_zv,
         "ip_target"_zv,
@@ -171,7 +170,6 @@ namespace configs
         "target_port"_zv,
         "proto_dest"_zv,
         "password"_zv,
-        "nla_password_hash"_zv,
         "reporting"_zv,
         "auth_channel_answer"_zv,
         "auth_channel_target"_zv,

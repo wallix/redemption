@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include <functional>
-
 #include "core/RDP/nla/credssp.hpp"
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
@@ -92,15 +90,13 @@ private:
     Random & rand;
     const std::vector<uint8_t> public_key;
 
-    private:
-    std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb;
+private:
     const bool credssp_verbose;
     const bool verbose;
 
     array_sha256 ClientServerHash;
 
 public:
-
     credssp::State state = credssp::State::Cont;
     struct ServerAuthenticateData
     {
@@ -142,21 +138,21 @@ private:
     array_challenge ServerChallenge;
 public:
     /**
-     * Generate client signing key (ClientSigningKey).\n
+     * Generate client signing key (ClientSigningKey).
      * @msdn{cc236711}
      */
 
     array_md5 ClientSigningKey;
 private:
     /**
-     * Generate client sealing key (ClientSealingKey).\n
+     * Generate client sealing key (ClientSealingKey).
      * @msdn{cc236712}
      */
 
     array_md5 ClientSealingKey;
 public:
     /**
-     * Generate server signing key (ServerSigningKey).\n
+     * Generate server signing key (ServerSigningKey).
      * @msdn{cc236711}
      */
     NTLMAuthenticateMessage authenticate;
@@ -166,6 +162,11 @@ private:
 
     // uint8_t NtProofStr[16];
 
+    PasswordCallback password_res = PasswordCallback::Error;
+    array_md4 password_hash;
+    TSRequest authentication_token;
+
+
 public:
     NtlmServer(bool is_domain,
                bool is_server,
@@ -174,7 +175,7 @@ public:
                bytes_view DnsComputerName, bytes_view DnsDomainName,
                bytes_view DnsTreeName,
                bytes_view key,
-               const std::vector<NTLM_AV_ID> & avFieldsTags,
+               array_view<NTLM_AV_ID> avFieldsTags,
                Random & rand,
                const TimeBase & time_base,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
@@ -183,7 +184,7 @@ public:
                const bool verbose)
         : is_domain(is_domain)
         , is_server(is_server)
-        , avFieldsTags(avFieldsTags)
+        , avFieldsTags(avFieldsTags.begin(), avFieldsTags.end())
         , TargetName(TargetName.data(), TargetName.data()+TargetName.size())
         , netbiosComputerName(NetbiosComputerName.data(), NetbiosComputerName.data()+NetbiosComputerName.size())
         , netbiosDomainName(NetbiosDomainName.data(), NetbiosDomainName.data()+NetbiosDomainName.size())
@@ -215,17 +216,10 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Loop;
     }
 
-
-public:
-    PasswordCallback password_res;
-    array_md4 password_hash;
-    TSRequest authentication_token;
-
     void set_password_hash(PasswordCallback password_res, array_md4 password_hash)
     {
         this->password_res  = password_res;
         this->password_hash = password_hash;
-//                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
     }
 
     std::vector<uint8_t> authenticate_next(bytes_view in_data)
@@ -300,8 +294,6 @@ public:
 
                 case NTLM_STATE_WAIT_PASSWORD:
                 {
-//                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
-
                     if (this->password_res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
                         // SEC_E_LOGON_DENIED;

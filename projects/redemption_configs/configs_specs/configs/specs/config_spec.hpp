@@ -171,7 +171,6 @@ void config_spec_definition(Writer && W)
             type_<std::chrono::milliseconds>(), names{"target_connection_time"},
             desc{"from Module rdp creation to \"up_and_running\" state"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{.all="nla_auth_user", .sesman="nla_login"});
         W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<std::string>(), names{.all="auth_user", .sesman="login"});
         W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<std::string>(), names{.all="host", .sesman="ip_client"});
         W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{.all="target", .sesman="ip_target"});
@@ -1010,7 +1009,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{.all="target_protocol", .sesman="proto_dest"}, set("RDP"));
 
         W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, NL, type_<std::string>(), names{"password"});
-        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"nla_password_hash"});
 
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"reporting"});
 

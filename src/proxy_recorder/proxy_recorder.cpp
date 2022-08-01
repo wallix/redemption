@@ -143,6 +143,9 @@ void ProxyRecorder::front_nla(Transport & frontConn)
                 || buffer.next(TpduBuffer::CREDSSP))
             && credssp::State::Cont == st) {
         if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
+            // TODO use this->nego_server->credssp.set_password_hash();
+            // bytes_view username_utf16 = this->nego_server->credssp.authenticate.UserName.buffer;
+            // UTF16toResizableUTF8<std::string>(username_utf16);
             result << this->nego_server->credssp.authenticate_next({});
         }
         else {

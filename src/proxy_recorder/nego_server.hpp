@@ -35,8 +35,8 @@ public:
 
 public:
     NegoServer(bytes_view key, const TimeBase & time_base, uint64_t verbosity)
-    : credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key,
-        {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
+    : credssp(false, true, "WIN7"_av, "WIN7"_av, "WIN7"_av, "win7"_av, "win7"_av, "win7"_av, key,
+        make_array_view({MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvTimestamp}),
         rand, time_base, 6,
         NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
         false, verbosity, verbosity)
