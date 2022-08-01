@@ -439,7 +439,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     };
     NtlmServer ntlm_server(false, true, "RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,
                            make_array_view(public_key),
-                           {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
+                           make_array_view({MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}),
                            rand, time_base, 5,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
                            false, true, true);
@@ -590,7 +590,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
     NtlmServer ntlm_server(true, false, "PROXYKDC"_av,"WINKDC2012"_av,"PROXYKDC"_av,"WINKDC2012.proxykdc.lab"_av,"proxykdc.lab"_av,"proxykdc.lab"_av,
                            make_array_view(public_key),
 //                           {MsvAvNbDomainName, MsvAvDnsDomainName, MsvAvNbComputerName,MsvAvDnsComputerName,MsvAvTimestamp},
-                           {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
+                           make_array_view({MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}),
                            rand, time_base, 6,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3},
                            false, true, true);
@@ -749,7 +749,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 
     NtlmServer ntlm_server(true, false, "PROXYKDC"_av, "WIN10CGR"_av, "PROXYKDC"_av, "WIN10CGR.proxykdc.lab"_av, "proxykdc.lab"_av, "proxykdc.lab"_av,
                            make_array_view(public_key),
-                           {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvDnsTreeName, MsvAvTimestamp},
+                           make_array_view({MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvDnsTreeName, MsvAvTimestamp}),
                            rand, time_base, 6,
                            NtlmVersion{10, 0, 0x4563, NTLMSSP_REVISION_W2K3},
                            false, true, true);

@@ -8,7 +8,6 @@ namespace cfg
     struct globals {
         struct front_connection_time;
         struct target_connection_time;
-        struct nla_auth_user;
         struct auth_user;
         struct host;
         struct target;
@@ -357,7 +356,6 @@ namespace cfg
         struct target_port;
         struct target_protocol;
         struct password;
-        struct nla_password_hash;
         struct reporting;
         struct auth_channel_answer;
         struct auth_channel_target;

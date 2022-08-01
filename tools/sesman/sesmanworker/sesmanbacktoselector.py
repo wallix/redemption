@@ -14,7 +14,6 @@ back_to_selector_default_sent = {
     'formflag': 0,
     'is_rec': False,
     'message': '',
-    'nla_password_hash': '',
     'opt_message': '',
     'pattern_kill': '',
     'pattern_notify': '',
