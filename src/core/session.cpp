@@ -438,8 +438,8 @@ class Session
                             }
 
                             if (front2->is_up_and_running()) {
-                                auto const& client_info = front.get_client_info();
-                                if (session_sharing_invitation_id != client_info.password) {
+                                auto const& client_info2 = front2->get_client_info();
+                                if (session_sharing_invitation_id != client_info2.password) {
                                     LOG(LOG_ERR, "Front2: bad credential of session sharing");
                                     stop(front);
                                     event.garbage = true;
@@ -448,7 +448,7 @@ class Session
 
                                 front2->is_synchronized = true;
                                 front.add_guest(*front2);
-                                auto screen = client_info.screen_info;
+                                auto screen = front.get_client_info().screen_info;
                                 callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
                             }
                         }
