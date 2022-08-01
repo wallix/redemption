@@ -1674,6 +1674,18 @@ class Engine(object):
             conn_opts = {}
         return conn_opts
 
+    def get_target_conn_type(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
+            return {}
+        try:
+            conn_type = target.get('connection_policy_type',
+                                   target.get('service_protocol_cn'))
+        except Exception:
+            Logger().error("Error: Connection policy has no data field")
+            conn_type = "RDP"
+        return conn_type
+
     def get_physical_target_info(self, physical_target):
         if self.is_shadow_session(physical_target):
             status, infos = self.check_target(physical_target)

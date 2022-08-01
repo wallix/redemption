@@ -2044,7 +2044,7 @@ class Sesman():
                             physical_proto_info.subprotocols
                         )
 
-                    conn_type = physical_target['connection_policy_type']
+                    conn_type = self.engine.get_target_conn_type(physical_target)
                     conn_spec = cp_spec[conn_type.lower()]
 
                     kv.update(self._fetch_connectionpolicy(conn_spec[0], conn_opts))
