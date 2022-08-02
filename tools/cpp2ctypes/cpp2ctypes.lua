@@ -126,7 +126,7 @@ function c2py(t)
     local ctype = typemap[type]
     if not ctype then
         io.stderr:write("Unknown type '" .. type ..
-                        "'\nPlease, run with '" .. type .. "=MyPythonType'\n")
+                        "'\nPlease, run with -t '" .. type .. "=MyPythonType'\n")
         os.exit(3)
     end
     add_import(ctype)
@@ -314,7 +314,7 @@ local pcommun = [=[
 id          <- [_a-zA-Z0-9]+
 type        <- {| ('const' ws)? 'std::'? {native_type / id} (ws 'const')? S {'*'?} S |}
 scalar_w1   <- 'char' / 'short' / 'int' / 'long' / 'double'
-native_type <- 'unsigned ' scalar_w1 ' long'? / 'long '+ 'double'
+native_type <- 'unsigned '? scalar_w1 ' long'? / 'long '+ 'double'
 
 ws          <- %s+
 S           <- %s*

@@ -23,4 +23,6 @@ extern "C" {
     REDEMPTION_LIB_EXPORT int f6(char const* str);
     // buffer
     REDEMPTION_LIB_EXPORT int f7(uint8_t const* buffer);
+
+    REDEMPTION_LIB_EXPORT long long f8(unsigned long len);
 }
