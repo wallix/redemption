@@ -859,10 +859,14 @@ ModPack create_mod_rdp(
     mod_rdp_params.krb_armoring_user = ini.get<cfg::mod_rdp::effective_krb_armoring_user>().c_str();
     mod_rdp_params.krb_armoring_password = ini.get<cfg::mod_rdp::effective_krb_armoring_password>().c_str();
 
-    unique_fd client_sck = connect_to_target_host(
-        ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
-        ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
-        ini.get<cfg::all_target_mod::tcp_user_timeout>());
+    unique_fd client_sck = ini.get<cfg::context::tunneling_target_host>().empty()
+        ? connect_to_target_host(
+            ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
+            ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+            ini.get<cfg::all_target_mod::tcp_user_timeout>())
+        : addr_connect_blocking(
+            ini.get<cfg::context::tunneling_target_host>().c_str(),
+            std::chrono::seconds(1), false);
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())
