@@ -2125,6 +2125,11 @@ class Sesman():
                     kv[u'target_device'] = self.target_context.showname()
                 else:
                     kv[u'target_host'] = physical_info.device_host
+                    _phost = physical_info.device_host
+                    if _phost.startswith("sock://"):
+                        kv[u"tunneling_target_host"] = \
+                            _phost[len("sock://"):]
+                        kv[u'target_host'] = "localhost"
 
                 kv[u'target_login'] = physical_info.account_login
                 if (not kv.get(u'target_login')
