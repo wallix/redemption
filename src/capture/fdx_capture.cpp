@@ -115,7 +115,7 @@ namespace
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
     std::string fdx_filebase, std::string_view sid,
-    int groupid, FilePermissions file_permissions,
+    FilePermissions file_permissions,
     CryptoContext& cctx, Random& rnd,
     std::function<void(const Error & error)> notify_error)
 : name_generator(
@@ -125,7 +125,6 @@ FdxCapture::FdxCapture(
 , cctx(cctx)
 , rnd(rnd)
 , notify_error(std::move(notify_error))
-, groupid(groupid)
 , file_permissions(file_permissions)
 , out_crypto_transport(this->cctx, this->rnd, this->notify_error)
 {
@@ -134,7 +133,7 @@ FdxCapture::FdxCapture(
 
     for (std::string_view path : {record_path, hash_path}) {
         str_assign(directory, path, '/', sid);
-        if (recursive_create_directory(directory.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
+        if (recursive_create_directory(directory.c_str(), S_IRWXU | S_IRGRP | S_IXGRP) != 0) {
             auto err = errno;
             LOG(LOG_ERR, "FdxCapture: Failed to create directory: \"%s\": %s",
                 directory, strerror(err));
@@ -146,7 +145,6 @@ FdxCapture::FdxCapture(
     this->out_crypto_transport.open(
         str_concat(record_path, '/', fdx_filebase).c_str(),
         str_concat(hash_path, '/', fdx_filebase).c_str(),
-        this->groupid,
         this->file_permissions,
         /*derivator=*/fdx_filebase);
 
@@ -162,7 +160,6 @@ FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
     this->trans.open(
         fdx.name_generator.get_current_record_path().c_str(),
         fdx.name_generator.get_current_hash_path().c_str(),
-        fdx.groupid,
         fdx.file_permissions,
         derivator);
 }

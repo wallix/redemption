@@ -826,8 +826,6 @@ void config_spec_definition(Writer && W)
 
     W.section("video", [&]
     {
-        W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"capture_groupid"}, set(33));
-
         W.member(advanced_in_gui, no_sesman, L, type_<CaptureFlags>{}, names{"capture_flags"}, set(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::deci>>(), names{"png_interval"}, desc{"Frame interval."}, set(10));

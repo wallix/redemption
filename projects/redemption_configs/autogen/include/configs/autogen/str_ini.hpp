@@ -992,10 +992,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [video]
 
-# min = 0
-#_advanced
-#capture_groupid = 33
-
 # Specifies the type of data to be captured:
 # min = 0, max = 15
 #   0x00: none

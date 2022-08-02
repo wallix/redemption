@@ -67,11 +67,9 @@ OutFilenameSequenceTransport::OutFilenameSequenceTransport(
     const char * const prefix,
     const char * const filename,
     const char * const extension,
-    const int groupid,
     std::function<void(const Error & error)> notify_error)
 : filegen_(prefix, filename, extension)
 , buf_(invalid_fd(), std::move(notify_error))
-, groupid_(groupid)
 {
     this->current_filename_[0] = 0;
 }
@@ -138,11 +136,9 @@ void OutFilenameSequenceTransport::open_filename(const char * filename)
     }
     // LOG(LOG_INFO, "pngcapture=%s", this->current_filename_);
     // TODO PERF used fchmod
-    if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
-            , this->current_filename_
-            , this->groupid_ ? "u+r, g+r" : "u+r"
-            , strerror(errno), errno);
+    if (chmod(this->current_filename_, S_IRUSR | S_IRGRP) == -1) {
+        LOG( LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%d]"
+            , this->current_filename_, strerror(errno), errno);
     }
     this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
     this->buf_.open(unique_fd{fd});

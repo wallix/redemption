@@ -36,7 +36,6 @@ struct CaptureParams
     char const * basename;
     char const * record_tmp_path;
     char const * record_path;
-    int groupid;
     SessionLogApi * session_log;
 
     SmartVideoCropping smart_video_cropping;

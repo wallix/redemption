@@ -68,12 +68,12 @@ void SessionLogFile::log6(std::time_t time_now, LogId id, KVLogList kv_list)
 }
 
 void SessionLogFile::open_session_log(
-    const char * const record_path, const char * const hash_path, int groupid,
+    const char * const record_path, const char * const hash_path,
     FilePermissions file_permissions, bytes_view derivator)
 {
     assert(!this->ct.is_open());
 
-    this->ct.open(record_path, hash_path, groupid, file_permissions, derivator);
+    this->ct.open(record_path, hash_path, file_permissions, derivator);
     // force to create the file
     this->ct.send("", 0);
 }

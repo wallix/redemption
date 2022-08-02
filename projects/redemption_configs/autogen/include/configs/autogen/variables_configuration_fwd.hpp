@@ -258,7 +258,6 @@ namespace cfg
     };
 
     struct video {
-        struct capture_groupid;
         struct capture_flags;
         struct png_interval;
         struct break_interval;

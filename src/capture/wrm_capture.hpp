@@ -834,7 +834,6 @@ public:
         capture_params.real_now,
         drawable_ref.get().width(),
         drawable_ref.get().height(),
-        capture_params.groupid,
         capture_params.session_log,
         wrm_params.file_permissions)
     , graphic_to_file(

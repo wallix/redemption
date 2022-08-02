@@ -471,7 +471,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
         '.',
         video_params.codec
     ).c_str(),
-    capture_params.groupid, capture_params.session_log,
+    capture_params.session_log,
     drawable,
     checked_int{video_params.frame_rate},
     video_params.codec.c_str(),
@@ -584,7 +584,6 @@ void SequencedVideoCaptureImpl::init_recorder()
     auto image = this->video_cap_ctx.acquire_image_for_dump(buffer_saver, now);
     this->recorder.emplace(
         this->vc_filename_generator.current_filename(),
-        this->recorder_params.groupid,
         this->recorder_params.acl_report,
         image,
         this->recorder_params.frame_rate,
@@ -647,7 +646,6 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     video_params.codec_options,
     int(video_params.frame_rate),
     int(video_params.verbosity),
-    capture_params.groupid,
 }
 {
     log_video_params(video_params);

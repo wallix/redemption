@@ -621,7 +621,6 @@ public:
         capture_params.record_tmp_path,
         png_params.real_basename,
         ".png",
-        capture_params.groupid,
         FilesystemFullReporter{capture_params.session_log})
     {}
 
@@ -657,7 +656,6 @@ public:
         capture_params.record_tmp_path,
         png_params.real_basename,
         ".png",
-        capture_params.groupid,
         FilesystemFullReporter{capture_params.session_log})
     {}
 
@@ -1162,7 +1160,7 @@ public:
             capture_params.basename,
             ".meta");
         const char * filename = record_path.c_str();
-        int const file_mode = capture_params.groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR;
+        int const file_mode = S_IRUSR | S_IRGRP;
         int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
         // umask (man umask) can change effective mode of created file
         if ((fd < 0) || (chmod(filename, file_mode) == -1)) {
@@ -1344,7 +1342,7 @@ Capture::Capture(
 
     if (capture_png || (capture_params.session_log && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
-                S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
+                S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP) != 0) {
             LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
         }
     }

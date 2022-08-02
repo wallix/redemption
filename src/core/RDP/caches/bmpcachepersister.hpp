@@ -426,7 +426,7 @@ inline void save_persistent_disk_bitmap_cache(
 )
 {
     // Ensures that the directory exists.
-    if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
+    if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG) != 0) {
         LOG( LOG_ERR
             , "save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
             , persistent_path);

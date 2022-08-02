@@ -704,7 +704,7 @@ bool OutCryptoTransport::is_open() const
     return this->out_file.is_open();
 }
 
-void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, FilePermissions file_permissions, bytes_view derivator)
+void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, FilePermissions file_permissions, bytes_view derivator)
 {
     // This should avoid double open, we do not want that
     if (this->is_open()){
@@ -746,18 +746,17 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
     }
     this->hash_filename = hash_filename;
     this->derivator.assign(derivator.begin(), derivator.end());
-    this->groupid = groupid;
 
     ocrypto::Result res = this->encrypter.open(derivator);
     this->out_file.send(res.buf);
 }
 
 // derivator implicitly basename(finalname)
-void OutCryptoTransport::open(const char * finalname, const char * const hash_filename, int groupid, FilePermissions file_permissions)
+void OutCryptoTransport::open(const char * finalname, const char * const hash_filename, FilePermissions file_permissions)
 {
     size_t base_len = 0;
     const char * base = basename_len(finalname, base_len);
-    this->open(finalname, hash_filename, groupid, file_permissions, {base, base_len});
+    this->open(finalname, hash_filename, file_permissions, {base, base_len});
 }
 
 void OutCryptoTransport::close(HashArray & qhash, HashArray & fhash)
@@ -810,7 +809,7 @@ void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray con
     OutFileTransport hash_out_file(unique_fd(::open(
         this->hash_filename.c_str(),
         O_WRONLY | O_CREAT,
-        this->groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)));
+        S_IRUSR | S_IRGRP)));
     if (!hash_out_file.is_open()){
         int const err = errno;
         LOG(LOG_ERR, "OutCryptoTransport::open: open failed hash file %s: %s", this->hash_filename, strerror(err));

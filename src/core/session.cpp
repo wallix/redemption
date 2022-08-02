@@ -142,7 +142,6 @@ class Session
             this->cctx.set_hmac_key(this->ini.get<cfg::crypto::sign_key>());
             this->cctx.set_trace_type(this->ini.get<cfg::globals::trace_type>());
 
-            int const groupid = this->ini.get<cfg::video::capture_groupid>();
             auto const& subdir = this->ini.get<cfg::capture::record_subdirectory>();
             auto const& record_dir = this->ini.get<cfg::video::record_path>();
             auto const& hash_dir = this->ini.get<cfg::video::hash_path>();
@@ -152,7 +151,7 @@ class Session
             std::string hash_path = str_concat(hash_dir.as_string(), subdir, '/');
 
             for (auto* s : {&record_path, &hash_path}) {
-                if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP) != 0) {
                     LOG(LOG_ERR,
                         "Session::open_secondary_session: Failed to create directory: \"%s\"", *s);
                 }
@@ -163,7 +162,7 @@ class Session
             hash_path += basename;
 
             this->log_file.open_session_log(
-                record_path.c_str(), hash_path.c_str(), groupid,
+                record_path.c_str(), hash_path.c_str(),
                 this->ini.get<cfg::video::file_permissions>(), /*derivator=*/basename);
 
             return *this;

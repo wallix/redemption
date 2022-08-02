@@ -209,7 +209,6 @@ public:
     {
         if (!this->fdx_capture) {
             LOG(LOG_INFO, "Enable clipboard file storage");
-            int  const groupid = int(ini.get<cfg::video::capture_groupid>());
             auto const& session_id = ini.get<cfg::context::session_id>();
             auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
             auto const& record_dir = ini.get<cfg::video::record_path>();
@@ -220,7 +219,7 @@ public:
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, groupid, ini.get<cfg::video::file_permissions>(),
+                session_id, ini.get<cfg::video::file_permissions>(),
                 cctx, gen,
                 /* TODO should be a log (siem?)*/
                 [](const Error & /*error*/){});

@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
         WorkingDirectory wd;
         auto dir = wd.dirname().string() + "test_dir/";
         auto subdir = dir + subname;
-        RED_CHECK_MESSAGE(!recursive_create_directory(subdir.c_str(), 0777, getgid()), strerror(errno));
+        RED_CHECK_MESSAGE(!recursive_create_directory(subdir.c_str(), 0777), strerror(errno));
 
         RED_CHECK_PREDICATE(file_exist, (subdir.c_str()));
 

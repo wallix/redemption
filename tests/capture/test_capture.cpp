@@ -68,7 +68,6 @@ namespace
 
         LCGRandom rnd;
         CryptoContext cctx;
-        const int groupid = 0;
 
         bool capture_wrm;
         bool capture_png;
@@ -139,7 +138,6 @@ namespace
             basename,
             record_tmp_path,
             record_path,
-            groupid,
             nullptr,
             SmartVideoCropping::disable,
             0

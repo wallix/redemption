@@ -165,7 +165,6 @@ private:
                 movie_name,
                 record_path,
                 record_path,
-                0,
                 nullptr,
                 SmartVideoCropping{},
                 0

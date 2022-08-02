@@ -2990,16 +2990,6 @@ namespace cfg
         type value { KeyboardLogFlagsCP::syslog };
     };
 
-    /// type: unsigned <br/>
-    /// default: 33 <br/>
-    struct video::capture_groupid {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
-        type value { 33 };
-    };
     /// type: CaptureFlags <br/>
     /// default: CaptureFlags(11) <br/>
     struct video::capture_flags {
@@ -5722,7 +5712,6 @@ struct video
 , cfg::video::ffmpeg_options
 , cfg::video::png_interval
 , cfg::video::file_permissions
-, cfg::video::capture_groupid
 , cfg::video::capture_flags
 , cfg::video::png_limit
 , cfg::video::hash_path

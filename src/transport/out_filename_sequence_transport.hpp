@@ -31,7 +31,6 @@ public:
         const char * const prefix,
         const char * const filename,
         const char * const extension,
-        const int groupid,
         std::function<void(const Error & error)> notify_error);
 
     ~OutFilenameSequenceTransport();
@@ -81,7 +80,6 @@ private:
     FilenameGenerator filegen_;
     OutFileTransport buf_;
     unsigned num_file_ = 0;
-    int groupid_;
     uint32_t seqno_ = 0;
     bool status = true;
 };

@@ -267,7 +267,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
 }
 
 
-static int internal_make_directory(const char *directory, mode_t mode, int groupid)
+static int internal_make_directory(const char *directory, mode_t mode)
 {
     struct stat st;
     int status = 0;
@@ -278,17 +278,6 @@ static int internal_make_directory(const char *directory, mode_t mode, int group
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
                 LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
-            }
-            if (groupid >= 0) {
-                #ifdef __EMSCRIPTEN__
-                    groupid = (groupid == -1) ? getpid() : groupid;
-                    const uid_t userid = getuid();
-                #else
-                    const uid_t userid = -1;
-                #endif
-                if (chown(directory, userid, groupid) < 0){
-                    LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
-                }
             }
         }
         else if (!S_ISDIR(st.st_mode)) {
@@ -301,7 +290,7 @@ static int internal_make_directory(const char *directory, mode_t mode, int group
 }
 
 
-int recursive_create_directory(const char * directory, mode_t mode, const int groupid)
+int recursive_create_directory(const char * directory, mode_t mode)
 {
     if (!directory) {
         LOG(LOG_ERR, "Call to recursive create directory without directory path (null)");
@@ -320,13 +309,13 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
         }
 
         pSearch[0] = 0;
-        status = internal_make_directory(copy_directory.data(), mode, groupid);
+        status = internal_make_directory(copy_directory.data(), mode);
         *pSearch = '/';
     }
 
     // creation of last directory in chain or nothing if path ending with slash
     if (status == 0 && *directory != 0) {
-        status = internal_make_directory(directory, mode, groupid);
+        status = internal_make_directory(directory, mode);
     }
 
     return status;

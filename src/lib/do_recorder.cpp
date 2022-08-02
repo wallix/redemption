@@ -357,7 +357,6 @@ static int do_recompress(
     bool & program_requested_to_shutdown,
     OriginalOr<WrmCompressionAlgorithm> wrm_compression_algorithm,
     std::string const & output_filename,
-    int group_id,
     FilePermissions file_permissions,
     char const* hash_path,
     uint32_t verbose
@@ -369,7 +368,7 @@ static int do_recompress(
         std::cout << "Output file path: " << outfile.directory << outfile.basename << outfile.extension << '\n' << std::endl;
     }
 
-    if (recursive_create_directory(outfile.directory.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, group_id) != 0) {
+    if (recursive_create_directory(outfile.directory.c_str(), S_IRWXU | S_IRGRP | S_IXGRP) != 0) {
         std::cerr << "Failed to create directory: \"" << outfile.directory << "\"" << std::endl;
     }
 
@@ -389,7 +388,6 @@ static int do_recompress(
             RealTimePoint(begin_record),
             player.get_wrm_info().width,
             player.get_wrm_info().height,
-            group_id,
             nullptr,
             file_permissions
         );
@@ -917,7 +915,6 @@ struct RecorderParams
 
     uint32_t verbosity = 0;
 
-    int group_id;
     FilePermissions file_permissions = FilePermissions::user_permissions(
         FilePermissions::BitPermissions::read);
 
@@ -1163,7 +1160,6 @@ static inline int replay(
                                 spath.basename.c_str(),
                                 record_tmp_path,
                                 record_path,
-                                rp.group_id,
                                 nullptr,
                                 rp.smart_video_cropping,
                                 0
@@ -1325,7 +1321,6 @@ static inline int replay(
                 program_requested_to_shutdown,
                 rp.wrm_compression_algorithm,
                 rp.output_filename,
-                rp.group_id,
                 rp.file_permissions,
                 rp.hash_path.c_str(),
                 rp.verbosity);
@@ -1777,7 +1772,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     recorder.play_video_with_corrupted_bitmap
         = ini.get<cfg::video::play_video_with_corrupted_bitmap>();
     recorder.smart_video_cropping = ini.get<cfg::video::smart_video_cropping>();
-    recorder.group_id = checked_int{ini.get<cfg::video::capture_groupid>()};
     recorder.file_permissions = ini.get<cfg::video::file_permissions>();
     recorder.wrm_verbosity = safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>());
 

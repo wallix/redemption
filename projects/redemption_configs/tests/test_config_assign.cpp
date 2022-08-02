@@ -275,7 +275,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
 
     ini.set<cfg::video::break_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-    ini.set<cfg::video::capture_groupid>(1);
     ini.set<cfg::video::disable_clipboard_log>(ClipboardLogFlags::syslog);
     ini.set<cfg::video::disable_file_system_log>(FileSystemLogFlags::syslog);
     ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::syslog);

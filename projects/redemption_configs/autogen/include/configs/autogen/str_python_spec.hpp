@@ -843,9 +843,6 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 
 [video]
 
-#_advanced
-capture_groupid = integer(min=0, default=33)
-
 # Specifies the type of data to be captured:
 # &nbsp; &nbsp;   0x00: none
 # &nbsp; &nbsp;   0x01: png

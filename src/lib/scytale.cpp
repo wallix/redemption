@@ -294,7 +294,7 @@ int scytale_writer_open(
     handle->error_ctx.set_error(Error(NO_ERROR));
     CHECK_NOTHROW(
         handle->out_crypto_transport.open(
-            record_path, hash_path, groupid,
+            record_path, hash_path, /*TODO groupid,*/
             // TODO file_permissions as parameter
             FilePermissions(0440)/*, TODO derivator*/),
         ERR_TRANSPORT_OPEN_FAILED);
@@ -614,11 +614,11 @@ struct ScytaleFdxWriterHandle
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         ScytaleRandomWrapper::RandomType random_type,
         char const * record_path, char const * hash_path, char const * fdx_file_base,
-        int groupid, char const * sid)
+        char const * sid)
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
     // TODO file_permissions as parameter
-    , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid, FilePermissions(0440),
+    , fdx_capture(record_path, hash_path, fdx_file_base, sid, FilePermissions(0440),
         this->cctxw.cctx, *this->random_wrapper.rnd, [](const Error &/*error*/){})
     {
         this->qhashhex[0] = 0;
@@ -697,7 +697,7 @@ ScytaleFdxWriterHandle * scytale_fdx_writer_new(
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
         with_encryption, with_checksum, master_derivator,
         hmac_key, trace_fn, ScytaleRandomWrapper::UDEV,
-        record_path, hash_path, fdx_file_base, groupid, sid));
+        record_path, hash_path, fdx_file_base, /*TODO groupid, */sid));
 }
 
 ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
@@ -710,7 +710,7 @@ ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
         with_encryption, with_checksum, master_derivator,
         hmac_key, trace_fn, ScytaleRandomWrapper::LCG,
-        record_path, hash_path, fdx_file_base, groupid, sid));
+        record_path, hash_path, fdx_file_base, sid));
 }
 
 char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle)

@@ -375,7 +375,7 @@ migration_defs: List[MigrationType] = [
                 UpdateItem(section='session_probe', key='clipboard_based_launcher_reset_keyboard_status'),
             'session_probe_bestsafe_integration': UpdateItem(section='session_probe',
                                                              key='enable_bestsafe_interaction'),
-        }
+        },
         'video': {
             'replay_path': UpdateItem(section='mod_replay'),
         },
@@ -383,6 +383,11 @@ migration_defs: List[MigrationType] = [
     (RedemptionVersion("9.1.76"), {
         'all_target_mod': {
             'connection_retry_count': RemoveItem(),
+        },
+    }),
+    (RedemptionVersion("10.2.8"), {
+        'video': {
+            'capture_groupid': RemoveItem(),
         },
     }),
 ]

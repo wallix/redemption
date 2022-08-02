@@ -121,7 +121,7 @@ namespace
             25, codec.name, codec.options, false, 0};
         SequencedVideoParams sequenced_video_params { video_interval, false };
         CaptureParams capture_params{
-            monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
+            monotonic_time, real_time, "video", nullptr, dirname,
             nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 0 /* png_width */, 0 /* png_height */,
@@ -143,7 +143,7 @@ namespace
         VideoParams video_params{
             25, codec.name, codec.options, false, 0};
         CaptureParams capture_params{
-            monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
+            monotonic_time, real_time, "video", nullptr, dirname,
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable.impl(), drawable_pointer, to_rect(drawable, cropped),

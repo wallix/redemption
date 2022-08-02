@@ -1623,14 +1623,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 11) {
         if (0) {}
-        else if (key == "capture_groupid"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::capture_groupid&>(this->variables).value,
-                ::configs::spec_type<unsigned>{},
-                value
-            );
-        }
         else if (key == "capture_flags"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

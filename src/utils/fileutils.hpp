@@ -72,7 +72,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
                     char * basename, size_t basename_len, char * extension,
                     size_t extension_len);
 
-int recursive_create_directory(const char * directory, mode_t mode, int groupid);
+int recursive_create_directory(const char * directory, mode_t mode);
 
 int recursive_delete_directory(const char * directory_path);
 

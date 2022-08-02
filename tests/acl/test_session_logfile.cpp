@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     log_file.open_session_log(
         logfile.c_str(), hashlog.c_str(),
-        33, FilePermissions(0664), "log5_6.log"_av);
+        FilePermissions(0664), "log5_6.log"_av);
 
     {
         ut::log_buffered logbuf;

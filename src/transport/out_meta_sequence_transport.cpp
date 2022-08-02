@@ -95,13 +95,11 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     RealTimePoint now,
     uint16_t width,
     uint16_t height,
-    const int groupid,
     AclReportApi * acl_report,
     FilePermissions file_permissions)
 : meta_buf_encrypt_transport(cctx, rnd, make_notify_error(acl_report))
 , wrm_filter_encrypt_transport(cctx, rnd, make_notify_error(acl_report))
 , filegen_(path, hash_path, basename, ".wrm")
-, groupid_(groupid)
 , mf_(path, basename)
 , hf_(hash_path, basename)
 , cctx(cctx)
@@ -113,7 +111,6 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     this->meta_buf_encrypt_transport.open(
         this->mf_.filename,
         this->hf_.filename,
-        S_IRUSR | S_IRGRP | S_IWUSR,
         file_permissions_);
 
     MwrmWriterBuf mwrm_file_buf;
@@ -157,7 +154,7 @@ void OutMetaSequenceTransport::do_send(const uint8_t * data, size_t len)
     if (!this->wrm_filter_encrypt_transport.is_open()) {
         const char * filename = this->filegen_.get_filename(this->num_file_);
         const char * hash_filename = this->filegen_.get_hash_filename(this->num_file_);
-        this->wrm_filter_encrypt_transport.open(filename, hash_filename, this->groupid_, file_permissions_);
+        this->wrm_filter_encrypt_transport.open(filename, hash_filename, file_permissions_);
     }
     this->wrm_filter_encrypt_transport.send(data, len);
 }

@@ -71,7 +71,7 @@ namespace
             CaptureParams{
                 now, RealTimePoint{1000s},
                 filebase, tmp_wd.dirname(), record_wd.dirname(),
-                /*groupid=*/0, nullptr, SmartVideoCropping::disable, 0},
+                nullptr, SmartVideoCropping::disable, 0},
             WrmParams{
                 BitsPerPixel{24},
                 remote_app,

@@ -184,7 +184,7 @@ WorkingDirectory::SubDirectory WorkingDirectory::create_subdirectory(std::string
     }
 
     auto path = this->add_file(str_concat(dirname, '/'));
-    recursive_create_directory(path.c_str(), 0755, -1);
+    recursive_create_directory(path.c_str(), 0755);
     return SubDirectory(*this, std::move(path), this->dirname_.size());
 }
 

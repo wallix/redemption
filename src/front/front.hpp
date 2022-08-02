@@ -1092,7 +1092,6 @@ public:
 
         this->capture_bpp = this->wrm_color_depth();
 
-        int const groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         char const * const record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         char const * const record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
 
@@ -1103,7 +1102,7 @@ public:
         auto const hash_path = str_concat(hash_dir.as_string(), subdir, '/');
 
         for (auto* s : {&record_path, &hash_path}) {
-            if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+            if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP) != 0) {
                 LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", *s);
             }
         }
@@ -1163,7 +1162,6 @@ public:
             record_filebase,
             record_tmp_path,
             record_path.c_str(),
-            groupid,
             &session_log,
             ini.get<cfg::video::smart_video_cropping>(),
             ini.get<cfg::debug::capture>()

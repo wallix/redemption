@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestPidFile)
     auto dirname = app_path(AppPath::LockDir);
     chars_view s_pid{session_id, r.ptr};
 
-    recursive_create_directory(dirname.c_str(), 0755, -1);
+    recursive_create_directory(dirname.c_str(), 0755);
 
     auto filename = str_concat(dirname, "/session_", s_pid, ".pid");
 

@@ -34,7 +34,7 @@ class video_recorder
 {
 public:
     video_recorder(
-        char const* filename, const int groupid, AclReportApi * acl_report,
+        char const* filename, AclReportApi * acl_report,
         ImageView const& image_view, int frame_rate,
         const char * codec_name, char const* codec_options, int log_level
     );

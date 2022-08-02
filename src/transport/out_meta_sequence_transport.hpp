@@ -36,7 +36,6 @@ struct OutMetaSequenceTransport final : SequencedTransport
         RealTimePoint now,
         uint16_t width,
         uint16_t height,
-        const int groupid,
         AclReportApi * acl_report,
         FilePermissions file_permissions);
 
@@ -89,7 +88,6 @@ private:
     char current_filename_[1024] {};
     WrmFGen filegen_;
     unsigned num_file_ = 0;
-    int groupid_;
 
     MetaFilename mf_;
     MetaFilename hf_;

@@ -90,7 +90,7 @@ public:
         ::snprintf(license_dir_path, sizeof(license_dir_path), "%s/%s",
             license_path.c_str(), client_name);
         license_dir_path[sizeof(license_dir_path) - 1] = '\0';
-        if (::recursive_create_directory(license_dir_path, S_IRWXU | S_IRWXG, -1) != 0) {
+        if (::recursive_create_directory(license_dir_path, S_IRWXU | S_IRWXG) != 0) {
             LOG(LOG_ERR, "FileSystemLicenseStore::put_license(): Failed to create directory: \"%s\"", license_dir_path);
             return false;
         }

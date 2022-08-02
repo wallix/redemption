@@ -276,7 +276,6 @@ private:
         std::string codec_options;
         int frame_rate;
         int verbosity;
-        int groupid;
     };
 
     const RecorderParams recorder_params;

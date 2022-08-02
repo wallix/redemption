@@ -47,7 +47,7 @@ public:
     void log6(std::time_t time_now, LogId id, KVLogList kv_list);
 
     void open_session_log(
-        const char * const record_path, const char * const hash_path, int groupid,
+        const char * const record_path, const char * const hash_path,
         FilePermissions file_permissions, bytes_view derivator);
 
     void close_session_log();
