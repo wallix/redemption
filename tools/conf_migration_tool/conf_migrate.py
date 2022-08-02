@@ -361,22 +361,21 @@ migration_defs: List[MigrationType] = [
         },
     }),
     (RedemptionVersion("9.1.71"), {
-        'rdp': dict(itertools.chain(
-            (
-                (key, UpdateItem(section='session_probe', key=key[14:]))
-                for key in ('session_probe_exe_or_file',
-                            'session_probe_arguments',
-                            'session_probe_customize_executable_name',
-                            'session_probe_allow_multiple_handshake',
-                            'session_probe_at_end_of_session_freeze_connection_and_wait',
-                            'session_probe_enable_cleaner',
-                            'session_probe_clipboard_based_launcher_reset_keyboard_status',)
-            ),
-            (
-                ('session_probe_bestsafe_integration', UpdateItem(section='session_probe',
-                                                                   key='enable_bestsafe_interaction')),
-            )
-        )),
+        'rdp': {
+            'session_probe_exe_or_file': UpdateItem(section='session_probe', key='exe_or_file'),
+            'session_probe_arguments': UpdateItem(section='session_probe', key='arguments'),
+            'session_probe_customize_executable_name': UpdateItem(section='session_probe',
+                                                                  key='customize_executable_name'),
+            'session_probe_allow_multiple_handshake': UpdateItem(section='session_probe',
+                                                                 key='allow_multiple_handshake'),
+            'session_probe_at_end_of_session_freeze_connection_and_wait':
+                UpdateItem(section='session_probe', key='at_end_of_session_freeze_connection_and_wait'),
+            'session_probe_enable_cleaner': UpdateItem(section='session_probe', key='enable_cleaner'),
+            'session_probe_clipboard_based_launcher_reset_keyboard_status':
+                UpdateItem(section='session_probe', key='clipboard_based_launcher_reset_keyboard_status'),
+            'session_probe_bestsafe_integration': UpdateItem(section='session_probe',
+                                                             key='enable_bestsafe_interaction'),
+        }
         'video': {
             'replay_path': UpdateItem(section='mod_replay'),
         },
