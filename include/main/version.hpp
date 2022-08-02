@@ -25,4 +25,4 @@
 
 #pragma once
 
-#define VERSION "10.2.5"
+#define VERSION "10.2.7"
