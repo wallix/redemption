@@ -40,28 +40,36 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * scytale_version();
 
+    // Note: hmac_key is a 32 bytes array
+
 
     // Writer
     //@{
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new(
-        int with_encryption, int with_checksum, const char * master_derivator,
+        int with_encryption, int with_checksum,
+        uint8_t const * master_derivator, unsigned master_derivator_len,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new_with_test_random(
-        int with_encryption, int with_checksum, const char * master_derivator,
+        int with_encryption, int with_checksum,
+        uint8_t const * master_derivator, unsigned master_derivator_len,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle);
 
+    // When derivator is nullptr, computed from record_path
+    // When permissions is 0, auto-transformed to 0440
     REDEMPTION_LIB_EXPORT
     int scytale_writer_open(
         ScytaleWriterHandle * handle,
-        char const * record_path, char const * hash_path, int groupid);
+        char const * record_path, char const * hash_path,
+        int permissions,
+        uint8_t const * derivator, unsigned derivator_len);
 
     REDEMPTION_LIB_EXPORT
     int scytale_writer_write(
@@ -87,16 +95,18 @@ extern "C"
     //@{
     REDEMPTION_LIB_EXPORT
     ScytaleReaderHandle * scytale_reader_new(
-        const char * master_derivator,
+        uint8_t const * master_derivator, unsigned master_derivator_len,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle);
 
+    // When derivator is nullptr, computed from record_path
     REDEMPTION_LIB_EXPORT
     int scytale_reader_open(
-        ScytaleReaderHandle * handle, char const * path, char const * derivator);
+        ScytaleReaderHandle * handle, char const * path,
+        uint8_t const * derivator, unsigned derivator_len);
 
     // enum class EncryptionSchemeTypeResult
     // {
@@ -105,10 +115,12 @@ extern "C"
     //     OldScheme,
     //     NewScheme,
     // };
+    // When derivator is nullptr, computed from record_path
     /// \result EncryptionSchemeTypeResult
     REDEMPTION_LIB_EXPORT
     int scytale_reader_open_with_auto_detect_encryption_scheme(
-        ScytaleReaderHandle * handle, char const * path, char const * derivator);
+        ScytaleReaderHandle * handle, char const * path,
+        uint8_t const * derivator, unsigned derivator_len);
 
     /// < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
@@ -195,19 +207,23 @@ extern "C"
 
     // Fdx / Tfl
     //@{
+    // When permissions is 0, auto-transformed to 0440
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new(
-        int with_encryption, int with_checksum, char const* master_derivator,
+        int with_encryption, int with_checksum,
+        uint8_t const * master_derivator, unsigned master_derivator_len,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         char const * record_path, char const * hash_path, char const * fdx_file_base,
-        int groupid, char const * sid);
+        char const * sid, int permissions);
 
+    // When permissions is 0, auto-transformed to 0440
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
-        int with_encryption, int with_checksum, char const* master_derivator,
+        int with_encryption, int with_checksum,
+        uint8_t const * master_derivator, unsigned master_derivator_len,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         char const * record_path, char const * hash_path, char const * fdx_file_base,
-        int groupid, char const * sid);
+        char const * sid, int permissions);
 
     REDEMPTION_LIB_EXPORT
     char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle);

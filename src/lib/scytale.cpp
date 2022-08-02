@@ -51,68 +51,37 @@
 }()
 
 
-extern "C"
-{
-
-struct CryptoContextWrapper
-{
-    CryptoContext cctx;
-
-    CryptoContextWrapper(
-        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
-        bool with_encryption, bool with_checksum,
-        bool old_encryption_scheme, bool one_shot_encryption_scheme,
-        std::string_view master_derivator)
-    {
-        if (hmac_key) {
-            cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));
-        }
-        cctx.set_get_trace_key_cb(trace_fn);
-        cctx.set_trace_type(
-            with_encryption
-            ? TraceType::cryptofile
-            : with_checksum
-                ? TraceType::localfile_hashed
-                : TraceType::localfile);
-        cctx.old_encryption_scheme = old_encryption_scheme;
-        cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
-        cctx.set_master_derivator(master_derivator);
-    }
-};
-
-struct ScytaleErrorContext
-{
-    ScytaleErrorContext() noexcept = default;
-
-    char const * message() noexcept
-    {
-        if (this->error.errnum) {
-            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s",
-                this->error.errmsg().c_str(), this->error.errnum, strerror(this->error.errnum));
-            this->msg[sizeof(this->msg)-1] = 0;
-            return this->msg;
-        }
-
-        return this->error.errmsg();
-    }
-
-    static char const * handle_get_error_message() noexcept
-    {
-        return "Handle is nullptr";
-    }
-
-    void set_error(Error const & err) noexcept
-    {
-        this->error = err;
-    }
-
-private:
-    Error error {NO_ERROR};
-    char msg[256];
-};
+using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
+static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
 
 namespace
 {
+    void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
+        static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
+        auto phex = hashhex;
+        for (uint8_t c : hash) {
+            phex = int_to_fixed_hexadecimal_upper_chars(phex, c);
+        }
+        *phex = '\0';
+    }
+
+    bytes_view compute_derivator(char const * path, uint8_t const * derivator, unsigned derivator_len) noexcept
+    {
+        if (derivator) {
+            return {derivator, derivator_len};
+        }
+        size_t base_len = 0;
+        const char * base = basename_len(path, base_len);
+        return {base, base_len};
+    }
+
+    FilePermissions compute_permissions(int permissions) noexcept
+    {
+        return permissions
+            ? FilePermissions(checked_int(permissions))
+            : FilePermissions(0440);
+    }
+
     struct HashHex
     {
         HashHex() noexcept
@@ -165,6 +134,67 @@ namespace
     };
 } // namespace
 
+
+extern "C"
+{
+
+struct CryptoContextWrapper
+{
+    CryptoContext cctx;
+
+    CryptoContextWrapper(
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
+        bool with_encryption, bool with_checksum,
+        bool old_encryption_scheme, bool one_shot_encryption_scheme,
+        bytes_view master_derivator)
+    {
+        if (hmac_key) {
+            cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));
+        }
+        cctx.set_get_trace_key_cb(trace_fn);
+        cctx.set_trace_type(
+            with_encryption
+            ? TraceType::cryptofile
+            : with_checksum
+                ? TraceType::localfile_hashed
+                : TraceType::localfile);
+        cctx.old_encryption_scheme = old_encryption_scheme;
+        cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
+        cctx.set_master_derivator(master_derivator);
+    }
+};
+
+struct ScytaleErrorContext
+{
+    ScytaleErrorContext() noexcept = default;
+
+    char const * message() noexcept
+    {
+        if (this->error.errnum) {
+            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s",
+                this->error.errmsg().c_str(), this->error.errnum, strerror(this->error.errnum));
+            this->msg[sizeof(this->msg)-1] = 0;
+            return this->msg;
+        }
+
+        return this->error.errmsg();
+    }
+
+    static char const * handle_get_error_message() noexcept
+    {
+        return "Handle is nullptr";
+    }
+
+    void set_error(Error const & err) noexcept
+    {
+        this->error = err;
+    }
+
+private:
+    Error error {NO_ERROR};
+    char msg[256];
+};
+
 struct ScytaleWriterHandle
 {
     ScytaleWriterHandle(
@@ -172,7 +202,7 @@ struct ScytaleWriterHandle
         bool with_encryption, bool with_checksum,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme , int one_shot_encryption_scheme,
-        char const * master_derivator)
+        bytes_view master_derivator)
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum,
             old_encryption_scheme, one_shot_encryption_scheme,
@@ -203,7 +233,7 @@ struct ScytaleReaderHandle
         InCryptoTransport::EncryptionMode encryption,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme, int one_shot_encryption_scheme,
-        char const * master_derivator)
+        bytes_view master_derivator)
     : cctxw(hmac_key, trace_fn,
             false /* unused for reading */, false /* unused for reading */,
             old_encryption_scheme, one_shot_encryption_scheme,
@@ -216,22 +246,6 @@ struct ScytaleReaderHandle
     InCryptoTransport in_crypto_transport;
     ScytaleErrorContext error_ctx;
 };
-
-
-using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
-static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
-
-namespace
-{
-    void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
-        static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
-        auto phex = hashhex;
-        for (uint8_t c : hash) {
-            phex = int_to_fixed_hexadecimal_upper_chars(phex, c);
-        }
-        *phex = '\0';
-    }
-} // namespace
 
 
 
@@ -256,7 +270,8 @@ char const * scytale_writer_get_fhashhex(ScytaleWriterHandle * handle) {
 
 
 ScytaleWriterHandle * scytale_writer_new(
-    int with_encryption, int with_checksum, const char * master_derivator,
+    int with_encryption, int with_checksum,
+    uint8_t const * master_derivator, unsigned master_derivator_len,
     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
     int old_scheme, int one_shot)
 {
@@ -266,13 +281,14 @@ ScytaleWriterHandle * scytale_writer_new(
         with_encryption, with_checksum,
         hmac_key, trace_fn,
         old_scheme, one_shot,
-        master_derivator
+        {master_derivator, master_derivator_len}
     ));
 }
 
 
 ScytaleWriterHandle * scytale_writer_new_with_test_random(
-    int with_encryption, int with_checksum, const char * master_derivator,
+    int with_encryption, int with_checksum,
+    uint8_t const * master_derivator, unsigned master_derivator_len,
     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
     int old_scheme, int one_shot)
 {
@@ -282,21 +298,22 @@ ScytaleWriterHandle * scytale_writer_new_with_test_random(
         with_encryption, with_checksum,
         hmac_key, trace_fn,
         old_scheme, one_shot,
-        master_derivator
+        {master_derivator, master_derivator_len}
     ));
 }
 
 int scytale_writer_open(
-    ScytaleWriterHandle * handle, char const * record_path, char const * hash_path, int groupid)
+    ScytaleWriterHandle * handle, char const * record_path, char const * hash_path,
+    int permissions, uint8_t const * derivator, unsigned derivator_len)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
     CHECK_NOTHROW(
         handle->out_crypto_transport.open(
-            record_path, hash_path, /*TODO groupid,*/
-            // TODO file_permissions as parameter
-            FilePermissions(0440)/*, TODO derivator*/),
+            record_path, hash_path,
+            compute_permissions(permissions),
+            compute_derivator(record_path, derivator, derivator_len)),
         ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
@@ -335,7 +352,7 @@ char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle)
 
 
 ScytaleReaderHandle * scytale_reader_new(
-    const char * master_derivator,
+    uint8_t const * master_derivator, unsigned master_derivator_len,
     uint8_t const * hmac_key, get_trace_key_prototype* trace_fn,
     int old_scheme, int one_shot)
 {
@@ -344,27 +361,33 @@ ScytaleReaderHandle * scytale_reader_new(
         InCryptoTransport::EncryptionMode::Auto,
         hmac_key, trace_fn,
         old_scheme, one_shot,
-        master_derivator
+        {master_derivator, master_derivator_len}
     ));
 }
 
-int scytale_reader_open(ScytaleReaderHandle * handle, char const * path, char const * derivator) {
+int scytale_reader_open(
+    ScytaleReaderHandle * handle, char const * path,
+    uint8_t const * derivator, unsigned derivator_len
+) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
     CHECK_NOTHROW(
-        handle->in_crypto_transport.open(path, {derivator, strlen(derivator)}),
+        handle->in_crypto_transport.open(
+            path,
+            compute_derivator(path, derivator, derivator_len)),
         ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
 int scytale_reader_open_with_auto_detect_encryption_scheme(
-    ScytaleReaderHandle * handle, char const * path, char const * derivator)
+    ScytaleReaderHandle * handle, char const * path,
+    uint8_t const * derivator, unsigned derivator_len)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    bytes_view const derivator_array{derivator, strlen(derivator)};
+    bytes_view const derivator_array = compute_derivator(path, derivator, derivator_len);
     Error out_error{NO_ERROR};
     CHECK_NOTHROW(
         auto const r = open_if_possible_and_get_encryption_scheme_type(
@@ -393,7 +416,10 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
 long long scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(return handle->in_crypto_transport.partial_read(buffer, len), ERR_TRANSPORT_READ_FAILED);
+    CHECK_NOTHROW(
+        return checked_int(handle->in_crypto_transport.partial_read(buffer, len)),
+        ERR_TRANSPORT_READ_FAILED
+    );
 }
 
 
@@ -564,7 +590,6 @@ int scytale_meta_reader_read_line(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    // TODO use InCryptoTransport::is_eof()
     CHECK_NOTHROW(
         handle->eof
             = Transport::Read::Eof == handle->mwrm_reader.read_meta_line(handle->meta_line),
@@ -610,15 +635,14 @@ struct ScytaleTflWriterHandler
 struct ScytaleFdxWriterHandle
 {
     ScytaleFdxWriterHandle(
-        int with_encryption, int with_checksum, const char * master_derivator,
+        int with_encryption, int with_checksum, bytes_view master_derivator,
         uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         ScytaleRandomWrapper::RandomType random_type,
         char const * record_path, char const * hash_path, char const * fdx_file_base,
-        char const * sid)
+        char const * sid, FilePermissions permissions)
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
-    // TODO file_permissions as parameter
-    , fdx_capture(record_path, hash_path, fdx_file_base, sid, FilePermissions(0440),
+    , fdx_capture(record_path, hash_path, fdx_file_base, sid, permissions,
         this->cctxw.cctx, *this->random_wrapper.rnd, [](const Error &/*error*/){})
     {
         this->qhashhex[0] = 0;
@@ -688,29 +712,35 @@ public:
 
 
 ScytaleFdxWriterHandle * scytale_fdx_writer_new(
-    int with_encryption, int with_checksum, char const* master_derivator,
+    int with_encryption, int with_checksum,
+    uint8_t const * master_derivator, unsigned master_derivator_len,
     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
     char const * record_path, char const * hash_path, char const * fdx_file_base,
-    int groupid, char const * sid)
+    char const * sid, int permissions)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
-        with_encryption, with_checksum, master_derivator,
+        with_encryption, with_checksum,
+        {master_derivator, master_derivator_len},
         hmac_key, trace_fn, ScytaleRandomWrapper::UDEV,
-        record_path, hash_path, fdx_file_base, /*TODO groupid, */sid));
+        record_path, hash_path, fdx_file_base, sid,
+        compute_permissions(permissions)));
 }
 
 ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
-    int with_encryption, int with_checksum, char const* master_derivator,
+    int with_encryption, int with_checksum,
+    uint8_t const * master_derivator, unsigned master_derivator_len,
     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
     char const * record_path, char const * hash_path, char const * fdx_file_base,
-    int groupid, char const * sid)
+    char const * sid, int permissions)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
-        with_encryption, with_checksum, master_derivator,
+        with_encryption, with_checksum,
+        {master_derivator, master_derivator_len},
         hmac_key, trace_fn, ScytaleRandomWrapper::LCG,
-        record_path, hash_path, fdx_file_base, sid));
+        record_path, hash_path, fdx_file_base, sid,
+        compute_permissions(permissions)));
 }
 
 char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle)
@@ -793,7 +823,7 @@ char const * scytale_fdx_writer_get_error_message(ScytaleFdxWriterHandle * handl
     return handle->error_ctx.message();
 }
 
-}
+} // extern "C"
 
 namespace
 {
