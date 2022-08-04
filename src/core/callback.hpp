@@ -95,3 +95,44 @@ struct Callback : RdpInput
     virtual void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) = 0;
 };
 
+struct NullCallback : Callback
+{
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
+    {
+        (void)flags;
+        (void)scancode;
+        (void)event_time;
+        (void)keymap;
+    }
+
+    void rdp_input_mouse(int device_flags, int x, int y) override
+    {
+        (void)device_flags;
+        (void)x;
+        (void)y;
+    }
+
+    void rdp_input_synchronize(KeyLocks locks) override
+    {
+        (void)locks;
+    }
+
+    void rdp_input_invalidate(Rect r) override
+    {
+        (void)r;
+    }
+
+    void rdp_gdi_up_and_running() override
+    {}
+
+    void rdp_gdi_down() override
+    {}
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
+    {
+        (void)front_channel_name;
+        (void)chunk;
+        (void)length;
+        (void)flags;
+    }
+};

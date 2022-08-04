@@ -737,8 +737,47 @@ private:
 
     Rect rail_window_rect;
 
-    const bool is_guest;
-    const std::string session_sharing_invitation_id;
+    struct FrontSharingCtx
+    {
+        // send pointer when graphics is disabled on guest
+        struct NullGdWithNewPointer : gdi::NullGraphic
+        {
+            void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+            {
+                this->gd->new_pointer(cache_idx, cursor);
+            }
+
+            gdi::GraphicApi* gd = nullptr;
+        };
+
+        void(*kill_fn)(void*);
+        void* fn_ctx;
+
+        gdi::GraphicApi* guest_old_gd = nullptr;
+        Front* guest = nullptr;
+        // TODO int for multi sharing (always 0 or 1 for guest (bool like))
+        int input_id = 0;
+        gdi::CachePointerIndex last_pointer_cache_idx = PredefinedPointer::Normal;
+        const bool is_guest;
+        NullGdWithNewPointer null_gd_with_new_pointer {};
+
+        bool has_input() const noexcept
+        {
+            return input_id == 0;
+        }
+
+        void enable_input() noexcept
+        {
+            input_id = 0;
+        }
+
+        void disable_input() noexcept
+        {
+            input_id = 1;
+        }
+    };
+
+    FrontSharingCtx sharing_ctx;
 
 public:
     bool is_up_and_running() const noexcept
@@ -862,7 +901,8 @@ public:
     {
         bool is_guest;
         ScreenInfo screen_info;
-        std::string_view session_sharing_invitation_id;
+        void(*kill_fn)(void*);
+        void* fn_ctx;
     };
 
     Front( EventContainer& events
@@ -892,9 +932,12 @@ public:
     )
     , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
-    , is_guest(guest_parameter.is_guest)
-    , session_sharing_invitation_id(guest_parameter.session_sharing_invitation_id)
-    , input_front_id(guest_parameter.is_guest)
+    , sharing_ctx{
+        .kill_fn = guest_parameter.kill_fn,
+        .fn_ctx = guest_parameter.fn_ctx,
+        .input_id = guest_parameter.is_guest /* disable input for guest */,
+        .is_guest = guest_parameter.is_guest,
+    }
     {
         client_info.screen_info = guest_parameter.screen_info;
 
@@ -1059,7 +1102,7 @@ public:
     void cached_pointer(gdi::CachePointerIndex cache_idx) override
     {
         this->gd->cached_pointer(cache_idx);
-        this->last_pointer_cache_idx = cache_idx;
+        this->sharing_ctx.last_pointer_cache_idx = cache_idx;
     }
 
     void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
@@ -1383,7 +1426,7 @@ private:
           , this->max_data_block_size
           , this->server_fastpath_update_support
           , this->mppc_enc.get()
-          , this->input_front_id
+          , this->sharing_ctx.input_id
           , this->verbose
         );
         this->set_gd(this->get_internal_gd());
@@ -1626,7 +1669,7 @@ public:
                             cs_core.log("Front::incoming: Received from Client");
                         }
 
-                        if (!this->is_guest) {
+                        if (!this->sharing_ctx.is_guest) {
                             this->client_info.screen_info.width     = cs_core.desktopWidth;
                             this->client_info.screen_info.height    = cs_core.desktopHeight;
                             this->client_info.screen_info.bpp = BitsPerPixel{8};
@@ -3493,7 +3536,7 @@ private:
                     // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
                     if (!this->client_info.screen_info.width || !this->client_info.screen_info.height)
                     {
-                        if (!this->is_guest) {
+                        if (!this->sharing_ctx.is_guest) {
                             this->client_info.screen_info.width  = this->client_info.bitmap_caps.desktopWidth;
                             this->client_info.screen_info.height = this->client_info.bitmap_caps.desktopHeight;
                         }
@@ -5130,49 +5173,87 @@ public:
 private:
     void session_sharing_take_control(Callback & cb)
     {
-        this->input_front_id = 0;
-        this->gd->cached_pointer(this->last_pointer_cache_idx);
-        this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
+        this->sharing_ctx.enable_input();
+        this->gd->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
+        this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(PredefinedPointer::SlashedCircle);
-        this->front2->input_front_id = 1;
+        this->sharing_ctx.guest->sharing_ctx.disable_input();
         cb.rdp_input_synchronize(this->keymap.locks());
     }
 
     void session_sharing_give_control(Callback & cb)
     {
         this->gd->cached_pointer(PredefinedPointer::SlashedCircle);
-        this->input_front_id = 1;
-        this->front2->input_front_id = 0;
-        this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
-            ::cached_pointer(this->last_pointer_cache_idx);
-        cb.rdp_input_synchronize(this->front2->keymap.locks());
+        this->sharing_ctx.disable_input();
+        this->sharing_ctx.guest->sharing_ctx.enable_input();
+        this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
+            ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
+        cb.rdp_input_synchronize(this->sharing_ctx.guest->keymap.locks());
     }
 
     void session_sharing_common_control()
     {
-        this->input_front_id = 0;
-        this->front2->input_front_id = 0;
-        this->gd->cached_pointer(this->last_pointer_cache_idx);
-        this->front2->orders.graphics_update_pdu().GraphicsUpdatePDU
-            ::cached_pointer(this->last_pointer_cache_idx);
+        this->sharing_ctx.enable_input();
+        this->sharing_ctx.guest->sharing_ctx.enable_input();
+        this->gd->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
+        this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
+            ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
     }
 
     void session_sharing_toggle_graphics(Callback & cb)
     {
-        if (this->front2->front2_old_gd) {
-            this->front2->set_gd(this->front2->front2_old_gd);
-            this->front2->front2_old_gd = nullptr;
+        if (this->sharing_ctx.guest->sharing_ctx.guest_old_gd) {
+            this->sharing_ctx.guest->set_gd(this->sharing_ctx.guest->sharing_ctx.guest_old_gd);
+            this->sharing_ctx.guest->sharing_ctx.guest_old_gd = nullptr;
             cb.rdp_input_invalidate({0, 0, client_info.screen_info.width, client_info.screen_info.height});
         }
         else {
-            auto& gd = this->front2->orders.graphics_update_pdu();
+            auto& gd = this->sharing_ctx.guest->orders.graphics_update_pdu();
             gdi_freeze_screen(gd, {client_info.screen_info.width, client_info.screen_info.height});
             this->session_sharing_take_control(cb);
             gd.sync();
-            this->front2->null_gd_with_new_pointer.gd = &gd;
-            this->front2->front2_old_gd = this->front2->gd;
-            this->front2->set_gd(this->front2->null_gd_with_new_pointer);
+            this->sharing_ctx.guest->sharing_ctx.null_gd_with_new_pointer.gd = &gd;
+            this->sharing_ctx.guest->sharing_ctx.guest_old_gd = this->sharing_ctx.guest->gd;
+            this->sharing_ctx.guest->set_gd(this->sharing_ctx.guest->sharing_ctx.null_gd_with_new_pointer);
         }
+    }
+
+    bool sharing_scancode_filtered(Callback & cb)
+    {
+        if (!this->sharing_ctx.guest) {
+            return false;
+        }
+
+        // graphic is enabled (session_sharing_toggle_graphics)
+        if (!this->sharing_ctx.guest->sharing_ctx.guest_old_gd)
+        {
+            if (this->keymap.is_session_sharing_take_control()) {
+                this->session_sharing_take_control(cb);
+                return true;
+            }
+
+            if (this->keymap.is_session_sharing_give_control()) {
+                this->session_sharing_give_control(cb);
+                return true;
+            }
+
+            if (this->keymap.is_session_sharing_common_control()) {
+                this->session_sharing_common_control();
+                return true;
+            }
+        }
+
+        if (this->keymap.is_session_sharing_kill_guest()) {
+            this->sharing_ctx.guest->auto_kill();
+            return true;
+        }
+
+        if (this->keymap.is_session_sharing_toggle_graphics()) {
+            this->session_sharing_toggle_graphics(cb);
+            return true;
+        }
+
+        return !this->sharing_ctx.has_input();
     }
 
     void input_event_scancode(
@@ -5189,28 +5270,7 @@ private:
             if (this->ini.get<cfg::client::disable_tsk_switch_shortcuts>() && this->keymap.is_tsk_switch_shortcut()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
-            else if (this->front2 && !this->front2->front2_old_gd
-                  && this->keymap.is_session_sharing_take_control()
-            ) {
-                this->session_sharing_take_control(cb);
-            }
-            else if (this->front2 && !this->front2->front2_old_gd
-                  && this->keymap.is_session_sharing_give_control()
-            ) {
-                this->session_sharing_give_control(cb);
-            }
-            else if (this->front2 && !this->front2->front2_old_gd
-                  && this->keymap.is_session_sharing_common_control()
-            ) {
-                this->session_sharing_common_control();
-            }
-            else if (this->front2 && this->keymap.is_session_sharing_kill_guest()) {
-                this->front2->disconnect();
-            }
-            else if (this->front2 && this->keymap.is_session_sharing_toggle_graphics()) {
-                this->session_sharing_toggle_graphics(cb);
-            }
-            else if (this->input_front_id == 0) {
+            else if (!this->sharing_scancode_filtered(cb)) {
                 bool send_to_mod = !this->capture;
                 if (!send_to_mod) {
                     auto const now = this->events_guard.get_monotonic_time();
@@ -5255,7 +5315,7 @@ private:
     void input_event_unicode(RdpInput::KbdFlags flag, uint16_t unicode, Callback & cb)
     {
         if (this->state == FRONT_UP_AND_RUNNING) {
-            if (this->input_front_id == 0) {
+            if (this->sharing_ctx.has_input()) {
                 cb.rdp_input_unicode(flag, unicode);
             }
             this->has_user_activity = true;
@@ -5268,7 +5328,7 @@ private:
         this->mouse_y = y;
         this->has_user_activity = true;
 
-        if (this->state == FRONT_UP_AND_RUNNING && this->input_front_id == 0) {
+        if (this->state == FRONT_UP_AND_RUNNING && this->sharing_ctx.has_input()) {
             cb.rdp_input_mouse(pointer_flags, x, y);
 
             if ((pointer_flags & (SlowPath::PTRFLAGS_BUTTON1 |
@@ -5285,10 +5345,10 @@ private:
     {
         this->has_user_activity = true;
 
-        // if (this->state == FRONT_UP_AND_RUNNING && this->input_front_id == 0) {
+        // if (this->state == FRONT_UP_AND_RUNNING && this->sharing_ctx.has_input()) {
         // }
 
-        // if (this->input_front_id == 0) {
+        // if (this->sharing_ctx.has_input()) {
         //     if ((pointer_flags & (SlowPath::PTRXFLAGS_BUTTON1 |
         //                           SlowPath::PTRXFLAGS_BUTTON2))
         //      && !(pointer_flags & SlowPath::PTRXFLAGS_DOWN)
@@ -5319,50 +5379,37 @@ private:
         }
     }
 
-private:
-    struct NullGdWithNewPointer : gdi::NullGraphic
-    {
-        void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
-        {
-            this->gd->new_pointer(cache_idx, cursor);
-        }
-
-        gdi::GraphicApi* gd = nullptr;
-    };
-
-    gdi::GraphicApi* front2_old_gd = nullptr;
-    NullGdWithNewPointer null_gd_with_new_pointer;
-    // TODO for multi sharing
-    int input_front_id = 0;
-    Front* front2 = nullptr;
-    gdi::CachePointerIndex last_pointer_cache_idx = PredefinedPointer::Normal;
-
 public:
-    void add_guest(Front& front2)
+    void add_guest(Front& guest_front)
     {
-        assert(!this->front2);
+        assert(!this->sharing_ctx.guest);
 
-        this->front2 = &front2;
-        front2.orders.graphics_update_pdu().GraphicsUpdatePDU
+        this->sharing_ctx.guest = &guest_front;
+        guest_front.orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(PredefinedPointer::SlashedCircle);
-        front2.input_front_id = 1;
+        guest_front.sharing_ctx.disable_input();
 
-        this->copy_caches_to(front2);
-        this->add_graphic(front2);
+        this->copy_caches_to(guest_front);
+        this->add_graphic(guest_front);
     }
 
-    void remove_guest(Front& front2)
+    void remove_guest(Front& guest_front)
     {
-        assert(this->front2 == &front2);
-        this->front2 = nullptr;
-        this->remove_graphic(front2);
-        if (this->input_front_id != 0) {
-            this->input_front_id = 0;
-            this->cached_pointer(this->last_pointer_cache_idx);
+        assert(this->sharing_ctx.guest == &guest_front);
+        this->sharing_ctx.guest = nullptr;
+        this->remove_graphic(guest_front);
+        if (!this->sharing_ctx.has_input()) {
+            this->sharing_ctx.enable_input();
+            this->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         }
     }
 
 private:
+    void auto_kill()
+    {
+        this->sharing_ctx.kill_fn(this->sharing_ctx.fn_ctx);
+    }
+
     void copy_caches_to(Front& front) const
     {
         auto pointers = this->orders.get_raw_pointer_cache().source_pointers_view();
@@ -5375,6 +5422,7 @@ private:
             this->capture->add_graphic(gd);
         }
         else {
+            // gd become a gd dispatcher
             if (this->gd_dispatcher.graphics().empty()) {
                 this->set_gd(this->gd_dispatcher);
                 this->gd_dispatcher.add_graphic(this->orders.graphics_update_pdu());
@@ -5390,6 +5438,7 @@ private:
         }
         else {
             this->gd_dispatcher.remove_graphic(gd);
+            // remove gd dispatcher
             if (this->gd_dispatcher.graphics().size() == 1) {
                 this->gd_dispatcher.clear();
                 this->set_gd(this->orders.graphics_update_pdu());

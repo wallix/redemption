@@ -49,6 +49,15 @@ struct AclReportApi : noncopyable
     virtual ~AclReportApi() = default;
 };
 
+struct NullAclReport final : AclReportApi
+{
+    void report(const char * reason, const char * message) override
+    {
+        (void)reason;
+        (void)message;
+    }
+};
+
 struct SessionLogApi : AclReportApi
 {
     virtual void log6(LogId id, KVLogList kv_list) = 0;

@@ -24,6 +24,7 @@
 #include "core/session_events.hpp"
 #include "core/pid_file.hpp"
 #include "core/listen.hpp"
+#include "core/guest_ctx.hpp"
 
 #include "acl/session_inactivity.hpp"
 #include "acl/acl_serializer.hpp"
@@ -289,207 +290,10 @@ class Session
         }
     };
 
-    struct Front2Ctx
-    {
-        struct Front2Data
-        {
-            bool is_synchronized = false;
-            TpduBuffer rbuf;
-            Inifile ini;
-
-            Front2Data(Inifile const& original_ini)
-            {
-                original_ini.copy_variables_to(ini);
-            }
-
-            Inifile& get_ini()
-            {
-                return ini;
-            }
-        };
-
-        struct Front2 final : private SocketTransport, Front2Data, Front
-        {
-            Front2(
-                unique_fd conn_sck,
-                EventContainer& event_container,
-                Front& front,
-                Inifile const& original_ini,
-                UdevRandom& rnd,
-                std::string_view session_sharing_invitation_id)
-            : SocketTransport(
-                "Front2"_sck_name, std::move(conn_sck), ""_av, 0,
-                3s, 3s, 3s, SocketTransport::Verbose()/*TODO debug::session_sharing_front*/, nullptr)
-            , Front2Data(original_ini)
-            , Front(event_container, null_acl_report,
-                *this, rnd, get_ini(), cctx,
-                Front::GuestParameters{
-                    .is_guest = true,
-                    .screen_info = front.get_client_info().screen_info,
-                    .session_sharing_invitation_id = session_sharing_invitation_id
-                }
-            )
-            {}
-
-            SocketTransport& get_transport()
-            {
-                return *this;
-            }
-
-            Front& get_front()
-            {
-                return *this;
-            }
-
-        private:
-            NullAclReport null_acl_report;
-            null_mod nullmod;
-            CryptoContext cctx;
-        };
-
-        std::unique_ptr<Front2> front2;
-        unique_fd listen_sck = invalid_fd();
-        std::string session_sharing_invitation_id;
-        Event* event = nullptr;
-
-        static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
-
-        bool is_started() const noexcept
-        {
-            return event;
-        }
-
-        // TODO remove this
-        ~Front2Ctx()
-        {
-            if (is_started()) {
-                remove(sck_patch.c_str());
-            }
-        }
-
-        void start(
-            EventContainer& event_container, Front& front, Callback& callback,
-            UdevRandom& rnd, Inifile& original_ini)
-        {
-            assert(!event);
-
-            listen_sck = create_unix_server(sck_patch, EnableTransparentMode::No);
-            if (!listen_sck.is_open()) {
-                LOG(LOG_DEBUG, "Front2::start() create server error");
-                original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(checked_int(errno));
-                original_ini.set_acl<cfg::context::session_sharing_invitation_error_message>(strerror(errno));
-                return ;
-            }
-
-            original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(0u);
-            // TODO
-            session_sharing_invitation_id = "abc";
-            original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
-            original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_patch);
-
-            LOG(LOG_DEBUG, "start ok");
-
-            // TODO add timer before auto-close
-
-            event = &event_container.event_creator().create_event_fd_without_timeout(
-                "Front2Server", this, listen_sck.fd(),
-                [this, &event_container, &front, &callback, &rnd, &original_ini](Event& event) {
-                    LOG(LOG_DEBUG, "guest connection");
-                    union
-                    {
-                        struct sockaddr s;
-                        struct sockaddr_storage ss;
-                        struct sockaddr_in s4;
-                        struct sockaddr_in6 s6;
-                    } u;
-                    unsigned int sin_size = sizeof(u);
-                    memset(&u, 0, sin_size);
-
-                    int conn_sck = accept(listen_sck.fd(), &u.s, &sin_size);
-                    listen_sck.close();
-                    remove(sck_patch.c_str());
-
-                    event.garbage = true;
-
-                    if (conn_sck == -1) {
-                        // TODO
-                        throw Error(ERR_SOCKET_CONNECT_FAILED);
-                    }
-
-                    front2 = std::make_unique<Front2>(
-                        unique_fd(conn_sck), event_container, front, original_ini, rnd,
-                        session_sharing_invitation_id);
-
-                    this->event = &event_container.event_creator().create_event_fd_without_timeout(
-                        "Front2Client", this, conn_sck,
-                        [this, &front, &callback](Event& event) {
-                            try {
-                                front_process(front2->rbuf, *front2, front2->get_transport(), callback);
-                            }
-                            catch (...) {
-                                stop(front);
-                                event.garbage = true;
-                                return;
-                            }
-
-                            if (REDEMPTION_LIKELY(front2->is_synchronized)) {
-                                return;
-                            }
-
-                            if (front2->is_up_and_running()) {
-                                auto const& client_info2 = front2->get_client_info();
-                                if (session_sharing_invitation_id != client_info2.password) {
-                                    LOG(LOG_ERR, "Front2: bad credential of session sharing");
-                                    stop(front);
-                                    event.garbage = true;
-                                    return;
-                                }
-
-                                front2->is_synchronized = true;
-                                front.add_guest(*front2);
-                                auto screen = front.get_client_info().screen_info;
-                                callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
-                            }
-                        }
-                    );
-                }
-            );
-        }
-
-        void stop(Front& front)
-        {
-            if (listen_sck.is_open()) {
-                listen_sck.close();
-                remove(sck_patch);
-            }
-
-            if (event) {
-                event->garbage = true;
-                event = nullptr;
-            }
-
-            if (front2) {
-                if (front2->is_synchronized) {
-                    front.remove_guest(*front2);
-                }
-
-                try {
-                    front2->get_front().disconnect();
-                    front2->get_transport().disconnect();
-                }
-                catch (...) {
-                }
-                front2.reset();
-            }
-        }
-
-    private:
-    };
-
     Inifile & ini;
     PidFile & pid_file;
     SessionVerbose verbose;
-    Front2Ctx front2_ctx;
+    GuestCtx guest_ctx;
 
 private:
     enum class EndSessionResult
@@ -664,7 +468,7 @@ private:
             LOG(LOG_INFO, "Exited from target connection");
             mod_wrapper.disconnect();
             front.must_be_stop_capture();
-            front2_ctx.stop(front);
+            guest_ctx.stop();
             secondary_session.close_secondary_session();
         }
         else {
@@ -1055,7 +859,7 @@ private:
             ini.get<cfg::globals::authfile>(), 0,
             std::chrono::milliseconds(1000),
             std::chrono::milliseconds::zero(),
-            std::chrono::seconds(1),
+            std::chrono::milliseconds(1000),
             SocketTransport::Verbose::none);
 
         auto& events = event_manager.get_events();
@@ -1097,10 +901,10 @@ private:
                 auto* pmod_trans = mod_wrapper.get_mod_transport();
                 const bool front_has_data_to_write     = front_trans.has_data_to_write();
                 const bool front_has_tls_pending_data  = front_trans.has_tls_pending_data();
-                const bool front2_has_data_to_write    = front2_ctx.front2
-                                                      && front2_ctx.front2->get_transport().has_data_to_write();
-                const bool front2_has_tls_pending_data = front2_ctx.front2
-                                                      && front2_ctx.front2->get_transport().has_tls_pending_data();
+                const bool front2_has_data_to_write    = guest_ctx.has_front()
+                                                      && guest_ctx.front_transport().has_data_to_write();
+                const bool front2_has_tls_pending_data = guest_ctx.has_front()
+                                                      && guest_ctx.front_transport().has_tls_pending_data();
                 const bool mod_trans_is_valid          = pmod_trans
                                                       && pmod_trans->get_fd() != INVALID_SOCKET;
                 const bool mod_has_data_to_write       = mod_trans_is_valid
@@ -1124,7 +928,7 @@ private:
                     if (front2_has_data_to_write) {
                         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                             LOG_INFO, "Session: Front2 has data to write");
-                        ioswitch.set_write_sck(front2_ctx.front2->get_transport().get_fd());
+                        ioswitch.set_write_sck(guest_ctx.front_transport().get_fd());
                     }
 
                     if (mod_has_data_to_write) {
@@ -1158,7 +962,7 @@ private:
                 if (front2_has_tls_pending_data) {
                     LOG_IF(bool(this->verbose & SessionVerbose::Trace),
                         LOG_INFO, "Session: Front2 has tls pending data");
-                    ioswitch.set_read_sck(front2_ctx.front2->get_transport().get_fd());
+                    ioswitch.set_read_sck(guest_ctx.front_transport().get_fd());
                 }
 
                 if (front_has_tls_pending_data) {
@@ -1202,7 +1006,7 @@ private:
                     }
 
                     if (front2_has_data_to_write) {
-                        if (ioswitch.is_set_for_writing(front2_ctx.front2->get_transport().get_fd())) {
+                        if (ioswitch.is_set_for_writing(guest_ctx.front_transport().get_fd())) {
                             front_trans.send_waiting_data();
                         }
                     }
@@ -1307,9 +1111,9 @@ private:
                         if (front.is_up_and_running()
                          && mod_wrapper.is_connected()
                          && mod_wrapper.is_up_and_running()
-                         && !front2_ctx.is_started()
+                         && !guest_ctx.is_started()
                         ) {
-                            front2_ctx.start(events, front, mod_wrapper.get_callback(), rnd, ini);
+                            guest_ctx.start(events, front, mod_wrapper.get_callback(), rnd, ini);
                         }
                     }
                 }
@@ -1808,7 +1612,7 @@ public:
         log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
 
         front.must_be_stop_capture();
-        front2_ctx.stop(front);
+        guest_ctx.stop();
     }
 
     Session(Session const &) = delete;
