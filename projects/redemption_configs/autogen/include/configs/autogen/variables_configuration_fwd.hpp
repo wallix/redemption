@@ -284,6 +284,7 @@ namespace cfg
     struct audit {
         struct rt_display;
         struct use_redis;
+        struct redis_timeout;
         struct redis_address;
         struct redis_port;
         struct redis_password;
@@ -292,7 +293,6 @@ namespace cfg
         struct redis_tls_cacert;
         struct redis_tls_cert;
         struct redis_tls_key;
-        struct redis_timeout;
     };
 
     struct file_verification {

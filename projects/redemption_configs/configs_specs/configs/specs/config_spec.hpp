@@ -887,22 +887,18 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"rt_display"}, set(false));
 
-        // TODO hidden_in_gui -> no_ini_no_gui
-        //@{
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"use_redis"}, set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"use_redis"}, set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));
 
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_address"});
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::unsigned_>(), names{"redis_port"});
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_password"});
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::unsigned_>(), names{"redis_db"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_address"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::unsigned_>(), names{"redis_port"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_password"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<types::unsigned_>(), names{"redis_db"});
 
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"redis_use_tls"});
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_tls_cacert"});
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_tls_cert"});
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_tls_key"});
-        //@}
-
-        W.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::chrono::milliseconds>(), names{"redis_timeout"}, set(500));
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"redis_use_tls"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_tls_cacert"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_tls_cert"});
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"redis_tls_key"});
     });
 
     W.section("crypto", [&]

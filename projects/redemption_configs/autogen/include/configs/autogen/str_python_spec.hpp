@@ -963,30 +963,6 @@ file_permissions = string(default='440')
 #_hidden
 use_redis = boolean(default=False)
 
-#_hidden
-redis_address = string(default='')
-
-#_hidden
-redis_port = integer(min=0, default=0)
-
-#_hidden
-redis_password = string(default='')
-
-#_hidden
-redis_db = integer(min=0, default=0)
-
-#_hidden
-redis_use_tls = boolean(default=False)
-
-#_hidden
-redis_tls_cacert = string(default='')
-
-#_hidden
-redis_tls_cert = string(default='')
-
-#_hidden
-redis_tls_key = string(default='')
-
 # (in milliseconds)
 #_hidden
 redis_timeout = integer(min=0, default=500)

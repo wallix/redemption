@@ -321,7 +321,6 @@ class RTManager(object):
                 'redis_password': redis_config.get('password', ''),
                 'redis_db': redis_config.get('db', 0),
                 'redis_use_tls': use_tls,
-                'use_redis': True,
             }
             if use_tls:
                 data['redis_tls_key'] = redis_config.get('ssl_keyfile')

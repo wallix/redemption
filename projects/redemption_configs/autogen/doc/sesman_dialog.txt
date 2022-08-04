@@ -318,7 +318,6 @@ cfg::video::record_tmp_path ⇐ record_tmp_path   [::configs::spec_types::direct
 cfg::video::record_path ⇐ record_path   [::configs::spec_types::directory_path]
 
 cfg::audit::rt_display ⇐ rt_display   [bool]
-cfg::audit::use_redis ⇐ use_redis   [bool]
 cfg::audit::redis_address ⇐ redis_address   [std::string]
 cfg::audit::redis_port ⇐ redis_port   [unsigned]
 cfg::audit::redis_password ⇐ redis_password   [std::string]
@@ -327,7 +326,6 @@ cfg::audit::redis_use_tls ⇐ redis_use_tls   [bool]
 cfg::audit::redis_tls_cacert ⇐ redis_tls_cacert   [std::string]
 cfg::audit::redis_tls_cert ⇐ redis_tls_cert   [std::string]
 cfg::audit::redis_tls_key ⇐ redis_tls_key   [std::string]
-cfg::audit::redis_timeout ⇐ redis_timeout   [std::chrono::milliseconds]
 
 cfg::file_verification::enable_up ⇐ file_verification:enable_up   [bool]
     Enable use of ICAP service for file verification on upload.
