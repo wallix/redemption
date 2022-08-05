@@ -1129,7 +1129,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#use_redis = 0
+#use_redis = 1
 
 # (in milliseconds)
 #_hidden

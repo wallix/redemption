@@ -961,7 +961,7 @@ file_permissions = string(default='440')
 [audit]
 
 #_hidden
-use_redis = boolean(default=False)
+use_redis = boolean(default=True)
 
 # (in milliseconds)
 #_hidden
