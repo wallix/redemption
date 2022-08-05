@@ -2927,7 +2927,7 @@ class Sesman():
             userdata = params.get("session_sharing_userdata")
             Logger().debug("sending _shadow_type=%s" % res)
             self.send_data({
-                u'session_sharing_type': res,
+                u'session_sharing_enable_control': res == "normal",
                 u'session_sharing_userdata': userdata
             })
 

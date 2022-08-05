@@ -63,9 +63,12 @@ struct GuestCtx
 
     void start(
         EventContainer& event_container, Front& front, Callback& callback,
-        UdevRandom& rnd, Inifile& original_ini)
+        UdevRandom& rnd, Inifile& original_ini, std::string_view user_data,
+        bool enable_shared_control)
     {
         assert(!event);
+
+        original_ini.set_acl<cfg::context::session_sharing_userdata>(user_data);
 
         listen_sck = create_unix_server(sck_patch, EnableTransparentMode::No);
         if (!listen_sck.is_open()) {
@@ -89,7 +92,8 @@ struct GuestCtx
             "GuestServer", this, listen_sck.fd(),
             [
                 this, &event_container, &front, &callback, &rnd, &original_ini,
-                password = std::move(session_sharing_invitation_id)
+                password = std::move(session_sharing_invitation_id),
+                enable_shared_control
             ](Event& /*event*/) {
                 LOG(LOG_DEBUG, "guest connection");
 
@@ -105,7 +109,8 @@ struct GuestCtx
 
                 auto* kill_fn = +[](void* self){ static_cast<GuestCtx*>(self)->close_front2(); };
                 front2_ptr = std::make_unique<Guest>(
-                    unique_fd(conn_sck), event_container, front, original_ini, rnd, kill_fn, this);
+                    unique_fd(conn_sck), event_container, front, original_ini, rnd,
+                    enable_shared_control, kill_fn, this);
 
                 front2_ptr->set_io_event([this, &callback, password = std::move(password)](Event& /*event*/) {
                     // no input
@@ -186,6 +191,7 @@ private:
             Front& user_front,
             Inifile const& original_ini,
             UdevRandom& rnd,
+            bool enable_shared_control,
             void(*kill_fn)(void*),
             void* fn_ctx)
         : GuestData(event_container, user_front, original_ini)
@@ -200,6 +206,7 @@ private:
             *this, rnd, get_ini(), cctx,
             Front::GuestParameters{
                 .is_guest = true,
+                .enable_shared_control = enable_shared_control,
                 .screen_info = user_front.get_client_info().screen_info,
                 .kill_fn = kill_fn,
                 .fn_ctx = fn_ctx,

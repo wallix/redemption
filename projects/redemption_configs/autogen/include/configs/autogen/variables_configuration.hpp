@@ -4796,19 +4796,19 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// type: std::string <br/>
+    /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
-    /// default: {} <br/>
-    struct context::session_sharing_type {
+    /// default: false <br/>
+    struct context::session_sharing_enable_control {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 76};
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = bool;
+        using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value {  };
+        type value { false };
     };
     /// type: uint32_t <br/>
     /// sesman ⇐ proxy <br/>
@@ -5913,7 +5913,6 @@ struct context
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::session_sharing_userdata
-, cfg::context::session_sharing_type
 , cfg::context::session_sharing_invitation_error_message
 , cfg::context::session_sharing_invitation_id
 , cfg::context::session_sharing_invitation_addr
@@ -5946,6 +5945,7 @@ struct context
 , cfg::context::rd_shadow_available
 , cfg::context::rd_shadow_invitation_error_code
 , cfg::context::rd_shadow_invitation_port
+, cfg::context::session_sharing_enable_control
 , cfg::context::session_sharing_invitation_error_code
 , cfg::context::rail_module_host_mod_is_active
 , cfg::context::banner_type
@@ -6259,7 +6259,7 @@ using VariablesAclPack = Pack<
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::rd_shadow_invitation_port
 , cfg::context::session_sharing_userdata
-, cfg::context::session_sharing_type
+, cfg::context::session_sharing_enable_control
 , cfg::context::session_sharing_invitation_error_code
 , cfg::context::session_sharing_invitation_error_message
 , cfg::context::session_sharing_invitation_id

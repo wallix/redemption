@@ -414,7 +414,7 @@ namespace cfg
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
         struct session_sharing_userdata;
-        struct session_sharing_type;
+        struct session_sharing_enable_control;
         struct session_sharing_invitation_error_code;
         struct session_sharing_invitation_error_message;
         struct session_sharing_invitation_id;

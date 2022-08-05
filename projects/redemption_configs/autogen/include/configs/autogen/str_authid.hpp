@@ -225,7 +225,7 @@ namespace configs
         "rd_shadow_invitation_addr"_zv,
         "rd_shadow_invitation_port"_zv,
         "session_sharing_userdata"_zv,
-        "session_sharing_type"_zv,
+        "session_sharing_enable_control"_zv,
         "session_sharing_invitation_error_code"_zv,
         "session_sharing_invitation_error_message"_zv,
         "session_sharing_invitation_id"_zv,

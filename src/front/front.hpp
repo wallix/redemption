@@ -750,15 +750,16 @@ private:
             gdi::GraphicApi* gd = nullptr;
         };
 
-        void(*kill_fn)(void*);
-        void* fn_ctx;
+        void(*const kill_fn)(void*);
+        void* const fn_ctx;
 
         gdi::GraphicApi* guest_old_gd = nullptr;
         Front* guest = nullptr;
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
         gdi::CachePointerIndex last_pointer_cache_idx = PredefinedPointer::Normal;
-        const bool is_guest;
+        bool const is_guest;
+        bool const enable_shared_control;
         NullGdWithNewPointer null_gd_with_new_pointer {};
 
         bool has_input() const noexcept
@@ -900,6 +901,7 @@ public:
     struct GuestParameters
     {
         bool is_guest;
+        bool enable_shared_control;
         ScreenInfo screen_info;
         void(*kill_fn)(void*);
         void* fn_ctx;
@@ -937,6 +939,7 @@ public:
         .fn_ctx = guest_parameter.fn_ctx,
         .input_id = guest_parameter.is_guest /* disable input for guest */,
         .is_guest = guest_parameter.is_guest,
+        .enable_shared_control = guest_parameter.enable_shared_control,
     }
     {
         client_info.screen_info = guest_parameter.screen_info;
@@ -5225,7 +5228,8 @@ private:
         }
 
         // graphic is enabled (session_sharing_toggle_graphics)
-        if (!this->sharing_ctx.guest->sharing_ctx.guest_old_gd)
+        if (!this->sharing_ctx.guest->sharing_ctx.guest_old_gd
+         && !this->sharing_ctx.guest->sharing_ctx.enable_shared_control)
         {
             if (this->keymap.is_session_sharing_take_control()) {
                 this->session_sharing_take_control(cb);

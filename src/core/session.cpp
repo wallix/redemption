@@ -1107,13 +1107,17 @@ private:
                         }
                     }
 
-                    if (has_field(cfg::context::session_sharing_type())) {
+                    if (has_field(cfg::context::session_sharing_enable_control())) {
                         if (front.is_up_and_running()
                          && mod_wrapper.is_connected()
                          && mod_wrapper.is_up_and_running()
                          && !guest_ctx.is_started()
                         ) {
-                            guest_ctx.start(events, front, mod_wrapper.get_callback(), rnd, ini);
+                            guest_ctx.start(
+                                events, front, mod_wrapper.get_callback(), rnd, ini,
+                                this->ini.get<cfg::context::session_sharing_userdata>(),
+                                this->ini.get<cfg::context::session_sharing_enable_control>()
+                            );
                         }
                     }
                 }

@@ -30,7 +30,7 @@ back_to_selector_default_sent = {
     'selector_lines_per_page': 0,
     'selector_number_of_pages': 1,
     'session_id': '',
-    'session_sharing_type': '',
+    'session_sharing_enable_control': False,
     'session_sharing_userdata': '',
     'shell_arguments': '',
     'shell_working_directory': '',
