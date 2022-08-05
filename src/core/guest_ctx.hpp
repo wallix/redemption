@@ -48,17 +48,17 @@ struct GuestCtx
 {
     bool is_started() const noexcept
     {
-        return event || front2_ptr;
+        return event || guest_ptr;
     }
 
     bool has_front() const noexcept
     {
-        return bool(front2_ptr);
+        return bool(guest_ptr);
     }
 
     SocketTransport& front_transport() const noexcept
     {
-        return front2_ptr->get_transport();
+        return guest_ptr->get_transport();
     }
 
     void start(
@@ -107,27 +107,27 @@ struct GuestCtx
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                auto* kill_fn = +[](void* self){ static_cast<GuestCtx*>(self)->close_front2(); };
-                front2_ptr = std::make_unique<Guest>(
+                auto* kill_fn = +[](void* self){ static_cast<GuestCtx*>(self)->close_guest(); };
+                guest_ptr = std::make_unique<Guest>(
                     unique_fd(conn_sck), event_container, front, original_ini, rnd,
                     enable_shared_control, kill_fn, this);
 
-                front2_ptr->set_io_event([this, &callback, password = std::move(password)](Event& /*event*/) {
+                guest_ptr->set_io_event([this, &callback, password = std::move(password)](Event& /*event*/) {
                     // no input
                     NullCallback null_callback;
-                    process_front2(null_callback);
+                    process_guest(null_callback);
 
-                    if (front2_ptr->is_up_and_running()) {
+                    if (guest_ptr->is_up_and_running()) {
                         // check credential
-                        if (password != front2_ptr->get_client_info().password) {
+                        if (password != guest_ptr->get_client_info().password) {
                             LOG(LOG_ERR, "Guest: bad credential of session sharing");
-                            close_front2();
+                            close_guest();
                             return;
                         }
 
-                        front2_ptr->start_sharing(callback);
-                        front2_ptr->set_io_event([this, &callback](Event& /*event*/) {
-                            process_front2(callback);
+                        guest_ptr->start_sharing(callback);
+                        guest_ptr->set_io_event([this, &callback](Event& /*event*/) {
+                            process_guest(callback);
                         });
                     }
                 });
@@ -144,8 +144,8 @@ struct GuestCtx
             }
         }
 
-        if (front2_ptr) {
-            close_front2();
+        if (guest_ptr) {
+            close_guest();
         }
     }
 
@@ -279,14 +279,14 @@ private:
         CryptoContext cctx;
     };
 
-    void process_front2(Callback& callback)
+    void process_guest(Callback& callback)
     {
         try {
-            front2_ptr->process(callback);
+            guest_ptr->process(callback);
         }
         catch (...) {
             garbage_valid_event();
-            close_front2();
+            close_guest();
         }
     }
 
@@ -302,13 +302,13 @@ private:
         remove(sck_patch);
     }
 
-    void close_front2()
+    void close_guest()
     {
-        front2_ptr->stop_sharing();
-        front2_ptr.reset();
+        guest_ptr->stop_sharing();
+        guest_ptr.reset();
     }
 
-    std::unique_ptr<Guest> front2_ptr;
+    std::unique_ptr<Guest> guest_ptr;
     unique_fd listen_sck = invalid_fd();
     Event* event = nullptr;
 
