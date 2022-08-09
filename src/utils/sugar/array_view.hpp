@@ -385,6 +385,33 @@ struct writable_array_view
     template<class C>
     C as() const
     {
+        if constexpr (detail::is_convertible_with_two_ptr<C>(const_pointer()))
+            return C(this->begin(), this->end());
+        else
+            return C(this->data(), this->size());
+    }
+
+    template<template<class...> class C>
+    auto as() const
+    {
+        if constexpr (detail::is_convertible_with_two_ptr<C>(const_pointer()))
+            return C(this->begin(), this->end());
+        else
+            return C(this->data(), this->size());
+    }
+
+    template<class C>
+    C as()
+    {
+        if constexpr (detail::is_convertible_with_two_ptr<C>(pointer()))
+            return C(this->begin(), this->end());
+        else
+            return C(this->data(), this->size());
+    }
+
+    template<template<class...> class C>
+    auto as()
+    {
         if constexpr (detail::is_convertible_with_two_ptr<C>(pointer()))
             return C(this->begin(), this->end());
         else
