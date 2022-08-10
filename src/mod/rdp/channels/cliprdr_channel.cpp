@@ -714,9 +714,7 @@ struct ClipboardVirtualChannel::FileValidatorDataList
             ? Mwrm3::TransferedStatus::Broken
             : Mwrm3::TransferedStatus::Completed
         )
-        {
-            assert(sig.has_digest());
-        }
+        {}
     };
 
     FileValidatorId file_validator_id;
