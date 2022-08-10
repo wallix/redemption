@@ -86,12 +86,12 @@ struct CryptContext
             // 40 bits encryption
             ssllib::sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key({this->key, 8});
+            this->rc4.set_key(make_sized_array_view(this->key).first<8>());
         }
         else {
             // 128 bits encryption
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key({this->key, 16});
+            this->rc4.set_key(make_sized_array_view(this->key));
         }
     }
 
@@ -110,15 +110,21 @@ struct CryptContext
             sign.update({this->key, keylen});
             sign.final(make_writable_sized_array_view(this->key));
 
-            this->rc4.set_key({this->key, keylen});
+            if (this->encryptionMethod == 1) {
+                this->rc4.set_key(make_sized_array_view(this->key).first<8>());
+            } else {
+                this->rc4.set_key(make_sized_array_view(this->key));
+            }
 
             // size, in, out
             this->rc4.crypt(keylen, this->key, this->key);
 
-            if (this->encryptionMethod == 1){
+            if (this->encryptionMethod == 1) {
                 ssllib::sec_make_40bit(this->key);
+                this->rc4.set_key(make_sized_array_view(this->key).first<8>());
+            } else {
+                this->rc4.set_key(make_sized_array_view(this->key));
             }
-            this->rc4.set_key({this->key, keylen});
             this->use_count = 0;
         }
         // size, in, out

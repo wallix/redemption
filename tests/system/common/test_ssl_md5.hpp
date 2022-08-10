@@ -274,7 +274,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
     // KeyExchangeKey = SessionBaseKey
     // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
     SslRC4 rc4;
-    rc4.set_key(make_array_view(SessionBaseKey));
+    rc4.set_key(make_sized_array_view(SessionBaseKey));
     uint8_t EncryptedRandomSessionKey[16] = {};
     uint8_t ExportedSessionKey[16] = {
         0x89, 0x90, 0x0d, 0x5d, 0x2c, 0x53, 0x2b, 0x36,

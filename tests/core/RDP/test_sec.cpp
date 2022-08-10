@@ -23,8 +23,10 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "utils/sugar/bounded_bytes_view.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/sec.hpp"
+
 
 RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 {
@@ -103,7 +105,12 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
     memcpy(decrypt.key, "\xd1\x26\x9e\x63\xec\x51\x65\x1d\x89\x5c\x5a\x2a\x29\xef\x08\x4c", 16);
     memcpy(decrypt.update_key, decrypt.key, 16);
 
-    decrypt.rc4.set_key({decrypt.key, (decrypt.encryptionMethod==1)?8u:16u});
+    if (decrypt.encryptionMethod==1) {
+        decrypt.rc4.set_key(make_sized_array_view(decrypt.key).first<8>());
+    } else {
+        decrypt.rc4.set_key(make_sized_array_view(decrypt.key));
+    }
+
 
     SEC::SecInfoPacket_Recv sec(stream, decrypt);
 

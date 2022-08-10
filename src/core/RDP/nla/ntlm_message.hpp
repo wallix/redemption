@@ -97,7 +97,7 @@ static inline array_md4 Md4(bytes_view data)
 }
 
 using array_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
-static inline array_md5 Rc4Key(u8_array_view key, u8_array_view plaintext)
+static inline array_md5 Rc4Key(sized_bytes_view<SslMd5::DIGEST_LENGTH> key, u8_array_view plaintext)
 {
     array_md5 cyphertext;
     SslRC4 rc4;
@@ -1220,7 +1220,7 @@ struct NTLMAuthenticateMessage {
         return are_buffer_equal(a, b);
     }
 
-    array_md5 get_exported_session_key(u8_array_view sessionBaseKey)
+    array_md5 get_exported_session_key(sized_bytes_view<SslMd5::DIGEST_LENGTH> sessionBaseKey)
     {
         return Rc4Key(sessionBaseKey, this->EncryptedRandomSessionKey.buffer);
     }

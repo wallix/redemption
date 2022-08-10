@@ -2958,7 +2958,7 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(make_array_view(license_key));
+            rc4.set_key(make_sized_array_view(license_key));
 
             if (!stream.in_check_rem(this->licenseInfo.wBlobLen)){
                 LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license data, need=%u, remains=%zu",
@@ -3197,7 +3197,7 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(make_array_view(license_key));
+            rc4.set_key(make_sized_array_view(license_key));
 
             uint8_t * data = const_cast<uint8_t*>(stream.get_current());
             // size, in, out

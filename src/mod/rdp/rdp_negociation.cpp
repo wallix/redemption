@@ -1419,7 +1419,7 @@ bool RdpNegociation::get_license(InStream & stream)
                         /* Now encrypt the HWID */
 
                         SslRC4 rc4;
-                        rc4.set_key(make_array_view(this->lic_layer_license_key));
+                        rc4.set_key(make_sized_array_view(this->lic_layer_license_key));
 
                         // in, out
                         rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
@@ -1462,7 +1462,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 /* Decrypt the token. It should read TEST in Unicode. */
                 memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                 SslRC4 rc4_decrypt_token;
-                rc4_decrypt_token.set_key(make_array_view(this->lic_layer_license_key));
+                rc4_decrypt_token.set_key(make_sized_array_view(this->lic_layer_license_key));
                 // size, in, out
                 rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
@@ -1492,7 +1492,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 /* Now encrypt the HWID */
                 memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                 SslRC4 rc4_hwid;
-                rc4_hwid.set_key(make_array_view(this->lic_layer_license_key));
+                rc4_hwid.set_key(make_sized_array_view(this->lic_layer_license_key));
                 // size, in, out
                 rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
