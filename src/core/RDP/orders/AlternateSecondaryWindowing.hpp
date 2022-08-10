@@ -3232,10 +3232,13 @@ public:
     void log(int level) const
     {
         char buffer[4096];
-        size_t size = sizeof(buffer);
+        size_t size = sizeof(buffer) - 1;
 
-        auto copy = [](char* p, auto const& s) {
+        auto copy = [&](char* p, auto const& s) {
             auto len = sizeof(s)-1u;
+            if (p + len >= buffer + size) {
+                return p;
+            }
             memcpy(p, s, len);
             return p+len;
         };
