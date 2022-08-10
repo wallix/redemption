@@ -31,20 +31,16 @@
 #include <openssl/sha.h>
 
 
-class SslSha256_Delayed
+class SslSha256
 {
     SHA256_CTX sha256;
 
 public:
     enum : unsigned { DIGEST_LENGTH = SHA256_DIGEST_LENGTH };
 
-    SslSha256_Delayed() = default;
-
-    void init()
+    SslSha256()
     {
-        if (0 == SHA256_Init(&this->sha256)){
-            throw Error(ERR_SSL_CALL_SHA256_INIT_FAILED);
-        }
+        reset();
     }
 
     void update(bytes_view data)
@@ -60,31 +56,14 @@ public:
             throw Error(ERR_SSL_CALL_SHA256_FINAL_FAILED);
         }
     }
-};
 
-class SslSha256
-{
-    SslSha256_Delayed sha256;
-
-public:
-    enum : unsigned { DIGEST_LENGTH = SslSha256_Delayed::DIGEST_LENGTH };
-
-    SslSha256()
+    void reset()
     {
-        sha256.init();
-    }
-
-    void update(bytes_view data)
-    {
-        sha256.update(data);
-    }
-
-    void final(sized_writable_u8_array_view<DIGEST_LENGTH> out_data)
-    {
-        sha256.final(out_data);
+        if (0 == SHA256_Init(&this->sha256)){
+            throw Error(ERR_SSL_CALL_SHA256_INIT_FAILED);
+        }
     }
 };
 
 using SslHMAC_Sha256 = detail_::basic_HMAC<&EVP_sha256, SslSha256::DIGEST_LENGTH>;
 using SslHMAC_Sha256_Delayed = detail_::DelayedHMAC<&EVP_sha256, SslSha256::DIGEST_LENGTH>;
-

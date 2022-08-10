@@ -97,7 +97,7 @@ enum class ClipboardVirtualChannel::ClipCtx::Sig::Status : uint8_t
 
 void ClipboardVirtualChannel::ClipCtx::Sig::reset()
 {
-    this->sha256.init();
+    this->sha256.reset();
     this->status = Status::Update;
 }
 

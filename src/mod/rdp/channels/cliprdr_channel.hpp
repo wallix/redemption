@@ -147,7 +147,7 @@ private:
             operator Status () const { return this->status; }
 
         private:
-            SslSha256_Delayed sha256;
+            SslSha256 sha256;
             uint8_t array[digest_len];
             Status status;
         };
