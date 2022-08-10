@@ -143,6 +143,8 @@ private:
 
             bytes_view digest_as_av() const noexcept;
 
+            std::array<uint8_t, digest_len> digest_as_array() const noexcept;
+
             enum class Status : uint8_t;
             operator Status () const { return this->status; }
 

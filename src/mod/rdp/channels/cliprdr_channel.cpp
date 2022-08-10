@@ -136,6 +136,14 @@ bytes_view ClipboardVirtualChannel::ClipCtx::Sig::digest_as_av() const noexcept
     return make_array_view(this->digest());
 }
 
+auto ClipboardVirtualChannel::ClipCtx::Sig::digest_as_array() const noexcept
+  -> std::array<uint8_t, digest_len>
+{
+    std::array<uint8_t, digest_len> result;
+    memcpy(result.data(), this->digest_as_av().data(), this->digest_as_av().size());
+    return result;
+}
+
 
 struct ClipboardVirtualChannel::ClipCtx::FileContentsRange::TflFile
 {
@@ -695,11 +703,27 @@ void ClipboardVirtualChannel::ClipCtx::clear()
 
 struct ClipboardVirtualChannel::FileValidatorDataList
 {
+    struct Sig
+    {
+        std::array<uint8_t, ClipCtx::Sig::digest_len> digest;
+        Mwrm3::TransferedStatus status;
+
+        Sig(ClipCtx::Sig const& sig) noexcept
+        : digest(sig.digest_as_array())
+        , status((sig == ClipCtx::Sig::Status::Broken)
+            ? Mwrm3::TransferedStatus::Broken
+            : Mwrm3::TransferedStatus::Completed
+        )
+        {
+            assert(sig.has_digest());
+        }
+    };
+
     FileValidatorId file_validator_id;
-    Direction direction;
     std::unique_ptr<ClipCtx::FileContentsRange::TflFile> tfl_file_ptr;
     std::string file_name;
-    ClipCtx::Sig sig;
+    Direction direction;
+    Sig sig;
 };
 
 struct ClipboardVirtualChannel::TextValidatorDataList
@@ -1080,9 +1104,9 @@ struct ClipboardVirtualChannel::ClipCtx::D
             self.file_validator->send_eof(file_rng.file_validator_id);
             self.file_validator_list.push_back({
                 file_rng.file_validator_id,
-                Self::to_direction(self, clip),
                 std::move(file_rng.tfl_file_ptr),
                 file_rng.file_name,
+                Self::to_direction(self, clip),
                 file_rng.sig
             });
             file_rng.file_validator_id = FileValidatorId();
@@ -1105,9 +1129,9 @@ struct ClipboardVirtualChannel::ClipCtx::D
             self.file_validator->send_eof(file_rng.file_validator_id);
             self.file_validator_list.push_back({
                 file_rng.file_validator_id,
-                Self::to_direction(self, clip),
                 nullptr,
                 file_rng.file_name,
+                Self::to_direction(self, clip),
                 file_rng.sig
             });
             file_rng.file_validator_id = FileValidatorId();
@@ -2671,7 +2695,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                     file_validator.tfl_file_ptr->tfl_file,
                     file_validator.file_name,
                     Mwrm3::TransferedStatus::Broken,
-                    Mwrm3::Sha256Signature{file_validator.sig.digest_as_av()});
+                    Mwrm3::Sha256Signature{file_validator.sig.digest});
             }
 
             dlpav_report_file(
@@ -3092,16 +3116,12 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
 
             if (file_validator_data->tfl_file_ptr) {
                 if (this->always_file_storage || not is_accepted) {
-                    auto status = Mwrm3::TransferedStatus::Completed;
-                    if (!file_validator_data->sig.has_digest()) {
-                        file_validator_data->sig.broken();
-                        status = Mwrm3::TransferedStatus::Broken;
-                    }
                     this->fdx_capture->close_tfl(
                         file_validator_data->tfl_file_ptr->tfl_file,
                         file_validator_data->file_name,
-                        status, Mwrm3::Sha256Signature{
-                            file_validator_data->sig.digest_as_av()
+                        file_validator_data->sig.status,
+                        Mwrm3::Sha256Signature{
+                            file_validator_data->sig.digest
                         });
                 }
                 else {
