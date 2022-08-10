@@ -247,6 +247,3 @@ private:
         }
     }
 };
-
-
-using SslHMAC_Md4_direct = detail_::basic_HMAC_direct<SslMd4_direct, 64>;
