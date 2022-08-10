@@ -118,16 +118,3 @@ RED_AUTO_TEST_CASE(TestSslMd4)
             "\x33\xce\xe5\xdd\x0b\x6f\x3a\xf7\xd9\xa4\xa1\x9a\xbc\x1b\xc6\x58"_av);
     }
 }
-
-RED_AUTO_TEST_CASE(TestSslHmacMd4)
-{
-    SslHMAC_Md4 hmac(cstr_array_view("key"));
-
-    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
-
-    uint8_t sig[SslMd4::DIGEST_LENGTH];
-    hmac.final(sig);
-    // hexdump96_c(sig, sizeof(sig));
-    RED_CHECK(make_array_view(sig) ==
-        "\x8d\x33\x66\xc4\x40\xa9\xc6\x51\x24\xab\x0b\x5f\x4c\xa2\x73\x38"_av);
-}

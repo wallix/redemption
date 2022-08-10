@@ -7,7 +7,6 @@ using SslMd5 = SslMd5_direct;
 using SslHMAC_Md5 = SslHMAC_Md5_direct;
 
 using SslMd4 = SslMd4_direct;
-using SslHMAC_Md4 = SslHMAC_Md4_direct;
 
 using SslRC4 = SslRC4_direct;
 
