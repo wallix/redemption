@@ -219,13 +219,8 @@ show_duration $toolset_clang
 
 if (( $fast == 0 )); then
     # debug with coverage
-    # mkdir -p bin/htmlcov
-    # GCOV_BIN="$gcovbin" OUTPUT_DIR=bin/htmlcov ./tools/gcovr.sh -q $toolset_gcc debug -s FAST_CHECK=1
-    # rm -r bin/gcc*
-    # show_duration $toolset_gcc coverage
-
-    # debug
-    build_all $toolset_gcc debug -s FAST_CHECK=1
+    build_all $toolset_gcc debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
+    gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ | tail -n2 | sed -n -E 's/.* ([0-9]+)%$/\1/p' > coverage.percent
     rm -r bin/gcc*
 
     show_duration $toolset_gcc debug
