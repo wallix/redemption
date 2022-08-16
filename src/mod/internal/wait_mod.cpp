@@ -37,15 +37,16 @@ WaitMod::WaitMod(
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
-    , wait_widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+    , wait_widget(drawable, widget_rect,
         this->screen, this, caption, message, 0, &this->language_button,
         font, theme, language(vars), showform, flag, vars.get<cfg::context::duration_max>())
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , events_guard(events)
+    , showform(showform)
 {
     this->screen.add_widget(&this->wait_widget);
-    if (this->wait_widget.hasform) {
+    if (showform) {
         this->wait_widget.set_widget_focus(&this->wait_widget.form, Widget::focus_reason_tabkey);
     }
     else {
@@ -67,7 +68,9 @@ WaitMod::~WaitMod() = default;
 void WaitMod::init()
 {
     RailModBase::init();
-    this->copy_paste.ready(this->front);
+    if (this->showform) {
+        this->copy_paste.ready(this->front);
+    }
 }
 
 void WaitMod::notify(Widget & sender, notify_event_t event)

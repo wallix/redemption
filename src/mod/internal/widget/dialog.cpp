@@ -34,7 +34,7 @@ enum {
 };
 
 WidgetDialog::WidgetDialog(
-    gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    gdi::GraphicApi & drawable, Rect const widget_rect,
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text,
     WidgetButton * extra_button,
@@ -110,7 +110,7 @@ WidgetDialog::WidgetDialog(
         }
     }
 
-    this->move_size_widget(left, top, width, height);
+    this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 
     if (!has_challenge) {
         this->set_widget_focus(&this->ok, focus_reason_tabkey);

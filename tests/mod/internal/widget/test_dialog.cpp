@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test1",
+    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "test1",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog2)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test2",
+    WidgetDialog flat_dialog(drawable, {0, 0, 640, 480}, parent, notifier, "test2",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog3)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test3",
+    WidgetDialog flat_dialog(drawable, {0, 0, 1280, 1024}, parent, notifier, "test3",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog4)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test4",
+    WidgetDialog flat_dialog(drawable, {0, 0, 1280, 1024}, parent, notifier, "test4",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog5)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test5",
+    WidgetDialog flat_dialog(drawable, {0, 0, 640, 480}, parent, notifier, "test5",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog6)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 350, 500, parent, notifier, "test6",
+    WidgetDialog flat_dialog(drawable, {0, 0, 350, 500}, parent, notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -225,7 +225,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 300, 600, parent, notifier, "test6",
+    WidgetDialog flat_dialog(drawable, {0, 0, 300, 600}, parent, notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip2)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -283,7 +283,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, &notifier, "test6",
                            "line 1\n"
                            "line 2\n"
                            "\n"
@@ -357,7 +357,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, &notifier, "test6",
                            "Lorem ipsum dolor sit amet, consectetur\n"
                            "adipiscing elit. Nam purus lacus, luctus sit\n"
                            "amet suscipit vel, posuere quis turpis. Sed\n"
@@ -415,10 +415,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
 
     WidgetButton *extra_button = nullptr;
     WidgetDialog flat_dialog(drawable,
-                           0,
-                           0,
-                           800,
-                           600,
+                           {0, 0, 800, 600},
                            parent,
                            notifier,
                            "test1",

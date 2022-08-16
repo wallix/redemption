@@ -58,7 +58,7 @@ private:
 
 public:
     WidgetDialog(gdi::GraphicApi & drawable,
-               int16_t left, int16_t top, int16_t width, int16_t height,
+               Rect const widget_rect,
                Widget & parent, NotifyApi* notifier,
                const char* caption, const char * text,
                WidgetButton * extra_button,

@@ -80,6 +80,8 @@ private:
 
     EventsGuard events_guard;
 
+    bool showform;
+
     void confirm();
     void accepted();
     void refused();

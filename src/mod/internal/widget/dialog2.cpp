@@ -189,8 +189,7 @@ Widget::Color WidgetDialog2::get_bg_color() const
 
 void WidgetDialog2::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
-    if ((event == NOTIFY_SUBMIT) &&
-             (&widget == &this->ok)) {
+    if (event == NOTIFY_SUBMIT && &widget == &this->ok) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     else if (event == NOTIFY_COPY) {

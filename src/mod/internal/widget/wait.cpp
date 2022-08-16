@@ -33,7 +33,7 @@ enum {
 constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 
 WidgetWait::WidgetWait(
-    gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    gdi::GraphicApi & drawable, Rect const widget_rect,
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text, int group_id,
     WidgetButton * extra_button,
@@ -55,8 +55,8 @@ WidgetWait::WidgetWait(
            theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
            6, 2)
     , extra_button(extra_button)
-    , hasform(showform)
     , bg_color(theme.global.bgcolor)
+    , hasform(showform)
     , hide_back_to_selector(flags & HIDE_BACK_TO_SELECTOR)
 {
     this->impl = &composite_array;
@@ -78,7 +78,7 @@ WidgetWait::WidgetWait(
         this->add_widget(extra_button);
     }
 
-    this->move_size_widget(left, top, width, height);
+    this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 }
 
 WidgetWait::~WidgetWait()

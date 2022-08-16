@@ -38,7 +38,7 @@ DialogMod::DialogMod(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
     , dialog_widget(
-        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        drawable, widget_rect,
         this->screen, this, caption, message, &this->language_button, theme, font,
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)
@@ -60,7 +60,9 @@ DialogMod::~DialogMod() = default;
 void DialogMod::init()
 {
     RailModBase::init();
-    this->copy_paste.ready(this->front);
+    if (this->dialog_widget.challenge) {
+        this->copy_paste.ready(this->front);
+    }
 }
 
 void DialogMod::notify(Widget& sender, notify_event_t event)

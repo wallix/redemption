@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TraceWidgetWait)
 
 
     WidgetButton * extra_button = nullptr;
-    WidgetWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
+    WidgetWait flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
                          text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en);
     // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TraceWidgetWaitWithForm)
     //     "Otherwise, you can either return to selector or exit.";
 
     WidgetButton * extra_button = nullptr;
-    WidgetWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
+    WidgetWait flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
                          text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en, true,
                          WidgetForm::COMMENT_DISPLAY | WidgetForm::COMMENT_MANDATORY |
                             WidgetForm::TICKET_DISPLAY | WidgetForm::TICKET_MANDATORY |

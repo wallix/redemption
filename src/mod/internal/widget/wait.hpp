@@ -41,15 +41,12 @@ private:
     WidgetButton   exit;
     WidgetButton * extra_button;
 
-public:
-    bool hasform;
-
-private:
     Color bg_color;
+    bool hasform;
     bool hide_back_to_selector;
 
 public:
-    WidgetWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    WidgetWait(gdi::GraphicApi & drawable, Rect const widget_rect,
              Widget & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              WidgetButton * extra_button,
