@@ -5279,7 +5279,6 @@ private:
                 if (!send_to_mod) {
                     auto const now = this->events_guard.get_monotonic_time();
                     auto const& uchars = decoded_keys.uchars;
-                    LOG(LOG_DEBUG, "%d %d", uchars[0], uchars[1]);
                     if (uchars[0] && uchars[1]) {
                         send_to_mod = this->capture->kbd_input(now, uchars[0])
                                    || this->capture->kbd_input(now, uchars[1]);
