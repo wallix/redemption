@@ -119,6 +119,16 @@ private:
     static unsigned int const FORMAT_LIST_REJECTION_RETRY_MAX = 3;
 
 private:
+    enum class InitializationState : uint8_t
+    {
+        WaitingServerMonitorReadyPDU = 1,
+        WaitingClientClipboardCapabilitiesPDU = 2,
+        WaitingClientTemporaryDirectoryPDUOrFormatListPDU = 4,
+        WaitingClientFormatListPDU = 8,
+        WaitingServerFormatListResponsePDU = 16,
+        Ready = 32,
+    } initialization_state = InitializationState::WaitingServerMonitorReadyPDU;
+
     enum class LockId : uint32_t;
     enum class StreamId : uint32_t;
     enum class FileGroupId : uint32_t;
