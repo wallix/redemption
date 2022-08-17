@@ -922,9 +922,37 @@ namespace
             TEST_BUF(Msg::ToFront{24, first_last_flags, temp_av})
         );
 
+        Buffer buf_2;
+        bytes_view temp_av_2;
+        temp_av_2 = buf_2.build(CB_MONITOR_READY, 0, [&](OutStream& /*out*/){
+        });
+        msg_comparator.run(
+            TEST_PROCESS { channel_ctx.process_server_message(temp_av_2); },
+            TEST_BUF(Msg::ToFront{8, first_last_flags, temp_av_2})
+        );
+
         msg_comparator.run(
             TEST_PROCESS { channel_ctx.process_client_message(temp_av); },
             TEST_BUF(Msg::ToMod{24, first_last_flags, temp_av})
+        );
+
+        msg_comparator.run(
+            TEST_PROCESS {
+                Buffer buf;
+                temp_av = buf.build_format_list_with_text();
+                channel_ctx.process_client_message(temp_av);
+            },
+            TEST_BUF(Msg::ToMod{14, first_last_flags, temp_av})
+        );
+
+        msg_comparator.run(
+            TEST_PROCESS {
+                Buffer buf;
+                temp_av = buf.build(RDPECLIP::CB_FORMAT_LIST_RESPONSE, 0, [&](OutStream& /*out*/){
+                });
+                channel_ctx.process_server_message(temp_av);
+            },
+            TEST_BUF(Msg::ToFront{8, first_last_flags, temp_av})
         );
 
         msg_comparator.run(
@@ -940,6 +968,22 @@ namespace
             },
             TEST_BUF_IF(format_list_by_server, Msg::ToFront{54, first_last_flags, temp_av}),
             TEST_BUF_IF(not format_list_by_server, Msg::ToMod{54, first_last_flags, temp_av})
+        );
+
+        msg_comparator.run(
+            TEST_PROCESS {
+                Buffer buf;
+                temp_av = buf.build(RDPECLIP::CB_FORMAT_LIST_RESPONSE, 0, [&](OutStream& /*out*/){
+                });
+                if (format_list_by_server) {
+                    channel_ctx.process_server_message(temp_av);
+                }
+                else {
+                    channel_ctx.process_client_message(temp_av);
+                }
+            },
+            TEST_BUF_IF(format_list_by_server, Msg::ToFront{8, first_last_flags, temp_av}),
+            TEST_BUF_IF(not format_list_by_server, Msg::ToMod{8, first_last_flags, temp_av})
         );
     }
 } // anonymous namespace
@@ -1168,7 +1212,7 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDa
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
-   initialize_channel(msg_comparator, *channel_ctx,
+    initialize_channel(msg_comparator, *channel_ctx,
         RDPECLIP::CB_CAN_LOCK_CLIPDATA | RDPECLIP::CB_USE_LONG_FORMAT_NAMES, false);
 
     msg_comparator.run(
@@ -1176,28 +1220,6 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDa
             Buffer buf;
             temp_av = buf.build(RDPECLIP::CB_LOCK_CLIPDATA, 0, [&](OutStream& out){
                 out.out_uint32_le(0);
-            });
-            channel_ctx->process_server_message(temp_av);
-        },
-        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
-    );
-
-    msg_comparator.run(
-        TEST_PROCESS {
-            Buffer buf;
-            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
-                out.out_uint32_le(file_group_id);
-            });
-            channel_ctx->process_server_message(temp_av);
-        },
-        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
-    );
-
-    msg_comparator.run(
-        TEST_PROCESS {
-            Buffer buf;
-            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_LIST_RESPONSE, [&](OutStream& out){
-                out.out_uint32_le(file_group_id);
             });
             channel_ctx->process_server_message(temp_av);
         },
@@ -1298,29 +1320,6 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDa
             temp_av = buf.build(RDPECLIP::CB_LOCK_CLIPDATA, 0, [&](OutStream& out){
                 out.out_uint32_le(1);
             });
-            channel_ctx->process_server_message(temp_av);
-        },
-        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
-    );
-
-    msg_comparator.run(
-        TEST_PROCESS {
-            Buffer buf;
-            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
-                out.out_uint32_le(file_group_id);
-            });
-            channel_ctx->process_server_message(temp_av);
-        },
-        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
-    );
-
-    msg_comparator.run(
-        TEST_PROCESS {
-            Buffer buf;
-            temp_av = buf.build_ok(
-                RDPECLIP::CB_FORMAT_LIST_RESPONSE, [&](OutStream& out){
-                    out.out_uint32_le(file_group_id);
-                });
             channel_ctx->process_server_message(temp_av);
         },
         TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
