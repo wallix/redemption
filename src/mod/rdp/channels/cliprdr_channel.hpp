@@ -123,9 +123,9 @@ private:
     {
         WaitingServerMonitorReadyPDU = 1,
         WaitingClientClipboardCapabilitiesPDU = 2,
-        WaitingClientTemporaryDirectoryPDUOrFormatListPDU = 4,
-        WaitingClientFormatListPDU = 8,
-        WaitingServerFormatListResponsePDU = 16,
+        WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU = 4,
+        WaitingClientFormatListPDUOrLockPDU = 8,
+        WaitingServerFormatListResponsePDUOrLockPDU = 16,
         Ready = 32,
     } initialization_state = InitializationState::WaitingServerMonitorReadyPDU;
 
