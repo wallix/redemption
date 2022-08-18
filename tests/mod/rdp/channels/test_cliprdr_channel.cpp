@@ -520,12 +520,43 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
 
                 process_server_message(av);
-                process_client_message(av);
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
-            RED_REQUIRE(to_server_sender.total_in_stream == 1);
-            RED_CHECK(to_client_sender.back() == to_server_sender.back());
+            RED_REQUIRE(to_server_sender.total_in_stream == 0);
             RED_CHECK(to_client_sender.back() ==
+                "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
+                "\x01\x00\x00\x00\x02\x00\x00\x00" //........
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK(validator_transport.buf == ""_av);
+
+            {
+                using namespace RDPECLIP;
+                Buffer buf;
+                auto av = buf.build(CB_MONITOR_READY, 0, [&](OutStream& /*out*/){
+                });
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_server_sender.total_in_stream == 0);
+            RED_CHECK(to_client_sender.back() == "\x01\x00\x00\x00\x00\x00\x00\x00"_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK(validator_transport.buf == ""_av);
+
+            {
+                using namespace RDPECLIP;
+                Buffer buf;
+                auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
+                    out.out_uint16_le(CB_CAPSTYPE_GENERAL);
+                    out.out_clear_bytes(2);
+                    GeneralCapabilitySet{CB_CAPS_VERSION_1, CB_USE_LONG_FORMAT_NAMES}.emit(out);
+                });
+
+                process_client_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_server_sender.total_in_stream == 1);
+            RED_CHECK(to_server_sender.back() ==
                 "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
                 "\x01\x00\x00\x00\x02\x00\x00\x00" //........
                 ""_av);
@@ -541,7 +572,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
 
                 process_client_message(out.get_bytes());
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 1);
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
@@ -552,7 +583,22 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             RED_CHECK(report_message.messages.size() == 0);
             RED_CHECK(validator_transport.buf == ""_av);
 
-            // skip format list response
+            {
+                Buffer buf;
+                auto av = buf.build(
+                    RDPECLIP::CB_FORMAT_LIST_RESPONSE,
+                    RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
+                        out.out_uint32_le(file_group_id);
+                    });
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_server_sender.total_in_stream == 2);
+            RED_CHECK(to_client_sender.back() ==
+                "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 Buffer buf;
@@ -561,7 +607,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_client_sender.total_in_stream == 4);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
@@ -587,7 +633,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_client_sender.total_in_stream == 4);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
@@ -642,7 +688,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -661,7 +707,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 4);
             RED_CHECK(to_server_sender.back() ==
                 "\t\x00\x01\x00\x10\x00\x00\x00\x00\x00\x00\x00""data_abcdefg"
@@ -721,7 +767,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
 
                 process_client_message(out.get_bytes());
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
             RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
@@ -738,7 +784,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 4);
+            RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
             RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
@@ -754,7 +800,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 4);
+            RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
             RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av);
@@ -917,20 +963,55 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
                     out.out_uint16_le(CB_CAPSTYPE_GENERAL);
                     out.out_clear_bytes(2);
-                    GeneralCapabilitySet{CB_CAPS_VERSION_1,
-                        RDPECLIP::CB_CAN_LOCK_CLIPDATA | CB_USE_LONG_FORMAT_NAMES
+                    GeneralCapabilitySet{
+                        CB_CAPS_VERSION_1,
+                        CB_USE_LONG_FORMAT_NAMES | RDPECLIP::CB_CAN_LOCK_CLIPDATA
                     }.emit(out);
                 });
 
                 process_server_message(av);
-                process_client_message(av);
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
-            RED_REQUIRE(to_server_sender.total_in_stream == 1);
-            RED_CHECK(to_client_sender.back() == to_server_sender.back());
+            RED_REQUIRE(to_server_sender.total_in_stream == 0);
             RED_CHECK(to_client_sender.back() ==
-                "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
-                "\x01\x00\x00\x00\x12\x00\x00\x00"
+                "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
+                "\x01\x00\x00\x00\x12\x00\x00\x00" //........
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK(validator_transport.buf == ""_av);
+
+            {
+                using namespace RDPECLIP;
+                Buffer buf;
+                auto av = buf.build(CB_MONITOR_READY, 0, [&](OutStream& /*out*/){
+                });
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_server_sender.total_in_stream == 0);
+            RED_CHECK(to_client_sender.back() == "\x01\x00\x00\x00\x00\x00\x00\x00"_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK(validator_transport.buf == ""_av);
+
+            {
+                using namespace RDPECLIP;
+                Buffer buf;
+                auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
+                    out.out_uint16_le(CB_CAPSTYPE_GENERAL);
+                    out.out_clear_bytes(2);
+                    GeneralCapabilitySet{
+                        CB_CAPS_VERSION_1,
+                        CB_USE_LONG_FORMAT_NAMES | RDPECLIP::CB_CAN_LOCK_CLIPDATA
+                    }.emit(out);
+                });
+
+                process_client_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_server_sender.total_in_stream == 1);
+            RED_CHECK(to_server_sender.back() ==
+                "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
+                "\x01\x00\x00\x00\x12\x00\x00\x00" //........
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
             RED_CHECK(validator_transport.buf == ""_av);
@@ -944,7 +1025,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
 
                 process_client_message(out.get_bytes());
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 1);
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
@@ -962,7 +1043,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_client_sender.back() ==
                 "\x0A\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00"
@@ -977,7 +1058,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_client_sender.total_in_stream == 4);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
@@ -994,7 +1075,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                     });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 4);
+            RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_client_sender.back() ==
                 "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
@@ -1009,7 +1090,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 5);
+            RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
             RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
@@ -1035,7 +1116,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 5);
+            RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
@@ -1089,7 +1170,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 6);
+            RED_REQUIRE(to_client_sender.total_in_stream == 7);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -1109,7 +1190,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_client_message(av, CHANNELS::CHANNEL_FLAG_FIRST);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 6);
+            RED_REQUIRE(to_client_sender.total_in_stream == 7);
             RED_REQUIRE(to_server_sender.total_in_stream == 4);
             RED_CHECK(to_server_sender.back() ==
                 "\x09\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00""da"
@@ -1124,7 +1205,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             {
                 process_client_message("ta_"_av, CHANNELS::CHANNEL_FLAG_LAST);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 6);
+            RED_REQUIRE(to_client_sender.total_in_stream == 7);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
             RED_CHECK(to_server_sender.back() == "ta_"_av);
             RED_REQUIRE(report_message.messages.size() == 1);
@@ -1144,7 +1225,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
 
                 process_client_message(out.get_bytes());
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 6);
+            RED_REQUIRE(to_client_sender.total_in_stream == 7);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
             RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
@@ -1161,7 +1242,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 7);
+            RED_REQUIRE(to_client_sender.total_in_stream == 8);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
             RED_CHECK(to_client_sender.back() ==
                 "\x0A\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
@@ -1175,37 +1256,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 8);
-            RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK(to_client_sender.back() ==
-                "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
-                ""_av);
-            RED_CHECK(report_message.messages.size() == 1);
-
-            {
-                Buffer buf;
-                auto av = buf.build(
-                    RDPECLIP::CB_FORMAT_LIST_RESPONSE,
-                    RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
-                        out.out_uint32_le(file_group_id);
-                    });
-                process_server_message(av);
-            }
             RED_REQUIRE(to_client_sender.total_in_stream == 9);
-            RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK(to_client_sender.back() ==
-                "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
-                ""_av);
-            RED_CHECK(report_message.messages.size() == 1);
-
-            {
-                Buffer buf;
-                auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
-                    out.out_uint32_le(file_group_id);
-                });
-                process_server_message(av);
-            }
-            RED_REQUIRE(to_client_sender.total_in_stream == 10);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
             RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
@@ -1230,7 +1281,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 10);
+            RED_REQUIRE(to_client_sender.total_in_stream == 9);
             RED_REQUIRE(to_server_sender.total_in_stream == 7);
             RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
@@ -1284,7 +1335,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 11);
+            RED_REQUIRE(to_client_sender.total_in_stream == 10);
             RED_REQUIRE(to_server_sender.total_in_stream == 7);
             RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -1309,7 +1360,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 11);
+            RED_REQUIRE(to_client_sender.total_in_stream == 10);
             RED_REQUIRE(to_server_sender.total_in_stream == 8);
             RED_CHECK(to_server_sender.back() ==
                 "\t\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00""plopploppl"
@@ -1337,7 +1388,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 12);
+            RED_REQUIRE(to_client_sender.total_in_stream == 11);
             RED_REQUIRE(to_server_sender.total_in_stream == 8);
             RED_CHECK(to_client_sender.back() ==
                 "\x0B\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
@@ -1352,7 +1403,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_server_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 13);
+            RED_REQUIRE(to_client_sender.total_in_stream == 12);
             RED_REQUIRE(to_server_sender.total_in_stream == 8);
             RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -1382,7 +1433,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 });
                 process_client_message(av);
             }
-            RED_REQUIRE(to_client_sender.total_in_stream == 13);
+            RED_REQUIRE(to_client_sender.total_in_stream == 12);
             RED_REQUIRE(to_server_sender.total_in_stream == 9);
             RED_CHECK(to_server_sender.back() ==
                 "\t\x00\x01\x00\x0b\x00\x00\x00\x00\x00\x00\x00""abcdefg"
