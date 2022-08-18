@@ -220,7 +220,15 @@ show_duration $toolset_clang
 if (( $fast == 0 )); then
     # debug with coverage
     build_all $toolset_gcc debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
-    gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ | tail -n2 | sed -n -E 's/.* ([0-9]+)%$/\1/p' > coverage.percent
+    while read -a a ; do
+        echo "gcov: lines: ${a[1]}  exec: ${a[2]}  cover: ${a[3]}"
+        declare -i cover=${a[3]:0:-1} i=0
+        # 1% = 1 line for graph extractor
+        for ((i=0; i<$cover; ++i)); do
+            echo 'coverage: '$cover
+        done
+        break
+    done < <(gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ | tail -n2)
     rm -r bin/gcc*
 
     show_duration $toolset_gcc debug
