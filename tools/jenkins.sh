@@ -225,7 +225,7 @@ if (( $fast == 0 )); then
         declare -i cover=${a[3]:0:-1} i=0
         # 1% = 1 line for graph extractor
         for ((i=0; i<$cover; ++i)); do
-            echo 'coverage: '$cover
+            echo 'coverage: '$i
         done
         break
     done < <(gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ | tail -n2)
