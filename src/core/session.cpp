@@ -466,9 +466,9 @@ private:
 
         if (mod_wrapper.is_connected()) {
             LOG(LOG_INFO, "Exited from target connection");
+            guest_ctx.stop();
             mod_wrapper.disconnect();
             front.must_be_stop_capture();
-            guest_ctx.stop();
             secondary_session.close_secondary_session();
         }
         else {
@@ -1114,7 +1114,8 @@ private:
                          && !guest_ctx.is_started()
                         ) {
                             guest_ctx.start(
-                                events, front, mod_wrapper.get_callback(), rnd, ini,
+                                events, front, mod_wrapper.get_callback(),
+                                secondary_session.get_secondary_session_log(), rnd, ini,
                                 this->ini.get<cfg::context::session_sharing_userdata>(),
                                 this->ini.get<cfg::context::session_sharing_enable_control>()
                             );
@@ -1395,6 +1396,8 @@ private:
         try { acl_serial.send_acl_data(); }
         catch (...) {}
 
+        guest_ctx.stop();
+
         const bool show_close_box = auth_trans.get_fd() == INVALID_SOCKET;
         if (!show_close_box || mod_wrapper.current_mod != ModuleName::close) {
             mod_wrapper.disconnect();
@@ -1616,7 +1619,6 @@ public:
         log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
 
         front.must_be_stop_capture();
-        guest_ctx.stop();
     }
 
     Session(Session const &) = delete;

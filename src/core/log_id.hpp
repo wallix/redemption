@@ -45,6 +45,7 @@ enum class LogCategoryId
     AccountManipulation,
     BestSafe,
     DynamicChannel,
+    SessionSharing,
     count
 };
 
@@ -127,7 +128,13 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(SESSION_LOCKED, Session)                                   \
     f(EDIT_CHANGED_2, Widget)                                    \
     f(SELECT_CHANGED, Widget)                                    \
-    f(SESSION_EVENT, Session)
+    f(SESSION_EVENT, Session)                                    \
+    f(SESSION_SHARING_GUEST_CONNECTION, SessionSharing)          \
+    f(SESSION_SHARING_GUEST_CONNECTION_REJECTED, SessionSharing) \
+    f(SESSION_SHARING_GUEST_DISCONNECTION, SessionSharing)       \
+    f(SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, SessionSharing) \
+    f(SESSION_SHARING_GUEST_KILLED, SessionSharing)              \
+    f(SESSION_SHARING_GUEST_VIEW_CHANGED, SessionSharing)
 
 
 enum class LogId : unsigned

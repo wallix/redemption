@@ -524,6 +524,12 @@ bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
         case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
         case LogId::FILE_BLOCKED:
         case LogId::SESSION_EVENT:
+        case LogId::SESSION_SHARING_GUEST_CONNECTION:
+        case LogId::SESSION_SHARING_GUEST_CONNECTION_REJECTED:
+        case LogId::SESSION_SHARING_GUEST_DISCONNECTION:
+        case LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED:
+        case LogId::SESSION_SHARING_GUEST_KILLED:
+        case LogId::SESSION_SHARING_GUEST_VIEW_CHANGED:
             ;
     }
     return true;

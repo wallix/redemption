@@ -48,7 +48,7 @@ struct GuestCtx
 {
     bool is_started() const noexcept
     {
-        return event || guest_ptr;
+        return listen_event || guest_ptr;
     }
 
     bool has_front() const noexcept
@@ -63,17 +63,18 @@ struct GuestCtx
 
     void start(
         EventContainer& event_container, Front& front, Callback& callback,
-        UdevRandom& rnd, Inifile& original_ini, std::string_view user_data,
+        SessionLogApi& session_log, UdevRandom& rnd,
+        Inifile& original_ini, std::string_view user_data,
         bool enable_shared_control)
     {
-        assert(!event);
+        assert(!listen_event);
 
         original_ini.set_acl<cfg::context::session_sharing_userdata>(user_data);
 
         listen_sck = create_unix_server(sck_patch, EnableTransparentMode::No);
         if (!listen_sck.is_open()) {
-            LOG(LOG_DEBUG, "Guest::start() create server error");
             int errnum = errno;
+            LOG(LOG_ERR, "Guest::start() create server error");
             original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(checked_int(errnum));
             original_ini.set_acl<cfg::context::session_sharing_invitation_error_message>(strerror(errnum));
             return ;
@@ -84,27 +85,26 @@ struct GuestCtx
         original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
         original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_patch);
 
-        LOG(LOG_DEBUG, "start ok");
+        LOG(LOG_INFO, "Guest::start() create server error");
 
         // TODO add timer before auto-close
 
-        event = &event_container.event_creator().create_event_fd_without_timeout(
+        listen_event = &event_container.event_creator().create_event_fd_without_timeout(
             "GuestServer", this, listen_sck.fd(),
             [
-                this, &event_container, &front, &callback, &rnd, &original_ini,
+                this, &event_container, &front, &callback, &session_log, &rnd, &original_ini,
                 password = std::move(session_sharing_invitation_id),
                 enable_shared_control
             ](Event& /*event*/) {
                 LOG(LOG_DEBUG, "guest connection");
 
                 int conn_sck = accept(listen_sck.fd(), nullptr, nullptr);
+                int errnum = errno;
                 close_listen_sck();
 
-                garbage_valid_event();
-
                 if (conn_sck == -1) {
-                    // TODO replace with log ?
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                    LOG(LOG_ERR, "Guest: accept error: %d %s", errnum, strerror(errnum));
+                    return;
                 }
 
                 auto* kill_fn = +[](void* self){ static_cast<GuestCtx*>(self)->close_guest(); };
@@ -112,7 +112,9 @@ struct GuestCtx
                     unique_fd(conn_sck), event_container, front, original_ini, rnd,
                     enable_shared_control, kill_fn, this);
 
-                guest_ptr->set_io_event([this, &callback, password = std::move(password)](Event& /*event*/) {
+                guest_ptr->set_io_event([
+                    this, &callback, &session_log, password = std::move(password)
+                ](Event& /*event*/) {
                     // no input
                     NullCallback null_callback;
                     process_guest(null_callback);
@@ -121,11 +123,15 @@ struct GuestCtx
                         // check credential
                         if (password != guest_ptr->get_client_info().password) {
                             LOG(LOG_ERR, "Guest: bad credential of session sharing");
+                            session_log.log6(LogId::SESSION_SHARING_GUEST_CONNECTION_REJECTED, {
+                                KVLog("name"_av, "guest-1"_av),
+                                KVLog("reason"_av, "bad password"_av),
+                            });
                             close_guest();
                             return;
                         }
 
-                        guest_ptr->start_sharing(callback);
+                        guest_ptr->start_sharing(callback, session_log);
                         guest_ptr->set_io_event([this, &callback](Event& /*event*/) {
                             process_guest(callback);
                         });
@@ -139,9 +145,6 @@ struct GuestCtx
     {
         if (listen_sck.is_open()) {
             close_listen_sck();
-            if (event) {
-                garbage_valid_event();
-            }
         }
 
         if (guest_ptr) {
@@ -163,7 +166,7 @@ private:
         TpduBuffer rbuf;
         Front& user_front;
         bool is_synchronized = false;
-        Event* event = nullptr;
+        Event* io_event = nullptr;
         EventContainer& event_container;
 
         GuestData(
@@ -228,13 +231,13 @@ private:
         void set_io_event(F f)
         {
             this->remove_io_event();
-            this->event = &event_container.event_creator()
+            this->io_event = &event_container.event_creator()
               .create_event_fd_without_timeout("GuestClient", this, get_fd(), f);
         }
 
-        void start_sharing(Callback& callback)
+        void start_sharing(Callback& callback, SessionLogApi& session_log)
         {
-            user_front.add_guest(*this);
+            user_front.add_guest(*this, session_log);
             is_synchronized = true;
             auto screen = user_front.get_client_info().screen_info;
             callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
@@ -264,9 +267,9 @@ private:
     private:
         void remove_io_event() noexcept
         {
-            if (this->event) {
-                event->garbage = true;
-                event = nullptr;
+            if (this->io_event) {
+                io_event->garbage = true;
+                io_event = nullptr;
             }
         }
 
@@ -285,21 +288,16 @@ private:
             guest_ptr->process(callback);
         }
         catch (...) {
-            garbage_valid_event();
             close_guest();
         }
-    }
-
-    void garbage_valid_event() noexcept
-    {
-        event->garbage = true;
-        event = nullptr;
     }
 
     void close_listen_sck()
     {
         listen_sck.close();
         remove(sck_patch);
+        listen_event->garbage = true;
+        listen_event = nullptr;
     }
 
     void close_guest()
@@ -310,7 +308,7 @@ private:
 
     std::unique_ptr<Guest> guest_ptr;
     unique_fd listen_sck = invalid_fd();
-    Event* event = nullptr;
+    Event* listen_event = nullptr;
 
     static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
 };

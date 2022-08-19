@@ -755,12 +755,23 @@ private:
 
         gdi::GraphicApi* guest_old_gd = nullptr;
         Front* guest = nullptr;
+        SessionLogApi* session_log = nullptr;
+        MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
         gdi::CachePointerIndex last_pointer_cache_idx = PredefinedPointer::Normal;
         bool const is_guest;
         bool const enable_shared_control;
-        NullGdWithNewPointer null_gd_with_new_pointer {};
+        NullGdWithNewPointer gd_for_pointer_cache {};
+
+        void reset() noexcept
+        {
+            guest_old_gd = nullptr;
+            guest = nullptr;
+            session_log = nullptr;
+            input_id = is_guest /* disable input for guest */;
+            last_pointer_cache_idx = PredefinedPointer::Normal;
+        }
 
         bool has_input() const noexcept
         {
@@ -775,6 +786,24 @@ private:
         void disable_input() noexcept
         {
             input_id = 1;
+        }
+
+        bool guest_has_view() const noexcept
+        {
+            return !this->guest->sharing_ctx.guest_old_gd;
+        }
+
+        void guest_mask_view(gdi::GraphicApi& gd_for_pointer_cache) noexcept
+        {
+            guest->sharing_ctx.gd_for_pointer_cache.gd = &gd_for_pointer_cache;
+            guest->sharing_ctx.guest_old_gd = guest->gd;
+            guest->set_gd(guest->sharing_ctx.gd_for_pointer_cache);
+        }
+
+        void guest_unmask_view() noexcept
+        {
+            guest->set_gd(guest->sharing_ctx.guest_old_gd);
+            guest->sharing_ctx.guest_old_gd = nullptr;
         }
     };
 
@@ -5176,49 +5205,87 @@ public:
 private:
     void session_sharing_take_control(Callback & cb)
     {
+        if (!this->sharing_ctx.guest->sharing_ctx.has_input()) {
+            return;
+        }
+
         this->sharing_ctx.enable_input();
         this->gd->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(PredefinedPointer::SlashedCircle);
         this->sharing_ctx.guest->sharing_ctx.disable_input();
         cb.rdp_input_synchronize(this->keymap.locks());
+
+        this->sharing_ctx.session_log->log6(
+            LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
+                KVLog("gaigner"_av, "user"_av),
+                KVLog("loster"_av, "guest-1"_av),
+            }
+        );
     }
 
     void session_sharing_give_control(Callback & cb)
     {
+        if (!this->sharing_ctx.has_input()) {
+            return;
+        }
+
         this->gd->cached_pointer(PredefinedPointer::SlashedCircle);
         this->sharing_ctx.disable_input();
         this->sharing_ctx.guest->sharing_ctx.enable_input();
         this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         cb.rdp_input_synchronize(this->sharing_ctx.guest->keymap.locks());
+
+        this->sharing_ctx.session_log->log6(
+            LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
+                KVLog("gaigner"_av, "guest-1"_av),
+                KVLog("loster"_av, "user"_av),
+            }
+        );
     }
 
     void session_sharing_common_control()
     {
+        if (this->sharing_ctx.has_input() && this->sharing_ctx.guest->sharing_ctx.has_input()) {
+            return;
+        }
+
         this->sharing_ctx.enable_input();
         this->sharing_ctx.guest->sharing_ctx.enable_input();
         this->gd->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
+
+        this->sharing_ctx.session_log->log6(
+            LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
+                KVLog("gaigner"_av, "everybody"_av),
+                KVLog("loster"_av, "nobody"_av),
+            }
+        );
     }
 
     void session_sharing_toggle_graphics(Callback & cb)
     {
-        if (this->sharing_ctx.guest->sharing_ctx.guest_old_gd) {
-            this->sharing_ctx.guest->set_gd(this->sharing_ctx.guest->sharing_ctx.guest_old_gd);
-            this->sharing_ctx.guest->sharing_ctx.guest_old_gd = nullptr;
-            cb.rdp_input_invalidate({0, 0, client_info.screen_info.width, client_info.screen_info.height});
-        }
-        else {
+        array_view state = "unmasked"_av;
+        if (this->sharing_ctx.guest_has_view()) {
             auto& gd = this->sharing_ctx.guest->orders.graphics_update_pdu();
             gdi_freeze_screen(gd, {client_info.screen_info.width, client_info.screen_info.height});
             this->session_sharing_take_control(cb);
             gd.sync();
-            this->sharing_ctx.guest->sharing_ctx.null_gd_with_new_pointer.gd = &gd;
-            this->sharing_ctx.guest->sharing_ctx.guest_old_gd = this->sharing_ctx.guest->gd;
-            this->sharing_ctx.guest->set_gd(this->sharing_ctx.guest->sharing_ctx.null_gd_with_new_pointer);
+            this->sharing_ctx.guest_mask_view(gd);
+            state = "masked"_av;
         }
+        else {
+            this->sharing_ctx.guest_unmask_view();
+            cb.rdp_input_invalidate({0, 0, client_info.screen_info.width, client_info.screen_info.height});
+        }
+
+        this->sharing_ctx.session_log->log6(
+            LogId::SESSION_SHARING_GUEST_VIEW_CHANGED, {
+                KVLog("state"_av, state),
+            }
+        );
     }
 
     bool sharing_scancode_filtered(Callback & cb)
@@ -5228,8 +5295,8 @@ private:
         }
 
         // graphic is enabled (session_sharing_toggle_graphics)
-        if (!this->sharing_ctx.guest->sharing_ctx.guest_old_gd
-         && !this->sharing_ctx.guest->sharing_ctx.enable_shared_control)
+        if (this->sharing_ctx.guest_has_view()
+         && this->sharing_ctx.guest->sharing_ctx.enable_shared_control)
         {
             if (this->keymap.is_session_sharing_take_control()) {
                 this->session_sharing_take_control(cb);
@@ -5383,33 +5450,55 @@ private:
     }
 
 public:
-    void add_guest(Front& guest_front)
+    void add_guest(Front& guest_front, SessionLogApi& session_log)
     {
         assert(!this->sharing_ctx.guest);
 
         this->sharing_ctx.guest = &guest_front;
+        this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;
+        this->sharing_ctx.session_log = &session_log;
+        this->sharing_ctx.session_time_start = this->events_guard.get_monotonic_time().time_since_epoch();
         guest_front.orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(PredefinedPointer::SlashedCircle);
         guest_front.sharing_ctx.disable_input();
 
         this->copy_caches_to(guest_front);
         this->add_graphic(guest_front);
+
+        session_log.log6(LogId::SESSION_SHARING_GUEST_CONNECTION, {
+            KVLog("name"_av, "guest-1"_av),
+        });
     }
 
     void remove_guest(Front& guest_front)
     {
         assert(this->sharing_ctx.guest == &guest_front);
-        this->sharing_ctx.guest = nullptr;
         this->remove_graphic(guest_front);
         if (!this->sharing_ctx.has_input()) {
             this->sharing_ctx.enable_input();
             this->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         }
+
+        auto delay = this->events_guard.get_monotonic_time().time_since_epoch()
+                   - this->sharing_ctx.session_time_start;
+        long seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
+
+        char duration_str[128];
+        int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
+            seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+
+        this->sharing_ctx.session_log->log6(LogId::SESSION_SHARING_GUEST_DISCONNECTION, {
+            KVLog("name"_av, "guest-1"_av),
+            KVLog("duration"_av, {duration_str, std::size_t(len)}),
+        });
+
+        this->sharing_ctx.reset();
     }
 
 private:
     void auto_kill()
     {
+        this->sharing_ctx.session_log->log6(LogId::SESSION_SHARING_GUEST_KILLED, {});
         this->sharing_ctx.kill_fn(this->sharing_ctx.fn_ctx);
     }
 
