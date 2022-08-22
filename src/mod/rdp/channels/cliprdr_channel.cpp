@@ -2948,21 +2948,25 @@ void ClipboardVirtualChannel::process_client_message(
         this->client_ctx.message_type, total_length, flags, chunk, header,
         Direction::FileFromClient, this->verbose);
 
+    // break process when states is incorrect
+    #define IGNORE_OUT_OF_SEQUENCE(accepted_states) do {                   \
+        if (REDEMPTION_UNLIKELY(!(                                         \
+            checked_cast<unsigned>(accepted_states)                        \
+          & unsigned(this->initialization_state)                           \
+        ))) {                                                              \
+            LOG(LOG_WARNING,                                               \
+                "ClipboardVirtualChannel::process_client_message: "        \
+                    "Unexpected Client %s PDU! (%d)",                      \
+                RDPECLIP::get_msgType_name(this->client_ctx.message_type), \
+                int(this->initialization_state));                          \
+            return;                                                        \
+        }                                                                  \
+    } while (0)
+
     switch (this->client_ctx.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
-            if (REDEMPTION_UNLIKELY(
-                InitializationState::WaitingClientClipboardCapabilitiesPDU
-             != this->initialization_state
-            )) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Clipboard Capabilities PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::WaitingClientClipboardCapabilitiesPDU);
 
             this->initialization_state
                 = InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU;
@@ -2976,20 +2980,10 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_LIST: {
-            if (REDEMPTION_UNLIKELY(
-                !(unsigned(this->initialization_state)
-                  & (unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
-                   | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
-                   | unsigned(InitializationState::Ready)
-            )))) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Format List PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(
+                unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
+              | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
+              | unsigned(InitializationState::Ready));
 
             if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state))
             {
@@ -3009,29 +3003,13 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state)) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Format List Response PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
 
             ClipCtx::D::format_list_response(header, flags, this->server_ctx);
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-            if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state)) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Format Data Request PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
 
             ClipCtx::D::format_data_request(this->server_ctx, chunk.remaining_bytes(), this->verbose);
             send_message_to_server = this->params.clipboard_down_authorized;
@@ -3046,15 +3024,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-            if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state)) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Format Data Response PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
 
             auto* receiver = this->to_server_sender_ptr();
             if (receiver) {
@@ -3066,15 +3036,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state)) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client File Contents Request PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
 
             auto* sender = this->to_client_sender_ptr();
             auto* receiver = this->to_server_sender_ptr();
@@ -3087,15 +3049,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state)) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client File Contents Response PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
 
             auto* sender = this->to_client_sender_ptr();
             auto* receiver = this->to_server_sender_ptr();
@@ -3108,60 +3062,29 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_LOCK_CLIPDATA: {
-            if (REDEMPTION_UNLIKELY(
-                !(unsigned(this->initialization_state)
-                  & (unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
-                   | unsigned(InitializationState::WaitingServerFormatListResponsePDUOrLockPDU)
-                   | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
-                   | unsigned(InitializationState::Ready)
-            )))) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Lock Clipboard Data PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(
+                unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
+              | unsigned(InitializationState::WaitingServerFormatListResponsePDUOrLockPDU)
+              | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
+              | unsigned(InitializationState::Ready));
 
             ClipCtx::D::lock(*this, this->server_ctx, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-            if (REDEMPTION_UNLIKELY(
-                !(unsigned(this->initialization_state)
-                  & (unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
-                   | unsigned(InitializationState::WaitingServerFormatListResponsePDUOrLockPDU)
-                   | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
-                   | unsigned(InitializationState::Ready)
-            )))) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Unlock Clipboard Data PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(
+                unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
+              | unsigned(InitializationState::WaitingServerFormatListResponsePDUOrLockPDU)
+              | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
+              | unsigned(InitializationState::Ready));
 
             ClipCtx::D::unlock(*this, this->server_ctx, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_TEMP_DIRECTORY: {
-            if (REDEMPTION_UNLIKELY(
-                InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU
-             != this->initialization_state
-            )) {
-                LOG(LOG_WARNING,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Unexpected Client Temporary Directory PDU! (%d)",
-                    int(this->initialization_state));
-
-                send_message_to_server = false;
-                break;
-            }
+            IGNORE_OUT_OF_SEQUENCE(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU);
 
             this->initialization_state = InitializationState::WaitingClientFormatListPDUOrLockPDU;
         }
