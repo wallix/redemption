@@ -19,19 +19,18 @@ Author(s): Jonathan Poelen
 */
 
 #include "core/log_id.hpp"
+#include "cxx/cxx.hpp"
 
-#include <type_traits>
 
-
-int main()
+int main(int, char** av)
 {
-    using int_type = std::underlying_type_t<LogId>;
-
     // LogId must be stable for Arcsight
 
-#define CASE(id, i) case id: static_assert(int_type(id) == i); break
+#define CASE(id, i) case id: static_assert(static_cast<int>(id) == i); break
 
-    switch (LogId())
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_ERROR("-Wswitch")
+    switch (LogId(av[0][0]))
     {
         CASE(LogId::BUTTON_CLICKED, 0);
         CASE(LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION, 1);
@@ -93,7 +92,6 @@ int main()
         CASE(LogId::WEB_NAVIGATION, 57);
         CASE(LogId::WEB_PRIVACY_IMPACTED, 58);
         CASE(LogId::WEB_THIRD_PARTY_URL_BLOCKED, 59);
-
         CASE(LogId::ACCOUNT_MANIPULATION_BLOCKED, 60);
         CASE(LogId::ACCOUNT_MANIPULATION_DETECTED, 61);
         CASE(LogId::TEXT_VERIFICATION, 62);
@@ -102,5 +100,20 @@ int main()
         CASE(LogId::DYNAMIC_CHANNEL_CREATION_REJECTED, 65);
         CASE(LogId::FILE_BLOCKED, 66);
         CASE(LogId::SESSION_LOCKED, 67);
+        CASE(LogId::EDIT_CHANGED_2, 68);
+        CASE(LogId::SELECT_CHANGED, 69);
+        CASE(LogId::SESSION_EVENT, 70);
+        CASE(LogId::SESSION_SHARING_GUEST_CONNECTION, 71);
+        CASE(LogId::SESSION_SHARING_GUEST_CONNECTION_REJECTED, 72);
+        CASE(LogId::SESSION_SHARING_GUEST_DISCONNECTION, 73);
+        CASE(LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, 74);
+        CASE(LogId::SESSION_SHARING_GUEST_KILLED, 75);
+        CASE(LogId::SESSION_SHARING_GUEST_VIEW_CHANGED, 76);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
+
+#undef CASE
+
+    static_assert(!is_valid_log_id(77));
+    static_assert(is_valid_log_id(44));
 }

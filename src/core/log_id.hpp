@@ -144,15 +144,12 @@ enum class LogId : unsigned
 #undef f
 };
 
-inline bool is_valid_log_id(unsigned id)
+constexpr bool is_valid_log_id(unsigned id) noexcept
 {
-    switch (id) {
-#define f(x, cat) case unsigned(LogId::x):
-    X_LOG_ID(f)
+    return id < 0u
+#define f(x, cat) +1
+    X_LOG_ID(f);
 #undef f
-        return true;
-    }
-    return false;
 }
 
 namespace detail
