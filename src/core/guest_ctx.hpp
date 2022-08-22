@@ -26,6 +26,7 @@ Author(s): Proxies Team
 #include "capture/cryptofile.hpp"
 #include "utils/netutils.hpp"
 #include "core/listen.hpp"
+#include "utils/base64.hpp"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -62,6 +63,7 @@ struct GuestCtx
     }
 
     void start(
+        std::string_view session_id,
         EventContainer& event_container, Front& front, Callback& callback,
         SessionLogApi& session_log, UdevRandom& rnd,
         Inifile& original_ini, std::string_view user_data,
@@ -69,9 +71,11 @@ struct GuestCtx
     {
         assert(!listen_event);
 
+        sck_path = generate_sck_path(session_id);
+
         original_ini.set_acl<cfg::context::session_sharing_userdata>(user_data);
 
-        listen_sck = create_unix_server(sck_patch, EnableTransparentMode::No);
+        listen_sck = create_unix_server(sck_path, EnableTransparentMode::No);
         if (!listen_sck.is_open()) {
             int errnum = errno;
             LOG(LOG_ERR, "Guest::start() create server error");
@@ -83,7 +87,7 @@ struct GuestCtx
         original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(0u);
         std::string session_sharing_invitation_id = generate_password(rnd);
         original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
-        original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_patch);
+        original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_path);
 
         LOG(LOG_INFO, "Guest::start() create server error");
 
@@ -154,9 +158,19 @@ struct GuestCtx
 
     static std::string generate_password(Random& rnd)
     {
-        // TODO
-        (void)rnd;
-        return "abc";
+        uint8_t rnd_data[32];
+        rnd.random(rnd_data, sizeof(rnd_data));
+
+        std::array<uint8_t, 64> password_rep;
+        base64_encode(make_array_view(rnd_data), writable_bytes_view(password_rep));
+        std::string password(char_ptr_cast(password_rep.data()), base64_encode_size(sizeof(rnd_data)));
+
+        return password;
+    }
+
+    static std::string generate_sck_path(std::string_view session_id)
+    {
+        return str_concat("/tmp/front2_", session_id, ".sck");
     }
 
 private:
@@ -295,7 +309,7 @@ private:
     void close_listen_sck()
     {
         listen_sck.close();
-        remove(sck_patch);
+        remove(sck_path.c_str());
         listen_event->garbage = true;
         listen_event = nullptr;
     }
@@ -310,5 +324,5 @@ private:
     unique_fd listen_sck = invalid_fd();
     Event* listen_event = nullptr;
 
-    static constexpr zstring_view sck_patch = "/tmp/front2.sck"_zv;
+    std::string sck_path;
 };

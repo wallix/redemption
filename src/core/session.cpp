@@ -1114,6 +1114,7 @@ private:
                          && !guest_ctx.is_started()
                         ) {
                             guest_ctx.start(
+                                this->ini.get<cfg::context::session_id>(),
                                 events, front, mod_wrapper.get_callback(),
                                 secondary_session.get_secondary_session_log(), rnd, ini,
                                 this->ini.get<cfg::context::session_sharing_userdata>(),
