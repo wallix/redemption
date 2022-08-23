@@ -70,7 +70,8 @@ enum {
     OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
     OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
-    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010
+    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010,
+    OPTION_SUPPORT_IPV6                                         = 0x00000020
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -612,7 +613,7 @@ public:
                 }
 
                 {
-                    uint32_t options = 0;
+                    uint32_t options = OPTION_SUPPORT_IPV6;
 
                     if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {
                         options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
@@ -1564,9 +1565,23 @@ public:
                         const auto&    shadow_errmsg  = parameters_[1];
                         const auto&    shadow_userdata = parameters_[2];
                         if (parameters_.size() >= 6) {
-                            const auto&    shadow_id   = parameters_[3];
-                            const auto&    shadow_addr = parameters_[4];
-                            const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
+                            auto const&    shadow_id   = parameters_[3];
+                            std::string    shadow_addr = parameters_[4];
+                            uint16_t const shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
+
+                            if (!this->sespro_params.target_ip.empty()) {
+                                if (shadow_addr == this->sespro_params.target_ip) {
+                                    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
+                                        "Replace shadow address (%s) by target ip (%s)",
+                                        shadow_addr.c_str(), this->sespro_params.target_ip);
+
+                                    shadow_addr = this->sespro_params.target_ip;
+                                }
+                            }
+                            else {
+                                LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
+                                    "Target IP is unknown! Use the original shadow address.");
+                            }
 
                             this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }
