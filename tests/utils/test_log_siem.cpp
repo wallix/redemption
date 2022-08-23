@@ -25,26 +25,20 @@
 #include "test_only/log_buffered.hpp"
 
 
-RED_AUTO_TEST_CASE(TestLogSiem)
-{
-    ut::log_buffered log_buf;
-    LOG_SIEM("test %s", "1");
-    RED_CHECK(log_buf.buf() == "test 1\n");
-}
-
 RED_AUTO_TEST_CASE(TestLogProxySiem)
 {
     ut::log_buffered log_buf;
-    LOG_PROXY_SIEM("CAT", "test %s", "1");
-    log_proxy::set_psid("L33t");
-    log_proxy::incoming_connection("universe", 1234);
-    LOG_PROXY_SIEM("TAC", "test 2");
-    log_proxy::set_user("Banana");
-    LOG_PROXY_SIEM("ACT", "test 3");
+    log_siem::target_connection("user", "sid", "host", 33);
+    log_siem::set_psid("L33t");
+    log_siem::incoming_connection("universe", 1234);
+    log_siem::target_connection("user", "sid", "host", 33);
+    log_siem::set_user("Banana");
+    log_siem::target_connection("user", "sid", "host", 33);
     RED_CHECK(log_buf.buf() ==
-        R"([rdpproxy] psid="42" user="" type="CAT" test 1)""\n"
+        R"([rdpproxy] psid="42" user="" type="TARGET_CONNECTION" target="user" session_id="sid" host="host" port="33")""\n"
         R"([rdpproxy] psid="L33t" type="INCOMING_CONNECTION" src_ip="universe" src_port="1234")""\n"
-        R"([rdpproxy] psid="L33t" user="" type="TAC" test 2)""\n"
-        R"([rdpproxy] psid="L33t" user="Banana" type="ACT" test 3)""\n"_av
+        R"([rdpproxy] psid="L33t" user="" type="TARGET_CONNECTION" target="user" session_id="sid" host="host" port="33")""\n"
+        R"([rdpproxy] psid="L33t" user="Banana" type="TARGET_CONNECTION" target="user" session_id="sid" host="host" port="33")""\n"
+        ""_av
     );
 }

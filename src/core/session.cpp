@@ -498,7 +498,7 @@ private:
 
         enum class SecondarySessionType { RDP, VNC, };
         auto open_secondary_session = [&](SecondarySessionType secondary_session_type){
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             try {
                 switch (secondary_session_type)
                 {
@@ -549,25 +549,25 @@ private:
             break;
 
         case ModuleName::login:
-            log_proxy::set_user("");
+            log_siem::set_user("");
             inactivity.stop();
             mod_pack = mod_factory.create_login_mod();
             break;
 
         case ModuleName::waitinfo:
-            log_proxy::set_user("");
+            log_siem::set_user("");
             inactivity.stop();
             mod_pack = mod_factory.create_wait_info_mod();
             break;
 
         case ModuleName::confirm:
-            log_proxy::set_user("");
+            log_siem::set_user("");
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_display_message_mod();
             break;
 
         case ModuleName::link_confirm:
-            log_proxy::set_user("");
+            log_siem::set_user("");
             if (auto timeout = this->ini.get<cfg::context::mod_timeout>()
                 ; timeout.count() != 0
             ) {
@@ -580,13 +580,13 @@ private:
             break;
 
         case ModuleName::valid:
-            log_proxy::set_user("");
+            log_siem::set_user("");
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_valid_message_mod();
             break;
 
         case ModuleName::challenge:
-            log_proxy::set_user("");
+            log_siem::set_user("");
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_dialog_challenge_mod();
             break;
@@ -606,39 +606,39 @@ private:
                         break;
                 }
             }
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_selector_mod();
             break;
 
         case ModuleName::bouncer2:
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_mod_bouncer();
             break;
 
         case ModuleName::autotest:
             inactivity.stop();
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_mod_replay();
             break;
 
         case ModuleName::widgettest:
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_widget_test_mod();
             break;
 
         case ModuleName::card:
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_test_card_mod();
             break;
 
         case ModuleName::interactive_target:
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             mod_pack = mod_factory.create_interactive_target_mod();
             break;
 
         case ModuleName::transitory:
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+            log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             mod_pack = mod_factory.create_transition_mod();
             break;
 
@@ -675,7 +675,7 @@ private:
         }
 
         rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
-        log_proxy::set_user(this->ini.get<cfg::globals::auth_user>());
+        log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
 
         mod_wrapper.disconnect();
 
@@ -1541,7 +1541,7 @@ public:
         ) {
             // silent message for localhost or probe IPs for watchdog
             if (!prevent_early_log) {
-                log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
+                log_siem::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
             }
 
             return ;
@@ -1616,7 +1616,7 @@ public:
         if (!ini.is_asked<cfg::globals::host>()) {
             LOG(LOG_INFO, "Client Session Disconnected");
         }
-        log_proxy::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
+        log_siem::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
 
         front.must_be_stop_capture();
     }

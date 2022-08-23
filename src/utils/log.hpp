@@ -155,26 +155,26 @@ auto log_value(T const & x) noexcept
 #   define LOG_REDEMPTION_FILENAME(priority)
 # else
 #   define LOG_REDEMPTION_FILENAME(priority)                 \
-    REDEMPTION_DIAGNOSTIC_PUSH()                               \
+    REDEMPTION_DIAGNOSTIC_PUSH()                             \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
     if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
-        ::detail::LOG_REDEMPTION_INTERNAL(                 \
-            priority, "%s (%d/%d) -- ◢ In %s:%d",            \
+        ::detail::LOG_REDEMPTION_INTERNAL(                   \
+            priority, "%s (%d/%d) -- ◢ In %s:%d",           \
             __FILE__, __LINE__                               \
         );                                                   \
     }                                                        \
     REDEMPTION_DIAGNOSTIC_POP()
 # endif
 
-# define LOG(priority, ...) do {                                       \
-    using ::log_value;                                                 \
-    LOG_REDEMPTION_FILENAME(priority)                                  \
+# define LOG(priority, ...) do {                                     \
+    using ::log_value;                                               \
+    LOG_REDEMPTION_FILENAME(priority)                                \
     ::detail::LOGCHECK_REDEMPTION_INTERNAL((                         \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                      \
+        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
         ::detail::LOG_REDEMPTION_INTERNAL(priority, "%s (%d/%d) -- " \
-            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),   \
-        1                                                              \
-    ));                                                                \
+            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
+        1                                                            \
+    ));                                                              \
  } while (0)
 
 namespace detail

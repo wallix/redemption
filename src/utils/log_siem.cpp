@@ -19,19 +19,26 @@ Author(s): Jonathan Poelen
 */
 
 #include "log_siem.hpp"
+#include "utils/log.hpp"
 #include "utils/strutils.hpp"
 
-#include <cstring>
+
+# define LOG_SIEM(format, ...) do {                            \
+    LOG_REDEMPTION_INTERNAL_IMPL(                              \
+        /* check format and insert LOG_INFO */                 \
+        (void(sizeof(printf(format, __VA_ARGS__))), LOG_INFO), \
+        format, __VA_ARGS__);                                  \
+} while (0)
 
 
-namespace
+namespace log_siem
 {
-    char g_psid[32] = "42"; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
-    char g_username[256] = ""; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
-}
+    namespace
+    {
+        char g_psid[32] = "42"; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
+        char g_username[256] = ""; /* NOLINT(cppcoreguidelines-avoid-non-const-global-variables) */
+    }
 
-namespace log_proxy
-{
     void set_psid(std::string_view psid) noexcept
     {
         utils::strlcpy(g_psid, psid);
@@ -39,8 +46,7 @@ namespace log_proxy
 
     void incoming_connection(std::string_view source_ip, int source_port) noexcept
     {
-        LOG_REDEMPTION_INTERNAL_IMPL(
-            LOG_INFO,
+        LOG_SIEM(
             R"([rdpproxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%.*s" src_port="%d")",
             g_psid, int(source_ip.size()), source_ip.data(), source_port
         );
@@ -51,18 +57,38 @@ namespace log_proxy
         utils::strlcpy(g_username, username);
     }
 
+    void target_connection(char const* target_user, char const* session_id,
+                           char const* target_host, unsigned target_port) noexcept
+    {
+        LOG_SIEM(
+            R"([rdpproxy] psid="%s" user="%s" type="TARGET_CONNECTION" target="%s" session_id="%s" host="%s" port="%u")",
+            g_psid, g_username, target_user, session_id, target_host, target_port
+        );
+    }
+
+    void target_connection_failed(char const* target_user, char const* session_id,
+                                  char const* target_host, unsigned target_port,
+                                  char const* reason) noexcept
+    {
+        LOG_SIEM(
+            R"([rdpproxy] psid="%s" user="%s" type="TARGET_CONNECTION_FAILED" target="%s" session_id="%s" host="%s" port="%u" reason="%s")",
+            g_psid, g_username, target_user, session_id, target_host, target_port, reason
+        );
+    }
+
     void target_disconnection(char const* reason, char const* session_id) noexcept
     {
         if (reason && *reason) {
-            LOG_PROXY_SIEM("TARGET_DISCONNECTION",
-                           R"(session_id="%s" reason="%s")",
-                           session_id,
-                           reason);
+            LOG_SIEM(
+                R"([rdpproxy] psid="%s" user="%s" type="TARGET_DISCONNECTION" session_id="%s" reason="%s")",
+                g_psid, g_username, session_id, reason
+            );
         }
         else {
-            LOG_PROXY_SIEM("TARGET_DISCONNECTION",
-                           R"(session_id="%s")",
-                           session_id);
+            LOG_SIEM(
+                R"([rdpproxy] psid="%s" user="%s" type="TARGET_DISCONNECTION" session_id="%s")",
+                g_psid, g_username, session_id
+            );
         }
     }
 
@@ -70,15 +96,13 @@ namespace log_proxy
     {
         if (reason && *reason) {
             if (g_username[0]) {
-                LOG_REDEMPTION_INTERNAL_IMPL(
-                    LOG_INFO,
+                LOG_SIEM(
                     R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT" reason="%s")",
                     g_psid, g_username, reason
                 );
             }
             else {
-                LOG_REDEMPTION_INTERNAL_IMPL(
-                    LOG_INFO,
+                LOG_SIEM(
                     R"([rdpproxy] psid="%s" type="DISCONNECT" reason="%s")",
                     g_psid, reason
                 );
@@ -86,29 +110,17 @@ namespace log_proxy
         }
         else {
             if (g_username[0]) {
-                LOG_REDEMPTION_INTERNAL_IMPL(
-                    LOG_INFO,
+                LOG_SIEM(
                     R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT")",
                     g_psid, g_username
                 );
             }
             else {
-                LOG_REDEMPTION_INTERNAL_IMPL(
-                    LOG_INFO,
+                LOG_SIEM(
                     R"([rdpproxy] psid="%s" type="DISCONNECT")",
                     g_psid
                 );
             }
         }
     }
-
-    char const* get_psid() noexcept
-    {
-        return g_psid;
-    }
-
-    char const* get_user() noexcept
-    {
-        return g_username;
-    }
-} // namespace log_proxy
+} // namespace log_siem

@@ -260,12 +260,12 @@ namespace
                 p = std::to_chars(p, std::end(psid), sec).ptr;
                 p = std::to_chars(p, std::end(psid), pid).ptr;
                 ini.set_acl<cfg::context::psid>(std::string_view(psid, std::size_t(p - psid)));
-                log_proxy::set_psid(ini.get<cfg::context::psid>());
+                log_siem::set_psid(ini.get<cfg::context::psid>());
             }
 
             if (!prevent_early_log)
             {
-                log_proxy::incoming_connection(source_ip.to_sv(), source_port);
+                log_siem::incoming_connection(source_ip.to_sv(), source_port);
             }
 
             union

@@ -273,7 +273,7 @@ void SiemLogger::log_syslog_format(
 
         log_format_append_info(this->buffer_, id, kv_list);
 
-        LOG_SIEM("%s", this->buffer_.c_str());
+        LOG_REDEMPTION_INTERNAL_IMPL(LOG_INFO, "%s", this->buffer_.c_str());
     }
 }
 
@@ -296,6 +296,6 @@ void SiemLogger::log_arcsight_format(
             ini.get<cfg::context::target_service>(),
             kv_list);
 
-        LOG_SIEM("%s", this->buffer_);
+        LOG_REDEMPTION_INTERNAL_IMPL(LOG_INFO, "%s", this->buffer_.c_str());
     }
 }

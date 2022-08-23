@@ -47,11 +47,11 @@ inline unique_fd connect_to_target_host(
     std::chrono::milliseconds tcp_user_timeout)
 {
     auto throw_error = [&ini, &session_log](char const* error_message, int id) {
-        LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
-            R"(target="%s" session_id="%s" host="%s" port="%u" reason="%s")",
-            ini.get<cfg::globals::target_user>(),
-            ini.get<cfg::context::session_id>(),
-            ini.get<cfg::context::target_host>(),
+
+        log_siem::target_connection_failed(
+            ini.get<cfg::globals::target_user>().c_str(),
+            ini.get<cfg::context::session_id>().c_str(),
+            ini.get<cfg::context::target_host>().c_str(),
             ini.get<cfg::context::target_port>(),
             error_message);
 
@@ -65,11 +65,10 @@ inline unique_fd connect_to_target_host(
         throw Error(ERR_SOCKET_CONNECT_FAILED);
     };
 
-    LOG_PROXY_SIEM("TARGET_CONNECTION",
-        R"(target="%s" session_id="%s" host="%s" port="%u")",
-        ini.get<cfg::globals::target_user>(),
-        ini.get<cfg::context::session_id>(),
-        ini.get<cfg::context::target_host>(),
+    log_siem::target_connection(
+        ini.get<cfg::globals::target_user>().c_str(),
+        ini.get<cfg::context::session_id>().c_str(),
+        ini.get<cfg::context::target_host>().c_str(),
         ini.get<cfg::context::target_port>());
 
     const char *ip = ini.get<cfg::context::target_host>().c_str();
