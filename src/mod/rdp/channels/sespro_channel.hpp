@@ -118,6 +118,8 @@ private:
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
 
+    std::string param_target_ip;
+
     Translator tr;
 
     bool param_bogus_refresh_rect_ex = false;
@@ -1466,8 +1468,21 @@ public:
                         const auto&    shadow_userdata = parameters_[2];
                         if (parameters_.size() >= 6) {
                             const auto&    shadow_id   = parameters_[3];
-                            const auto&    shadow_addr = parameters_[4];
+                            std::string    shadow_addr { parameters_[4] };
                             const uint16_t shadow_port = unchecked_decimal_chars_to_int(parameters_[5]);
+
+                            if (!this->sespro_params.target_ip.empty()) {
+                                if (shadow_addr.compare(this->sespro_params.target_ip)) {
+                                    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
+                                        "Replace shadow address (%s) by target ip (%s)", shadow_addr.c_str(), this->sespro_params.target_ip);
+
+                                    shadow_addr = this->sespro_params.target_ip;
+                                }
+                            }
+                            else {
+                                LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
+                                    "Target IP is unknown! Use the original shadow address.");
+                            }
 
                             this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }

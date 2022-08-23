@@ -866,8 +866,9 @@ ModPack create_mod_rdp(
         : addr_connect_blocking(
             ini.get<cfg::context::tunneling_target_host>().c_str(),
             std::chrono::seconds(1), false);
-    IpAddress local_ip_address;
+    mod_rdp_params.session_probe_params.vc_params.target_ip = ini.get<cfg::context::ip_target>();
 
+    IpAddress local_ip_address;
     switch (ini.get<cfg::mod_rdp::client_address_sent>())
     {
         case ClientAddressSent::no_address :
