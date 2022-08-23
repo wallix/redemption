@@ -25,6 +25,7 @@ Author(s): Proxies Team
 #include "acl/auth_api.hpp"
 #include "capture/cryptofile.hpp"
 #include "utils/netutils.hpp"
+#include "core/app_path.hpp"
 #include "core/listen.hpp"
 #include "utils/base64.hpp"
 
@@ -78,9 +79,10 @@ struct GuestCtx
         listen_sck = create_unix_server(sck_path, EnableTransparentMode::No);
         if (!listen_sck.is_open()) {
             int errnum = errno;
-            LOG(LOG_ERR, "Guest::start() create server error");
+            char const* errorstr = strerror(errnum);
+            LOG(LOG_ERR, "Guest::start() create server error: \"%s\"", errorstr);
             original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(checked_int(errnum));
-            original_ini.set_acl<cfg::context::session_sharing_invitation_error_message>(strerror(errnum));
+            original_ini.set_acl<cfg::context::session_sharing_invitation_error_message>(errorstr);
             return ;
         }
 
@@ -89,7 +91,7 @@ struct GuestCtx
         original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
         original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_path);
 
-        LOG(LOG_INFO, "Guest::start() create server error");
+        LOG(LOG_INFO, "Guest::start() server created");
 
         // TODO add timer before auto-close
 
@@ -170,7 +172,7 @@ struct GuestCtx
 
     static std::string generate_sck_path(std::string_view session_id)
     {
-        return str_concat("/tmp/front2_", session_id, ".sck");
+        return str_concat(app_path(AppPath::LockDir), "/front2_", session_id, ".sck");
     }
 
 private:

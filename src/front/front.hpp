@@ -754,6 +754,7 @@ private:
         void* const fn_ctx;
 
         gdi::GraphicApi* guest_old_gd = nullptr;
+        Front* user = nullptr;
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
         MonotonicTimePoint::duration session_time_start {};
@@ -764,13 +765,27 @@ private:
         bool const enable_shared_control;
         NullGdWithNewPointer gd_for_pointer_cache {};
 
+        struct PointerPos {
+            uint16_t x = 0xFFFF;
+            uint16_t y = 0xFFFF;
+
+            bool is_valid() const noexcept {
+                return x != 0xFFFF and y != 0xFFFF;
+            }
+        };
+
+        PointerPos pointer_pos {};
+
         void reset() noexcept
         {
             guest_old_gd = nullptr;
+            user = nullptr;
             guest = nullptr;
             session_log = nullptr;
             input_id = is_guest /* disable input for guest */;
             last_pointer_cache_idx = PredefinedPointer::Normal;
+
+            pointer_pos = PointerPos {};
         }
 
         bool has_input() const noexcept
@@ -5190,7 +5205,39 @@ private:
 public:
     void sync() override {
         LOG_IF(bool(this->verbose & Verbose::graphic), LOG_INFO, "Front::sync");
+
+        auto draw_other_pointer = [this]() {
+                if (FRONT_UP_AND_RUNNING != this->state) {
+                    return;
+                }
+
+                FrontSharingCtx::PointerPos other_pointer_pos {};
+
+                if (this->sharing_ctx.is_guest) {
+                    other_pointer_pos = this->sharing_ctx.user->sharing_ctx.pointer_pos;
+                }
+                else if (this->sharing_ctx.guest) {
+                    other_pointer_pos = this->sharing_ctx.guest->sharing_ctx.pointer_pos;
+                }
+
+                if (other_pointer_pos.is_valid()) {
+                    Rect rect(other_pointer_pos.x - 2,
+                              other_pointer_pos.y - 2,
+                              5, 5);
+                    RDPDstBlt order(
+                            rect,
+                            0x55    // (DSTINVERT)
+                        );
+
+                    this->orders.graphics_update_pdu().draw(order, rect);
+                }
+            };
+
+        draw_other_pointer();
+
         this->gd->sync();
+
+        draw_other_pointer();
     }
 
     void set_palette(const BGRPalette & palette) override {
@@ -5398,6 +5445,16 @@ private:
         this->mouse_y = y;
         this->has_user_activity = true;
 
+        this->sharing_ctx.pointer_pos.x = x;
+        this->sharing_ctx.pointer_pos.y = y;
+
+        if (this->sharing_ctx.is_guest) {
+            this->sharing_ctx.user->sync();
+        }
+        else if (this->sharing_ctx.guest) {
+            this->sharing_ctx.guest->sync();
+        }
+
         if (this->state == FRONT_UP_AND_RUNNING && this->sharing_ctx.has_input()) {
             cb.rdp_input_mouse(pointer_flags, x, y);
 
@@ -5454,6 +5511,9 @@ public:
     {
         assert(!this->sharing_ctx.guest);
 
+        assert(!guest_front.sharing_ctx.user);
+        guest_front.sharing_ctx.user = this;
+
         this->sharing_ctx.guest = &guest_front;
         this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;
         this->sharing_ctx.session_log = &session_log;
@@ -5472,6 +5532,9 @@ public:
 
     void remove_guest(Front& guest_front)
     {
+        assert(guest_front.sharing_ctx.user);
+        guest_front.sharing_ctx.user = nullptr;
+
         assert(this->sharing_ctx.guest == &guest_front);
         this->remove_graphic(guest_front);
         if (!this->sharing_ctx.has_input()) {
