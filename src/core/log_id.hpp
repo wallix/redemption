@@ -96,6 +96,7 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(PASSWORD_TEXT_BOX_GET_FOCUS, Widget)                       \
     f(PROCESS_BLOCKED, Application)                              \
     f(PROCESS_DETECTED, Application)                             \
+    /* internal, used from front to capture for enabled ocr */   \
     f(PROBE_STATUS, Probe)                                       \
     f(SERVER_CERTIFICATE_ERROR, ServerCertificate)               \
     f(SERVER_CERTIFICATE_MATCH_FAILURE, ServerCertificate)       \
