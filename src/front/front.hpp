@@ -5498,7 +5498,9 @@ public:
 private:
     void auto_kill()
     {
-        this->sharing_ctx.session_log->log6(LogId::SESSION_SHARING_GUEST_KILLED, {});
+        this->sharing_ctx.session_log->log6(LogId::SESSION_SHARING_GUEST_KILLED, {
+            KVLog("name"_av, "guest-1"_av),
+        });
         this->sharing_ctx.kill_fn(this->sharing_ctx.fn_ctx);
     }
 
