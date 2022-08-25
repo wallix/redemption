@@ -388,6 +388,8 @@ void ModuleManager::create_mod_rdp(
         mod_rdp_params.session_probe_params.vc_params.enable_self_cleaner = ini.get<cfg::mod_rdp::session_probe_enable_cleaner>();
     }
 
+    mod_rdp_params.session_probe_params.vc_params.target_ip = ini.get<cfg::context::ip_target>();
+
     mod_rdp_params.forward_client_build_number = ini.get<cfg::mod_rdp::forward_client_build_number>();
 
     try {

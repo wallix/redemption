@@ -171,6 +171,8 @@ struct SessionProbeVirtualChannelParams
     SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
 
     bool enable_self_cleaner = false;
+
+    std::string target_ip;
 };
 
 

@@ -61,7 +61,8 @@ enum {
     OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
     OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
-    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010
+    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010,
+    OPTION_SUPPORT_IPV6                                         = 0x00000020
 };
 
 
@@ -1582,6 +1583,21 @@ public:
                             const char *   shadow_id   = parameters_[3].c_str();
                             const char *   shadow_addr = parameters_[4].c_str();
                             const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
+
+
+                            if (!this->sespro_params.target_ip.empty()) {
+                                if (shadow_addr == this->sespro_params.target_ip) {
+                                    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
+                                        "Replace shadow address (%s) by target ip (%s)",
+                                        shadow_addr, this->sespro_params.target_ip);
+
+                                    shadow_addr = this->sespro_params.target_ip.c_str();
+                                }
+                            }
+                            else {
+                                LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
+                                    "Target IP is unknown! Use the original shadow address.");
+                            }
 
                             this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }
