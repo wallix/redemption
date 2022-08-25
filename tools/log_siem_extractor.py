@@ -45,7 +45,7 @@ def print_log_siem_constants(src_path: str) -> None:
     other_log_ids: Set[str] = set()
     declared_log_ids: Set[str] = set()
 
-    for dirpath, _, filenames in os.walk('src'):
+    for dirpath, _, filenames in os.walk(src_path):
         if dirpath.startswith(f'{src_path}/mod/rdp'):
             rdp_log_ids.update(extract_log_id_from_files(dirpath, filenames, extract_log_id_rdp))
         elif dirpath.startswith(f'{src_path}/mod/vnc'):
