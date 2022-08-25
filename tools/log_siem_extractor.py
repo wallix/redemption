@@ -2,7 +2,7 @@
 import os
 import re
 import sys
-from typing import Iterable, Iterator, Callable
+from typing import Iterable, Iterator, Callable, List, Set
 from itertools import chain
 from os.path import join as path_join
 
@@ -17,7 +17,7 @@ def readall(filename) -> str:
     with open(filename) as f:
         return f.read()
 
-def extract_log_id(filename: str) -> Iterator[str]:
+def extract_log_id(filename: str) -> List[str]:
     return log_id_regex.findall(readall(filename))
 
 def extract_log_id_rdp(filename: str) -> Iterator[str]:
@@ -28,7 +28,7 @@ def extract_log_id_rdp(filename: str) -> Iterator[str]:
     )
 
 def extract_log_id_from_files(dirpath: str, filenames: Iterable[str],
-                              log_id_extractor: Callable[[str], Iterator[str]] = extract_log_id
+                              log_id_extractor: Callable[[str], Iterable[str]] = extract_log_id
                               ) -> Iterator[str]:
     return chain.from_iterable(
         log_id_extractor(path_join(dirpath, filename))
@@ -39,13 +39,13 @@ def extract_log_id_from_files(dirpath: str, filenames: Iterable[str],
 def print_log_siem_constants(src_path: str) -> None:
     src_path = src_path.rstrip('/')
 
-    vnc_log_ids = set()
-    rdp_log_ids = set()
-    capture_log_ids = set()
-    other_log_ids = set()
-    declared_log_ids = set()
+    vnc_log_ids: Set[str] = set()
+    rdp_log_ids: Set[str] = set()
+    capture_log_ids: Set[str] = set()
+    other_log_ids: Set[str] = set()
+    declared_log_ids: Set[str] = set()
 
-    for dirpath, dirnames, filenames in os.walk('src'):
+    for dirpath, _, filenames in os.walk('src'):
         if dirpath.startswith(f'{src_path}/mod/rdp'):
             rdp_log_ids.update(extract_log_id_from_files(dirpath, filenames, extract_log_id_rdp))
         elif dirpath.startswith(f'{src_path}/mod/vnc'):
