@@ -28,6 +28,7 @@ projects/qtclient/DATA/
 /tools/ocr/learning
 *.pyc
 *.pyo
+*.gcov
 
 # user depends
 password.py
