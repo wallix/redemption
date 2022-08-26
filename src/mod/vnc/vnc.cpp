@@ -115,7 +115,7 @@ mod_vnc::mod_vnc( Transport & t
     , encodings(encodings)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
-    , beginning(events.get_monotonic_time().time_since_epoch())
+    , session_time_start(events.get_monotonic_time().time_since_epoch())
     , rail_client_execute(rail_client_execute)
     , gd(gd)
     , events_guard(events)
@@ -2132,13 +2132,13 @@ void mod_vnc::rdp_gdi_up_and_running()
 void mod_vnc::disconnect()
 {
     auto delay = this->events_guard.get_monotonic_time().time_since_epoch()
-                - this->beginning;
+                - this->session_time_start;
     long seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
 
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];
-    int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
+    int len = snprintf(duration_str, sizeof(duration_str), "%ld:%02ld:%02ld",
         seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
     this->session_log.log6(LogId::SESSION_DISCONNECTION,

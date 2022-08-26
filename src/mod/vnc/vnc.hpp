@@ -260,7 +260,7 @@ private:
     bool clipboard_owned_by_client = true;
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
     uint32_t clipboard_general_capability_flags = 0;
-    MonotonicTimePoint::duration beginning;
+    MonotonicTimePoint::duration session_time_start;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 

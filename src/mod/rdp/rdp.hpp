@@ -6147,7 +6147,7 @@ private:
             this->session_time_start = MonotonicTimePoint::duration(0);
 
             char duration_str[128];
-            int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
+            int len = snprintf(duration_str, sizeof(duration_str), "%ld:%02ld:%02ld",
                 seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
             // force kbd flush before disconnect event
