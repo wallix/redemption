@@ -77,15 +77,6 @@ include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
 include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 
-
-make test_libredrec : libredrec : @test_libredrec : <variant>san:<build>no ;
-
-actions test_libredrec
-{
-    # check is loadable
-    $(TOOLS_PATH)/redrec rec $(>) -h > /dev/null && :> $(<)
-}
-
 include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
 
 
