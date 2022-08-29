@@ -34,6 +34,12 @@
 
 #include <snappy.h> // for SNAPPY_VERSION
 
+// fix SNAPPY_VERSION when SNAPPY_MAJOR is empty
+#if !SNAPPY_MAJOR+0
+# undef SNAPPY_VERSION
+# define SNAPPY_VERSION (1<<16|1<<8|8)
+#endif
+
 
 using namespace std::string_view_literals;
 
