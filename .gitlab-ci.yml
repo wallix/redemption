@@ -22,4 +22,7 @@ build_package:
     paths:
       - bin/gcc-*/release
       - test_tmpdir
+    exclude:
+      - bin/**/*.o
+      - bin/gcc-*/release/tests/**/*
     expire_in: 1 day
