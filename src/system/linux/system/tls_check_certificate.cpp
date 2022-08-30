@@ -369,8 +369,6 @@ private:
         // OpenSSL_add_all_ciphers() adds all encryption algorithms to the table including password
         // based encryption algorithms.
 
-        // EVP_cleanup() removes all ciphers and digests from the table.
-
         OpenSSL_add_all_algorithms();
 
         X509_LOOKUP* lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());

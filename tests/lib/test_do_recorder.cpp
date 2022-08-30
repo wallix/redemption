@@ -74,7 +74,6 @@ int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme
     ut::ostream_buffered cout_buf;                                                    \
     ut::ostream_buffered cerr_buf(std::cerr);                                         \
     int res = do_main(argc, argv, hmac_key, trace_fn);                                \
-    EVP_cleanup();                                                                    \
     RED_CHECK(cout_buf.str() == output);                                              \
     RED_CHECK(cerr_buf.str() == output_error);                                        \
     RED_TEST(res_result == res);                                                      \
