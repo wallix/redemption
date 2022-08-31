@@ -1471,7 +1471,7 @@ public:
                             uint16_t const   shadow_port = unchecked_decimal_chars_to_int(parameters_[5]);
 
                             if (!this->sespro_params.target_ip.empty()) {
-                                if (shadow_addr == this->sespro_params.target_ip) {
+                                if (shadow_addr != this->sespro_params.target_ip) {
                                     LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
                                         "Replace shadow address (%.*s) by target ip (%s)",
                                         static_cast<int>(shadow_addr.size()), shadow_addr.data(), this->sespro_params.target_ip);
