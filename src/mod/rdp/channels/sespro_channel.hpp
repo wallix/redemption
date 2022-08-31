@@ -1570,7 +1570,7 @@ public:
                             uint16_t const shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
 
                             if (!this->sespro_params.target_ip.empty()) {
-                                if (shadow_addr == this->sespro_params.target_ip) {
+                                if (shadow_addr != this->sespro_params.target_ip) {
                                     LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
                                         "Replace shadow address (%s) by target ip (%s)",
                                         shadow_addr.c_str(), this->sespro_params.target_ip);
