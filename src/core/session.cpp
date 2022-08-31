@@ -609,6 +609,13 @@ private:
         ClientExecute & rail_client_execute,
         PerformAutomaticReconnection perform_automatic_reconnection)
     {
+        size_t session_reconnection_delay_ms = this->ini.get<cfg::mod_rdp::session_reconnection_delay>().count();
+        if (session_reconnection_delay_ms)
+        {
+            LOG(LOG_INFO, "Waiting for %lu ms before retrying RDP", session_reconnection_delay_ms);
+            ::usleep(session_reconnection_delay_ms * 1000);
+        }
+
         LOG(LOG_INFO, "Retry RDP");
 
         auto next_state = ModuleName::RDP;

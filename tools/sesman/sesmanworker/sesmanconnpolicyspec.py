@@ -82,6 +82,9 @@ cp_spec = {
         u'mod_rdp:allow_session_reconnection_by_shortcut': (
             'allow_session_reconnection_by_shortcut', False
         ),
+        u'mod_rdp:session_reconnection_delay': (
+            'session_reconnection_delay', 0
+        ),
         u'mod_rdp:forward_client_build_number': (
             'forward_client_build_number', True
         ),

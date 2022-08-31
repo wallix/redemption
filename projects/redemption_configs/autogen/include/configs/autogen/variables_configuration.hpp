@@ -19,24 +19,24 @@ namespace configs
         inline constexpr int section1 = 18; /* session_log */
         inline constexpr int section2 = 19; /* client */
         inline constexpr int section3 = 21; /* mod_rdp */
-        inline constexpr int section4 = 98; /* mod_vnc */
-        // inline constexpr int section5 = 106; /* metrics */
-        inline constexpr int section6 = 106; /* file_verification */
-        inline constexpr int section7 = 114; /* file_storage */
-        // inline constexpr int section8 = 115; /* icap_server_down */
-        // inline constexpr int section9 = 115; /* icap_server_up */
-        inline constexpr int section10 = 115; /* mod_replay */
-        // inline constexpr int section11 = 116; /* ocr */
-        inline constexpr int section12 = 116; /* video */
-        inline constexpr int section13 = 120; /* capture */
-        inline constexpr int section14 = 124; /* crypto */
-        // inline constexpr int section15 = 126; /* websocket */
-        // inline constexpr int section16 = 126; /* debug */
-        // inline constexpr int section17 = 126; /* remote_program */
-        inline constexpr int section18 = 126; /* translation */
-        // inline constexpr int section19 = 128; /* internal_mod */
-        inline constexpr int section20 = 128; /* context */
-        // inline constexpr int section21 = 208; /* theme */
+        inline constexpr int section4 = 99; /* mod_vnc */
+        // inline constexpr int section5 = 107; /* metrics */
+        inline constexpr int section6 = 107; /* file_verification */
+        inline constexpr int section7 = 115; /* file_storage */
+        // inline constexpr int section8 = 116; /* icap_server_down */
+        // inline constexpr int section9 = 116; /* icap_server_up */
+        inline constexpr int section10 = 116; /* mod_replay */
+        // inline constexpr int section11 = 117; /* ocr */
+        inline constexpr int section12 = 117; /* video */
+        inline constexpr int section13 = 121; /* capture */
+        inline constexpr int section14 = 125; /* crypto */
+        // inline constexpr int section15 = 127; /* websocket */
+        // inline constexpr int section16 = 127; /* debug */
+        // inline constexpr int section17 = 127; /* remote_program */
+        inline constexpr int section18 = 127; /* translation */
+        // inline constexpr int section19 = 129; /* internal_mod */
+        inline constexpr int section20 = 129; /* context */
+        // inline constexpr int section21 = 209; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2524,6 +2524,21 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
+    /// type: std::chrono::milliseconds <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:session_reconnection_delay <br/>
+    /// default: 0 <br/>
+    struct mod_rdp::session_reconnection_delay {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 73};
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
+        using mapped_type = sesman_and_spec_type;
+        type value { 0 };
+    };
     /// Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
@@ -2534,7 +2549,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 73};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 74};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2550,7 +2565,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 74};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 75};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2565,7 +2580,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 75};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 76};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2580,7 +2595,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 76};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 77};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -5415,6 +5430,7 @@ struct mod_rdp
 , cfg::mod_rdp::mode_console
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_rdp::allow_session_reconnection_by_shortcut
+, cfg::mod_rdp::session_reconnection_delay
 , cfg::mod_rdp::forward_client_build_number
 , cfg::mod_rdp::bogus_monitor_layout_treatment
 { static constexpr bool is_section = true; };
@@ -5785,6 +5801,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::mode_console
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_rdp::allow_session_reconnection_by_shortcut
+, cfg::mod_rdp::session_reconnection_delay
 , cfg::mod_rdp::forward_client_build_number
 , cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::effective_krb_armoring_user
@@ -5904,14 +5921,14 @@ using VariablesAclPack = Pack<
 
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
-, 0b1100111111111111111111111111110111111111111111111111111111111111
-, 0b0111111111111111111111111111111111111111111011011111011111111111
-, 0b0000000000000000000000000000000000000000000000001111111111111111
+, 0b1001111111111111111111111111101111111111111111111111111111111111
+, 0b1111111111111111111111111111111111111111110110111110111111111111
+, 0b0000000000000000000000000000000000000000000000011111111111111110
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000100000000000000000000
+, 0b0000000000000000000000000000000000000000001000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

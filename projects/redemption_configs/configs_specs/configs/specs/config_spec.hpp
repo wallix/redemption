@@ -511,6 +511,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"allow_session_reconnection_by_shortcut"}, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{"session_reconnection_delay"}, set(0));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"forward_client_build_number"},
             desc{
                 "Forward the build number advertised by the client to the server. "
