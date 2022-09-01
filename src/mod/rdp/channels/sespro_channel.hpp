@@ -1586,7 +1586,7 @@ public:
 
 
                             if (!this->sespro_params.target_ip.empty()) {
-                                if (shadow_addr == this->sespro_params.target_ip) {
+                                if (shadow_addr != this->sespro_params.target_ip) {
                                     LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
                                         "Replace shadow address (%s) by target ip (%s)",
                                         shadow_addr, this->sespro_params.target_ip);
