@@ -1464,35 +1464,32 @@ public:
                          upper_order == "SHADOW_SESSION_RESPONSE_2"_ascii_upper) {
                     if (parameters_.size() >= 3)
                     {
-                        const uint32_t shadow_errcode = unchecked_hexadecimal_chars_with_prefix_to_int(parameters_[0]);
-                        const auto&    shadow_errmsg  = parameters_[1];
+                        const uint32_t shadow_errcode  = unchecked_hexadecimal_chars_with_prefix_to_int(parameters_[0]);
+                        const auto&    shadow_errmsg   = parameters_[1];
                         const auto&    shadow_userdata = parameters_[2];
                         if (parameters_.size() >= 6) {
                             auto is_ipv4 = [](std::string_view ip) {
                                 return std::find(ip.begin(), ip.end(), ':') == ip.end();
                             };
 
+                            auto const& shadow_id = parameters_[3];
 
-                            auto const&      shadow_id   = parameters_[3];
-
-                                   const std::size_t  max_arity  = 16;
-                                         std::size_t  item_count = 0;
-                                         int          best_adress_port_index = -1;
-                                         int          default_adress_port_index = -1;
-                            std::string_view  target_ip = this->sespro_params.target_ip;
-                                         bool         target_ip_is_ipv4 = is_ipv4(target_ip);
-
+                            std::size_t const max_arity                 = 16;
+                            std::size_t       item_count                = 0;
+                            int               best_adress_port_index    = -1;
+                            int               default_adress_port_index = -1;
+                            std::string_view  target_ip                 = this->sespro_params.target_ip;
+                            bool              target_ip_is_ipv4         = is_ipv4(target_ip);
 
                             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                                 "SessionProbeVirtualChannel::process_server_message: target_ip=%s",
                                 this->sespro_params.target_ip);
 
-
                             std::array<std::string_view, max_arity> shadow_addresses;
-                            std::array<uint16_t, max_arity> shadow_ports;
+                            std::array<uint16_t, max_arity>         shadow_ports;
 
                             auto shadow_addresses_reader = split_with(parameters_[4], '|');
-                            auto shadow_ports_reader = split_with(parameters_[5], '|');
+                            auto shadow_ports_reader     = split_with(parameters_[5], '|');
 
                             for (auto addr_iter = shadow_addresses_reader.begin(),
                                       addr_end  = shadow_addresses_reader.end(),
@@ -1509,8 +1506,8 @@ public:
 
                                 shadow_addresses[item_count] = addr_iter->as<std::string_view>();
                                 shadow_ports[item_count]     = unchecked_decimal_chars_to_int(*port_iter);
-                                LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
-                                    "address=%.*s port=%u",
+                                LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                    "SessionProbeVirtualChannel::process_server_message: address=%.*s port=%u",
                                     static_cast<int>(shadow_addresses[item_count].size()), shadow_addresses[item_count].data(),
                                     shadow_ports[item_count]);
 
@@ -1527,6 +1524,10 @@ public:
 
                             if (item_count)
                             {
+                                if (default_adress_port_index == -1) {
+                                    default_adress_port_index = 0;
+                                }
+
                                 std::string_view shadow_addr = shadow_addresses[default_adress_port_index];
                                 uint16_t         shadow_port = shadow_ports[default_adress_port_index];
 
