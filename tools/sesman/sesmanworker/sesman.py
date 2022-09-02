@@ -50,8 +50,6 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
                      PASSWORD_INTERACTIVE,
                      PASSWORD_MAPPING,
                      TargetContext,
-                     RDP,
-                     VNC
                      )
 
 import syslog
@@ -2046,8 +2044,8 @@ class Sesman():
                 conn_opts = self.engine.get_target_conn_options(
                     physical_target
                 )
-                if physical_proto_info.protocol in (RDP, VNC):
-                    if physical_proto_info.protocol == RDP:
+                if physical_proto_info.protocol in ('RDP', 'VNC'):
+                    if physical_proto_info.protocol == 'RDP':
                         kv[u'proxy_opt'] = ",".join(
                             physical_proto_info.subprotocols
                         )
