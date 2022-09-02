@@ -42,6 +42,7 @@
 #include "utils/strutils.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/uninit_checked.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/chars_to_int.hpp"
@@ -71,7 +72,8 @@ enum {
     OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
     OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010,
-    OPTION_SUPPORT_IPV6                                         = 0x00000020
+    OPTION_SUPPORT_MULTIPLE_NETWORK_INTERFACES_IN_SHADOW_SESSION_RESPONSE
+                                                                = 0x00000020
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -613,7 +615,7 @@ public:
                 }
 
                 {
-                    uint32_t options = OPTION_SUPPORT_IPV6;
+                    uint32_t options = OPTION_SUPPORT_MULTIPLE_NETWORK_INTERFACES_IN_SHADOW_SESSION_RESPONSE;
 
                     if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {
                         options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
@@ -1558,32 +1560,110 @@ public:
                     }
                 }
 
-                else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_RESPONSE")) {
+                else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_RESPONSE") ||
+                         !::strcasecmp(order_.c_str(), "SHADOW_SESSION_RESPONSE_2")) {
                     if (parameters_.size() >= 3)
                     {
-                        const uint32_t shadow_errcode = ::strtoul(parameters_[0].c_str(), nullptr, 16);
-                        const auto&    shadow_errmsg  = parameters_[1];
+                        const uint32_t shadow_errcode  = ::strtoul(parameters_[0].c_str(), nullptr, 16);
+                        const auto&    shadow_errmsg   = parameters_[1];
                         const auto&    shadow_userdata = parameters_[2];
                         if (parameters_.size() >= 6) {
-                            auto const&    shadow_id   = parameters_[3];
-                            std::string    shadow_addr = parameters_[4];
-                            uint16_t const shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
+                            auto const& shadow_id = parameters_[3];
 
-                            if (!this->sespro_params.target_ip.empty()) {
-                                if (shadow_addr != this->sespro_params.target_ip) {
-                                    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
-                                        "Replace shadow address (%s) by target ip (%s)",
-                                        shadow_addr.c_str(), this->sespro_params.target_ip);
+                            auto is_ipv4 = [](std::string_view ip) {
+                                return std::find(ip.begin(), ip.end(), ':') == ip.end();
+                            };
 
-                                    shadow_addr = this->sespro_params.target_ip;
+                            std::size_t const max_arity                 = 16;
+                            std::size_t       item_count                = 0;
+                            int               best_adress_port_index    = -1;
+                            int               default_adress_port_index = -1;
+                            std::string_view  target_ip                 = this->sespro_params.target_ip;
+
+                            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                "SessionProbeVirtualChannel::process_server_message: target_ip=%s",
+                                this->sespro_params.target_ip);
+
+                            std::array<std::string_view, max_arity> shadow_addresses;
+                            std::array<uint16_t, max_arity>         shadow_ports;
+
+                            auto shadow_addresses_reader = split_with(parameters_[4], '|');
+                            auto shadow_ports_reader     = split_with(parameters_[5], '|');
+
+                            for (auto addr_iter = shadow_addresses_reader.begin(),
+                                      addr_end  = shadow_addresses_reader.end(),
+                                      port_iter = shadow_ports_reader.begin(),
+                                      port_end  = shadow_ports_reader.end();
+                                 addr_iter != addr_end && port_iter != port_end;
+                                 ++addr_iter, ++port_iter
+                            ) {
+                                if (item_count == max_arity) {
+                                    LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
+                                        "Too many network adressess/ports in Shadow Session Response!");
+                                    break;
                                 }
+
+                                std::string_view temp_addr = addr_iter->as<std::string_view>();
+                                if (!is_ipv4(temp_addr)) {
+                                    uint16_t temp_port = unchecked_decimal_chars_to_int(*port_iter);
+                                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                        "SessionProbeVirtualChannel::process_server_message: Igonre IPv6 address/port. address=%.*s port=%u",
+                                        static_cast<int>(temp_addr.size()), temp_addr.data(), temp_port);
+
+                                    continue;
+                                }
+
+                                shadow_addresses[item_count] = temp_addr;
+                                shadow_ports[item_count]     = unchecked_decimal_chars_to_int(*port_iter);
+                                LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                    "SessionProbeVirtualChannel::process_server_message: address=%.*s port=%u",
+                                    static_cast<int>(shadow_addresses[item_count].size()), shadow_addresses[item_count].data(),
+                                    shadow_ports[item_count]);
+
+                                if (shadow_addresses[item_count] == target_ip) {
+                                    best_adress_port_index = item_count;
+                                }
+
+                                if (default_adress_port_index == -1) {
+                                    default_adress_port_index = item_count;
+                                }
+
+                                ++item_count;
+                            }
+
+                            if (item_count)
+                            {
+                                if (default_adress_port_index == -1) {
+                                    default_adress_port_index = 0;
+                                }
+
+                                std::string_view shadow_addr = shadow_addresses[default_adress_port_index];
+                                uint16_t         shadow_port = shadow_ports[default_adress_port_index];
+
+                                if (best_adress_port_index > -1) {
+                                    shadow_addr = shadow_addresses[best_adress_port_index];
+                                    shadow_port = shadow_ports[best_adress_port_index];
+
+                                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                        "SessionProbeVirtualChannel::process_server_message: "
+                                            "Use best Shadow address/port: (%.*s):%u",
+                                        static_cast<int>(shadow_addr.size()), shadow_addr.data(), shadow_port);
+                                }
+                                else {
+                                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                        "SessionProbeVirtualChannel::process_server_message: "
+                                            "Use default Shadow address/port: (%.*s):%u",
+                                        static_cast<int>(shadow_addr.size()), shadow_addr.data(), shadow_port);
+                                }
+
+                                this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                             }
                             else {
                                 LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
-                                    "Target IP is unknown! Use the original shadow address.");
-                            }
+                                    "No usable address/port found!");
 
-                            this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
+                                this->set_rd_shadow_invitation(0xFFFFFFFF, "No usable address/port found!", shadow_userdata, "", "", 0);
+                            }
                         }
                         else {
                             this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);

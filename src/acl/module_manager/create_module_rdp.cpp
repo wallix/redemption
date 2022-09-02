@@ -862,8 +862,6 @@ ModPack create_mod_rdp(
     mod_rdp_params.krb_armoring_user = ini.get<cfg::mod_rdp::effective_krb_armoring_user>().c_str();
     mod_rdp_params.krb_armoring_password = ini.get<cfg::mod_rdp::effective_krb_armoring_password>().c_str();
 
-    mod_rdp_params.session_probe_params.vc_params.target_ip = ini.get<cfg::context::ip_target>();
-
     unique_fd client_sck =
         connect_to_target_host(ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
             ini.get<cfg::all_target_mod::connection_establishment_timeout>(), ini.get<cfg::all_target_mod::connection_retry_count>(),
@@ -883,6 +881,8 @@ ModPack create_mod_rdp(
             mod_rdp_params.client_address = local_ip_address.ip_addr;
             break;
     }
+
+    mod_rdp_params.session_probe_params.vc_params.target_ip = ini.get<cfg::context::ip_target>();
 
     std::unique_ptr<RailModuleHostMod> host_mod {
         host_mod_in_widget
