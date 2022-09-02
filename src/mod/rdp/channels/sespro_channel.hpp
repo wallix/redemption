@@ -1483,8 +1483,9 @@ public:
                                          bool         target_ip_is_ipv4 = is_ipv4(target_ip);
 
 
-    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
-        "target_ip=%s", this->sespro_params.target_ip);
+                            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                "SessionProbeVirtualChannel::process_server_message: target_ip=%s",
+                                this->sespro_params.target_ip);
 
 
                             std::array<std::string_view, max_arity> shadow_addresses;
@@ -1502,15 +1503,16 @@ public:
                             ) {
                                 if (item_count == max_arity) {
                                     LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
-                                        "Too many network adressess/ports in Shadow Session Response.");
+                                        "Too many network adressess/ports in Shadow Session Response!");
                                     break;
                                 }
 
                                 shadow_addresses[item_count] = addr_iter->as<std::string_view>();
                                 shadow_ports[item_count]     = unchecked_decimal_chars_to_int(*port_iter);
-LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
-    "address=%.*s port=%u",
-    static_cast<int>(shadow_addresses[item_count].size()), shadow_addresses[item_count].data(), shadow_ports[item_count]);
+                                LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
+                                    "address=%.*s port=%u",
+                                    static_cast<int>(shadow_addresses[item_count].size()), shadow_addresses[item_count].data(),
+                                    shadow_ports[item_count]);
 
                                 if (shadow_addresses[item_count] == target_ip) {
                                     best_adress_port_index = item_count;
@@ -1532,20 +1534,25 @@ LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
                                     shadow_addr = shadow_addresses[best_adress_port_index];
                                     shadow_port = shadow_ports[best_adress_port_index];
 
-                                    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
-                                        "Use best Shadow address/port: (%.*s):%u",
+                                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                        "SessionProbeVirtualChannel::process_server_message: "
+                                            "Use best Shadow address/port: (%.*s):%u",
                                         static_cast<int>(shadow_addr.size()), shadow_addr.data(), shadow_port);
                                 }
                                 else {
-                                    LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: "
-                                        "Use default Shadow address/port: (%.*s):%u",
+                                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                                        "SessionProbeVirtualChannel::process_server_message: "
+                                            "Use default Shadow address/port: (%.*s):%u",
                                         static_cast<int>(shadow_addr.size()), shadow_addr.data(), shadow_port);
                                 }
 
                                 this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                             }
                             else {
-                                this->set_rd_shadow_invitation(0xFFFFFFFF, "Has not usable address/port", shadow_userdata, "", "", 0);
+                                LOG(LOG_WARNING, "SessionProbeVirtualChannel::process_server_message: "
+                                    "No usable address/port found!");
+
+                                this->set_rd_shadow_invitation(0xFFFFFFFF, "No usable address/port found!", shadow_userdata, "", "", 0);
                             }
                         }
                         else {
