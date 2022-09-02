@@ -70,8 +70,8 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
     kv_log6_regex = re.compile(r'KVLog[{(]"([^"]+)"_av,\s*((?:(?!"_av|[)}]?,?\n).)*(?:"(?=_av)))')
     log6_process = to_process(log6_regex, kv_log6_regex)
 
-    log_id_sesprobe_regex = re.compile(r'EXECUTABLE_LOG6_ID_AND_NAME\(\s*([A-Z0-9_]+)([)]*)')
-    kv_sesprobe_regex = re.compile(r'"([^"]+)"')
+    log_id_sesprobe_regex = re.compile(r'EXECUTABLE_LOG6_ID_AND_NAME\(\s*([A-Z0-9_]+)\s*\)([^)]*)')
+    kv_sesprobe_regex = re.compile(r'"([^"]+)"()')  # capture an empty value
     sesprob_process = to_process(log_id_sesprobe_regex, kv_sesprobe_regex)
 
     sesman_regex = re.compile(r'self\.rdplog\.log\("([^"]+)"([^)]*)')
