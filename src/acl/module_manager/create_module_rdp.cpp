@@ -884,6 +884,8 @@ ModPack create_mod_rdp(
             break;
     }
 
+    mod_rdp_params.session_probe_params.vc_params.target_ip = ini.get<cfg::context::ip_target>();
+
     std::unique_ptr<RailModuleHostMod> host_mod {
         host_mod_in_widget
         ? create_mod_rail(ini,
