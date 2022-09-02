@@ -65,10 +65,17 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
     def to_process(log_extractor, kv_extractor):
         return lambda d, text: update_dict(d, log_extractor.findall(text), kv_extractor, colored)
 
-    # log6 call or ternary prefix
-    log6_regex = re.compile(r'(?:log6\(| [?:] )\s*\bLogId::([A-Z0-9_]+)(,\s*\{(?:(?!\);).)*)?', re.DOTALL)
-    kv_log6_regex = re.compile(r'KVLog[{(]"([^"]+)"_av,\s*((?:(?!"_av|[)}]?,?\n).)*(?:"(?=_av)))')
-    log6_process = to_process(log6_regex, kv_log6_regex)
+    # log6 call with or without ternary
+    log6_regex = re.compile(r'\blog6\((?:(?!\bLogId:|[?]|;).)*(?:[?])?\s*\bLogId::([A-Z0-9_]+)[^,:)]*(?::\s*LogId::([A-Z0-9_]+)\s*\)?)?,\s*(\{(?:[^)]+|[)][^;])*)?', re.DOTALL)
+    # KVLog("key"_av, value) with value "..." | "..."_av | ...
+    kv_log6_regex = re.compile(r'KVLog[{(]"([^"]+)"_av,\s*((?:(?!"_av|[)}]?,?\n).)*(?:"(?=_av))?)')
+    log6_process = lambda d, text: \
+        update_dict(d,
+                    chain.from_iterable(
+                        ((t[0], t[2]), (t[1], t[2])) if t[1] else ((t[0], t[2]),)
+                        for t in log6_regex.findall(text)
+                    ),
+                    kv_log6_regex, colored)
 
     log_id_sesprobe_regex = re.compile(r'EXECUTABLE_LOG6_ID_AND_NAME\(\s*([A-Z0-9_]+)\s*\)([^)]*)')
     kv_sesprobe_regex = re.compile(r'"([^"]+)"()')  # capture an empty value
