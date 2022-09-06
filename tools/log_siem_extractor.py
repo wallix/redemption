@@ -294,10 +294,11 @@ def print_log_siem_constants(proxy_logs: Iterable[str],
 #######################################################################
 
 # see redemption/tools/log_siem_extractor.py
-    """)
+    """, file=output)
 
     def show(name, logs):
-        print(name, ' = (\n    \'', "',\n    '".join(sorted(logs)), '\',\n)\n', sep='')
+        print(name, ' = (\n    \'', "',\n    '".join(sorted(logs)), '\',\n)\n',
+              sep='', file=output)
 
     show('SIEM_RDP_PROXY', proxy_logs)
     show('SIEM_RDP_SESSION', rdp_logs)
