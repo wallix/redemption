@@ -88,7 +88,7 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
     log_siem_cpp_regex = re.compile(r'R"\(\[rdpproxy\].* type="([^"]+)"([^;]+)')
     kv_siem_cpp_regex = re.compile(r'(\w+)="([^"]+)"')
     siem_cpp_process = lambda d, text: \
-        update_dict(d, ((m.group(1), m.group(0)) for m in log_siem_cpp_regex.finditer(text)),
+        update_dict(d, ((m.group(1), m.group(2)) for m in log_siem_cpp_regex.finditer(text)),
                     kv_siem_cpp_regex, colored)
 
     log_id_enum_regex = re.compile(r'\n    f\(([A-Z0-9_]+),')
