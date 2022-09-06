@@ -36,6 +36,7 @@
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/splitter.hpp"
 
 #include <chrono>
 #include <memory>
