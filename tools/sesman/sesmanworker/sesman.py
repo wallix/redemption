@@ -1436,23 +1436,17 @@ class Sesman():
     def generate_record_filebase(self, session_id, user, account, start_time):
         """
         Naming convention :
-        {session_id},{username}@{userip},
-        {account}@{devicename},
+        {session_id},
         YYYYMMDD-HHMMSS,{wabhostname},{uid}
 
         NB :  backslashes are replaced by pipes for IE compatibility
         """
         random.seed(self.pid)
-        fname = (u"%(session_id)s,%(username)s@%(source_ip)s,"
-                 u"%(account)s@%(device)s,"
+        fname = (u"%(session_id)s,"
                  u"%(timestamp)s,%(host)s,%(random)s")
 
         basename = fname % {
             'session_id': session_id,
-            'username': user,
-            'source_ip': self.shared.get(u'ip_client'),
-            'account': account,
-            'device': self.shared.get(u'target_device'),
             'timestamp': start_time.strftime("%Y%m%d-%H%M%S"),
             'host': gethostname(),
             'random': random.randint(1000, 9999)
