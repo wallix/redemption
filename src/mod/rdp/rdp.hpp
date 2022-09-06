@@ -506,6 +506,19 @@ public:
     }
 
 private:
+    bool has_dump_verbose(CHANNELS::ChannelNameId channel_name) const
+    {
+        if (channel_name == channel_names::cliprdr) {
+            return bool(this->verbose & RDPVerbose::cliprdr_dump);
+        }
+
+        if (channel_name == channel_names::rdpdr) {
+            return bool(this->verbose & RDPVerbose::rdpdr_dump);
+        }
+
+        return false;
+    }
+
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
     {
@@ -551,10 +564,7 @@ private:
             }
         };
 
-        bool const verbose
-          = bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
-          && (channel_name == channel_names::cliprdr || channel_name == channel_names::rdpdr);
-        return std::make_unique<ToClientSender>(front, *channel, verbose);
+        return std::make_unique<ToClientSender>(front, *channel, this->has_dump_verbose(channel_name));
     }
 
     inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc, FileValidatorService * file_validator_service) {
@@ -634,15 +644,11 @@ private:
             return nullptr;
         }
 
-        bool const verbose
-          = bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
-          && (channel_name == channel_names::cliprdr || channel_name == channel_names::rdpdr);
-
         return std::make_unique<ToServerSender>(
             stc,
             channel->chanid,
             (channel->flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
-            verbose);
+            this->has_dump_verbose(channel_name));
     }
 
 
@@ -692,17 +698,13 @@ private:
             return nullptr;
         }
 
-        bool const verbose
-          = bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
-          && (channel_name == channel_names::cliprdr || channel_name == channel_names::rdpdr);
-
         return std::make_unique<ToServerAsynchronousSender>(
             stc,
             channel->chanid,
             (channel->flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
             this->asynchronous_tasks,
             this->verbose,
-            verbose);
+            this->has_dump_verbose(channel_name));
     }
 
 
