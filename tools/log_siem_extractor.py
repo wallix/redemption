@@ -266,7 +266,7 @@ class DocSiemChecker:
                                                                 doc_vnc_logs.values())) if '”' in log)
         if bad_logs:
             print('Log with ” instead of ":\n - ', end='')
-            print('\n - '.join(bad_logs))
+            print('\n - '.join(sorted(bad_logs)))
 
         return bool(proxy_missing or rdp_missing or vnc_missing or proxy_unknown or rdp_unknown or vnc_unknown)
 
