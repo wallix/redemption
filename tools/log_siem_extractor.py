@@ -296,12 +296,13 @@ def print_log_siem_constants(proxy_logs: Iterable[str],
 # see redemption/tools/log_siem_extractor.py""", file=output)
 
     def show(name, logs):
-        print('\n', name, ' = (\n    \'', "',\n    '".join(sorted(logs)), '\',\n)',
+        siem = (f"('{siem_type.lower().replace('_', '-')}', '{siem_type}')," for siem_type in sorted(logs))
+        print('\n', name, ' = (\n    ', "\n    ".join(siem), '\n)',
               sep='', file=output)
 
-    show('SIEM_RDP_PROXY', proxy_logs)
-    show('SIEM_RDP_SESSION', rdp_logs)
-    show('SIEM_VNC_SESSION', vnc_logs)
+    show('SIEM_FILTERS_RDP_PROXY', proxy_logs)
+    show('SIEM_FILTERS_RDP_SESSION', rdp_logs)
+    show('SIEM_FILTERS_VNC_SESSION', vnc_logs)
 
 
 if __name__ == '__main__':
