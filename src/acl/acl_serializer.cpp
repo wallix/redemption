@@ -45,9 +45,9 @@ namespace
 
 
 AclSerializer::AclSerializer(Inifile & ini, Transport & trans)
-: verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
-, ini(ini)
+: ini(ini)
 , auth_trans(trans)
+, verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
 {}
 
 namespace

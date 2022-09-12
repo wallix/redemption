@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+set -e
+
 cd "$(dirname "$0")/../.."
 extract() {
     sed -E '/REDEMPTION_VERBOSE_FLAGS/,/};/!d;/= *[0-9]/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/;s/'\'// "$@"
@@ -13,7 +15,7 @@ echo "//
 
 namespace cfg_specs {
 
-constexpr char const* CONFIG_DESC_AUTH = R\"($(extract src/acl/acl_serializer.hpp))\";
+constexpr char const* CONFIG_DESC_AUTH = R\"($(extract src/acl/acl_verbose.hpp))\";
 
 constexpr char const* CONFIG_DESC_FRONT = R\"($(extract src/front/front.hpp)
 
@@ -31,7 +33,7 @@ constexpr char const* CONFIG_DESC_CAPTURE = R\"(- kbd / ocr when != 0
 (Wrm)
 $rdp_serializer)\";
 
-constexpr char const* CONFIG_DESC_SESSION = R\"($(sed -E '/^enum class SessionVerbose/,/^};/!d;/=/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/' src/core/session.cpp))\";
+constexpr char const* CONFIG_DESC_SESSION = R\"($(extract src/core/session_verbose.hpp))\";
 
 constexpr char const* CONFIG_DESC_MOD_INTERNAL = R\"(- copy_paste != 0
 - client_execute = 0x01)\";

@@ -84,28 +84,30 @@ actions generate_debug_verbose_description
 
 rule create_generator ( name : file : libraries * : requirements * )
 {
-    make $(file) : make_$(name) : @generate_$(name) : <location>. ;
     alias generate_$(name) : $(file) ;
-    obj src/configs/write_$(name).cpp.o : src/configs/write_$(name).cpp :
-        $(requirements)
-        <cxxflags>-std=c++2a
-        # bug of clang
-        # zstring_view.hpp:187:24: warning: zero as null pointer constant [-Wzero-as-null-pointer-constant]
-        # return lhs.to_sv() >= std::string_view(rhs);
-        #                    ^~
-        #                    nullptr
-        <toolset>clang:<cxxflags>-Wno-zero-as-null-pointer-constant
-    ;
+    make $(file) : make_$(name) : @generate_$(name) : <location>. ;
     exe make_$(name) : src/configs/write_$(name).cpp.o : $(libraries) ;
+    obj src/configs/write_$(name).cpp.o : src/configs/write_$(name).cpp : $(requirements) ;
 }
 
 obj keylayouts : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp : ;
 
-create_generator debug_verbose_description : $(FILEGEN_VERBOSE_DESC) ;
+make $(FILEGEN_VERBOSE_DESC)
+    : extract_verbose.sh
+      $(REDEMPTION_SRC_PATH)/core/RDP/RDPSerializerVerbose.hpp
+      $(REDEMPTION_SRC_PATH)/acl/acl_verbose.hpp
+      $(REDEMPTION_SRC_PATH)/front/front.hpp
+      $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_verbose.hpp
+      $(REDEMPTION_SRC_PATH)/mod/vnc/vnc_verbose.hpp
+      $(REDEMPTION_SRC_PATH)/transport/socket_transport.hpp
+      $(REDEMPTION_SRC_PATH)/core/session_verbose.hpp
+      $(REDEMPTION_SRC_PATH)/core/RDP/caches/bmpcache.hpp
+    : @generate_debug_verbose_description : <location>. ;
+
 create_generator cpp_enumeration : $(FILEGEN_ENUM) : <library>log_test.o ;
 create_generator config_spec : $(FILEGEN_CONF)
     : <library>keylayouts <library>log_test.o
-    : <include>autogen/src <implicit-dependency>generate_debug_verbose_description
+    : <include>autogen/src <implicit-dependency>$(FILEGEN_VERBOSE_DESC)
     ;
 
 alias generate :

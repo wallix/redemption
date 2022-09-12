@@ -100,9 +100,9 @@ constexpr char const* CONFIG_DESC_CAPTURE = R"(- kbd / ocr when != 0
 - internal_buffer     = 0x0400
 - sec_decrypted       = 0x1000)";
 
-constexpr char const* CONFIG_DESC_SESSION = R"(- Event   = 0x02
-- Acl     = 0x04
-- Trace   = 0x08)";
+constexpr char const* CONFIG_DESC_SESSION = R"(- Event = 0x02
+- Acl   = 0x04
+- Trace = 0x08)";
 
 constexpr char const* CONFIG_DESC_MOD_INTERNAL = R"(- copy_paste != 0
 - client_execute = 0x01)";

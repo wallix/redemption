@@ -25,7 +25,7 @@
 #pragma once
 
 #include "acl/acl_field_mask.hpp"
-#include "utils/verbose_flags.hpp"
+#include "acl/acl_verbose.hpp"
 
 class Inifile;
 class Transport;
@@ -33,13 +33,7 @@ class Transport;
 class AclSerializer final
 {
 public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        variable = 0x0002,
-        buffer   = 0x0040,
-        dump     = 0x1000,
-    };
+    using Verbose = AclVerbose;
 
     AclSerializer(Inifile & ini, Transport & auth_trans);
 
@@ -49,4 +43,5 @@ public:
 private:
     Inifile & ini;
     Transport & auth_trans;
+    AclVerbose verbose;
 };
