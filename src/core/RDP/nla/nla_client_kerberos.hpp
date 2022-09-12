@@ -68,9 +68,7 @@ private:
     kerberos;
 
 public:
-    SEC_WINNT_AUTH_IDENTITY()
-    {
-    }
+    SEC_WINNT_AUTH_IDENTITY() = default;
 
     bool is_empty_user_domain() const
     {
@@ -365,7 +363,8 @@ private:
         if (!this->sspi_krb_ctx) {
             return SEC_E_NO_CONTEXT;
         }
-        gss_buffer_desc inbuf, outbuf;
+        gss_buffer_desc inbuf;
+        gss_buffer_desc outbuf;
 
         inbuf.value = const_cast<uint8_t*>(data_in.data()); /*NOLINT*/
         inbuf.length = data_in.size();

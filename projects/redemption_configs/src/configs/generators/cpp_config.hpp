@@ -68,7 +68,7 @@ void write_value(std::ostream& out, [[maybe_unused]] type_enumerations& enums, T
             }
         }
         // probably an enum flag
-        out << "(" << +static_cast<std::underlying_type_t<T>>(x) << ")";
+        out << "{" << +static_cast<std::underlying_type_t<T>>(x) << "}";
     }
     else if constexpr (std::is_same_v<T, bool>) {
         out << (x ? "true" : "false");
@@ -706,7 +706,7 @@ inline void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& wri
       "namespace configs\n"
       "{\n"
       "    enum class authid_t : unsigned;\n"
-      "    constexpr authid_t max_authid = authid_t(" << writer.authstrs.size() << ");\n"
+      "    constexpr authid_t max_authid {" << writer.authstrs.size() << "};\n"
       "}\n"
     ;
 }

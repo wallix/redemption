@@ -459,7 +459,7 @@ void push_key(KeymapSym::Keys& keys, uint32_t uc, KeymapSym::VncDownFlag down_fl
 using kbdtypes::KeyMod;
 using kbdtypes::KeyCode;
 
-}
+} // anonymous namespace
 
 KeymapSym::KeymapSym(KeyLayout layout, kbdtypes::KeyLocks locks, IsApple is_apple, IsUnix is_unix, bool verbose) noexcept
 : layout_(layout)

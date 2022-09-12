@@ -307,7 +307,7 @@ RED_AUTO_TEST_CASE(TestFromDecimalChars)
     i = 42;
     RED_CHECK(from_decimal_chars(std::string_view(s), i) == (std::from_chars_result{s+5, std::errc()}));
     RED_CHECK(i == 12345);
-    i = 42;
+    // i = 42;
 
     uint32_t u = 42;
 

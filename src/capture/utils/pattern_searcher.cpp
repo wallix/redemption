@@ -260,24 +260,23 @@ PatternSearcher::PatternSearcher(
             hs_free_compile_error(compileErr);
             return;
         }
-        else {
-            auto pos = static_cast<unsigned>(compileErr->expression);
-            LOG(LOG_ERR, "PatternsSearcher::PatternsSearcher(): '%s' failed compilation with error: %s",
-                compile_arrays.expressions[pos], compileErr->message);
-            hs_free_compile_error(compileErr);
 
-            // remove malformed pattern
-            --d->nb_pattern;
-            memmove(compile_arrays.expressions+pos, compile_arrays.expressions+pos+1, d->nb_pattern - pos);
-            compile_arrays.expressions[pos] = compile_arrays.expressions[d->nb_pattern];
-            d->internal_scan_results[pos] = d->internal_scan_results[d->nb_pattern];
-            if (pos < d->nb_pattern_kill) {
-                --d->nb_pattern_kill;
-            }
+        auto pos = static_cast<unsigned>(compileErr->expression);
+        LOG(LOG_ERR, "PatternsSearcher::PatternsSearcher(): '%s' failed compilation with error: %s",
+            compile_arrays.expressions[pos], compileErr->message);
+        hs_free_compile_error(compileErr);
 
-            err = hs_compile_multi(compile_arrays.expressions, compile_arrays.flags, compile_arrays.ids,
-                                   d->nb_pattern, reg_mode, nullptr, &d->db, &compileErr);
+        // remove malformed pattern
+        --d->nb_pattern;
+        memmove(compile_arrays.expressions+pos, compile_arrays.expressions+pos+1, d->nb_pattern - pos);
+        compile_arrays.expressions[pos] = compile_arrays.expressions[d->nb_pattern];
+        d->internal_scan_results[pos] = d->internal_scan_results[d->nb_pattern];
+        if (pos < d->nb_pattern_kill) {
+            --d->nb_pattern_kill;
         }
+
+        err = hs_compile_multi(compile_arrays.expressions, compile_arrays.flags, compile_arrays.ids,
+                               d->nb_pattern, reg_mode, nullptr, &d->db, &compileErr);
     }
 
     // init scratch

@@ -54,8 +54,8 @@ zstring_view assign_zbuf_from_cfg(
     ModuleName x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ModuleName>::is_valid(uint8_t(x)));
-    return enum_zint_ModuleName[uint8_t(x)];
+    assert(is_valid_enum_value<ModuleName>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_ModuleName[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -64,8 +64,8 @@ zstring_view assign_zbuf_from_cfg(
     ModuleName x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ModuleName>::is_valid(uint8_t(x)));
-    return enum_zstr_ModuleName[uint8_t(x)];
+    assert(is_valid_enum_value<ModuleName>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_ModuleName[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<ModuleName> /*type*/, bytes_view value)
@@ -119,7 +119,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<CaptureFlags> /*type*/,
     CaptureFlags x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -159,8 +159,8 @@ zstring_view assign_zbuf_from_cfg(
     Level x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<Level>::is_valid(uint8_t(x)));
-    return enum_zint_Level[uint8_t(x)];
+    assert(is_valid_enum_value<Level>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_Level[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -169,8 +169,8 @@ zstring_view assign_zbuf_from_cfg(
     Level x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<Level>::is_valid(uint8_t(x)));
-    return enum_zstr_Level[uint8_t(x)];
+    assert(is_valid_enum_value<Level>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_Level[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(Level & x, ::configs::spec_type<Level> /*type*/, bytes_view value)
@@ -219,8 +219,8 @@ zstring_view assign_zbuf_from_cfg(
     Language x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<Language>::is_valid(uint8_t(x)));
-    return enum_zint_Language[uint8_t(x)];
+    assert(is_valid_enum_value<Language>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_Language[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -229,8 +229,8 @@ zstring_view assign_zbuf_from_cfg(
     Language x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<Language>::is_valid(uint8_t(x)));
-    return enum_zstr_Language[uint8_t(x)];
+    assert(is_valid_enum_value<Language>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_Language[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(Language & x, ::configs::spec_type<Language> /*type*/, bytes_view value)
@@ -278,8 +278,8 @@ zstring_view assign_zbuf_from_cfg(
     ClipboardEncodingType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ClipboardEncodingType>::is_valid(uint8_t(x)));
-    return enum_zint_ClipboardEncodingType[uint8_t(x)];
+    assert(is_valid_enum_value<ClipboardEncodingType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_ClipboardEncodingType[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -288,8 +288,8 @@ zstring_view assign_zbuf_from_cfg(
     ClipboardEncodingType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ClipboardEncodingType>::is_valid(uint8_t(x)));
-    return enum_zstr_ClipboardEncodingType[uint8_t(x)];
+    assert(is_valid_enum_value<ClipboardEncodingType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_ClipboardEncodingType[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(ClipboardEncodingType & x, ::configs::spec_type<ClipboardEncodingType> /*type*/, bytes_view value)
@@ -326,7 +326,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<KeyboardLogFlagsCP> /*type*/,
     KeyboardLogFlagsCP x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -353,7 +353,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<KeyboardLogFlags> /*type*/,
     KeyboardLogFlags x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -380,7 +380,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<ClipboardLogFlags> /*type*/,
     ClipboardLogFlags x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -407,7 +407,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<FileSystemLogFlags> /*type*/,
     FileSystemLogFlags x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -493,11 +493,11 @@ parse_error parse_from_cfg(ColorDepth & x, ::configs::spec_type<ColorDepth> /*ty
     }
 
     switch (xi) {
-        case uint8_t(ColorDepth::depth8):
-        case uint8_t(ColorDepth::depth15):
-        case uint8_t(ColorDepth::depth16):
-        case uint8_t(ColorDepth::depth24):
-        case uint8_t(ColorDepth::depth32):
+        case static_cast<uint8_t>(ColorDepth::depth8):
+        case static_cast<uint8_t>(ColorDepth::depth15):
+        case static_cast<uint8_t>(ColorDepth::depth16):
+        case static_cast<uint8_t>(ColorDepth::depth24):
+        case static_cast<uint8_t>(ColorDepth::depth32):
                break;
         default: return parse_error{"unknown value"};
     }
@@ -526,7 +526,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<ServerNotification> /*type*/,
     ServerNotification x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint8_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -568,8 +568,8 @@ zstring_view assign_zbuf_from_cfg(
     ServerCertCheck x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ServerCertCheck>::is_valid(uint8_t(x)));
-    return enum_zint_ServerCertCheck[uint8_t(x)];
+    assert(is_valid_enum_value<ServerCertCheck>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_ServerCertCheck[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -578,8 +578,8 @@ zstring_view assign_zbuf_from_cfg(
     ServerCertCheck x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ServerCertCheck>::is_valid(uint8_t(x)));
-    return enum_zstr_ServerCertCheck[uint8_t(x)];
+    assert(is_valid_enum_value<ServerCertCheck>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_ServerCertCheck[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(ServerCertCheck & x, ::configs::spec_type<ServerCertCheck> /*type*/, bytes_view value)
@@ -631,8 +631,8 @@ zstring_view assign_zbuf_from_cfg(
     TraceType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<TraceType>::is_valid(uint8_t(x)));
-    return enum_zint_TraceType[uint8_t(x)];
+    assert(is_valid_enum_value<TraceType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_TraceType[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -641,8 +641,8 @@ zstring_view assign_zbuf_from_cfg(
     TraceType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<TraceType>::is_valid(uint8_t(x)));
-    return enum_zstr_TraceType[uint8_t(x)];
+    assert(is_valid_enum_value<TraceType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_TraceType[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(TraceType & x, ::configs::spec_type<TraceType> /*type*/, bytes_view value)
@@ -695,8 +695,8 @@ zstring_view assign_zbuf_from_cfg(
     KeyboardInputMaskingLevel x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<KeyboardInputMaskingLevel>::is_valid(uint8_t(x)));
-    return enum_zint_KeyboardInputMaskingLevel[uint8_t(x)];
+    assert(is_valid_enum_value<KeyboardInputMaskingLevel>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_KeyboardInputMaskingLevel[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -705,8 +705,8 @@ zstring_view assign_zbuf_from_cfg(
     KeyboardInputMaskingLevel x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<KeyboardInputMaskingLevel>::is_valid(uint8_t(x)));
-    return enum_zstr_KeyboardInputMaskingLevel[uint8_t(x)];
+    assert(is_valid_enum_value<KeyboardInputMaskingLevel>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_KeyboardInputMaskingLevel[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(KeyboardInputMaskingLevel & x, ::configs::spec_type<KeyboardInputMaskingLevel> /*type*/, bytes_view value)
@@ -758,8 +758,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeOnLaunchFailure x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeOnLaunchFailure>::is_valid(uint8_t(x)));
-    return enum_zint_SessionProbeOnLaunchFailure[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeOnLaunchFailure>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SessionProbeOnLaunchFailure[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -768,8 +768,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeOnLaunchFailure x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeOnLaunchFailure>::is_valid(uint8_t(x)));
-    return enum_zstr_SessionProbeOnLaunchFailure[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeOnLaunchFailure>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SessionProbeOnLaunchFailure[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(SessionProbeOnLaunchFailure & x, ::configs::spec_type<SessionProbeOnLaunchFailure> /*type*/, bytes_view value)
@@ -820,8 +820,8 @@ zstring_view assign_zbuf_from_cfg(
     VncBogusClipboardInfiniteLoop x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncBogusClipboardInfiniteLoop>::is_valid(uint8_t(x)));
-    return enum_zint_VncBogusClipboardInfiniteLoop[uint8_t(x)];
+    assert(is_valid_enum_value<VncBogusClipboardInfiniteLoop>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_VncBogusClipboardInfiniteLoop[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -830,8 +830,8 @@ zstring_view assign_zbuf_from_cfg(
     VncBogusClipboardInfiniteLoop x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncBogusClipboardInfiniteLoop>::is_valid(uint8_t(x)));
-    return enum_zstr_VncBogusClipboardInfiniteLoop[uint8_t(x)];
+    assert(is_valid_enum_value<VncBogusClipboardInfiniteLoop>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_VncBogusClipboardInfiniteLoop[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(VncBogusClipboardInfiniteLoop & x, ::configs::spec_type<VncBogusClipboardInfiniteLoop> /*type*/, bytes_view value)
@@ -880,8 +880,8 @@ zstring_view assign_zbuf_from_cfg(
     ColorDepthSelectionStrategy x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ColorDepthSelectionStrategy>::is_valid(uint8_t(x)));
-    return enum_zint_ColorDepthSelectionStrategy[uint8_t(x)];
+    assert(is_valid_enum_value<ColorDepthSelectionStrategy>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_ColorDepthSelectionStrategy[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -890,8 +890,8 @@ zstring_view assign_zbuf_from_cfg(
     ColorDepthSelectionStrategy x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ColorDepthSelectionStrategy>::is_valid(uint8_t(x)));
-    return enum_zstr_ColorDepthSelectionStrategy[uint8_t(x)];
+    assert(is_valid_enum_value<ColorDepthSelectionStrategy>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_ColorDepthSelectionStrategy[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(ColorDepthSelectionStrategy & x, ::configs::spec_type<ColorDepthSelectionStrategy> /*type*/, bytes_view value)
@@ -941,8 +941,8 @@ zstring_view assign_zbuf_from_cfg(
     WrmCompressionAlgorithm x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<WrmCompressionAlgorithm>::is_valid(uint8_t(x)));
-    return enum_zint_WrmCompressionAlgorithm[uint8_t(x)];
+    assert(is_valid_enum_value<WrmCompressionAlgorithm>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_WrmCompressionAlgorithm[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -951,8 +951,8 @@ zstring_view assign_zbuf_from_cfg(
     WrmCompressionAlgorithm x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<WrmCompressionAlgorithm>::is_valid(uint8_t(x)));
-    return enum_zstr_WrmCompressionAlgorithm[uint8_t(x)];
+    assert(is_valid_enum_value<WrmCompressionAlgorithm>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_WrmCompressionAlgorithm[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(WrmCompressionAlgorithm & x, ::configs::spec_type<WrmCompressionAlgorithm> /*type*/, bytes_view value)
@@ -1007,8 +1007,8 @@ zstring_view assign_zbuf_from_cfg(
     RdpCompression x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<RdpCompression>::is_valid(uint8_t(x)));
-    return enum_zint_RdpCompression[uint8_t(x)];
+    assert(is_valid_enum_value<RdpCompression>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_RdpCompression[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1017,8 +1017,8 @@ zstring_view assign_zbuf_from_cfg(
     RdpCompression x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<RdpCompression>::is_valid(uint8_t(x)));
-    return enum_zstr_RdpCompression[uint8_t(x)];
+    assert(is_valid_enum_value<RdpCompression>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_RdpCompression[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(RdpCompression & x, ::configs::spec_type<RdpCompression> /*type*/, bytes_view value)
@@ -1105,8 +1105,8 @@ parse_error parse_from_cfg(OcrVersion & x, ::configs::spec_type<OcrVersion> /*ty
     }
 
     switch (xi) {
-        case uint8_t(OcrVersion::v1):
-        case uint8_t(OcrVersion::v2):
+        case static_cast<uint8_t>(OcrVersion::v1):
+        case static_cast<uint8_t>(OcrVersion::v2):
                break;
         default: return parse_error{"unknown value"};
     }
@@ -1143,8 +1143,8 @@ zstring_view assign_zbuf_from_cfg(
     OcrLocale x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<OcrLocale>::is_valid(uint8_t(x)));
-    return enum_zint_OcrLocale[uint8_t(x)];
+    assert(is_valid_enum_value<OcrLocale>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_OcrLocale[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1153,8 +1153,8 @@ zstring_view assign_zbuf_from_cfg(
     OcrLocale x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<OcrLocale>::is_valid(uint8_t(x)));
-    return enum_zstr_OcrLocale[uint8_t(x)];
+    assert(is_valid_enum_value<OcrLocale>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_OcrLocale[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(OcrLocale & x, ::configs::spec_type<OcrLocale> /*type*/, bytes_view value)
@@ -1204,8 +1204,8 @@ zstring_view assign_zbuf_from_cfg(
     BogusNumberOfFastpathInputEvent x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<BogusNumberOfFastpathInputEvent>::is_valid(uint8_t(x)));
-    return enum_zint_BogusNumberOfFastpathInputEvent[uint8_t(x)];
+    assert(is_valid_enum_value<BogusNumberOfFastpathInputEvent>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_BogusNumberOfFastpathInputEvent[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1214,8 +1214,8 @@ zstring_view assign_zbuf_from_cfg(
     BogusNumberOfFastpathInputEvent x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<BogusNumberOfFastpathInputEvent>::is_valid(uint8_t(x)));
-    return enum_zstr_BogusNumberOfFastpathInputEvent[uint8_t(x)];
+    assert(is_valid_enum_value<BogusNumberOfFastpathInputEvent>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_BogusNumberOfFastpathInputEvent[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(BogusNumberOfFastpathInputEvent & x, ::configs::spec_type<BogusNumberOfFastpathInputEvent> /*type*/, bytes_view value)
@@ -1266,8 +1266,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeOnKeepaliveTimeout x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeOnKeepaliveTimeout>::is_valid(uint8_t(x)));
-    return enum_zint_SessionProbeOnKeepaliveTimeout[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeOnKeepaliveTimeout>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SessionProbeOnKeepaliveTimeout[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1276,8 +1276,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeOnKeepaliveTimeout x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeOnKeepaliveTimeout>::is_valid(uint8_t(x)));
-    return enum_zstr_SessionProbeOnKeepaliveTimeout[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeOnKeepaliveTimeout>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SessionProbeOnKeepaliveTimeout[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(SessionProbeOnKeepaliveTimeout & x, ::configs::spec_type<SessionProbeOnKeepaliveTimeout> /*type*/, bytes_view value)
@@ -1328,8 +1328,8 @@ zstring_view assign_zbuf_from_cfg(
     SmartVideoCropping x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SmartVideoCropping>::is_valid(uint8_t(x)));
-    return enum_zint_SmartVideoCropping[uint8_t(x)];
+    assert(is_valid_enum_value<SmartVideoCropping>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SmartVideoCropping[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1338,8 +1338,8 @@ zstring_view assign_zbuf_from_cfg(
     SmartVideoCropping x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SmartVideoCropping>::is_valid(uint8_t(x)));
-    return enum_zstr_SmartVideoCropping[uint8_t(x)];
+    assert(is_valid_enum_value<SmartVideoCropping>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SmartVideoCropping[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(SmartVideoCropping & x, ::configs::spec_type<SmartVideoCropping> /*type*/, bytes_view value)
@@ -1390,8 +1390,8 @@ zstring_view assign_zbuf_from_cfg(
     RdpModeConsole x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<RdpModeConsole>::is_valid(uint8_t(x)));
-    return enum_zint_RdpModeConsole[uint8_t(x)];
+    assert(is_valid_enum_value<RdpModeConsole>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_RdpModeConsole[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1400,8 +1400,8 @@ zstring_view assign_zbuf_from_cfg(
     RdpModeConsole x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<RdpModeConsole>::is_valid(uint8_t(x)));
-    return enum_zstr_RdpModeConsole[uint8_t(x)];
+    assert(is_valid_enum_value<RdpModeConsole>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_RdpModeConsole[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(RdpModeConsole & x, ::configs::spec_type<RdpModeConsole> /*type*/, bytes_view value)
@@ -1439,7 +1439,7 @@ zstring_view assign_zbuf_from_cfg(
     cfg_s_type<SessionProbeDisabledFeature> /*type*/,
     SessionProbeDisabledFeature x
 ){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), uint16_t(x));
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint16_t>(x));
     *r.ptr = '\0';
     return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
 }
@@ -1479,8 +1479,8 @@ zstring_view assign_zbuf_from_cfg(
     RdpStoreFile x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<RdpStoreFile>::is_valid(uint8_t(x)));
-    return enum_zint_RdpStoreFile[uint8_t(x)];
+    assert(is_valid_enum_value<RdpStoreFile>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_RdpStoreFile[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1489,8 +1489,8 @@ zstring_view assign_zbuf_from_cfg(
     RdpStoreFile x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<RdpStoreFile>::is_valid(uint8_t(x)));
-    return enum_zstr_RdpStoreFile[uint8_t(x)];
+    assert(is_valid_enum_value<RdpStoreFile>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_RdpStoreFile[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(RdpStoreFile & x, ::configs::spec_type<RdpStoreFile> /*type*/, bytes_view value)
@@ -1541,8 +1541,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeOnAccountManipulation x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeOnAccountManipulation>::is_valid(uint8_t(x)));
-    return enum_zint_SessionProbeOnAccountManipulation[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeOnAccountManipulation>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SessionProbeOnAccountManipulation[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1551,8 +1551,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeOnAccountManipulation x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeOnAccountManipulation>::is_valid(uint8_t(x)));
-    return enum_zstr_SessionProbeOnAccountManipulation[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeOnAccountManipulation>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SessionProbeOnAccountManipulation[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(SessionProbeOnAccountManipulation & x, ::configs::spec_type<SessionProbeOnAccountManipulation> /*type*/, bytes_view value)
@@ -1603,8 +1603,8 @@ zstring_view assign_zbuf_from_cfg(
     ClientAddressSent x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ClientAddressSent>::is_valid(uint8_t(x)));
-    return enum_zint_ClientAddressSent[uint8_t(x)];
+    assert(is_valid_enum_value<ClientAddressSent>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_ClientAddressSent[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1613,8 +1613,8 @@ zstring_view assign_zbuf_from_cfg(
     ClientAddressSent x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ClientAddressSent>::is_valid(uint8_t(x)));
-    return enum_zstr_ClientAddressSent[uint8_t(x)];
+    assert(is_valid_enum_value<ClientAddressSent>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_ClientAddressSent[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(ClientAddressSent & x, ::configs::spec_type<ClientAddressSent> /*type*/, bytes_view value)
@@ -1673,8 +1673,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeLogLevel x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeLogLevel>::is_valid(uint8_t(x)));
-    return enum_zint_SessionProbeLogLevel[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeLogLevel>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SessionProbeLogLevel[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1683,8 +1683,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeLogLevel x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeLogLevel>::is_valid(uint8_t(x)));
-    return enum_zstr_SessionProbeLogLevel[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeLogLevel>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SessionProbeLogLevel[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(SessionProbeLogLevel & x, ::configs::spec_type<SessionProbeLogLevel> /*type*/, bytes_view value)
@@ -1739,8 +1739,8 @@ zstring_view assign_zbuf_from_cfg(
     ModRdpUseFailureSimulationSocketTransport x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ModRdpUseFailureSimulationSocketTransport>::is_valid(uint8_t(x)));
-    return enum_zint_ModRdpUseFailureSimulationSocketTransport[uint8_t(x)];
+    assert(is_valid_enum_value<ModRdpUseFailureSimulationSocketTransport>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_ModRdpUseFailureSimulationSocketTransport[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1749,8 +1749,8 @@ zstring_view assign_zbuf_from_cfg(
     ModRdpUseFailureSimulationSocketTransport x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<ModRdpUseFailureSimulationSocketTransport>::is_valid(uint8_t(x)));
-    return enum_zstr_ModRdpUseFailureSimulationSocketTransport[uint8_t(x)];
+    assert(is_valid_enum_value<ModRdpUseFailureSimulationSocketTransport>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_ModRdpUseFailureSimulationSocketTransport[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(ModRdpUseFailureSimulationSocketTransport & x, ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport> /*type*/, bytes_view value)
@@ -1801,8 +1801,8 @@ zstring_view assign_zbuf_from_cfg(
     LoginLanguage x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<LoginLanguage>::is_valid(uint8_t(x)));
-    return enum_zint_LoginLanguage[uint8_t(x)];
+    assert(is_valid_enum_value<LoginLanguage>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_LoginLanguage[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1811,8 +1811,8 @@ zstring_view assign_zbuf_from_cfg(
     LoginLanguage x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<LoginLanguage>::is_valid(uint8_t(x)));
-    return enum_zstr_LoginLanguage[uint8_t(x)];
+    assert(is_valid_enum_value<LoginLanguage>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_LoginLanguage[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(LoginLanguage & x, ::configs::spec_type<LoginLanguage> /*type*/, bytes_view value)
@@ -1863,8 +1863,8 @@ zstring_view assign_zbuf_from_cfg(
     VncTunnelingType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncTunnelingType>::is_valid(uint8_t(x)));
-    return enum_zint_VncTunnelingType[uint8_t(x)];
+    assert(is_valid_enum_value<VncTunnelingType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_VncTunnelingType[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1873,8 +1873,8 @@ zstring_view assign_zbuf_from_cfg(
     VncTunnelingType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncTunnelingType>::is_valid(uint8_t(x)));
-    return enum_zstr_VncTunnelingType[uint8_t(x)];
+    assert(is_valid_enum_value<VncTunnelingType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_VncTunnelingType[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(VncTunnelingType & x, ::configs::spec_type<VncTunnelingType> /*type*/, bytes_view value)
@@ -1923,8 +1923,8 @@ zstring_view assign_zbuf_from_cfg(
     VncTunnelingCredentialSource x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncTunnelingCredentialSource>::is_valid(uint8_t(x)));
-    return enum_zint_VncTunnelingCredentialSource[uint8_t(x)];
+    assert(is_valid_enum_value<VncTunnelingCredentialSource>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_VncTunnelingCredentialSource[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1933,8 +1933,8 @@ zstring_view assign_zbuf_from_cfg(
     VncTunnelingCredentialSource x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<VncTunnelingCredentialSource>::is_valid(uint8_t(x)));
-    return enum_zstr_VncTunnelingCredentialSource[uint8_t(x)];
+    assert(is_valid_enum_value<VncTunnelingCredentialSource>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_VncTunnelingCredentialSource[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(VncTunnelingCredentialSource & x, ::configs::spec_type<VncTunnelingCredentialSource> /*type*/, bytes_view value)
@@ -1984,8 +1984,8 @@ zstring_view assign_zbuf_from_cfg(
     BannerType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<BannerType>::is_valid(uint8_t(x)));
-    return enum_zint_BannerType[uint8_t(x)];
+    assert(is_valid_enum_value<BannerType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_BannerType[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -1994,8 +1994,8 @@ zstring_view assign_zbuf_from_cfg(
     BannerType x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<BannerType>::is_valid(uint8_t(x)));
-    return enum_zstr_BannerType[uint8_t(x)];
+    assert(is_valid_enum_value<BannerType>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_BannerType[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(BannerType & x, ::configs::spec_type<BannerType> /*type*/, bytes_view value)
@@ -2044,8 +2044,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeCPUUsageAlarmAction x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeCPUUsageAlarmAction>::is_valid(uint8_t(x)));
-    return enum_zint_SessionProbeCPUUsageAlarmAction[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeCPUUsageAlarmAction>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SessionProbeCPUUsageAlarmAction[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
@@ -2054,8 +2054,8 @@ zstring_view assign_zbuf_from_cfg(
     SessionProbeCPUUsageAlarmAction x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<SessionProbeCPUUsageAlarmAction>::is_valid(uint8_t(x)));
-    return enum_zstr_SessionProbeCPUUsageAlarmAction[uint8_t(x)];
+    assert(is_valid_enum_value<SessionProbeCPUUsageAlarmAction>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SessionProbeCPUUsageAlarmAction[static_cast<uint8_t>(x)];
 }
 
 parse_error parse_from_cfg(SessionProbeCPUUsageAlarmAction & x, ::configs::spec_type<SessionProbeCPUUsageAlarmAction> /*type*/, bytes_view value)

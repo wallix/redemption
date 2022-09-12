@@ -26,7 +26,7 @@
 
 #include <cinttypes>
 
-#define RDP_40_HIST_BUF_LEN (1024 * 8)  /* RDP 4.0 uses 8K history buf */
+inline constexpr std::size_t RDP_40_HIST_BUF_LEN = 1024 * 8;  /* RDP 4.0 uses 8K history buf */
 
 
 struct rdp_mppc_40_dec : public rdp_mppc_dec
@@ -514,7 +514,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "compress_40");
 
         if (uncompressed_data_size >= RDP_40_HIST_BUF_LEN) {
-            LOG(LOG_ERR, "compress_40: input stream too large, max=%d got=%u",
+            LOG(LOG_ERR, "compress_40: input stream too large, max=%zu got=%u",
                 RDP_40_HIST_BUF_LEN - 1, uncompressed_data_size);
             throw Error(ERR_RDP_PROTOCOL);
         }

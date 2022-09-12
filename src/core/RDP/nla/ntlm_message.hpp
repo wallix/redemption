@@ -26,6 +26,7 @@
 #include "utils/serialize.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/sugar/buf_maker.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -1182,7 +1183,7 @@ struct NTLMAuthenticateMessage {
 
     NTLMAuthenticateMessage() = default;
 
-    std::vector<uint8_t> get_bytes()
+    bytes_view get_bytes() const
     {
         return this->message_bytes_dump;
     }

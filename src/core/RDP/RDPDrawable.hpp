@@ -189,4 +189,4 @@ namespace gdi
     {
         return gdi::get_writable_image_view(drawable.impl());
     }
-}
+} // namespace gdi

@@ -67,7 +67,7 @@ namespace cpp_enumeration_writer
                     "    " << e.name << " x\n"
                     ")"
                     "{\n"
-                    "    auto r = std::to_chars(zbuf.begin(), zbuf.end(), " << type << "(x));\n"
+                    "    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<" << type << ">(x));\n"
                     "    *r.ptr = '\\0';\n"
                     "    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});\n"
                     "}\n\n"
@@ -79,8 +79,8 @@ namespace cpp_enumeration_writer
                 auto append_assign_impl = [&](type_enumeration const& e, char const* prefix){
                     if (e.cat == type_enumeration::Category::autoincrement) {
                         out <<
-                            "    assert(is_valid_enum_value<" << e.name << ">::is_valid(" << type << "(x)));\n"
-                            "    return " << prefix << e.name << "[" << type << "(x)];\n"
+                            "    assert(is_valid_enum_value<" << e.name << ">::is_valid(static_cast<" << type << ">(x)));\n"
+                            "    return " << prefix << e.name << "[static_cast<" << type << ">(x)];\n"
                         ;
                     }
                     else {
@@ -179,7 +179,7 @@ namespace cpp_enumeration_writer
                     "    switch (xi) {\n"
                 ;
                 for (auto & v : e.values) {
-                    out << "        case " << type << "(" << e.name << "::" << v.name << "):\n";
+                    out << "        case static_cast<" << type << ">(" << e.name << "::" << v.name << "):\n";
                 }
                 out <<
                     "               break;\n"
@@ -273,19 +273,31 @@ namespace cpp_enumeration_writer
                     "template<> struct is_valid_enum_value<" << e.name << ">\n"
                     "{\n"
                     "    constexpr static bool is_valid(uint64_t n) { return n <= " << max << "; }\n"
-                    "};\n\n"
+                    "};\n"
+                    "\n"
                     "inline " << e.name << " operator | (" << e.name << " x, " << e.name << " y)\n"
-                    "{ return " << e.name << "(" << type << "(x) | " << type << "(y)); }\n"
+                    "{\n"
+                    "    return static_cast<" << e.name << ">(\n"
+                    "        static_cast<" << type << ">(x) | static_cast<" << type << ">(y)\n"
+                    "    );\n"
+                    "}\n"
+                    "\n"
                     "inline " << e.name << " operator & (" << e.name << " x, " << e.name << " y)\n"
-                    "{ return " << e.name << "(" << type << "(x) & " << type << "(y)); }\n"
+                    "{\n"
+                    "    return static_cast<" << e.name << ">(\n"
+                    "        static_cast<" << type << ">(x) & static_cast<" << type << ">(y)\n"
+                    "    );\n"
+                    "}\n"
+                    "\n"
                     "inline " << e.name << " operator ~ (" << e.name << " x)\n"
-                    "{ return " << e.name << "(~" << type << "(x) & " << type << "(" << max << ")); }\n"
-                    "// inline " << e.name << " operator + (" << e.name << " x, " << e.name << " y) { return x | y; }\n"
-                    "// inline " << e.name << " operator - (" << e.name << " x, " << e.name << " y) { return x & ~y; }\n"
+                    "{\n"
+                    "    return static_cast<" << e.name << ">(\n"
+                    "        ~static_cast<" << type << ">(x) & " << max << "\n"
+                    "    );\n"
+                    "}\n"
+                    "\n"
                     "inline " << e.name << " & operator |= (" << e.name << " & x, " << e.name << " y) { return x = x | y; }\n"
                     "inline " << e.name << " & operator &= (" << e.name << " & x, " << e.name << " y) { return x = x & y; }\n"
-                    "// inline " << e.name << " & operator += (" << e.name << " & x, " << e.name << " y) { return x = x + y; }\n"
-                    "// inline " << e.name << " & operator -= (" << e.name << " & x, " << e.name << " y) { return x = x - y; }\n"
                     "\n"
                 ;
                 break;
@@ -308,7 +320,7 @@ namespace cpp_enumeration_writer
                     "        switch (n) {\n"
                 ;
                 for (auto & v : e.values) {
-                    out << "        case uint64_t(" << v.val << "):\n";
+                    out << "        case " << v.val << "u:\n";
                 }
                 out <<
                     "            return true;\n"

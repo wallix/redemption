@@ -530,25 +530,25 @@ struct LineBuffer
     }
 };
 
-bool compare_binary_ipv4(const in_addr& inaddr, const char *ipv4)
+bool compare_binary_ipv4(const in_addr& in_addr, const char *ipv4)
 {
     assert(ipv4);
 
-    in_addr inaddr2;
+    struct in_addr inaddr2;
 
     return inet_aton(ipv4, &inaddr2)
-        && ntohl(inaddr.s_addr) == ntohl(inaddr2.s_addr);
+        && ntohl(in_addr.s_addr) == ntohl(inaddr2.s_addr);
 }
 
-bool compare_binary_ipv6(const in6_addr& in6addr, const char *ipv6)
+bool compare_binary_ipv6(const in6_addr& in6_addr, const char *ipv6)
 {
     assert(ipv6);
 
-    in6_addr in6addr2;
+    struct in6_addr in6_addr2;
 
-    return inet_pton(AF_INET6, ipv6, &in6addr2) == 1
-        && memcmp(in6addr.s6_addr,
-                  in6addr2.s6_addr,
+    return inet_pton(AF_INET6, ipv6, &in6_addr2) == 1
+        && memcmp(in6_addr.s6_addr,
+                  in6_addr2.s6_addr,
                   sizeof(in6_addr::s6_addr)) == 0;
 }
 
@@ -660,11 +660,7 @@ namespace
 
             return [](auto... decorated_parser) {
                 return [=](Rng& r){
-                    if ((... || decorated_parser(r))) {
-                        return true;
-                    }
-
-                    return false;
+                    return (... || decorated_parser(r));
                 };
             }(parser_decorator(to_parser(ps))...);
         }

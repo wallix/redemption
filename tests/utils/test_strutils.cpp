@@ -159,7 +159,6 @@ RED_AUTO_TEST_CASE(TestTrim)
 
 RED_AUTO_TEST_CASE(Test_str_replace_inplace_between_pattern)
 {
-    using Pattern = char;
     using Replacement = std::string_view;
 
     auto replace_substr_on_tag = [](
@@ -171,25 +170,25 @@ RED_AUTO_TEST_CASE(Test_str_replace_inplace_between_pattern)
         return str;
     };
 
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement("*****"),
+    RED_CHECK(replace_substr_on_tag('+', Replacement("*****"),
         "") ==
         ""_av);
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement("*****"),
+    RED_CHECK(replace_substr_on_tag('+', Replacement("*****"),
         "abc") ==
         "abc"_av);
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement("*****"),
+    RED_CHECK(replace_substr_on_tag('+', Replacement("*****"),
         "ab+c") ==
         "ab+c"_av);
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement("********"),
+    RED_CHECK(replace_substr_on_tag('+', Replacement("********"),
         "AAAAA $$$$$$+}BBBBB$$$$$$$$+} CCCCC DDDDD") ==
         "AAAAA $$$$$$********} CCCCC DDDDD"_av);
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement("********"),
+    RED_CHECK(replace_substr_on_tag('+', Replacement("********"),
         "+1++2+++") ==
         "************************"_av);
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement("********"),
+    RED_CHECK(replace_substr_on_tag('+', Replacement("********"),
         "+{TAG_B}+") ==
         "********"_av);
-    RED_CHECK(replace_substr_on_tag(Pattern('+'), Replacement(),
+    RED_CHECK(replace_substr_on_tag('+', Replacement(),
         " +abcdef+ ") ==
         "  "_av);
 }

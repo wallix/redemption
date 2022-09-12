@@ -576,7 +576,7 @@ struct ServerRedirectionPDU {
         }
         if (rinfo.password_or_cookie.size()) {
             uint32_t const passlen = std::min(rinfo.password_or_cookie.size(), sizeof(this->Password));
-            memcpy(this->Password, &rinfo.password_or_cookie[0], passlen);
+            memcpy(this->Password, rinfo.password_or_cookie.data(), passlen);
             this->PasswordLength = passlen;
             this->RedirFlags |= LB_PASSWORD;
         }

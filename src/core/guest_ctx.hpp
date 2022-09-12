@@ -99,7 +99,7 @@ struct GuestCtx
                 this, &event_container, &front, &callback, &session_log, &rnd, &original_ini,
                 password = std::move(session_sharing_invitation_id),
                 enable_shared_control
-            ](Event& /*event*/) {
+            ](Event& /*event*/) mutable {
                 LOG(LOG_DEBUG, "guest connection");
 
                 int conn_sck = accept(listen_sck.fd(), nullptr, nullptr);

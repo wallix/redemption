@@ -26,7 +26,7 @@
 #define REDEMPTION_COMP_VERSION_NUMBER(major, minor, patch) \
   ( (((major)%100)*10000000) + (((minor)%100)*100000) + ((patch)%100000) )
 
-#define REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE 0
+#define REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE 0 /*NOLINT*/
 
 // Clang
 

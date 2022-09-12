@@ -28,6 +28,7 @@
 #include "utils/cfgloader.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -160,7 +161,7 @@ public:
 
         [[nodiscard]] LoggableCategory loggable_category() const noexcept
         {
-            return configs::loggable_field(unsigned(this->authid()));
+            return configs::loggable_field(safe_cast<unsigned>(this->authid()));
         }
 
     private:
@@ -198,7 +199,7 @@ public:
         LoggableCategory loggable_category() const noexcept
         {
             assert(bool(*this));
-            return configs::loggable_field(unsigned(this->id));
+            return configs::loggable_field(safe_cast<unsigned>(this->id));
         }
 
         void ask() noexcept

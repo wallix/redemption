@@ -271,7 +271,7 @@ public:
             [this, &can_be_sent_to_server](uint32_t uchar) {
                 ZStrUtf8Char utf8_char_buf{uchar};
                 auto utf8_char = utf8_char_buf.av();
-                if (utf8_char.size() > 0) {
+                if (not utf8_char.empty()) {
                     utf8_kbd_buffer.push(utf8_char);
                     for (auto result : patterns.scan(utf8_char)) {
                         if (result.is_pattern_kill) {

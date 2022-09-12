@@ -855,7 +855,7 @@ public:
             }
             else{
                 *unicodeFieldSizesPos++ = this->redirection_password_or_cookie.size() - 2;
-                stream.out_copy_bytes(&this->redirection_password_or_cookie[0], this->redirection_password_or_cookie.size());
+                stream.out_copy_bytes(this->redirection_password_or_cookie);
             }
         }
         else{

@@ -125,7 +125,6 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
     const Primitives::prim_size_t *roi)
 {
-    uint32_t x, y;
     uint8_t *pRGB = pDst;
     const int16_t *pY  = pSrc[0];
     const int16_t *pCb = pSrc[1];
@@ -134,8 +133,8 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
     int dstPad = (dstStep - (roi->width * 4));
     const uint16_t formatSize = Primitives::pixelFormatSize(dstFormat);
 
-    for (y = 0; y < roi->height; y++) {
-        for (x = 0; x < roi->width; x++) {
+    for (uint32_t y = 0; y < roi->height; y++) {
+        for (uint32_t x = 0; x < roi->width; x++) {
             int16_t R, G, B;
             const int32_t divisor = 16;
             const int32_t Y = ((*pY++) + 4096) << divisor;
@@ -166,7 +165,6 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
     const Primitives::prim_size_t *roi)
 {
-    uint32_t x, y;
     uint8_t* pRGB = pDst;
     const int16_t *pY  = pSrc[0];
     const int16_t *pCb = pSrc[1];
@@ -177,8 +175,8 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
     fkt_writePixel writePixel = getPixelWriteFunction(dstFormat);
     const uint16_t formatSize = Primitives::pixelFormatSize(dstFormat);
 
-    for (y = 0; y < roi->height; y++) {
-        for (x = 0; x < roi->width; x++) {
+    for (uint32_t y = 0; y < roi->height; y++) {
+        for (uint32_t x = 0; x < roi->width; x++) {
             int16_t R, G, B;
             const int32_t divisor = 16;
             const int32_t Y = ((*pY++) + 4096) << divisor;

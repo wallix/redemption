@@ -52,17 +52,28 @@ template<> struct is_valid_enum_value<CaptureFlags>
 };
 
 inline CaptureFlags operator | (CaptureFlags x, CaptureFlags y)
-{ return CaptureFlags(uint8_t(x) | uint8_t(y)); }
+{
+    return static_cast<CaptureFlags>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
 inline CaptureFlags operator & (CaptureFlags x, CaptureFlags y)
-{ return CaptureFlags(uint8_t(x) & uint8_t(y)); }
+{
+    return static_cast<CaptureFlags>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
 inline CaptureFlags operator ~ (CaptureFlags x)
-{ return CaptureFlags(~uint8_t(x) & uint8_t(15)); }
-// inline CaptureFlags operator + (CaptureFlags x, CaptureFlags y) { return x | y; }
-// inline CaptureFlags operator - (CaptureFlags x, CaptureFlags y) { return x & ~y; }
+{
+    return static_cast<CaptureFlags>(
+        ~static_cast<uint8_t>(x) & 15
+    );
+}
+
 inline CaptureFlags & operator |= (CaptureFlags & x, CaptureFlags y) { return x = x | y; }
 inline CaptureFlags & operator &= (CaptureFlags & x, CaptureFlags y) { return x = x & y; }
-// inline CaptureFlags & operator += (CaptureFlags & x, CaptureFlags y) { return x = x + y; }
-// inline CaptureFlags & operator -= (CaptureFlags & x, CaptureFlags y) { return x = x - y; }
 
 enum class Level : uint8_t
 {
@@ -113,17 +124,28 @@ template<> struct is_valid_enum_value<KeyboardLogFlagsCP>
 };
 
 inline KeyboardLogFlagsCP operator | (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
-{ return KeyboardLogFlagsCP(uint8_t(x) | uint8_t(y)); }
+{
+    return static_cast<KeyboardLogFlagsCP>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
 inline KeyboardLogFlagsCP operator & (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
-{ return KeyboardLogFlagsCP(uint8_t(x) & uint8_t(y)); }
+{
+    return static_cast<KeyboardLogFlagsCP>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
 inline KeyboardLogFlagsCP operator ~ (KeyboardLogFlagsCP x)
-{ return KeyboardLogFlagsCP(~uint8_t(x) & uint8_t(3)); }
-// inline KeyboardLogFlagsCP operator + (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y) { return x | y; }
-// inline KeyboardLogFlagsCP operator - (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y) { return x & ~y; }
+{
+    return static_cast<KeyboardLogFlagsCP>(
+        ~static_cast<uint8_t>(x) & 3
+    );
+}
+
 inline KeyboardLogFlagsCP & operator |= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x | y; }
 inline KeyboardLogFlagsCP & operator &= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x & y; }
-// inline KeyboardLogFlagsCP & operator += (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x + y; }
-// inline KeyboardLogFlagsCP & operator -= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x - y; }
 
 enum class KeyboardLogFlags : uint8_t
 {
@@ -142,17 +164,28 @@ template<> struct is_valid_enum_value<KeyboardLogFlags>
 };
 
 inline KeyboardLogFlags operator | (KeyboardLogFlags x, KeyboardLogFlags y)
-{ return KeyboardLogFlags(uint8_t(x) | uint8_t(y)); }
+{
+    return static_cast<KeyboardLogFlags>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
 inline KeyboardLogFlags operator & (KeyboardLogFlags x, KeyboardLogFlags y)
-{ return KeyboardLogFlags(uint8_t(x) & uint8_t(y)); }
+{
+    return static_cast<KeyboardLogFlags>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
 inline KeyboardLogFlags operator ~ (KeyboardLogFlags x)
-{ return KeyboardLogFlags(~uint8_t(x) & uint8_t(7)); }
-// inline KeyboardLogFlags operator + (KeyboardLogFlags x, KeyboardLogFlags y) { return x | y; }
-// inline KeyboardLogFlags operator - (KeyboardLogFlags x, KeyboardLogFlags y) { return x & ~y; }
+{
+    return static_cast<KeyboardLogFlags>(
+        ~static_cast<uint8_t>(x) & 7
+    );
+}
+
 inline KeyboardLogFlags & operator |= (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x | y; }
 inline KeyboardLogFlags & operator &= (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x & y; }
-// inline KeyboardLogFlags & operator += (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x + y; }
-// inline KeyboardLogFlags & operator -= (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x - y; }
 
 enum class ClipboardLogFlags : uint8_t
 {
@@ -171,17 +204,28 @@ template<> struct is_valid_enum_value<ClipboardLogFlags>
 };
 
 inline ClipboardLogFlags operator | (ClipboardLogFlags x, ClipboardLogFlags y)
-{ return ClipboardLogFlags(uint8_t(x) | uint8_t(y)); }
+{
+    return static_cast<ClipboardLogFlags>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
 inline ClipboardLogFlags operator & (ClipboardLogFlags x, ClipboardLogFlags y)
-{ return ClipboardLogFlags(uint8_t(x) & uint8_t(y)); }
+{
+    return static_cast<ClipboardLogFlags>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
 inline ClipboardLogFlags operator ~ (ClipboardLogFlags x)
-{ return ClipboardLogFlags(~uint8_t(x) & uint8_t(7)); }
-// inline ClipboardLogFlags operator + (ClipboardLogFlags x, ClipboardLogFlags y) { return x | y; }
-// inline ClipboardLogFlags operator - (ClipboardLogFlags x, ClipboardLogFlags y) { return x & ~y; }
+{
+    return static_cast<ClipboardLogFlags>(
+        ~static_cast<uint8_t>(x) & 7
+    );
+}
+
 inline ClipboardLogFlags & operator |= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x | y; }
 inline ClipboardLogFlags & operator &= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x & y; }
-// inline ClipboardLogFlags & operator += (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x + y; }
-// inline ClipboardLogFlags & operator -= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x - y; }
 
 enum class FileSystemLogFlags : uint8_t
 {
@@ -200,17 +244,28 @@ template<> struct is_valid_enum_value<FileSystemLogFlags>
 };
 
 inline FileSystemLogFlags operator | (FileSystemLogFlags x, FileSystemLogFlags y)
-{ return FileSystemLogFlags(uint8_t(x) | uint8_t(y)); }
+{
+    return static_cast<FileSystemLogFlags>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
 inline FileSystemLogFlags operator & (FileSystemLogFlags x, FileSystemLogFlags y)
-{ return FileSystemLogFlags(uint8_t(x) & uint8_t(y)); }
+{
+    return static_cast<FileSystemLogFlags>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
 inline FileSystemLogFlags operator ~ (FileSystemLogFlags x)
-{ return FileSystemLogFlags(~uint8_t(x) & uint8_t(7)); }
-// inline FileSystemLogFlags operator + (FileSystemLogFlags x, FileSystemLogFlags y) { return x | y; }
-// inline FileSystemLogFlags operator - (FileSystemLogFlags x, FileSystemLogFlags y) { return x & ~y; }
+{
+    return static_cast<FileSystemLogFlags>(
+        ~static_cast<uint8_t>(x) & 7
+    );
+}
+
 inline FileSystemLogFlags & operator |= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x | y; }
 inline FileSystemLogFlags & operator &= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x & y; }
-// inline FileSystemLogFlags & operator += (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x + y; }
-// inline FileSystemLogFlags & operator -= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x - y; }
 
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : uint8_t
@@ -232,11 +287,11 @@ template<> struct is_valid_enum_value<ColorDepth>
     constexpr static bool is_valid(uint64_t n)
     {
         switch (n) {
-        case uint64_t(8):
-        case uint64_t(15):
-        case uint64_t(16):
-        case uint64_t(24):
-        case uint64_t(32):
+        case 8u:
+        case 15u:
+        case 16u:
+        case 24u:
+        case 32u:
             return true;
         }
         return false;
@@ -261,17 +316,28 @@ template<> struct is_valid_enum_value<ServerNotification>
 };
 
 inline ServerNotification operator | (ServerNotification x, ServerNotification y)
-{ return ServerNotification(uint8_t(x) | uint8_t(y)); }
+{
+    return static_cast<ServerNotification>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
 inline ServerNotification operator & (ServerNotification x, ServerNotification y)
-{ return ServerNotification(uint8_t(x) & uint8_t(y)); }
+{
+    return static_cast<ServerNotification>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
 inline ServerNotification operator ~ (ServerNotification x)
-{ return ServerNotification(~uint8_t(x) & uint8_t(7)); }
-// inline ServerNotification operator + (ServerNotification x, ServerNotification y) { return x | y; }
-// inline ServerNotification operator - (ServerNotification x, ServerNotification y) { return x & ~y; }
+{
+    return static_cast<ServerNotification>(
+        ~static_cast<uint8_t>(x) & 7
+    );
+}
+
 inline ServerNotification & operator |= (ServerNotification & x, ServerNotification y) { return x = x | y; }
 inline ServerNotification & operator &= (ServerNotification & x, ServerNotification y) { return x = x & y; }
-// inline ServerNotification & operator += (ServerNotification & x, ServerNotification y) { return x = x + y; }
-// inline ServerNotification & operator -= (ServerNotification & x, ServerNotification y) { return x = x - y; }
 
 // Behavior of certificates check.
 // System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
@@ -412,8 +478,8 @@ template<> struct is_valid_enum_value<OcrVersion>
     constexpr static bool is_valid(uint64_t n)
     {
         switch (n) {
-        case uint64_t(1):
-        case uint64_t(2):
+        case 1u:
+        case 2u:
             return true;
         }
         return false;
@@ -515,17 +581,28 @@ template<> struct is_valid_enum_value<SessionProbeDisabledFeature>
 };
 
 inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
-{ return SessionProbeDisabledFeature(uint16_t(x) | uint16_t(y)); }
+{
+    return static_cast<SessionProbeDisabledFeature>(
+        static_cast<uint16_t>(x) | static_cast<uint16_t>(y)
+    );
+}
+
 inline SessionProbeDisabledFeature operator & (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
-{ return SessionProbeDisabledFeature(uint16_t(x) & uint16_t(y)); }
+{
+    return static_cast<SessionProbeDisabledFeature>(
+        static_cast<uint16_t>(x) & static_cast<uint16_t>(y)
+    );
+}
+
 inline SessionProbeDisabledFeature operator ~ (SessionProbeDisabledFeature x)
-{ return SessionProbeDisabledFeature(~uint16_t(x) & uint16_t(511)); }
-// inline SessionProbeDisabledFeature operator + (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y) { return x | y; }
-// inline SessionProbeDisabledFeature operator - (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y) { return x & ~y; }
+{
+    return static_cast<SessionProbeDisabledFeature>(
+        ~static_cast<uint16_t>(x) & 511
+    );
+}
+
 inline SessionProbeDisabledFeature & operator |= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x | y; }
 inline SessionProbeDisabledFeature & operator &= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x & y; }
-// inline SessionProbeDisabledFeature & operator += (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x + y; }
-// inline SessionProbeDisabledFeature & operator -= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x - y; }
 
 enum class RdpStoreFile : uint8_t
 {

@@ -25,6 +25,8 @@
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "test_only/transport/test_transport.hpp"
 
+#include "fixtures/persistent_disk_bitmap_cache.hpp"
+
 RED_AUTO_TEST_CASE(TestBmpCachePersister)
 {
     uint8_t  bpp              = 8;
@@ -283,8 +285,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister)
     (void)result;
     //LogTransport t;
 
-    #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    CheckTransport t(cstr_array_view(outdata));
+    CheckTransport t(cstr_array_view(persistent_disk_bitmap_cache_outdata));
 
     BmpCachePersister::save_all_to_disk(bmp_cache, t, BmpCachePersister::Verbose(verbose));
 }
@@ -304,8 +305,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister1)
                       , BmpCache::Verbose(verbose)
                       );
 
-    #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    GeneratorTransport t(cstr_array_view(outdata));
+    GeneratorTransport t(cstr_array_view(persistent_disk_bitmap_cache_outdata));
 
     BmpCachePersister bmp_cache_persister(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", BmpCachePersister::Verbose(verbose));
 
@@ -345,8 +345,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister2)
                       , BmpCache::Verbose(verbose)
                       );
 
-    #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    GeneratorTransport t(cstr_array_view(outdata));
+    GeneratorTransport t(cstr_array_view(persistent_disk_bitmap_cache_outdata));
 
     BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", BmpCachePersister::Verbose(verbose));
 

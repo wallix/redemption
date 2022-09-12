@@ -161,7 +161,7 @@ namespace
     };
 
     constexpr KEventKeymaps kevent_keymaps {};
-}
+} // anonymous namespace
 
 
 Keymap::Keymap(KeyLayout layout) noexcept

@@ -32,6 +32,7 @@ struct RedirectionInfo {
     uint8_t host[513] {};
     uint8_t username[257] {};
 
+    // TODO should be a static array (static_vector<512>)
     std::vector<uint8_t> password_or_cookie;
 
     uint8_t domain[257] {};

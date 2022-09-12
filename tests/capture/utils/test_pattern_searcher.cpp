@@ -75,7 +75,7 @@ struct PatternResults
 using PatternResultArray = PatternSearcher::PatternFound[];
 #define PattResultA(...) PatternResults(PatternResultArray{__VA_ARGS__})
 
-}
+} // anonymous namespace
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 # include "utils/sugar/int_to_chars.hpp"
@@ -105,8 +105,8 @@ static ut::assertion_result test_comp_patt_results(PatternResults a, PatternResu
 
     auto to_comparable = [](PatternResults results){
         return array_view{
-            static_cast<ComparablePatternFound const*>(results.results.begin()),
-            static_cast<ComparablePatternFound const*>(results.results.end())
+            static_cast<ComparablePatternFound const*>(results.results.begin()), /*NOLINT*/
+            static_cast<ComparablePatternFound const*>(results.results.end())    /*NOLINT*/
         };
     };
 
@@ -120,7 +120,7 @@ static ut::assertion_result test_comp_patt_results(PatternResults a, PatternResu
     });
 }
 
-}
+} // anonymous namespace
 
 RED_TEST_DISPATCH_COMPARISON_EQ((), (::PatternResults), (::PatternResults), ::test_comp_patt_results)
 #endif

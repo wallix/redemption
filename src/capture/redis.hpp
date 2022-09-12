@@ -170,7 +170,7 @@ struct RedisSyncSession
 
     void close();
 
-    IOCode send(bytes_view data);
+    IOCode send(bytes_view buffer);
 
     int get_last_errno() const noexcept;
     char const* get_last_error_message() const;

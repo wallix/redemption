@@ -49,7 +49,7 @@ namespace detail
             }
         }
 
-        explicit split_view_iterator(split_view_end_iterator)
+        explicit split_view_iterator(split_view_end_iterator /*end*/)
         : splitter(nullptr)
         {}
 

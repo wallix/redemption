@@ -435,7 +435,8 @@ struct KERBEROSContext final {
     {}
 
     ~KERBEROSContext() {
-        OM_uint32 major_status, minor_status;
+        OM_uint32 major_status;
+        OM_uint32 minor_status;
         if (this->target_name != GSS_C_NO_NAME) {
             major_status = gss_release_name(&minor_status, &this->target_name);
             (void) major_status;

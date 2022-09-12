@@ -46,7 +46,7 @@ namespace
     {
         return static_cast<uint8_t*>(operator new(n));
     }
-}
+} // anonymous namespace
 
 UninitDynamicBuffer::UninitDynamicBuffer() noexcept
 : p(uninit_null_pointer())

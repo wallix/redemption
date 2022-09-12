@@ -33,10 +33,10 @@ struct writable_bounded_bytes_view : writable_bounded_array_view<uint8_t, AtLeas
     using writable_bounded_chars_view = writable_bounded_array_view<char, AtLeast, AtMost>;
 
     writable_bounded_bytes_view() = delete;
-    writable_bounded_bytes_view(writable_bounded_bytes_view &&) = default;
-    writable_bounded_bytes_view(writable_bounded_bytes_view const &) = default;
-    writable_bounded_bytes_view & operator=(writable_bounded_bytes_view &&) = default;
-    writable_bounded_bytes_view & operator=(writable_bounded_bytes_view const &) = default;
+    writable_bounded_bytes_view(writable_bounded_bytes_view &&) noexcept = default;
+    writable_bounded_bytes_view(writable_bounded_bytes_view const &) noexcept = default;
+    writable_bounded_bytes_view & operator=(writable_bounded_bytes_view &&) noexcept = default;
+    writable_bounded_bytes_view & operator=(writable_bounded_bytes_view const &) noexcept = default;
 
 
     template<class T, std::size_t n>
@@ -101,10 +101,10 @@ struct bounded_bytes_view : bounded_array_view<uint8_t, AtLeast, AtMost>
     using bounded_chars_view = bounded_array_view<char, AtLeast, AtMost>;
 
     bounded_bytes_view() = delete;
-    bounded_bytes_view(bounded_bytes_view &&) = default;
-    bounded_bytes_view(bounded_bytes_view const &) = default;
-    bounded_bytes_view & operator=(bounded_bytes_view &&) = default;
-    bounded_bytes_view & operator=(bounded_bytes_view const &) = default;
+    bounded_bytes_view(bounded_bytes_view &&) noexcept = default;
+    bounded_bytes_view(bounded_bytes_view const &) noexcept = default;
+    bounded_bytes_view & operator=(bounded_bytes_view &&) noexcept = default;
+    bounded_bytes_view & operator=(bounded_bytes_view const &) noexcept = default;
 
 
     template<class T, std::size_t n>
@@ -167,4 +167,4 @@ namespace detail
     {
         using type = size_bounds<AtLeast, AtMost>;
     };
-}
+} // namespace detail

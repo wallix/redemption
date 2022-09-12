@@ -22,7 +22,7 @@ Author(s): Jonathan Poelen
 #include "cxx/cxx.hpp"
 
 
-int main(int, char** av)
+int main(int /*ac*/, char** av)
 {
     // LogId must be stable for Arcsight
 

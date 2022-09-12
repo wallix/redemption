@@ -2341,7 +2341,7 @@ namespace cfg
     /// type: SessionProbeDisabledFeature <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:disabled_features <br/>
-    /// default: SessionProbeDisabledFeature(352) <br/>
+    /// default: SessionProbeDisabledFeature{352} <br/>
     struct session_probe::disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2351,7 +2351,7 @@ namespace cfg
         using type = SessionProbeDisabledFeature;
         using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
-        type value { SessionProbeDisabledFeature(352) };
+        type value { SessionProbeDisabledFeature{352} };
     };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
@@ -2991,14 +2991,14 @@ namespace cfg
     };
 
     /// type: CaptureFlags <br/>
-    /// default: CaptureFlags(11) <br/>
+    /// default: CaptureFlags{11} <br/>
     struct video::capture_flags {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = CaptureFlags;
         using sesman_and_spec_type = CaptureFlags;
         using mapped_type = sesman_and_spec_type;
-        type value { CaptureFlags(11) };
+        type value { CaptureFlags{11} };
     };
     /// Frame interval. <br/>
     /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 10>> <br/>

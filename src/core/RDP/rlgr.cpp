@@ -25,12 +25,12 @@
 #include <cstring>
 
 /* Constants used in RLGR1/RLGR3 algorithm */
-#define KPMAX    (80)    /* max value for kp or krp */
-#define LSGR    (3)    /* shift count to convert kp to k */
-#define UP_GR    (4)    /* increase in kp after a zero run in RL mode */
-#define DN_GR    (6)    /* decrease in kp after a nonzero symbol in RL mode */
-#define UQ_GR    (3)    /* increase in kp after nonzero symbol in GR mode */
-#define DQ_GR    (3)    /* decrease in kp after zero symbol in GR mode */
+inline constexpr int KPMAX = 80;    /* max value for kp or krp */
+inline constexpr int LSGR  =  3;    /* shift count to convert kp to k */
+inline constexpr int UP_GR =  4;    /* increase in kp after a zero run in RL mode */
+inline constexpr int DN_GR =  6;    /* decrease in kp after a nonzero symbol in RL mode */
+inline constexpr int UQ_GR =  3;    /* increase in kp after nonzero symbol in GR mode */
+inline constexpr int DQ_GR =  3;    /* decrease in kp after zero symbol in GR mode */
 
 static inline uint32_t lzcnt_s(uint32_t x)
 {

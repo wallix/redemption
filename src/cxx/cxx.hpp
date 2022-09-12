@@ -25,15 +25,15 @@
 #include "cxx/compiler_version.hpp"
 #include "cxx/diagnostic.hpp"
 
-#define REDEMPTION_CXX_STD_03 199711L // 1998/2003
-#define REDEMPTION_CXX_STD_11 201103L
-#define REDEMPTION_CXX_STD_14 201402L
-#define REDEMPTION_CXX_STD_17 201703L
+#define REDEMPTION_CXX_STD_03 199711L // 1998/2003 /*NOLINT*/
+#define REDEMPTION_CXX_STD_11 201103L              /*NOLINT*/
+#define REDEMPTION_CXX_STD_14 201402L              /*NOLINT*/
+#define REDEMPTION_CXX_STD_17 201703L              /*NOLINT*/
 
 #ifdef __has_include
 # define REDEMPTION_HAS_INCLUDE(path) __has_include(path)
 #else
-# define REDEMPTION_HAS_INCLUDE(path) 0
+# define REDEMPTION_HAS_INCLUDE(path) 0            /*NOLINT*/
 #endif
 
 
@@ -42,7 +42,7 @@
 #ifdef __has_cpp_attribute
 # define REDEMPTION_CXX_HAS_ATTRIBUTE(attr) __has_cpp_attribute(attr)
 #else
-# define REDEMPTION_CXX_HAS_ATTRIBUTE(attr) 0
+# define REDEMPTION_CXX_HAS_ATTRIBUTE(attr) 0      /*NOLINT*/
 #endif
 
 

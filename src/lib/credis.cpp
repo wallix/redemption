@@ -521,7 +521,7 @@ namespace
     {
         std::memcpy(p, av.data(), av.size());
         return p + av.size();
-    };
+    }
 } // anonymous namespace
 
 extern "C"

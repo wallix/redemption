@@ -66,7 +66,7 @@ static ut::assertion_result test_comp_remaining_result(RemainingDataResult const
     return ar;
 }
 
-}
+} // anonymous namespace
 
 RED_TEST_DISPATCH_COMPARISON_EQ((), (::RemainingDataResult), (::RemainingDataResult), ::test_comp_remaining_result)
 #endif

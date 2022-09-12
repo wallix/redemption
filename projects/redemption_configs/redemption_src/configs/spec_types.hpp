@@ -65,9 +65,9 @@ namespace spec_types
     {
         explicit rgb(uint32_t color = 0) noexcept : rgb_(color) { }
 
-        uint8_t red() const noexcept { return uint8_t(rgb_ >> 16); }
-        uint8_t green() const noexcept { return uint8_t((rgb_ >> 8) & 0xff); }
-        uint8_t blue() const noexcept { return uint8_t(rgb_ & 0xff); }
+        uint8_t red() const noexcept { return static_cast<uint8_t>(rgb_ >> 16); }
+        uint8_t green() const noexcept { return static_cast<uint8_t>((rgb_ >> 8) & 0xff); }
+        uint8_t blue() const noexcept { return static_cast<uint8_t>(rgb_ & 0xff); }
 
         uint32_t to_rrggbb() const { return rgb_; }
 
