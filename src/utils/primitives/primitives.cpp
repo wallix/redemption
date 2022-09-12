@@ -23,86 +23,73 @@
 
 #include "utils/primitives/primitives_internal.hpp"
 
-
-static inline uint8_t* writePixelBGRX(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
-                                   uint8_t R, uint8_t G, uint8_t B, uint8_t A)
+struct writePixelBGRX
 {
-    *dst++ = B;
-    *dst++ = G;
-    *dst++ = R;
-    *dst++ = A;
-    return dst;
-}
-
-static inline uint8_t* writePixelRGBX(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
-                                   uint8_t R, uint8_t G, uint8_t B, uint8_t A)
-{
-    *dst++ = R;
-    *dst++ = G;
-    *dst++ = B;
-    *dst++ = A;
-    return dst;
-}
-
-static inline uint8_t* writePixelXBGR(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
-                                   uint8_t R, uint8_t G, uint8_t B, uint8_t A)
-{
-    *dst++ = A;
-    *dst++ = B;
-    *dst++ = G;
-    *dst++ = R;
-    return dst;
-}
-
-static inline uint8_t* writePixelXRGB(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
-                                   uint8_t R, uint8_t G, uint8_t B, uint8_t A)
-{
-    *dst++ = A;
-    *dst++ = R;
-    *dst++ = G;
-    *dst++ = B;
-    return dst;
-}
-
-static inline uint8_t* writePixelGeneric(uint8_t* dst, uint16_t formatSize, uint32_t /*format*/,
-                                      uint8_t /*R*/, uint8_t /*G*/, uint8_t /*B*/, uint8_t /*A*/)
-{
-#if 0
-    uint32_t color = FreeRDPGetColor(format, R, G, B, A);
-    WriteColor(dst, format, color);
-#endif
-    return dst + formatSize;
-}
-
-using fkt_writePixel = uint8_t* (*)(uint8_t*, uint16_t, uint32_t, uint8_t, uint8_t, uint8_t, uint8_t);
-
-static inline fkt_writePixel getPixelWriteFunction(uint16_t format)
-{
-    switch (format)
+    static inline uint8_t* write(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
+                                 uint8_t R, uint8_t G, uint8_t B, uint8_t A) noexcept
     {
-        case Primitives::PIXEL_FORMAT_ARGB32:
-        case Primitives::PIXEL_FORMAT_XRGB32:
-            return writePixelXRGB;
-
-        case Primitives::PIXEL_FORMAT_ABGR32:
-        case Primitives::PIXEL_FORMAT_XBGR32:
-            return writePixelXBGR;
-
-        case Primitives::PIXEL_FORMAT_RGBA32:
-        case Primitives::PIXEL_FORMAT_RGBX32:
-            return writePixelRGBX;
-
-        case Primitives::PIXEL_FORMAT_BGRA32:
-        case Primitives::PIXEL_FORMAT_BGRX32:
-            return writePixelBGRX;
-
-        default:
-            return writePixelGeneric;
+        *dst++ = B;
+        *dst++ = G;
+        *dst++ = R;
+        *dst++ = A;
+        return dst;
     }
-}
+};
+
+struct writePixelRGBX
+{
+    static inline uint8_t* write(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
+                                 uint8_t R, uint8_t G, uint8_t B, uint8_t A) noexcept
+    {
+        *dst++ = R;
+        *dst++ = G;
+        *dst++ = B;
+        *dst++ = A;
+        return dst;
+    }
+};
+
+struct writePixelXBGR
+{
+    static inline uint8_t* write(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
+                                 uint8_t R, uint8_t G, uint8_t B, uint8_t A) noexcept
+    {
+        *dst++ = A;
+        *dst++ = B;
+        *dst++ = G;
+        *dst++ = R;
+        return dst;
+    }
+};
+
+struct writePixelXRGB
+{
+    static inline uint8_t* write(uint8_t* dst, uint16_t /*formatSize*/, uint32_t /*format*/,
+                                 uint8_t R, uint8_t G, uint8_t B, uint8_t A) noexcept
+    {
+        *dst++ = A;
+        *dst++ = R;
+        *dst++ = G;
+        *dst++ = B;
+        return dst;
+    }
+};
+
+struct writePixelGeneric
+{
+    static inline uint8_t* write(uint8_t* dst, uint16_t formatSize, uint32_t /*format*/,
+                                 uint8_t /*R*/, uint8_t /*G*/, uint8_t /*B*/, uint8_t /*A*/)
+    {
+    #if 0
+        uint32_t color = FreeRDPGetColor(format, R, G, B, A);
+        WriteColor(dst, format, color);
+    #endif
+        return dst + formatSize;
+    }
+};
 
 
-Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, int16_t * pDst, uint32_t len)
+Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, int16_t * pDst, uint32_t len) noexcept
 {
     if (val == 0) {
         return Primitives::SUCCESS;
@@ -119,60 +106,18 @@ Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, in
 /**
  *
  */
-
-static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
+template<class WritePixel>
+static Primitives::pstatus_t yCbCrToRGB_16s8u_P3AC4R_XXX(
     const int16_t *pSrc[3], uint32_t srcStep,
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
-    const Primitives::prim_size_t *roi)
-{
-    uint8_t *pRGB = pDst;
-    const int16_t *pY  = pSrc[0];
-    const int16_t *pCb = pSrc[1];
-    const int16_t *pCr = pSrc[2];
-    int srcPad = (srcStep - (roi->width * 2)) / 2;
-    int dstPad = (dstStep - (roi->width * 4));
-    const uint16_t formatSize = Primitives::pixelFormatSize(dstFormat);
-
-    for (uint32_t y = 0; y < roi->height; y++) {
-        for (uint32_t x = 0; x < roi->width; x++) {
-            int16_t R, G, B;
-            const int32_t divisor = 16;
-            const int32_t Y = ((*pY++) + 4096) << divisor;
-            const int32_t Cb = (*pCb++);
-            const int32_t Cr = (*pCr++);
-            const int32_t CrR = Cr * static_cast<int32_t>(1.402525f * (1 << divisor));
-            const int32_t CrG = Cr * static_cast<int32_t>(0.714401f * (1 << divisor));
-            const int32_t CbG = Cb * static_cast<int32_t>(0.343730f * (1 << divisor));
-            const int32_t CbB = Cb * static_cast<int32_t>(1.769905f * (1 << divisor));
-            R = (static_cast<int16_t>((CrR + Y) >> divisor)) >> 5;
-            G = (static_cast<int16_t>((Y - CbG - CrG) >> divisor)) >> 5;
-            B = (static_cast<int16_t>((CbB + Y) >> divisor)) >> 5;
-            pRGB = writePixelBGRX(pRGB, formatSize, dstFormat, CLIP(R), CLIP(G),
-                                  CLIP(B), 0xFF);
-        }
-
-        pY += srcPad;
-        pCb += srcPad;
-        pCr += srcPad;
-        pRGB += dstPad;
-    }
-
-    return Primitives::SUCCESS;
-}
-
-static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
-    const int16_t *pSrc[3], uint32_t srcStep,
-    uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
-    const Primitives::prim_size_t *roi)
+    const Primitives::prim_size_t *roi) noexcept
 {
     uint8_t* pRGB = pDst;
     const int16_t *pY  = pSrc[0];
     const int16_t *pCb = pSrc[1];
     const int16_t *pCr = pSrc[2];
     int srcPad = (srcStep - (roi->width * 2)) / 2;
-    int dstPad = (dstStep - (roi->width * 4));
-    // TODO: use templates instead of function pointer
-    fkt_writePixel writePixel = getPixelWriteFunction(dstFormat);
+    int dstPad = static_cast<int>(dstStep - (roi->width * 4));
     const uint16_t formatSize = Primitives::pixelFormatSize(dstFormat);
 
     for (uint32_t y = 0; y < roi->height; y++) {
@@ -189,8 +134,8 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
             R = static_cast<int16_t>((CrR + Y) >> divisor) >> 5;
             G = static_cast<int16_t>((Y - CbG - CrG) >> divisor) >> 5;
             B = static_cast<int16_t>((CbB + Y) >> divisor) >> 5;
-            pRGB = (*writePixel)(pRGB, formatSize, dstFormat, CLIP(R), CLIP(G),
-                                 CLIP(B), 0xFF);
+            pRGB = WritePixel::write(pRGB, formatSize, dstFormat, CLIP(R), CLIP(G),
+                                     CLIP(B), 0xFF);
         }
 
         pY += srcPad;
@@ -205,18 +150,30 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
 Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
     const int16_t *pSrc[3], uint32_t srcStep,
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
-    const Primitives::prim_size_t *roi)
+    const Primitives::prim_size_t *roi) noexcept
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (dstFormat)
     {
+        case Primitives::PIXEL_FORMAT_ARGB32:
+        case Primitives::PIXEL_FORMAT_XRGB32:
+            return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelXRGB>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
+
+        case Primitives::PIXEL_FORMAT_ABGR32:
+        case Primitives::PIXEL_FORMAT_XBGR32:
+            return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelXBGR>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
+
+        case Primitives::PIXEL_FORMAT_RGBA32:
+        case Primitives::PIXEL_FORMAT_RGBX32:
+            return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelRGBX>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
+
         case Primitives::PIXEL_FORMAT_BGRA32:
         case Primitives::PIXEL_FORMAT_BGRX32:
-            return general_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
+            return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelBGRX>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
 
         default:
-            return general_yCbCrToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
+            return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelGeneric>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
     }
     REDEMPTION_DIAGNOSTIC_POP()
 }
@@ -226,7 +183,8 @@ Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 
 #include <cpuid.h>
 
-static bool haveSSSE3() {
+static bool haveSSSE3()
+{
     int a, b, c, d;
     int nIds;
 
@@ -254,10 +212,12 @@ Primitives::Primitives() noexcept
 #endif
 }
 
-Primitives *Primitives::instance() {
+Primitives *Primitives::instance()
+{
     return &s_instance;
 }
 
-size_t Primitives::pixelFormatSize(PixelFormat /*format*/) {
+uint16_t Primitives::pixelFormatSize(PixelFormat /*format*/) noexcept
+{
     return 4;
 }

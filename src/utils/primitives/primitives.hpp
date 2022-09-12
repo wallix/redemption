@@ -52,11 +52,12 @@ public:
         PIXEL_FORMAT_BGRX32
     };
 
-    using _lShiftC_16s_t = pstatus_t (*)(const int16_t * pSrc, uint32_t val, int16_t * pSrcDst, uint32_t len);
+    using _lShiftC_16s_t = pstatus_t (*)(const int16_t * pSrc, uint32_t val, int16_t * pSrcDst, uint32_t len) noexcept;
 
+    // TODO use std::array or sized_array_view<3>
     using _yCbCrToRGB_16s8u_P3AC4R_t = pstatus_t (*)(const int16_t * pSrc[3], uint32_t srcStep,
         uint8_t * pDst, uint32_t dstStep, PixelFormat DstFormat,
-        const prim_size_t* roi);
+        const prim_size_t* roi) noexcept;
 
 public:
     /**
@@ -67,7 +68,7 @@ public:
     /**
      *
      */
-    static size_t pixelFormatSize(PixelFormat format);
+    static uint16_t pixelFormatSize(PixelFormat format) noexcept;
 
 protected:
     Primitives() noexcept;

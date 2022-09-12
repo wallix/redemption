@@ -64,7 +64,7 @@ static inline uint8_t CLIP(int32_t X)
  * SCD = Source, Constant, Destination
  */
 #define SSE3_SCD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
-    static Primitives::pstatus_t _name_(const _type_ *pSrc, uint32_t val, _type_ *pDst, uint32_t len) \
+    static Primitives::pstatus_t _name_(const _type_ *pSrc, uint32_t val, _type_ *pDst, uint32_t len) noexcept \
     { \
         int32_t shifts = 0; \
         uint32_t offBeatMask; \
@@ -209,6 +209,6 @@ static inline uint8_t CLIP(int32_t X)
 
 Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const int16_t *pSrc[3], uint32_t srcStep,
             uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
-            const Primitives::prim_size_t *roi);
-Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, int16_t * pDst, uint32_t len);
-void init_sse(Primitives *prims);
+            const Primitives::prim_size_t *roi) noexcept;
+Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, int16_t * pDst, uint32_t len) noexcept;
+void init_sse(Primitives *prims) noexcept;

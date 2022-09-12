@@ -35,7 +35,7 @@ SSE3_SCD_ROUTINE(sse2_lShiftC_16s, int16_t, general_lShiftC_16s, _mm_slli_epi16,
 
 static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const int16_t* pSrc[3], uint32_t /*srcStep*/,
     uint8_t *pDst, uint32_t dstStep,
-    const Primitives::prim_size_t* roi)    /* region of interest */
+    const Primitives::prim_size_t* roi) noexcept    /* region of interest */
 {
     const __m128i zero = _mm_setzero_si128();
     const __m128i max = _mm_set1_epi16(255);
@@ -222,7 +222,7 @@ static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const int16_t* pS
 
 static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const int16_t* pSrc[3], uint32_t /*srcStep*/,
     uint8_t* pDst, uint32_t dstStep,
-    const Primitives::prim_size_t* roi)    /* region of interest */
+    const Primitives::prim_size_t* roi) noexcept    /* region of interest */
 {
     const __m128i zero = _mm_setzero_si128();
     const __m128i max = _mm_set1_epi16(255);
@@ -412,7 +412,7 @@ static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
     const int16_t *pSrc[3],
     uint32_t srcStep,
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat DstFormat,
-    const Primitives::prim_size_t* roi)    /* region of interest */
+    const Primitives::prim_size_t* roi) noexcept    /* region of interest */
 {
     if ((reinterpret_cast<uint64_t>(pSrc[0]) & 0x0f) ||
         (reinterpret_cast<uint64_t>(pSrc[1]) & 0x0f) ||
@@ -443,7 +443,8 @@ static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
     REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void init_sse(Primitives *prims) {
+void init_sse(Primitives *prims) noexcept
+{
     prims->lShiftC_16s = sse2_lShiftC_16s;
     prims->yCbCrToRGB_16s8u_P3AC4R = sse2_yCbCrToRGB_16s8u_P3AC4R;
 }
