@@ -365,10 +365,12 @@ namespace kbdtypes
         Equal = 0x0D,
     };
 
-    // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
+    // The scancode and its extended nature are merged in a new variable
+    // (whose most significant bit indicates the extended nature)
     constexpr KeyCode to_keycode(KbdFlags flags, Scancode scancode) noexcept
     {
-        return KeyCode(underlying_cast(scancode) | underlying_cast(flags & (KbdFlags::Extended | KbdFlags::Extended1)));
+        return KeyCode(underlying_cast(scancode)
+                     | underlying_cast(flags & (KbdFlags::Extended | KbdFlags::Extended1)));
     }
 
     constexpr Scancode pressed_scancode(KbdFlags flags, Scancode scancode) noexcept

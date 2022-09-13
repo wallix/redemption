@@ -45,8 +45,9 @@ struct KeyModFlags
     KeyModFlags() noexcept = default;
 
     KeyModFlags(KeyMod mod) noexcept
-    : mods(1u << unsigned(mod))
-    {}
+    {
+        set(mod);
+    }
 
     KeyModFlags(KeyLocks locks) noexcept
     {
@@ -67,34 +68,34 @@ struct KeyModFlags
 
     bool test(KeyMod mod) const noexcept
     {
-        return (mods >> unsigned(mod)) & 1u;
+        return (mods >> bitpos(mod)) & 1u;
     }
 
     void set(KeyMod mod) noexcept
     {
-        mods |= 1u << unsigned(mod);
+        mods |= 1u << bitpos(mod);
     }
 
     void set_if(bool b, KeyMod mod) noexcept
     {
-        mods |= b ? (1u << unsigned(mod)) : 0u;
+        mods |= b ? (1u << bitpos(mod)) : 0u;
     }
 
     void flip(KeyMod mod) noexcept
     {
-        mods ^= 1u << unsigned(mod);
+        mods ^= 1u << bitpos(mod);
     }
 
     void clear(KeyMod mod) noexcept
     {
-        mods &= ~(1u << unsigned(mod));
+        mods &= ~(1u << bitpos(mod));
     }
 
     void update(KbdFlags flags, KeyMod mod) noexcept
     {
         clear(mod);
         // 0x8000 (Release) -> 0x1
-        mods |= ((~unsigned(flags) >> 15) & 1u) << unsigned(mod);
+        mods |= ((~static_cast<unsigned>(flags) >> 15) & 1u) << bitpos(mod);
     }
 
     unsigned as_uint() const noexcept
@@ -120,6 +121,11 @@ struct KeyModFlags
 
 private:
     explicit KeyModFlags(unsigned mods) noexcept : mods(mods) {}
+
+    static unsigned bitpos(KeyMod mod) noexcept
+    {
+        return static_cast<unsigned>(mod);
+    }
 
     unsigned mods = 0;
 };
