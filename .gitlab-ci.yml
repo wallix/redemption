@@ -43,7 +43,6 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script:
-    - rm .git
     - echo "${SONAR_SSL}" >> sonarqube.crt
     - keytool -noprompt -trustcacerts -cacerts -storepass changeit -importcert -alias sonarqube -file "sonarqube.crt"
     - sonar-scanner
