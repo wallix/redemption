@@ -45,8 +45,12 @@ public:
 
     void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
+    void rdp_input_invalidate(Rect clip) override;
+
 private:
     unsigned selected_language = 0;
+    uint16_t icon_size_in_space = 0;
+    uint16_t space_size = 0;
     FrontAPI & front;
     Widget & parent_redraw;
     std::vector<CRef<KeyLayout>> locales;

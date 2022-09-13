@@ -20,13 +20,91 @@
  */
 
 #include "mod/internal/widget/language_button.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/front_api.hpp"
+#include "core/font.hpp"
 #include "keyboard/keylayouts.hpp"
+#include "gdi/graphic_api.hpp"
 #include "utils/log.hpp"
 #include "utils/theme.hpp"
 #include "utils/sugar/split.hpp"
 #include "utils/strutils.hpp"
+#include "utils/txt2d_to_rects.hpp"
 
+
+namespace
+{
+    constexpr auto kbd_icon_rects = TXT2D_TO_RECTS(
+        // "                  ####                                                          ",
+        // "                  ####                                                          ",
+        // "                  ############################################                  ",
+        // "                  ############################################                  ",
+        // "                                                          ####                  ",
+        // "                                                          ####                  ",
+        "################################################################################",
+        "################################################################################",
+        "####------------------------------------------------------------------------####",
+        "####------------------------------------------------------------------------####",
+        "####------------------------------------------------------------------------####",
+        "####------######------######------######------######------############------####",
+        "####------######------######------######------######------############------####",
+        "####------######------######------######------######------############------####",
+        "####------------------------------------------------------------######------####",
+        "####------------------------------------------------------------######------####",
+        "####------------------------------------------------------------######------####",
+        "####------############------######------######------######------######------####",
+        "####------############------######------######------######------######------####",
+        "####------############------######------######------######------######------####",
+        "####------------------------------------------------------------------------####",
+        "####------------------------------------------------------------------------####",
+        "####------------------------------------------------------------------------####",
+        "####------######------####################################------######------####",
+        "####------######------####################################------######------####",
+        "####------######------####################################------######------####",
+        "####------------------------------------------------------------------------####",
+        "####------------------------------------------------------------------------####",
+        "####------------------------------------------------------------------------####",
+        "################################################################################",
+        "################################################################################",
+    );
+    constexpr int16_t kbd_icon_cx = kbd_icon_rects.back().cx;
+    constexpr int16_t kbd_icon_cy = kbd_icon_rects.back().ebottom();
+
+    int get_space_size(Font const & font)
+    {
+        FontCharView c = font.glyph_or_unknown(' ');
+        int w = c.width + c.incby;
+        if (w <= 0) {
+            w = 8;
+        }
+        return w;
+    }
+
+    uint16_t kbd_icon_in_space(int w)
+    {
+        auto spaces = static_cast<uint16_t>((kbd_icon_cx + w - 1) / w + 1);
+        return std::min(spaces, uint16_t{16});
+    }
+
+    // insert space for draw icon
+    struct LanguageButtonText
+    {
+        char text[128];
+
+        LanguageButtonText(chars_view str, unsigned spaces)
+        {
+            memset(text, ' ', spaces);
+
+            std::size_t remaining = std::size(text) - spaces - 1;
+            std::size_t len = std::min(remaining, str.size());
+            memcpy(text + spaces, str.data(), len);
+            text[spaces + len] = '\0';
+        }
+    };
+
+    constexpr uint16_t language_button_border = 2;
+    constexpr uint16_t language_button_padding = 7;
+}
 
 LanguageButton::LanguageButton(
     zstring_view enable_locales,
@@ -36,12 +114,15 @@ LanguageButton::LanguageButton(
     Font const & font,
     Theme const & theme
 )
-    : WidgetButton(drawable, *this, this, nullptr, -1,
-                       theme.global.fgcolor, theme.global.bgcolor,
-                       theme.global.focus_color, 2, font, 7, 7)
-    , front(front)
-    , parent_redraw(parent)
-    , front_layout(front.get_keylayout())
+: WidgetButton(drawable, *this, this, nullptr, -1,
+               theme.global.fgcolor, theme.global.bgcolor,
+               theme.global.focus_color, language_button_border, font,
+               language_button_padding, language_button_padding)
+, icon_size_in_space(kbd_icon_in_space(get_space_size(font)))
+, space_size(static_cast<uint16_t>(icon_size_in_space * get_space_size(font)))
+, front(front)
+, parent_redraw(parent)
+, front_layout(front.get_keylayout())
 {
     using std::begin;
     using std::end;
@@ -68,7 +149,7 @@ LanguageButton::LanguageButton(
         }
     }
 
-    this->set_text(this->locales.front().get().name);
+    this->set_text(LanguageButtonText(this->locales.front().get().name, icon_size_in_space).text);
 
     Dimension dim = this->get_optimal_dim();
     this->set_wh(dim);
@@ -82,7 +163,7 @@ void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
 
         this->selected_language = (this->selected_language + 1) % this->locales.size();
         KeyLayout const& layout = this->locales[this->selected_language];
-        this->set_text(layout.name);
+        this->set_text(LanguageButtonText(layout.name, icon_size_in_space).text);
 
         Dimension dim = this->get_optimal_dim();
         this->set_wh(dim);
@@ -92,5 +173,28 @@ void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
         this->parent_redraw.rdp_input_invalidate(rect);
 
         front.set_keylayout(layout);
+    }
+}
+
+#include "core/error.hpp"
+
+void LanguageButton::rdp_input_invalidate(Rect clip)
+{
+    WidgetButton::rdp_input_invalidate(clip);
+
+    Error{(ERR_AUTOMATIC_RECONNECTION_REQUIRED)};
+
+    int ox = x() + language_button_border + (space_size - kbd_icon_cy - language_button_padding) / 2;
+    int oy = y() + (cy() - kbd_icon_cy) / 2;
+
+    Rect rect_intersect = clip.intersect(Rect(ox, oy, kbd_icon_cx, kbd_icon_cy));
+    if (!rect_intersect.isempty()) {
+        this->drawable.begin_update();
+        for (auto r : kbd_icon_rects) {
+            r.x += ox;
+            r.y += oy;
+            drawable.draw(RDPOpaqueRect(r, fg_color), rect_intersect, gdi::ColorCtx::depth24());
+        }
+        this->drawable.end_update();
     }
 }

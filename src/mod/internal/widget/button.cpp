@@ -117,6 +117,13 @@ void WidgetButton::draw(
         label_rect.cy -= (border_width * 2 + 1);
     }
 
+    if (state == State::Pressed) {
+        label_rect.x++;
+        label_rect.y++;
+        label_rect.cx--;
+        label_rect.cy--;
+    }
+
     // Label color
     if (logo) {
         fg_color = has_focus ? focuscolor : fg_color;
@@ -127,15 +134,7 @@ void WidgetButton::draw(
     // background
     drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, color_ctx);
 
-    if (state == State::Pressed)  {
-        Rect temp_rect = label_rect.offset(1, 1);
-        temp_rect.cx--;
-        temp_rect.cy--;
-        WidgetLabel::draw(clip, temp_rect, drawable, text, fg_color, bg_color, color_ctx, font, xtext, ytext);
-    }
-    else {
-        WidgetLabel::draw(clip, label_rect, drawable, text, fg_color, bg_color, color_ctx, font, xtext, ytext);
-    }
+    WidgetLabel::draw(clip, label_rect, drawable, text, fg_color, bg_color, color_ctx, font, xtext, ytext);
 
     if (logo) {
         return;
