@@ -21,27 +21,27 @@ namespace configs
         // inline constexpr int section3 = 19; /* remote_program */
         inline constexpr int section4 = 19; /* mod_rdp */
         inline constexpr int section5 = 55; /* session_probe */
-        inline constexpr int section6 = 94; /* server_cert */
-        inline constexpr int section7 = 103; /* mod_vnc */
-        inline constexpr int section8 = 111; /* session_log */
-        // inline constexpr int section9 = 112; /* ocr */
-        inline constexpr int section10 = 112; /* capture */
-        inline constexpr int section11 = 116; /* video */
-        inline constexpr int section12 = 119; /* audit */
-        inline constexpr int section13 = 128; /* file_verification */
-        inline constexpr int section14 = 136; /* file_storage */
-        // inline constexpr int section15 = 137; /* icap_server_down */
-        // inline constexpr int section16 = 137; /* icap_server_up */
-        // inline constexpr int section17 = 137; /* metrics */
-        inline constexpr int section18 = 137; /* crypto */
-        // inline constexpr int section19 = 139; /* websocket */
-        // inline constexpr int section20 = 139; /* vnc_over_ssh */
-        inline constexpr int section21 = 139; /* context */
-        // inline constexpr int section22 = 223; /* internal_mod */
-        inline constexpr int section23 = 223; /* mod_replay */
-        inline constexpr int section24 = 225; /* translation */
-        // inline constexpr int section25 = 227; /* theme */
-        // inline constexpr int section26 = 227; /* debug */
+        inline constexpr int section6 = 95; /* server_cert */
+        inline constexpr int section7 = 104; /* mod_vnc */
+        inline constexpr int section8 = 112; /* session_log */
+        // inline constexpr int section9 = 113; /* ocr */
+        inline constexpr int section10 = 113; /* capture */
+        inline constexpr int section11 = 117; /* video */
+        inline constexpr int section12 = 120; /* audit */
+        inline constexpr int section13 = 129; /* file_verification */
+        inline constexpr int section14 = 137; /* file_storage */
+        // inline constexpr int section15 = 138; /* icap_server_down */
+        // inline constexpr int section16 = 138; /* icap_server_up */
+        // inline constexpr int section17 = 138; /* metrics */
+        inline constexpr int section18 = 138; /* crypto */
+        // inline constexpr int section19 = 140; /* websocket */
+        // inline constexpr int section20 = 140; /* vnc_over_ssh */
+        inline constexpr int section21 = 140; /* context */
+        // inline constexpr int section22 = 224; /* internal_mod */
+        inline constexpr int section23 = 224; /* mod_replay */
+        inline constexpr int section24 = 226; /* translation */
+        // inline constexpr int section25 = 228; /* theme */
+        // inline constexpr int section26 = 228; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2186,6 +2186,21 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 50 };
     };
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:smart_launcher_enable_wabam_affinity <br/>
+    /// default: true <br/>
+    struct session_probe::smart_launcher_enable_wabam_affinity {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 20};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { true };
+    };
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:launcher_abort_delay <br/>
@@ -2195,7 +2210,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 20};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 21};
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         using mapped_type = sesman_and_spec_type;
@@ -2210,7 +2225,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 21};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 22};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2225,7 +2240,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 22};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 23};
         using type = uint32_t;
         using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 1000>;
         using mapped_type = sesman_and_spec_type;
@@ -2240,7 +2255,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 23};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 24};
         using type = uint32_t;
         using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 200000000>;
         using mapped_type = sesman_and_spec_type;
@@ -2257,7 +2272,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 24};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 25};
         using type = uint32_t;
         using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 10000>;
         using mapped_type = sesman_and_spec_type;
@@ -2272,7 +2287,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 25};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 26};
         using type = SessionProbeCPUUsageAlarmAction;
         using sesman_and_spec_type = SessionProbeCPUUsageAlarmAction;
         using mapped_type = sesman_and_spec_type;
@@ -2287,7 +2302,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 26};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 27};
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         using mapped_type = sesman_and_spec_type;
@@ -2302,7 +2317,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 27};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 28};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2317,7 +2332,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 28};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 29};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2332,7 +2347,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 29};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 30};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2347,7 +2362,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 30};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 31};
         using type = SessionProbeDisabledFeature;
         using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
@@ -2362,7 +2377,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 31};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 32};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2377,7 +2392,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 32};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 33};
         using type = SessionProbeOnAccountManipulation;
         using sesman_and_spec_type = SessionProbeOnAccountManipulation;
         using mapped_type = sesman_and_spec_type;
@@ -2394,7 +2409,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 33};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 34};
         using type = char[4];
         using sesman_and_spec_type = ::configs::spec_types::fixed_string;
         using mapped_type = sesman_and_spec_type;
@@ -2410,7 +2425,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 34};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 35};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2431,7 +2446,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 35};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 36};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2449,7 +2464,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 36};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 37};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2465,7 +2480,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 37};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 38};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2481,7 +2496,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 38};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 39};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -5714,6 +5729,7 @@ struct session_probe
 , cfg::session_probe::disconnected_application_limit
 , cfg::session_probe::disconnected_session_limit
 , cfg::session_probe::idle_session_limit
+, cfg::session_probe::smart_launcher_enable_wabam_affinity
 , cfg::session_probe::launcher_abort_delay
 , cfg::session_probe::enable_crash_dump
 , cfg::session_probe::handle_usage_limit
@@ -6119,6 +6135,7 @@ using VariablesAclPack = Pack<
 , cfg::session_probe::smart_launcher_start_delay
 , cfg::session_probe::smart_launcher_long_delay
 , cfg::session_probe::smart_launcher_short_delay
+, cfg::session_probe::smart_launcher_enable_wabam_affinity
 , cfg::session_probe::launcher_abort_delay
 , cfg::session_probe::enable_crash_dump
 , cfg::session_probe::handle_usage_limit
@@ -6277,13 +6294,13 @@ using VariablesAclPack = Pack<
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111101111111111111111111111111111111111111111011111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
-, 0b1111111111111111111111111111111101011111101111111111100111111111
-, 0b0000000000000000000000000000011111111111111111111111111011111111
+, 0b1111111111111111111111111111111010111111011111111111001111111111
+, 0b0000000000000000000000000000111111111111111111111111110111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000010000000000000000000000000000000
+, 0b0000000000000000000000000000000100000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

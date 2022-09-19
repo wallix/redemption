@@ -64,6 +64,7 @@ cp_spec = {
         ('session_probe:smart_launcher_start_delay', 'smart_launcher_start_delay', 0),
         ('session_probe:smart_launcher_long_delay', 'smart_launcher_long_delay', 500),
         ('session_probe:smart_launcher_short_delay', 'smart_launcher_short_delay', 50),
+        ('session_probe:smart_launcher_enable_wabam_affinity', 'smart_launcher_enable_wabam_affinity', True),
         ('session_probe:launcher_abort_delay', 'launcher_abort_delay', 2000),
         ('session_probe:enable_crash_dump', 'enable_crash_dump', False),
         ('session_probe:handle_usage_limit', 'handle_usage_limit', 0),

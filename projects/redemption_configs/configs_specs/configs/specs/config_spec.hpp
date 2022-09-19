@@ -598,6 +598,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_short_delay"}, set(50));
 
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"smart_launcher_enable_wabam_affinity"}, set(true));
+
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launcher_abort_delay"}, set(2000));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_crash_dump"}, set(false));

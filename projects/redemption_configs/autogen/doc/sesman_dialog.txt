@@ -182,6 +182,7 @@ cfg::session_probe::smart_launcher_clipboard_initialization_delay ⇐ session_pr
 cfg::session_probe::smart_launcher_start_delay ⇐ session_probe:smart_launcher_start_delay   [std::chrono::milliseconds]
 cfg::session_probe::smart_launcher_long_delay ⇐ session_probe:smart_launcher_long_delay   [std::chrono::milliseconds]
 cfg::session_probe::smart_launcher_short_delay ⇐ session_probe:smart_launcher_short_delay   [std::chrono::milliseconds]
+cfg::session_probe::smart_launcher_enable_wabam_affinity ⇐ session_probe:smart_launcher_enable_wabam_affinity   [bool]
 cfg::session_probe::launcher_abort_delay ⇐ session_probe:launcher_abort_delay   [std::chrono::milliseconds]
 cfg::session_probe::enable_crash_dump ⇐ session_probe:enable_crash_dump   [bool]
 cfg::session_probe::handle_usage_limit ⇐ session_probe:handle_usage_limit   [uint32_t]
