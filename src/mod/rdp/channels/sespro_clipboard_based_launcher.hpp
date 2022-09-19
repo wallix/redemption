@@ -589,50 +589,69 @@ public:
 
             const uint16_t msgType = chunk.in_uint16_le();
             if (msgType == RDPECLIP::CB_FORMAT_LIST) {
-                this->current_client_format_list_pdu_length = current_chunk_size;
-                this->current_client_format_list_pdu        =
-                    std::make_unique<uint8_t[]>(current_chunk_size);
-                ::memcpy(this->current_client_format_list_pdu.get(),
-                    current_chunk_pos, current_chunk_size);
-                this->current_client_format_list_pdu_flags  = flags;
+                LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                    "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST)");
 
-                if (this->format_list_sent)
-                {
-                    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
+                ClipboardVirtualChannel::InitializationState const cliprdr_initialization_state =
+                    this->cliprdr_channel->get_initialization_state();
 
-                    StaticOutStream<128> out_s;
-
-                    clipboard_header.emit(out_s);
-
-                    const size_t totalLength = out_s.get_offset();
-                    std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-                    this->cliprdr_channel->process_server_message(
-                                                  totalLength,
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
-                                                  | CHANNELS::CHANNEL_FLAG_LAST,
-                                                  out_s.get_bytes(),
-                                                  out_asynchronous_task);
-                    assert(!out_asynchronous_task);
+                if (REDEMPTION_UNLIKELY(
+                    !(unsigned(cliprdr_initialization_state)
+                      & (unsigned(ClipboardVirtualChannel::InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
+                       | unsigned(ClipboardVirtualChannel::InitializationState::WaitingClientFormatListPDUOrLockPDU)
+                       | unsigned(ClipboardVirtualChannel::InitializationState::Ready)
+                )))) {
+                    LOG(LOG_WARNING,
+                        "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST): "
+                            "Unexpected Client Format List PDU! (%d)",
+                        int(cliprdr_initialization_state));
                 }
-                else
-                {
-                    StaticOutStream<256> out_s;
-                    Cliprdr::format_list_serialize_with_header(
-                        out_s,
-                        Cliprdr::IsLongFormat(this->cliprdr_channel
-                                           && this->cliprdr_channel->use_long_format_names()),
-                        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
+                else {
+                    this->current_client_format_list_pdu_length = current_chunk_size;
+                    this->current_client_format_list_pdu        =
+                        std::make_unique<uint8_t[]>(current_chunk_size);
+                    ::memcpy(this->current_client_format_list_pdu.get(),
+                        current_chunk_pos, current_chunk_size);
+                    this->current_client_format_list_pdu_flags  = flags;
 
-                    const size_t totalLength = out_s.get_offset();
+                    if (this->format_list_sent)
+                    {
+                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
 
-                    this->cliprdr_channel->process_client_message(
-                            totalLength,
-                              CHANNELS::CHANNEL_FLAG_FIRST
-                            | CHANNELS::CHANNEL_FLAG_LAST
-                            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                            out_s.get_bytes());
+                        StaticOutStream<128> out_s;
 
-                    this->format_list_sent = true;
+                        clipboard_header.emit(out_s);
+
+                        const size_t totalLength = out_s.get_offset();
+                        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+                        this->cliprdr_channel->process_server_message(
+                                                      totalLength,
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      | CHANNELS::CHANNEL_FLAG_LAST,
+                                                      out_s.get_bytes(),
+                                                      out_asynchronous_task);
+                        assert(!out_asynchronous_task);
+                    }
+                    else
+                    {
+                        StaticOutStream<256> out_s;
+                        Cliprdr::format_list_serialize_with_header(
+                            out_s,
+                            Cliprdr::IsLongFormat(this->cliprdr_channel
+                                               && this->cliprdr_channel->use_long_format_names()),
+                            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
+
+                        const size_t totalLength = out_s.get_offset();
+
+                        this->cliprdr_channel->process_client_message(
+                                totalLength,
+                                  CHANNELS::CHANNEL_FLAG_FIRST
+                                | CHANNELS::CHANNEL_FLAG_LAST
+                                | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                out_s.get_bytes());
+
+                        this->format_list_sent = true;
+                    }
                 }
 
                 ret = false;
