@@ -62,6 +62,7 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launch
 template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_wabam_affinity>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_launcher_abort_delay>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_enable_crash_dump>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_handle_usage_limit>;

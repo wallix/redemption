@@ -956,6 +956,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_enable_wabam_affinity")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_wabam_affinity&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "session_probe_launcher_abort_delay")) {
             ::configs::parse_and_log(
                 context, key,

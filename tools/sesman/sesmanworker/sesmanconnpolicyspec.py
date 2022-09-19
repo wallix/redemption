@@ -149,6 +149,9 @@ cp_spec = {
         u'mod_rdp:session_probe_clipboard_based_launcher_short_delay': (
             'smart_launcher_short_delay', 50
         ),
+        u'mod_rdp:session_probe_clipboard_based_launcher_enable_wabam_affinity': (
+            'smart_launcher_enable_wabam_affinity', True
+        ),
         u'mod_rdp:session_probe_launcher_abort_delay': (
             'launcher_abort_delay', 2000
         ),

@@ -227,6 +227,9 @@ smart_launcher_long_delay = integer(min=0, default=500)
 #_advanced
 smart_launcher_short_delay = integer(min=0, default=50)
 
+#_advanced
+smart_launcher_enable_wabam_affinity = boolean(default=True)
+
 # (is in millisecond)
 #_advanced
 launcher_abort_delay = integer(min=0, max=300000, default=2000)

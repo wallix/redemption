@@ -629,6 +629,20 @@ void ModuleManager::create_mod_rdp(
                 , *this, name, std::move(client_sck), this->ini.get<cfg::debug::mod_rdp>()
                 , &ini.get_mutable_ref<cfg::context::auth_error_message>());
 
+        ChannelsAuthorizations channels_authorizations(
+                ini.get<cfg::mod_rdp::allow_channels>(),
+                ini.get<cfg::mod_rdp::deny_channels>());
+
+        if (ini.get<cfg::context::is_wabam>()
+         && ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_wabam_affinity>()
+         && channels_authorizations.is_authorized(CHANNELS::channel_names::cliprdr)
+         ) {
+            LOG(LOG_INFO, "Session Probe Clipboard Based Launche enables AM Affinity");
+            mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms =
+                std::chrono::milliseconds(120000);
+        }
+
+
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             std::move(socket_transport_ptr),
             *this,
@@ -641,9 +655,7 @@ void ModuleManager::create_mod_rdp(
             ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
-            ChannelsAuthorizations(
-                ini.get<cfg::mod_rdp::allow_channels>(),
-                ini.get<cfg::mod_rdp::deny_channels>()),
+            channels_authorizations,
             mod_rdp_params,
             tls_client_params,
             authentifier,

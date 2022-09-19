@@ -590,6 +590,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_clipboard_based_launcher_short_delay = 50
 
+# value: 0 or 1
+#_hidden
+#session_probe_clipboard_based_launcher_enable_wabam_affinity = 1
+
 # min = 0, max = 300000
 # (is in millisecond)
 #_hidden
