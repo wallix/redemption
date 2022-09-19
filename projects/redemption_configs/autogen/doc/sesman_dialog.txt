@@ -149,6 +149,7 @@ cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_de
 cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_start_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_long_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay ⇐ mod_rdp:session_probe_clipboard_based_launcher_short_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_clipboard_based_launcher_enable_wabam_affinity ⇐ mod_rdp:session_probe_clipboard_based_launcher_enable_wabam_affinity   [bool]
 cfg::mod_rdp::session_probe_launcher_abort_delay ⇐ mod_rdp:session_probe_launcher_abort_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_enable_crash_dump ⇐ mod_rdp:session_probe_enable_crash_dump   [bool]
 cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_usage_limit   [uint32_t]

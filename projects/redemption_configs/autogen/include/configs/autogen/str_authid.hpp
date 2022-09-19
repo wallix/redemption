@@ -74,6 +74,7 @@ namespace configs
         "mod_rdp:session_probe_clipboard_based_launcher_start_delay"_zv,
         "mod_rdp:session_probe_clipboard_based_launcher_long_delay"_zv,
         "mod_rdp:session_probe_clipboard_based_launcher_short_delay"_zv,
+        "mod_rdp:session_probe_clipboard_based_launcher_enable_wabam_affinity"_zv,
         "mod_rdp:session_probe_launcher_abort_delay"_zv,
         "mod_rdp:session_probe_enable_crash_dump"_zv,
         "mod_rdp:session_probe_handle_usage_limit"_zv,

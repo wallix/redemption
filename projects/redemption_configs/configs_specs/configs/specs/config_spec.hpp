@@ -402,6 +402,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.cpp="session_probe_clipboard_based_launcher_long_delay", .connpolicy="smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.cpp="session_probe_clipboard_based_launcher_short_delay", .connpolicy="smart_launcher_short_delay"}, set(50));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_clipboard_based_launcher_enable_wabam_affinity", .connpolicy="smart_launcher_enable_wabam_affinity"}, set(true));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{.cpp="session_probe_launcher_abort_delay", .connpolicy="launcher_abort_delay"}, set(2000));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_allow_multiple_handshake"}, set(false));

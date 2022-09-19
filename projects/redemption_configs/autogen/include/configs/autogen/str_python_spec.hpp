@@ -535,6 +535,9 @@ session_probe_clipboard_based_launcher_long_delay = integer(min=0, default=500)
 #_hidden
 session_probe_clipboard_based_launcher_short_delay = integer(min=0, default=50)
 
+#_hidden
+session_probe_clipboard_based_launcher_enable_wabam_affinity = boolean(default=True)
+
 # (in milliseconds)
 #_hidden
 session_probe_launcher_abort_delay = integer(min=0, max=300000, default=2000)
