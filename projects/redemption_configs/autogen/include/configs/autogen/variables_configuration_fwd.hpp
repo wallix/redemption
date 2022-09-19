@@ -185,6 +185,7 @@ namespace cfg
         struct smart_launcher_start_delay;
         struct smart_launcher_long_delay;
         struct smart_launcher_short_delay;
+        struct smart_launcher_enable_wabam_affinity;
         struct launcher_abort_delay;
         struct enable_crash_dump;
         struct handle_usage_limit;

@@ -250,6 +250,7 @@ public:
       , const ClientInfo & info
       , RedirectionInfo & redir_info
       , Random & gen
+      , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , LicenseApi & license_store
@@ -299,7 +300,7 @@ public:
         }())
     , mod(*this->socket_transport_ptr, gd
         , osd , events, session_log, front, info, redir_info, gen
-        , make_channels_authorizations(ini), mod_rdp_params, tls_client_params
+        , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
     , rdp_data(events)
@@ -895,6 +896,17 @@ ModPack create_mod_rdp(
         : nullptr
     };
 
+    ChannelsAuthorizations channels_authorizations = make_channels_authorizations(ini);
+
+    if (ini.get<cfg::context::is_wabam>()
+     && ini.get<cfg::session_probe::smart_launcher_enable_wabam_affinity>()
+     && channels_authorizations.is_authorized(CHANNELS::channel_names::cliprdr)
+     ) {
+        LOG(LOG_INFO, "Session Probe Clipboard Based Launche enables AM Affinity");
+        mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms =
+            std::chrono::milliseconds(120000);
+    }
+
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         osd,
         ini,
@@ -909,6 +921,7 @@ ModPack create_mod_rdp(
         client_info,
         redir_info,
         gen,
+        channels_authorizations,
         mod_rdp_params,
         tls_client_params,
         file_system_license_store,

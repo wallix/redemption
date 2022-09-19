@@ -86,6 +86,7 @@ namespace configs
         "session_probe:smart_launcher_start_delay"_zv,
         "session_probe:smart_launcher_long_delay"_zv,
         "session_probe:smart_launcher_short_delay"_zv,
+        "session_probe:smart_launcher_enable_wabam_affinity"_zv,
         "session_probe:launcher_abort_delay"_zv,
         "session_probe:enable_crash_dump"_zv,
         "session_probe:handle_usage_limit"_zv,
