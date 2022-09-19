@@ -118,7 +118,7 @@ private:
     unsigned int format_list_rejection_retry_count = 0;
     static unsigned int const FORMAT_LIST_REJECTION_RETRY_MAX = 3;
 
-private:
+public:
     enum class InitializationState : uint8_t
     {
         WaitingServerMonitorReadyPDU = 1,
@@ -127,8 +127,17 @@ private:
         WaitingClientFormatListPDUOrLockPDU = 8,
         WaitingServerFormatListResponsePDUOrLockPDU = 16,
         Ready = 32,
-    } initialization_state = InitializationState::WaitingServerMonitorReadyPDU;
+    };
 
+private:
+    InitializationState initialization_state = InitializationState::WaitingServerMonitorReadyPDU;
+
+public:
+    InitializationState get_initialization_state() const {
+        return this->initialization_state;
+    }
+
+private:
     enum class LockId : uint32_t;
     enum class StreamId : uint32_t;
     enum class FileGroupId : uint32_t;
