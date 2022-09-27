@@ -249,7 +249,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_NE(r, inner);
         RED_CHECK_NE(r, outer);
         RED_CHECK_NE(r, bad1);
-        RED_CHECK_NE(r, bad1);
+        RED_CHECK_NE(r, bad2);
         RED_CHECK_NE(r, bad3);
         RED_CHECK_NE(r, bad4);
         RED_CHECK_NE(r, bad5);
