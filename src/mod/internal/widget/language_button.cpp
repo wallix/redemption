@@ -176,13 +176,9 @@ void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
 }
 
-#include "core/error.hpp"
-
 void LanguageButton::rdp_input_invalidate(Rect clip)
 {
     WidgetButton::rdp_input_invalidate(clip);
-
-    Error{(ERR_AUTOMATIC_RECONNECTION_REQUIRED)};
 
     int ox = x() + language_button_border + (space_size - kbd_icon_cy - language_button_padding) / 2;
     int oy = y() + (cy() - kbd_icon_cy) / 2;
