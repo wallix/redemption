@@ -537,7 +537,7 @@ bool compare_binary_ipv4(const in_addr& in_addr, const char *ipv4)
     struct in_addr inaddr2;
 
     return inet_aton(ipv4, &inaddr2)
-        && ntohl(in_addr.s_addr) == ntohl(inaddr2.s_addr);
+        && in_addr.s_addr == inaddr2.s_addr;
 }
 
 bool compare_binary_ipv6(const in6_addr& in6_addr, const char *ipv6)
@@ -556,8 +556,8 @@ bool compare_binary_ip(const sockaddr_storage& ss, const char *ip, bool is_ipv6)
 {
     assert(ip);
 
-    return (is_ipv6) ?
-        compare_binary_ipv6(reinterpret_cast<const sockaddr_in6&>(ss).sin6_addr, ip)
+    return (is_ipv6)
+        ? compare_binary_ipv6(reinterpret_cast<const sockaddr_in6&>(ss).sin6_addr, ip)
         : compare_binary_ipv4(reinterpret_cast<const sockaddr_in&>(ss).sin_addr, ip);
 }
 
@@ -565,8 +565,8 @@ bool get_in_addr_from_ip(sockaddr_storage& ss, const char *ip, bool is_ipv6)
 {
     assert(ip);
 
-    return (is_ipv6) ?
-        inet_pton(AF_INET6, ip, &reinterpret_cast<sockaddr_in6 *>(&ss)->sin6_addr) == 1
+    return (is_ipv6)
+        ? inet_pton(AF_INET6, ip, &reinterpret_cast<sockaddr_in6 *>(&ss)->sin6_addr) == 1
         : inet_aton(ip, &reinterpret_cast<sockaddr_in *>(&ss)->sin_addr);
 }
 

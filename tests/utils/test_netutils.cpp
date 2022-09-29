@@ -146,8 +146,9 @@ RED_AUTO_TEST_CASE(Test_compare_binary_ipv6)
                                    ""));
 }
 
-RED_AUTO_TEST_CASE(Test_find_probe_client_ipv4)
+RED_AUTO_TEST_CASE(Test_find_probe_client)
 {
+    // ipv4 equal
     RED_CHECK(find_probe_client(",,0.0.0.0,,"sv,
                                 "0.0.0.0"_zv,
                                 false));
@@ -164,8 +165,7 @@ RED_AUTO_TEST_CASE(Test_find_probe_client_ipv4)
                                 "255.255.255.255"_zv,
                                 false));
 
-
-
+    // ipv4 not equal
     RED_CHECK(!find_probe_client("5.6.7.8"sv,
                                  "1.2.3.4"_zv,
                                  false));
@@ -181,10 +181,7 @@ RED_AUTO_TEST_CASE(Test_find_probe_client_ipv4)
     RED_CHECK(!find_probe_client(""sv,
                                  "0.10.100.0"_zv,
                                  false));
-}
-
-RED_AUTO_TEST_CASE(Test_find_probe_client_ipv6)
-{
+    // ipv6 equal
     RED_CHECK(find_probe_client("fe80::,::1"sv,
                                 "0000:0000:0000:0000:0000:0000:0000:0001"_zv,
                                 true));
@@ -201,8 +198,7 @@ RED_AUTO_TEST_CASE(Test_find_probe_client_ipv6)
                                 "2a0d:5d40:888:4176:d999:e759:962:19f"_zv,
                                 true));
 
-
-
+    // ipv6 not equal
     RED_CHECK(!find_probe_client("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,,,,,"sv,
                                  "::ffff:127.0.0.1"_zv,
                                  true));
@@ -218,6 +214,14 @@ RED_AUTO_TEST_CASE(Test_find_probe_client_ipv6)
     RED_CHECK(!find_probe_client(""sv,
                                  "fe80::1234"_zv,
                                  true));
+
+    // ipv4 and ipv6 equal
+    RED_CHECK(find_probe_client("168.63.129.16,fe80::1234:5678:9abc"sv,
+                                "168.63.129.16"_zv,
+                                false));
+    RED_CHECK(find_probe_client("168.63.129.16,fe80::1234:5678:9abc"sv,
+                                "fe80::1234:5678:9abc"_zv,
+                                true));
 }
 
 RED_AUTO_TEST_CASE(ParseIpConntrack_IPv4)
