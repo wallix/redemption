@@ -5122,6 +5122,10 @@ test-run tests/utils/test_translation :
   <library>src/utils/strutils.o
   $(MUSL_GETTEXT)
 ;
+test-run tests/utils/test_txt2d_to_rects :
+  $(REDEMPTION_TEST_PATH)/utils/test_txt2d_to_rects.cpp
+:
+;
 test-run tests/utils/test_utf :
   $(REDEMPTION_TEST_PATH)/utils/test_utf.cpp
 :
@@ -5632,6 +5636,7 @@ alias test_string_c : tests/utils/test_string_c ;
 alias test_strutils : tests/utils/test_strutils ;
 alias test_to_timeval : tests/utils/test_to_timeval ;
 alias test_translation : tests/utils/test_translation ;
+alias test_txt2d_to_rects : tests/utils/test_txt2d_to_rects ;
 alias test_utf : tests/utils/test_utf ;
 alias test_zlib : tests/utils/test_zlib ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
@@ -6030,6 +6035,7 @@ alias tests/utils.norec :
   tests/utils/test_strutils
   tests/utils/test_to_timeval
   tests/utils/test_translation
+  tests/utils/test_txt2d_to_rects
   tests/utils/test_utf
   tests/utils/test_zlib
 ;
