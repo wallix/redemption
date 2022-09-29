@@ -45,6 +45,18 @@ struct Ref<T const>
     Ref(T const&& ref) = delete;
     Ref(T&& ref) = delete;
 
+    Ref& operator=(Ref&&) noexcept = default;
+    Ref& operator=(Ref const&) noexcept = default;
+
+    Ref& operator=(T&& ref) = delete;
+    Ref& operator=(T const&& ref) = delete;
+
+    Ref& operator=(Ref<T> ref)
+    {
+        _p = &ref.get();
+        return *this;
+    }
+
     operator T const& () const noexcept { return *_p; }
     T const& get() const noexcept { return *_p; }
 
