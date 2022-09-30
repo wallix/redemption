@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(Test_compare_binary_ipv6)
 
 RED_AUTO_TEST_CASE(Test_find_probe_client)
 {
-    // ipv4 equal
+    // ipv4 found
     RED_CHECK(find_probe_client(",,0.0.0.0,,"sv,
                                 "0.0.0.0"_zv,
                                 false));
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(Test_find_probe_client)
                                 "255.255.255.255"_zv,
                                 false));
 
-    // ipv4 not equal
+    // ipv4 not found
     RED_CHECK(!find_probe_client("5.6.7.8"sv,
                                  "1.2.3.4"_zv,
                                  false));
@@ -181,7 +181,7 @@ RED_AUTO_TEST_CASE(Test_find_probe_client)
     RED_CHECK(!find_probe_client(""sv,
                                  "0.10.100.0"_zv,
                                  false));
-    // ipv6 equal
+    // ipv6 found
     RED_CHECK(find_probe_client("fe80::,::1"sv,
                                 "0000:0000:0000:0000:0000:0000:0000:0001"_zv,
                                 true));
@@ -197,8 +197,11 @@ RED_AUTO_TEST_CASE(Test_find_probe_client)
     RED_CHECK(find_probe_client("2a0d:5d40:0888:4176:d999:e759:0962:019f"sv,
                                 "2a0d:5d40:888:4176:d999:e759:962:19f"_zv,
                                 true));
+    RED_CHECK(find_probe_client("fe80::1234:5678:9abc%eth0"sv,
+                                "fe80::1234:5678:9abc%eth0"_zv,
+                                true));
 
-    // ipv6 not equal
+    // ipv6 not found
     RED_CHECK(!find_probe_client("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,,,,,"sv,
                                  "::ffff:127.0.0.1"_zv,
                                  true));
@@ -214,8 +217,11 @@ RED_AUTO_TEST_CASE(Test_find_probe_client)
     RED_CHECK(!find_probe_client(""sv,
                                  "fe80::1234"_zv,
                                  true));
+    RED_CHECK(!find_probe_client("fe80::1234:5678:9abc%eth0"sv,
+                                 "fe80::1234:5678:9abc%eth1"_zv,
+                                 true));
 
-    // ipv4 and ipv6 equal
+    // ipv4 and ipv6 found
     RED_CHECK(find_probe_client("168.63.129.16,fe80::1234:5678:9abc"sv,
                                 "168.63.129.16"_zv,
                                 false));
