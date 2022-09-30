@@ -968,19 +968,49 @@ bool find_probe_client(std::string_view probe_client_addresses,
     if (!probe_client_addresses.empty())
     {
         sockaddr_storage source_ss;
+        static_string<INET6_ADDRSTRLEN> probe_ip_buf;
+
+        auto is_found = [&](chars_view addr){
+            return probe_ip_buf.try_assign(addr)
+                && compare_binary_ip(source_ss, probe_ip_buf.c_str(), is_ipv6);
+        };
+
+        auto find_interface = [](chars_view ip){
+            return static_cast<char const*>(memchr(ip.data(), '%', ip.size()));
+        };
 
         if (get_in_addr_from_ip(source_ss, source_ip.c_str(), is_ipv6))
         {
-            static_string<INET6_ADDRSTRLEN> probe_ip_buf;
+            for (chars_view addr : split_with(probe_client_addresses, ','))
+            {
+                if (is_found(addr))
+                {
+                    return true;
+                }
+            }
+        }
+        // possibly ipv6 with interface (subnet): fe80::1234:5678:9abc%eth0
+        else if (char const* const interface_p1 = find_interface(source_ip))
+        {
+            if (!probe_ip_buf.try_assign(chars_view(source_ip.c_str(), interface_p1))
+             || !get_in_addr_from_ip(source_ss, probe_ip_buf.c_str(), is_ipv6))
+            {
+                return false;
+            }
+
+            auto n1 = static_cast<std::size_t>(source_ip.end() - interface_p1);
 
             for (chars_view addr : split_with(probe_client_addresses, ','))
             {
-                if (probe_ip_buf.try_assign(addr)
-                    && compare_binary_ip(source_ss,
-                                         probe_ip_buf.c_str(),
-                                         is_ipv6))
+                if (char const* interface_p2 = find_interface(addr))
                 {
-                    return true;
+                    auto n2 = static_cast<std::size_t>(addr.end() - interface_p2);
+                    if (n1 == n2
+                     && is_found({addr.data(), interface_p2})
+                     && 0 == memcmp(interface_p1 + 1, interface_p2 + 1, n1 - 1))
+                    {
+                        return true;
+                    }
                 }
             }
         }
