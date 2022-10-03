@@ -1078,29 +1078,6 @@ enable_x_context = boolean(default=True)
 #_advanced
 filename_percent_encoding = boolean(default=False)
 
-[metrics]
-
-#_advanced
-enable_rdp_metrics = boolean(default=False)
-
-#_advanced
-enable_vnc_metrics = boolean(default=False)
-
-#_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
-
-# (in seconds)
-#_advanced
-log_interval = integer(min=0, default=5)
-
-# (in hours)
-#_advanced
-log_file_turnover_interval = integer(min=0, default=24)
-
-# signature key to digest log metrics header info
-#_advanced
-sign_key = string(default='')
-
 [crypto]
 
 # (in hexadecimal format)

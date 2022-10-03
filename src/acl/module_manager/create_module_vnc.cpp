@@ -25,13 +25,10 @@
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "mod/vnc/vnc.hpp"
-#include "mod/metrics_hmac.hpp"
-#include "mod/vnc/vnc_metrics.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "transport/socket_transport.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
-#include "acl/module_manager/create_module_metrics.hpp"
 #include "acl/connect_to_target_host.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
@@ -43,29 +40,18 @@ namespace
 
 struct VncData
 {
-    using ModVncMetrics = ModMetrics<VNCMetrics>;
-
     VncData(EventContainer & events)
     : events_guard(events)
     {}
 
     ~VncData() = default;
 
-    void set_metrics(std::unique_ptr<ModVncMetrics> && metrics, std::chrono::seconds log_interval)
-    {
-        assert(!this->metrics);
-        this->metrics = std::move(metrics);
-        this->metrics->timed_log(this->events_guard, log_interval, "VNC Metrics Timer");
-    }
-
 private:
-    std::unique_ptr<ModVncMetrics> metrics;
-
     EventsGuard events_guard;
 };
 
 
-class ModVNCWithSocketAndMetrics final : public mod_api
+class ModVNCWithSocket final : public mod_api
 {
     struct FinalSocketTransport final : SocketTransport
     {
@@ -87,7 +73,7 @@ public:
         return this->socket_transport;
     }
 
-    ModVNCWithSocketAndMetrics(
+    ModVNCWithSocket(
         gdi::GraphicApi & drawable,
         Inifile & ini, SocketTransport::Name name, unique_fd sck,
         SocketTransport::Verbose verbose,
@@ -110,9 +96,7 @@ public:
         bool send_alt_ksym,
         bool cursor_pseudo_encoding_supported,
         ClientExecute* rail_client_execute,
-        VNCVerbose vnc_verbose,
-        VNCMetrics * metrics
-        )
+        VNCVerbose vnc_verbose)
     : socket_transport(name, std::move(sck),
                        ini.get<cfg::context::target_host>(),
                        checked_int(ini.get<cfg::context::target_port>()),
@@ -126,12 +110,12 @@ public:
           clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           layout, locks, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
-          rail_client_execute, vnc_verbose, metrics, session_log)
+          rail_client_execute, vnc_verbose, session_log)
     , vnc_data(events)
     , ini(ini)
     {}
 
-    ~ModVNCWithSocketAndMetrics()
+    ~ModVNCWithSocket()
     {
         log_siem::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str(),
@@ -248,13 +232,6 @@ ModPack create_mod_vnc(
             ini.get<cfg::context::tunneling_target_host>().c_str(),
             std::chrono::seconds(1), false);
 
-    bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
-        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
-
-    auto metrics = (!enable_metrics)
-        ? std::unique_ptr<VncData::ModVncMetrics>()
-        : VncData::ModVncMetrics::make_unique(events, ini, client_info.screen_info);
-
     const auto vnc_verbose = safe_cast<VNCVerbose>(ini.get<cfg::debug::mod_vnc>());
 
     std::unique_ptr<RailModuleHostMod> host_mod {
@@ -271,7 +248,7 @@ ModPack create_mod_vnc(
         : nullptr
     };
 
-    auto new_mod = std::make_unique<ModVNCWithSocketAndMetrics>(
+    auto new_mod = std::make_unique<ModVNCWithSocket>(
         host_mod ? host_mod->proxy_gd() : drawable,
         ini,
         "VNC Target"_sck_name,
@@ -299,13 +276,8 @@ ModPack create_mod_vnc(
         ini.get<cfg::mod_vnc::server_unix_alt>(),
         ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),
         (client_info.remote_program ? &rail_client_execute : nullptr),
-        vnc_verbose,
-        enable_metrics ? &metrics->protocol_metrics : nullptr
+        vnc_verbose
     );
-
-    if (enable_metrics) {
-        new_mod->vnc_data.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
-    }
 
     auto tmp_psocket_transport = &new_mod->get_transport();
 

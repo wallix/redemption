@@ -430,7 +430,7 @@ public:
             trans, gd, osd, event_manager.get_events(), session_log, front, client_info,
             redir_info, js_rand, ChannelsAuthorizations("*"_zv, ""_zv),
             rdp_params, TLSClientParams{},
-            license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
+            license_store, ini, nullptr, this->mod_rdp_factory);
     }
 
     void write_first_packet()

@@ -55,7 +55,6 @@
 
 
 class UltraDSM;
-class VNCMetrics;
 class ClientExecute;
 
 // got extracts of VNC documentation from
@@ -268,7 +267,6 @@ private:
     EventsGuard events_guard;
     EventRef clipboard_timeout_timer;
 
-    VNCMetrics * metrics;
     SessionLogApi& session_log;
     /** @brief type of VNC authentication */
     enum VncAuthType : int32_t {
@@ -318,7 +316,6 @@ public:
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
-           , [[maybe_unused]] VNCMetrics * metrics
            , SessionLogApi& session_log);
 
     ~mod_vnc();

@@ -23,7 +23,6 @@
 
 #include "mod/vnc/vnc.hpp"
 #include "mod/vnc/dsm.hpp"
-#include "mod/vnc/vnc_metrics.hpp"
 #include "mod/vnc/newline_convert.hpp"
 #include "core/log_id.hpp"
 #include "core/RDP/rdp_pointer.hpp"
@@ -39,12 +38,6 @@
 #include <openssl/tls1.h>
 
 using namespace std::literals::chrono_literals;
-
-#ifndef __EMSCRIPTEN__
-# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
-#else
-# define IF_ENABLE_METRICS(m) do {} while(0)
-#endif
 
 
 void mod_vnc::VncTransport::send(bytes_view buffer)
@@ -96,7 +89,6 @@ mod_vnc::mod_vnc( Transport & t
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
-           , [[maybe_unused]] VNCMetrics * metrics
            , SessionLogApi& session_log
            )
     : front(front)
@@ -120,7 +112,6 @@ mod_vnc::mod_vnc( Transport & t
     , gd(gd)
     , events_guard(events)
 #ifndef __EMSCRIPTEN__
-    , metrics(metrics)
     , session_log(session_log)
 #endif
     , choosenAuth(VNC_AUTH_INVALID)
@@ -199,7 +190,6 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     out_copy_encrypted(make_bounded_array_view(this->password).first<64>());
 
     this->t.send(out_stream.get_produced_bytes());
-    IF_ENABLE_METRICS(data_from_client(out_stream.get_offset()));
     // sec result
 
     return true;
@@ -296,15 +286,12 @@ void mod_vnc::rdp_input_mouse(int device_flags, int x, int y)
 
     if (device_flags & MOUSE_FLAG_MOVE) {
         this->mouse.move(out_stream, x, y);
-        IF_ENABLE_METRICS(mouse_move(x, y));
     }
     else if (device_flags & MOUSE_FLAG_BUTTON1) {
         this->mouse.click(out_stream, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
-        IF_ENABLE_METRICS(right_click());
     }
     else if (device_flags & MOUSE_FLAG_BUTTON2) {
         this->mouse.click(out_stream, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
-        IF_ENABLE_METRICS(left_click());
     }
     else if (device_flags & MOUSE_FLAG_BUTTON3) {
         this->mouse.click(out_stream, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
@@ -377,8 +364,6 @@ void mod_vnc::send_keyevents(KeymapSym::Keys keys)
     }
 
     this->t.send(stream.get_produced_bytes());
-    IF_ENABLE_METRICS(key_pressed());
-    IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 }
 
 void mod_vnc::rdp_input_clip_data(bytes_view data)
@@ -395,8 +380,6 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
             stream.out_skip_bytes(str.size());  // text
 
             this->t.send(stream.get_produced_bytes());
-            IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
-            IF_ENABLE_METRICS(clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset()));
         };
 
         if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
@@ -474,7 +457,6 @@ void mod_vnc::update_screen(Rect r, uint8_t incr) {
     stream.out_uint16_be(r.cx);
     stream.out_uint16_be(r.cy);
     this->t.send(stream.get_produced_bytes());
-    IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 }
 
 void mod_vnc::rdp_input_invalidate(Rect r) {
@@ -589,7 +571,6 @@ void mod_vnc::draw_event()
     }
 
     uint64_t const data_server_after = this->server_data_buf.remaining();
-    IF_ENABLE_METRICS(data_from_server(data_server_before - data_server_after));
 
     LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO,
         "Remaining in buffer : %" PRIu64, data_server_after);
@@ -912,7 +893,6 @@ bool mod_vnc::draw_event_impl()
             this->t.send(handshakeAnswer, 12);
 
             this->server_data_buf.advance(protocol_version_len);
-            IF_ENABLE_METRICS(data_from_client(12));
 
             this->state = WAIT_SECURITY_TYPES_LEVEL;
         }
@@ -1121,7 +1101,6 @@ bool mod_vnc::draw_event_impl()
 
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Sending Password");
             this->t.send(random_buf);
-            IF_ENABLE_METRICS(data_from_client(16));
         }
         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;
         [[fallthrough]];
@@ -1236,7 +1215,6 @@ bool mod_vnc::draw_event_impl()
 
     case SERVER_INIT:
         this->t.send("\x01", 1); // share flag
-        IF_ENABLE_METRICS(data_from_client(1));
         this->state = SERVER_INIT_RESPONSE;
         [[fallthrough]];
 
@@ -1339,7 +1317,6 @@ bool mod_vnc::draw_event_impl()
 
             stream.out_copy_bytes(pixel_format, 16);
             this->t.send(stream.get_produced_bytes());
-            IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 
             this->bpp = BitsPerPixel{16};
             this->depth  = 16;
@@ -1467,7 +1444,6 @@ bool mod_vnc::draw_event_impl()
             assert(4u + number_of_encodings * 4u == stream.get_offset());
 
             this->t.send(stream.get_data(), 4u + number_of_encodings * 4u);
-            IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
         }
 
 
@@ -1591,7 +1567,6 @@ void mod_vnc::send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, ui
     const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get_by_name(mod_channel_name);
     if (front_channel) {
         this->front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
-        IF_ENABLE_METRICS(clipboard_data_from_client(chunk_size));
     }
 }
 

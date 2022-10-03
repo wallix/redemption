@@ -30,7 +30,6 @@ Author(s): Jonathan Poelen
 class ClientExecute;
 class FrontAPI;
 class Transport;
-class VNCMetrics;
 class AuthApi;
 class SessionLogApi;
 class KeyLayout;
@@ -64,6 +63,5 @@ std::unique_ptr<mod_api> new_mod_vnc(
     bool send_alt_ksym,
     bool cursor_pseudo_encoding_supported,
     ClientExecute* rail_client_execute,
-    VNCVerbose verbose,
-    VNCMetrics * metrics
+    VNCVerbose verbose
 );

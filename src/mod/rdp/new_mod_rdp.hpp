@@ -34,7 +34,6 @@ class LicenseApi;
 class Transport;
 class RedirectionInfo;
 class Random;
-class RDPMetrics;
 class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
@@ -61,7 +60,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     const TLSClientParams& tls_client_params,
     LicenseApi& license_store,
     ModRdpVariables vars,
-    RDPMetrics * metrics,
     FileValidatorService * file_validator_service,
     ModRdpFactory& mod_rdp_factory
 );

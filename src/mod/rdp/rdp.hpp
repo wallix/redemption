@@ -100,14 +100,10 @@
 #endif
 
 #ifdef __EMSCRIPTEN__
-class RDPMetrics;
 struct FileValidatorService;
-# define IF_ENABLE_METRICS(m) do {} while(0)
 # include "mod/rdp/windowing_api.hpp"
 #else
-# include "mod/rdp/rdp_metrics.hpp"
 # include "mod/file_validator_service.hpp"
-# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
 # include "mod/rdp/channels/rail_session_manager.hpp"
 # include "mod/rdp/channels/rail_channel.hpp"
 # include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
@@ -166,7 +162,6 @@ public:
     int auth_channel_chanid     = 0;
     int checkout_channel_flags  = 0;
     int checkout_channel_chanid = 0;
-    RDPMetrics * metrics;
 
 private:
     Random & gen;
@@ -384,8 +379,9 @@ private:
 public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
-        const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
-        Random & gen, RDPMetrics * metrics,
+        const ModRDPParams & mod_rdp_params,
+        const RDPVerbose verbose,
+        Random & gen,
         gdi::OsdApi & osd,
         EventContainer & events,
         SessionLogApi& session_log,
@@ -398,7 +394,6 @@ public:
                         && !mod_rdp_params.ignore_auth_channel)
     , auth_channel(mod_rdp_params.auth_channel)
     , checkout_channel(mod_rdp_params.checkout_channel)
-    , metrics(metrics)
     , gen(gen)
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params, mod_rdp_params.perform_automatic_reconnection)
@@ -1639,23 +1634,18 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
-                IF_ENABLE_METRICS(set_client_cliprdr_metrics(chunk.clone(), length, flags));
                 this->send_to_mod_cliprdr_channel(chunk, length, flags, front, stc);
                 break;
             case channel_names::rail:
-                IF_ENABLE_METRICS(client_rail_channel_data(length));
                 this->send_to_mod_rail_channel(chunk, length, flags, front, stc, vars, client_rail_caps);
                 break;
             case channel_names::rdpdr:
-                IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags, front, stc, client_general_caps, client_name);
                 break;
             case channel_names::drdynvc:
-                IF_ENABLE_METRICS(client_other_channel_data(length));
                 this->send_to_mod_drdynvc_channel(chunk, length, flags, front, stc);
                 break;
             default:
-                IF_ENABLE_METRICS(client_other_channel_data(length));
                 this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
         }
     }
@@ -1967,7 +1957,6 @@ class mod_rdp final : public mod_api, public rdp_api
 #ifndef __EMSCRIPTEN__
     bool const session_probe_start_launch_timeout_timer_only_after_logon;
 
-    RDPMetrics * metrics;
     FileValidatorService * file_validator_service;
 #endif
 
@@ -2013,7 +2002,6 @@ public:
       , const TLSClientParams & tls_client_params
       , LicenseApi & license_store
       , ModRdpVariables vars
-      , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpFactory& mod_rdp_factory
     )
@@ -2021,7 +2009,7 @@ public:
         : spvc_callbacks(*this, osd)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            gen, metrics, osd, events, session_log,
+            gen, osd, events, session_log,
             file_validator_service,
             mod_rdp_factory,
             spvc_callbacks,
@@ -2099,7 +2087,6 @@ public:
         , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
         #ifndef __EMSCRIPTEN__
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
-        , metrics(metrics)
         , file_validator_service(file_validator_service)
         #endif
     {
@@ -2526,8 +2513,6 @@ private:
                 this->send_input_scancode(event_time, flags, scancode);
             }
 
-            IF_ENABLE_METRICS(key_pressed());
-
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_scancode(flags, scancode);
             }
@@ -2541,7 +2526,6 @@ public:
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input_unicode(flag, unicode);
-            IF_ENABLE_METRICS(key_pressed());
         }
     }
 
@@ -2560,8 +2544,6 @@ public:
             this->send_input_mouse(device_flags, x, y);
 
 #ifndef __EMSCRIPTEN__
-            IF_ENABLE_METRICS(mouse_event(device_flags, x, y));
-
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_mouse(device_flags, x, y);
             }
@@ -2709,7 +2691,6 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, writable_u8_array_view array)
     {
         InStream stream(array);
-        IF_ENABLE_METRICS(server_main_channel_data(stream.in_remain()));
 
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
 
@@ -3031,8 +3012,6 @@ public:
 
         X224::DT_TPDU_Recv x224(stream);
 
-        IF_ENABLE_METRICS(server_main_channel_data(stream.in_remain()));
-
         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
         if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
@@ -3100,13 +3079,11 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service);
             }
             else if (mod_channel.name == channel_names::rail) {
-                IF_ENABLE_METRICS(server_rail_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rail_event(
@@ -3114,13 +3091,11 @@ public:
                     this->front, stc, this->vars, this->client_rail_caps);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
-                IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->client_general_caps, this->client_name);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                IF_ENABLE_METRICS(server_other_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc);
@@ -3128,7 +3103,6 @@ public:
             else {
                 LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
                     LOG_INFO, "mod_rdp::process unknown channel: mod_channel.name=%" PRIX64 " %s",uint64_t(mod_channel.name), mod_channel.name);
-                IF_ENABLE_METRICS(server_other_channel_data(length));
                 this->channels.process_unknown_channel_event(mod_channel, sec.payload, length, flags, chunk_size, this->front);
             }
 #else
@@ -6384,7 +6358,6 @@ private:
             [this](StreamSize<0> /*maxlen*/, OutStream &, std::size_t total_pdu_sz) {
                 (void)this;
                 (void)total_pdu_sz;
-                IF_ENABLE_METRICS(client_main_channel_data(total_pdu_sz));
             }
         );
     }
@@ -6516,5 +6489,3 @@ private:
 
     friend RdpSessionProbeWrapper;
 };
-
-#undef IF_ENABLE_METRICS

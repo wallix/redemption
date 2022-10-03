@@ -38,7 +38,6 @@
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
-#include "acl/module_manager/create_module_metrics.hpp"
 #include "acl/connect_to_target_host.hpp"
 #include "transport/failure_simulation_socket_transport.hpp"
 #include "transport/socket_transport.hpp"
@@ -82,8 +81,6 @@ ChannelsAuthorizations make_channels_authorizations(Inifile const& ini)
 
 struct RdpData
 {
-    using ModRdpMetrics = ModMetrics<RDPMetrics>;
-
     struct FileValidator
     {
         struct CtxError {
@@ -101,7 +98,7 @@ struct RdpData
             {
                 size_t r = FileTransport::do_partial_read(buffer, len);
                 if (r == 0) {
-                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
+                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: RDPData::FileValidator::do_partial_read: No data read!");
                     this->throw_error(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
                 }
                 return r;
@@ -151,13 +148,6 @@ public:
 
     ~RdpData() = default;
 
-    void set_metrics(std::unique_ptr<ModRdpMetrics> && metrics, std::chrono::seconds log_interval)
-    {
-        assert(!this->metrics);
-        this->metrics = std::move(metrics);
-        this->metrics->timed_log(this->events_guard, log_interval, "RDP Metrics Timer");
-    }
-
     void set_file_validator(std::unique_ptr<RdpData::FileValidator>&& file_validator, mod_rdp& mod)
     {
         assert(!this->file_validator);
@@ -172,15 +162,13 @@ public:
     }
 
 private:
-    std::unique_ptr<ModRdpMetrics> metrics;
-
     EventsGuard events_guard;
 
     std::unique_ptr<FileValidator> file_validator;
 };
 
 
-class ModRDPWithSocketAndMetrics final : public mod_api
+class ModRDPWithSocket final : public mod_api
 {
     struct FinalSocketTransport final : SocketTransport
     {
@@ -235,7 +223,7 @@ public:
         return this->rdp_factory;
     }
 
-    ModRDPWithSocketAndMetrics(
+    ModRDPWithSocket(
         gdi::OsdApi & osd
       , Inifile & ini
       , SocketTransport::Name name
@@ -254,7 +242,6 @@ public:
       , const TLSClientParams & tls_client_params
       , LicenseApi & license_store
       , ModRdpVariables vars
-      , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
     )
@@ -281,7 +268,7 @@ public:
 
             const bool is_read_error_simulation
                 = ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport;
-            LOG(LOG_WARNING, "ModRDPWithSocketAndMetrics::ModRDPWithSocketAndMetrics: Mod_rdp use Failure Simulation Socket Transport (mode=%s)",
+            LOG(LOG_WARNING, "ModRDPWithSocket::ModRDPWithSocket: Mod_rdp use Failure Simulation Socket Transport (mode=%s)",
                 is_read_error_simulation ? "SimulateErrorRead" : "SimulateErrorWrite");
 
             return new FailureSimulationSocketTransport( /*NOLINT*/
@@ -301,12 +288,12 @@ public:
         , osd , events, session_log, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
-        , vars, metrics, file_validator_service, this->get_rdp_factory())
+        , vars, file_validator_service, this->get_rdp_factory())
     , rdp_data(events)
     , ini(ini)
     {}
 
-    ~ModRDPWithSocketAndMetrics()
+    ~ModRDPWithSocket()
     {
         log_siem::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str(),
@@ -759,15 +746,6 @@ ModPack create_mod_rdp(
     }
     // ================== End FileValidator =========================
 
-    // ================== Metrics =========================
-    bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
-        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
-
-    auto metrics = (!enable_metrics)
-        ? std::unique_ptr<RdpData::ModRdpMetrics>()
-        : RdpData::ModRdpMetrics::make_unique(events, ini, client_info.screen_info);
-    // ================== End Metrics ======================
-
 
     // ================== Application Driver =========================
     char const * application_driver_exe_or_file            = nullptr;
@@ -912,7 +890,7 @@ ModPack create_mod_rdp(
             std::chrono::milliseconds(120000);
     }
 
-    auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
+    auto new_mod = std::make_unique<ModRDPWithSocket>(
         osd,
         ini,
         "RDP Target"_sck_name,
@@ -931,17 +909,12 @@ ModPack create_mod_rdp(
         tls_client_params,
         file_system_license_store,
         ini,
-        enable_metrics ? &metrics->protocol_metrics : nullptr,
         enable_validator ? &file_validator->service : nullptr,
         ini.get<cfg::debug::mod_rdp_use_failure_simulation_socket_transport>()
     );
 
     if (enable_validator) {
         new_mod->rdp_data.set_file_validator(std::move(file_validator), new_mod->mod);
-    }
-
-    if (enable_metrics) {
-        new_mod->rdp_data.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
     }
 
     {

@@ -256,9 +256,7 @@ int main(int argc, char** argv)
               , true           /* support Cursor Pseudo-Encoding */
               , nullptr
               , safe_cast<VNCVerbose>(uint32_t(verbose))
-              | VNCVerbose::connection
-              | VNCVerbose::basic_trace
-              , nullptr);
+              | VNCVerbose::connection | VNCVerbose::basic_trace);
         }) ? 1 : 0;
     }
 
@@ -316,7 +314,7 @@ int main(int argc, char** argv)
                 front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, licensestore,
-                ini, nullptr, nullptr, mod_rdp_factory);
+                ini, nullptr, mod_rdp_factory);
         });
     };
 

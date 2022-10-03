@@ -104,8 +104,6 @@ void config_spec_definition(Writer && W)
         "icap_server_down",
         "icap_server_up",
 
-        "metrics",
-
         "crypto",
         "websocket",
 
@@ -743,16 +741,6 @@ void config_spec_definition(Writer && W)
         });
 
         W.member(external, vnc_connpolicy | advanced_in_connpolicy, L, type_<VncTunnelingType>(), spec::type_<std::string>(), names{"tunneling_type"}, set(VncTunnelingType::pxssh), desc{"Only for debugging purposes."});
-    });
-
-    W.section("metrics", [&]
-    {
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_rdp_metrics"}, set(false));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_vnc_metrics"}, set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), names{"log_dir_path"}, set(CPP_EXPR(app_path(AppPath::Metrics))));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"log_interval"}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), names{"log_file_turnover_interval"}, set(24));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"sign_key"}, desc{"signature key to digest log metrics header info"});
     });
 
     W.section("file_verification", [&]

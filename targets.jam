@@ -109,7 +109,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget/wait.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -234,7 +233,6 @@ exe headlessclient :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -391,7 +389,6 @@ exe rdpclient :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -537,15 +534,6 @@ lib libredrec :
   $(LIB_DEPENDENCIES)
   <define>ZLIB_CONST
 ;
-lib libiametrics :
-  src/lib/iametrics.cpp.lib.o
-:
-  <library>log.o
-  <library>src/mod/metrics.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/strutils.o
-  $(LIB_DEPENDENCIES)
-;
 lib libscytale :
   src/lib/scytale.cpp.lib.o
 :
@@ -575,11 +563,6 @@ obj src/lib/do_recorder.cpp.lib.o :
 :
   $(LIB_DEPENDENCIES)
   <define>ZLIB_CONST
-;
-obj src/lib/iametrics.cpp.lib.o :
-  $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp
-:
-  $(LIB_DEPENDENCIES)
 ;
 obj src/lib/scytale.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/scytale.cpp
@@ -671,7 +654,6 @@ test-run tests/acl/test_license_api :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -1078,7 +1060,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -1179,7 +1160,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -1253,7 +1233,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -2344,7 +2323,6 @@ test-run tests/front/test_front :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -2530,15 +2508,6 @@ test-run tests/lib/test_do_recorder :
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/lib/test_iametrics :
-  $(REDEMPTION_TEST_PATH)/lib/test_iametrics.cpp
-:
-  <library>src/lib/iametrics.o
-  <library>src/mod/metrics.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
 ;
 test-run tests/lib/test_scytale :
   $(REDEMPTION_TEST_PATH)/lib/test_scytale.cpp
@@ -3973,7 +3942,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -4012,21 +3980,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(MUSL_GETTEXT)
-;
-test-run tests/mod/rdp/test_rdp_metrics :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_metrics.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/mod/metrics.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/mod/rdp/test_rdp_negociation :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_negociation.cpp
@@ -4067,15 +4020,6 @@ test-run tests/mod/test_file_validator_service :
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/mod/test_metrics_hmac :
-  $(REDEMPTION_TEST_PATH)/mod/test_metrics_hmac.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/mod/vnc/encoder/test_hextile :
@@ -4148,7 +4092,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
-  <library>src/mod/metrics.o
   <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
@@ -4161,7 +4104,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -4170,18 +4112,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <define>ZLIB_CONST
-;
-test-run tests/mod/vnc/test_vnc_metrics :
-  $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc_metrics.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/mod/metrics.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/proxy_recorder/test_extract_user_domain :
   $(REDEMPTION_TEST_PATH)/proxy_recorder/test_extract_user_domain.cpp
@@ -5204,7 +5134,6 @@ obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/credis.o : $(REDEMPTION_SRC_PATH)/lib/credis.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
-obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
@@ -5256,7 +5185,6 @@ obj src/mod/internal/widget/wab_close.o : $(REDEMPTION_SRC_PATH)/mod/internal/wi
 obj src/mod/internal/widget/wait.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/wait.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
-obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
 obj src/mod/rdp/channels/rdp_session_probe_wrapper.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdp_session_probe_wrapper.cpp ;
 obj src/mod/rdp/channels/rdpdr_file_system_drive_manager.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdpdr_file_system_drive_manager.cpp ;
@@ -5481,7 +5409,6 @@ alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_credis : tests/lib/test_credis ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
-alias test_iametrics : tests/lib/test_iametrics ;
 alias test_scytale : tests/lib/test_scytale ;
 alias test_close_mod : tests/mod/internal/test_close_mod ;
 alias test_copy_paste : tests/mod/internal/test_copy_paste ;
@@ -5523,16 +5450,13 @@ alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_m
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
 alias test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel ;
 alias test_rdp : tests/mod/rdp/test_rdp ;
-alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
 alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
 alias test_file_validator_service : tests/mod/test_file_validator_service ;
-alias test_metrics_hmac : tests/mod/test_metrics_hmac ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
 alias test_pointer_loader_vnc : tests/mod/vnc/encoder/test_pointer_loader_vnc ;
 alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
 alias test_newline_convert : tests/mod/vnc/test_newline_convert ;
 alias test_vnc : tests/mod/vnc/test_vnc ;
-alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
 alias test_extract_user_domain : tests/proxy_recorder/test_extract_user_domain ;
 alias test_proxy_recorder : tests/proxy_recorder/test_proxy_recorder ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
@@ -5846,7 +5770,6 @@ alias tests/keyboard.norec :
 alias tests/lib.norec :
   tests/lib/test_credis
   tests/lib/test_do_recorder
-  tests/lib/test_iametrics
   tests/lib/test_scytale
 ;
 alias tests/mod/internal.norec :
@@ -5896,12 +5819,10 @@ alias tests/mod/rdp/channels.norec :
 ;
 alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp
-  tests/mod/rdp/test_rdp_metrics
   tests/mod/rdp/test_rdp_negociation
 ;
 alias tests/mod.norec :
   tests/mod/test_file_validator_service
-  tests/mod/test_metrics_hmac
 ;
 alias tests/mod/vnc/encoder.norec :
   tests/mod/vnc/encoder/test_hextile
@@ -5911,7 +5832,6 @@ alias tests/mod/vnc/encoder.norec :
 alias tests/mod/vnc.norec :
   tests/mod/vnc/test_newline_convert
   tests/mod/vnc/test_vnc
-  tests/mod/vnc/test_vnc_metrics
 ;
 alias tests/proxy_recorder.norec :
   tests/proxy_recorder/test_extract_user_domain

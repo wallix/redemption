@@ -22,7 +22,6 @@
 #include <cassert>
 
 #ifdef IN_IDE_PARSER
-# define METRICS_PATH "/var/rdpproxy/recorded/metrics"
 # define RECORD_PATH "/var/rdpproxy/recorded"
 # define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 # define VIDEO_PATH "/tmp"
@@ -56,7 +55,6 @@ zstring_view app_path(AppPath k) noexcept
 {
     switch (k)
     {
-        case AppPath::Metrics: return METRICS_PATH ""_zv;
         case AppPath::Record: return RECORD_PATH ""_zv;
         case AppPath::RecordTmp: return RECORD_TMP_PATH ""_zv;
         case AppPath::Video: return VIDEO_PATH ""_zv;

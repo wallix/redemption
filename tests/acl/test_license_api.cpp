@@ -190,7 +190,7 @@ namespace
                 trans, front.gd(), osd, event_manager.get_events(),
                 session_log, front, info, redir_info, gen, channels_authorizations,
                 get_mod_rdp_params(), tls_client_params, license_store, ini,
-                nullptr, nullptr, mod_rdp_factory);
+                nullptr, mod_rdp_factory);
             LOG(LOG_INFO, "--- new mod");
             return mod;
         }

@@ -41,8 +41,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     bool send_alt_ksym,
     bool cursor_pseudo_encoding_supported,
     ClientExecute* rail_client_execute,
-    VNCVerbose verbose,
-    VNCMetrics * metrics
+    VNCVerbose verbose
 )
 {
     return std::make_unique<mod_vnc>(
@@ -50,5 +49,5 @@ std::unique_ptr<mod_api> new_mod_vnc(
         front_width, front_height, clipboard_up, clipboard_down, encodings,
         mod_vnc::ClipboardEncodingType::UTF8, VncBogusClipboardInfiniteLoop::delayed,
         layout, locks, server_is_macos, send_alt_ksym,
-        cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics, session_log);
+        cursor_pseudo_encoding_supported, rail_client_execute, verbose, session_log);
 }

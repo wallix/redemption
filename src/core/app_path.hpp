@@ -25,7 +25,6 @@
 
 enum class AppPath
 {
-    Metrics,
     Record,
     RecordTmp,
     Video,

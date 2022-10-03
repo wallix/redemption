@@ -194,7 +194,6 @@ RED_AUTO_TEST_CASE(TestFront)
     LCGRandom gen2;
 
     NullLicenseStore license_store;
-    class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
     ModRdpFactory mod_rdp_factory;
 
@@ -206,7 +205,7 @@ RED_AUTO_TEST_CASE(TestFront)
     auto mod = new_mod_rdp(
         t, front.gd(), osd, events, session_log,
         front, info, redir_info, gen2, channels_authorizations, mod_rdp_params,
-        tls_client_params, license_store, ini, metrics, file_validator_service,
+        tls_client_params, license_store, ini, file_validator_service,
         mod_rdp_factory);
 
     // incoming connexion data

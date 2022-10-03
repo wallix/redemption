@@ -439,7 +439,6 @@ public:
                   , this->licensestore
                   , this->ini
                   , nullptr
-                  , nullptr
                   , this->mod_rdp_factory
                 );
 
@@ -476,7 +475,6 @@ public:
                   , true                                    // support Cursor Pseudo-encoding
                   , nullptr
                   , VNCVerbose()
-                  , nullptr
                 );
                 break;
             }

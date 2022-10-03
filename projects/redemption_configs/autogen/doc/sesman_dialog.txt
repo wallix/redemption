@@ -357,7 +357,6 @@ cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile ⇐ st
 
 
 
-
 cfg::crypto::encryption_key ⇐ encryption_key   [std::array<unsigned char, 32>]
 cfg::crypto::sign_key ⇐ sign_key   [std::array<unsigned char, 32>]
 

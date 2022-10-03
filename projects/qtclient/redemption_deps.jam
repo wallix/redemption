@@ -34,7 +34,6 @@ add_obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy
 add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
 add_obj src/mod/internal/widget/button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/button.cpp ;
 add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
-add_obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 add_obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
 add_obj src/mod/rdp/channels/rdpdr_file_system_drive_manager.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdpdr_file_system_drive_manager.cpp ;
 add_obj src/mod/rdp/channels/rdp_session_probe_wrapper.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdp_session_probe_wrapper.cpp ;
@@ -131,7 +130,6 @@ requirement_list += <library>src/mod/internal/copy_paste.o ;
 requirement_list += <library>src/mod/internal/replay_mod.o ;
 requirement_list += <library>src/mod/internal/widget/button.o ;
 requirement_list += <library>src/mod/internal/widget/label.o ;
-requirement_list += <library>src/mod/metrics.o ;
 requirement_list += <library>src/mod/rdp/channels/cliprdr_channel.o ;
 requirement_list += <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o ;
 requirement_list += <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o ;

@@ -20,8 +20,6 @@ cd "../.."
 disable_sources=''
 for f in \
     src/mod/rdp/channels/*.hpp \
-    src/mod/rdp/rdp_metrics.hpp \
-    src/mod/metrics.hpp \
     src/RAIL/client_execute.hpp \
     src/core/RDP/capabilities/rail.hpp \
     src/core/RDP/caches/bmpcachepersister.hpp \

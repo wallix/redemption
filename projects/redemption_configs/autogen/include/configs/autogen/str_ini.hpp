@@ -1266,32 +1266,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #filename_percent_encoding = 0
 
-[metrics]
-
-# value: 0 or 1
-#_advanced
-#enable_rdp_metrics = 0
-
-# value: 0 or 1
-#_advanced
-#enable_vnc_metrics = 0
-
-# maxlen = 4096
-#_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
-
-# (in seconds)
-#_advanced
-#log_interval = 5
-
-# (in hours)
-#_advanced
-#log_file_turnover_interval = 24
-
-# signature key to digest log metrics header info
-#_advanced
-#sign_key = 
-
 [crypto]
 
 # (hexadecimal string of length 64)
