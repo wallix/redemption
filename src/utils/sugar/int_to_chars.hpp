@@ -82,7 +82,7 @@ private:
 };
 
 
-// to decimal chars
+/// To decimal chars.
 //@{
 template<class T>
 int_to_chars_result int_to_decimal_chars(T n) noexcept;
@@ -98,7 +98,7 @@ void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept;
 //@}
 
 
-// to hexadecimal upper case chars
+/// To hexadecimal upper case chars.
 //@{
 template<class T>
 int_to_chars_result int_to_hexadecimal_upper_chars(T n) noexcept;
@@ -114,7 +114,7 @@ void int_to_hexadecimal_upper_zchars(int_to_zchars_result& out, T n) noexcept;
 //@}
 
 
-// to hexadecimal lower case chars
+/// To hexadecimal lower case chars.
 //@{
 template<class T>
 int_to_chars_result int_to_hexadecimal_lower_chars(T n) noexcept;
@@ -130,7 +130,8 @@ void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noexcept;
 //@}
 
 
-// to fixed hexadecimal upper case chars
+/// To fixed hexadecimal upper case chars.
+/// \tparam NbBytes number of no-significative bytes display. -1 is equivalent to sizeof(T)
 //@{
 template<int NbBytes = -1, class T>
 int_to_chars_result int_to_fixed_hexadecimal_upper_chars(T n) noexcept;
@@ -149,7 +150,8 @@ char* int_to_fixed_hexadecimal_upper_chars(char* out, T n) noexcept;
 //@}
 
 
-// to fixed hexadecimal lower case chars
+/// To fixed hexadecimal lower case chars.
+/// \tparam NbBytes number of no-significative bytes display. -1 is equivalent to sizeof(T)
 //@{
 template<int NbBytes = -1, class T>
 int_to_chars_result int_to_fixed_hexadecimal_lower_chars(T n) noexcept;
