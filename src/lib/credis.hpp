@@ -86,6 +86,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     void credis_buffer_clear(CRedisBuffer* buffer);
 
+    /// Release memory and reset prefix/suffix to 0.
     REDEMPTION_LIB_EXPORT
     void credis_buffer_free(CRedisBuffer* buffer);
 
