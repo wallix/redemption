@@ -18,7 +18,6 @@
     Author(s): David Fort
 */
 
-#include "cxx/diagnostic.hpp"
 #include "utils/primitives/primitives.hpp"
 
 #include "utils/primitives/primitives_internal.hpp"
@@ -152,8 +151,6 @@ Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
     const Primitives::prim_size_t *roi) noexcept
 {
-    REDEMPTION_DIAGNOSTIC_PUSH()
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (dstFormat)
     {
         case Primitives::PIXEL_FORMAT_ARGB32:
@@ -171,11 +168,9 @@ Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
         case Primitives::PIXEL_FORMAT_BGRA32:
         case Primitives::PIXEL_FORMAT_BGRX32:
             return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelBGRX>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
-
-        default:
-            return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelGeneric>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
     }
-    REDEMPTION_DIAGNOSTIC_POP()
+
+    return yCbCrToRGB_16s8u_P3AC4R_XXX<writePixelGeneric>(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
 }
 
 
