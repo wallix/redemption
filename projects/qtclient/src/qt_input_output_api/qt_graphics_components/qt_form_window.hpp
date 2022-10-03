@@ -339,7 +339,6 @@ public:
 
 class ConnectionFormQt  : public QWidget
 {
-
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
@@ -352,18 +351,17 @@ REDEMPTION_DIAGNOSTIC_POP()
     FormTabAPI * main_panel;
 
 public:
-    QComboBox  _IPCombobox;
-
-    QLineEdit _IPField;
-    QLineEdit _userNameField;
-    QLineEdit _PWDField;
-    QLineEdit _portField;
+    QComboBox IPCombobox;
+    QLineEdit IPField;
+    QLineEdit userNameField;
+    QLineEdit PWDField;
+    QLineEdit portField;
 
 private:
-    QLabel    _IPLabel;
-    QLabel    _userNameLabel;
-    QLabel    _PWDLabel;
-    QLabel    _portLabel;
+    QLabel    IPLabel;
+    QLabel    userNameLabel;
+    QLabel    PWDLabel;
+    QLabel    portLabel;
 
 
 public:
@@ -372,45 +370,45 @@ public:
       , protocol_type(protocol_type)
       , line_edit_layout(this)
       , main_panel(main_panel)
-      , _IPCombobox(this)
-      , _IPField("", this)
-      , _userNameField("", this)
-      , _PWDField("", this)
-      , _portField((protocol_type == ClientRedemptionConfig::MOD_RDP) ? "3389" : "5900", this)
-      , _IPLabel(      QString("IP server :"), this)
-      , _userNameLabel(QString("User name : "), this)
-      , _PWDLabel(     QString("Password :  "), this)
-      , _portLabel(    QString("Port :      "), this)
+      , IPCombobox(this)
+      , IPField("", this)
+      , userNameField("", this)
+      , PWDField("", this)
+      , portField((protocol_type == ClientRedemptionConfig::MOD_RDP) ? "3389" : "5900", this)
+      , IPLabel(      QString("IP server :"), this)
+      , userNameLabel(QString("User name : "), this)
+      , PWDLabel(     QString("Password :  "), this)
+      , portLabel(    QString("Port :      "), this)
     {
         this->setFixedSize(240, 160);
-        this->_IPCombobox.setFixedWidth(140);
-        this->_IPCombobox.setLineEdit(&(this->_IPField));
-        this->QObject::connect(&(this->_IPCombobox), SIGNAL(currentIndexChanged(int)) , this, SLOT(targetPicked(int)));
+        this->IPCombobox.setFixedWidth(140);
+        this->IPCombobox.setLineEdit(&(this->IPField));
+        this->QObject::connect(&(this->IPCombobox), SIGNAL(currentIndexChanged(int)) , this, SLOT(targetPicked(int)));
 
         this->setLayout(&(this->line_edit_layout));
 
-        this->_PWDField.setEchoMode(QLineEdit::Password);
-        this->_PWDField.setInputMethodHints(Qt::ImhHiddenText | Qt::ImhNoPredictiveText | Qt::ImhNoAutoUppercase);
-        this->_userNameField.setFixedWidth(140);
-        this->_PWDField.setFixedWidth(140);
-        this->_portField.setFixedWidth(140);
+        this->PWDField.setEchoMode(QLineEdit::Password);
+        this->PWDField.setInputMethodHints(Qt::ImhHiddenText | Qt::ImhNoPredictiveText | Qt::ImhNoAutoUppercase);
+        this->userNameField.setFixedWidth(140);
+        this->PWDField.setFixedWidth(140);
+        this->portField.setFixedWidth(140);
 
-        this->line_edit_layout.addRow(&(this->_IPLabel)      , &(this->_IPCombobox));
-        this->line_edit_layout.addRow(&(this->_userNameLabel), &(this->_userNameField));
-        this->line_edit_layout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
-        this->line_edit_layout.addRow(&(this->_portLabel)    , &(this->_portField));
+        this->line_edit_layout.addRow(&(this->IPLabel)      , &(this->IPCombobox));
+        this->line_edit_layout.addRow(&(this->userNameLabel), &(this->userNameField));
+        this->line_edit_layout.addRow(&(this->PWDLabel)     , &(this->PWDField));
+        this->line_edit_layout.addRow(&(this->portLabel)    , &(this->portField));
 
         if (this->protocol_type == ClientRedemptionConfig::MOD_VNC) {
-            this->_portField.setText("5900");
+            this->portField.setText("5900");
         } else  {
-            this->_portField.setText("3389");
+            this->portField.setText("3389");
         }
     }
 
 private Q_SLOTS:
     void targetPicked(int index) {
         if (this->main_panel) {
-            this->main_panel->targetPicked(this->_IPCombobox.itemData(index).toInt());
+            this->main_panel->targetPicked(this->IPCombobox.itemData(index).toInt());
         }
     }
 };
@@ -661,25 +659,25 @@ public:
             this->main_panel->check_password_box();
         }
 
-        this->line_edit_panel._IPCombobox.clear();
-        this->line_edit_panel._IPCombobox.addItem(QString(""), 0);
+        this->line_edit_panel.IPCombobox.clear();
+        this->line_edit_panel.IPCombobox.addItem(QString(""), 0);
 
         QStringList stringList;
 
         for (size_t i = 0; i < this->config->_accountData.size(); i++) {
             if (this->config->_accountData[i].protocol == this->protocol_type) {
                 std::string title(this->config->_accountData[i].title);
-                this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), int(i+1));
+                this->line_edit_panel.IPCombobox.addItem(QString(title.c_str()), int(i+1));
                 stringList << title.c_str();
             }
         }
         if (this->config->_last_target_index < this->config->_accountData.size()) {
             if (this->protocol_type == this->config->_accountData[this->config->_last_target_index].protocol) {
-                this->line_edit_panel._IPField.insert(QString(this->config->_accountData[this->config->_last_target_index].IP.c_str()));
-                this->line_edit_panel._userNameField.insert(QString(this->config->_accountData[this->config->_last_target_index].name.c_str()));
-                this->line_edit_panel._PWDField.insert(QString(this->config->_accountData[this->config->_last_target_index].pwd.c_str()));
+                this->line_edit_panel.IPField.insert(QString(this->config->_accountData[this->config->_last_target_index].IP.c_str()));
+                this->line_edit_panel.userNameField.insert(QString(this->config->_accountData[this->config->_last_target_index].name.c_str()));
+                this->line_edit_panel.PWDField.insert(QString(this->config->_accountData[this->config->_last_target_index].pwd.c_str()));
                 std::string port_string = std::to_string(this->config->_accountData[this->config->_last_target_index].port);
-                this->line_edit_panel._portField.insert(QString(port_string.c_str()));
+                this->line_edit_panel.portField.insert(QString(port_string.c_str()));
             }
         }
     }
@@ -851,54 +849,54 @@ public:
         this->_errorLabel.setText(QString(str.c_str()));
     }
 
-    void set_IPField(std::string str) {
-        this->formAccountConnectionPanel.line_edit_panel._IPField.clear();
-        this->formAccountConnectionPanel.line_edit_panel._IPField.insert(QString(str.c_str()));
+    void setIPField(std::string str) {
+        this->formAccountConnectionPanel.line_edit_panel.IPField.clear();
+        this->formAccountConnectionPanel.line_edit_panel.IPField.insert(QString(str.c_str()));
     }
 
-    void set_userNameField(std::string str) {
-        this->formAccountConnectionPanel.line_edit_panel._userNameField.clear();
-        this->formAccountConnectionPanel.line_edit_panel._userNameField.insert(QString(str.c_str()));
+    void setUserNameField(std::string str) {
+        this->formAccountConnectionPanel.line_edit_panel.userNameField.clear();
+        this->formAccountConnectionPanel.line_edit_panel.userNameField.insert(QString(str.c_str()));
     }
 
-    void set_PWDField(std::string str) {
-        this->formAccountConnectionPanel.line_edit_panel._PWDField.clear();
-        this->formAccountConnectionPanel.line_edit_panel._PWDField.insert(QString(str.c_str()));
+    void setPWDField(std::string str) {
+        this->formAccountConnectionPanel.line_edit_panel.PWDField.clear();
+        this->formAccountConnectionPanel.line_edit_panel.PWDField.insert(QString(str.c_str()));
     }
 
-    void set_portField(int str) {
-        this->formAccountConnectionPanel.line_edit_panel._portField.clear();
+    void setPortField(int str) {
+        this->formAccountConnectionPanel.line_edit_panel.portField.clear();
         if (str == 0) {
-            this->formAccountConnectionPanel.line_edit_panel._portField.insert(QString(""));
+            this->formAccountConnectionPanel.line_edit_panel.portField.insert(QString(""));
         } else {
-            this->formAccountConnectionPanel.line_edit_panel._portField.insert(QString(std::to_string(str).c_str()));
+            this->formAccountConnectionPanel.line_edit_panel.portField.insert(QString(std::to_string(str).c_str()));
         }
     }
 
-    std::string get_IPField() {
+    std::string getIPField() {
         std::string delimiter(" - ");
-        std::string ip_field_content = this->formAccountConnectionPanel.line_edit_panel._IPField.text().toStdString();
+        std::string ip_field_content = this->formAccountConnectionPanel.line_edit_panel.IPField.text().toStdString();
         auto pos(ip_field_content.find(delimiter));
         std::string IP  = ip_field_content.substr(0, pos);
         return IP;
     }
 
-    std::string get_userNameField() {
-        if (this->formAccountConnectionPanel.line_edit_panel._userNameField.text().toStdString() !=  std::string(""))
-            return this->formAccountConnectionPanel.line_edit_panel._userNameField.text().toStdString();
+    std::string getuserNameField() {
+        if (this->formAccountConnectionPanel.line_edit_panel.userNameField.text().toStdString() !=  std::string(""))
+            return this->formAccountConnectionPanel.line_edit_panel.userNameField.text().toStdString();
 
         return std::string(" ");
     }
 
-    std::string get_PWDField() {
-        if (this->formAccountConnectionPanel.line_edit_panel._PWDField.text().toStdString() !=  std::string(""))
-            return this->formAccountConnectionPanel.line_edit_panel._PWDField.text().toStdString();
+    std::string getPWDField() {
+        if (this->formAccountConnectionPanel.line_edit_panel.PWDField.text().toStdString() !=  std::string(""))
+            return this->formAccountConnectionPanel.line_edit_panel.PWDField.text().toStdString();
 
         return std::string("");
     }
 
-    int get_portField() {
-        return this->formAccountConnectionPanel.line_edit_panel._portField.text().toInt();
+    int getportField() {
+        return this->formAccountConnectionPanel.line_edit_panel.portField.text().toInt();
     }
 
     void keyPressEvent(QKeyEvent *e) override {
@@ -923,17 +921,17 @@ public:
              return;
         }
         if (index == 0) {
-            this->formAccountConnectionPanel.line_edit_panel._IPField.clear();
-            this->formAccountConnectionPanel.line_edit_panel._userNameField.clear();
-            this->formAccountConnectionPanel.line_edit_panel._PWDField.clear();
-            this->formAccountConnectionPanel.line_edit_panel._portField.clear();
+            this->formAccountConnectionPanel.line_edit_panel.IPField.clear();
+            this->formAccountConnectionPanel.line_edit_panel.userNameField.clear();
+            this->formAccountConnectionPanel.line_edit_panel.PWDField.clear();
+            this->formAccountConnectionPanel.line_edit_panel.portField.clear();
 
         } else {
             index--;
-            this->set_IPField(this->config->_accountData[index].IP);
-            this->set_userNameField(this->config->_accountData[index].name);
-            this->set_PWDField(this->config->_accountData[index].pwd);
-            this->set_portField(this->config->_accountData[index].port);
+            this->setIPField(this->config->_accountData[index].IP);
+            this->setUserNameField(this->config->_accountData[index].name);
+            this->setPWDField(this->config->_accountData[index].pwd);
+            this->setPortField(this->config->_accountData[index].port);
 
             this->config->current_user_profil = this->config->_accountData[index].options_profil;
         }
@@ -965,10 +963,10 @@ private Q_SLOTS:
 
         this->options->getConfigValues();
 
-        this->controllers->connect(this->get_IPField(),
-                                   this->get_userNameField(),
-                                   this->get_PWDField(),
-                                   this->get_portField());
+        this->controllers->connect(this->getIPField(),
+                                   this->getuserNameField(),
+                                   this->getPWDField(),
+                                   this->getportField());
 
         if (this->_pwdCheckBox.isChecked()) {
             this->config->_save_password_account = true;
@@ -1090,36 +1088,36 @@ public:
         this->get_current_tab()->set_ErrorMsg(str);
     }
 
-    void set_IPField(std::string str) {
-         this->get_current_tab()->set_IPField(str);
+    void setIPField(std::string str) {
+         this->get_current_tab()->setIPField(str);
     }
 
-    void set_userNameField(std::string str) {
-        this->get_current_tab()->set_userNameField(str);
+    void setUserNameField(std::string str) {
+        this->get_current_tab()->setUserNameField(str);
     }
 
-    void set_PWDField(std::string str) {
-        this->get_current_tab()->set_PWDField(str);
+    void setPWDField(std::string str) {
+        this->get_current_tab()->setPWDField(str);
     }
 
-    void set_portField(int str) {
-        this->get_current_tab()->set_portField(str);
+    void setPortField(int str) {
+        this->get_current_tab()->setPortField(str);
     }
 
-    std::string get_IPField() {
-        return this->get_current_tab()->get_IPField();
+    std::string getIPField() {
+        return this->get_current_tab()->getIPField();
     }
 
-    std::string get_userNameField() {
-        return this->get_current_tab()->get_userNameField();
+    std::string getuserNameField() {
+        return this->get_current_tab()->getuserNameField();
     }
 
-    std::string get_PWDField() {
-        return this->get_current_tab()->get_PWDField();
+    std::string getPWDField() {
+        return this->get_current_tab()->getPWDField();
     }
 
-    int get_portField() {
-        return this->get_current_tab()->get_portField();
+    int getportField() {
+        return this->get_current_tab()->getportField();
     }
 
     void init_form() {

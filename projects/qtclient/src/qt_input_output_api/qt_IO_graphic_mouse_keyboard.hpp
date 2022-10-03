@@ -227,10 +227,10 @@ public:
             this->form->init_form();
             if (this->config->mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
 
-                this->form->set_IPField(this->config->target_IP);
-                this->form->set_portField(this->config->port);
-                this->form->set_PWDField(this->config->user_password);
-                this->form->set_userNameField(this->config->user_name);
+                this->form->setIPField(this->config->target_IP);
+                this->form->setPortField(this->config->port);
+                this->form->setPWDField(this->config->user_password);
+                this->form->setUserNameField(this->config->user_name);
             }
 
             this->form->show();
