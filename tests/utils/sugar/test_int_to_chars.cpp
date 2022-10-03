@@ -160,4 +160,7 @@ RED_AUTO_TEST_CASE(TestIntToFizedHexadecimalChars)
     char buffer[8]{};
     int_to_fixed_hexadecimal_upper_chars(buffer, uint16_t(0xaf8));
     RED_CHECK(chars_view(buffer, 4) == "0AF8"_av);
+
+    RED_CHECK(int_to_fixed_hexadecimal_lower_chars<2>(0xABCDEFu) == "cdef"_av);
+    RED_CHECK(int_to_fixed_hexadecimal_lower_chars<2>(0x0000EFu) == "00ef"_av);
 }
