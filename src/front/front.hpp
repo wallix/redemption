@@ -760,6 +760,7 @@ private:
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
         gdi::CachePointerIndex last_pointer_cache_idx = PredefinedPointer::Normal;
+        bool is_sharing_mode = false;
         bool const is_guest;
         bool const enable_shared_control;
         NullGdWithNewPointer gd_for_pointer_cache {};
@@ -5290,9 +5291,16 @@ private:
 
     bool sharing_scancode_filtered(Callback & cb)
     {
-        if (!this->sharing_ctx.guest) {
+        if (!this->sharing_ctx.is_sharing_mode) {
             return false;
         }
+
+        // input from guest
+        if (!this->sharing_ctx.guest) {
+            return !this->sharing_ctx.has_input();
+        }
+
+        // input from host
 
         // graphic is enabled (session_sharing_toggle_graphics)
         if (this->sharing_ctx.guest_has_view()
@@ -5454,6 +5462,9 @@ public:
     {
         assert(!this->sharing_ctx.guest);
 
+        this->sharing_ctx.is_sharing_mode = true;
+        guest_front.sharing_ctx.is_sharing_mode = true;
+
         this->sharing_ctx.guest = &guest_front;
         this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;
         this->sharing_ctx.session_log = &session_log;
@@ -5478,6 +5489,9 @@ public:
             this->sharing_ctx.enable_input();
             this->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         }
+
+        this->sharing_ctx.is_sharing_mode = false;
+        guest_front.sharing_ctx.is_sharing_mode = false;
 
         auto delay = this->events_guard.get_monotonic_time().time_since_epoch()
                    - this->sharing_ctx.session_time_start;
