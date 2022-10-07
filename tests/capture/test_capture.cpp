@@ -24,6 +24,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/check_img.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/session_log_test.hpp"
 #include "test_only/lcg_random.hpp"
 
 REDEMPTION_DIAGNOSTIC_PUSH()
@@ -658,36 +659,27 @@ RED_AUTO_TEST_CASE(TestPattern)
     };
 
     for (int i = 0; i < 2; ++i) {
-        struct : NullSessionLog
-        {
-            std::string reason;
-            std::string message;
-
-            void report(const char * reason, const char * message) override
-            {
-                this->reason = reason;
-                this->message = message;
-            }
-        } report_message;
+        SessionLogTest report_message;
         Capture::PatternsChecker checker(
             report_message, {&cap_pattern, i ? 1u : 0u}, {&cap_pattern, i ? 0u : 1u});
 
-        auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
+        auto const logid = i ? "KILL_PATTERN_DETECTED"_av : "NOTIFY_PATTERN_DETECTED"_av;
+        auto const reason = i ? "FINDPATTERN_KILL"_av : "FINDPATTERN_NOTIFY"_av;
+        auto mk_msg = [=](chars_view msg){
+            return str_concat(
+                logid, " pattern=\""_av, msg, "\"\n",
+                reason, ": "_av, msg, '\n'
+            );
+        };
 
         checker.title_changed("Gestionnaire"_av);
-
-        RED_CHECK(report_message.reason.empty());
-        RED_CHECK(report_message.message.empty());
+        RED_CHECK(report_message.events() == ""_av);
 
         checker.title_changed("Gestionnaire de serveur"_av);
-
-        RED_CHECK_EQUAL(report_message.reason,  reason);
-        RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de serveur");
+        RED_CHECK(report_message.events() == mk_msg("$ocr:.de.|Gestionnaire de serveur"_av));
 
         checker.title_changed("Gestionnaire de licences TS"_av);
-
-        RED_CHECK_EQUAL(report_message.reason,  reason);
-        RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de licences TS");
+        RED_CHECK(report_message.events() == mk_msg("$ocr:.de.|Gestionnaire de licences TS"_av));
     }
 }
 
@@ -2259,22 +2251,9 @@ RED_AUTO_TEST_CASE(TestUtf8KbdBuffer)
     RED_TEST(buffer.get(10) == "56789+=/*a"_av);
 }
 
-struct ReportMessage : NullSessionLog
-{
-    std::string s;
-
-    void log6(LogId id, KVLogList kv_list) override
-    {
-        s += detail::log_id_string_map[int(id)].to_sv();
-        for (auto& kv : kv_list) {
-            str_append(s, ' ', kv.key, '=', kv.value);
-        }
-    }
-};
-
 RED_AUTO_TEST_CASE(TestKbdCapture)
 {
-    ReportMessage report_message;
+    SessionLogTest report_message;
 
     MonotonicTimePoint const time {};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -2284,43 +2263,40 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
         // flush report buffer then empty buffer
         kbd_capture.possible_active_window_change();
 
-        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
+        RED_CHECK(report_message.events() == "KBD_INPUT data=\"a\"\n"_av);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
-    report_message.s.clear();
 
     {
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.possible_active_window_change();
 
         // prob is not enabled
-        RED_CHECK_EQUAL(report_message.s.size(), 0);
+        RED_CHECK(report_message.events() == ""_av);
     }
 
     kbd_capture.enable_kbd_input_mask(false);
-    report_message.s.clear();
 
     {
         kbd_capture.kbd_input(time, 'a');
 
-        RED_CHECK_EQUAL(report_message.s.size(), 0);
+        RED_CHECK(report_message.events() == ""_av);
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
-        report_message.s.clear();
+        RED_CHECK(report_message.events() == "KBD_INPUT data=\"a\"\n"_av);
 
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.possible_active_window_change();
 
-        RED_CHECK_EQUAL(report_message.s.size(), 0);
+        RED_CHECK(report_message.events() == ""_av);
     }
 }
 
 RED_AUTO_TEST_CASE(TestKbdCapture2)
 {
-    ReportMessage report_message;
+    SessionLogTest report_message;
 
     MonotonicTimePoint now{};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -2333,7 +2309,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
             KVLog("display_name"_av, "xy\\z"_av),
         });
 
-        RED_CHECK_EQUAL(report_message.s.size(), 0);
+        RED_CHECK(report_message.events() == ""_av);
 
         kbd_capture.kbd_input(now, 'o');
 
@@ -2343,21 +2319,13 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
         kbd_capture.possible_active_window_change();
 
-        RED_CHECK_EQUAL("KBD_INPUT data=toto", report_message.s);
+        RED_CHECK(report_message.events() == "KBD_INPUT data=\"toto\"\n"_av);
     }
 }
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
-    struct : NullSessionLog
-    {
-        std::string s;
-
-        void report(const char* reason, const char* message) override
-        {
-            str_append(s, reason, " -- ", message, "\n");
-        }
-    } report_message;
+    SessionLogTest report_message;
 
     CapturePattern cap_pattern{
         CapturePattern::Filters{.is_ocr = false, .is_kbd = true},
@@ -2374,27 +2342,24 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         }
     }
 
-    RED_CHECK_EQUAL(4, pattern_count);
-    RED_CHECK_EQUAL(
-        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
-        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
-        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
-        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
-      , report_message.s
+    RED_CHECK(pattern_count == 4);
+    RED_CHECK(report_message.events() ==
+        "KILL_PATTERN_DETECTED pattern=\"$kbd:abcd|abcd\"\n"
+        "FINDPATTERN_KILL: $kbd:abcd|abcd\n"
+        "KILL_PATTERN_DETECTED pattern=\"$kbd:abcd|abcd\"\n"
+        "FINDPATTERN_KILL: $kbd:abcd|abcd\n"
+        "KILL_PATTERN_DETECTED pattern=\"$kbd:abcd|abcd\"\n"
+        "FINDPATTERN_KILL: $kbd:abcd|abcd\n"
+        "KILL_PATTERN_DETECTED pattern=\"$kbd:abcd|abcd\"\n"
+        "FINDPATTERN_KILL: $kbd:abcd|abcd\n"
+        ""_av
     );
 }
 
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
-    struct : NullSessionLog
-    {
-        bool is_killed = false;
-
-        void report(const char*  /*reason*/, const char*  /*message*/) override {
-            this->is_killed = true;
-        }
-    } report_message;
+    SessionLogTest report_message;
 
     CapturePattern cap_pattern{
         CapturePattern::Filters{.is_ocr = false, .is_kbd = true},
@@ -2411,7 +2376,10 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     }
     RED_CHECK_EQUAL(1, pattern_count);
-    RED_CHECK(report_message.is_killed);
+    RED_CHECK(report_message.events() ==
+        "KILL_PATTERN_DETECTED pattern=\"$kbd:ab/cd|ab/cd\"\n"
+        "FINDPATTERN_KILL: $kbd:ab/cd|ab/cd\n"
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestKbdEnableWithoutPattern)

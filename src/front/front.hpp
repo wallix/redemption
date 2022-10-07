@@ -943,7 +943,7 @@ public:
          , Random & gen
          , Inifile & ini
          , CryptoContext & cctx
-         , GuestParameters guest_parameter = {}
+         , GuestParameters guest_params = {}
          )
     : verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(default_layout())
@@ -965,14 +965,14 @@ public:
     , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     , sharing_ctx{
-        .kill_fn = guest_parameter.kill_fn,
-        .fn_ctx = guest_parameter.fn_ctx,
-        .input_id = guest_parameter.is_guest /* disable input for guest */,
-        .is_guest = guest_parameter.is_guest,
-        .enable_shared_control = guest_parameter.enable_shared_control,
+        .kill_fn = guest_params.kill_fn,
+        .fn_ctx = guest_params.fn_ctx,
+        .input_id = guest_params.is_guest /* disable input for guest */,
+        .is_guest = guest_params.is_guest,
+        .enable_shared_control = guest_params.enable_shared_control,
     }
     {
-        client_info.screen_info = guest_parameter.screen_info;
+        client_info.screen_info = guest_params.screen_info;
 
         using namespace std::literals::chrono_literals;
 
@@ -2577,12 +2577,7 @@ public:
                         "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                         se.eventFlags);
 
-                    kbdtypes::KeyLocks key_locks = safe_int{se.eventFlags};
-                    this->keymap.reset_mods(key_locks);
-                    if (this->state == FRONT_UP_AND_RUNNING) {
-                        cb.rdp_input_synchronize(key_locks);
-                        this->has_user_activity = true;
-                    }
+                    this->input_event_synchronize(safe_int{se.eventFlags}, cb);
                 }
                 break;
 
@@ -4165,12 +4160,7 @@ private:
                                 "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
                                 ie.eventTime, se.toggleFlags);
 
-                            kbdtypes::KeyLocks key_locks = checked_int{se.toggleFlags};
-                            this->keymap.reset_mods(key_locks);
-                            if (this->state == FRONT_UP_AND_RUNNING) {
-                                cb.rdp_input_synchronize(key_locks);
-                                this->has_user_activity = true;
-                            }
+                            this->input_event_synchronize(checked_int{se.toggleFlags}, cb);
                         }
                         break;
 
@@ -5246,7 +5236,7 @@ private:
         );
     }
 
-    void session_sharing_common_control()
+    void session_sharing_common_control(Callback & cb)
     {
         if (this->sharing_ctx.has_input() && this->sharing_ctx.guest->sharing_ctx.has_input()) {
             return;
@@ -5257,6 +5247,12 @@ private:
         this->gd->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
             ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
+
+        auto const key_locks = this->keymap.locks();
+        if (this->sharing_ctx.guest->keymap.locks() != key_locks) {
+            this->sharing_ctx.guest->set_keyboard_indicators(key_locks);
+        }
+        cb.rdp_input_synchronize(key_locks);
 
         this->sharing_ctx.session_log->log6(
             LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
@@ -5317,7 +5313,7 @@ private:
             }
 
             if (this->keymap.is_session_sharing_common_control()) {
-                this->session_sharing_common_control();
+                this->session_sharing_common_control(cb);
                 return true;
             }
         }
@@ -5335,6 +5331,7 @@ private:
         return !this->sharing_ctx.has_input();
     }
 
+public:
     void input_event_scancode(
         Keymap::KbdFlags kbdFlags, Keymap::Scancode scancode,
         Callback & cb, uint32_t event_time
@@ -5380,13 +5377,13 @@ private:
 
                 if (send_to_mod) {
                     cb.rdp_input_scancode(kbdFlags, scancode, event_time, this->keymap);
+
+                    if (this->keymap.is_app_switching_shortcut()) {
+                        this->possible_active_window_change();
+                    }
                 }
             }
             this->has_user_activity = true;
-        }
-
-        if (this->keymap.is_app_switching_shortcut()) {
-            this->possible_active_window_change();
         }
     }
 
@@ -5395,6 +5392,17 @@ private:
         if (this->state == FRONT_UP_AND_RUNNING) {
             if (this->sharing_ctx.has_input()) {
                 cb.rdp_input_unicode(flag, unicode);
+            }
+            this->has_user_activity = true;
+        }
+    }
+
+    void input_event_synchronize(kbdtypes::KeyLocks key_locks, Callback & cb)
+    {
+        this->keymap.reset_mods(key_locks);
+        if (this->state == FRONT_UP_AND_RUNNING) {
+            if (this->sharing_ctx.has_input()) {
+                cb.rdp_input_synchronize(key_locks);
             }
             this->has_user_activity = true;
         }
@@ -5423,6 +5431,8 @@ private:
     {
         this->has_user_activity = true;
 
+        // TODO unimplemented
+
         // if (this->state == FRONT_UP_AND_RUNNING && this->sharing_ctx.has_input()) {
         // }
 
@@ -5436,6 +5446,7 @@ private:
         // }
     }
 
+private:
     void update_keyboard_input_mask_state() {
         const ::KeyboardInputMaskingLevel keyboard_input_masking_level =
             this->ini.get<cfg::session_log::keyboard_input_masking_level>();
@@ -5524,6 +5535,7 @@ private:
         front.orders.get_raw_pointer_cache().set_pointers(pointers);
     }
 
+public:
     void add_graphic(gdi::GraphicApi& gd)
     {
         if (this->capture && this->capture->has_graphic_api()) {

@@ -156,6 +156,7 @@ struct GuestCtx
         }
     }
 
+    // TODO to another file + test
     static std::string generate_password(Random& rnd)
     {
         uint8_t rnd_data[32];
