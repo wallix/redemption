@@ -2784,11 +2784,11 @@ class Sesman():
                 self.shared.get("session_sharing_invitation_addr"),
                 "shadow_port": 0,  # force 0 to use Unix Socket
             }
-            self.engine.shadow_response(
+            self.engine.sharing_response(
                 errcode=self.shared.get("session_sharing_invitation_error_code"),
                 errmsg=self.shared.get("session_sharing_invitation_error_message"),
                 token=session_sharing_token,
-                userdata=self.shared.get("session_sharing_userdata")
+                request_id=self.shared.get("session_sharing_userdata")
             )
             self.shared["session_sharing_userdata"] = None
             self.shared["session_sharing_invitation_error_code"] = 0
@@ -2911,20 +2911,35 @@ class Sesman():
         res = params.get("shadow_type")
         Logger().debug("shadow_type=%s" % res)
         if res:
+            # TODO remove once session sharing interface unified
+            # Former Session Shadowing Trigger interface
             userdata = params.get("shadow_userdata")
             Logger().debug("sending rd_shadow_type=%s" % res)
             self.send_data({
                 u'rd_shadow_type': res,
                 u'rd_shadow_userdata': userdata
             })
-        res = params.get("session_sharing_type")
-        if res:
-            userdata = params.get("session_sharing_userdata")
-            Logger().debug("sending _shadow_type=%s" % res)
-            self.send_data({
-                u'session_sharing_enable_control': res == "normal",
-                u'session_sharing_userdata': userdata
-            })
+        sharing_req = params.get("sharing_pending_request")
+        if sharing_req:
+            sharing_mode = params.get("sharing_mode")
+            sharing_type = params.get("sharing_type")
+            sharing_ttl = params.get("sharing_request_ttl")
+            sharing_request_id = params.get("sharing_request_id")
+            Logger().debug("sending _shadow_type=%s" % sharing_mode)
+            if sharing_mode == "SHADOWING":
+                self.send_data({
+                    u'rd_shadow_type': sharing_type,
+                    u'rd_shadow_userdata': sharing_request_id,
+                })
+            else:
+                self.send_data({
+                    u'session_sharing_enable_control': sharing_type == "normal",
+                    u'session_sharing_userdata': sharing_request_id,
+                    u'session_sharing_ttl': sharing_ttl,
+                })
+            self.engine.update_session(
+                sharing_pending_request=False
+            )
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')

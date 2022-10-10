@@ -1299,15 +1299,29 @@ class Engine(object):
                           (traceback.format_exc()))
 
     def shadow_response(self, errcode, errmsg, token, userdata):
+        # TODO remove once session sharing interface unified
+        # Former Session Shadowing Trigger interface
+        return self.sharing_response(errcode, errmsg, token, userdata)
+
+    def sharing_response(self, errcode, errmsg, token, request_id):
         try:
             status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED
             with manage_transaction(self.wabengine):
-                self.wabengine.make_session_shadowing_response(
-                    status=status, errmsg=errmsg, token=token, userdata=userdata
-                )
+                if not hasattr(self.wabengine, "make_session_sharing_response"):
+                    # TODO remove once session sharing interface unified
+                    # Former Session Shadowing Trigger interface
+                    self.wabengine.make_session_shadowing_response(
+                        status=status, errmsg=errmsg,
+                        token=token, userdata=request_id
+                    )
+                else:
+                    self.wabengine.make_session_sharing_response(
+                        status=status, errmsg=errmsg,
+                        token=token, request_id=request_id
+                    )
         except Exception:
             import traceback
-            Logger().info("Engine shadow_response failed: (((%s)))" %
+            Logger().info("Engine sharing_response failed: (((%s)))" %
                           (traceback.format_exc()))
 
     def stop_session(self, title=u"End session"):
