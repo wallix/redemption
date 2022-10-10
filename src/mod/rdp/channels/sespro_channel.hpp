@@ -507,7 +507,7 @@ public:
         auto const upper_order = parse_server_message_result.upper_order();
         auto const parameters_ = parse_server_message_result.parameters();
 
-        if (upper_order == "Option"_ascii_upper && !parameters_.empty()) {
+        if (upper_order == "Options"_ascii_upper && !parameters_.empty()) {
             this->options = unchecked_decimal_chars_to_int(parameters_[0]);
 
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
