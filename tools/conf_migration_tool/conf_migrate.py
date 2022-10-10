@@ -156,9 +156,7 @@ class MoveSection(NamedTuple):
 MigrationKeyOrderType = Union[RemoveItem, UpdateItem]
 MigrationSectionOrderType = Union[RemoveItem,
                                   MoveSection,
-                                  Dict[str, MigrationKeyOrderType],
-                                  Iterable[Union[MoveSection,
-                                                 Dict[str, MigrationKeyOrderType]]]]
+                                  Dict[str, MigrationKeyOrderType]]
 MigrationDescType = Dict[str, MigrationSectionOrderType]
 
 MigrationType = Tuple[RedemptionVersion, MigrationDescType]
@@ -329,7 +327,7 @@ def migrate(fragments: List[ConfigurationFragment],
     for i, fragment in enumerate(fragments):
         added_fragments = reinject_fragments.get(i, (fragment,))
 
-        section = None
+        section = ""
         for x in added_fragments:
             if x.kind == ConfigKind.Section:
                 section = x.value1
