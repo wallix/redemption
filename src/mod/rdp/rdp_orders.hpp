@@ -66,6 +66,7 @@
 #include "core/RDP/caches/glyphcache.hpp"
 
 #include "mod/rdp/rdp_verbose.hpp"
+#include "mod/rdp/channels/sespro_api.hpp"
 
 #include "gdi/graphic_api.hpp"
 
@@ -118,10 +119,13 @@ private:
     std::function<void(const Error & error)> notify_error;
 #endif
 
+    sespro_api& sespro;
+
 public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
         , bool persist_bitmap_cache_on_disk, bool silent_reject_windowing_orders
-        , RDPVerbose verbose, std::function<void(const Error & error)> notify_error)
+        , RDPVerbose verbose, std::function<void(const Error & error)> notify_error
+        , sespro_api& sespro)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , memblt(0, Rect(), 0, 0, 0, 0)
     , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
@@ -141,6 +145,7 @@ public:
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
     , notify_error(std::move(notify_error))
 #endif
+    , sespro(sespro)
     {
 #ifdef __EMSCRIPTEN__
         (void)enable_persistent_disk_bitmap_cache;
@@ -387,6 +392,7 @@ private:
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
                     }
+                    this->sespro.rail_deleted_window(order.header.WindowId());
                 }
                 break;
 
@@ -399,6 +405,15 @@ private:
                     }
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
+                    }
+                    if (order.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW)
+                    {
+                        if (order.ShowState()) {
+                            this->sespro.rail_new_or_existing_window(order.header.WindowId());
+                        }
+                        else {
+                            this->sespro.rail_deleted_window(order.header.WindowId());
+                        }
                     }
                 }
                 break;
@@ -429,6 +444,7 @@ private:
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
                     }
+                    this->sespro.rail_deleted_notification_icon(order.header.WindowId(), order.header.NotifyIconId());
                 }
                 break;
 
@@ -442,6 +458,7 @@ private:
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
                     }
+                    this->sespro.rail_new_or_existing_notification_icon(order.header.WindowId(), order.header.NotifyIconId());
                 }
                 break;
 

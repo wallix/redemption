@@ -2232,7 +2232,7 @@ class NotificationIconInformationCommonHeader {
     mutable uint16_t OrderSize           = 0;
             uint32_t FieldsPresentFlags_ = 0;
     mutable uint32_t WindowId_           = 0;
-            uint32_t NotifyIconId        = 0;
+            uint32_t NotifyIconId_       = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
 
@@ -2255,7 +2255,7 @@ public:
 
         stream.out_uint32_le(this->FieldsPresentFlags_);
         stream.out_uint32_le(this->WindowId_);
-        stream.out_uint32_le(this->NotifyIconId);
+        stream.out_uint32_le(this->NotifyIconId_);
     }
 
     void emit_end(OutStream & stream) const
@@ -2274,10 +2274,12 @@ public:
         this->OrderSize           = stream.in_uint16_le();
         this->FieldsPresentFlags_ = stream.in_uint32_le();
         this->WindowId_           = stream.in_uint32_le();
-        this->NotifyIconId        = stream.in_uint32_le();
+        this->NotifyIconId_       = stream.in_uint32_le();
     }
 
-    uint16_t WindowId() const { return this->WindowId_; }
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    uint32_t NotifyIconId() const { return this->NotifyIconId_; }
 
     static size_t size() {
         return 14;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
@@ -2288,7 +2290,7 @@ public:
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=0x%X NotifyIconId=0x%X)",
                        unsigned(this->OrderSize), this->FieldsPresentFlags_,
-                       this->WindowId_, this->NotifyIconId);
+                       this->WindowId_, this->NotifyIconId_);
         return ((length < size) ? length : size - 1);
     }
 

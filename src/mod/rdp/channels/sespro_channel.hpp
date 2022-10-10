@@ -35,6 +35,7 @@
 #include "core/window_constants.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"
+#include "mod/rdp/channels/sespro_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/parse_server_message.hpp"
@@ -56,6 +57,8 @@
 #include <cinttypes> // PRId64, ...
 #include <cstring>
 
+#include <set>
+
 enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
 };
@@ -74,7 +77,8 @@ enum {
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
     OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010,
     OPTION_SUPPORT_MULTIPLE_NETWORK_INTERFACES_IN_SHADOW_SESSION_RESPONSE
-                                                                = 0x00000020
+                                                                = 0x00000020,
+    OPTION_REMOTE_PROGRAM_SESSION                               = 0x00000040
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -87,7 +91,7 @@ using SessionProbeVariables = vcfg::variables<
     vcfg::var<cfg::context::rd_shadow_available,                vcfg::accessmode::set>
 >;
 
-class SessionProbeVirtualChannel final : public BaseVirtualChannel
+class SessionProbeVirtualChannel final : public BaseVirtualChannel, public sespro_api
 {
 public:
     struct Callbacks {
@@ -507,7 +511,7 @@ public:
         auto const upper_order = parse_server_message_result.upper_order();
         auto const parameters_ = parse_server_message_result.parameters();
 
-        if (upper_order == "Option"_ascii_upper && !parameters_.empty()) {
+        if (upper_order == "Options"_ascii_upper && !parameters_.empty()) {
             this->options = unchecked_decimal_chars_to_int(parameters_[0]);
 
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
@@ -520,6 +524,8 @@ public:
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
+
+                this->windows_and_notification_icons_synchronized = false;
 
                 uint32_t remote_reconnection_cookie = INVALID_RECONNECTION_COOKIE;
                 if (parameters_.size() > 1) {
@@ -638,6 +644,10 @@ public:
 
                     options |= this->param_disconnect_session_instead_of_logoff_session
                         ? uint32_t(OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION)
+                        : uint32_t();
+
+                    options |= this->sespro_params.enable_remote_program
+                        ? uint32_t(OPTION_REMOTE_PROGRAM_SESSION)
                         : uint32_t();
 
                     if (options)
@@ -789,6 +799,29 @@ public:
                     out_s.out_copy_bytes(this->param_target_informations);
                 });
             }
+
+            else if (upper_param0 == "Get remote program windows and notification icons"_ascii_upper) {
+                if (this->windows_and_notification_icons.size()) {
+                    send_client_message([this](OutStream & out_s) {
+                        out_s.out_copy_bytes("RemotePrgramNewOrExistingWindowsAndNotificationIcons="_av);
+                        bool bFirst = true;
+                        for (auto const& window_or_notification_icon : this->windows_and_notification_icons) {
+                            if (bFirst) {
+                                bFirst = false;
+                            }
+                            else {
+                                out_s.out_uint8('\x01');
+                            }
+                            out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_or_notification_icon.window_id));
+                            out_s.out_uint8('\x01');
+                            out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_or_notification_icon.notification_icon_id));
+                        }
+                    });
+                }
+
+                this->windows_and_notification_icons_synchronized = true;
+            }
+
             else if (upper_param0 == "Get startup application"_ascii_upper) {
                 if (this->param_real_alternate_shell != "[None]" ||
                     this->start_application_started) {
@@ -1765,6 +1798,112 @@ public:
             out_s.out_copy_bytes(userdata, ::strlen(userdata));
 
         });
+    }
+
+    struct window_or_notification_icon {
+        uint32_t window_id;
+
+        uint32_t notification_icon_id;
+
+        bool operator<(window_or_notification_icon const& other) const {
+            return (this->window_id < other.window_id)
+                || (   (this->window_id == other.window_id)
+                    && (this->notification_icon_id < other.notification_icon_id))
+                ;
+        }
+    };
+
+    static constexpr uint32_t invalid_notification_icon_id = 0;
+
+    std::set<window_or_notification_icon> windows_and_notification_icons;
+
+    bool windows_and_notification_icons_synchronized = false;
+
+    void rail_new_or_existing_window(uint32_t window_id) override
+    {
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_window(): WindowId=0x%X", window_id);
+
+        auto const insert_result = this->windows_and_notification_icons.insert({
+                .window_id            = window_id,
+                .notification_icon_id = invalid_notification_icon_id
+            });
+
+        if (this->windows_and_notification_icons_synchronized &&
+            insert_result.second) {
+            send_client_message([window_id](OutStream & out_s) {
+                out_s.out_copy_bytes("RemotePrgramNewOrExistingWindowsAndNotificationIcons="_av);
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
+                out_s.out_uint8('\x01');
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(invalid_notification_icon_id));
+            });
+        }
+
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_window(): ItemCount=%d", this->windows_and_notification_icons.size());
+    }
+
+    void rail_deleted_window(uint32_t window_id) override
+    {
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): WindowId=0x%X", window_id);
+
+        auto const number_of_elements_removed = this->windows_and_notification_icons.erase({
+                .window_id            = window_id,
+                .notification_icon_id = invalid_notification_icon_id
+            });
+
+        if (this->windows_and_notification_icons_synchronized) {
+            send_client_message([window_id](OutStream & out_s) {
+                out_s.out_copy_bytes("RemotePrgramDeletedWindowOrNotificationIcon="_av);
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
+                out_s.out_uint8('\x01');
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(invalid_notification_icon_id));
+            });
+        }
+
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): ItemCount=%d", this->windows_and_notification_icons.size());
+    }
+
+    void rail_new_or_existing_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
+    {
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_notification_icon(): WindowId=0x%X NotificationIconId=0x%X", window_id, notification_icon_id);
+
+        auto const insert_result = this->windows_and_notification_icons.insert({
+                .window_id            = window_id,
+                .notification_icon_id = notification_icon_id
+            });
+
+        if (this->windows_and_notification_icons_synchronized &&
+            insert_result.second) {
+            send_client_message([window_id, notification_icon_id](OutStream & out_s) {
+                out_s.out_copy_bytes("RemotePrgramNewOrExistingWindowsAndNotificationIcons="_av);
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
+                out_s.out_uint8('\x01');
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(notification_icon_id));
+            });
+        }
+
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_notification_icon(): ItemCount=%d", this->windows_and_notification_icons.size());
+    }
+
+    void rail_deleted_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
+    {
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_notification_icon(): WindowId=0x%X NotificationIconId=0x%X", window_id, notification_icon_id);
+
+        auto const number_of_elements_removed = this->windows_and_notification_icons.erase({
+                .window_id            = window_id,
+                .notification_icon_id = notification_icon_id
+            });
+        assert(number_of_elements_removed == 1);
+
+        if (this->windows_and_notification_icons_synchronized) {
+            send_client_message([window_id, notification_icon_id](OutStream & out_s) {
+                out_s.out_copy_bytes("RemotePrgramDeletedWindowOrNotificationIcon="_av);
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
+                out_s.out_uint8('\x01');
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(notification_icon_id));
+            });
+        }
+
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_notification_icon(): ItemCount=%d", this->windows_and_notification_icons.size());
     }
 
 private:

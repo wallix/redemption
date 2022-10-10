@@ -181,6 +181,8 @@ struct SessionProbeVirtualChannelParams
     bool enable_self_cleaner = false;
 
     std::string target_ip;
+
+    bool enable_remote_program = false;
 };
 
 

@@ -1801,7 +1801,7 @@ public:
 #endif
 };
 
-class mod_rdp final : public mod_api, public rdp_api
+class mod_rdp final : public mod_api, public rdp_api, public sespro_api
 {
 #ifndef __EMSCRIPTEN__
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks
@@ -2035,7 +2035,8 @@ public:
                         // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
                         session_log.report("FILESYSTEM_FULL", "100|unknown");
                     }
-                })
+                }
+                , *this)
         , last_key_locks(mod_rdp_params.key_locks)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -6336,6 +6337,34 @@ public:
                 }
                 this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
             }
+        }
+    }
+
+    void rail_new_or_existing_window(uint32_t window_id) override
+    {
+        if (this->channels.session_probe_virtual_channel) {
+            this->channels.session_probe_virtual_channel->rail_new_or_existing_window(window_id);
+        }
+    }
+
+    void rail_deleted_window(uint32_t window_id) override
+    {
+        if (this->channels.session_probe_virtual_channel) {
+            this->channels.session_probe_virtual_channel->rail_deleted_window(window_id);
+        }
+    }
+
+    void rail_new_or_existing_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
+    {
+        if (this->channels.session_probe_virtual_channel) {
+            this->channels.session_probe_virtual_channel->rail_new_or_existing_notification_icon(window_id, notification_icon_id);
+        }
+    }
+
+    void rail_deleted_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
+    {
+        if (this->channels.session_probe_virtual_channel) {
+            this->channels.session_probe_virtual_channel->rail_deleted_notification_icon(window_id, notification_icon_id);
         }
     }
 

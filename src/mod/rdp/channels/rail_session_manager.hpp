@@ -421,6 +421,8 @@ public:
         }
     }
 
+    EventRef event_ref_waiting_screen;
+
     void draw(RDP::RAIL::ActivelyMonitoredDesktop const & order) override {
         this->has_actively_monitored_desktop = true;
 
@@ -447,7 +449,7 @@ public:
         && this->has_previous_window)
         {
             this->currently_without_window = true;
-            this->events_guard.create_event_timeout(
+            this->event_ref_waiting_screen = this->events_guard.create_event_timeout(
                 "Rail Waiting Screen Event",
                 this->rail_disconnect_message_delay,
                 [this](Event&event)
@@ -463,6 +465,10 @@ public:
                     }
                     event.garbage = true;
                 });
+        }
+        else if (!has_not_window)
+        {
+            this->event_ref_waiting_screen.garbage();
         }
 
         if (has_window) {

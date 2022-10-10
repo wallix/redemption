@@ -675,6 +675,9 @@ ModPack create_mod_rdp(
         mod_rdp_params.session_probe_params.vc_params.enable_self_cleaner = ini.get<cfg::session_probe::enable_cleaner>();
     }
 
+    mod_rdp_params.session_probe_params.vc_params.enable_remote_program =
+        mod_rdp_params.remote_app_params.enable_remote_program;
+
     Rect const adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
 
     const bool host_mod_in_widget = (client_info.remote_program
