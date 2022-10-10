@@ -390,6 +390,9 @@ migration_defs: List[MigrationType] = [
             'capture_groupid': RemoveItem(),
         },
     }),
+    (RedemptionVersion("10.3.3"), {
+        'metrics': RemoveItem(),
+    }),
 ]
 
 
