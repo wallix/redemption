@@ -2829,6 +2829,7 @@ class Sesman():
         'height': ('video_height', 'int'),
         'width': ('video_width', 'int'),
         'rt_ready': ('rt', 'bool'),
+        'sharing_ready': ('sharing_allow', 'bool'),
         'fdx_path': ('fdx_path', 'str'),
         'smartcard_login': ('effective_login', 'str'),
         'native_session_id': ('native_session_id', 'str'),

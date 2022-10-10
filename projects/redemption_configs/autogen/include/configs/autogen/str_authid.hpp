@@ -200,6 +200,7 @@ namespace configs
         "disconnect_reason_ack"_zv,
         "recording_started"_zv,
         "rt_ready"_zv,
+        "sharing_ready"_zv,
         "auth_command"_zv,
         "auth_notify"_zv,
         "auth_notify_rail_exec_flags"_zv,

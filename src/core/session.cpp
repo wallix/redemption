@@ -1447,6 +1447,8 @@ public:
                     *this->target_connection_start_time_ptr = {};
                 }
 
+                this->ini_ptr->set_acl<cfg::context::sharing_ready>(true);
+
                 if (this->Front::can_be_start_capture(session_log)) {
                     // Must be synchronized with Front::can_be_start_capture()
 
