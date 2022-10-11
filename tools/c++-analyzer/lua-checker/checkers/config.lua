@@ -93,11 +93,14 @@ function terminate()
         else
             if not t.get and t.is_sesman_to_proxy then
                 if not ask_only[name] or not t.ask then
-                    errors[#errors+1] = name .. " is sesman_to_proxy but nerver read"
+                    local real_type = t.is_sesman_to_proxy and t.is_proxy_to_sesman
+                        and 'sesman_rw'
+                        or 'sesman_to_proxy'
+                    errors[#errors+1] = name .. " is " .. real_type .. " but never read (should be proxy_to_sesman)"
                 end
             end
             if not t.set and t.is_proxy_to_sesman then
-                errors[#errors+1] = name .. " is proxy_to_sesman but nerver write"
+                errors[#errors+1] = name .. " is proxy_to_sesman but never write (should be sesman_to_proxy)"
             end
         end
     end
