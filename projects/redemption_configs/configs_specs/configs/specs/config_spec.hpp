@@ -1045,7 +1045,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<bool>(), names{"recording_started"}, set(false));
         W.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L, type_<bool>(), names{"rt_ready"}, set(false));
-        W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<bool>(), names{"sharing_ready"}, set(false));
+        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<bool>(), names{"sharing_ready"}, set(false));
 
         W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command"});
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"auth_notify"});

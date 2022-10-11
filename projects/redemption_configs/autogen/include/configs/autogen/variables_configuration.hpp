@@ -4376,10 +4376,10 @@ namespace cfg
         type value { false };
     };
     /// type: bool <br/>
-    /// sesman ⇔ proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::sharing_ready {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
