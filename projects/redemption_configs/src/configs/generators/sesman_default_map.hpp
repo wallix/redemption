@@ -52,10 +52,10 @@ namespace python
     void write_type(std::ostream& out, type_<types::dirpath>, T const& x)
     {
         if (std::is_same_v<T, types::dirpath>) {
-            write_type(out, type_<std::string>(), std::string());
+            out << "''";
         }
         else {
-            write_type(out, type_<std::string>(), x);
+            out << "'" << io_quoted2{x} << "'";
         }
     }
 
@@ -90,10 +90,7 @@ namespace python
     template<class T, class X>
     void write_type(std::ostream& out, type_<T>, X const& x)
     {
-        if constexpr (std::is_enum_v<T>) {
-            out << +std::underlying_type_t<T>(x);
-        }
-        else if constexpr (traits::is_integer_v<T>) {
+        if constexpr (traits::is_integer_v<T>) {
             out << +python_spec_writer::impl::stringize_integral(x);
         }
         else {
@@ -110,7 +107,7 @@ namespace python
     template<class T1, class Ratio1, class T>
     void write_type(std::ostream& out, type_<std::chrono::duration<T1, Ratio1>>, T const& i)
     {
-        out << +python_spec_writer::impl::stringize_integral(i);
+        out << +i;
     }
 
     template<class T1, long min, long max, class T>

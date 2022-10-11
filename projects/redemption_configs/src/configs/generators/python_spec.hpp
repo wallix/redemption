@@ -203,10 +203,10 @@ namespace impl
     }
 
     template<class Int, long min, long max, class T>
-    T stringize_integral(types::range<Int, min, max>)
+    char const * stringize_integral(types::range<Int, min, max>)
     {
         static_assert(!min, "unspecified value but 'min' isn't 0");
-        return {};
+        return "0";
     }
 
     inline exprio stringize_integral(cfg_attributes::cpp::expr e) { return {e.value}; }
