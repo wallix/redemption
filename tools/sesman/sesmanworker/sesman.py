@@ -2933,13 +2933,11 @@ class Sesman():
                 })
             else:
                 self.send_data({
-                    u'session_sharing_enable_control': sharing_type == "normal",
+                    u'session_sharing_enable_control':
+                    "control" in sharing_type.lower(),
                     u'session_sharing_userdata': sharing_request_id,
                     u'session_sharing_ttl': sharing_ttl,
                 })
-            self.engine.update_session(
-                sharing_pending_request=False
-            )
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')
