@@ -65,8 +65,8 @@ struct GuestCtx
     void start(
         std::string_view session_id,
         EventContainer& event_container, Front& front, Callback& callback,
-        SessionLogApi& session_log, UdevRandom& rnd,
-        Inifile& original_ini, std::string_view user_data,
+        SessionLogApi& session_log, MonotonicTimePoint::duration invitation_delay,
+        UdevRandom& rnd, Inifile& original_ini, std::string_view user_data,
         bool enable_shared_control)
     {
         assert(!listen_event);
@@ -89,12 +89,11 @@ struct GuestCtx
         original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
         original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_path);
 
-        LOG(LOG_INFO, "Guest::start() create server error");
+        LOG(LOG_INFO, "Guest::start(delay=%lds) start server",
+            std::chrono::duration_cast<std::chrono::seconds>(invitation_delay).count());
 
-        // TODO add timer before auto-close
-
-        listen_event = &event_container.event_creator().create_event_fd_without_timeout(
-            "GuestServer", this, listen_sck.fd(),
+        listen_event = &event_container.event_creator().create_event_fd_timeout(
+            "GuestServer", this, listen_sck.fd(), invitation_delay,
             [
                 this, &event_container, &front, &callback, &session_log, &rnd, &original_ini,
                 password = std::move(session_sharing_invitation_id),
@@ -141,6 +140,11 @@ struct GuestCtx
                         });
                     }
                 });
+            },
+            // timeout
+            [this](Event& /*event*/) {
+                LOG(LOG_INFO, "Guest::start() timeout");
+                stop();
             }
         );
     }
@@ -309,6 +313,7 @@ private:
 
     void close_listen_sck()
     {
+        LOG(LOG_INFO, "Guest::stop()");
         listen_sck.close();
         remove(sck_path.c_str());
         listen_event->garbage = true;

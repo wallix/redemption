@@ -1080,6 +1080,30 @@ private:
                         }
                     }
 
+                    if (has_field(cfg::context::session_sharing_enable_control())) {
+                        if (front.is_up_and_running()
+                         && mod_wrapper.is_connected()
+                         && mod_wrapper.is_up_and_running()
+                        ) {
+                            if (guest_ctx.is_started()) {
+                                guest_ctx.stop();
+                            }
+
+                            guest_ctx.start(
+                                this->ini.get<cfg::context::session_id>(),
+                                events, front, mod_wrapper.get_callback(),
+                                secondary_session.get_secondary_session_log(),
+                                this->ini.get<cfg::context::session_sharing_ttl>(), rnd, ini,
+                                this->ini.get<cfg::context::session_sharing_userdata>(),
+                                this->ini.get<cfg::context::session_sharing_enable_control>()
+                            );
+                        }
+                        else {
+                            this->ini.set_acl<cfg::context::session_sharing_invitation_error_code>(0xffffu);
+                            this->ini.set_acl<cfg::context::session_sharing_invitation_error_message>("sharing not available");
+                        }
+                    }
+
                     if (has_field(cfg::context::rejected())) {
                         LOG(LOG_ERR, "Connection is rejected by Authentifier! Reason: %s",
                             this->ini.get<cfg::context::rejected>().c_str());
@@ -1103,22 +1127,6 @@ private:
                             auto& mod = mod_wrapper.get_mod();
                             mod.acl_update(updated_fields);
                             back_event = std::max(back_event, mod.get_mod_signal());
-                        }
-                    }
-
-                    if (has_field(cfg::context::session_sharing_enable_control())) {
-                        if (front.is_up_and_running()
-                         && mod_wrapper.is_connected()
-                         && mod_wrapper.is_up_and_running()
-                         && !guest_ctx.is_started()
-                        ) {
-                            guest_ctx.start(
-                                this->ini.get<cfg::context::session_id>(),
-                                events, front, mod_wrapper.get_callback(),
-                                secondary_session.get_secondary_session_log(), rnd, ini,
-                                this->ini.get<cfg::context::session_sharing_userdata>(),
-                                this->ini.get<cfg::context::session_sharing_enable_control>()
-                            );
                         }
                     }
                 }
