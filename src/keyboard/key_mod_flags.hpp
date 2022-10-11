@@ -66,9 +66,14 @@ struct KeyModFlags
         set_if(bool(locks & KeyLocks::ScrollLock), KeyMod::ScrollLock);
     }
 
-    bool test(KeyMod mod) const noexcept
+    unsigned test_as_uint(KeyMod mod) const noexcept
     {
         return (mods >> bitpos(mod)) & 1u;
+    }
+
+    bool test(KeyMod mod) const noexcept
+    {
+        return test_as_uint(mod);
     }
 
     void set(KeyMod mod) noexcept

@@ -5209,8 +5209,8 @@ private:
 
         this->sharing_ctx.session_log->log6(
             LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("gaigner"_av, "user"_av),
-                KVLog("loster"_av, "guest-1"_av),
+                KVLog("from"_av, "guest-1"_av),
+                KVLog("to"_av, "user"_av),
             }
         );
     }
@@ -5230,8 +5230,8 @@ private:
 
         this->sharing_ctx.session_log->log6(
             LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("gaigner"_av, "guest-1"_av),
-                KVLog("loster"_av, "user"_av),
+                KVLog("from"_av, "user"_av),
+                KVLog("to"_av, "guest-1"_av),
             }
         );
     }
@@ -5241,6 +5241,8 @@ private:
         if (this->sharing_ctx.has_input() && this->sharing_ctx.guest->sharing_ctx.has_input()) {
             return;
         }
+
+        auto const from = this->sharing_ctx.has_input() ? "user"_av : "guest-1"_av;
 
         this->sharing_ctx.enable_input();
         this->sharing_ctx.guest->sharing_ctx.enable_input();
@@ -5256,8 +5258,8 @@ private:
 
         this->sharing_ctx.session_log->log6(
             LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("gaigner"_av, "everybody"_av),
-                KVLog("loster"_av, "nobody"_av),
+                KVLog("from"_av, from),
+                KVLog("to"_av, "everybody"_av),
             }
         );
     }

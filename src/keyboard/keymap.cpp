@@ -31,39 +31,51 @@ namespace
 
     unsigned numlock_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return mods.test(KeyMod::NumLock);
+        return mods.test_as_uint(KeyMod::NumLock);
     }
 
     unsigned capslock_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return mods.test(KeyMod::CapsLock);
+        return mods.test_as_uint(KeyMod::CapsLock);
     }
 
     unsigned ctrl_01u(kbdtypes::KeyModFlags mods, unsigned rctrl_is_ctrl) noexcept
     {
-        return mods.test(KeyMod::LCtrl)
-             | (mods.test(KeyMod::RCtrl) & rctrl_is_ctrl);
+        return mods.test_as_uint(KeyMod::LCtrl)
+             | (mods.test_as_uint(KeyMod::RCtrl) & rctrl_is_ctrl);
     }
 
     unsigned oem8_01u(kbdtypes::KeyModFlags mods, unsigned rctrl_is_ctrl) noexcept
     {
-        return mods.test(KeyMod::RCtrl) & ~rctrl_is_ctrl;
+        return mods.test_as_uint(KeyMod::RCtrl) & ~rctrl_is_ctrl;
     }
 
     unsigned alt_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return mods.test(KeyMod::LAlt);
+        return mods.test_as_uint(KeyMod::LAlt);
     }
 
     unsigned altgr_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return mods.test(KeyMod::RAlt);
+        return mods.test_as_uint(KeyMod::RAlt);
     }
 
     unsigned shift_01u(kbdtypes::KeyModFlags mods) noexcept
     {
-        return mods.test(KeyMod::LShift)
-             | mods.test(KeyMod::RShift);
+        return mods.test_as_uint(KeyMod::LShift)
+             | mods.test_as_uint(KeyMod::RShift);
+    }
+
+    inline bool sharing_shortcut(kbdtypes::KeyCode shortcut,
+                                 Keymap::DecodedKeys const& decoded_key,
+                                 kbdtypes::KeyModFlags mods) noexcept
+    {
+        return decoded_key.keycode == shortcut
+            && !bool(decoded_key.flags & kbdtypes::KbdFlags::Release)
+            && (mods.test_as_uint(KeyMod::LCtrl)
+              | mods.test_as_uint(KeyMod::LShift)
+              | mods.test_as_uint(KeyMod::LAlt)
+            );
     }
 
     struct KEventKeymaps
@@ -325,37 +337,27 @@ bool Keymap::is_app_switching_shortcut() const noexcept
 
 bool Keymap::is_session_sharing_take_control() const noexcept
 {
-    return _decoded_key.keycode == KeyCode::F9
-        && !bool(_decoded_key.flags & KbdFlags::Release)
-        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+    return sharing_shortcut(KeyCode::F9, _decoded_key, _key_mods);
 }
 
 bool Keymap::is_session_sharing_give_control() const noexcept
 {
-    return _decoded_key.keycode == KeyCode::F10
-        && !bool(_decoded_key.flags & KbdFlags::Release)
-        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+    return sharing_shortcut(KeyCode::F10, _decoded_key, _key_mods);
 }
 
 bool Keymap::is_session_sharing_common_control() const noexcept
 {
-    return _decoded_key.keycode == KeyCode::F11
-        && !bool(_decoded_key.flags & KbdFlags::Release)
-        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+    return sharing_shortcut(KeyCode::F11, _decoded_key, _key_mods);
 }
 
 bool Keymap::is_session_sharing_kill_guest() const noexcept
 {
-    return _decoded_key.keycode == KeyCode::F5
-        && !bool(_decoded_key.flags & KbdFlags::Release)
-        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+    return sharing_shortcut(KeyCode::F5, _decoded_key, _key_mods);
 }
 
 bool Keymap::is_session_sharing_toggle_graphics() const noexcept
 {
-    return _decoded_key.keycode == KeyCode::F8
-        && !bool(_decoded_key.flags & KbdFlags::Release)
-        && (_key_mods.test(KeyMod::LCtrl) || _key_mods.test(KeyMod::RCtrl));
+    return sharing_shortcut(KeyCode::F8, _decoded_key, _key_mods);
 }
 
 bool Keymap::is_alt_pressed() const noexcept

@@ -594,16 +594,16 @@ void KeymapSym::_update_keymap() noexcept
 
     auto rctrl_is_ctrl = unsigned(layout_.right_ctrl_is_ctrl);
 
-    unsigned numlock = mods_.test(KeyMod::NumLock);
-    unsigned capslock = mods_.test(KeyMod::CapsLock);
-    unsigned ctrl = mods_.test(KeyMod::LCtrl)
-                  | (mods_.test(KeyMod::RCtrl) & rctrl_is_ctrl);
-    unsigned oem8 = mods_.test(KeyMod::RCtrl) & ~rctrl_is_ctrl;
-    unsigned alt = mods_.test(KeyMod::LAlt);
-    unsigned shift = mods_.test(KeyMod::LShift)
-                   | mods_.test(KeyMod::RShift);
+    unsigned numlock = mods_.test_as_uint(KeyMod::NumLock);
+    unsigned capslock = mods_.test_as_uint(KeyMod::CapsLock);
+    unsigned ctrl = mods_.test_as_uint(KeyMod::LCtrl)
+                  | (mods_.test_as_uint(KeyMod::RCtrl) & rctrl_is_ctrl);
+    unsigned oem8 = mods_.test_as_uint(KeyMod::RCtrl) & ~rctrl_is_ctrl;
+    unsigned alt = mods_.test_as_uint(KeyMod::LAlt);
+    unsigned shift = mods_.test_as_uint(KeyMod::LShift)
+                   | mods_.test_as_uint(KeyMod::RShift);
     // enable Ctrl and Alt when AltGr
-    unsigned altgr = mods_.test(KeyMod::RAlt) | (ctrl & alt);
+    unsigned altgr = mods_.test_as_uint(KeyMod::RAlt) | (ctrl & alt);
 
     imods_ = checked_int(0u
            | (shift << KeyLayout::Mods::Shift)

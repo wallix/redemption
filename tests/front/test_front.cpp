@@ -430,8 +430,12 @@ std::string shortcut(FrontCtx& front_ctx, Shortcut scancode)
 {
     auto& mod = front_ctx.mod;
     front_ctx.front.input_event_scancode(KbdFlags::NoFlags, Scancode::LCtrl, mod, 0);
+    front_ctx.front.input_event_scancode(KbdFlags::NoFlags, Scancode::LShift, mod, 0);
+    front_ctx.front.input_event_scancode(KbdFlags::NoFlags, Scancode::LAlt, mod, 0);
     front_ctx.front.input_event_scancode(KbdFlags::NoFlags, Scancode(scancode), mod, 0);
     front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode(scancode), mod, 0);
+    front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode::LAlt, mod, 0);
+    front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode::LShift, mod, 0);
     front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode::LCtrl, mod, 0);
     return mod.events();
 };
@@ -448,15 +452,49 @@ inline constexpr auto keyA_av =
     "{KbdFlags=0x0000, Scancode=0x1E}, {KbdFlags=0x8000, Scancode=0x1E}"_av;
 inline constexpr auto no_keys =
     ""_av;
-inline constexpr auto keys_take =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x43}, "
-    "{KbdFlags=0x8000, Scancode=0x43}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto keys_give =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x44}, "
-    "{KbdFlags=0x8000, Scancode=0x44}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "{KbdFlags=0x0000, Scancode=0x1D}, "
+    "{KbdFlags=0x0000, Scancode=0x2A}, "
+    "{KbdFlags=0x0000, Scancode=0x38}, "
+    "{KbdFlags=0x0000, Scancode=0x44}, "
+    "{KbdFlags=0x8000, Scancode=0x44}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x2A}, "
+    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
+inline constexpr auto keys_take =
+    "{KbdFlags=0x0000, Scancode=0x1D}, "
+    "{KbdFlags=0x0000, Scancode=0x2A}, "
+    "{KbdFlags=0x0000, Scancode=0x38}, "
+    "{KbdFlags=0x0000, Scancode=0x43}, "
+    "{KbdFlags=0x8000, Scancode=0x43}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x2A}, "
+    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
+inline constexpr auto keys_take_intercept =
+    "{KbdFlags=0x0000, Scancode=0x1D}, "
+    "{KbdFlags=0x0000, Scancode=0x2A}, "
+    "{KbdFlags=0x0000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x43}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x2A}, "
+    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto keys_common =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x57}, "
-    "{KbdFlags=0x8000, Scancode=0x57}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "{KbdFlags=0x0000, Scancode=0x1D}, "
+    "{KbdFlags=0x0000, Scancode=0x2A}, "
+    "{KbdFlags=0x0000, Scancode=0x38}, "
+    "{KbdFlags=0x0000, Scancode=0x57}, "
+    "{KbdFlags=0x8000, Scancode=0x57}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x2A}, "
+    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
+inline constexpr auto keys_common_intercept =
+    "{KbdFlags=0x0000, Scancode=0x1D}, "
+    "{KbdFlags=0x0000, Scancode=0x2A}, "
+    "{KbdFlags=0x0000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x57}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, "
+    "{KbdFlags=0x8000, Scancode=0x2A}, "
+    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
 
 
 std::string uniA(FrontCtx& front_ctx)
@@ -497,43 +535,53 @@ inline constexpr auto no_mouse = ""_av;
 
 inline constexpr auto guest_to_user_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED gaigner=\"user\" loster=\"guest-1\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x43}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"user\"\n"
+    ", {KbdFlags=0x8000, Scancode=0x43}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto common_to_user_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KeyLocks=0x01}"
-    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED gaigner=\"user\" loster=\"guest-1\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x43}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
+    "{KeyLocks=0x01}"
+    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"user\"\n"
+    ", {KbdFlags=0x8000, Scancode=0x43}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_to_guest_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KeyLocks=0x04}"
-    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED gaigner=\"guest-1\" loster=\"user\"\n"_av;
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, {KeyLocks=0x04}"
+    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED from=\"user\" to=\"guest-1\"\n"_av;
 inline constexpr auto guest_to_user_and_guest_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED gaigner=\"everybody\" loster=\"nobody\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x57}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"everybody\"\n"
+    ", {KbdFlags=0x8000, Scancode=0x57}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_to_user_and_guest_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KeyLocks=0x01}"
-    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED gaigner=\"everybody\" loster=\"nobody\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x57}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
+    "{KeyLocks=0x01}"
+    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED from=\"user\" to=\"everybody\"\n"
+    ", {KbdFlags=0x8000, Scancode=0x57}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_mask_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}"
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}"
     "SESSION_SHARING_GUEST_VIEW_CHANGED state=\"masked\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x42}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    ", {KbdFlags=0x8000, Scancode=0x42}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_mask_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED gaigner=\"user\" loster=\"guest-1\"\n"
+    "SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"user\"\n"
     "SESSION_SHARING_GUEST_VIEW_CHANGED state=\"masked\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x42}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    ", {KbdFlags=0x8000, Scancode=0x42}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_unmask_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}, "
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{Invalidate={0, 0, 1024, 768}"
     "SESSION_SHARING_GUEST_VIEW_CHANGED state=\"unmasked\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x42}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    ", {KbdFlags=0x8000, Scancode=0x42}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_kill_log_event =
     "SESSION_SHARING_GUEST_KILLED name=\"guest-1\"\n"_av;
 inline constexpr auto user_kill_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}"
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}"
     "SESSION_SHARING_GUEST_KILLED name=\"guest-1\"\n, "
-    "{KbdFlags=0x8000, Scancode=0x3F}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "{KbdFlags=0x8000, Scancode=0x3F}, "
+    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 
 
 int draw(FrontCtx& front_ctx)
@@ -656,7 +704,7 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
 
         RED_TEST_CONTEXT("user send Take") {
             // shortcut scancode is skipped
-            RED_CHECK(shortcut(user, Shortcut::Take) == "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x8000, Scancode=0x43}, {KbdFlags=0x8000, Scancode=0x1D}"_av);
+            RED_CHECK(shortcut(user, Shortcut::Take) == keys_take_intercept);
             RED_CHECK(!gd.is_slased_circle_cursor);
             RED_CHECK(keyA(guest) == no_keys);
             RED_CHECK(keyA(user) == keyA_av);
@@ -786,7 +834,7 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
         }
 
         RED_TEST_CONTEXT("user send Common") {
-            RED_CHECK(shortcut(user, Shortcut::Common) == "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x8000, Scancode=0x57}, {KbdFlags=0x8000, Scancode=0x1D}"_av);
+            RED_CHECK(shortcut(user, Shortcut::Common) == keys_common_intercept);
             RED_CHECK(!gd.is_slased_circle_cursor);
             RED_CHECK(keyA(guest) == keyA_av);
             RED_CHECK(keyA(user) == keyA_av);
