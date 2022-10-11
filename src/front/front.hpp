@@ -5489,6 +5489,7 @@ public:
 
         session_log.log6(LogId::SESSION_SHARING_GUEST_CONNECTION, {
             KVLog("name"_av, "guest-1"_av),
+            KVLog("mode"_av, guest_front.sharing_ctx.enable_shared_control ? "view-control"_av : "view-only"_av),
         });
     }
 

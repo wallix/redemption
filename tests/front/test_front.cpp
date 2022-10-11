@@ -602,7 +602,7 @@ RED_AUTO_TEST_CASE(TestViewAndControlSharingFront)
     using namespace TestFrontData;
 
 sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
-    RED_CHECK(mod.session_log.events() == "SESSION_SHARING_GUEST_CONNECTION name=\"guest-1\"\n"_av);
+    RED_CHECK(mod.session_log.events() == "SESSION_SHARING_GUEST_CONNECTION name=\"guest-1\" mode=\"view-control\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
         RED_CHECK(!gd.is_slased_circle_cursor);
@@ -970,7 +970,7 @@ RED_AUTO_TEST_CASE(TestViewOnlySharingFront)
     using namespace TestFrontData;
 
 sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
-    RED_CHECK(mod.session_log.events() == "SESSION_SHARING_GUEST_CONNECTION name=\"guest-1\"\n"_av);
+    RED_CHECK(mod.session_log.events() == "SESSION_SHARING_GUEST_CONNECTION name=\"guest-1\" mode=\"view-only\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
         RED_CHECK(!gd.is_slased_circle_cursor);
