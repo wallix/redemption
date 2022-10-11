@@ -1838,17 +1838,17 @@ public:
             });
         }
 
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_window(): ItemCount=%d", this->windows_and_notification_icons.size());
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_window(): ItemCount=%zu", this->windows_and_notification_icons.size());
     }
 
     void rail_deleted_window(uint32_t window_id) override
     {
         LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): WindowId=0x%X", window_id);
 
-        auto const number_of_elements_removed = this->windows_and_notification_icons.erase({
-                .window_id            = window_id,
-                .notification_icon_id = invalid_notification_icon_id
-            });
+        this->windows_and_notification_icons.erase({
+            .window_id            = window_id,
+            .notification_icon_id = invalid_notification_icon_id
+        });
 
         if (this->windows_and_notification_icons_synchronized) {
             send_client_message([window_id](OutStream & out_s) {
@@ -1859,7 +1859,7 @@ public:
             });
         }
 
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): ItemCount=%d", this->windows_and_notification_icons.size());
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): ItemCount=%zu", this->windows_and_notification_icons.size());
     }
 
     void rail_new_or_existing_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
@@ -1881,7 +1881,7 @@ public:
             });
         }
 
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_notification_icon(): ItemCount=%d", this->windows_and_notification_icons.size());
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_notification_icon(): ItemCount=%zu", this->windows_and_notification_icons.size());
     }
 
     void rail_deleted_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
@@ -1903,7 +1903,7 @@ public:
             });
         }
 
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_notification_icon(): ItemCount=%d", this->windows_and_notification_icons.size());
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_notification_icon(): ItemCount=%zu", this->windows_and_notification_icons.size());
     }
 
 private:
