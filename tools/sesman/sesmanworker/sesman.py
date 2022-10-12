@@ -456,6 +456,7 @@ class Sesman():
             self.engine.wabengine_conf.get("session_4eyes_timer", 60)
         )
         self.tun_process = None
+        self.sharing_requests = set()
 
     def reset_session_var(self):
         """
@@ -477,6 +478,7 @@ class Sesman():
         self.target_group = None
         self.internal_target = False
         self.target_app_rights = {}
+        self.sharing_requests = set()
         # Should set context values back to default
         for key, value in back_to_selector_default_reinit.items():
             self.shared[key] = value
@@ -2901,7 +2903,7 @@ class Sesman():
             return False, None
         return engine.is_device_in_subnet(host_ip, subnet), host_ip
 
-    def update_session_parameters(self, current_time):
+    def update_session_parameters(self, current_time: float) -> None:
         params = self.engine.read_session_parameters()
         res = params.get("rt_display")
         Logger().debug("rt_display=%s" % res)
@@ -2919,22 +2921,22 @@ class Sesman():
                 u'rd_shadow_type': res,
                 u'rd_shadow_userdata': userdata
             })
-        sharing_req = params.get("sharing_pending_request")
-        if sharing_req:
+        sharing_request_id = params.get("sharing_request_id")
+        if sharing_request_id not in self.sharing_requests:
+            self.sharing_requests.add(sharing_request_id)
             sharing_mode = params.get("sharing_mode")
             sharing_type = params.get("sharing_type")
             sharing_ttl = params.get("sharing_request_ttl")
-            sharing_request_id = params.get("sharing_request_id")
             Logger().debug("sending _shadow_type=%s" % sharing_mode)
-            if sharing_mode == "SHADOWING":
+            if sharing_type == "SHADOWING":
                 self.send_data({
-                    u'rd_shadow_type': sharing_type,
+                    u'rd_shadow_type': sharing_mode,
                     u'rd_shadow_userdata': sharing_request_id,
                 })
             else:
                 self.send_data({
                     u'session_sharing_enable_control':
-                    "control" in sharing_type.lower(),
+                    "control" in sharing_mode.lower(),
                     u'session_sharing_userdata': sharing_request_id,
                     u'session_sharing_ttl': sharing_ttl,
                 })

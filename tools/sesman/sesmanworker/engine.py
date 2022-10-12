@@ -1613,7 +1613,8 @@ class Engine(object):
 
     def read_session_parameters(self, key=None):
         with manage_transaction(self.wabengine):
-            return self.wabengine.read_session_parameters(self.session_id, key=key)
+            return self.wabengine.read_session_parameters(self.session_id,
+                                                          key=key)
 
     def check_target(self, target, pid=None, request_ticket=None):
         if self.checktarget_cache == (APPROVAL_ACCEPTED, target['target_uid']):
