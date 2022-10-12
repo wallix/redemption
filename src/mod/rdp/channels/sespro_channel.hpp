@@ -1813,86 +1813,40 @@ public:
         }
     };
 
-    static constexpr uint32_t invalid_notification_icon_id = 0;
-
     std::set<window_or_notification_icon> windows_and_notification_icons;
 
     bool windows_and_notification_icons_synchronized = false;
 
-    void rail_new_or_existing_window(uint32_t window_id) override
+    void rail_add_window_or_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
     {
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_window(): WindowId=0x%X", window_id);
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_add_window_or_notification_icon(): WindowId=0x%X NotificationIconId=0x%X", window_id, notification_icon_id);
 
         auto const insert_result = this->windows_and_notification_icons.insert({
                 .window_id            = window_id,
-                .notification_icon_id = invalid_notification_icon_id
+                .notification_icon_id = notification_icon_id
             });
 
         if (this->windows_and_notification_icons_synchronized &&
             insert_result.second) {
-            send_client_message([window_id](OutStream & out_s) {
+            send_client_message([window_id, notification_icon_id](OutStream & out_s) {
                 out_s.out_copy_bytes("RemotePrgramNewOrExistingWindowsAndNotificationIcons="_av);
                 out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
                 out_s.out_uint8('\x01');
-                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(invalid_notification_icon_id));
+                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(notification_icon_id));
             });
         }
 
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_window(): ItemCount=%zu", this->windows_and_notification_icons.size());
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_add_window_or_notification_icon(): ItemCount=%zu", this->windows_and_notification_icons.size());
     }
 
-    void rail_deleted_window(uint32_t window_id) override
+    void rail_remove_window_or_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
     {
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): WindowId=0x%X", window_id);
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_remove_window_or_notification_icon(): WindowId=0x%X NotificationIconId=0x%X", window_id, notification_icon_id);
 
         this->windows_and_notification_icons.erase({
-            .window_id            = window_id,
-            .notification_icon_id = invalid_notification_icon_id
-        });
-
-        if (this->windows_and_notification_icons_synchronized) {
-            send_client_message([window_id](OutStream & out_s) {
-                out_s.out_copy_bytes("RemotePrgramDeletedWindowOrNotificationIcon="_av);
-                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
-                out_s.out_uint8('\x01');
-                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(invalid_notification_icon_id));
-            });
-        }
-
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_window(): ItemCount=%zu", this->windows_and_notification_icons.size());
-    }
-
-    void rail_new_or_existing_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
-    {
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_notification_icon(): WindowId=0x%X NotificationIconId=0x%X", window_id, notification_icon_id);
-
-        auto const insert_result = this->windows_and_notification_icons.insert({
                 .window_id            = window_id,
                 .notification_icon_id = notification_icon_id
             });
-
-        if (this->windows_and_notification_icons_synchronized &&
-            insert_result.second) {
-            send_client_message([window_id, notification_icon_id](OutStream & out_s) {
-                out_s.out_copy_bytes("RemotePrgramNewOrExistingWindowsAndNotificationIcons="_av);
-                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(window_id));
-                out_s.out_uint8('\x01');
-                out_s.out_copy_bytes(int_to_fixed_hexadecimal_upper_chars(notification_icon_id));
-            });
-        }
-
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_new_or_existing_notification_icon(): ItemCount=%zu", this->windows_and_notification_icons.size());
-    }
-
-    void rail_deleted_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
-    {
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_notification_icon(): WindowId=0x%X NotificationIconId=0x%X", window_id, notification_icon_id);
-
-        auto const number_of_elements_removed = this->windows_and_notification_icons.erase({
-                .window_id            = window_id,
-                .notification_icon_id = notification_icon_id
-            });
-        assert(number_of_elements_removed == 1);
 
         if (this->windows_and_notification_icons_synchronized) {
             send_client_message([window_id, notification_icon_id](OutStream & out_s) {
@@ -1903,7 +1857,7 @@ public:
             });
         }
 
-        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_deleted_notification_icon(): ItemCount=%zu", this->windows_and_notification_icons.size());
+        LOG(LOG_INFO, "SessionProbeVirtualChannel::rail_remove_window_or_notification_icon(): ItemCount=%zu", this->windows_and_notification_icons.size());
     }
 
 private:

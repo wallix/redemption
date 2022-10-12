@@ -392,7 +392,10 @@ private:
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
                     }
-                    this->sespro.rail_deleted_window(order.header.WindowId());
+                    this->sespro.rail_remove_window_or_notification_icon(
+                          order.header.WindowId()
+                        , sespro_api::invalid_notification_icon_id
+                        );
                 }
                 break;
 
@@ -409,10 +412,16 @@ private:
                     if (order.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW)
                     {
                         if (order.ShowState()) {
-                            this->sespro.rail_new_or_existing_window(order.header.WindowId());
+                            this->sespro.rail_add_window_or_notification_icon(
+                                  order.header.WindowId()
+                                , sespro_api::invalid_notification_icon_id
+                                );
                         }
                         else {
-                            this->sespro.rail_deleted_window(order.header.WindowId());
+                            this->sespro.rail_remove_window_or_notification_icon(
+                                  order.header.WindowId()
+                                , sespro_api::invalid_notification_icon_id
+                                );
                         }
                     }
                 }
@@ -444,7 +453,10 @@ private:
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
                     }
-                    this->sespro.rail_deleted_notification_icon(order.header.WindowId(), order.header.NotifyIconId());
+                    this->sespro.rail_remove_window_or_notification_icon(
+                          order.header.WindowId()
+                        , order.header.NotifyIconId()
+                        );
                 }
                 break;
 
@@ -458,7 +470,10 @@ private:
                     if (!this->silent_reject_windowing_orders) {
                         gd.draw(order);
                     }
-                    this->sespro.rail_new_or_existing_notification_icon(order.header.WindowId(), order.header.NotifyIconId());
+                    this->sespro.rail_add_window_or_notification_icon(
+                          order.header.WindowId()
+                        , order.header.NotifyIconId()
+                        );
                 }
                 break;
 

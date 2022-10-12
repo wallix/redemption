@@ -6341,44 +6341,24 @@ public:
     }
 
 #ifndef __EMSCRIPTEN__
-    void rail_new_or_existing_window(uint32_t window_id) override
+    void rail_add_window_or_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
     {
         if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->rail_new_or_existing_window(window_id);
+            this->channels.session_probe_virtual_channel->rail_add_window_or_notification_icon(window_id, notification_icon_id);
         }
     }
 
-    void rail_deleted_window(uint32_t window_id) override
+    void rail_remove_window_or_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
     {
         if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->rail_deleted_window(window_id);
-        }
-    }
-
-    void rail_new_or_existing_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
-    {
-        if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->rail_new_or_existing_notification_icon(window_id, notification_icon_id);
-        }
-    }
-
-    void rail_deleted_notification_icon(uint32_t window_id, uint32_t notification_icon_id) override
-    {
-        if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->rail_deleted_notification_icon(window_id, notification_icon_id);
+            this->channels.session_probe_virtual_channel->rail_remove_window_or_notification_icon(window_id, notification_icon_id);
         }
     }
 #else
-    void rail_new_or_existing_window(uint32_t /*window_id*/) override
+    void rail_add_window_or_notification_icon(uint32_t /*window_id*/, uint32_t /*notification_icon_id*/) override
     {}
 
-    void rail_deleted_window(uint32_t /*window_id*/) override
-    {}
-
-    void rail_new_or_existing_notification_icon(uint32_t /*window_id*/, uint32_t /*notification_icon_id*/) override
-    {}
-
-    void rail_deleted_notification_icon(uint32_t /*window_id*/, uint32_t /*notification_icon_id*/) override
+    void rail_remove_window_or_notification_icon(uint32_t /*window_id*/, uint32_t /*notification_icon_id*/) override
     {}
 #endif
 

@@ -22,11 +22,13 @@
 
 struct sespro_api
 {
-    virtual void rail_new_or_existing_window(uint32_t window_id) = 0;
-    virtual void rail_deleted_window(uint32_t window_id) = 0;
+    static constexpr uint32_t invalid_notification_icon_id = 0;
 
-    virtual void rail_new_or_existing_notification_icon(uint32_t window_id, uint32_t notification_icon_id) = 0;
-    virtual void rail_deleted_notification_icon(uint32_t window_id, uint32_t notification_icon_id) = 0;
+    virtual void rail_add_window_or_notification_icon(
+        uint32_t window_id, uint32_t notification_icon_id) = 0;
+
+    virtual void rail_remove_window_or_notification_icon(
+        uint32_t window_id, uint32_t notification_icon_id) = 0;
 
     virtual ~sespro_api() = default;
 };
