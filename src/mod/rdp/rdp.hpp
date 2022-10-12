@@ -6340,6 +6340,7 @@ public:
         }
     }
 
+#ifndef __EMSCRIPTEN__
     void rail_new_or_existing_window(uint32_t window_id) override
     {
         if (this->channels.session_probe_virtual_channel) {
@@ -6367,6 +6368,19 @@ public:
             this->channels.session_probe_virtual_channel->rail_deleted_notification_icon(window_id, notification_icon_id);
         }
     }
+#else
+    void rail_new_or_existing_window(uint32_t /*window_id*/) override
+    {}
+
+    void rail_deleted_window(uint32_t /*window_id*/) override
+    {}
+
+    void rail_new_or_existing_notification_icon(uint32_t /*window_id*/, uint32_t /*notification_icon_id*/) override
+    {}
+
+    void rail_deleted_notification_icon(uint32_t /*window_id*/, uint32_t /*notification_icon_id*/) override
+    {}
+#endif
 
 private:
     template<class... WriterData>
