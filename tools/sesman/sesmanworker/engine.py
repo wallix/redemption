@@ -1686,6 +1686,8 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return []
+        if self.is_shadow_session(target):
+            return [PASSWORD_VAULT]
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)

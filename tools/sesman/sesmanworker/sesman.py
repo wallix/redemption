@@ -2778,12 +2778,14 @@ class Sesman():
 
     def handle_session_sharing(self):
         if self.shared.get("session_sharing_invitation_error_code"):
+            sharing_addr = self.shared.get("session_sharing_invitation_addr")
+            if not sharing_addr.startswith("sock://"):
+                sharing_addr = "sock://" + sharing_addr
             session_sharing_token = {
                 "native_session_sharing": True,
-                "shadow_id":
+                "sharing_pass":
                 self.shared.get("session_sharing_invitation_id"),
-                "shadow_ip":
-                self.shared.get("session_sharing_invitation_addr"),
+                "shadow_ip": sharing_addr,
                 "shadow_port": 0,  # force 0 to use Unix Socket
             }
             self.engine.sharing_response(
@@ -2927,7 +2929,8 @@ class Sesman():
             sharing_mode = params.get("sharing_mode")
             sharing_type = params.get("sharing_type")
             sharing_ttl = params.get("sharing_request_ttl")
-            Logger().debug("sending _shadow_type=%s" % sharing_mode)
+            Logger().debug("sending _sharing_mode=%s" % sharing_mode)
+            Logger().debug("sending _sharing_type=%s" % sharing_type)
             if sharing_type == "SHADOWING":
                 self.send_data({
                     u'rd_shadow_type': sharing_mode,
