@@ -20,6 +20,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/front_wrapper.hpp"
 #include "test_only/session_log_test.hpp"
@@ -49,7 +50,7 @@
 #include "core/channels_authorizations.hpp"
 #include "gdi/osd_api.hpp"
 #include "front/front.hpp"
-#include "core/guest_ctx.hpp" // front_process
+#include "core/guest_ctx.hpp"
 #include "capture/cryptofile.hpp"
 
 using namespace std::chrono_literals;
@@ -57,6 +58,10 @@ using namespace std::chrono_literals;
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
 } // namespace dump2008
+
+namespace dump_front {
+    #include "fixtures/trace_front_client.hpp"
+} // namespace dump_front
 
 namespace {
 
@@ -209,10 +214,7 @@ RED_AUTO_TEST_CASE(TestFront)
     //                           , verbose, 0);
 
     // Comment the code block below to generate testing data.
-    #include "fixtures/trace_front_client.hpp"
-
-    // Comment the code block below to generate testing data.
-    FrontTransport front_trans(cstr_array_view(indata));
+    FrontTransport front_trans(cstr_array_view(dump_front::indata));
 
     LCGRandom gen1;
 
@@ -400,10 +402,7 @@ struct FrontCtx
         Mod& mod,
         Inifile& ini,
         Front::GuestParameters guest_params = {})
-    : trans([]{
-        #include "fixtures/trace_front_client.hpp"
-        return FrontTransport(cstr_array_view(indata));
-    }())
+    : trans(FrontTransport(cstr_array_view(dump_front::indata)))
     , mod(mod)
     , front(events, mod.session_log, trans, gen1, ini, cctx, guest_params)
     {
@@ -593,12 +592,8 @@ int draw(FrontCtx& front_ctx)
     return front_ctx.trans.counter;
 };
 
-template<class F>
-void sharing_test(bool enable_shared_control, F f)
+void init_ini(Inifile& ini)
 {
-    ClientInfo info = make_client_info();
-
-    Inifile ini;
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
     ini.set<cfg::client::tls_support>(false);
@@ -607,8 +602,13 @@ void sharing_test(bool enable_shared_control, F f)
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::client::fast_path>(false);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
+}
 
-
+template<class F>
+void sharing_test(bool enable_shared_control, F f)
+{
+    Inifile ini;
+    init_ini(ini);
     Mod mod;
     SessionLogTest& session_log = mod.session_log;
     EventManager event_manager;
@@ -1178,4 +1178,68 @@ sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& 
 
 });
 
+}
+
+RED_AUTO_TEST_CASE_WD(TestGuestCtx, wd)
+{
+    GuestCtx guest_ctx;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
+
+    using namespace TestFrontData;
+
+    Mod mod;
+    Inifile ini;
+    init_ini(ini);
+    FrontCtx front_ctx(events, mod, ini);
+
+    std::string sck_filename = "/front2_{SID}_eFiuUrCubBc=_1.sck";
+
+    // change current directory for unix socket name limitation
+    // path is limited to 108 bytes (92 for portability)
+    char dir[2024];
+    RED_REQUIRE((getcwd(dir, sizeof(dir)) != nullptr));
+
+    auto sck_path = wd.add_file(sck_filename);
+
+    RED_REQUIRE(chdir(wd.dirname()) == 0);
+
+    auto result = guest_ctx.start(
+        "."_av, "{SID}"_av,
+        events, front_ctx.front, front_ctx.mod,
+        mod.session_log,
+        100ms,
+        front_ctx.gen1, ini,
+        true
+    );
+
+    RED_CHECK(result.errnum == 0);
+    RED_CHECK(result.errmsg == nullptr);
+    RED_CHECK(guest_ctx.sck_path() == "./front2_{SID}_eFiuUrCubBc=_1.sck");
+    RED_CHECK(guest_ctx.sck_password() == "aFoTvaBTevNYEnvOkI6orUhAhzGAH0W2OKTxS3DGNaQ="_av);
+
+    RED_REQUIRE(chdir(wd.dirname()) == 0);
+
+    auto fd = local_connect(guest_ctx.sck_path(), 100ms, true);
+    RED_REQUIRE(fd.is_open());
+
+    RED_REQUIRE(detail::ProtectedEventContainer::get_events(events).size() == 1);
+
+    front_ctx.gen1.set_seed(0);
+
+    event_manager.execute_events([](int /*fd*/){ return true; }, false);
+    RED_REQUIRE(guest_ctx.has_front());
+
+    wd.remove_file(sck_filename);
+    RED_CHECK_WORKSPACE(wd);
+
+    RED_REQUIRE(fcntl(fd.fd(), F_SETFL, fcntl(fd.fd(), F_GETFL) & ~O_NONBLOCK) == 0);
+
+    auto input = cstr_array_view(dump_front::indata);
+    RED_REQUIRE(write(fd.fd(), input.data(), input.size()) == static_cast<ssize_t>(input.size()));
+    event_manager.execute_events([](int /*fd*/){ return true; }, false);
+
+    RED_CHECK(!guest_ctx.has_front());
+    RED_CHECK(mod.session_log.events() ==
+        "SESSION_SHARING_GUEST_CONNECTION_REJECTED name=\"guest-1\" reason=\"bad password\"\n"_av);
 }

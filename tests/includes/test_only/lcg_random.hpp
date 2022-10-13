@@ -64,6 +64,11 @@ public:
         }
     }
 
+    void set_seed(uint64_t seed)
+    {
+        this->seed = seed;
+    }
+
 private:
     uint32_t rand32()
     {

@@ -2368,6 +2368,7 @@ test-run tests/front/test_front :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/session_log_test.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)

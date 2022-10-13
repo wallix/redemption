@@ -62,32 +62,51 @@ struct GuestCtx
         return guest_ptr->get_transport();
     }
 
-    void start(
-        std::string_view session_id,
+    zstring_view sck_path() const noexcept
+    {
+        return sck_path_;
+    }
+
+    zstring_view sck_password() const noexcept
+    {
+        return sck_password_;
+    }
+
+    struct ResultError
+    {
+        unsigned errnum;
+        char const* errmsg;
+    };
+
+    ResultError start(
+        chars_view sck_path_base, chars_view session_id,
         EventContainer& event_container, Front& front, Callback& callback,
         SessionLogApi& session_log, MonotonicTimePoint::duration invitation_delay,
-        UdevRandom& rnd, Inifile& original_ini, std::string_view user_data,
-        bool enable_shared_control)
+        Random& rnd, Inifile& original_ini, bool enable_shared_control)
     {
         assert(!listen_event);
 
-        sck_path = generate_sck_path(session_id);
+        // generate random socket path
+        ++sck_counter_;
+        str_assign(
+            sck_path_, sck_path_base,
+            "/front2_", session_id, '_',
+            RandomText().text(rnd, 8), '_',
+            int_to_decimal_chars(sck_counter_), ".sck"
+        );
 
-        original_ini.set_acl<cfg::context::session_sharing_userdata>(user_data);
-
-        listen_sck = create_unix_server(sck_path, EnableTransparentMode::No);
+        // create a unix socket for guest front
+        listen_sck = create_unix_server(sck_path_, EnableTransparentMode::No);
         if (!listen_sck.is_open()) {
-            int errnum = errno;
             LOG(LOG_ERR, "Guest::start() create server error");
-            original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(checked_int(errnum));
-            original_ini.set_acl<cfg::context::session_sharing_invitation_error_message>(strerror(errnum));
-            return ;
+            int errnum = errno;
+            return (errnum)
+                ? ResultError{checked_int(errnum), strerror(errnum)}
+                : ResultError{0xfff0u, "Create session sharing server error"};
         }
 
-        original_ini.set_acl<cfg::context::session_sharing_invitation_error_code>(0u);
-        std::string session_sharing_invitation_id = generate_password(rnd);
-        original_ini.set_acl<cfg::context::session_sharing_invitation_id>(session_sharing_invitation_id);
-        original_ini.set_acl<cfg::context::session_sharing_invitation_addr>(sck_path);
+        // generate random password
+        str_assign(sck_password_, RandomText().text(rnd, 32));
 
         LOG(LOG_INFO, "Guest::start(delay=%lds) start server",
             std::chrono::duration_cast<std::chrono::seconds>(invitation_delay).count());
@@ -96,11 +115,8 @@ struct GuestCtx
             "GuestServer", this, listen_sck.fd(), invitation_delay,
             [
                 this, &event_container, &front, &callback, &session_log, &rnd, &original_ini,
-                password = std::move(session_sharing_invitation_id),
                 enable_shared_control
             ](Event& /*event*/) mutable {
-                LOG(LOG_DEBUG, "guest connection");
-
                 int conn_sck = accept(listen_sck.fd(), nullptr, nullptr);
                 int errnum = errno;
                 close_listen_sck();
@@ -116,11 +132,15 @@ struct GuestCtx
                     enable_shared_control, kill_fn, this);
 
                 guest_ptr->set_io_event([
-                    this, &callback, &session_log, password = std::move(password)
+                    this, &callback, &session_log, password = std::move(sck_password_)
                 ](Event& /*event*/) {
                     // no input
                     NullCallback null_callback;
                     process_guest(null_callback);
+                    // possibly closed by process_guest
+                    if (!guest_ptr) {
+                        return ;
+                    }
 
                     if (guest_ptr->is_up_and_running()) {
                         // check credential
@@ -147,6 +167,8 @@ struct GuestCtx
                 stop();
             }
         );
+
+        return ResultError{0, nullptr};
     }
 
     void stop()
@@ -160,25 +182,27 @@ struct GuestCtx
         }
     }
 
-    // TODO to another file + test
-    static std::string generate_password(Random& rnd)
+    ~GuestCtx()
     {
-        uint8_t rnd_data[32];
-        rnd.random(rnd_data, sizeof(rnd_data));
-
-        std::array<uint8_t, 64> password_rep;
-        base64_encode(make_array_view(rnd_data), writable_bytes_view(password_rep));
-        std::string password(char_ptr_cast(password_rep.data()), base64_encode_size(sizeof(rnd_data)));
-
-        return password;
-    }
-
-    static std::string generate_sck_path(std::string_view session_id)
-    {
-        return str_concat("/tmp/front2_", session_id, ".sck");
+        if (listen_sck.is_open()) {
+            close_listen_sck();
+        }
     }
 
 private:
+    struct RandomText
+    {
+        char text_buffer[64];
+
+        chars_view text(Random& rnd, std::size_t bytes_len)
+        {
+            char buffer[32];
+            assert(sizeof(buffer) >= bytes_len);
+            rnd.random(buffer, bytes_len);
+            return base64_encode({buffer, bytes_len}, make_writable_array_view(text_buffer)).as_chars();
+        }
+    };
+
     struct GuestData
     {
         Inifile ini;
@@ -212,7 +236,7 @@ private:
             EventContainer& event_container,
             Front& user_front,
             Inifile const& original_ini,
-            UdevRandom& rnd,
+            Random& rnd,
             bool enable_shared_control,
             void(*kill_fn)(void*),
             void* fn_ctx)
@@ -315,7 +339,7 @@ private:
     {
         LOG(LOG_INFO, "Guest::stop()");
         listen_sck.close();
-        remove(sck_path.c_str());
+        remove(sck_path_.c_str());
         listen_event->garbage = true;
         listen_event = nullptr;
     }
@@ -330,5 +354,7 @@ private:
     unique_fd listen_sck = invalid_fd();
     Event* listen_event = nullptr;
 
-    std::string sck_path;
+    unsigned sck_counter_ = 0;
+    std::string sck_path_;
+    std::string sck_password_;
 };

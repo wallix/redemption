@@ -49,5 +49,7 @@ enum class AppPath
     LockDir,
     LockFile,
     DefaultFontFile,
+    SessionTmp,
 };
+
 zstring_view app_path(AppPath) noexcept;

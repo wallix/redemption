@@ -29,11 +29,14 @@ INSTALLDIR_DEFAULT ?= "" ;
 PREFIX_DEFAULT ?= /usr/local ;
 ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
 VAR_PREFIX_DEFAULT ?= /var/rdpproxy ;
+SESSION_PREFIX_DEFAULT ?= /var/lib/redemption ;
+
 
 constant INSTALLDIR : [ setvar DESTDIR : $(INSTALLDIR_DEFAULT) ] ;
 constant PREFIX : [ setvar PREFIX : $(PREFIX_DEFAULT) ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : $(ETC_PREFIX_DEFAULT) ] ;
 constant VAR_PREFIX : [ setvar VAR_PREFIX : $(VAR_PREFIX_DEFAULT) ] ;
+constant SESSION_PREFIX : [ setvar SESSION_PREFIX : $(SESSION_PREFIX_DEFAULT) ] ;
 
 
 RECORD_PREFIX_DEFAULT ?= $(VAR_PREFIX)/recorded ;
@@ -48,7 +51,8 @@ RECORD_PATH_DEFAULT ?= $(RECORD_PREFIX)/rdp ;
 RECORD_TMP_PATH_DEFAULT ?= $(VAR_PREFIX)/tmp ;
 CERT_PREFIX_DEFAULT ?= $(ETC_PREFIX)/cert ;
 HASH_PATH_DEFAULT ?= $(VAR_PREFIX)/hash ;
-PERSISTENT_PATH_DEFAULT ?= /var/lib/redemption/cache ;
+PERSISTENT_PATH_DEFAULT ?= $(SESSION_PREFIX)/cache ;
+SESSION_DATA_PATH_DEFAULT ?= $(SESSION_PREFIX)/session ;
 DRIVE_REDIRECTION_PATH_DEFAULT ?= $(VAR_PREFIX)/drive_redirection ;
 PID_PATH_DEFAULT ?= /var/run ;
 
@@ -60,6 +64,7 @@ constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : $(RECORD_TMP_PATH_DEFAULT)
 constant CERT_PREFIX : [ setvar CERT_PREFIX : $(CERT_PREFIX_DEFAULT) ] ;
 constant HASH_PATH : [ setvar HASH_PATH : $(HASH_PATH_DEFAULT) ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : $(PERSISTENT_PATH_DEFAULT) ] ;
+constant SESSION_DATA_PATH : [ setvar SESSION_DATA_PATH : $(SESSION_DATA_PATH_DEFAULT) ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : $(DRIVE_REDIRECTION_PATH_DEFAULT) ] ;
 constant PID_PATH : [ setvar PID_PATH : $(PID_PATH_DEFAULT) ] ;
 
@@ -80,6 +85,7 @@ rule defines ( properties * )
     defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
     defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)\"' ;
     defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
+    defs += <define>SESSION_DATA_PATH='\"$(SESSION_DATA_PATH)\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
     defs += <define>PID_PATH='\"$(PID_PATH)\"' ;
     return $(defs) ;
@@ -98,6 +104,7 @@ rule defines-for-test ( properties * )
     defs += <define>LICENSE_PATH='\"$(TMP_TEST_PATH)/redemption_cert/rdplicense\"' ;
     defs += <define>CERTIF_PATH='\"$(TMP_TEST_PATH)/redemption_cert\"' ;
     defs += <define>PERSISTENT_PATH='\"$(TMP_TEST_PATH)/redemption_cache\"' ;
+    defs += <define>SESSION_DATA_PATH='\"$(TMP_TEST_PATH)/redemption_session\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(TMP_TEST_PATH)/redemption_drive_redirection\"' ;
     defs += <define>PID_PATH='\"$(TMP_TEST_PATH)/redemption_pid\"' ;
     return $(defs) ;

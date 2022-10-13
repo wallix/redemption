@@ -1081,6 +1081,8 @@ private:
                     }
 
                     if (has_field(cfg::context::session_sharing_enable_control())) {
+                        GuestCtx::ResultError result = {0xffff, "Sharing not available"};
+
                         if (front.is_up_and_running()
                          && mod_wrapper.is_connected()
                          && mod_wrapper.is_up_and_running()
@@ -1089,18 +1091,24 @@ private:
                                 guest_ctx.stop();
                             }
 
-                            guest_ctx.start(
+                            result = guest_ctx.start(
+                                app_path(AppPath::SessionTmp),
                                 this->ini.get<cfg::context::session_id>(),
                                 events, front, mod_wrapper.get_callback(),
                                 secondary_session.get_secondary_session_log(),
                                 this->ini.get<cfg::context::session_sharing_ttl>(), rnd, ini,
-                                this->ini.get<cfg::context::session_sharing_userdata>(),
                                 this->ini.get<cfg::context::session_sharing_enable_control>()
                             );
                         }
+
+                        this->ini.send<cfg::context::session_sharing_userdata>();
+                        this->ini.set_acl<cfg::context::session_sharing_invitation_error_code>(result.errnum);
+                        if (result.errnum) {
+                            this->ini.set_acl<cfg::context::session_sharing_invitation_error_message>(result.errmsg);
+                        }
                         else {
-                            this->ini.set_acl<cfg::context::session_sharing_invitation_error_code>(0xffffu);
-                            this->ini.set_acl<cfg::context::session_sharing_invitation_error_message>("sharing not available");
+                            this->ini.set_acl<cfg::context::session_sharing_invitation_addr>(guest_ctx.sck_path());
+                            this->ini.set_acl<cfg::context::session_sharing_invitation_id>(guest_ctx.sck_password());
                         }
                     }
 

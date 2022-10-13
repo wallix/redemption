@@ -94,6 +94,14 @@ public:
     }
 
     template<class T>
+    void send()
+    {
+        static_assert(T::is_proxy_to_sesman, "T isn't writable.");
+        this->to_send_index.insert(T::index);
+        this->asked_table.clear(T::index);
+    }
+
+    template<class T>
     void ask() noexcept
     {
         static_assert(T::is_sesman_to_proxy, "T isn't askable");
