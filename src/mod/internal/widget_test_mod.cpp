@@ -79,7 +79,7 @@ WidgetTestMod::WidgetTestMod(
     Font const & font, Theme const & theme)
 : d(std::make_unique<WidgetTestModPrivate>(width, height, gd, events, front, font, theme))
 {
-    front.server_resize({width, height, BitsPerPixel{8}});
+    (void)front.server_resize({width, height, BitsPerPixel{8}});
 }
 
 void WidgetTestMod::init()

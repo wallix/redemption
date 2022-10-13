@@ -101,7 +101,7 @@ ClientInfo make_client_info()
     info.screen_info.width = 800;
     info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname,sizeof(info.hostname),"test");
+    utils::strlcpy(info.hostname, "test");
     return info;
 }
 
@@ -437,7 +437,7 @@ std::string shortcut(FrontCtx& front_ctx, Shortcut scancode)
     front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode::LShift, mod, 0);
     front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode::LCtrl, mod, 0);
     return mod.events();
-};
+}
 
 std::string keyA(FrontCtx& front_ctx)
 {
@@ -445,7 +445,7 @@ std::string keyA(FrontCtx& front_ctx)
     front_ctx.front.input_event_scancode(KbdFlags::NoFlags, Scancode::A, mod, 0);
     front_ctx.front.input_event_scancode(KbdFlags::Release, Scancode::A, mod, 0);
     return mod.events();
-};
+}
 
 inline constexpr auto keyA_av =
     "{KbdFlags=0x0000, Scancode=0x1E}, {KbdFlags=0x8000, Scancode=0x1E}"_av;
@@ -502,7 +502,7 @@ std::string uniA(FrontCtx& front_ctx)
     front_ctx.front.input_event_unicode(KbdFlags::NoFlags, 'a', mod);
     front_ctx.front.input_event_unicode(KbdFlags::Release, 'a', mod);
     return mod.events();
-};
+}
 
 inline constexpr auto uniA_av = "{KbdFlags=0x0000, Unicode=0x0061}, {KbdFlags=0x8000, Unicode=0x0061}"_av;
 inline constexpr auto no_unis = ""_av;
@@ -513,7 +513,7 @@ std::string locks(FrontCtx& front_ctx, KeyLocks locks)
     auto& mod = front_ctx.mod;
     front_ctx.front.input_event_synchronize(locks, mod);
     return mod.events();
-};
+}
 
 inline constexpr auto lock_caps = "{KeyLocks=0x04}"_av;
 inline constexpr auto lock_scroll = "{KeyLocks=0x01}"_av;
@@ -526,7 +526,7 @@ std::string mouse(FrontCtx& front_ctx)
     front_ctx.front.input_mouse(1, 1, SlowPath::PTRFLAGS_BUTTON1 | SlowPath::PTRFLAGS_DOWN, mod);
     front_ctx.front.input_mouse(1, 1, SlowPath::PTRFLAGS_BUTTON1, mod);
     return mod.events();
-};
+}
 
 inline constexpr auto mouse_pos = "{flags=0x9000, x=1, y=1}, {flags=0x1000, x=1, y=1}"_av;
 inline constexpr auto no_mouse = ""_av;
@@ -590,7 +590,7 @@ int draw(FrontCtx& front_ctx)
     front_ctx.front.draw(RDPOpaqueRect({0, 0, 10, 10}, RDPColor()), Rect(0, 0, 10, 10), gdi::ColorCtx::depth24());
     front_ctx.front.sync();
     return front_ctx.trans.counter;
-};
+}
 
 void init_ini(Inifile& ini)
 {
@@ -642,8 +642,8 @@ void sharing_test(bool enable_shared_control, F f)
     f(user, guest, mod, gd, guest_killed);
 }
 
-}
-}
+} // namespace TestFrontData
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestViewAndControlSharingFront)
 {

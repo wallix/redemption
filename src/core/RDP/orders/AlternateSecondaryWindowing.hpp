@@ -2289,7 +2289,7 @@ public:
         const size_t length =
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=0x%X NotifyIconId=0x%X)",
-                       unsigned(this->OrderSize), this->FieldsPresentFlags_,
+                       this->OrderSize, this->FieldsPresentFlags_,
                        this->WindowId_, this->NotifyIconId_);
         return ((length < size) ? length : size - 1);
     }

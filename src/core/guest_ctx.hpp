@@ -339,7 +339,7 @@ private:
     {
         LOG(LOG_INFO, "Guest::stop()");
         listen_sck.close();
-        remove(sck_path_.c_str());
+        (void)remove(sck_path_.c_str());
         listen_event->garbage = true;
         listen_event = nullptr;
     }
