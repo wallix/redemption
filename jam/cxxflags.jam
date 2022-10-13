@@ -18,12 +18,38 @@ REDEMPTION_CXXFLAGS +=
     <toolset>clang:<cxxflags>-Wno-overlength-strings
     <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
     <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
-
-    # <cxxflags>-Werror=return-type
-    # <toolset>gcc:<cxxflags>-Werror=suggest-override
-
-    <conditional>@flags
 ;
+
+import os ;
+
+local REGULAR_BUILD = [ os.environ REGULAR_BUILD ] ;
+if $(REGULAR_BUILD) = 1
+{
+  REDEMPTION_CXXFLAGS += <conditional>@flags ;
+}
+else
+{
+  REDEMPTION_CXXFLAGS += <conditional>@gflags ;
+
+  local GLOBAL_FLAGS_IS_INITIALIZED = 0 ;
+  local GLOBAL_FLAGS = ;
+  rule gflags ( properties * )
+  {
+    if $(GLOBAL_FLAGS_IS_INITIALIZED) = 1
+    {
+      local ps = [ property-set.create $(properties) ] ;
+      local toolset = [ $(ps).get <toolset> ] ;
+      if $(ORIGINAL_TOOLSET) = $(toolset)
+      {
+        return $(GLOBAL_FLAGS) ;
+      }
+    }
+
+    GLOBAL_FLAGS_IS_INITIALIZED = 1 ;
+    GLOBAL_FLAGS = [ flags $(properties) ] ;
+    return $(GLOBAL_FLAGS) ;
+  }
+}
 
 # ./compiler-options.lua -f -stl_fix,msvc_isystem,msvc_isystem_with_template_from_non_external,exceptions,sanitizers_extra,pie,rtti,coverage generators/bjam.lua cxx- >> cxxflags.jam
 # remove:
@@ -111,8 +137,6 @@ feature <cxx-warnings-covered-switch-default-default> : on default off : inciden
 feature <cxx-warnings-switch-default> : on default off enum mandatory-default : incidental ;
 feature <cxx-whole-program-default> : default off on strip-all : incidental ;
 
-
-import os ;
 
 rule jln-get-env ( env : values * )
 {
