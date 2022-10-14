@@ -6160,6 +6160,202 @@ alias tests/utils/sugar :
 alias tests/utils/winpr :
   tests/utils/winpr.norec
 ;
+
+explicit
+  src/lib/credis.cpp
+  src/lib/do_recorder.cpp
+  src/lib/scytale.cpp
+;
+
+explicit
+  projects/redemption_configs/redemption_src/configs/config.o
+  src/RAIL/client_execute.o
+  src/acl/acl_serializer.o
+  src/acl/kv_list_from_strings.o
+  src/acl/module_manager/create_module_rail.o
+  src/acl/module_manager/create_module_rdp.o
+  src/acl/module_manager/create_module_vnc.o
+  src/acl/session_inactivity.o
+  src/acl/session_logfile.o
+  src/capture/agent_data_extractor.o
+  src/capture/capture.o
+  src/capture/fdx_capture.o
+  src/capture/file_to_graphic.o
+  src/capture/ocr/locale/latin_to_cyrillic.o
+  src/capture/ocr/main/display_learning.o
+  src/capture/ocr/main/extract_text.o
+  src/capture/ocr/main/ppocr_extract_text.o
+  src/capture/params_from_ini.o
+  src/capture/rail_screen_computation.o
+  src/capture/rdp_ppocr/get_ocr_constants.o
+  src/capture/redis.o
+  src/capture/regions_capture.o
+  src/capture/session_update_buffer.o
+  src/capture/utils/pattern_searcher.o
+  src/capture/utils/pattutils.o
+  src/capture/video_capture.o
+  src/capture/video_recorder.o
+  src/client_redemption/client_channels/client_cliprdr_channel.o
+  src/client_redemption/client_channels/client_rdpdr_channel.o
+  src/client_redemption/client_channels/client_rdpsnd_channel.o
+  src/client_redemption/client_channels/client_remoteapp_channel.o
+  src/client_redemption/client_config/client_redemption_config.o
+  src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  src/client_redemption/client_input_output_api/rdp_disk_config.o
+  src/client_redemption/pointer_to_rgba8888.o
+  src/core/RDP/RDPDrawable.o
+  src/core/RDP/dwt.o
+  src/core/RDP/mppc.o
+  src/core/RDP/nego.o
+  src/core/RDP/orders/remoteFx.o
+  src/core/RDP/rdp_pointer.o
+  src/core/RDP/rlgr.o
+  src/core/channels_authorizations.o
+  src/core/check_files.o
+  src/core/dynamic_channels_authorizations.o
+  src/core/error.o
+  src/core/font.o
+  src/core/mainloop.o
+  src/core/pid_file.o
+  src/core/session.o
+  src/core/session_events.o
+  src/gdi/clip_from_cmd.o
+  src/gdi/graphic_api.o
+  src/gdi/protected_graphics.o
+  src/gdi/screen_functions.o
+  src/gdi/text_metrics.o
+  src/keyboard/keyboard_shortcut_layout.o
+  src/keyboard/keylayouts.o
+  src/keyboard/keymap.o
+  src/keyboard/keymapsym.o
+  src/lib/credis.o
+  src/lib/do_recorder.o
+  src/lib/scytale.o
+  src/main/headlessclient.o
+  src/main/ini_checker.o
+  src/main/main.o
+  src/main/mwrm3_editor.o
+  src/main/nla_server_cli.o
+  src/main/proxy_recorder_cli.o
+  src/main/rdp_client.o
+  src/mod/internal/bouncer2_mod.o
+  src/mod/internal/close_mod.o
+  src/mod/internal/copy_paste.o
+  src/mod/internal/dialog_mod.o
+  src/mod/internal/dialog_mod2.o
+  src/mod/internal/interactive_target_mod.o
+  src/mod/internal/login_mod.o
+  src/mod/internal/rail_mod_base.o
+  src/mod/internal/rail_module_host_mod.o
+  src/mod/internal/replay_mod.o
+  src/mod/internal/selector_mod.o
+  src/mod/internal/test_card_mod.o
+  src/mod/internal/transition_mod.o
+  src/mod/internal/wait_mod.o
+  src/mod/internal/widget/button.o
+  src/mod/internal/widget/composite.o
+  src/mod/internal/widget/delegated_copy.o
+  src/mod/internal/widget/dialog.o
+  src/mod/internal/widget/dialog2.o
+  src/mod/internal/widget/edit.o
+  src/mod/internal/widget/edit_valid.o
+  src/mod/internal/widget/form.o
+  src/mod/internal/widget/grid.o
+  src/mod/internal/widget/group_box.o
+  src/mod/internal/widget/image.o
+  src/mod/internal/widget/interactive_target.o
+  src/mod/internal/widget/label.o
+  src/mod/internal/widget/labelgrid.o
+  src/mod/internal/widget/language_button.o
+  src/mod/internal/widget/login.o
+  src/mod/internal/widget/module_host.o
+  src/mod/internal/widget/multiline.o
+  src/mod/internal/widget/number_edit.o
+  src/mod/internal/widget/password.o
+  src/mod/internal/widget/screen.o
+  src/mod/internal/widget/scroll.o
+  src/mod/internal/widget/selector.o
+  src/mod/internal/widget/tooltip.o
+  src/mod/internal/widget/vertical_scroll_text.o
+  src/mod/internal/widget/wab_close.o
+  src/mod/internal/widget/wait.o
+  src/mod/internal/widget/widget_rect.o
+  src/mod/internal/widget_test_mod.o
+  src/mod/rdp/channels/cliprdr_channel.o
+  src/mod/rdp/channels/rdp_session_probe_wrapper.o
+  src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
+  src/mod/rdp/channels/sespro_channel_params.o
+  src/mod/rdp/channels/sespro_clipboard_based_launcher.o
+  src/mod/rdp/new_mod_rdp.o
+  src/mod/rdp/rdp_negociation.o
+  src/mod/rdp/rdp_negociation_data.o
+  src/mod/vnc/dsm.o
+  src/mod/vnc/encoder/copyrect.o
+  src/mod/vnc/encoder/cursor.o
+  src/mod/vnc/encoder/hextile.o
+  src/mod/vnc/encoder/raw.o
+  src/mod/vnc/encoder/rre.o
+  src/mod/vnc/encoder/zrle.o
+  src/mod/vnc/new_mod_vnc.o
+  src/mod/vnc/vnc.o
+  src/proxy_recorder/proxy_recorder.o
+  src/system/linux/system/i18n/message_translator_gettext.o
+  src/system/linux/system/tls_check_certificate.o
+  src/transport/crypto_transport.o
+  src/transport/file_transport.o
+  src/transport/gzip_compression_transport.o
+  src/transport/in_multi_crypto_transport.o
+  src/transport/mwrm_file_data.o
+  src/transport/mwrm_reader.o
+  src/transport/out_filename_sequence_transport.o
+  src/transport/out_meta_sequence_transport.o
+  src/transport/recorder_transport.o
+  src/transport/replay_transport.o
+  src/transport/snappy_compression_transport.o
+  src/transport/socket_transport.o
+  src/transport/ws_transport.o
+  src/utils/base64.o
+  src/utils/bitmap.o
+  src/utils/bitmap_data_allocator.o
+  src/utils/bitmap_from_file.o
+  src/utils/cfgloader.o
+  src/utils/crypto/ssl_mod_exp_direct.o
+  src/utils/d3des.o
+  src/utils/drawable.o
+  src/utils/drawable_pointer.o
+  src/utils/fileutils.o
+  src/utils/hexadecimal_string_to_buffer.o
+  src/utils/hexdump.o
+  src/utils/ip.o
+  src/utils/keyboard_shortcut_blocker.o
+  src/utils/load_theme.o
+  src/utils/local_err_msg.o
+  src/utils/log_siem.o
+  src/utils/netutils.o
+  src/utils/parse_primary_drawing_orders.o
+  src/utils/png.o
+  src/utils/primitives/primitives.o
+  src/utils/primitives/primitives_sse2.o
+  src/utils/rle.o
+  src/utils/scaled_image24.o
+  src/utils/set_exception_handler_pretty_message.o
+  src/utils/stacktrace.o
+  src/utils/strutils.o
+  src/utils/sugar/multisz.o
+  src/utils/timestamp_tracer.o
+  src/utils/uninit_buffer.o
+  src/utils/utf.o
+  tests/includes/test_only/core/font.o
+  tests/includes/test_only/front/fake_front.o
+  tests/includes/test_only/front/front_wrapper.o
+  tests/includes/test_only/gdi/test_graphic.o
+  tests/includes/test_only/session_log_test.o
+  tests/includes/test_only/test_framework/check_img.o
+  tests/includes/test_only/test_framework/sig.o
+  tests/includes/test_only/test_framework/working_directory.o
+  tests/includes/test_only/transport/test_transport.o
+;
+
 explicit
   test_client_execute
   test_acl_field_mask
@@ -6468,6 +6664,7 @@ explicit
   test_zlib
   test_pattern
 ;
+
 explicit
   tests/RAIL.norec
   tests/acl.norec
@@ -6516,6 +6713,7 @@ explicit
   tests/utils.norec
   tests/utils/winpr.norec
 ;
+
 explicit
   tests/RAIL
   tests

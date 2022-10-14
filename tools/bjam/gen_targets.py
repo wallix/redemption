@@ -623,9 +623,12 @@ def inject_variable_prefix(path):
     return path
 
 def generate_obj(files):
+    objs = []
     for f in files:
         if f.type == 'C' and f != app_path_cpp:
-            print('obj', cpp_to_obj(f), ':', inject_variable_prefix(f.path), end='')
+            name = cpp_to_obj(f)
+            objs.append(name)
+            print('obj', name, ':', inject_variable_prefix(f.path), end='')
             if f.all_cxx_deps:
                 print(' :', ' '.join(sorted(f.all_cxx_deps)), end='')
             if f.path.startswith('tests/includes/test_only/'):
@@ -633,6 +636,7 @@ def generate_obj(files):
                     print(' :', end='')
                 print(' $(CXXFLAGS_TEST)', end='')
             print(' ;')
+    return objs
 
 # filter target
 if filter_targets:
@@ -654,8 +658,10 @@ generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)],
 generate('exe', ocr_mains, [])
 print()
 
+obj_libs = []
 generate('lib', libs, ['$(LIB_DEPENDENCIES)', '<library>log.o'], lambda f: 'lib'+get_target(f))
 for f in libs:
+    obj_libs.append(f.path)
     print('obj ', f.path, '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
     if f.all_cxx_deps:
         print(' ', '\n  '.join(f.all_cxx_deps))
@@ -666,9 +672,9 @@ generate('test-run', tests, [], unprefixed_file)
 print()
 
 if has_set_arg:
-    generate_obj(f for f in sources if f.used)
+    obj_sources = generate_obj(f for f in sources if f.used)
 else:
-    generate_obj(sources)
+    obj_sources = generate_obj(sources)
 print()
 
 ###
@@ -712,15 +718,11 @@ for name,aliases in dir_tests.items():
 explicit_rec = []
 for name,aliases in dir_rec_tests.items():
     explicit_rec.append(name)
-    aliases = sorted(aliases)
-    print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
+    print('alias ', name, ' :\n  ', '\n  '.join(sorted(aliases)), '\n;', sep='')
 
-if simple_aliases:
-    print('explicit\n  ', '\n  '.join(simple_aliases), '\n;', sep='')
-if explicit_no_rec:
-    print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
-if explicit_rec:
-    print('explicit\n  ', '\n  '.join(explicit_rec),    '\n;', sep='')
+for aliases in (obj_libs, obj_sources, simple_aliases, explicit_no_rec, explicit_rec):
+    if aliases:
+        print('\nexplicit\n  ', '\n  '.join(aliases), '\n;', sep='')
 
 
 if not filter_targets and not has_set_arg:

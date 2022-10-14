@@ -7,6 +7,7 @@ alias ocr : ocr.o ppocr ;
 rule create_ppocr_rule ( srcs * )
 {
     local targets ;
+    local objs ;
     for f in $(srcs)
     {
         local path = $(f:P) ;
@@ -14,9 +15,11 @@ rule create_ppocr_rule ( srcs * )
         obj $(target) : $(f) ;
         alias $(f).o : $(target) ;
         targets += $(target) ;
+        objs += $(f).o ;
     }
 
     alias ppocr : $(targets) ;
+    explicit ocr.o ocr ppocr $(targets) $(objs) ;
 }
 
 create_ppocr_rule

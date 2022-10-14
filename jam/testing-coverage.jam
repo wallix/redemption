@@ -34,6 +34,8 @@ lib libunit_test :
     <cxxflags>-O3
 ;
 
+explicit log_test.o register_exception.o libunit_test ;
+
 local _TEST_DEPENDENCIES = ;
 if $(FAST_CHECK) = 1
 {

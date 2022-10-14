@@ -29,6 +29,7 @@ obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 ;
 
+explicit log_print.o log.o app_path_exe.o app_path_test.o ;
 
 constant LIB_DEPENDENCIES :
     <library>app_path_exe.o

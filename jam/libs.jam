@@ -10,12 +10,15 @@ lib z ;
 lib hyperscan : : <name>hs ;
 alias png : libpng z ;
 
+explicit bz2 crypto dl gssapi_krb5 krb5 libpng openssl snappy z hyperscan png ;
+
 
 # gettext with musl
 if $(MUSL_LIBC) != 0
 {
     lib intl ;
     MUSL_GETTEXT = <library>intl ;
+    explicit intl ;
 }
 
 
@@ -44,6 +47,8 @@ if $(NO_FFMPEG) = 0
 
     lib pthread ;
 
+    explicit avcodec avformat avutil swscale ffmpeg pthread ;
+
     FFMPEG_CXXFLAGS = ;
     if $(FFMPEG_INC_PATH) != ""
     {
@@ -53,6 +58,7 @@ if $(NO_FFMPEG) = 0
 else
 {
     alias ffmpeg : ;
+    explicit ffmpeg ;
     REDEMPTION_FFMPEG_FLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
 }
 ## }
@@ -93,10 +99,13 @@ if $(BOOST_STACKTRACE) != 0
 
     lib disable_boost_stacktrace : : <name>boost_stacktrace_noop ;
     BOOST_NOOP_STACKTRACE_LIBFLAGS = <library>disable_boost_stacktrace ;
+    explicit disable_boost_stacktrace ;
 }
 else
 {
     alias boost_stacktrace : ;
     BOOST_STACKTRACE_CXXFLAGS = <define>REDEMPTION_NO_STACKTRACE ;
 }
+
+explicit boost_stacktrace ;
 ## }
