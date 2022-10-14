@@ -681,9 +681,11 @@ test_targets_counter = OrderedDict(test_targets)
 for t in test_targets:
     test_targets_counter[t[0]][0] += 1
 
+simple_aliases = []
 for k,t in test_targets_counter.items():
     if t[0] == 1:
         f = t[1]
+        simple_aliases.append(k)
         unprefixed = unprefixed_file(f)
         print('alias', k, ':', unprefixed, ';')
 
@@ -713,6 +715,8 @@ for name,aliases in dir_rec_tests.items():
     aliases = sorted(aliases)
     print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
+if simple_aliases:
+    print('explicit\n  ', '\n  '.join(simple_aliases), '\n;', sep='')
 if explicit_no_rec:
     print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
 if explicit_rec:
