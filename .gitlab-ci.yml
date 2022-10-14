@@ -7,7 +7,7 @@ stages:
   - build
   - analysis
 
-build_package:
+build-project:
   stage: build
   needs: []
   image: debian:buster-slim
