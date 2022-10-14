@@ -102,7 +102,7 @@ rule filter_flags ( flags * )
     {
         if $(f) != <cxxflags>-msse3
         {
-            if $(f) = <conditional>@flags
+            if $(f) = <conditional>@flags || $(f) = <conditional>@gflags
             {
                 jsflags += <conditional>@emcc_flags ;
             }

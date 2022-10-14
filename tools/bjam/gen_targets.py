@@ -245,6 +245,7 @@ filter_targets = []
 argv_gen = (arg for arg in sys.argv)
 default_options = {}
 has_set_arg = False
+no_explicit_set = set()
 next(argv_gen)
 try:
     set_arg = lambda name: lambda arg: default_options.setdefault(name, arg)
@@ -269,7 +270,8 @@ try:
         '--src-system': set_arg('system'),
         '--disable-src': add_disable_src,
         '--deps-src': add_deps_src,
-        '--include': lambda arg: includes.add(arg),
+        '--include': includes.add,
+        '--implicit': no_explicit_set.add,
     }
     while True:
         arg = next(argv_gen)
@@ -722,7 +724,7 @@ for name,aliases in dir_rec_tests.items():
 
 for aliases in (obj_libs, obj_sources, simple_aliases, explicit_no_rec, explicit_rec):
     if aliases:
-        print('\nexplicit\n  ', '\n  '.join(aliases), '\n;', sep='')
+        print('\nexplicit\n  ', '\n  '.join(alias for alias in aliases if alias not in no_explicit_set), '\n;', sep='')
 
 
 if not filter_targets and not has_set_arg:

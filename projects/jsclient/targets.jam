@@ -271,12 +271,72 @@ alias tests/redjs :
 alias tests/system :
   tests/system.norec
 ;
+
+explicit
+  src/main/_dummy.bc
+  src/main/js_client.bc
+  src/main/js_player.bc
+  src/red_channels/clipboard.bc
+  src/red_channels/js_channel.bc
+  src/redjs/front.bc
+  src/redjs/graphics.bc
+  src/redjs/image_conversions.bc
+  src/redjs/transport.bc
+  src/system/ssl_mod_exp.bc
+  projects/redemption_configs/redemption_src/configs/config.bc
+  src/client_redemption/pointer_to_rgba8888.bc
+  src/core/RDP/dwt.bc
+  src/core/RDP/mppc.bc
+  src/core/RDP/nego.bc
+  src/core/RDP/orders/remoteFx.bc
+  src/core/RDP/rdp_pointer.bc
+  src/core/RDP/rlgr.bc
+  src/core/channels_authorizations.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/gdi/clip_from_cmd.bc
+  src/gdi/graphic_api.bc
+  src/gdi/screen_functions.bc
+  src/mod/rdp/new_mod_rdp.bc
+  src/mod/rdp/rdp_negociation.bc
+  src/mod/rdp/rdp_negociation_data.bc
+  src/transport/mwrm_reader.bc
+  src/utils/bitmap.bc
+  src/utils/bitmap_data_allocator.bc
+  src/utils/hexadecimal_string_to_buffer.bc
+  src/utils/hexdump.bc
+  src/utils/parse_primary_drawing_orders.bc
+  src/utils/primitives/primitives.bc
+  src/utils/rle.bc
+  src/utils/stacktrace.bc
+  src/utils/strutils.bc
+  src/utils/sugar/multisz.bc
+  src/utils/utf.bc
+;
+
+explicit
+  test_scancodes
+  test_clipboard
+  test_js_channel
+  test_front
+  test_graphics
+  test_image_conversions
+  test_transport
+  test_ssl_md4
+  test_ssl_md5
+  test_ssl_mod_exp
+  test_ssl_rc4
+  test_ssl_sha1
+  test_ssl_sha256
+;
+
 explicit
   tests/application.norec
   tests/red_channels.norec
   tests/redjs.norec
   tests/system.norec
 ;
+
 explicit
   tests/application
   tests

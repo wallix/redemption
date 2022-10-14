@@ -35,6 +35,7 @@ do
 done
 
 ./tools/bjam/gen_targets.py \
+    --implicit tests \
     --main $d/src/main \
     --src $d/src/red_emscripten \
     --src $d/src/red_channels \
