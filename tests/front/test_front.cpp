@@ -53,6 +53,9 @@
 #include "core/guest_ctx.hpp"
 #include "capture/cryptofile.hpp"
 
+#include <cstring>
+
+
 using namespace std::chrono_literals;
 
 namespace dump2008 {
@@ -1193,16 +1196,16 @@ RED_AUTO_TEST_CASE_WD(TestGuestCtx, wd)
     init_ini(ini);
     FrontCtx front_ctx(events, mod, ini);
 
-    std::string sck_filename = "/front2_{SID}_eFiuUrCubBc=_1.sck";
+    std::string sck_filename = "front2_{SID}_eFiuUrCubBc=_1.sck";
 
     // change current directory for unix socket name limitation
     // path is limited to 108 bytes (92 for portability)
-    char dir[2024];
+    char dir[2024] {};
     RED_REQUIRE((getcwd(dir, sizeof(dir)) != nullptr));
 
     auto sck_path = wd.add_file(sck_filename);
 
-    RED_REQUIRE(chdir(wd.dirname()) == 0);
+    RED_REQUIRE_MESSAGE(chdir(wd.dirname()) == 0, strerror(errno));
 
     auto result = guest_ctx.start(
         "."_av, "{SID}"_av,
@@ -1218,10 +1221,8 @@ RED_AUTO_TEST_CASE_WD(TestGuestCtx, wd)
     RED_CHECK(guest_ctx.sck_path() == "./front2_{SID}_eFiuUrCubBc=_1.sck");
     RED_CHECK(guest_ctx.sck_password() == "aFoTvaBTevNYEnvOkI6orUhAhzGAH0W2OKTxS3DGNaQ="_av);
 
-    RED_REQUIRE(chdir(wd.dirname()) == 0);
-
     auto fd = local_connect(guest_ctx.sck_path(), 100ms, true);
-    RED_REQUIRE(fd.is_open());
+    RED_REQUIRE_MESSAGE(fd.is_open(), strerror(errno));
 
     RED_REQUIRE(detail::ProtectedEventContainer::get_events(events).size() == 1);
 
@@ -1229,6 +1230,8 @@ RED_AUTO_TEST_CASE_WD(TestGuestCtx, wd)
 
     event_manager.execute_events([](int /*fd*/){ return true; }, false);
     RED_REQUIRE(guest_ctx.has_front());
+
+    RED_REQUIRE_MESSAGE(chdir(dir) == 0, strerror(errno));
 
     wd.remove_file(sck_filename);
     RED_CHECK_WORKSPACE(wd);
