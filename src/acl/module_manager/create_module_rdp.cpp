@@ -833,6 +833,10 @@ ModPack create_mod_rdp(
         mod_rdp_params.session_probe_params.enable_session_probe                               = true;
         mod_rdp_params.session_probe_params.vc_params.launch_application_driver                = true;
         mod_rdp_params.session_probe_params.vc_params.launch_application_driver_then_terminate = !(ini.get<cfg::session_probe::enable_session_probe>());
+
+        if (ini.get<cfg::session_probe::enable_autodeployed_appdriver_affinity>()) {
+            mod_rdp_params.session_probe_params.vc_params.end_disconnected_session = true;
+        }
     }
     // ================== End Application Driver ======================
 

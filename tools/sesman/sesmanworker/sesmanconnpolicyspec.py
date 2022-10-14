@@ -50,6 +50,7 @@ cp_spec = {
         ('session_probe:keepalive_timeout', 'keepalive_timeout', 5000),
         ('session_probe:on_keepalive_timeout', 'on_keepalive_timeout', 1),
         ('session_probe:end_disconnected_session', 'end_disconnected_session', False),
+        ('session_probe:enable_autodeployed_appdriver_affinity', 'enable_autodeployed_appdriver_affinity', True),
         ('session_probe:enable_log', 'enable_log', False),
         ('session_probe:enable_log_rotation', 'enable_log_rotation', False),
         ('session_probe:log_level', 'log_level', 5),

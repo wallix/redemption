@@ -75,6 +75,7 @@ namespace configs
         "session_probe:keepalive_timeout"_zv,
         "session_probe:on_keepalive_timeout"_zv,
         "session_probe:end_disconnected_session"_zv,
+        "session_probe:enable_autodeployed_appdriver_affinity"_zv,
         "session_probe:enable_log"_zv,
         "session_probe:enable_log_rotation"_zv,
         "session_probe:log_level"_zv,

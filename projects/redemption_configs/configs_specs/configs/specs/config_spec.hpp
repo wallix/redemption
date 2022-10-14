@@ -574,6 +574,10 @@ void config_spec_definition(Writer && W)
             "Session Probe must be enabled to use this feature."
         }, set(false));
 
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"enable_autodeployed_appdriver_affinity"}, desc{
+            "End automatically a disconnected auto-deployed Application Driver session.\n"
+        }, set(true));
+
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_log"}, set(false));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_log_rotation"}, set(false));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeLogLevel>(), names{"log_level"}, set(SessionProbeLogLevel::Debug));

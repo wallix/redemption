@@ -662,6 +662,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #end_disconnected_session = 0
 
+# End automatically a disconnected auto-deployed Application Driver session.
+# 
+# value: 0 or 1
+#_hidden
+#enable_autodeployed_appdriver_affinity = 1
+
 # value: 0 or 1
 #_hidden
 #enable_log = 0

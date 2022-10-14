@@ -160,6 +160,9 @@ cfg::session_probe::end_disconnected_session ⇐ session_probe:end_disconnected_
     End automatically a disconnected session.
     This option is recommended for Web applications running in Desktop mode.
     Session Probe must be enabled to use this feature.
+cfg::session_probe::enable_autodeployed_appdriver_affinity ⇐ session_probe:enable_autodeployed_appdriver_affinity   [bool]
+    End automatically a disconnected auto-deployed Application Driver session.
+    
 cfg::session_probe::enable_log ⇐ session_probe:enable_log   [bool]
 cfg::session_probe::enable_log_rotation ⇐ session_probe:enable_log_rotation   [bool]
 cfg::session_probe::log_level ⇐ session_probe:log_level   [SessionProbeLogLevel]

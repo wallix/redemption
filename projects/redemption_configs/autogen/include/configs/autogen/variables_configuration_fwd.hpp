@@ -174,6 +174,7 @@ namespace cfg
         struct keepalive_timeout;
         struct on_keepalive_timeout;
         struct end_disconnected_session;
+        struct enable_autodeployed_appdriver_affinity;
         struct enable_log;
         struct enable_log_rotation;
         struct log_level;

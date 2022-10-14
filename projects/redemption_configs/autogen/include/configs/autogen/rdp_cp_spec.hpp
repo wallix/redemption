@@ -209,6 +209,10 @@ on_keepalive_timeout = option(0, 1, 2, default=1)
 # Session Probe must be enabled to use this feature.
 end_disconnected_session = boolean(default=False)
 
+# End automatically a disconnected auto-deployed Application Driver session.<br/>
+# <br/>
+enable_autodeployed_appdriver_affinity = boolean(default=True)
+
 #_advanced
 enable_log = boolean(default=False)
 

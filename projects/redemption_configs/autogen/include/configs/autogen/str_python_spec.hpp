@@ -564,6 +564,11 @@ on_keepalive_timeout = option(0, 1, 2, default=1)
 #_hidden
 end_disconnected_session = boolean(default=False)
 
+# End automatically a disconnected auto-deployed Application Driver session.<br/>
+# <br/>
+#_hidden
+enable_autodeployed_appdriver_affinity = boolean(default=True)
+
 #_hidden
 enable_log = boolean(default=False)
 
