@@ -121,29 +121,15 @@ public:
         void set_section(zstring_view section) override;
         void set_value(zstring_view key, zstring_view value) override;
 
-        void start() noexcept
-        {
-            this->section_id = 0;
-            this->section_name = "";
-        }
-
-    private:
-        friend class Inifile;
-
-        explicit ConfigurationHolder(configs::VariablesConfiguration & variables) noexcept
-        : variables(variables)
+        explicit ConfigurationHolder(Inifile & ini) noexcept
+        : variables(ini.variables)
         {}
 
-        int section_id;
-        char const* section_name;
+    private:
+        int section_id = 0;
+        char const* section_name = "";
         configs::VariablesConfiguration & variables;
     };
-
-    ::ConfigurationHolder & configuration_holder() noexcept
-    {
-        this->conf_holder.start();
-        return this->conf_holder;
-    }
 
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
@@ -421,7 +407,6 @@ private:
     AuthIdBoolTable asked_table;
     ToSendIndexList to_send_index;
     configs::VariablesConfiguration variables;
-    ConfigurationHolder conf_holder {variables};
 
     template<class T>
     void push_to_send_index() noexcept

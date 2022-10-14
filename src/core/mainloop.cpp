@@ -240,7 +240,10 @@ namespace
             Inifile ini;
 
             ini.set<cfg::debug::config>(debug_config);
-            configuration_load(ini.configuration_holder(), config_filename.c_str());
+            {
+                Inifile::ConfigurationHolder conf_holder{ini};
+                configuration_load(conf_holder, config_filename.c_str());
+            }
 
             bool prevent_early_log = (source_is_localhost
                                       || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
