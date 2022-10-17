@@ -418,10 +418,7 @@ int main(int argc, char** argv)
     }
 
     Inifile ini;
-    {
-        Inifile::ConfigurationHolder conf_holder{ini};
-        configuration_load(conf_holder, config_filename.c_str());
-    }
+    configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), config_filename.c_str());
 
     ScopedCryptoInit scoped_crypto;
     ScopedSslInit scoped_ssl;

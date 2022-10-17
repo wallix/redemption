@@ -1581,10 +1581,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    {
-        Inifile::ConfigurationHolder conf_holder{ini};
-        configuration_load(conf_holder, recorder.config_filename.c_str());
-    }
+    configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), recorder.config_filename.c_str());
 
 
     // VideoParams

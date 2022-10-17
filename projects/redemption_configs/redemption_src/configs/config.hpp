@@ -54,7 +54,7 @@
 #include "configs/autogen/max_str_buffer_size.hpp"
 
 
-class Inifile
+class Inifile : private noncopyable
 {
 public:
     // enum class authid_t : unsigned;
@@ -116,7 +116,7 @@ public:
         return this->asked_table.get(T::index);
     }
 
-    struct ConfigurationHolder : ::ConfigurationHolder
+    struct ConfigurationHolder final : ::ConfigurationHolder
     {
         void set_section(zstring_view section) override;
         void set_value(zstring_view key, zstring_view value) override;
@@ -124,6 +124,11 @@ public:
         explicit ConfigurationHolder(Inifile & ini) noexcept
         : variables(ini.variables)
         {}
+
+        ConfigurationHolder& as_ref()
+        {
+            return *this;
+        }
 
     private:
         int section_id = 0;

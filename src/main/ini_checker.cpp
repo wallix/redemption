@@ -232,8 +232,7 @@ int main(int ac, char ** av)
     std::printf("filename: %s\n", filename);
 
     Inifile ini;
-    Inifile::ConfigurationHolder conf_holder{ini};
-    bool const load_result = configuration_load(conf_holder, filename);
+    bool const load_result = configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), filename);
 
     if (show_values) {
         PrinterValues<configs::cfg_ini_infos::IniPack>::print(ini);

@@ -224,8 +224,7 @@ int main(int argc, char** argv)
 
     Inifile ini;
     if (!ini_file.empty()) {
-        Inifile::ConfigurationHolder conf_holder{ini};
-        configuration_load(conf_holder, ini_file.c_str());
+        configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), ini_file.c_str());
     }
 
     NullSessionLog session_log;
