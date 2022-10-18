@@ -321,6 +321,42 @@ uint8_t* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
 }
 
 REDEMPTION_LIB_EXPORT
+uint8_t* credis_buffer_alloc_max_fragment_at(CRedisBuffer* buffer,
+                                             std::size_t* min_length_in_out,
+                                             uint8_t const* p,
+                                             std::size_t used_size)
+{
+    SCOPED_TRACE;
+
+    auto buf = buffer->buffer();
+
+    if (REDEMPTION_UNLIKELY(!(buf.data() <= p && p <= buf.data() + buf.size()))) {
+        return nullptr;
+    }
+
+    auto old_length = static_cast<std::size_t>(p - buf.data());
+    if (REDEMPTION_UNLIKELY(buf.size() - old_length < used_size)) {
+        return nullptr;
+    }
+
+    auto length = static_cast<std::size_t>(p - buf.data()) + used_size;
+    buffer->force_buffer_size(length);
+
+    uint8_t* result;
+
+    CHECK_NOTHROW(
+        result = buffer->use(*min_length_in_out).p,
+        void(),
+        nullptr
+    );
+
+    auto capacity = buffer->capacity();
+    buffer->force_buffer_size(capacity);
+    *min_length_in_out = capacity - length;
+    return result;
+}
+
+REDEMPTION_LIB_EXPORT
 int credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n)
 {
     SCOPED_TRACE;
@@ -331,6 +367,27 @@ int credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n)
     }
 
     buffer->force_buffer_size(n);
+    return 0;
+}
+
+REDEMPTION_LIB_EXPORT
+int credis_buffer_set_size_at(CRedisBuffer* buffer, uint8_t* p, std::size_t used_size)
+{
+    SCOPED_TRACE;
+
+    auto buf = buffer->buffer();
+
+    if (REDEMPTION_UNLIKELY(!(buf.data() <= p && p <= buf.data() + buf.size()))) {
+        return 1;
+    }
+
+    auto length = static_cast<std::size_t>(p - buf.data());
+
+    if (buffer->capacity() - length < used_size) {
+        return 1;
+    }
+
+    buffer->force_buffer_size(length + used_size);
     return 0;
 }
 

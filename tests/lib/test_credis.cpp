@@ -34,7 +34,7 @@ namespace
 
 chars_view credis_buffer_get_data_view(CRedisBuffer* buffer)
 {
-    uint64_t len;
+    std::size_t len;
     uint8_t const* data = credis_buffer_get_data(buffer, &len);
     return bytes_view(data, len).as_chars();
 }
@@ -95,17 +95,28 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
         "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
         "$5\r\nblabl\r\n$-1\r\nxyz"_av_ascii);
 
-    uint64_t len;
+    std::size_t len;
     uint8_t* data;
     credis_buffer_reset(buffer, 0, 5, 5);
     data = credis_buffer_alloc_fragment(buffer, 3);
     RED_CHECK(credis_buffer_get_data_view(buffer).size() == 3);
     memcpy(data, "abc", 3);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "abc"_av_ascii);
+
+    // set_size
     RED_CHECK(credis_buffer_set_size(buffer, 200) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer).size() == 200);
     RED_CHECK(credis_buffer_set_size(buffer, 2) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "ab"_av_ascii);
+
+    // set_size_at
+    data = credis_buffer_get_data(buffer, &len);
+    RED_CHECK(credis_buffer_set_size_at(buffer, data + 1, 200) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer).size() == 201);
+    data = credis_buffer_get_data(buffer, &len);
+    RED_CHECK(credis_buffer_set_size_at(buffer, data + 1, 1) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "ab"_av_ascii);
+
     data = credis_buffer_build_with_prefix_and_suffix(
         buffer, byte_ptr_cast("pre"), 3, byte_ptr_cast("post"), 4, &len);
     RED_CHECK(bytes_view(data, len).as_chars() == "preabpost"_av_ascii);
@@ -126,6 +137,21 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
     *data++ = 'z';
     RED_CHECK(credis_buffer_pop(buffer, 0) == 7);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "abxyXYz"_av_ascii);
+
+    len = 4;
+    data = credis_buffer_alloc_max_fragment_at(buffer, &len, data-3, 2);
+    RED_REQUIRE(data != nullptr);
+    RED_CHECK(len == 240);
+
+    *data++ = '1';
+    *data++ = '2';
+    len = 0;
+    data = credis_buffer_alloc_max_fragment_at(buffer, &len, data, 0);
+    RED_REQUIRE(data != nullptr);
+    RED_CHECK(len == 238);
+    RED_CHECK(credis_buffer_set_size_at(buffer, data, 0) == 0);
+    RED_CHECK(credis_buffer_get_data_view(buffer) == "abxyXY12"_av_ascii);
+
     RED_CHECK(credis_buffer_pop(buffer, 111) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) == ""_av_ascii);
 
@@ -140,7 +166,7 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
     RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("abcde"), 5) == 0);
     RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("fgh"), 3) == 0);
 
-    uint64_t len;
+    std::size_t len;
     uint8_t* data = credis_cmd_set_build_command(cmd, &len);
     RED_CHECK(bytes_view(data, len).as_chars() ==
         "*5\r\n"
@@ -236,7 +262,7 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
         "*2\r\n$4\r\nAUTH\r\n$9\r\nsacrifice\r\n"
         "*2\r\n$6\r\nSELECT\r\n$2\r\n42\r\n"_av_ascii;
 
-    uint64_t out_len;
+    std::size_t out_len;
 
     RED_CHECK(credis_transport_set_fd(redis, client_fd.fd()) == Code::Ok);
     RED_CHECK(credis_transport_write(redis, msg1.bytes.data(), msg1.bytes.size(), &out_len) == Code::Ok);

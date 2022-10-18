@@ -51,8 +51,18 @@ int credis_buffer_reset(CRedisBuffer* buffer,
 REDEMPTION_LIB_EXPORT
 uint8_t* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length);
 
+/// Allocate and use \p length_in_out bytes after \p p + \p used_size.
+REDEMPTION_LIB_EXPORT
+uint8_t* credis_buffer_alloc_max_fragment_at(CRedisBuffer* buffer,
+                                             std::size_t* min_length_in_out,
+                                             uint8_t const* p,
+                                             std::size_t used_size);
+
 REDEMPTION_LIB_EXPORT
 int credis_buffer_set_size(CRedisBuffer* buffer, std::size_t n);
+
+REDEMPTION_LIB_EXPORT
+int credis_buffer_set_size_at(CRedisBuffer* buffer, uint8_t* p, std::size_t used_size);
 
 /// \return new buffer length
 REDEMPTION_LIB_EXPORT
