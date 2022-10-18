@@ -26,7 +26,6 @@ Author(s): Proxies Team
 #include "core/listen.hpp"
 
 #include <chrono>
-#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -36,8 +35,8 @@ namespace
 chars_view credis_buffer_get_data_view(CRedisBuffer* buffer)
 {
     uint64_t len;
-    char const* data = credis_buffer_get_data(buffer, &len);
-    return chars_view{data, len};
+    uint8_t const* data = credis_buffer_get_data(buffer, &len);
+    return bytes_view(data, len).as_chars();
 }
 
 chars_view credis_transport_get_last_error_zmessage(CRedisTransport* redis)
@@ -71,7 +70,7 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
     RED_CHECK(credis_buffer_push_arg_size(buffer, 4) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*3\r\n$4\r\n"_av_ascii);
-    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcd", 4) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("abcd"), 4) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*3\r\n$4\r\nabcd"_av_ascii);
     RED_CHECK(credis_buffer_push_arg_separator(buffer) == 0);
@@ -83,7 +82,7 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
     RED_CHECK(credis_buffer_push_u64_arg(buffer, 31) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"_av_ascii);
-    RED_CHECK(credis_buffer_push_string_arg(buffer, "blabla", 5) == 0);
+    RED_CHECK(credis_buffer_push_string_arg(buffer, byte_ptr_cast("blabla"), 5) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
         "$5\r\nblabl\r\n"_av_ascii);
@@ -91,13 +90,13 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
     RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
         "$5\r\nblabl\r\n$-1\r\n"_av_ascii);
-    RED_CHECK(credis_buffer_push_raw_data(buffer, "xyz", 3) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("xyz"), 3) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) ==
         "*3\r\n$4\r\nabcd\r\n$2\r\n20\r\n$2\r\n31\r\n"
         "$5\r\nblabl\r\n$-1\r\nxyz"_av_ascii);
 
     uint64_t len;
-    char* data;
+    uint8_t* data;
     credis_buffer_reset(buffer, 0, 5, 5);
     data = credis_buffer_alloc_fragment(buffer, 3);
     RED_CHECK(credis_buffer_get_data_view(buffer).size() == 3);
@@ -108,11 +107,11 @@ RED_AUTO_TEST_CASE(TestCRedisBuffer)
     RED_CHECK(credis_buffer_set_size(buffer, 2) == 0);
     RED_CHECK(credis_buffer_get_data_view(buffer) == "ab"_av_ascii);
     data = credis_buffer_build_with_prefix_and_suffix(
-        buffer, "pre", 3, "post", 4, &len);
-    RED_CHECK(chars_view(data, len) == "preabpost"_av_ascii);
+        buffer, byte_ptr_cast("pre"), 3, byte_ptr_cast("post"), 4, &len);
+    RED_CHECK(bytes_view(data, len).as_chars() == "preabpost"_av_ascii);
     data = credis_buffer_build_with_prefix_and_suffix(
-        buffer, "preprepre", 9, "post", 4, &len);
-    RED_CHECK(chars_view(data, len) == chars_view(nullptr));
+        buffer, byte_ptr_cast("preprepre"), 9, byte_ptr_cast("post"), 4, &len);
+    RED_CHECK(bytes_view(data, len).as_chars() == chars_view(nullptr));
 
     data = credis_buffer_alloc_fragment(buffer, 9);
     RED_CHECK(credis_buffer_get_data_view(buffer).size() == 11);
@@ -138,12 +137,12 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
     auto* cmd = credis_cmd_set_new("my_image_key", 2, 0);
     auto* buffer = credis_cmd_set_get_buffer(cmd);
 
-    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcde", 5) == 0);
-    RED_CHECK(credis_buffer_push_raw_data(buffer, "fgh", 3) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("abcde"), 5) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("fgh"), 3) == 0);
 
     uint64_t len;
-    char* data = credis_cmd_set_build_command(cmd, &len);
-    RED_CHECK(chars_view(data, len) ==
+    uint8_t* data = credis_cmd_set_build_command(cmd, &len);
+    RED_CHECK(bytes_view(data, len).as_chars() ==
         "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
@@ -153,7 +152,7 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
 
     credis_buffer_clear(buffer);
     data = credis_cmd_set_build_command(cmd, &len);
-    RED_CHECK(chars_view(data, len) ==
+    RED_CHECK(bytes_view(data, len).as_chars() ==
         "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
@@ -163,9 +162,9 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
 
     credis_cmd_set_free_buffer(cmd, 0);
 
-    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcde", 5) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("abcde"), 5) == 0);
     data = credis_cmd_set_build_command(cmd, &len);
-    RED_CHECK(chars_view(data, len) ==
+    RED_CHECK(bytes_view(data, len).as_chars() ==
         "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"
@@ -173,9 +172,9 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
         "$2\r\nEX\r\n"
         "$1\r\n2\r\n"_av_ascii);
 
-    RED_CHECK(credis_buffer_push_raw_data(buffer, "abcde", 5) == 0);
+    RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("abcde"), 5) == 0);
     data = credis_cmd_set_build_command(cmd, &len);
-    RED_CHECK(chars_view(data, len) ==
+    RED_CHECK(bytes_view(data, len).as_chars() ==
         "*5\r\n"
         "$3\r\nSET\r\n"
         "$12\r\nmy_image_key\r\n"

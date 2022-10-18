@@ -309,12 +309,12 @@ int credis_buffer_reset(CRedisBuffer* buffer,
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
+uint8_t* credis_buffer_alloc_fragment(CRedisBuffer* buffer, std::size_t length)
 {
     SCOPED_TRACE;
 
     CHECK_NOTHROW(
-        return char_ptr_cast(buffer->use(length).p),
+        return buffer->use(length).p,
         void(),
         nullptr
     );
@@ -371,7 +371,7 @@ int credis_buffer_push_u64_arg(CRedisBuffer* buffer, uint64_t n)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_push_string_arg(CRedisBuffer* buffer,
-                                  char const* value, uint32_t length)
+                                  uint8_t const* value, uint32_t length)
 {
     SCOPED_TRACE;
 
@@ -404,7 +404,7 @@ int credis_buffer_push_arg_separator(CRedisBuffer* buffer)
 
 REDEMPTION_LIB_EXPORT
 int credis_buffer_push_raw_data(CRedisBuffer* buffer,
-                                char const* value, std::size_t length)
+                                uint8_t const* value, std::size_t length)
 {
     SCOPED_TRACE;
 
@@ -428,13 +428,13 @@ void credis_buffer_free(CRedisBuffer* buffer)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_length)
+uint8_t* credis_buffer_get_data(CRedisBuffer* buffer, std::size_t* output_length)
 {
     SCOPED_TRACE;
 
     auto av = buffer->buffer();
     *output_length = av.size();
-    return av.as_chars().data();
+    return av.data();
 }
 
 REDEMPTION_LIB_EXPORT
@@ -472,10 +472,10 @@ int credis_buffer_push_cmd_select_db(CRedisBuffer* buffer, unsigned db)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_buffer_build_with_prefix_and_suffix(
+uint8_t* credis_buffer_build_with_prefix_and_suffix(
     CRedisBuffer* buffer,
-    char const* prefix, std::size_t prefix_length,
-    char const* suffix, std::size_t suffix_length,
+    uint8_t const* prefix, std::size_t prefix_length,
+    uint8_t const* suffix, std::size_t suffix_length,
     std::size_t* output_length)
 {
     SCOPED_TRACE;
@@ -486,7 +486,7 @@ char* credis_buffer_build_with_prefix_and_suffix(
     if (buffer->is_valid_prefix(av_prefix) && buffer->is_valid_suffix(av_suffix)) {
         auto av = buffer->build_with_prefix_and_suffix(av_prefix, av_suffix);
         *output_length = av.size();
-        return av.as_chars().data();
+        return av.data();
     }
 
     *output_length = 0;
@@ -646,7 +646,7 @@ int credis_cmd_set_free_buffer(CRedisCmdSet* cmd, std::size_t start_capacity)
 }
 
 REDEMPTION_LIB_EXPORT
-char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_length)
+uint8_t* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_length)
 {
     SCOPED_TRACE;
 
@@ -667,7 +667,7 @@ char* credis_cmd_set_build_command(CRedisCmdSet* cmd, std::size_t* output_length
     p = push_data(p, cmd->suffix());
 
     *output_length = checked_int(p - data);
-    return char_ptr_cast(data);
+    return data;
 }
 
 } // extern "C"
