@@ -1,4 +1,4 @@
-from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_long, c_longlong, c_size_t, c_uint, c_ulong, c_ulonglong, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_int64, c_long, c_longlong, c_size_t, c_uint, c_ulong, c_ulonglong, c_void_p
 
 lib = CDLL("funcs.so")
 
@@ -51,4 +51,16 @@ lib.f7.restype = c_int
 # long long f8(unsigned long len);
 lib.f8.argtypes = [c_ulong]
 lib.f8.restype = c_longlong
+
+# unsigned long f9(unsigned long len);
+lib.f9.argtypes = [c_ulong]
+lib.f9.restype = c_ulong
+
+# long long f10(int64_t len);
+lib.f10.argtypes = [c_int64]
+lib.f10.restype = c_longlong
+
+# long long f11(unsigned long long len);
+lib.f11.argtypes = [c_ulonglong]
+lib.f11.restype = c_longlong
 

@@ -313,8 +313,9 @@ local pcommun = [=[
 
 id          <- [_a-zA-Z0-9]+
 type        <- {| ('const' ws)? 'std::'? {native_type / id} (ws 'const')? S {'*'?} S |}
-scalar_w1   <- 'char' / 'short' / 'int' / 'long' / 'double'
-native_type <- 'unsigned '? scalar_w1 ' long'? / 'long '+ 'double'
+scalar_w1   <- 'char' / 'short' / 'int' / scalar_w2
+scalar_w2   <- 'long' / 'double'
+native_type <- ('unsigned' / 'signed') ws scalar_w1 (ws 'long')? / scalar_w2 ws scalar_w2 (ws scalar_w2)?
 
 ws          <- %s+
 S           <- %s*
