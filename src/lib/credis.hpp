@@ -197,20 +197,6 @@ CRedisTransportCode credis_transport_write(CRedisTransport* redis,
                                            std::size_t* output_length);
 
 REDEMPTION_LIB_EXPORT
-CRedisTransportCode credis_transport_read_with_offset(CRedisTransport* redis,
-                                                      uint8_t* buffer,
-                                                      std::size_t length,
-                                                      std::size_t* output_length,
-                                                      std::size_t offset);
-
-REDEMPTION_LIB_EXPORT
-CRedisTransportCode credis_transport_write_with_offset(CRedisTransport* redis,
-                                                       uint8_t const* buffer,
-                                                       std::size_t length,
-                                                       std::size_t* output_length,
-                                                       std::size_t offset);
-
-REDEMPTION_LIB_EXPORT
 CRedisTransportCode credis_transport_read_response_ok(CRedisTransport* redis);
 //@}
 
