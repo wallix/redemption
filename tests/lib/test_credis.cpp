@@ -294,5 +294,14 @@ RED_AUTO_TEST_CASE(TestCRedisTransport)
     RED_CHECK(credis_transport_read_response_ok(redis) == Code::UnknownResponse);
     RED_CHECK(credis_transport_get_last_error_zmessage(redis) == "+ERR\r"_av_ascii);
 
+    RED_CHECK(credis_transport_write_with_offset(redis, byte_ptr_cast("abcdef"), 4, &out_len, 1) == Code::Ok);
+    RED_REQUIRE(recv() == "bcde"_av);
+
+    RED_REQUIRE(server_send("ghijkl"_av));
+    char buf[] = "abcdef";
+    RED_CHECK(credis_transport_read_with_offset(redis, byte_ptr_cast(buf), 4, &out_len, 1) == Code::Ok);
+    // \n from "+ERR\r\n"_av
+    RED_CHECK(chars_view(buf, 6) == "a\nghif"_av);
+
     credis_transport_delete(redis);
 }
