@@ -147,11 +147,11 @@ local defs = {
             for _,x in ipairs(t[4]) do
                 types[#types+1] = to_ctype(name, x) -- param type
             end
-            typemap[name..'*'] = name
+            typemap[name..'*'] = 'c_void_p'
             funcptrs[name..'*'] = name
             imported['CFUNCTYPE'] = true
-            lines[#lines+1] = name .. ' = CFUNCTYPE(' .. table.concat(types, ', ') .. ')'
-            lines[#lines+1] = prefix .. name .. ' = ' .. name .. '\n'
+            imported['c_void_p'] = true
+            lines[#lines+1] = name .. ' = CFUNCTYPE(' .. table.concat(types, ', ') .. ')\n'
         else
             newc2py(t[1], t[2], t[3] ~= '')
         end
@@ -209,8 +209,10 @@ local defs = {
         for _k,p in ipairs(t[3]) do
             types[#types+1] = c2py(p[1])
         end
-        lines[#lines+1] = prefix .. t[2] .. '.argtypes = [' .. table.concat(types, ', ') .. ']'
-        lines[#lines+1] = prefix .. t[2] .. '.restype = ' .. c2py(t[1])
+        local name = t[2]
+        lines[#lines+1] = name .. ' = ' .. prefix .. name
+        lines[#lines+1] = name .. '.argtypes = [' .. table.concat(types, ', ') .. ']'
+        lines[#lines+1] = name .. '.restype = ' .. c2py(t[1])
         lines[#lines+1] = ''
     end,
     strfunc=function(s)
