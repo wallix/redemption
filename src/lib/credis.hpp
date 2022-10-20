@@ -196,6 +196,7 @@ CRedisTransportCode credis_transport_write(CRedisTransport* redis,
                                            std::size_t length,
                                            std::size_t* output_length);
 
+/// \return CRedisTransportCode::Ok, CRedisTransportCode::WantRead or CRedisTransportCode::UnknownResponse
 REDEMPTION_LIB_EXPORT
 CRedisTransportCode credis_transport_read_response_ok(CRedisTransport* redis);
 //@}
