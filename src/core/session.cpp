@@ -426,8 +426,13 @@ private:
         if (mod_wrapper.is_connected()) {
             LOG(LOG_INFO, "Exited from target connection");
             mod_wrapper.disconnect();
-            front.must_be_stop_capture();
-            session_log.close_session_log();
+            if (!ini.get<cfg::context::has_more_target>()) {
+                front.must_be_stop_capture();
+                session_log.close_session_log();
+            }
+            else {
+                LOG(LOG_INFO, "Keep existing capture & session log.");
+            }
         }
         else {
             mod_wrapper.disconnect();
@@ -461,10 +466,17 @@ private:
                 switch (secondary_session_type)
                 {
                     case SecondarySessionType::RDP:
+                    {
+                        SessionLogApi& session_log_api =
+                              this->ini.get<cfg::context::try_alternate_target>()
+                            ? session_log.already_session_log()
+                            : session_log.open_session_log("RDP");
+
                         mod_pack = mod_factory.create_rdp_mod(
-                            session_log.open_session_log("RDP"),
+                            session_log_api,
                             PerformAutomaticReconnection::No);
                         break;
+                    }
                     case SecondarySessionType::VNC:
                         mod_pack = mod_factory.create_vnc_mod(
                             session_log.open_session_log("VNC"));
@@ -475,11 +487,11 @@ private:
                 return;
             }
             catch (Error const& /*error*/) {
-                this->secondary_session_creation_failed(session_log);
+                this->secondary_session_creation_failed(session_log, this->ini.get<cfg::context::has_more_target>());
                 mod_pack = mod_factory.create_transition_mod();
             }
             catch (...) {
-                this->secondary_session_creation_failed(session_log);
+                this->secondary_session_creation_failed(session_log, this->ini.get<cfg::context::has_more_target>());
                 throw;
             }
         };
@@ -596,10 +608,15 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    void secondary_session_creation_failed(SessionLog & session_log)
+    void secondary_session_creation_failed(SessionLog & session_log, bool has_other_target_to_try)
     {
         session_log.already_session_log().log6(LogId::SESSION_CREATION_FAILED, {});
-        session_log.close_session_log();
+        if (!has_other_target_to_try) {
+            session_log.close_session_log();
+        }
+        else {
+            LOG(LOG_INFO, "Keep existing session log.");
+        }
         this->ini.set_acl<cfg::context::module>(ModuleName::close);
     }
 
@@ -633,12 +650,12 @@ private:
         }
         catch (Error const& /*error*/) {
             front.must_be_stop_capture();
-            this->secondary_session_creation_failed(session_log);
+            this->secondary_session_creation_failed(session_log, false);
             mod_wrapper.set_mod(next_state, mod_factory.create_transition_mod());
         }
         catch (...) {
             front.must_be_stop_capture();
-            this->secondary_session_creation_failed(session_log);
+            this->secondary_session_creation_failed(session_log, false);
         }
 
         return false;
@@ -932,7 +949,8 @@ private:
                     }
 
                     if (has_field(cfg::context::module())) {
-                        if (ini.get<cfg::context::module>() != mod_wrapper.current_mod) {
+                        if ((ini.get<cfg::context::module>() != mod_wrapper.current_mod)
+                         || ini.get<cfg::context::try_alternate_target>()) {
                             next_module = ini.get<cfg::context::module>();
                             back_event = BACK_EVENT_NEXT;
                         }
@@ -973,7 +991,7 @@ private:
                             this->ini.get<cfg::context::rejected>().c_str());
                         this->ini.set<cfg::context::auth_error_message>(
                             this->ini.get<cfg::context::rejected>());
-                         next_module = ModuleName::close;
+                        next_module = ModuleName::close;
                         back_event = BACK_EVENT_NEXT;
                     }
                     else if (has_field(cfg::context::disconnect_reason())) {
@@ -1168,7 +1186,9 @@ private:
                                     this->ini.set_acl<cfg::context::module>(ModuleName::close);
                                 }
                                 this->next_backend_module(
-                                    ModuleName::close, session_log, mod_factory,
+                                      this->ini.get<cfg::context::has_more_target>()
+                                    ? ModuleName::transitory : ModuleName::close,
+                                    session_log, mod_factory,
                                     mod_wrapper, inactivity, keepalive, front,
                                     rail_client_execute, event_manager);
                                 run_session = true;

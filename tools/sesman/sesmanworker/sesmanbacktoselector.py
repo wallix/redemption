@@ -10,6 +10,7 @@ back_to_selector_default_sent = {
     u'device_id': u'',
     u'duration_max': 0,
     u'formflag': 0,
+    u'has_more_target': False,
     u'is_rec': False,
     u'message': u'',
     u'nla_password_hash': u'',
@@ -44,6 +45,7 @@ back_to_selector_default_sent = {
     u'target_str': u'',
     u'timeclose': 0,
     u'trace_type': 1,
+    u'try_alternate_target': False,
 }
 back_to_selector_default_reinit = {
     u'auth_channel_target': u'',

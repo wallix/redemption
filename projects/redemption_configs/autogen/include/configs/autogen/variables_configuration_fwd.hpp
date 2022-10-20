@@ -389,6 +389,8 @@ namespace cfg
         struct showform;
         struct formflag;
         struct module;
+        struct try_alternate_target;
+        struct has_more_target;
         struct proxy_opt;
         struct pattern_kill;
         struct pattern_notify;
