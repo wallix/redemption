@@ -176,8 +176,7 @@ local defs = {
             enums[t[2]] = content
             lines[#lines+1] = 'class ' .. t[2] .. '(IntEnum):'
             lines[#lines+1] = content
-            lines[#lines+1] = '\n    def from_param(self) -> int:\n        return int(self)\n'
-            lines[#lines+1] = prefix .. t[2] .. ' = ' .. t[2] .. '\n\n'
+            lines[#lines+1] = '\n    def from_param(self) -> int:\n        return int(self)\n\n'
         else
             lines[#lines+1] = ''
         end

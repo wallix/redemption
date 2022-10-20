@@ -16,8 +16,6 @@ class T1(IntEnum):
     def from_param(self) -> int:
         return int(self)
 
-lib.T1 = T1
-
 
 # enum T2 : int {A,B,}
 class T2(IntEnum):
@@ -26,8 +24,6 @@ class T2(IntEnum):
 
     def from_param(self) -> int:
         return int(self)
-
-lib.T2 = T2
 
 
 # enum T3 : uint8_t
@@ -40,8 +36,6 @@ class T4(IntEnum):
     def from_param(self) -> int:
         return int(self)
 
-lib.T4 = T4
-
 
 # enum class
 # enum class T5: unsigned {A,B,}
@@ -52,8 +46,6 @@ class T5(IntEnum):
     def from_param(self) -> int:
         return int(self)
 
-lib.T5 = T5
-
 
 # enum class T6 : unsigned{A,B,}
 class T6(IntEnum):
@@ -63,8 +55,6 @@ class T6(IntEnum):
     def from_param(self) -> int:
         return int(self)
 
-lib.T6 = T6
-
 
 # enum class [[nodiscard]] T7 : unsigned {A,B,}
 class T7(IntEnum):
@@ -73,8 +63,6 @@ class T7(IntEnum):
 
     def from_param(self) -> int:
         return int(self)
-
-lib.T7 = T7
 
 
 # void f1(T1 x);
