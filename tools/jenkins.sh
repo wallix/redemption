@@ -111,14 +111,14 @@ show_duration jsclient
 
 # BJAM Build Test
 echo -e "
-using gcc : 11.0 : g++-11 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using gcc : : g++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
 " > project-config.jam
 valgrind_compiler=gcc-8
-toolset_gcc=toolset=gcc-11
+toolset_gcc=toolset=gcc
 toolset_wab=toolset=gcc-8
-gcovbin=gcov-11
+gcovbin=gcov
 toolset_clang=toolset=clang
 
 export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
