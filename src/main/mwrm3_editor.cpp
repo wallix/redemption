@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 #include "utils/move_remaining_data.hpp"
 #include "cxx/compiler_version.hpp"
 
-#include <ios>
+#include <iostream>
 #include <string_view>
 
 #if REDEMPTION_HAS_INCLUDE(<cxxabi.h>)
