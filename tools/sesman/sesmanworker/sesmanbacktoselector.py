@@ -12,6 +12,7 @@ back_to_selector_default_sent = {
     'device_id': '',
     'duration_max': 0,
     'formflag': 0,
+    'has_more_target': False,
     'is_rec': False,
     'message': '',
     'opt_message': '',
@@ -44,6 +45,7 @@ back_to_selector_default_sent = {
     'target_str': '',
     'timeclose': 0,
     'trace_type': 1,
+    'try_alternate_target': False,
     'tunneling_target_host': '',
 }
 back_to_selector_default_reinit = {

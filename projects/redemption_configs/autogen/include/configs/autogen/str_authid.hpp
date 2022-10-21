@@ -192,6 +192,8 @@ namespace configs
         "showform"_zv,
         "formflag"_zv,
         "module"_zv,
+        "try_alternate_target"_zv,
+        "has_more_target"_zv,
         "proxy_opt"_zv,
         "pattern_kill"_zv,
         "pattern_notify"_zv,

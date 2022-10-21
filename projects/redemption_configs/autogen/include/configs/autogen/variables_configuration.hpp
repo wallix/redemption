@@ -36,11 +36,11 @@ namespace configs
         // inline constexpr int section18 = 141; /* websocket */
         // inline constexpr int section19 = 141; /* vnc_over_ssh */
         inline constexpr int section20 = 141; /* context */
-        // inline constexpr int section21 = 227; /* internal_mod */
-        inline constexpr int section22 = 227; /* mod_replay */
-        inline constexpr int section23 = 229; /* translation */
-        // inline constexpr int section24 = 231; /* theme */
-        // inline constexpr int section25 = 231; /* debug */
+        // inline constexpr int section21 = 229; /* internal_mod */
+        inline constexpr int section22 = 229; /* mod_replay */
+        inline constexpr int section23 = 231; /* translation */
+        // inline constexpr int section24 = 233; /* theme */
+        // inline constexpr int section25 = 233; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -4256,38 +4256,38 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { ModuleName::login };
     };
-    /// type: std::string <br/>
+    /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
-    /// default: {} <br/>
-    struct context::proxy_opt {
+    /// default: false <br/>
+    struct context::try_alternate_target {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 41};
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = bool;
+        using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value {  };
+        type value { false };
     };
-    /// type: std::string <br/>
+    /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
-    /// default: {} <br/>
-    struct context::pattern_kill {
+    /// default: false <br/>
+    struct context::has_more_target {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 42};
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = bool;
+        using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value {  };
+        type value { false };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
-    struct context::pattern_notify {
+    struct context::proxy_opt {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -4301,7 +4301,7 @@ namespace cfg
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
-    struct context::opt_message {
+    struct context::pattern_kill {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -4315,7 +4315,7 @@ namespace cfg
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
-    struct context::login_message {
+    struct context::pattern_notify {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -4329,12 +4329,40 @@ namespace cfg
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
-    struct context::disconnect_reason {
+    struct context::opt_message {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 46};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇒ proxy <br/>
+    /// default: {} <br/>
+    struct context::login_message {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 47};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇒ proxy <br/>
+    /// default: {} <br/>
+    struct context::disconnect_reason {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 48};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4348,7 +4376,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 47};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 49};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4371,7 +4399,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 48};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 50};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4385,7 +4413,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 49};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 51};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4399,7 +4427,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 50};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 52};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4413,7 +4441,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 51};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 53};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4427,7 +4455,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 52};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 54};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4441,7 +4469,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 53};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 55};
         using type = unsigned;
         using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
@@ -4455,7 +4483,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 54};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 56};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4469,7 +4497,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 55};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 57};
         using type = uint16_t;
         using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
@@ -4483,7 +4511,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 56};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 58};
         using type = uint16_t;
         using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
@@ -4497,7 +4525,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 57};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 59};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4511,7 +4539,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 58};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 60};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4525,7 +4553,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 59};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 61};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4539,7 +4567,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 60};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 62};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4553,7 +4581,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 61};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 63};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4567,7 +4595,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 62};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 64};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4581,7 +4609,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 63};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 65};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4604,7 +4632,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 64};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 66};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4618,7 +4646,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 65};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 67};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4632,7 +4660,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 66};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 68};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4646,7 +4674,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 67};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 69};
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
@@ -4660,7 +4688,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 68};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 70};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4674,7 +4702,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 69};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 71};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4688,7 +4716,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 70};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 72};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4702,7 +4730,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 71};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 73};
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
@@ -4716,7 +4744,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 72};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 74};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4730,7 +4758,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 73};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 75};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4744,7 +4772,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 74};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 76};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4758,7 +4786,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 75};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 77};
         using type = uint16_t;
         using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
@@ -4772,7 +4800,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 76};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 78};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4786,7 +4814,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 77};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 79};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4800,7 +4828,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 78};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 80};
         using type = std::chrono::seconds;
         using sesman_and_spec_type = std::chrono::seconds;
         using mapped_type = sesman_and_spec_type;
@@ -4814,7 +4842,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 79};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 81};
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
@@ -4828,7 +4856,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 80};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 82};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4842,7 +4870,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 81};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 83};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4856,7 +4884,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 82};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 84};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4879,7 +4907,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 83};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 85};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4893,7 +4921,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 84};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 86};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4907,7 +4935,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 85};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 87};
         using type = BannerType;
         using sesman_and_spec_type = BannerType;
         using mapped_type = sesman_and_spec_type;
@@ -5924,6 +5952,8 @@ struct context
 , cfg::context::showform
 , cfg::context::formflag
 , cfg::context::module
+, cfg::context::try_alternate_target
+, cfg::context::has_more_target
 , cfg::context::disconnect_reason_ack
 , cfg::context::recording_started
 , cfg::context::rt_ready
@@ -6216,6 +6246,8 @@ using VariablesAclPack = Pack<
 , cfg::context::showform
 , cfg::context::formflag
 , cfg::context::module
+, cfg::context::try_alternate_target
+, cfg::context::has_more_target
 , cfg::context::proxy_opt
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
@@ -6272,7 +6304,7 @@ constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111101111111111111111111111111111111111111111011111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
 , 0b1111111111111111111111111111110101111110111111111110011111111111
-, 0b0000000000000000000000000111111110111111111111111111011111111111
+, 0b0000000000000000000000011111111011111111111111111101111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000

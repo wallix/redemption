@@ -467,8 +467,13 @@ private:
             LOG(LOG_INFO, "Exited from target connection");
             guest_ctx.stop();
             mod_wrapper.disconnect();
-            front.must_be_stop_capture();
-            secondary_session.close_secondary_session();
+            if (!ini.get<cfg::context::has_more_target>()) {
+                front.must_be_stop_capture();
+                secondary_session.close_secondary_session();
+            }
+            else {
+                LOG(LOG_INFO, "Keep existing capture & session log.");
+            }
         }
         else {
             mod_wrapper.disconnect();
@@ -502,10 +507,17 @@ private:
                 switch (secondary_session_type)
                 {
                     case SecondarySessionType::RDP:
+                    {
+                        SessionLogApi& session_log_api =
+                              this->ini.get<cfg::context::try_alternate_target>()
+                            ? secondary_session.get_secondary_session_log()
+                            : secondary_session.open_secondary_session("RDP");
+
                         mod_pack = mod_factory.create_rdp_mod(
-                            secondary_session.open_secondary_session("RDP"),
+                            session_log_api,
                             PerformAutomaticReconnection::No);
                         break;
+                    }
                     case SecondarySessionType::VNC:
                         mod_pack = mod_factory.create_vnc_mod(
                             secondary_session.open_secondary_session("VNC"));
@@ -516,11 +528,11 @@ private:
                 return;
             }
             catch (Error const& /*error*/) {
-                this->secondary_session_creation_failed(secondary_session);
+                this->secondary_session_creation_failed(secondary_session, this->ini.get<cfg::context::has_more_target>());
                 mod_pack = mod_factory.create_transition_mod();
             }
             catch (...) {
-                this->secondary_session_creation_failed(secondary_session);
+                this->secondary_session_creation_failed(secondary_session, this->ini.get<cfg::context::has_more_target>());
                 throw;
             }
         };
@@ -650,10 +662,15 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    void secondary_session_creation_failed(SecondarySession & secondary_session)
+    void secondary_session_creation_failed(SecondarySession & secondary_session, bool has_other_target_to_try)
     {
         secondary_session.get_secondary_session_log().log6(LogId::SESSION_CREATION_FAILED, {});
-        secondary_session.close_secondary_session();
+        if (!has_other_target_to_try) {
+            secondary_session.close_secondary_session();
+        }
+        else {
+            LOG(LOG_INFO, "Keep existing session log.");
+        }
         this->ini.set_acl<cfg::context::module>(ModuleName::close);
     }
 
@@ -687,12 +704,12 @@ private:
         }
         catch (Error const& /*error*/) {
             front.must_be_stop_capture();
-            this->secondary_session_creation_failed(secondary_session);
+            this->secondary_session_creation_failed(secondary_session, false);
             mod_wrapper.set_mod(next_state, mod_factory.create_transition_mod());
         }
         catch (...) {
             front.must_be_stop_capture();
-            this->secondary_session_creation_failed(secondary_session);
+            this->secondary_session_creation_failed(secondary_session, false);
         }
 
         return false;
@@ -1043,7 +1060,8 @@ private:
                     }
 
                     if (has_field(cfg::context::module())) {
-                        if (ini.get<cfg::context::module>() != mod_wrapper.current_mod) {
+                        if ((ini.get<cfg::context::module>() != mod_wrapper.current_mod)
+                         || ini.get<cfg::context::try_alternate_target>()) {
                             next_module = ini.get<cfg::context::module>();
                             back_event = BACK_EVENT_NEXT;
                         }
