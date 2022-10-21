@@ -103,6 +103,16 @@ def print_exception_caught(func):
     return method_wrapper
 
 
+def collection_has_more(iterable):
+    it = iter(iterable)
+    cur_item = next(it)
+    for item in it:
+        yield cur_item, True
+        cur_item = item
+
+    yield cur_item, False
+
+
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
@@ -2008,9 +2018,12 @@ class Sesman():
         close_box = False
 
         if _status:
-            for physical_target in self.engine.get_effective_target(
-                    selected_target
+            for physical_target, has_more_physical_target in collection_has_more(
+                self.engine.get_effective_target(selected_target)
             ):
+                kv[u'try_alternate_target'] = "True" if try_next else "False"
+                kv[u'has_more_target'] = "True" if has_more_physical_target else "False"
+            
                 try_next = False
                 close_box = False
                 kv[u'recording_started'] = "False"
@@ -2235,7 +2248,8 @@ class Sesman():
                             u'rejected': _error,
                         }
 
-                    try_next = False
+                    try_next = True
+                    self.shared[u'module'] = u''
                     logtimer.stop("CHECKOUT_TARGET")
                     try:
                         ###########
@@ -2301,9 +2315,8 @@ class Sesman():
 
                                 if self.shared.get(u'reporting'):
                                     report_status = self.handle_reporting()
-                                    if not report_status:
-                                        try_next = True
-                                        break
+                                    if report_status:
+                                        try_next = False
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
@@ -2413,7 +2426,6 @@ class Sesman():
             release_reason = u'Connection failed'
             self.engine.set_session_status(
                 result=False, diag=release_reason)
-            return False
         elif _reporting_reason == u'FINDPATTERN_KILL':
             Logger().info(
                 u"RDP connection terminated. Reason: Kill pattern detected"
@@ -2558,7 +2570,10 @@ class Sesman():
                 self.send_data({
                     u'disconnect_reason': TR(u"application_fatal_error")
                 })
-        return True
+        elif _reporting_reason == u'OPEN_SESSION_SUCCESSFUL':
+            return True
+
+        return False
 
     def process_target_connection_time(self):
         if self.shared.get(u"target_connection_time"):

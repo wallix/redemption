@@ -1049,6 +1049,10 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<types::unsigned_>(), names{"formflag"}, set(0));
 
         W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<ModuleName>(), spec::type_<std::string>(), names{"module"}, set(ModuleName::login));
+
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"try_alternate_target"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"has_more_target"}, set(false));
+
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"proxy_opt"});
 
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"pattern_kill"});
