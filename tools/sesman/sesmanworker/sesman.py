@@ -2387,6 +2387,9 @@ class Sesman():
                             Logger().info("<<<%s>>>" % traceback.format_exc())
                     if not try_next:
                         break
+                    elif not has_more_physical_target:
+                        self.engine.set_session_status(
+                            result=False, diag="All attempts have failed")
                 finally:
                     self.engine.release_target(physical_target)
 
