@@ -105,11 +105,13 @@ def print_exception_caught(func):
 
 def collection_has_more(iterable):
     it = iter(iterable)
-    cur_item = next(it)
+    try:
+        cur_item = next(it)
+    except StopIteration:
+        return
     for item in it:
         yield cur_item, True
         cur_item = item
-
     yield cur_item, False
 
 
@@ -2023,7 +2025,7 @@ class Sesman():
             ):
                 kv[u'try_alternate_target'] = "True" if try_next else "False"
                 kv[u'has_more_target'] = "True" if has_more_physical_target else "False"
-            
+
                 try_next = False
                 close_box = False
                 kv[u'recording_started'] = "False"
