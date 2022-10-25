@@ -145,121 +145,16 @@ struct RdpData
     };
 
 public:
-    RdpData(EventContainer & events)
-    : events_guard(events)
-    {}
-
-    ~RdpData() = default;
-
-    void set_metrics(std::unique_ptr<ModRdpMetrics> && metrics, std::chrono::seconds log_interval)
-    {
-        assert(!this->metrics);
-        this->metrics = std::move(metrics);
-        this->metrics->timed_log(this->events_guard, log_interval, "RDP Metrics Timer");
-    }
-
-    void set_file_validator(std::unique_ptr<RdpData::FileValidator>&& file_validator, mod_rdp& mod)
-    {
-        assert(!this->file_validator);
-        this->file_validator = std::move(file_validator);
-        this->events_guard.create_event_fd_without_timeout(
-            "File Validator Event",
-            this->file_validator->get_fd(),
-            [&mod](Event& /*event*/)
-            {
-                mod.DLP_antivirus_check_channels_files();
-            });
-    }
-
-private:
-    std::unique_ptr<ModRdpMetrics> metrics;
-
-    EventsGuard events_guard;
-
-    std::unique_ptr<FileValidator> file_validator;
-};
-
-
-class ModRDPWithSocketAndMetrics final : public mod_api
-{
-    struct FinalSocketTransport final : SocketTransport
-    {
-        using SocketTransport::SocketTransport;
-    };
-
-    std::unique_ptr<SocketTransport> socket_transport_ptr;
-    ModRdpFactory rdp_factory;
-
-public:
-    mod_rdp mod;
-    RdpData rdp_data;
-
-private:
-    Inifile & ini;
-
-    std::unique_ptr<FdxCapture> fdx_capture;
-
-public:
-    SocketTransport& get_transport() const
-    {
-        return *this->socket_transport_ptr;
-    }
-
-    FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
-    {
-        if (!this->fdx_capture) {
-            LOG(LOG_INFO, "Enable clipboard file storage");
-            int  const groupid = int(ini.get<cfg::video::capture_groupid>());
-            auto const& session_id = ini.get<cfg::context::session_id>();
-            auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
-            auto const& record_dir = ini.get<cfg::video::record_path>();
-            auto const& hash_dir = ini.get<cfg::video::hash_path>();
-            auto const& filebase = ini.get<cfg::capture::record_filebase>();
-
-            this->fdx_capture = std::make_unique<FdxCapture>(
-                str_concat(record_dir.as_string(), subdir),
-                str_concat(hash_dir.as_string(), subdir),
-                filebase,
-                session_id, groupid, ini.get<cfg::video::file_permissions>(),
-                cctx, gen,
-                /* TODO should be a log (siem?)*/
-                [](const Error & /*error*/){});
-
-            ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
-        }
-
-        return this->fdx_capture.get();
-    }
-
-    ModRdpFactory& get_rdp_factory() noexcept
-    {
-        return this->rdp_factory;
-    }
-
-    ModRDPWithSocketAndMetrics(
-        gdi::OsdApi & osd
+    RdpData(EventContainer & events
       , Inifile & ini
       , SocketTransport::Name name
       , unique_fd sck
       , SocketTransport::Verbose verbose
       , std::string * error_message
-      , EventContainer & events
-      , SessionLogApi& session_log
-      , gdi::GraphicApi & gd
-      , FrontAPI & front
-      , const ClientInfo & info
-      , RedirectionInfo & redir_info
-      , Random & gen
-      , const ChannelsAuthorizations & channels_authorizations
-      , const ModRDPParams & mod_rdp_params
-      , const TLSClientParams & tls_client_params
-      , LicenseApi & license_store
-      , ModRdpVariables vars
-      , [[maybe_unused]] RDPMetrics * metrics
-      , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
     )
-    : socket_transport_ptr([&]() -> SocketTransport* {
+    : events_guard(events)
+    , socket_transport_ptr([&]() -> SocketTransport* {
             chars_view ip_address = ini.get<cfg::context::target_host>();
             int port = checked_int(ini.get<cfg::context::target_port>());
             auto recv_timeout = std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>());
@@ -298,12 +193,119 @@ public:
                 error_message
             );
         }())
-    , mod(*this->socket_transport_ptr, gd
+    {}
+
+    ~RdpData() = default;
+
+    void set_metrics(std::unique_ptr<ModRdpMetrics> && metrics, std::chrono::seconds log_interval)
+    {
+        assert(!this->metrics);
+        this->metrics = std::move(metrics);
+        this->metrics->timed_log(this->events_guard, log_interval, "RDP Metrics Timer");
+    }
+
+    void set_file_validator(std::unique_ptr<RdpData::FileValidator>&& file_validator, mod_rdp& mod)
+    {
+        assert(!this->file_validator);
+        this->file_validator = std::move(file_validator);
+        this->events_guard.create_event_fd_without_timeout(
+            "File Validator Event",
+            this->file_validator->get_fd(),
+            [&mod](Event& /*event*/)
+            {
+                mod.DLP_antivirus_check_channels_files();
+            });
+    }
+
+    SocketTransport& get_transport() const
+    {
+        return *this->socket_transport_ptr;
+    }
+
+    ModRdpFactory& get_rdp_factory() noexcept
+    {
+        return this->rdp_factory;
+    }
+
+private:
+    std::unique_ptr<ModRdpMetrics> metrics;
+
+    EventsGuard events_guard;
+
+    std::unique_ptr<FileValidator> file_validator;
+
+    struct FinalSocketTransport final : SocketTransport
+    {
+        using SocketTransport::SocketTransport;
+    };
+
+    std::unique_ptr<SocketTransport> socket_transport_ptr;
+    ModRdpFactory rdp_factory;
+};
+
+
+class ModRDPWithSocketAndMetrics final : public RdpData, public mod_rdp
+{
+    Inifile & ini;
+
+    std::unique_ptr<FdxCapture> fdx_capture;
+
+public:
+    FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
+    {
+        if (!this->fdx_capture) {
+            LOG(LOG_INFO, "Enable clipboard file storage");
+            int  const groupid = int(ini.get<cfg::video::capture_groupid>());
+            auto const& session_id = ini.get<cfg::context::session_id>();
+            auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
+            auto const& record_dir = ini.get<cfg::video::record_path>();
+            auto const& hash_dir = ini.get<cfg::video::hash_path>();
+            auto const& filebase = ini.get<cfg::capture::record_filebase>();
+
+            this->fdx_capture = std::make_unique<FdxCapture>(
+                str_concat(record_dir.as_string(), subdir),
+                str_concat(hash_dir.as_string(), subdir),
+                filebase,
+                session_id, groupid, ini.get<cfg::video::file_permissions>(),
+                cctx, gen,
+                /* TODO should be a log (siem?)*/
+                [](const Error & /*error*/){});
+
+            ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
+        }
+
+        return this->fdx_capture.get();
+    }
+
+    ModRDPWithSocketAndMetrics(
+        gdi::OsdApi & osd
+      , Inifile & ini
+      , SocketTransport::Name name
+      , unique_fd sck
+      , SocketTransport::Verbose verbose
+      , std::string * error_message
+      , EventContainer & events
+      , SessionLogApi& session_log
+      , gdi::GraphicApi & gd
+      , FrontAPI & front
+      , const ClientInfo & info
+      , RedirectionInfo & redir_info
+      , Random & gen
+      , const ChannelsAuthorizations & channels_authorizations
+      , const ModRDPParams & mod_rdp_params
+      , const TLSClientParams & tls_client_params
+      , LicenseApi & license_store
+      , ModRdpVariables vars
+      , [[maybe_unused]] RDPMetrics * metrics
+      , [[maybe_unused]] FileValidatorService * file_validator_service
+      , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
+    )
+    : RdpData(events, ini, name, std::move(sck), verbose, error_message, use_failure_simulation_socket_transport)
+    , mod_rdp(this->get_transport(), gd
         , osd , events, session_log, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
-    , rdp_data(events)
     , ini(ini)
     {}
 
@@ -312,86 +314,6 @@ public:
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str(),
             this->ini.template get<cfg::context::session_id>().c_str());
-    }
-
-    // from RdpInput
-
-    void rdp_gdi_up_and_running() override
-    {
-        this->mod.rdp_gdi_up_and_running();
-    }
-
-    void rdp_gdi_down() override {}
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
-    {
-        this->mod.rdp_input_scancode(flags, scancode, event_time, keymap);
-    }
-
-    // from RdpInput
-    void rdp_input_mouse(int device_flags, int x, int y) override
-    {
-        this->mod.rdp_input_mouse(device_flags, x, y);
-    }
-
-    // from RdpInput
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override {
-        this->mod.rdp_input_unicode(flag, unicode);
-    }
-
-    // from RdpInput
-    void rdp_input_invalidate(const Rect r) override
-    {
-        this->mod.rdp_input_invalidate(r);
-    }
-
-    // from RdpInput
-    void rdp_input_synchronize(KeyLocks locks) override
-    {
-        return this->mod.rdp_input_synchronize(locks);
-    }
-
-    // from mod_api
-    [[nodiscard]] bool is_up_and_running() const override
-    {
-        return this->mod.is_up_and_running();
-    }
-
-    // from mod_api
-    // support auto-reconnection
-    bool is_auto_reconnectable() const override {
-        return this->mod.is_auto_reconnectable();
-    }
-
-    bool server_error_encountered() const override {
-        return this->mod.server_error_encountered();
-    }
-
-    // from mod_api
-    void disconnect() override
-    {
-        return this->mod.disconnect();
-    }
-
-    // from mod_api
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
-    {
-        return this->mod.move_size_widget(left, top, width, height);
-    }
-
-    // from mod_api
-    [[nodiscard]] Dimension get_dim() const override
-    {
-        return this->mod.get_dim();
-    }
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
-    {
-        this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
-    }
-
-    void acl_update(AclFieldMask const& acl_fields) override {
-        this->mod.acl_update(acl_fields);
     }
 };
 
@@ -932,11 +854,11 @@ ModPack create_mod_rdp(
     );
 
     if (enable_validator) {
-        new_mod->rdp_data.set_file_validator(std::move(file_validator), new_mod->mod);
+        new_mod->set_file_validator(std::move(file_validator), *new_mod);
     }
 
     if (enable_metrics) {
-        new_mod->rdp_data.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
+        new_mod->set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
     }
 
     {
@@ -963,7 +885,7 @@ ModPack create_mod_rdp(
 
     if (!host_mod) {
         auto mod = new_mod.release();
-        return ModPack{mod, &mod->mod, mod->mod.get_windowing_api(), false, false, tmp_psocket_transport};
+        return ModPack{mod, mod, mod->get_windowing_api(), false, false, tmp_psocket_transport};
     }
 
     host_mod->set_mod(std::move(new_mod));

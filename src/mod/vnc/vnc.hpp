@@ -62,7 +62,7 @@ class ClientExecute;
 // https://github.com/rfbproto/rfbproto
 
 
-class mod_vnc final : public mod_api
+class mod_vnc : public mod_api
 {
 
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
