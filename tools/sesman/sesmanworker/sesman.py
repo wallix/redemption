@@ -29,6 +29,7 @@ from datetime import datetime
 import socket
 from socket import gethostname
 from ipaddress import ip_network
+from typing import Iterable, Any, Tuple
 
 from .sesmanconf import TR, SESMANCONF
 from . import engine
@@ -105,13 +106,15 @@ def print_exception_caught(func):
     return method_wrapper
 
 
-def collection_has_more(iterable):
+def collection_has_more(iterable: Iterable[Any]) -> Tuple[Any, bool]:
     it = iter(iterable)
-    cur_item = next(it)
+    try:
+        cur_item = next(it)
+    except StopIteration:
+        return
     for item in it:
         yield cur_item, True
         cur_item = item
-
     yield cur_item, False
 
 
@@ -2047,7 +2050,7 @@ class Sesman():
             ):
                 kv[u'try_alternate_target'] = "True" if try_next else "False"
                 kv[u'has_more_target'] = "True" if has_more_physical_target else "False"
-            
+
                 try_next = False
                 close_box = False
                 kv[u'recording_started'] = "False"
