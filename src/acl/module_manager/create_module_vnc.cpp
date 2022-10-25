@@ -40,39 +40,45 @@ namespace
 
 struct VncData
 {
-    VncData(EventContainer & events)
+    VncData(EventContainer & events,
+        Inifile & ini, SocketTransport::Name name, unique_fd sck,
+        SocketTransport::Verbose verbose,
+        std::string * error_message)
     : events_guard(events)
+    , socket_transport(name, std::move(sck),
+                       ini.get<cfg::context::target_host>(),
+                       checked_int(ini.get<cfg::context::target_port>()),
+                       ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+                       ini.get<cfg::all_target_mod::tcp_user_timeout>(),
+                       std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>()),
+                       verbose, error_message)
     {}
 
     ~VncData() = default;
 
+    SocketTransport& get_transport()
+    {
+        return this->socket_transport;
+    }
+
 private:
     EventsGuard events_guard;
-};
 
-
-class ModVNCWithSocket final : public mod_api
-{
     struct FinalSocketTransport final : SocketTransport
     {
         using SocketTransport::SocketTransport;
     };
 
     FinalSocketTransport socket_transport;
+};
 
-public:
-    mod_vnc mod;
-    VncData vnc_data;
 
+class ModVNCWithSocket final : public VncData, public mod_vnc
+{
 private:
     Inifile & ini;
 
 public:
-    SocketTransport& get_transport()
-    {
-        return this->socket_transport;
-    }
-
     ModVNCWithSocket(
         gdi::GraphicApi & drawable,
         Inifile & ini, SocketTransport::Name name, unique_fd sck,
@@ -97,21 +103,14 @@ public:
         bool cursor_pseudo_encoding_supported,
         ClientExecute* rail_client_execute,
         VNCVerbose vnc_verbose)
-    : socket_transport(name, std::move(sck),
-                       ini.get<cfg::context::target_host>(),
-                       checked_int(ini.get<cfg::context::target_port>()),
-                       ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
-                       ini.get<cfg::all_target_mod::tcp_user_timeout>(),
-                       std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>()),
-                       verbose, error_message)
-    , mod(
-          this->socket_transport, drawable,
+    : VncData(events, ini, name, std::move(sck), verbose, error_message)
+    , mod_vnc(
+          this->get_transport(), drawable,
           events, username, password, front, front_width, front_height,
           clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           layout, locks, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
           rail_client_execute, vnc_verbose, session_log)
-    , vnc_data(events)
     , ini(ini)
     {}
 
@@ -120,89 +119,6 @@ public:
         log_siem::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str(),
             this->ini.template get<cfg::context::session_id>().c_str());
-    }
-
-    // from RdpInput
-    void rdp_gdi_up_and_running() override
-    {
-        this->mod.rdp_gdi_up_and_running();
-    }
-
-    void rdp_gdi_down() override
-    {
-        this->mod.rdp_gdi_down();
-    }
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
-    {
-        this->mod.rdp_input_scancode(flags, scancode, event_time, keymap);
-    }
-
-    // from RdpInput
-    void rdp_input_mouse(int device_flags, int x, int y) override
-    {
-        this->mod.rdp_input_mouse(device_flags, x, y);
-    }
-
-    // from RdpInput
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override {
-        this->mod.rdp_input_unicode(flag, unicode);
-    }
-
-    // from RdpInput
-    void rdp_input_invalidate(const Rect r) override
-    {
-        this->mod.rdp_input_invalidate(r);
-    }
-
-    // from RdpInput
-    void rdp_input_synchronize(KeyLocks locks) override
-    {
-        return this->mod.rdp_input_synchronize(locks);
-    }
-
-    // from mod_api
-    [[nodiscard]] bool is_up_and_running() const override
-    {
-        return this->mod.is_up_and_running();
-    }
-
-    // from mod_api
-    // support auto-reconnection
-    bool is_auto_reconnectable() const override {
-        return this->mod.is_auto_reconnectable();
-    }
-
-    bool server_error_encountered() const override {
-        return this->mod.server_error_encountered();
-    }
-
-    // from mod_api
-    void disconnect() override
-    {
-        return this->mod.disconnect();
-    }
-
-    // from mod_api
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
-    {
-        return this->mod.move_size_widget(left, top, width, height);
-    }
-
-    // from mod_api
-    [[nodiscard]] Dimension get_dim() const override
-    {
-        return this->mod.get_dim();
-    }
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
-    {
-        this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
-    }
-
-    void acl_update(AclFieldMask const& acl_fields) override
-    {
-        this->mod.acl_update(acl_fields);
     }
 };
 
