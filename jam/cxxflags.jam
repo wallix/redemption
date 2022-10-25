@@ -22,12 +22,8 @@ REDEMPTION_CXXFLAGS +=
 
 import os ;
 
-local REGULAR_BUILD = [ os.environ REGULAR_BUILD ] ;
-if $(REGULAR_BUILD) = 1
-{
-  REDEMPTION_CXXFLAGS += <conditional>@flags ;
-}
-else
+local SPEED_BUILD = [ os.environ SPEED_BUILD ] ;
+if $(SPEED_BUILD) = 1
 {
   REDEMPTION_CXXFLAGS += <conditional>@gflags ;
 
@@ -49,6 +45,10 @@ else
     GLOBAL_FLAGS = [ flags $(properties) ] ;
     return $(GLOBAL_FLAGS) ;
   }
+}
+else
+{
+  REDEMPTION_CXXFLAGS += <conditional>@flags ;
 }
 
 # ./compiler-options.lua -f -stl_fix,msvc_isystem,msvc_isystem_with_template_from_non_external,exceptions,sanitizers_extra,pie,rtti,coverage generators/bjam.lua cxx- >> cxxflags.jam
