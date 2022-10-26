@@ -75,7 +75,7 @@ create_server_bind_sck(unique_fd fd_sck,
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
     if (0 != ::bind(sck, &reinterpret_cast<sockaddr&>(addr), addrlen)) {
-        LOG(LOG_ERR, "Listen: error binding socket [errno=%d] %s", errno, strerror(errno));
+        LOG(LOG_ERR, "create_server: error binding socket [errno=%d] %s", errno, strerror(errno));
         return invalid_fd();
     }
 
@@ -89,9 +89,9 @@ create_server_bind_sck(unique_fd fd_sck,
         }
     }
 
-    LOG(LOG_INFO, "Listen: listening on socket %d", sck);
+    LOG(LOG_INFO, "create_server: listening on socket %d", sck);
     if (0 != listen(sck, 2)) {
-        LOG(LOG_ERR, "Listen: error listening on socket");
+        LOG(LOG_ERR, "create_server: error listening on socket");
     }
 
     // OK, keep the temporary socket everything was fine
@@ -116,7 +116,7 @@ create_unix_server(zstring_view sck_name,
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    LOG(LOG_INFO, "Listen: binding socket %d on %s", sck.fd(), sck_name);
+    LOG(LOG_INFO, "create_unix_server: binding socket %d on %s", sck.fd(), sck_name);
     return create_server_bind_sck(std::move(sck),
                                   u.ss,
                                   sizeof(u.s),
@@ -145,7 +145,7 @@ create_server(uint32_t s_addr,
     REDEMPTION_DIAGNOSTIC_POP()
     u.s4.sin_addr.s_addr = s_addr;
 
-    LOG(LOG_INFO, "Listen: binding socket %d on %s:%d",
+    LOG(LOG_INFO, "create_server: binding socket %d on %s:%d",
         sck.fd(), ::inet_ntoa(u.s4.sin_addr), port);
     return create_server_bind_sck(std::move(sck),
                                   u.ss,
@@ -197,7 +197,7 @@ create_ip_dual_stack_server(int port,
         return invalid_fd();
     }
     LOG(LOG_INFO,
-        "Listen: binding socket %d on [%s]:%d",
+        "create_ip_dual_stack_server: binding socket %d on [%s]:%d",
         sck.fd(),
         ip_address,
         port);
