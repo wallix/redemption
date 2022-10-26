@@ -29,7 +29,7 @@ from datetime import datetime
 import socket
 from socket import gethostname
 from ipaddress import ip_network
-from typing import Iterable, Any, Tuple
+from typing import Iterable, Any, Tuple, Generator
 
 from .sesmanconf import TR, SESMANCONF
 from . import engine
@@ -106,7 +106,9 @@ def print_exception_caught(func):
     return method_wrapper
 
 
-def collection_has_more(iterable: Iterable[Any]) -> Tuple[Any, bool]:
+def collection_has_more(
+        iterable: Iterable[Any]
+) -> Generator[Tuple[Any, bool], None, None]:
     it = iter(iterable)
     try:
         cur_item = next(it)
