@@ -86,14 +86,22 @@ struct GuestCtx
     {
         assert(!listen_event);
 
-        // generate random socket path
         ++sck_counter_;
-        str_assign(
-            sck_path_, sck_path_base,
-            "/front2_", session_id, '_',
-            RandomText().text(rnd, 8), '_',
-            int_to_decimal_chars(sck_counter_), ".sck"
-        );
+
+        // create socket path directory
+        str_assign(sck_path_, sck_path_base);
+        if (!file_exist(sck_path_) && recursive_create_directory(sck_path_.c_str(), 0700) < 0){
+            int errnum = errno;
+            char const * errmsg = strerror(errnum);
+            LOG(LOG_ERR, "Failed to create %s: %s", sck_path_, errmsg);
+            return ResultError{checked_int(errnum), errmsg};
+        }
+
+        // generate random socket path
+        str_append(sck_path_,
+                   "/front2_", session_id, '_',
+                   RandomText().text(rnd, 8), '_',
+                   int_to_decimal_chars(sck_counter_), ".sck");
 
         // create a unix socket for guest front
         listen_sck = create_unix_server(sck_path_, EnableTransparentMode::No);

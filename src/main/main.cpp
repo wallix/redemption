@@ -444,14 +444,6 @@ int main(int argc, char** argv)
         );
     }
 
-    // create SessionTmpDir
-    {
-        char const* session_tmp_dir = app_path(AppPath::SessionTmpDir);
-        if (!file_exist(session_tmp_dir) && recursive_create_directory(session_tmp_dir, 0700) < 0){
-            LOG(LOG_ERR, "Failed to create %s: %s", session_tmp_dir, strerror(errno));
-        }
-    }
-
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop(
         ini, euid, egid,
