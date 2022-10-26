@@ -80,7 +80,7 @@ zstring_view app_path(AppPath k) noexcept
         case AppPath::LockDir: return PID_PATH "/redemption"_zv;
         case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE ""_zv;
         case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME ""_zv;
-        case AppPath::SessionTmp: return SESSION_DATA_PATH ""_zv;
+        case AppPath::SessionTmpDir: return SESSION_DATA_PATH ""_zv;
     }
 
     assert(false);

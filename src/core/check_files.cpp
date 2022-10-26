@@ -59,7 +59,7 @@ namespace
         { IsDirectory, Writable, app_path(AppPath::Persistent)       },
         { IsDirectory, Writable, app_path(AppPath::PersistentRdp)    },
         { IsDirectory, Writable, app_path(AppPath::DriveRedirection) },
-        { IsDirectory, Writable, app_path(AppPath::SessionTmp)       },
+        { IsDirectory, Writable, app_path(AppPath::SessionTmpDir)    },
         { IsDirectory, Writable, app_path(AppPath::LockDir)          },
 
         //  Files

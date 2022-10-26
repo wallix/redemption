@@ -1110,7 +1110,7 @@ private:
                             }
 
                             result = guest_ctx.start(
-                                app_path(AppPath::SessionTmp),
+                                app_path(AppPath::SessionTmpDir),
                                 this->ini.get<cfg::context::session_id>(),
                                 events, front, mod_wrapper.get_callback(),
                                 secondary_session.get_secondary_session_log(),
