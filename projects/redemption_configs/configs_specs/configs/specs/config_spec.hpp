@@ -145,7 +145,7 @@ void config_spec_definition(Writer && W)
         "   2: ScrBlt\n"
         "   3: MemBlt\n"
         "   4: Mem3Blt\n"
-        "   8: LineTo\n"
+        "   9: LineTo\n"
         "  15: MultiDstBlt\n"
         "  16: MultiPatBlt\n"
         "  17: MultiScrBlt\n"

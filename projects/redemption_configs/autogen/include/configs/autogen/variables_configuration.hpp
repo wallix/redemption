@@ -945,7 +945,7 @@ namespace cfg
     ///    2: ScrBlt <br/>
     ///    3: MemBlt <br/>
     ///    4: Mem3Blt <br/>
-    ///    8: LineTo <br/>
+    ///    9: LineTo <br/>
     ///   15: MultiDstBlt <br/>
     ///   16: MultiPatBlt <br/>
     ///   17: MultiScrBlt <br/>
@@ -1039,7 +1039,7 @@ namespace cfg
     ///    2: ScrBlt <br/>
     ///    3: MemBlt <br/>
     ///    4: Mem3Blt <br/>
-    ///    8: LineTo <br/>
+    ///    9: LineTo <br/>
     ///   15: MultiDstBlt <br/>
     ///   16: MultiPatBlt <br/>
     ///   17: MultiScrBlt <br/>

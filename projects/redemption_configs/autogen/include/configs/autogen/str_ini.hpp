@@ -315,7 +315,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #    2: ScrBlt
 #    3: MemBlt
 #    4: Mem3Blt
-#    8: LineTo
+#    9: LineTo
 #   15: MultiDstBlt
 #   16: MultiPatBlt
 #   17: MultiScrBlt
@@ -371,7 +371,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #    2: ScrBlt
 #    3: MemBlt
 #    4: Mem3Blt
-#    8: LineTo
+#    9: LineTo
 #   15: MultiDstBlt
 #   16: MultiPatBlt
 #   17: MultiScrBlt

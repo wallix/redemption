@@ -42,7 +42,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;    2: ScrBlt
 # &nbsp; &nbsp;    3: MemBlt
 # &nbsp; &nbsp;    4: Mem3Blt
-# &nbsp; &nbsp;    8: LineTo
+# &nbsp; &nbsp;    9: LineTo
 # &nbsp; &nbsp;   15: MultiDstBlt
 # &nbsp; &nbsp;   16: MultiPatBlt
 # &nbsp; &nbsp;   17: MultiScrBlt
