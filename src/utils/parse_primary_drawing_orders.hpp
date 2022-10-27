@@ -24,50 +24,43 @@ Author(s): Jonathan Poelen
 
 PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog) noexcept;
 
-inline static constexpr auto order_indexes_supported() noexcept
-{
-    // Apparently, these primary drawing orders are supported
-    // by both rdesktop and xfreerdp :
-    // TS_NEG_DSTBLT_INDEX
-    // TS_NEG_PATBLT_INDEX
-    // TS_NEG_SCRBLT_INDEX
-    // TS_NEG_MEMBLT_INDEX
-    // TS_NEG_LINETO_INDEX
-    // others orders may not be supported.
+// Apparently, these primary drawing orders are supported
+// by both rdesktop and xfreerdp :
+// TS_NEG_DSTBLT_INDEX
+// TS_NEG_PATBLT_INDEX
+// TS_NEG_SCRBLT_INDEX
+// TS_NEG_MEMBLT_INDEX
+// TS_NEG_LINETO_INDEX
+// others orders may not be supported.
+inline constexpr std::array order_indexes_supported {
+    TS_NEG_DSTBLT_INDEX,
+    TS_NEG_PATBLT_INDEX,
+    TS_NEG_SCRBLT_INDEX,
+    TS_NEG_MEMBLT_INDEX,
+    TS_NEG_MEM3BLT_INDEX,
+    // TS_NEG_DRAWNINEGRID_INDEX,
+    TS_NEG_LINETO_INDEX,
+    TS_NEG_OPAQUERECT_INDEX,
+    // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
+    // TS_NEG_SAVEBITMAP_INDEX,
+    TS_NEG_MULTIDSTBLT_INDEX,
+    TS_NEG_MULTIPATBLT_INDEX,
+    TS_NEG_MULTISCRBLT_INDEX,
+    TS_NEG_MULTIOPAQUERECT_INDEX,
+    // TS_NEG_FAST_GLYPH_INDEX,
+    // TS_NEG_POLYGON_SC_INDEX,
+    // TS_NEG_POLYGON_CB_INDEX,
+    TS_NEG_POLYLINE_INDEX,
+    // TS_NEG_FAST_GLYPH_INDEX,
+    TS_NEG_ELLIPSE_SC_INDEX,
+    // TS_NEG_ELLIPSE_CB_INDEX,
+    TS_NEG_GLYPH_INDEX
+};
 
-    return [](auto... xs) noexcept {
-        return std::array<OrdersIndexes, sizeof...(xs)>{xs...};
-    }(
-        TS_NEG_DSTBLT_INDEX,
-        TS_NEG_PATBLT_INDEX,
-        TS_NEG_SCRBLT_INDEX,
-        TS_NEG_MEMBLT_INDEX,
-        TS_NEG_MEM3BLT_INDEX,
-        // TS_NEG_DRAWNINEGRID_INDEX,
-        TS_NEG_LINETO_INDEX,
-        TS_NEG_OPAQUERECT_INDEX,
-        // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
-        // TS_NEG_SAVEBITMAP_INDEX,
-        TS_NEG_MULTIDSTBLT_INDEX,
-        TS_NEG_MULTIPATBLT_INDEX,
-        TS_NEG_MULTISCRBLT_INDEX,
-        TS_NEG_MULTIOPAQUERECT_INDEX,
-        // TS_NEG_FAST_GLYPH_INDEX,
-        // TS_NEG_POLYGON_SC_INDEX,
-        // TS_NEG_POLYGON_CB_INDEX,
-        TS_NEG_POLYLINE_INDEX,
-        // TS_NEG_FAST_GLYPH_INDEX,
-        TS_NEG_ELLIPSE_SC_INDEX,
-        // TS_NEG_ELLIPSE_CB_INDEX,
-        TS_NEG_GLYPH_INDEX
-    );
-}
-
-inline static constexpr PrimaryDrawingOrdersSupport primary_drawing_orders_supported() noexcept
-{
+inline constexpr PrimaryDrawingOrdersSupport primary_drawing_orders_supported = []{
   PrimaryDrawingOrdersSupport support;
-  for (auto idx : order_indexes_supported()) {
+  for (auto idx : order_indexes_supported) {
     support.set(idx);
   }
   return support;
-}
+}();
