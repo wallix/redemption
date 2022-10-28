@@ -3396,3 +3396,16 @@ void ClipboardVirtualChannel::empty_client_clipboard()
         send_first_last_flags,
         out_s.get_produced_bytes());
 }
+
+void ClipboardVirtualChannel::set_session_probe_launcher(SessionProbeLauncher* launcher) {
+    if (launcher->no_clipboard_needed()) {
+        return;
+    }
+
+    this->clipboard_monitor_ready_notifier = launcher;
+    this->clipboard_initialize_notifier    = launcher;
+    this->format_list_notifier             = launcher;
+    this->format_list_response_notifier    = launcher;
+    this->format_data_request_notifier     = launcher;
+    this->format_list_rejection_notifier   = launcher;
+}
