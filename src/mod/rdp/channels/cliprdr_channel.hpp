@@ -69,14 +69,7 @@ public:
         // process_server_message
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override;
 
-    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
-        this->clipboard_monitor_ready_notifier = launcher;
-        this->clipboard_initialize_notifier    = launcher;
-        this->format_list_notifier             = launcher;
-        this->format_list_response_notifier    = launcher;
-        this->format_data_request_notifier     = launcher;
-        this->format_list_rejection_notifier   = launcher;
-    }
+    void set_session_probe_launcher(SessionProbeLauncher* launcher);
 
     void DLP_antivirus_check_channels_files();
 

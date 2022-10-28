@@ -186,4 +186,8 @@ public:
     [[nodiscard]] bool is_stopped() const override {
         return this->stopped;
     }
+
+    [[nodiscard]] bool no_clipboard_needed() const override {
+        return true;
+    }
 };
