@@ -962,7 +962,7 @@ public:
         ? std::chrono::milliseconds(1000)
         : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
     )
-    , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
+    , supported_orders(primary_drawing_orders_supported - parse_primary_drawing_orders(
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     , sharing_ctx{
         .kill_fn = guest_params.kill_fn,
@@ -3578,7 +3578,7 @@ private:
                         this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
-                    for (auto idx : order_indexes_supported()) {
+                    for (auto idx : order_indexes_supported) {
                         if (not this->supported_orders.test(idx)) {
                             this->client_info.order_caps.orderSupport[idx] = 0;
                         }

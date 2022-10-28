@@ -2054,7 +2054,7 @@ public:
         , primary_drawing_orders_support(
             [](auto& order_support, PrimaryDrawingOrdersSupport const& disabled_orders){
                 PrimaryDrawingOrdersSupport client_support;
-                for (auto idx : order_indexes_supported()) {
+                for (auto idx : order_indexes_supported) {
                     if (order_support[idx]) {
                         client_support |= idx;
                     }
@@ -3764,7 +3764,7 @@ public:
                 // intersect with client order capabilities
                 // which may not be supported by clients.
 
-                for (auto idx : order_indexes_supported()) {
+                for (auto idx : order_indexes_supported) {
                     order_caps.orderSupport[idx] = this->primary_drawing_orders_support.test(idx);
                 }
 

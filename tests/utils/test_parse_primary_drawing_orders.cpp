@@ -29,7 +29,7 @@
 RED_AUTO_TEST_CASE(TestPrimaryDrawaingOrders)
 {
     ut::log_buffered log_buf;
-    auto orders = parse_primary_drawing_orders("4  25 0X8,,0xf 666 2", false);
+    auto orders = parse_primary_drawing_orders("4  25 0X9,,0xf 666 2", false);
     RED_CHECK(orders.as_uint() == (
         OrdersIndexes::TS_NEG_SCRBLT_INDEX
       | OrdersIndexes::TS_NEG_MEM3BLT_INDEX

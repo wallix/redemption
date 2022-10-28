@@ -53,6 +53,8 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
         CASE(TS_NEG_MEMBLT_INDEX, "MemBlt");
         CASE(TS_NEG_MEM3BLT_INDEX, "Mem3Blt");
         CASE(TS_NEG_LINETO_INDEX, "LineTo");
+        CASE(TS_NEG_DRAWNINEGRID_INDEX, "NineGrid");
+        CASE(TS_NEG_MULTI_DRAWNINEGRID_INDEX, "MultiNineGrid");
         CASE(TS_NEG_MULTIDSTBLT_INDEX, "MultiDstBlt");
         CASE(TS_NEG_MULTIPATBLT_INDEX, "MultiPatBlt");
         CASE(TS_NEG_MULTISCRBLT_INDEX, "MultiScrBlt");
@@ -62,6 +64,7 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
         CASE(TS_NEG_POLYLINE_INDEX, "Polyline");
         CASE(TS_NEG_ELLIPSE_SC_INDEX, "EllipseSC");
         CASE(TS_NEG_ELLIPSE_CB_INDEX, "EllipseCB");
+        CASE(TS_NEG_GLYPH_INDEX, "GlyphIndex");
 #undef CASE
         default:;
         }
