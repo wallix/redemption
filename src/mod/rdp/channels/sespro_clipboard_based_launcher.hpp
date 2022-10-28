@@ -81,6 +81,8 @@ public:
 
     [[nodiscard]] bool is_stopped() const override;
 
+    [[nodiscard]] bool no_clipboard_needed() const override;
+
 private:
     MonotonicTimePoint get_short_delay_timeout() const;
 
