@@ -845,3 +845,7 @@ void SessionProbeClipboardBasedLauncher::do_state_start()
 {
     return (this->state == State::STOP);
 }
+
+[[nodiscard]] bool SessionProbeClipboardBasedLauncher::no_clipboard_needed() const {
+    return false;
+}

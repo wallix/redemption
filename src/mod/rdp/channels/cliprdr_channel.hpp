@@ -78,6 +78,10 @@ public:
         uint32_t flags, bytes_view chunk_data) override;
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        if (launcher->no_clipboard_needed()) {
+            return;
+        }
+
         this->clipboard_monitor_ready_notifier = launcher;
         this->clipboard_initialize_notifier    = launcher;
         this->format_list_notifier             = launcher;
