@@ -909,4 +909,8 @@ public:
     [[nodiscard]] bool is_stopped() const override {
         return (this->state == State::STOP);
     }
+
+    [[nodiscard]] bool no_clipboard_needed() const override {
+        return false;
+    }
 };  // class SessionProbeClipboardBasedLauncher

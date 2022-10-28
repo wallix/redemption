@@ -77,14 +77,7 @@ public:
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data) override;
 
-    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
-        this->clipboard_monitor_ready_notifier = launcher;
-        this->clipboard_initialize_notifier    = launcher;
-        this->format_list_notifier             = launcher;
-        this->format_list_response_notifier    = launcher;
-        this->format_data_request_notifier     = launcher;
-        this->format_list_rejection_notifier   = launcher;
-    }
+    void set_session_probe_launcher(SessionProbeLauncher* launcher);
 
     void DLP_antivirus_check_channels_files();
 
