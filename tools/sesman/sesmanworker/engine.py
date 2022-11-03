@@ -1304,11 +1304,6 @@ class Engine(object):
             Logger().info("Engine update_session failed: (((%s)))" %
                           (traceback.format_exc()))
 
-    def shadow_response(self, errcode, errmsg, token, userdata):
-        # TODO remove once session sharing interface unified
-        # Former Session Shadowing Trigger interface
-        return self.sharing_response(errcode, errmsg, token, userdata)
-
     def sharing_response(self, errcode, errmsg, token, request_id):
         try:
             status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED

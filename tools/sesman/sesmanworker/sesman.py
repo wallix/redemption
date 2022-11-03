@@ -2784,7 +2784,7 @@ class Sesman():
                 "shadow_port":
                 self.shared.get("rd_shadow_invitation_port"),
             }
-            self.engine.shadow_response(
+            self.engine.sharing_response(
                 errcode=self.shared.get("rd_shadow_invitation_error_code"),
                 errmsg=self.shared.get("rd_shadow_invitation_error_message"),
                 token=shadow_token,
@@ -2960,9 +2960,11 @@ class Sesman():
                     u'rd_shadow_userdata': sharing_request_id,
                 })
             else:
+                sharing_mode = sharing_mode.lower()
+                enable_control = ("control" in sharing_mode
+                                  or "write" in sharing_mode)
                 self.send_data({
-                    u'session_sharing_enable_control':
-                    "control" in sharing_mode.lower(),
+                    u'session_sharing_enable_control': enable_control,
                     u'session_sharing_userdata': sharing_request_id,
                     u'session_sharing_ttl': sharing_ttl,
                 })
