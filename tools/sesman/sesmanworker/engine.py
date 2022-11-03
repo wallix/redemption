@@ -1010,7 +1010,7 @@ class Engine(object):
     def get_effective_target(self, selected_target):
         application = selected_target['application_cn']
         try:
-            if application and not self.is_shadow_session(selected_target):
+            if application and not self.is_sharing_session(selected_target):
                 with manage_transaction(self.wabengine):
                     effective_target = self.wabengine.get_effective_target(
                         selected_target
@@ -1045,7 +1045,7 @@ class Engine(object):
         # Logger().info("Engine get_app_params: "
         #               "service_login=%s effective_target=%s" %
         #               (service_login, effective_target))
-        if self.is_shadow_session(selected_target):
+        if self.is_sharing_session(selected_target):
             from collections import namedtuple
             status, infos = self.check_target(selected_target)
             AppParams = namedtuple('AppParams',
@@ -1307,18 +1307,10 @@ class Engine(object):
         try:
             status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED
             with manage_transaction(self.wabengine):
-                if not hasattr(self.wabengine, "make_session_sharing_response"):
-                    # TODO remove once session sharing interface unified
-                    # Former Session Shadowing Trigger interface
-                    self.wabengine.make_session_shadowing_response(
-                        status=status, errmsg=errmsg,
-                        token=token, userdata=request_id
-                    )
-                else:
-                    self.wabengine.make_session_sharing_response(
-                        status=status, errmsg=errmsg,
-                        token=token, request_id=request_id
-                    )
+                self.wabengine.make_session_sharing_response(
+                    status=status, errmsg=errmsg,
+                    token=token, request_id=request_id
+                )
         except Exception:
             import traceback
             Logger().info("Engine sharing_response failed: (((%s)))" %
@@ -1404,7 +1396,7 @@ class Engine(object):
         return (kill_patterns, notify_patterns)
 
     def get_restrictions(self, auth, proxytype):
-        if self.is_shadow_session(auth):
+        if self.is_sharing_session(auth):
             return None, None
         if proxytype == "RDP":
             def matchproto(x):
@@ -1669,7 +1661,7 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return None
-        if self.is_shadow_session(target):
+        if self.is_sharing_session(target):
             return u'-'
         return target['deconnection_time']
 
@@ -1686,7 +1678,7 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return []
-        if self.is_shadow_session(target):
+        if self.is_sharing_session(target):
             return [PASSWORD_VAULT]
         try:
             # Logger().info("connectionpolicy")
@@ -1723,7 +1715,7 @@ class Engine(object):
         return conn_type
 
     def get_physical_target_info(self, physical_target):
-        if self.is_shadow_session(physical_target):
+        if self.is_sharing_session(physical_target):
             status, infos = self.check_target(physical_target)
             token = infos.get("shadow_token", {})
             return PhysicalTarget(
@@ -1820,9 +1812,14 @@ class Engine(object):
                 return self.proxy.get_trace_encryption_key(name, flag)
         return crypto_methods(self.wabengine)
 
-    def is_shadow_session(self, selected_target=None):
+    def is_sharing_session(self, selected_target=None):
         target = selected_target or self.target_right
-        return target.get('is_shadow') is True
+        return (
+            target.get('is_shadow', False)
+            or target.get('is_sharing', False)
+            or target.get('is_sharing_mode')
+            or False
+        )
 
 
 class TargetContext(object):
