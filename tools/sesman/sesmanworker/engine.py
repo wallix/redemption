@@ -31,7 +31,6 @@ try:
     from wallixconst.account import AM_IL_DOMAIN
     from wallixconst.trace import LOCAL_TRACE_PATH_RDP
     from wallixredis import redis
-    from wabx509 import AuthX509
     from wallixutils import is_cloud_configuration
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
@@ -404,9 +403,10 @@ class Engine(object):
             self, wab_login, ip_client, ip_server
         )
 
-    def pubkey_authenticate(self, wab_login, ip_client, pubkey, ip_server):
+    def pubkey_authenticate(self, wab_login, ip_client, ip_server,
+                            pubkey, ca_pubkey):
         return self.authenticator.pubkey_authenticate(
-            self, wab_login, ip_client, pubkey, ip_server
+            self, wab_login, ip_client, ip_server, pubkey, ca_pubkey
         )
 
     def get_challenge(self):
@@ -1205,7 +1205,8 @@ class Engine(object):
         return self.session_id, self.start_time, error_msg
 
     def start_session_ssh(self, target, target_user, hname, host, client_addr,
-                          pid, subproto, kill_handler, effective_login=None):
+                          pid, subproto, kill_handler, effective_login=None,
+                          **kwargs):
         """ Start session for new wabengine """
         self.hname = hname
         self.target_user = effective_login or target_user
@@ -1215,6 +1216,8 @@ class Engine(object):
             import signal
             signal.signal(signal.SIGUSR1, kill_handler)
         Logger().debug("**** CALL wabengine START SESSION ")
+
+        error_msg = ""
         try:
             with manage_transaction(self.wabengine):
                 self.session_id, self.start_time = self.wabengine.start_session(
@@ -1222,26 +1225,29 @@ class Engine(object):
                     pid=pid,
                     subprotocol=subproto,
                     effective_login=effective_login,
-                    target_host=self.host
+                    target_host=self.host,
+                    **kwargs
                 )
-        except LicenseException:
+        except LicenseException as e:
             Logger().info("Engine start_session failed: License exception")
-            self.session_id, self.start_time = None, None
-        except Exception:
+            self.session_id, self.start_time, error_msg = (
+                None, None, e.__class__.__name__)
+        except Exception as e:
             import traceback
-            self.session_id, self.start_time = None, None
+            self.session_id, self.start_time, error_msg = (
+                None, None, e.__class__.__name__)
             Logger().info("Engine start_session failed: (((%s)))" %
                           (traceback.format_exc()))
         Logger().debug("**** END wabengine START SESSION ")
         if self.session_id is None:
-            return None, None
+            return None, None, error_msg
         self.service = target['service_cn']
         is_critical = target['auth_is_critical']
         device_host = target['device_host']
         self.failed_secondary_set = False
 
         if not is_critical:
-            return self.session_id, self.start_time
+            return self.session_id, self.start_time, error_msg
         # Notify start
         # if subproto in ['SSH_X11_SESSION', 'SSH_SHELL_SESSION']:
         #     subproto = 'SSH'
@@ -1258,7 +1264,7 @@ class Engine(object):
 
         Notify(self.wabengine, CX_EQUIPMENT, notif_data)
 
-        return self.session_id, self.start_time
+        return self.session_id, self.start_time, error_msg
 
     def update_session_target(self, physical_target, **kwargs):
         """Update current session with target name.
@@ -1725,7 +1731,7 @@ class Engine(object):
                 device_id=physical_target.get('device_uid')
             )
         port = physical_target['service_port']
-        if not isinstance(port, int):
+        if isinstance(port, str):
             port = int(port)
         return PhysicalTarget(
             device_host=physical_target['device_host'],
