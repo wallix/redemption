@@ -1694,6 +1694,8 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return {}
+        if self.is_sharing_session(target):
+            return SHARING_CONN_POLICY
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
@@ -1863,6 +1865,23 @@ class DisplayInfo(object):
                 self.target_name,
                 self.service_name,
                 self.group)
+
+
+SHARING_CONN_POLICY = {
+    'session': {
+        'inactivity_timeout': 100000,
+    },
+    'session_probe': {
+        'enable_session_probe': False,
+    },
+    'server_cert': {
+        'server_cert_store': False,
+        'server_cert_check': 3,
+    },
+    'session_log': {
+        'keyboard_input_masking_level': 0,
+    }
+}
 
 
 class ProtocolInfo(object):
