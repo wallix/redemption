@@ -84,7 +84,7 @@ VideoCaptureCtx::VideoCropper::VideoCropper(Drawable& drawable, Rect crop_rect)
              && drawable.height() == crop_rect.height())
 , out_bmpdata(this->is_fullscreen
     ? nullptr
-    : new uint8_t[drawable.width() * drawable.height() * drawable.Bpp] /*NOLINT*/
+    : new uint8_t[drawable.width() * drawable.height() * drawable.Bpp] {} /*NOLINT*/
 )
 {
 }
