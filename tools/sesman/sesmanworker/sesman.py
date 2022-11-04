@@ -2788,7 +2788,7 @@ class Sesman():
                 errcode=self.shared.get("rd_shadow_invitation_error_code"),
                 errmsg=self.shared.get("rd_shadow_invitation_error_message"),
                 token=shadow_token,
-                userdata=self.shared.get("rd_shadow_userdata")
+                request_id=self.shared.get("rd_shadow_userdata")
             )
             self.shared["rd_shadow_available"] = 'False'
 
