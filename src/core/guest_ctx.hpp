@@ -100,7 +100,6 @@ struct GuestCtx
         // generate random socket path
         str_append(sck_path_,
                    "/front2_", session_id, '_',
-                   RandomText().text(rnd, 8), '_',
                    int_to_decimal_chars(sck_counter_), ".sck");
 
         // create a unix socket for guest front

@@ -1218,8 +1218,8 @@ RED_AUTO_TEST_CASE_WD(TestGuestCtx, wd)
 
     RED_CHECK(result.errnum == 0);
     RED_CHECK(result.errmsg == nullptr);
-    RED_CHECK(guest_ctx.sck_path() == "./front2_{SID}_eFiuUrCubBc=_1.sck");
-    RED_CHECK(guest_ctx.sck_password() == "aFoTvaBTevNYEnvOkI6orUhAhzGAH0W2OKTxS3DGNaQ="_av);
+    RED_CHECK(guest_ctx.sck_path() == "./front2_{SID}_1.sck");
+    RED_CHECK(guest_ctx.sck_password() == "eFiuUrCubBdoWhO9oFN681gSe86QjqitSECHMYAfRbY="_av);
 
     auto fd = local_connect(guest_ctx.sck_path(), 100ms, true);
     RED_REQUIRE_MESSAGE(fd.is_open(), strerror(errno));
