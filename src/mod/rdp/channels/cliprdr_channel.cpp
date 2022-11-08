@@ -2768,18 +2768,21 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         break;
 
         case RDPECLIP::CB_MONITOR_READY: {
-            if (this->proxy_managed) {
-                this->server_ctx.use_long_format_names = true;
-                ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
-            }
-
             if (this->clipboard_monitor_ready_notifier) {
                 if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
                     this->clipboard_monitor_ready_notifier = nullptr;
                 }
             }
 
-            this->initialization_state = InitializationState::WaitingClientClipboardCapabilitiesPDU;
+            if (this->proxy_managed) {
+                this->server_ctx.use_long_format_names = true;
+                ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
+
+                this->initialization_state = InitializationState::WaitingServerFormatListResponsePDUOrLockPDU;
+            }
+            else {
+                this->initialization_state = InitializationState::WaitingClientClipboardCapabilitiesPDU;
+            }
 
             send_message_to_client = !this->proxy_managed;
         }
