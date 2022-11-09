@@ -899,6 +899,12 @@ public:
             RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);// FIX
         }
 
+        if (this->session_probe.session_probe_launcher) {
+            if (!this->session_probe.session_probe_launcher->process_server_cliprdr_message(stream, length, flags, this->clipboard_to_client_sender == nullptr)) {
+                return;
+            }
+        }
+
         channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }   // process_cliprdr_event
 
@@ -1112,6 +1118,7 @@ public:
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, this->file_validator_service);
         }
+
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {

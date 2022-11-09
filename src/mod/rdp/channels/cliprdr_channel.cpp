@@ -2641,7 +2641,6 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , session_log(session_log)
 , verbose(verbose)
 , always_file_storage(file_storage.always_file_storage)
-, proxy_managed(to_client_sender_ == nullptr)
 , client_ctx(
     this->params.validator_params.up_target_name,
     this->params.validator_params.block_invalid_file_up,
@@ -2784,8 +2783,8 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         case RDPECLIP::CB_CLIP_CAPS: {
             send_message_to_client = ClipCtx::D::clip_caps(
                 *this, this->server_ctx, chunk.remaining_bytes(),
-                "server", this->proxy_managed ? nullptr : this->to_client_sender_ptr());
-            send_message_to_client = send_message_to_client && !this->proxy_managed;
+                "server", this->to_client_sender_ptr());
+            send_message_to_client = send_message_to_client;
         }
         break;
 
@@ -2797,15 +2796,6 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
             }
 
             this->initialization_state = InitializationState::WaitingClientClipboardCapabilitiesPDU;
-
-            if (this->proxy_managed) {
-                this->server_ctx.use_long_format_names = true;
-                ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
-
-                this->initialization_state = InitializationState::WaitingServerFormatListResponsePDUOrLockPDU;
-            }
-
-            send_message_to_client = !this->proxy_managed;
         }
         break;
 

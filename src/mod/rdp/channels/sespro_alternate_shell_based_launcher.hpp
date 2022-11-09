@@ -129,6 +129,15 @@ public:
         return true;
     }
 
+    // Returns false to prevent message to be sent to client.
+    bool process_server_cliprdr_message(InStream & chunk,uint32_t length, uint32_t flags, bool proxy_managed_channel) override {
+        (void)chunk;
+        (void)length;
+        (void)flags;
+        (void)proxy_managed_channel;
+        return true;
+    }
+
     void set_clipboard_virtual_channel(class ClipboardVirtualChannel* /*channel*/) override {}
 
     void set_remote_programs_virtual_channel(RemoteProgramsVirtualChannel* channel) override {

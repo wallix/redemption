@@ -106,7 +106,6 @@ private:
 
     const bool always_file_storage;
     bool can_lock = false;
-    const bool proxy_managed;   // Has not client.
 
     unsigned int format_list_rejection_retry_count = 0;
     static unsigned int const FORMAT_LIST_REJECTION_RETRY_MAX = 3;

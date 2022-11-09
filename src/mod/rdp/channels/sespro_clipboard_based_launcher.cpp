@@ -710,6 +710,99 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
     return ret;
 }
 
+// Returns false to prevent message to be sent to client.
+bool SessionProbeClipboardBasedLauncher::process_server_cliprdr_message(InStream & chunk, uint32_t length, uint32_t flags, bool proxy_managed_channel) {
+    if (this->state == State::STOP) {
+        return true;
+    }
+
+    bool ret = true;
+
+    const size_t saved_chunk_offset = chunk.get_offset();
+
+    if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) &&
+        (chunk.in_remain() >= 8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
+        const uint8_t* current_chunk_pos  = chunk.get_current();
+        const size_t   current_chunk_size = chunk.in_remain();
+
+        assert(current_chunk_size == length);
+
+        const uint16_t msgType = chunk.in_uint16_le();
+        if (msgType == RDPECLIP::CB_CLIP_CAPS) {
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> process_server_cliprdr_message(CB_CLIP_CAPS)");
+
+            RDPECLIP::ClipboardCapabilitiesPDU pdu;
+            pdu.recv(chunk);
+
+            RDPECLIP::GeneralCapabilitySet caps;
+            caps.recv(chunk);
+
+            this->server_clipboard_use_long_format_list =
+                bool(caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+        }
+        else if (msgType == RDPECLIP::CB_MONITOR_READY) {
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> process_server_cliprdr_message(CB_MONITOR_READY)");
+
+            if (proxy_managed_channel)
+            {
+                chunk.rewind(saved_chunk_offset);
+                this->cliprdr_channel->process_server_message(
+                        length,
+                          CHANNELS::CHANNEL_FLAG_FIRST
+                        | CHANNELS::CHANNEL_FLAG_LAST
+                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        {chunk.get_current(), chunk.in_remain()});
+                ret = false;
+
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "Send Clipboard Capabilities PDU.");
+
+                RDPECLIP::GeneralCapabilitySet general_cap_set(
+                    RDPECLIP::CB_CAPS_VERSION_1, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
+                RDPECLIP::CliprdrHeader caps_clipboard_header(
+                    RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE_NONE,
+                    clipboard_caps_pdu.size() + general_cap_set.size());
+
+                StaticOutStream<128> caps_stream;
+
+                caps_clipboard_header.emit(caps_stream);
+                clipboard_caps_pdu.emit(caps_stream);
+                general_cap_set.emit(caps_stream);
+
+                this->cliprdr_channel->process_client_message(
+                        caps_stream.get_offset(),
+                          CHANNELS::CHANNEL_FLAG_FIRST
+                        | CHANNELS::CHANNEL_FLAG_LAST
+                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        caps_stream.get_produced_bytes());
+
+
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "Send Format List PDU.");
+
+                StaticOutStream<256> list_stream;
+                Cliprdr::format_list_serialize_with_header(
+                    list_stream, Cliprdr::IsLongFormat(this->server_clipboard_use_long_format_list),
+                    std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
+
+                this->cliprdr_channel->process_client_message(
+                        list_stream.get_offset(),
+                          CHANNELS::CHANNEL_FLAG_FIRST
+                        | CHANNELS::CHANNEL_FLAG_LAST
+                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        list_stream.get_produced_bytes());
+            }
+        }
+    }
+
+    chunk.rewind(saved_chunk_offset);
+
+    return ret;
+}
+
 void SessionProbeClipboardBasedLauncher::set_clipboard_virtual_channel(ClipboardVirtualChannel* channel)
 {
     this->cliprdr_channel = channel;

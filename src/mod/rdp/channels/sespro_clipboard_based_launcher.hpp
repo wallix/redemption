@@ -69,6 +69,9 @@ public:
     // Returns false to prevent message to be sent to server.
     bool process_client_cliprdr_message(InStream & chunk, uint32_t length, uint32_t flags) override;
 
+    // Returns false to prevent message to be sent to client.
+    bool process_server_cliprdr_message(InStream & chunk,uint32_t length, uint32_t flags, bool proxy_managed_channel) override;
+
     void set_clipboard_virtual_channel(ClipboardVirtualChannel* channel) override;
 
     void set_remote_programs_virtual_channel(RemoteProgramsVirtualChannel* channel) override;
@@ -120,6 +123,8 @@ private:
     bool clipboard_monitor_ready = false;
 
     bool format_data_requested = false;
+
+    bool server_clipboard_use_long_format_list = false;
 
     EventRef event_ref;
 
