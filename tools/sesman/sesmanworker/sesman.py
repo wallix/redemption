@@ -29,7 +29,7 @@ from datetime import datetime
 import socket
 from socket import gethostname
 from ipaddress import ip_network
-from typing import Iterable, Any, Tuple, Generator
+from typing import Iterable, Any, Tuple, Generator, Optional
 
 from .sesmanconf import TR, SESMANCONF
 from . import engine
@@ -992,10 +992,14 @@ class Sesman():
 
         return _status, _error
 
-    def authentify(self):
+    def authentify(self) -> (Optional[bool], str):
         """ Authentify the user through password engine and then retreive his rights
              The user preferred language will be set as the language to use in
              interactive messages
+        return status: True: authenticated
+                       None: retry (failed and continue or challenge)
+                       False: failed and close connection
+               err_msg: failure message in case of None or False
         """
         _status, _error = self.receive_data()
         if not _status:
