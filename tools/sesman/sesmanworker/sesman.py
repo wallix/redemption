@@ -2947,7 +2947,8 @@ class Sesman():
                 u'rd_shadow_userdata': userdata
             })
         sharing_request_id = params.get("sharing_request_id")
-        if sharing_request_id not in self.sharing_requests:
+        if (sharing_request_id
+            and sharing_request_id not in self.sharing_requests):
             self.sharing_requests.add(sharing_request_id)
             sharing_mode = params.get("sharing_mode")
             sharing_type = params.get("sharing_type")
@@ -2959,7 +2960,7 @@ class Sesman():
                     u'rd_shadow_type': sharing_mode,
                     u'rd_shadow_userdata': sharing_request_id,
                 })
-            else:
+            elif sharing_mode:
                 sharing_mode = sharing_mode.lower()
                 enable_control = ("control" in sharing_mode
                                   or "write" in sharing_mode)
