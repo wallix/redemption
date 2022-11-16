@@ -1118,7 +1118,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
 #   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
 #   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
-#smart_video_cropping = 0
+#smart_video_cropping = 2
 
 # Needed to play a video with corrupted Bitmap Update.
 # value: 0 or 1

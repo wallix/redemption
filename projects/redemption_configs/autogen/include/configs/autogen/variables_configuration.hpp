@@ -3216,14 +3216,14 @@ namespace cfg
         type value { false };
     };
     /// type: SmartVideoCropping <br/>
-    /// default: SmartVideoCropping::disable <br/>
+    /// default: SmartVideoCropping::v2 <br/>
     struct video::smart_video_cropping {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = SmartVideoCropping;
         using sesman_and_spec_type = SmartVideoCropping;
         using mapped_type = sesman_and_spec_type;
-        type value { SmartVideoCropping::disable };
+        type value { SmartVideoCropping::v2 };
     };
     /// Needed to play a video with corrupted Bitmap Update. <br/>
     /// type: bool <br/>
