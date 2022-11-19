@@ -592,6 +592,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #bogus_monitor_layout_treatment = 0
 
+[protocol]
+
+# min = 0, max = 1
+#   0: Windows
+#   1: Bastion, xrdp or others
+#_hidden
+#save_session_info_pdu = 1
+
 [session_probe]
 
 # value: 0 or 1

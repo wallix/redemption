@@ -133,6 +133,10 @@ cfg::mod_rdp::remote_programs_disconnect_message_delay ⇐ mod_rdp:remote_progra
 cfg::mod_rdp::use_session_probe_to_launch_remote_program ⇐ mod_rdp:use_session_probe_to_launch_remote_program   [bool]
     Use Session Probe to launch Remote Program as much as possible.
 
+cfg::protocol::save_session_info_pdu ⇐ protocol:save_session_info_pdu   [RdpSaveSessionInfoPDU]
+      0: Windows
+      1: Bastion, xrdp or others
+
 cfg::session_probe::enable_session_probe ⇐ session_probe:enable_session_probe   [bool]
 cfg::session_probe::use_smart_launcher ⇐ session_probe:use_smart_launcher   [bool]
     Minimum supported server : Windows Server 2008.

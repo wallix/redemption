@@ -1991,6 +1991,8 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     KeyLocks status_of_keyboard_toggle_keys {};
 
+    RdpSaveSessionInfoPDU save_session_info_pdu;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -2097,6 +2099,7 @@ public:
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
         , file_validator_service(file_validator_service)
         #endif
+        , save_session_info_pdu(mod_rdp_params.save_session_info_pdu)
     {
         #ifdef __EMSCRIPTEN__
         (void)events;
@@ -3263,6 +3266,10 @@ public:
 
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->session_log.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
+
+                                if (this->save_session_info_pdu == RdpSaveSessionInfoPDU::UnsupportedOrUnknown) {
+                                    this->session_log.report("CONNECT_DEVICE_SUCCESSFUL", "OK.");
+                                }
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)

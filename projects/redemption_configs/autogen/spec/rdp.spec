@@ -159,6 +159,13 @@ remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
 
+[protocol]
+
+#   0: Windows
+# &nbsp; &nbsp;   1: Bastion, xrdp or others
+#_advanced
+save_session_info_pdu = option(0, 1, default=1)
+
 [session_probe]
 
 enable_session_probe = boolean(default=True)

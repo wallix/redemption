@@ -739,3 +739,16 @@ template<> struct is_valid_enum_value<SessionProbeCPUUsageAlarmAction>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
+enum class RdpSaveSessionInfoPDU : uint8_t
+{
+    // Windows
+    Supported = 0,
+    // Bastion, xrdp or others
+    UnsupportedOrUnknown = 1,
+};
+
+template<> struct is_valid_enum_value<RdpSaveSessionInfoPDU>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
+};
+

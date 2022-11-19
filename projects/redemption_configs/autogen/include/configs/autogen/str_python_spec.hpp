@@ -506,6 +506,13 @@ forward_client_build_number = boolean(default=True)
 #_hidden
 bogus_monitor_layout_treatment = boolean(default=False)
 
+[protocol]
+
+#   0: Windows
+# &nbsp; &nbsp;   1: Bastion, xrdp or others
+#_hidden
+save_session_info_pdu = option(0, 1, default=1)
+
 [session_probe]
 
 #_hidden

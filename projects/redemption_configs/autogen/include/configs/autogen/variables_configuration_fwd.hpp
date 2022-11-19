@@ -161,6 +161,10 @@ namespace cfg
         struct use_session_probe_to_launch_remote_program;
     };
 
+    struct protocol {
+        struct save_session_info_pdu;
+    };
+
     struct session_probe {
         struct enable_session_probe;
         struct exe_or_file;

@@ -214,6 +214,8 @@ struct ModRDPParams
 
     std::vector<uint8_t> redirection_password_or_cookie;
 
+    RdpSaveSessionInfoPDU save_session_info_pdu = RdpSaveSessionInfoPDU::UnsupportedOrUnknown;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -455,6 +457,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
+
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, save_session_info_pdu);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

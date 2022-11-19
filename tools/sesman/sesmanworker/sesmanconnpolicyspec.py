@@ -39,6 +39,9 @@ cp_spec = {
         ('mod_rdp:remote_programs_disconnect_message_delay', 'remote_programs_disconnect_message_delay', 3000),
         ('mod_rdp:use_session_probe_to_launch_remote_program', 'use_session_probe_to_launch_remote_program', True),
     },
+    'protocol': {
+        ('protocol:save_session_info_pdu', 'save_session_info_pdu', 1),
+    },
     'session_probe': {
         ('session_probe:enable_session_probe', 'enable_session_probe', True),
         ('session_probe:use_smart_launcher', 'use_smart_launcher', True),

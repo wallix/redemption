@@ -89,6 +89,7 @@ void config_spec_definition(Writer && W)
         "all_target_mod",
         "remote_program",
         "mod_rdp",
+        "protocol",
         "session_probe",
         "server_cert",
         "mod_vnc",
@@ -537,6 +538,11 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(), names{"remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
 
         W.member(no_ini_no_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
+    });
+
+    W.section("protocol", [&]
+    {
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<RdpSaveSessionInfoPDU>(), names{"save_session_info_pdu"}, set(RdpSaveSessionInfoPDU::UnsupportedOrUnknown));
     });
 
     W.section("session_probe", [&]

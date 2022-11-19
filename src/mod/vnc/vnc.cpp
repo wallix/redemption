@@ -816,6 +816,8 @@ bool mod_vnc::draw_event_impl()
     case UP_AND_RUNNING:
         LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "state=UP_AND_RUNNING");
 
+        this->session_log.report("CONNECT_DEVICE_SUCCESSFUL", "OK.");
+
         try {
             while (this->up_and_running_ctx.run(this->server_data_buf, this->gd, *this)) {
                 this->up_and_running_ctx.restart();
