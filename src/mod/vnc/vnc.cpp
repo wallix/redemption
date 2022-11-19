@@ -224,6 +224,8 @@ void mod_vnc::initial_clear_screen()
     this->state = UP_AND_RUNNING;
     this->front.can_be_start_capture(this->session_log);
 
+    this->session_log.report("CONNECT_DEVICE_SUCCESSFUL", "OK.");
+
     this->update_screen(screen_rect, 1);
     this->lib_open_clip_channel();
 
