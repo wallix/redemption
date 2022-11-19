@@ -2575,7 +2575,8 @@ class Sesman():
                 self.send_data({
                     u'disconnect_reason': TR(u"application_fatal_error")
                 })
-        elif _reporting_reason == u'OPEN_SESSION_SUCCESSFUL':
+        elif (_reporting_reason == u'OPEN_SESSION_SUCCESSFUL'
+              or _reporting_reason == u'CONNECT_DEVICE_SUCCESSFUL'):
             return True
 
         return False
@@ -2605,6 +2606,8 @@ class Sesman():
                 self.shared.get(u'target_login'),
                 self._physical_target_host)
         elif reason == u'CONNECTION_SUCCESSFUL':
+            pass
+        elif reason == u'CONNECT_DEVICE_SUCCESSFUL':
             pass
         elif reason == u'OPEN_SESSION_FAILED':
             self.engine.NotifySecondaryConnectionFailed(

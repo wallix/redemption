@@ -3279,6 +3279,8 @@ public:
 
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->session_log.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
+
+                                this->session_log.report("CONNECT_DEVICE_SUCCESSFUL", "OK.");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
