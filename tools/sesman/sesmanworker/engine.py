@@ -1722,10 +1722,11 @@ class Engine(object):
             status, infos = self.check_target(physical_target)
             token = infos.get("shadow_token", {})
             return PhysicalTarget(
-                device_host=token.get('shadow_ip'),
+                device_host=physical_target['device_host'],
                 account_login=physical_target.get('account_login'),
                 service_port=token.get('shadow_port'),
-                device_id=physical_target.get('device_uid')
+                device_id=physical_target.get('device_uid'),
+                sharing_host=token.get('shadow_ip'),
             )
         port = physical_target['service_port']
         if isinstance(port, str):
@@ -1908,13 +1909,16 @@ class ExtraInfo(object):
 class PhysicalTarget(object):
     __slots__ = (
         "device_host", "account_login", "service_port", "device_id",
+        "sharing_host",
     )
 
-    def __init__(self, device_host, account_login, service_port, device_id):
+    def __init__(self, device_host, account_login, service_port, device_id,
+                 sharing_host=None):
         self.device_host = device_host
         self.account_login = account_login
         self.service_port = service_port
         self.device_id = device_id
+        self.sharing_host = sharing_host
 
 
 class LoginInfo(object):
