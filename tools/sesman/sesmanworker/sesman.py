@@ -2401,8 +2401,12 @@ class Sesman():
                     if not try_next:
                         break
                     elif not has_more_physical_target:
-                        self.engine.set_session_status(
-                            result=False, diag="All attempts have failed")
+                        current_result, _ = self.engine.get_session_status()
+                        if current_result:
+                            self.engine.set_session_status(
+                                result=False,
+                                diag="Connection failed"
+                            )
                 finally:
                     self.engine.release_target(physical_target)
 

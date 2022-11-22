@@ -174,6 +174,9 @@ class Engine(object):
             self.user_cn = userobj.cn
             self.user_lang = userobj.preferredLanguage
 
+    def get_session_status(self):
+        return self.session_result, self.session_diag
+
     def set_session_status(self, result=None, diag=None):
         # Logger().info("Engine set session status : result='%s', diag='%s'" %
         #               (result, diag))
