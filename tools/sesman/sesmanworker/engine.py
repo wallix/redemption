@@ -1824,9 +1824,18 @@ class Engine(object):
         return (
             target.get('is_shadow', False)
             or target.get('is_sharing', False)
-            or target.get('is_sharing_mode')
+            or target.get('is_sharing_type')
             or False
         )
+
+    def get_sharing_session_type(self, selected_target=None):
+        target = selected_target or self.target_right
+        sharing_type = target.get('is_sharing_type')
+        if target.get('is_sharing', False):
+            sharing_type = "SHARING"
+        elif target.get('is_shadow', False):
+            sharing_type = "SHADOWING"
+        return sharing_type
 
 
 class TargetContext(object):
