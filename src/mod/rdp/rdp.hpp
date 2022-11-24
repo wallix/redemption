@@ -1395,10 +1395,10 @@ public:
 
         std::string cd_tmp;
         if (session_probe_params.alternate_directory_environment_variable.empty()) {
-            cd_tmp = "CD %TMP%&";
+            cd_tmp = "CD /D %TMP%&";
         }
         else {
-            cd_tmp = "CD %";
+            cd_tmp = "CD /D %";
             cd_tmp.append(session_probe_params.alternate_directory_environment_variable);
             cd_tmp.append("%&");
         }
