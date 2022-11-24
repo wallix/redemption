@@ -31,6 +31,7 @@
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "gdi/screen_functions.hpp"
 #include "RAIL/client_execute.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 #include "utils/d3des.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
@@ -1378,30 +1379,27 @@ bool mod_vnc::draw_event_impl()
 
             char const * p = this->encodings.c_str();
             if (*p){
-                support_zrle_encoding          = false;
+                support_zrle_encoding = false;
                 for (;;){
-                    while (*p == ','){++p;}
-                    char * end;
-                    int32_t encoding_type = std::strtol(p, &end, 0);
-                    if (p == end) { break; }
-                    p = end;
-                    switch (encoding_type){
-                    case HEXTILE_ENCODING:
-                        support_hextile_encoding = true;
-                    break;
-                    case ZRLE_ENCODING:
-                        support_zrle_encoding = true;
-                    break;
-                    case RRE_ENCODING:
-                        support_rre_encoding = true;
-                    break;
-                    default:
-                    break;
+                    while (*p == ','){
+                        ++p;
+                    }
+
+                    auto res = string_to_int<int32_t>(p);
+                    if (res.ec != std::errc()) {
+                        break;
+                    }
+                    p = res.ptr;
+
+                    switch (res.val) {
+                        case HEXTILE_ENCODING: support_hextile_encoding = true; break;
+                        case ZRLE_ENCODING: support_zrle_encoding = true; break;
+                        case RRE_ENCODING: support_rre_encoding = true; break;
+                        default: break;
                     }
                 }
             }
             else {
-                support_zrle_encoding          = true;
                 support_hextile_encoding       = true;
                 support_rre_encoding           = true;
             }
