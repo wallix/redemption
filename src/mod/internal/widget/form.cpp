@@ -20,6 +20,7 @@
  */
 
 #include "mod/internal/widget/form.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 
@@ -241,44 +242,45 @@ void WidgetForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)
 
 namespace
 {
+    char const* consume_spaces(char const* s) noexcept
+    {
+        while (*s ==  ' ') {
+            ++s;
+        }
+        return s;
+    }
+
+    // parse " *\d+h *\d+m| *\d+[hm]" or returns 0
     std::chrono::minutes check_duration(const char * duration)
     {
-        unsigned long res = 0;
-        unsigned long hours = 0;
-        unsigned long minutes = 0;
-        char * end_p = nullptr;
-        try {
-            unsigned long d = strtoul(duration, &end_p, 10);
-            if (*end_p == 'h') {
-                res = (d > 0);
-                hours = d;
-                end_p++;
-                d = strtoul(end_p, &end_p, 10);
-                if (*end_p == 'm') {
-                    res |= (d > 0);
-                    minutes = d;
-                    end_p++;
-                }
-                else if (d > 0) {
-                    res = 0;
+        auto chars_res = decimal_chars_to_int<unsigned>(consume_spaces(duration));
+        if (chars_res.ec == std::errc()) {
+            unsigned long minutes = 0;
+
+            if (*chars_res.ptr == 'h') {
+                minutes = chars_res.val * 60;
+                duration = consume_spaces(chars_res.ptr + 1);
+
+                if (*duration) {
+                    chars_res = decimal_chars_to_int<unsigned>(duration);
+                    if (chars_res.ec != std::errc()) {
+                        return std::chrono::minutes(0);
+                    }
+                    duration = chars_res.ptr + 1;
                 }
             }
-            else if (*end_p == 'm') {
-                res = (d > 0);
-                minutes = d;
-                end_p++;
+
+            if (*chars_res.ptr == 'm') {
+                minutes += chars_res.val;
+                duration = chars_res.ptr + 1;
+            }
+
+            if (*duration == '\0') {
+                return std::chrono::minutes(minutes);
             }
         }
-        catch (...) {
-            res = 0;
-        }
-        if (res && *end_p != 0) {
-            res = 0;
-        }
-        if (res > 0) {
-            res = hours * 60 + minutes;
-        }
-        return std::chrono::minutes(res);
+
+        return std::chrono::minutes(0);
     }
 } // anonymous namespace
 
