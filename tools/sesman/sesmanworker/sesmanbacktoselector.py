@@ -61,6 +61,7 @@ back_to_selector_default_reinit = {
     'selector_device_filter': '',
     'selector_group_filter': '',
     'selector_proto_filter': '',
+    'sharing_ready': False,
     'smartcard_login': '',
     'ticket': '',
     'waitinforeturn': '',
