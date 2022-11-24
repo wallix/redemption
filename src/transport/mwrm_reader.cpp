@@ -19,6 +19,7 @@
  */
 
 #include "transport/mwrm_reader.hpp"
+#include "utils/sugar/chars_to_int.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/hexadecimal_string_to_buffer.hpp"
 #include "utils/log.hpp"
@@ -85,7 +86,7 @@ namespace
         meta_line.ctime = 0;
     }
 
-    char * extract_hash(uint8_t (&hash)[MD_HASH::DIGEST_LENGTH], char * in, int & err)
+    char const * extract_hash(uint8_t (&hash)[MD_HASH::DIGEST_LENGTH], char const * in, int & err)
     {
         auto output = make_writable_array_view(hash);
         auto input = chars_view(in, output.size() * 2);
@@ -102,6 +103,14 @@ namespace
         *p = 0;
         return pline;
     }
+
+    // unchecked version of decimal_chars_to_int(s, value)
+    template<class Int>
+    Int consume_number(char const * & s){
+        auto r = decimal_chars_to_int<Int>(s);
+        s = r.ptr;
+        return r.val;
+    };
 } // namespace
 
 MwrmReader::MwrmReader(InTransport ibuf) noexcept
@@ -117,13 +126,17 @@ void MwrmReader::read_meta_headers()
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
     };
+
     next_line();
     this->header = MetaHeader(WrmVersion::v1, false);
     if (this->line_reader.get_buf()[0] == 'v') {
         next_line(); // 800 600
-        auto wh_line = this->line_reader.get_buf().data();
-        this->header.witdh = strtoll(wh_line, &wh_line, 10);
-        this->header.height = strtoll(wh_line, &wh_line, 10);
+        char const* wh_line = this->line_reader.get_buf().data();
+        this->header.witdh = consume_number<uint16_t>(wh_line);
+        if (*wh_line == ' ') {
+            ++wh_line;
+        }
+        this->header.height = consume_number<uint16_t>(wh_line);
         next_line(); // checksum or nochecksum
         this->header.version = WrmVersion::v2;
         this->header.has_checksum = (this->line_reader.get_buf()[0] == 'c');
@@ -280,14 +293,18 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
         e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
     }
 
-    char * pend;
-    meta_line.stop_time  = strtoll(e1.base(), &pend, 10);
-    err |= (*pend != (has_hash ? ' ' : '\n'));
+    chars_to_int_result<long long> r;
+
+    r = decimal_chars_to_int<long long>(e1.base());
+    meta_line.stop_time = r.val;
+    err |= (*r.ptr != (has_hash ? ' ' : '\n'));
     if (e1 != last) {
         ++e1;
     }
-    meta_line.start_time = strtoll(e2.base(), &pend, 10);
-    err |= (*pend != ' ');
+
+    r = decimal_chars_to_int<long long>(e2.base());
+    meta_line.start_time = r.val;
+    err |= (*r.ptr != ' ');
     if (e2 != last) {
         *e2 = 0;
     }
@@ -333,21 +350,40 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
     using std::begin;
     using std::end;
 
-    char * pline = buf_sread_filename(begin(meta_line.filename), end(meta_line.filename), line);
+    char const * pline = buf_sread_filename(begin(meta_line.filename), end(meta_line.filename), line);
 
     int err = 0;
-    auto pend = pline;                   meta_line.size  = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.mode  = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.uid   = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.gid   = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.dev   = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.ino   = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.mtime = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.ctime = strtoll (pline, &pend, 10);
+
+    auto pre_consume = [&]{
+        if (*pline == ' ') {
+            ++pline;
+        } else {
+            err = 1;
+        }
+    };
+
+    auto consume_ll = [&]{
+        pre_consume();
+        return consume_number<long long>(pline);
+    };
+
+    auto consume_ull = [&]{
+        pre_consume();
+        return consume_number<unsigned long long>(pline);
+    };
+
+    meta_line.size  = consume_ll();
+    meta_line.mode  = checked_int(consume_ull());
+    meta_line.uid   = checked_int(consume_ll());
+    meta_line.gid   = checked_int(consume_ll());
+    meta_line.dev   = consume_ull();
+    meta_line.ino   = checked_int(consume_ll());
+    meta_line.mtime = consume_ll();
+    meta_line.ctime = consume_ll();
 
     if (file_type == FileType::Mwrm) {
-        err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+        meta_line.start_time = consume_ll();
+        meta_line.stop_time  = consume_ll();
     }
     else {
         meta_line.start_time = 0;
@@ -356,17 +392,17 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
 
     meta_line.with_hash = (file_type == FileType::Mwrm)
       ? this->header.has_checksum
-      : (this->header.has_checksum || (*pend != '\n' && *pend != '\0'));
+      : (this->header.has_checksum || (*pline != '\n' && *pline != '\0'));
     if (meta_line.with_hash) {
         // ' ' hash ' ' hash '\n'
-        err |= line_buf.size() - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 3;
+        err |= line_buf.size() - (pline - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 3;
         if (!err)
         {
-            err |= (*pend != ' '); pend = extract_hash(meta_line.hash1, ++pend, err);
-            err |= (*pend != ' '); pend = extract_hash(meta_line.hash2, ++pend, err);
+            err |= (*pline != ' '); pline = extract_hash(meta_line.hash1, ++pline, err);
+            err |= (*pline != ' '); pline = extract_hash(meta_line.hash2, ++pline, err);
         }
     }
-    err |= (*pend != '\n' && *pend != '\0');
+    err |= (*pline != '\n' && *pline != '\0');
 
     if (err) {
         throw Error(ERR_TRANSPORT_READ_FAILED);
