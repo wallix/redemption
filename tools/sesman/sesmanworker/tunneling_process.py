@@ -303,9 +303,9 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
         if self.process:
             self.process.terminate()
             try:
-                self.process.wait(2)
+                self.process.wait()
             except Exception:
-                self.process.kill()
+                self.process.kill(9)
             # Logger().debug(self.process.returncode)
             self.process = None
 
