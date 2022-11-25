@@ -537,27 +537,27 @@ inline constexpr auto no_mouse = ""_av;
 
 inline constexpr auto guest_to_user_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"user\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x43}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto common_to_user_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"user\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x43}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_to_guest_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, {KeyLocks=0x04}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED from=\"user\" to=\"guest-1\"\n"_av;
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"guest-1\"\n"_av;
 inline constexpr auto guest_to_user_and_guest_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"everybody\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"<everybody>\"\n"
     ", {KbdFlags=0x8000, Scancode=0x57}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_to_user_and_guest_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED from=\"user\" to=\"everybody\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"<everybody>\"\n"
     ", {KbdFlags=0x8000, Scancode=0x57}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_mask_log_event =
@@ -567,7 +567,7 @@ inline constexpr auto user_mask_log_event =
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_mask_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED from=\"guest-1\" to=\"user\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
     "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;

@@ -756,6 +756,7 @@ private:
         gdi::GraphicApi* guest_old_gd = nullptr;
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
+        chars_view name {};
         MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
@@ -5194,6 +5195,16 @@ public:
     }
 
 private:
+    void control_ownership_changed(chars_view guest_name, chars_view new_control)
+    {
+        this->sharing_ctx.session_log->log6(
+            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
+                KVLog("guest_user"_av, guest_name),
+                KVLog("new_control_owner_user"_av, new_control),
+            }
+        );
+    }
+
     void session_sharing_take_control(Callback & cb)
     {
         if (!this->sharing_ctx.guest->sharing_ctx.has_input()) {
@@ -5207,11 +5218,9 @@ private:
         this->sharing_ctx.guest->sharing_ctx.disable_input();
         cb.rdp_input_synchronize(this->keymap.locks());
 
-        this->sharing_ctx.session_log->log6(
-            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("from"_av, "guest-1"_av),
-                KVLog("to"_av, "user"_av),
-            }
+        this->control_ownership_changed(
+            this->sharing_ctx.guest->sharing_ctx.name,
+            this->sharing_ctx.name
         );
     }
 
@@ -5228,11 +5237,9 @@ private:
             ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         cb.rdp_input_synchronize(this->sharing_ctx.guest->keymap.locks());
 
-        this->sharing_ctx.session_log->log6(
-            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("from"_av, "user"_av),
-                KVLog("to"_av, "guest-1"_av),
-            }
+        this->control_ownership_changed(
+            this->sharing_ctx.guest->sharing_ctx.name,
+            this->sharing_ctx.guest->sharing_ctx.name
         );
     }
 
@@ -5241,8 +5248,6 @@ private:
         if (this->sharing_ctx.has_input() && this->sharing_ctx.guest->sharing_ctx.has_input()) {
             return;
         }
-
-        auto const from = this->sharing_ctx.has_input() ? "user"_av : "guest-1"_av;
 
         this->sharing_ctx.enable_input();
         this->sharing_ctx.guest->sharing_ctx.enable_input();
@@ -5256,11 +5261,9 @@ private:
         }
         cb.rdp_input_synchronize(key_locks);
 
-        this->sharing_ctx.session_log->log6(
-            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("from"_av, from),
-                KVLog("to"_av, "everybody"_av),
-            }
+        this->control_ownership_changed(
+            this->sharing_ctx.guest->sharing_ctx.name,
+            "<everybody>"_av
         );
     }
 
@@ -5475,8 +5478,14 @@ public:
     {
         assert(!this->sharing_ctx.guest);
 
+        // TODO client_info.username should be Sized variable
+        // this->sharing_ctx.name = std::string_view{this->client_info.username};
+        this->sharing_ctx.name = "user"_av;
         this->sharing_ctx.is_sharing_mode = true;
         guest_front.sharing_ctx.is_sharing_mode = true;
+        // TODO client_info.username should be Sized variable
+        // guest_front.sharing_ctx.name = std::string_view{guest_front.client_info.username};
+        guest_front.sharing_ctx.name = "guest-1"_av;
 
         this->sharing_ctx.guest = &guest_front;
         this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;
