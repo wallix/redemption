@@ -51,13 +51,13 @@
 
 #include <chrono>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
 #include <cinttypes> // PRId64, ...
 #include <cstring>
 
-#include <set>
 
 enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
@@ -1505,7 +1505,7 @@ public:
                                 return std::find(ip.begin(), ip.end(), ':') == ip.end();
                             };
 
-                            auto const& shadow_id = parameters_[3];
+                            auto const shadow_id = str_concat(int_to_decimal_chars(time(nullptr)), "*", parameters_[3]);
 
                             std::size_t const max_arity                 = 16;
                             std::size_t       item_count                = 0;

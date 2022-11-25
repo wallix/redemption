@@ -39,5 +39,6 @@ struct ApplicationParams
 
     const char * target_application_account = "";
     const char * target_application_password = "";
-};
 
+    time_t shadow_invite_time = 0;
+};

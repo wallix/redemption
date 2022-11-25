@@ -393,12 +393,25 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
     ApplicationParams ap;
     ap.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>();
     ap.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>();
-    ap.shell_working_dir = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+
+    const char* shell_working_directory = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+    const char* sep = strchr(shell_working_directory, '*');
+    if (sep)
+    {
+        ap.shadow_invite_time = decimal_chars_to_int<time_t>(shell_working_directory).val;
+
+        ap.shell_working_dir = sep + 1;
+    }
+    else
+    {
+        ap.shell_working_dir = shell_working_directory;
+    }
     ap.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
     ap.target_application_account = ini.get<cfg::globals::target_application_account>().c_str();
     ap.target_application_password = ini.get<cfg::globals::target_application_password>().c_str();
     ap.primary_user_id = ini.get<cfg::globals::primary_user_id>().c_str();
     ap.target_application = ini.get<cfg::globals::target_application>().c_str();
+
     return ap;
 }
 
@@ -771,11 +784,38 @@ ModPack create_mod_rdp(
     mod_rdp_params.krb_armoring_user = ini.get<cfg::mod_rdp::effective_krb_armoring_user>().c_str();
     mod_rdp_params.krb_armoring_password = ini.get<cfg::mod_rdp::effective_krb_armoring_password>().c_str();
 
+    auto connect_to_rdp_target_host = [](
+            Inifile & ini, SessionLogApi& session_log,
+            trkeys::TrKey const& authentification_fail, bool enable_ipv6,
+            std::chrono::milliseconds connection_establishment_timeout,
+            std::chrono::milliseconds tcp_user_timeout,
+            time_t shadow_invite_time) {
+        try
+        {
+            return connect_to_target_host(
+                ini, session_log, authentification_fail, enable_ipv6,
+                connection_establishment_timeout,
+                tcp_user_timeout);
+        }
+        catch(const Error& e)
+        {
+            if (e.id == ERR_SOCKET_CONNECT_FAILED && shadow_invite_time)
+            {
+                if (time(nullptr) - shadow_invite_time > 30) {
+                    ini.set<cfg::context::auth_error_message>(TR(trkeys::target_shadow_fail, language(ini)));
+                }
+            }
+
+            throw;
+        }
+    };
+
     unique_fd client_sck = ini.get<cfg::context::tunneling_target_host>().empty()
-        ? connect_to_target_host(
+        ? connect_to_rdp_target_host(
             ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>(),
             ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
-            ini.get<cfg::all_target_mod::tcp_user_timeout>())
+            ini.get<cfg::all_target_mod::tcp_user_timeout>(),
+            mod_rdp_params.application_params.shadow_invite_time)
         : addr_connect_blocking(
             ini.get<cfg::context::tunneling_target_host>().c_str(),
             std::chrono::seconds(1), false);

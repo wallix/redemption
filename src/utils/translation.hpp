@@ -105,6 +105,7 @@ namespace trkeys
     TR_KV(close_inactivity, "Connection closed on inactivity");
     TR_KV(acl_fail, "Authentifier service failed");
     TR_KV(target_fail, "Failed to connect to remote host.");
+    TR_KV(target_shadow_fail, "Failed to connect to remote host. Maybe the session invitation has expired.");
     TR_KV(authentification_rdp_fail, "Failed to authenticate with remote RDP host.");
     TR_KV(authentification_vnc_fail, "Failed to authenticate with remote VNC host.");
     TR_KV(authentification_x_fail, "Failed to authenticate with remote X host.");

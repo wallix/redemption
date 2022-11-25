@@ -380,10 +380,5 @@ def parse_arguments() :
 if __name__ == "__main__" :
     args = parse_arguments()
 
-    try :
-        execute_generation(args)
-    except :
-        print(sys.exc_info()[1])
-        sys.exit(1)
-    else :
-        sys.exit(0)
+    execute_generation(args)
+

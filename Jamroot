@@ -278,8 +278,7 @@ make ppocr_resources :
 #
 actions gen_gettext_mo
 {
-    $(REDEMPTION_PUBLIC_PATH)/tools/i18n/gen_msg_catalog.py -C -p $(REDEMPTION_PUBLIC_PATH)/tools/i18n/ -b $(<).d
-    :>$(<)
+    $(REDEMPTION_PUBLIC_PATH)/tools/i18n/gen_msg_catalog.py -C -p $(REDEMPTION_PUBLIC_PATH)/tools/i18n/ -b $(<).d && :>$(<)
 }
 actions make_gettext_install
 {
