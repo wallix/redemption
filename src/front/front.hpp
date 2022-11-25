@@ -5208,7 +5208,7 @@ private:
         cb.rdp_input_synchronize(this->keymap.locks());
 
         this->sharing_ctx.session_log->log6(
-            LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
+            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
                 KVLog("from"_av, "guest-1"_av),
                 KVLog("to"_av, "user"_av),
             }
@@ -5229,7 +5229,7 @@ private:
         cb.rdp_input_synchronize(this->sharing_ctx.guest->keymap.locks());
 
         this->sharing_ctx.session_log->log6(
-            LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
+            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
                 KVLog("from"_av, "user"_av),
                 KVLog("to"_av, "guest-1"_av),
             }
@@ -5257,7 +5257,7 @@ private:
         cb.rdp_input_synchronize(key_locks);
 
         this->sharing_ctx.session_log->log6(
-            LogId::SESSION_SHARING_CONTROL_OWNERSHIP_CHANGED, {
+            LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
                 KVLog("from"_av, from),
                 KVLog("to"_av, "everybody"_av),
             }
@@ -5281,7 +5281,7 @@ private:
         }
 
         this->sharing_ctx.session_log->log6(
-            LogId::SESSION_SHARING_GUEST_VIEW_CHANGED, {
+            LogId::SESSION_INVITE_GUEST_VIEW_CHANGED, {
                 KVLog("state"_av, state),
             }
         );
@@ -5489,7 +5489,7 @@ public:
         this->copy_caches_to(guest_front);
         this->add_graphic(guest_front);
 
-        session_log.log6(LogId::SESSION_SHARING_GUEST_CONNECTION, {
+        session_log.log6(LogId::SESSION_INVITE_GUEST_CONNECTION, {
             KVLog("name"_av, "guest-1"_av),
             KVLog("mode"_av, guest_front.sharing_ctx.enable_shared_control ? "view-control"_av : "view-only"_av),
         });
@@ -5515,7 +5515,7 @@ public:
         int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
             seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
-        this->sharing_ctx.session_log->log6(LogId::SESSION_SHARING_GUEST_DISCONNECTION, {
+        this->sharing_ctx.session_log->log6(LogId::SESSION_INVITE_GUEST_DISCONNECTION, {
             KVLog("name"_av, "guest-1"_av),
             KVLog("duration"_av, {duration_str, std::size_t(len)}),
         });
@@ -5526,7 +5526,7 @@ public:
 private:
     void auto_kill()
     {
-        this->sharing_ctx.session_log->log6(LogId::SESSION_SHARING_GUEST_KILLED, {
+        this->sharing_ctx.session_log->log6(LogId::SESSION_INVITE_GUEST_KILLED, {
             KVLog("name"_av, "guest-1"_av),
         });
         this->sharing_ctx.kill_fn(this->sharing_ctx.fn_ctx);

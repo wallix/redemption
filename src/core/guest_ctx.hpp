@@ -153,7 +153,7 @@ struct GuestCtx
                         // check credential
                         if (password != guest_ptr->get_client_info().password) {
                             LOG(LOG_ERR, "Guest: bad credential of session sharing");
-                            session_log.log6(LogId::SESSION_SHARING_GUEST_CONNECTION_REJECTED, {
+                            session_log.log6(LogId::SESSION_INVITE_GUEST_CONNECTION_REJECTED, {
                                 KVLog("name"_av, "guest-1"_av),
                                 KVLog("reason"_av, "bad password"_av),
                             });
