@@ -133,7 +133,6 @@ struct FileValidatorService;
 #include "mod/rdp/server_transport_context.hpp"
 
 #include "utils/genrandom.hpp"
-#include "utils/keyboard_shortcut_blocker.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "utils/stream.hpp"
 #include "utils/strutils.hpp"
@@ -372,10 +371,6 @@ private:
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
 
-    const KeyLayout::KbdId keylayout;
-
-    KeyboardShortcutBlocker keyboard_shortcut_blocker;
-
 public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
@@ -387,8 +382,7 @@ public:
         SessionLogApi& session_log,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
-        SessionProbeVirtualChannel::Callbacks & callbacks,
-        KeyLayout::KbdId keylayout)
+        SessionProbeVirtualChannel::Callbacks & callbacks)
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -410,8 +404,6 @@ public:
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
-    , keylayout(keylayout)
-    , keyboard_shortcut_blocker(bool(verbose & RDPVerbose::basic_trace))
     {}
 
     void log6(LogId id, KVLogList kv_list)
@@ -425,11 +417,6 @@ public:
             }
             LOG(LOG_INFO, "type=%s %s", msg, detail::log_id_string_map[unsigned(id)]);
         }
-    }
-
-    bool scancode_must_be_blocked(kbdtypes::KbdFlags keyboardFlags, kbdtypes::Scancode scancode)
-    {
-        return this->keyboard_shortcut_blocker.scancode_must_be_blocked(keyboardFlags, scancode);
     }
 
 #ifndef __EMSCRIPTEN__
@@ -938,10 +925,8 @@ public:
             }
             this->callbacks.enable_graphics_update();
         }
-        else if (upper_order == "DisableNavigatorShortcuts"_ascii_upper && !parameters.empty() &&
-                 !this->keyboard_shortcut_blocker.has_shortcut())
-        {
-            this->keyboard_shortcut_blocker.set_shortcuts(this->keylayout, parameters[0]);
+        else if (upper_order == "DisableNavigatorShortcuts"_ascii_upper) {
+            // ignore this message
         }
         else if (upper_order == "Log"_ascii_upper) {
             if (!parameters.empty()) {
@@ -2021,8 +2006,7 @@ public:
             gen, osd, events, session_log,
             file_validator_service,
             mod_rdp_factory,
-            spvc_callbacks,
-            info.keylayout
+            spvc_callbacks
         )
 #else
         : channels(channels_authorizations)
@@ -2519,16 +2503,12 @@ private:
                 }
             }
 
-#ifndef __EMSCRIPTEN__
-            if (!this->channels.scancode_must_be_blocked(flags, scancode)) {
-                this->send_input_scancode(event_time, flags, scancode);
-            }
+            this->send_input_scancode(event_time, flags, scancode);
 
+#ifndef __EMSCRIPTEN__
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_scancode(flags, scancode);
             }
-#else
-            this->send_input_scancode(event_time, flags, scancode);
 #endif
         }
     }
