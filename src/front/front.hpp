@@ -757,7 +757,6 @@ private:
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
         chars_view name {};
-        chars_view control_owner {};
         MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
@@ -5200,11 +5199,10 @@ private:
     {
         this->sharing_ctx.session_log->log6(
             LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("control_owner"_av, this->sharing_ctx.control_owner),
                 KVLog("new_control_owner"_av, new_control_owner),
             }
         );
-        this->sharing_ctx.control_owner = new_control_owner;
+        this->sharing_ctx.session_log->set_owner_control_ctx(new_control_owner);
     }
 
     void session_sharing_take_control(Callback & cb)
@@ -5446,7 +5444,6 @@ public:
         assert(!this->sharing_ctx.guest);
 
         this->sharing_ctx.name = std::string_view{this->client_info.username};
-        this->sharing_ctx.control_owner = this->sharing_ctx.name;
 
         this->sharing_ctx.is_sharing_mode = true;
         guest_front.sharing_ctx.is_sharing_mode = true;
@@ -5464,9 +5461,10 @@ public:
         this->add_graphic(guest_front);
 
         session_log.log6(LogId::SESSION_INVITE_GUEST_CONNECTION, {
-            KVLog("name"_av, guest_front.sharing_ctx.name),
+            KVLog("guest"_av, guest_front.sharing_ctx.name),
             KVLog("mode"_av, guest_front.sharing_ctx.enable_shared_control ? "view-control"_av : "view-only"_av),
         });
+        session_log.set_owner_control_ctx(this->sharing_ctx.name);
     }
 
     void remove_guest(Front& guest_front)
@@ -5489,8 +5487,9 @@ public:
         int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
             seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
+        this->sharing_ctx.session_log->set_owner_control_ctx({});
         this->sharing_ctx.session_log->log6(LogId::SESSION_INVITE_GUEST_DISCONNECTION, {
-            KVLog("name"_av, "guest-1"_av),
+            KVLog("guest"_av, guest_front.sharing_ctx.name),
             KVLog("duration"_av, {duration_str, std::size_t(len)}),
         });
 

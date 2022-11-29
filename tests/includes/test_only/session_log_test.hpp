@@ -24,13 +24,18 @@ Author(s): Proxies Team
 #include <string>
 
 
-struct SessionLogTest : NullSessionLog
+struct SessionLogTest : SessionLogApi
 {
     void report(const char * reason, const char * message) override;
 
     void log6(LogId id, KVLogList kv_list) override;
 
+    void set_owner_control_ctx(chars_view name) override;
+
     std::string events();
 
     std::string messages;
+
+private:
+    std::string extra_msg;
 };

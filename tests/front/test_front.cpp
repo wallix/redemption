@@ -519,29 +519,29 @@ inline constexpr auto no_mouse = ""_av;
 
 inline constexpr auto user_to_guest_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, {KeyLocks=0x04}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"user\" new_control_owner=\"guest-1\"\n"_av;
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED new_control_owner=\"guest-1\" control_owner=\"user\"\n"_av;
 inline constexpr auto user_mask_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}"
-    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\"\n"
+    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\" control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_mask_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"guest-1\" new_control_owner=\"user\"\n"
-    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED new_control_owner=\"user\" control_owner=\"guest-1\"\n"
+    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\" control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_unmask_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{Invalidate={0, 0, 1024, 768}"
-    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"unmasked\"\n"
+    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"unmasked\" control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_kill_log_event =
-    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\"\n"_av;
+    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\" control_owner=\"guest-1\"\n"_av;
 inline constexpr auto user_kill_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}"
-    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\"\n, "
+    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\" control_owner=\"user\"\n, "
     "{KbdFlags=0x8000, Scancode=0x3F}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 
@@ -616,7 +616,7 @@ RED_AUTO_TEST_CASE(TestViewAndControlSharingFront)
     using namespace TestFrontData;
 
 sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
-    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION name=\"guest-1\" mode=\"view-control\"\n"_av);
+    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION guest=\"guest-1\" mode=\"view-control\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
         RED_CHECK(!gd.is_slased_circle_cursor);
@@ -785,7 +785,7 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
         user.front.remove_guest(guest.front);
         RED_CHECK(!gd.is_slased_circle_cursor);
         RED_CHECK(mod.session_log.events() ==
-            "SESSION_INVITE_GUEST_DISCONNECTION name=\"guest-1\" duration=\"00:00:00\"\n"_av);
+            "SESSION_INVITE_GUEST_DISCONNECTION guest=\"guest-1\" duration=\"00:00:00\"\n"_av);
         RED_CHECK(keyA(user) == keyA_av);
         RED_CHECK(uniA(user) == uniA_av);
         RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
@@ -800,7 +800,7 @@ RED_AUTO_TEST_CASE(TestViewOnlySharingFront)
     using namespace TestFrontData;
 
 sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
-    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION name=\"guest-1\" mode=\"view-only\"\n"_av);
+    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION guest=\"guest-1\" mode=\"view-only\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
         RED_CHECK(!gd.is_slased_circle_cursor);
@@ -925,7 +925,7 @@ sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& 
         user.front.remove_guest(guest.front);
         RED_CHECK(!gd.is_slased_circle_cursor);
         RED_CHECK(mod.session_log.events() ==
-            "SESSION_INVITE_GUEST_DISCONNECTION name=\"guest-1\" duration=\"00:00:00\"\n"_av);
+            "SESSION_INVITE_GUEST_DISCONNECTION guest=\"guest-1\" duration=\"00:00:00\"\n"_av);
         RED_CHECK(keyA(user) == keyA_av);
         RED_CHECK(uniA(user) == uniA_av);
         RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
