@@ -162,6 +162,7 @@ exe rdpproxy :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -522,6 +523,7 @@ lib libredrec :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -744,6 +746,7 @@ test-run tests/acl/test_session_logfile :
   <library>src/utils/log_siem.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>src/utils/uninit_buffer.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -802,6 +805,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/session_log_test.o
   <library>tests/includes/test_only/test_framework/check_img.o
@@ -2348,6 +2352,7 @@ test-run tests/front/test_front :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
@@ -2492,6 +2497,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
@@ -4193,6 +4199,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
@@ -4266,6 +4273,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
@@ -4339,6 +4347,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/timestamp_tracer.o
+  <library>src/utils/uninit_buffer.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
@@ -4877,7 +4886,6 @@ test-run tests/utils/test_ip :
 test-run tests/utils/test_key_qvalue_pairs :
   $(REDEMPTION_TEST_PATH)/utils/test_key_qvalue_pairs.cpp
 :
-  <library>src/utils/strutils.o
 ;
 test-run tests/utils/test_line_equation :
   $(REDEMPTION_TEST_PATH)/utils/test_line_equation.cpp

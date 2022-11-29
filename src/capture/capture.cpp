@@ -35,6 +35,7 @@
 #include "utils/sugar/ranges.hpp"
 #include "utils/sugar/split.hpp"
 
+#include "utils/uninit_buffer.hpp"
 #include "utils/scaled_image24.hpp"
 #include "utils/colors.hpp"
 #include "utils/strutils.hpp"
@@ -43,6 +44,7 @@
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
 #include "utils/timestamp_tracer.hpp"
+#include "utils/tm_to_chars.hpp"
 
 #include "transport/file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
@@ -961,12 +963,16 @@ public:
         return true;
     }
 
-    void send_line(MonotonicTimePoint now, chars_view data) {
-        this->send_data(now, data, '-');
+    void send_line(MonotonicTimePoint now, LogId id, KVLogList kv_list) {
+        this->send_kvlogs(now, '-', id, kv_list);
     }
 
     void next_video(MonotonicTimePoint now) {
-        this->send_data(now, "(break)"_av, '+');
+        auto data = " + (break)\n"_av;
+        this->send_data(now, data.size(), [=](char* p) {
+            memcpy(p, data.data(), data.size());
+            return p + data.size();
+        });
     }
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
@@ -974,24 +980,17 @@ public:
         this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
     }
 
-private:
-    // buffer for log_format_set_info
-    std::string formatted_message;
-
-public:
     void title_changed(MonotonicTimePoint now, chars_view title) {
-        log_format_set_info(this->formatted_message, LogId::TITLE_BAR, {
+        this->send_kvlogs(now, '+', LogId::TITLE_BAR, {
             KVLog("data"_av, title),
         });
-        this->send_data(now, this->formatted_message, '+');
     }
 
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
         if (!update_enable_probe(this->is_probe_enabled_session, id, kv_list)
           && is_logable_kvlist(id, kv_list, this->meta_params)
         ) {
-            log_format_set_info(this->formatted_message, id, kv_list);
-            this->send_line(now, this->formatted_message);
+            this->send_kvlogs(now, '-', id, kv_list);
         }
     }
 
@@ -1066,28 +1065,35 @@ private:
         this->kbd_stream.out_copy_bytes(bytes);
     }
 
-    void send_data(MonotonicTimePoint now, chars_view data, char sep) {
-        this->send_date(now, sep);
-        this->trans.send(data);
-        this->trans.send("\n"_av);
+    UninitDynamicBuffer formatted_message;
+    using date_format = dateformats::YYYY_mm_dd_HH_MM_SS;
+
+    template<class F>
+    void send_data(MonotonicTimePoint now, std::size_t len, F f)
+    {
+        struct tm tm;
+        auto rawtime = to_time_t(now, this->monotonic_to_real);
+        localtime_r(&rawtime, &tm);
+
+        len += date_format::output_length;
+        char* msg = this->formatted_message.grow_without_copy(len).as_charp();
+        char* p = f(date_format::to_chars(msg, tm));
+        this->trans.send({msg, p});
         this->monotonic_last_time = now;
     }
 
-    void send_date(MonotonicTimePoint now, char sep) {
-        auto rawtime = to_time_t(now, this->monotonic_to_real);
-
-        tm ptm;
-        localtime_r(&rawtime, &ptm);
-
-        char string_date[256];
-
-        auto const data_sz = std::sprintf(
-            string_date, "%4d-%02d-%02d %02d:%02d:%02d %c ",
-            ptm.tm_year+1900, ptm.tm_mon+1, ptm.tm_mday,
-            ptm.tm_hour, ptm.tm_min, ptm.tm_sec, sep
-        );
-
-        this->trans.send(string_date, data_sz);
+    void send_kvlogs(MonotonicTimePoint now, char sep, LogId id, KVLogList kv_list)
+    {
+        auto const buffer_size = 4 /* ' ' sep ' ' ... '\n' */
+                               + safe_size_for_log_format_append_info(id, kv_list);
+        this->send_data(now, buffer_size, [&](char* p) {
+            *p++ = ' ';
+            *p++ = sep;
+            *p++ = ' ';
+            p = log_format_append_info(p, id, kv_list);
+            *p++ = '\n';
+            return p;
+        });
     }
 
     void send_kbd_if_special_char(uint32_t uchar) {
@@ -1107,10 +1113,9 @@ private:
                 this->kbd_stream.out_copy_bytes("********"_av);
             }
             this->hidden_masked_char_count = 0;
-            log_format_set_info(this->formatted_message, LogId::KBD_INPUT, {
+            this->send_kvlogs(this->monotonic_last_time, '-', LogId::KBD_INPUT, {
                 KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
-            this->send_data(this->monotonic_last_time, this->formatted_message, '-');
             this->kbd_stream.rewind();
             this->previous_char_is_event_flush = true;
             this->kbd_char_pos = 0;
@@ -1121,7 +1126,6 @@ private:
 
 class Capture::SessionLogAgent : public gdi::CaptureProbeApi
 {
-    std::string formatted_message;
     SessionMeta & session_meta;
 
     MetaParams meta_params;
@@ -1132,14 +1136,15 @@ public:
     , meta_params(meta_params)
     {}
 
-    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
+    {
         if (id != LogId::PROBE_STATUS && is_logable_kvlist(id, kv_list, this->meta_params)) {
-            log_format_set_info(this->formatted_message, id, kv_list);
-            this->session_meta.send_line(now, this->formatted_message);
+            this->session_meta.send_line(now, id, kv_list);
         }
     }
 
-    void possible_active_window_change() override {
+    void possible_active_window_change() override
+    {
     }
 };
 

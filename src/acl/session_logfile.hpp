@@ -25,15 +25,14 @@
 #pragma once
 
 #include "transport/crypto_transport.hpp"
+#include "utils/uninit_buffer.hpp"
 #include "acl/auth_api.hpp"
 
-#include <string>
 #include <ctime>
 
 
 class Random;
 class Inifile;
-
 
 class SessionLogFile
 {
@@ -44,7 +43,10 @@ public:
 
     ~SessionLogFile();
 
-    void log6(std::time_t time_now, LogId id, KVLogList kv_list);
+    void set_control_owner_ctx(chars_view name);
+
+    void log(std::time_t time_now, Inifile& ini,
+             chars_view session_type, LogId id, KVLogList kv_list);
 
     void open_session_log(
         const char * const record_path, const char * const hash_path,
@@ -54,21 +56,7 @@ public:
 
 private:
     OutCryptoTransport ct;
-    std::string log6_buffer;
-};
-
-
-struct SiemLogger
-{
-    explicit SiemLogger();
-
-    void log_syslog_format(
-        LogId id, KVLogList kv_list, const Inifile & ini, chars_view session_type);
-
-    void log_arcsight_format(
-        std::time_t time_now,
-        LogId id, KVLogList kv_list, const Inifile & ini, chars_view session_type);
-
-private:
-    std::string buffer_;
+    UninitDynamicBuffer buffer;
+    UninitDynamicBuffer control_owner_extra_log;
+    std::size_t control_owner_extra_log_len = 0;
 };

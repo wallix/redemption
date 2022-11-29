@@ -436,9 +436,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         void session_update(MonotonicTimePoint /*now*/, LogId id, KVLogList kv_list) override
         {
-            std::string buf;
+            std::vector<char> buf;
             log_format_set_info(buf, id, kv_list);
-            output += buf;
+            output.append(buf.begin(), buf.end());
         }
 
         void possible_active_window_change() override {}

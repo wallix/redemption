@@ -23,6 +23,7 @@
 #include "utils/sugar/array_view.hpp"
 
 #include <string>
+#include <vector>
 
 #include <cstring>
 
@@ -157,8 +158,8 @@ namespace detail
     }
 
 
-    template<class... StringsOrChars>
-    void str_concat_view(std::string& str, StringsOrChars&&... strs) noexcept
+    template<class Buffer, class... StringsOrChars>
+    void str_concat_view(Buffer& str, StringsOrChars&&... strs) noexcept
     {
         auto ipos = str.size();
         str.resize(str.size() + (... + len_from_av_or_char(strs)));
@@ -198,6 +199,13 @@ template<class... Strings>
 inline void str_assign(std::string& str, Strings const&... strs)
 {
     str.clear();
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
+}
+
+
+template<class... Strings>
+inline void str_append(std::vector<char>& str, Strings const&... strs)
+{
     detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }
 

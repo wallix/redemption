@@ -75,26 +75,32 @@ UninitDynamicBuffer::~UninitDynamicBuffer()
     uninit_deallocate(p);
 }
 
-void UninitDynamicBuffer::grow(std::size_t new_size, std::size_t copiable_length, std::size_t copiable_offset)
+void UninitDynamicBuffer::grow_impl(std::size_t new_size, std::size_t copiable_length, std::size_t copiable_offset)
 {
-    if (new_size > len) {
-        assert(copiable_length + copiable_offset <= len);
-        uint8_t* newp = uninit_allocate(new_size);
-        std::memcpy(newp + copiable_offset, p + copiable_offset, copiable_length);
-        uninit_deallocate(p);
-        p = newp;
-        len = new_size;
+    if (REDEMPTION_LIKELY(new_size <= len)) {
+        return ;
     }
+
+    assert(copiable_length + copiable_offset <= len);
+    uint8_t* newp = uninit_allocate(new_size);
+    std::memcpy(newp + copiable_offset, p + copiable_offset, copiable_length);
+    // delete after new for exception safety
+    uninit_deallocate(p);
+    p = newp;
+    len = new_size;
 }
 
-void UninitDynamicBuffer::grow_without_copy(std::size_t new_size)
+void UninitDynamicBuffer::grow_without_copy_impl(std::size_t new_size)
 {
-    if (new_size < len) {
-        uint8_t* newp = uninit_allocate(new_size);
-        uninit_deallocate(p);
-        p = newp;
-        len = new_size;
+    if (REDEMPTION_LIKELY(new_size <= len)) {
+        return ;
     }
+
+    uint8_t* newp = uninit_allocate(new_size);
+    // delete after new for exception safety
+    uninit_deallocate(p);
+    p = newp;
+    len = new_size;
 }
 
 void UninitDynamicBuffer::free() noexcept

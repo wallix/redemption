@@ -62,12 +62,12 @@ struct SessionLogApi : AclReportApi
 {
     virtual void log6(LogId id, KVLogList kv_list) = 0;
     // empty name for disable
-    virtual void set_owner_control_ctx(chars_view name) = 0;
+    virtual void set_control_owner_ctx(chars_view name) = 0;
 };
 
 struct NullSessionLog : SessionLogApi
 {
     void report(const char * /* reason */, const char * /* message */) override {}
     void log6(LogId /*id*/, KVLogList /*kv_list*/) override {}
-    void set_owner_control_ctx(chars_view /*name*/) override {}
+    void set_control_owner_ctx(chars_view /*name*/) override {}
 };

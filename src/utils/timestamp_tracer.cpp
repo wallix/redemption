@@ -18,12 +18,11 @@
    Author(s): Christophe Grosjean, Raphael ZHOU
 */
 
+#include "utils/tm_to_chars.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "cxx/diagnostic.hpp"
 
 #include <cstring>
-#include <cstdio>
 
 namespace
 {
@@ -615,17 +614,17 @@ void TimestampTracer::trace(WritableImageView image_view, const tm & now) noexce
     };
 
     const char* timezone = (daylight ? tzname[1] : tzname[0]);
-    char rawdate[size_str_timestamp] {};
-    REDEMPTION_DIAGNOSTIC_PUSH()
-    REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wformat-truncation")
-    const int timestamp_length = std::max(0,
-        snprintf(rawdate, size_str_timestamp - 1,
-            "%4d-%02d-%02d %02d:%02d:%02d %s",
-            now.tm_year + 1900, now.tm_mon + 1, now.tm_mday,
-            now.tm_hour, now.tm_min, now.tm_sec, timezone));
-    REDEMPTION_DIAGNOSTIC_POP()
-    draw_12x7_digits(size_str_timestamp - 1, rawdate);
-    memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
+    char rawdate[ts_max_length] {};
+    using date_format = dateformats::YYYY_mm_dd_HH_MM_SS;
+    static_assert(date_format::output_length + 10 < ts_max_length);
+    char* date_p = date_format::to_chars(rawdate, now);
+    *date_p++ = ' ';
+    auto prefix_len = std::size_t(date_p - rawdate);
+    auto timezone_len = strnlen(timezone, ts_max_length - prefix_len);
+    memcpy(date_p, timezone, timezone_len);
+    const int timestamp_length = int(prefix_len + timezone_len);
+    draw_12x7_digits(ts_max_length, rawdate);
+    memcpy(this->previous_timestamp, rawdate, ts_max_length);
     this->previous_timestamp_length = timestamp_length;
 
     uint8_t * tsave = this->timestamp_save;

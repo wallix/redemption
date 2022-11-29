@@ -39,18 +39,26 @@ struct UninitDynamicBuffer
     ~UninitDynamicBuffer();
 
     /// \post size() >= new_size
-    void grow(std::size_t new_size, std::size_t copiable_length, std::size_t copiable_offset = 0);
+    writable_bytes_view grow(std::size_t new_size, std::size_t copiable_length, std::size_t copiable_offset = 0)
+    {
+        grow_impl(new_size, copiable_length, copiable_offset);
+        return {data(), new_size};
+    }
 
     /// \post size() >= new_size
-    void grow_without_copy(std::size_t new_size);
+    writable_bytes_view grow_without_copy(std::size_t new_size)
+    {
+        grow_without_copy_impl(new_size);
+        return {data(), new_size};
+    }
 
     void free() noexcept;
 
     void swap(UninitDynamicBuffer& other) noexcept;
 
-    bytes_view buffer() const noexcept
+    writable_bytes_view buffer() const noexcept
     {
-        return {p, len};
+        return {data(), len};
     }
 
     REDEMPTION_ATTRIBUTE_RETURNS_NONNULL
@@ -65,6 +73,12 @@ struct UninitDynamicBuffer
     }
 
 private:
+    /// \post size() >= new_size
+    void grow_impl(std::size_t new_size, std::size_t copiable_length, std::size_t copiable_offset = 0);
+
+    /// \post size() >= new_size
+    void grow_without_copy_impl(std::size_t new_size);
+
     uint8_t* p;
     std::size_t len = 0;
 };

@@ -39,7 +39,7 @@ void SessionLogTest::log6(LogId id, KVLogList kv_list)
     messages += '\n';
 }
 
-void SessionLogTest::set_owner_control_ctx(chars_view name)
+void SessionLogTest::set_control_owner_ctx(chars_view name)
 {
     if (name.empty()) {
         extra_msg.clear();

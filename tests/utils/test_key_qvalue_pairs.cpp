@@ -29,18 +29,18 @@
 
 RED_AUTO_TEST_CASE(TestQValue)
 {
-    auto to_string = [s = std::string{}](KVLogList kv_list) mutable -> std::string const& {
+    auto to_string = [s = std::vector<char>{}](KVLogList kv_list) mutable -> chars_view {
         log_format_set_info(s, LogId::INPUT_LANGUAGE, kv_list);
         return s;
     };
 
-    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\"", to_string({}));
-    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\" data=\"xxx\\\"yyy\" field=\"data\"",
+    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\""_av, to_string({}));
+    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\" data=\"xxx\\\"yyy\" field=\"data\""_av,
         to_string({
             KVLog{"data"_av, "xxx\"yyy"_av},
             KVLog{"field"_av, "data"_av},
         }));
-    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\" data=\"a\\\\b\\\"c \\r\\n\"",
+    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\" data=\"a\\\\b\\\"c \\r\\n\""_av,
         to_string({
             KVLog{"data"_av, "a\\b\"c \r\n"_av},
         }));

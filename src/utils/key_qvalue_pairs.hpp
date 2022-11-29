@@ -22,32 +22,52 @@
 
 #include "core/log_id.hpp"
 #include "acl/auth_api.hpp"
-#include "utils/strutils.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
-#include <string>
+#include <array>
+#include <vector>
 #include <algorithm>
+
+#include <cstring>
 
 
 namespace qvalue_table_formats
 {
-    constexpr auto log()
-    {
+    constexpr inline auto siem_escaped_table = []{
         std::array<char, 256> t{};
         t[int('"')] = '"';
         t[int('\\')] = '\\';
         t[int('\n')] = 'n';
         t[int('\r')] = 'r';
         return t;
+    }();
+
+    static char* append(char* buffer, chars_view av)
+    {
+        memcpy(buffer, av.data(), av.size());
+        return buffer + av.size();
     }
 
-    constexpr inline auto log_table = log();
+    constexpr inline chars_view log_id_as_type_strings[]{
+        #define f(x, cat) "type=\"" #x "\""_av,
+        X_LOG_ID(f)
+        #undef f
+    };
+
+    constexpr inline auto siem_value_prefix = "=\""_av;
+    constexpr inline auto siem_value_suffix = "\""_av;
 } // namespace qvalue_table_formats
 
-inline void escaped_qvalue(
-    std::string& escaped_subject,
-    chars_view subject,
+inline std::size_t safe_size_for_escaped_qvalue(chars_view data) noexcept
+{
+    return data.size() * 2;
+}
+
+[[nodiscard]]
+inline char * escaped_qvalue(
+    char * buffer,
+    chars_view data,
     std::array<char, 256> const& escaped_table)
 {
     auto escaped = [&](char c){
@@ -56,49 +76,96 @@ inline void escaped_qvalue(
         return escaped_table[unsigned(uchar(c))];
     };
 
-    auto first = subject.begin();
-    auto last = subject.end();
+    auto first = data.begin();
+    auto last = data.end();
 
-    decltype(first) p;
+    char const* p;
     while ((p = std::find_if(first, last, escaped)) != last) {
-        str_append(escaped_subject, chars_view{first, p}, '\\', escaped(*p));
+        buffer = qvalue_table_formats::append(buffer, {first, p});
+        *buffer++ = '\\';
+        *buffer++ = escaped(*p);
         first = p + 1;
     }
 
-    escaped_subject.append(first, last);
+    return qvalue_table_formats::append(buffer, {first, last});
 }
 
-template<class Prefix, class Suffix>
-inline std::string& kv_list_to_string(
-    std::string& buffer, KVLogList kv_list,
-    Prefix prefix, Suffix suffix,
+inline std::size_t safe_size_for_kv_list_to_string(
+    chars_view prefix,
+    chars_view suffix,
+    KVLogList kv_list) noexcept
+{
+    std::size_t len = (prefix.size() + suffix.size() + 1) * kv_list.size();
+
+    for (auto& kv : kv_list) {
+        len += kv.key.size();
+        len += safe_size_for_escaped_qvalue(kv.value);
+    }
+
+    return len;
+}
+
+[[nodiscard]]
+inline char * kv_list_to_string(
+    char * buffer, KVLogList kv_list,
+    chars_view prefix, chars_view suffix,
     std::array<char, 256> const& escaped_table)
 {
     for (auto& kv : kv_list) {
-        str_append(buffer, ' ', kv.key, prefix);
-        escaped_qvalue(buffer, kv.value, escaped_table);
-        buffer += suffix;
+        *buffer++ = ' ';
+        buffer = qvalue_table_formats::append(buffer, kv.key);
+        buffer = qvalue_table_formats::append(buffer, prefix);
+        buffer = escaped_qvalue(buffer, kv.value, escaped_table);
+        buffer = qvalue_table_formats::append(buffer, suffix);
     }
 
     return buffer;
 }
 
-constexpr inline zstring_view log_id_string_type_map[]{
-    #define f(x, cat) "type=\"" #x "\""_zv,
-    X_LOG_ID(f)
-    #undef f
-};
-
-inline chars_view log_format_append_info(std::string& buffer, LogId id, KVLogList kv_list)
+inline void kv_list_to_string(
+    std::vector<char>& buffer, KVLogList kv_list,
+    chars_view prefix, chars_view suffix,
+    std::array<char, 256> const& escaped_table)
 {
-    auto type = log_id_string_type_map[int(id)];
-    buffer.append(type.begin(), type.end());
-    kv_list_to_string(buffer, kv_list, "=\"", '"', qvalue_table_formats::log_table);
+    auto old_size = buffer.size();
+    buffer.resize(old_size + safe_size_for_kv_list_to_string(prefix, suffix, kv_list));
+
+    char* p = buffer.data() + old_size;
+    p = kv_list_to_string(p, kv_list, prefix, suffix, escaped_table);
+
+    auto final_len = static_cast<std::size_t>(p - buffer.data());
+    buffer.resize(final_len);
+}
+
+inline std::size_t safe_size_for_log_format_append_info(LogId id, KVLogList kv_list)
+{
+    auto type = qvalue_table_formats::log_id_as_type_strings[int(id)];
+
+    return type.size()
+      + safe_size_for_kv_list_to_string(qvalue_table_formats::siem_value_prefix,
+                                        qvalue_table_formats::siem_value_suffix,
+                                        kv_list);
+}
+
+inline char * log_format_append_info(char * buffer, LogId id, KVLogList kv_list)
+{
+    auto type = qvalue_table_formats::log_id_as_type_strings[int(id)];
+
+    buffer = qvalue_table_formats::append(buffer, type);
+    buffer = kv_list_to_string(buffer, kv_list,
+                               qvalue_table_formats::siem_value_prefix,
+                               qvalue_table_formats::siem_value_suffix,
+                               qvalue_table_formats::siem_escaped_table);
+
     return buffer;
 }
 
-inline chars_view log_format_set_info(std::string& buffer, LogId id, KVLogList kv_list)
+inline void log_format_set_info(std::vector<char>& buffer, LogId id, KVLogList kv_list)
 {
     buffer.clear();
-    return log_format_append_info(buffer, id, kv_list);
+    buffer.resize(safe_size_for_log_format_append_info(id, kv_list));
+    char* p = log_format_append_info(buffer.data(), id, kv_list);
+
+    auto final_len = static_cast<std::size_t>(p - buffer.data());
+    buffer.resize(final_len);
 }

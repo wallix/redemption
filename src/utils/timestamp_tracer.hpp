@@ -43,11 +43,10 @@ private:
 
         ts_width = ts_max_length * char_width,
         ts_height = char_height,
-        size_str_timestamp = ts_max_length + 1
     };
 
     uint8_t timestamp_save[ts_width * ts_height * /*DrawableImplPrivate::bytes_per_pixel*/4];
     uint8_t timestamp_data[ts_width * ts_height * /*DrawableImplPrivate::bytes_per_pixel*/4];
-    char previous_timestamp[size_str_timestamp];
+    char previous_timestamp[ts_max_length];
     int previous_timestamp_length;
 };

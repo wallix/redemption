@@ -5202,7 +5202,7 @@ private:
                 KVLog("new_control_owner"_av, new_control_owner),
             }
         );
-        this->sharing_ctx.session_log->set_owner_control_ctx(new_control_owner);
+        this->sharing_ctx.session_log->set_control_owner_ctx(new_control_owner);
     }
 
     void session_sharing_take_control(Callback & cb)
@@ -5464,7 +5464,7 @@ public:
             KVLog("guest"_av, guest_front.sharing_ctx.name),
             KVLog("mode"_av, guest_front.sharing_ctx.enable_shared_control ? "view-control"_av : "view-only"_av),
         });
-        session_log.set_owner_control_ctx(this->sharing_ctx.name);
+        session_log.set_control_owner_ctx(this->sharing_ctx.name);
     }
 
     void remove_guest(Front& guest_front)
@@ -5487,7 +5487,7 @@ public:
         int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
             seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
-        this->sharing_ctx.session_log->set_owner_control_ctx({});
+        this->sharing_ctx.session_log->set_control_owner_ctx({});
         this->sharing_ctx.session_log->log6(LogId::SESSION_INVITE_GUEST_DISCONNECTION, {
             KVLog("guest"_av, guest_front.sharing_ctx.name),
             KVLog("duration"_av, {duration_str, std::size_t(len)}),

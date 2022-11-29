@@ -30,7 +30,7 @@ struct SessionLogTest : SessionLogApi
 
     void log6(LogId id, KVLogList kv_list) override;
 
-    void set_owner_control_ctx(chars_view name) override;
+    void set_control_owner_ctx(chars_view name) override;
 
     std::string events();
 

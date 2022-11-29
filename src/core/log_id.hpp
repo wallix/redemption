@@ -145,14 +145,6 @@ enum class LogId : unsigned
 #undef f
 };
 
-constexpr bool is_valid_log_id(unsigned id) noexcept
-{
-    return id < 0u
-#define f(x, cat) +1
-    X_LOG_ID(f);
-#undef f
-}
-
 namespace detail
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
@@ -169,4 +161,15 @@ namespace detail
         #undef f
     };
     REDEMPTION_DIAGNOSTIC_POP()
+
+    inline constexpr std::size_t log_id_max = 0u
+#define f(x, cat) +1
+    X_LOG_ID(f);
+#undef f
+    ;
 } // namespace detail
+
+constexpr bool is_valid_log_id(unsigned id) noexcept
+{
+    return id < detail::log_id_max;
+}

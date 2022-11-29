@@ -203,10 +203,7 @@ class Session
             timespec tp;
             clock_gettime(CLOCK_REALTIME, &tp);
 
-            this->log_file.log6(tp.tv_sec, id, kv_list);
-            /* Log to SIEM (redirected syslog) */
-            this->siem_logger.log_syslog_format(id, kv_list, this->ini, this->session_type);
-            this->siem_logger.log_arcsight_format(tp.tv_sec, id, kv_list, this->ini, this->session_type);
+            this->log_file.log(tp.tv_sec, this->ini, this->session_type, id, kv_list);
 
             if (this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
                 return ;
@@ -215,14 +212,9 @@ class Session
             this->probe_api.session_update(this->time_base.monotonic_time, id, kv_list);
         }
 
-        void set_owner_control_ctx(chars_view name) override
+        void set_control_owner_ctx(chars_view name) override
         {
-            if (name.empty()) {
-                extra_log.clear();
-            }
-            else {
-                str_assign(extra_log, " control_owner=\"", name, '"');
-            }
+            this->log_file.set_control_owner_ctx(name);
         }
 
         Inifile& ini;
@@ -231,9 +223,8 @@ class Session
         CryptoContext & cctx;
         std::string session_type;
         LogCategoryFlags dont_log {};
-        SiemLogger siem_logger;
         SessionLogFile log_file;
-        std::string extra_log;
+        std::string sharing_ctx_extra_log;
     };
 
     struct Select

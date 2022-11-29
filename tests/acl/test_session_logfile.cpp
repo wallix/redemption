@@ -73,7 +73,6 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
     SessionLogFile log_file(cctx, rnd, notify_error);
-    SiemLogger siem_logger;
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
@@ -85,84 +84,73 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
         ut::log_buffered logbuf;
         const time_t now = 0;
 
-        log_file.log6(now, LogId::INPUT_LANGUAGE, {
+        log_file.log(now, ini, session_type, LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),
         });
 
-        siem_logger.log_syslog_format(LogId::INPUT_LANGUAGE, {
-            KVLog("identifier"_av,   "ident"_av),
-            KVLog("display_name"_av, "name"_av),
-        }, ini, session_type);
-
-        siem_logger.log_arcsight_format(now,
-            LogId::INPUT_LANGUAGE, {
-            KVLog("identifier"_av,   "ident"_av),
-            KVLog("display_name"_av, "name"_av),
-        }, ini, session_type);
-
-        auto expected6 =
+        auto expected =
             "[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
             "Jan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|24|INPUT_LANGUAGE|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 identifier=ident display_name=name\n"
             ""_av;
-        RED_CHECK(logbuf.buf() == expected6);
+        RED_CHECK(logbuf.buf() == expected);
     }
 
     {
         ut::log_buffered logbuf;
         const time_t now = 10;
 
-        log_file.log6(now, LogId::CONNECTION_FAILED, {
+        log_file.log(now, ini, session_type, LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog("msg2"_av, "vnc"_av),
         });
 
-        siem_logger.log_syslog_format(LogId::CONNECTION_FAILED, {
-            KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
-            KVLog("msg2"_av, "vnc"_av),
-        }, ini, session_type);
-
-        siem_logger.log_arcsight_format(now, LogId::CONNECTION_FAILED, {
-            KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
-            KVLog("msg2"_av, "vnc"_av),
-        }, ini, session_type);
-
-        auto expected6 =
+        auto expected =
             "[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"vnc\"\n"
             "Jan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 msg=long long\\nmessage\\=|x\\\\y\"z msg2=vnc\n"
             ""_av;
-
-        RED_CHECK(logbuf.buf() == expected6);
+        RED_CHECK(logbuf.buf() == expected);
     }
 
     {
         ut::log_buffered logbuf;
         const time_t now = 3033;
 
-        siem_logger.log_syslog_format(LogId::DRIVE_REDIRECTION_RENAME, {
-            KVLog("app"_av, "rdp"_av),
-            KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
-            KVLog("filePath"_av, "/dir/new_file.ext"_av),
-        }, ini, session_type);
-
-        siem_logger.log_arcsight_format(now, LogId::DRIVE_REDIRECTION_RENAME, {
-            KVLog("app"_av, "rdp"_av),
-            KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
-            KVLog("filePath"_av, "/dir/new_file.ext"_av),
-        }, ini, session_type);
-
-        log_file.log6(now, LogId::DRIVE_REDIRECTION_RENAME, {
+        log_file.log(now, ini, session_type, LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
         });
 
-        auto expected6 =
+        auto expected =
             "[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\n"
             "Jan 01 1970 00:50:33 host message CEF:1|Wallix|Bastion|" VERSION "|15|DRIVE_REDIRECTION_RENAME|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 app=rdp oldFilePath=/dir/old_file.ext filePath=/dir/new_file.ext\n"
             ""_av;
+        RED_CHECK(logbuf.buf() == expected);
+    }
 
-        RED_CHECK(logbuf.buf() == expected6);
+    {
+        ut::log_buffered logbuf;
+        const time_t now = 3033;
+
+        log_file.set_control_owner_ctx("guest-1"_av);
+        log_file.log(now, ini, session_type, LogId::BUTTON_CLICKED, {
+            KVLog("label"_av, "bbb"_av),
+        });
+
+        log_file.set_control_owner_ctx({});
+        log_file.log(now, ini, session_type, LogId::BUTTON_CLICKED, {
+            KVLog("label"_av, "bbb"_av),
+        });
+
+        auto expected =
+            "[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"BUTTON_CLICKED\" label=\"bbb\" control_owner=\"guest-1\"\n"
+            "Jan 01 1970 00:50:33 host message CEF:1|Wallix|Bastion|" VERSION "|0|BUTTON_CLICKED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 label=bbb\n"
+
+            "[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"BUTTON_CLICKED\" label=\"bbb\"\n"
+            "Jan 01 1970 00:50:33 host message CEF:1|Wallix|Bastion|" VERSION "|0|BUTTON_CLICKED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 label=bbb\n"
+            ""_av;
+        RED_CHECK(logbuf.buf() == expected);
     }
 
     log_file.close_session_log();
@@ -170,5 +158,8 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     RED_CHECK_FILE_CONTENTS(logfile,
         "1970-01-01 01:00:00 type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
         "1970-01-01 01:00:10 type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"vnc\"\n"
-        "1970-01-01 01:50:33 type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\n"_av);
+        "1970-01-01 01:50:33 type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\n"
+        "1970-01-01 01:50:33 type=\"BUTTON_CLICKED\" label=\"bbb\" control_owner=\"guest-1\"\n"
+        "1970-01-01 01:50:33 type=\"BUTTON_CLICKED\" label=\"bbb\"\n"
+        ""_av);
 }
