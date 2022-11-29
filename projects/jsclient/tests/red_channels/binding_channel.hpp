@@ -307,7 +307,10 @@ using js_function_ptr_t = typename js_function_ptr<PtrFunc>::type;
         };                                                                   \
     }                                                                        \
                                                                              \
+    REDEMPTION_DIAGNOSTIC_PUSH()                                             \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier")              \
     EMSCRIPTEN_BINDINGS(test_channel_)                                       \
+    REDEMPTION_DIAGNOSTIC_POP()                                              \
     {                                                                        \
         namespace structs = test_channel_data::ChannelType ## _structs;      \
         using Class = test_channel_data::ChannelType ## _js;                 \
