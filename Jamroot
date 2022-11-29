@@ -1,5 +1,3 @@
-using gcc : default : g++ ;
-
 JAM_INCLUDE_PATH ?= jam ;
 
 #############################
