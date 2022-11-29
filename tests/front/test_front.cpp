@@ -537,27 +537,30 @@ inline constexpr auto no_mouse = ""_av;
 
 inline constexpr auto guest_to_user_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"guest-1\" new_control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x43}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto common_to_user_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"<everybody>\" new_control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x43}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+inline constexpr auto common_to_guest_log_event =
+    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, {KeyLocks=0x04}"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"<everybody>\" new_control_owner=\"guest-1\"\n"_av;
 inline constexpr auto user_to_guest_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, {KeyLocks=0x04}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"guest-1\"\n"_av;
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"user\" new_control_owner=\"guest-1\"\n"_av;
 inline constexpr auto guest_to_user_and_guest_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"<everybody>\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"guest-1\" new_control_owner=\"<everybody>\"\n"
     ", {KbdFlags=0x8000, Scancode=0x57}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_to_user_and_guest_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"<everybody>\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"user\" new_control_owner=\"<everybody>\"\n"
     ", {KbdFlags=0x8000, Scancode=0x57}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_mask_log_event =
@@ -567,7 +570,7 @@ inline constexpr auto user_mask_log_event =
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_mask_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED control_owner=\"guest-1\" new_control_owner=\"user\"\n"
     "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
@@ -636,6 +639,9 @@ void sharing_test(bool enable_shared_control, F f)
     RED_CHECK(event_manager.is_empty());
 
     // start test
+
+    std::memcpy(const_cast<ClientInfo&>(user.front.get_client_info()).username, "user", 5); // NOLINT
+    std::memcpy(const_cast<ClientInfo&>(guest.front.get_client_info()).username, "guest-1", 7); // NOLINT
 
     RED_CHECK(session_log.events() == ""_av);
     RED_CHECK(!gd.is_slased_circle_cursor);
@@ -904,7 +910,7 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
         }
 
         RED_TEST_CONTEXT("Take -> Give -> Take -> Common -> Give") {
-            RED_CHECK(shortcut(user, Shortcut::Give) == user_to_guest_log_event);
+            RED_CHECK(shortcut(user, Shortcut::Give) == common_to_guest_log_event);
             RED_CHECK(gd.is_slased_circle_cursor);
             RED_CHECK(keyA(guest) == keyA_av);
             RED_CHECK(keyA(user) == no_keys);

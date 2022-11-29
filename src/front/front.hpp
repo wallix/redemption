@@ -757,6 +757,7 @@ private:
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
         chars_view name {};
+        chars_view control_owner {};
         MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
@@ -5195,14 +5196,15 @@ public:
     }
 
 private:
-    void control_ownership_changed(chars_view guest_name, chars_view new_control)
+    void control_ownership_changed(chars_view new_control_owner)
     {
         this->sharing_ctx.session_log->log6(
             LogId::SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, {
-                KVLog("guest_user"_av, guest_name),
-                KVLog("new_control_owner_user"_av, new_control),
+                KVLog("control_owner"_av, this->sharing_ctx.control_owner),
+                KVLog("new_control_owner"_av, new_control_owner),
             }
         );
+        this->sharing_ctx.control_owner = new_control_owner;
     }
 
     void session_sharing_take_control(Callback & cb)
@@ -5218,10 +5220,7 @@ private:
         this->sharing_ctx.guest->sharing_ctx.disable_input();
         cb.rdp_input_synchronize(this->keymap.locks());
 
-        this->control_ownership_changed(
-            this->sharing_ctx.guest->sharing_ctx.name,
-            this->sharing_ctx.name
-        );
+        this->control_ownership_changed(this->sharing_ctx.name);
     }
 
     void session_sharing_give_control(Callback & cb)
@@ -5237,10 +5236,7 @@ private:
             ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
         cb.rdp_input_synchronize(this->sharing_ctx.guest->keymap.locks());
 
-        this->control_ownership_changed(
-            this->sharing_ctx.guest->sharing_ctx.name,
-            this->sharing_ctx.guest->sharing_ctx.name
-        );
+        this->control_ownership_changed(this->sharing_ctx.guest->sharing_ctx.name);
     }
 
     void session_sharing_common_control(Callback & cb)
@@ -5261,10 +5257,7 @@ private:
         }
         cb.rdp_input_synchronize(key_locks);
 
-        this->control_ownership_changed(
-            this->sharing_ctx.guest->sharing_ctx.name,
-            "<everybody>"_av
-        );
+        this->control_ownership_changed("<everybody>"_av);
     }
 
     void session_sharing_toggle_graphics(Callback & cb)
@@ -5478,14 +5471,12 @@ public:
     {
         assert(!this->sharing_ctx.guest);
 
-        // TODO client_info.username should be Sized variable
-        // this->sharing_ctx.name = std::string_view{this->client_info.username};
-        this->sharing_ctx.name = "user"_av;
+        this->sharing_ctx.name = std::string_view{this->client_info.username};
+        this->sharing_ctx.control_owner = this->sharing_ctx.name;
+
         this->sharing_ctx.is_sharing_mode = true;
         guest_front.sharing_ctx.is_sharing_mode = true;
-        // TODO client_info.username should be Sized variable
-        // guest_front.sharing_ctx.name = std::string_view{guest_front.client_info.username};
-        guest_front.sharing_ctx.name = "guest-1"_av;
+        guest_front.sharing_ctx.name = std::string_view{guest_front.client_info.username};
 
         this->sharing_ctx.guest = &guest_front;
         this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;
@@ -5499,7 +5490,7 @@ public:
         this->add_graphic(guest_front);
 
         session_log.log6(LogId::SESSION_INVITE_GUEST_CONNECTION, {
-            KVLog("name"_av, "guest-1"_av),
+            KVLog("name"_av, guest_front.sharing_ctx.name),
             KVLog("mode"_av, guest_front.sharing_ctx.enable_shared_control ? "view-control"_av : "view-only"_av),
         });
     }
