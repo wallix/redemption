@@ -106,10 +106,10 @@ void VideoCaptureCtx::VideoCropper::set_cropping(Rect cropping) noexcept
     }
 
     if (cropping.cx != crop_rect.cx || cropping.cy != crop_rect.cy) {
-        uint8_t* out_bmpdata_tmp = out_bmpdata.get() + cropping.cx * cropping.cy * Drawable::Bpp;
+        uint8_t* out_bmpdata_tmp = out_bmpdata.get() + original_dimension.w * cropping.cy * Drawable::Bpp;
         std::size_t const rowsize = original_dimension.w * Drawable::Bpp;
 
-        for (uint16_t i = original_dimension.h - cropping.cy; i < original_dimension.h; ++i) {
+        for (uint16_t i = cropping.cy; i < original_dimension.h; ++i) {
             std::memset(out_bmpdata_tmp, 0, rowsize);
             out_bmpdata_tmp += rowsize;
         }
