@@ -2134,7 +2134,8 @@ class Sesman():
                     )
 
                     # kv[u'target_application'] = selected_target.service_login
-                    kv[u'disable_tsk_switch_shortcuts'] = u'yes'
+                    if not self.engine.is_sharing_session(selected_target):
+                        kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                 self.cn = target_login_info.target_name
 
                 if self.target_context.host:
