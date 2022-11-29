@@ -5239,27 +5239,6 @@ private:
         this->control_ownership_changed(this->sharing_ctx.guest->sharing_ctx.name);
     }
 
-    void session_sharing_common_control(Callback & cb)
-    {
-        if (this->sharing_ctx.has_input() && this->sharing_ctx.guest->sharing_ctx.has_input()) {
-            return;
-        }
-
-        this->sharing_ctx.enable_input();
-        this->sharing_ctx.guest->sharing_ctx.enable_input();
-        this->gd->cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
-        this->sharing_ctx.guest->orders.graphics_update_pdu().GraphicsUpdatePDU
-            ::cached_pointer(this->sharing_ctx.last_pointer_cache_idx);
-
-        auto const key_locks = this->keymap.locks();
-        if (this->sharing_ctx.guest->keymap.locks() != key_locks) {
-            this->sharing_ctx.guest->set_keyboard_indicators(key_locks);
-        }
-        cb.rdp_input_synchronize(key_locks);
-
-        this->control_ownership_changed("<everybody>"_av);
-    }
-
     void session_sharing_toggle_graphics(Callback & cb)
     {
         array_view state = "unmasked"_av;
@@ -5307,11 +5286,6 @@ private:
 
             if (this->keymap.is_session_sharing_give_control()) {
                 this->session_sharing_give_control(cb);
-                return true;
-            }
-
-            if (this->keymap.is_session_sharing_common_control()) {
-                this->session_sharing_common_control(cb);
                 return true;
             }
         }

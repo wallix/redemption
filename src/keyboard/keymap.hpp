@@ -108,7 +108,6 @@ struct Keymap
 
     bool is_session_sharing_take_control() const noexcept;
     bool is_session_sharing_give_control() const noexcept;
-    bool is_session_sharing_common_control() const noexcept;
     bool is_session_sharing_kill_guest() const noexcept;
     bool is_session_sharing_toggle_graphics() const noexcept;
 
