@@ -345,11 +345,6 @@ bool Keymap::is_session_sharing_give_control() const noexcept
     return sharing_shortcut(KeyCode::F10, _decoded_key, _key_mods);
 }
 
-bool Keymap::is_session_sharing_common_control() const noexcept
-{
-    return sharing_shortcut(KeyCode::F11, _decoded_key, _key_mods);
-}
-
 bool Keymap::is_session_sharing_kill_guest() const noexcept
 {
     return sharing_shortcut(KeyCode::F5, _decoded_key, _key_mods);

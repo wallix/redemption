@@ -35,7 +35,18 @@ void SessionLogTest::log6(LogId id, KVLogList kv_list)
     for (auto& kv : kv_list) {
         str_append(messages, ' ', kv.key, "=\"", kv.value, '"');
     }
+    messages += extra_msg;
     messages += '\n';
+}
+
+void SessionLogTest::set_owner_control_ctx(chars_view name)
+{
+    if (name.empty()) {
+        extra_msg.clear();
+    }
+    else {
+        str_assign(extra_msg, " control_owner=\"", name, '"');
+    }
 }
 
 std::string SessionLogTest::events()

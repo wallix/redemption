@@ -423,7 +423,6 @@ enum class Shortcut : int_scancode
 {
     Take = int_scancode(Scancode::F9),
     Give = int_scancode(Scancode::F10),
-    Common = int_scancode(Scancode::F11),
     Kill = int_scancode(Scancode::F5),
     ToggleGraphics = int_scancode(Scancode::F8),
 };
@@ -480,23 +479,6 @@ inline constexpr auto keys_take_intercept =
     "{KbdFlags=0x8000, Scancode=0x38}, "
     "{KbdFlags=0x8000, Scancode=0x2A}, "
     "{KbdFlags=0x8000, Scancode=0x1D}"_av;
-inline constexpr auto keys_common =
-    "{KbdFlags=0x0000, Scancode=0x1D}, "
-    "{KbdFlags=0x0000, Scancode=0x2A}, "
-    "{KbdFlags=0x0000, Scancode=0x38}, "
-    "{KbdFlags=0x0000, Scancode=0x57}, "
-    "{KbdFlags=0x8000, Scancode=0x57}, "
-    "{KbdFlags=0x8000, Scancode=0x38}, "
-    "{KbdFlags=0x8000, Scancode=0x2A}, "
-    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
-inline constexpr auto keys_common_intercept =
-    "{KbdFlags=0x0000, Scancode=0x1D}, "
-    "{KbdFlags=0x0000, Scancode=0x2A}, "
-    "{KbdFlags=0x0000, Scancode=0x38}, "
-    "{KbdFlags=0x8000, Scancode=0x57}, "
-    "{KbdFlags=0x8000, Scancode=0x38}, "
-    "{KbdFlags=0x8000, Scancode=0x2A}, "
-    "{KbdFlags=0x8000, Scancode=0x1D}"_av;
 
 
 std::string uniA(FrontCtx& front_ctx)
@@ -535,53 +517,31 @@ inline constexpr auto mouse_pos = "{flags=0x9000, x=1, y=1}, {flags=0x1000, x=1,
 inline constexpr auto no_mouse = ""_av;
 
 
-inline constexpr auto guest_to_user_log_event =
-    "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x43}, "
-    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
-inline constexpr auto common_to_user_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
-    "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x43}, "
-    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_to_guest_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, {KeyLocks=0x04}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"guest-1\"\n"_av;
-inline constexpr auto guest_to_user_and_guest_log_event =
-    "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"<everybody>\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x57}, "
-    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
-inline constexpr auto user_to_user_and_guest_log_event =
-    "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
-    "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"<everybody>\"\n"
-    ", {KbdFlags=0x8000, Scancode=0x57}, "
-    "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED new_control_owner=\"guest-1\" control_owner=\"user\"\n"_av;
 inline constexpr auto user_mask_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}"
-    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\"\n"
+    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\" control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_mask_log_event =
     "{KeyLocks=0x01}"
-    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED guest_user=\"guest-1\" new_control_owner_user=\"user\"\n"
-    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\"\n"
+    "SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED new_control_owner=\"user\" control_owner=\"guest-1\"\n"
+    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"masked\" control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto user_unmask_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}, "
     "{Invalidate={0, 0, 1024, 768}"
-    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"unmasked\"\n"
+    "SESSION_INVITE_GUEST_VIEW_CHANGED state=\"unmasked\" control_owner=\"user\"\n"
     ", {KbdFlags=0x8000, Scancode=0x42}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 inline constexpr auto guest_to_user_and_kill_log_event =
-    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\"\n"_av;
+    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\" control_owner=\"guest-1\"\n"_av;
 inline constexpr auto user_kill_log_event =
     "{KbdFlags=0x0000, Scancode=0x1D}, {KbdFlags=0x0000, Scancode=0x2A}, {KbdFlags=0x0000, Scancode=0x38}"
-    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\"\n, "
+    "SESSION_INVITE_GUEST_KILLED name=\"guest-1\" control_owner=\"user\"\n, "
     "{KbdFlags=0x8000, Scancode=0x3F}, "
     "{KbdFlags=0x8000, Scancode=0x38}, {KbdFlags=0x8000, Scancode=0x2A}, {KbdFlags=0x8000, Scancode=0x1D}"_av;
 
@@ -637,6 +597,9 @@ void sharing_test(bool enable_shared_control, F f)
 
     // start test
 
+    std::memcpy(const_cast<ClientInfo&>(user.front.get_client_info()).username, "user", 5); // NOLINT
+    std::memcpy(const_cast<ClientInfo&>(guest.front.get_client_info()).username, "guest-1", 7); // NOLINT
+
     RED_CHECK(session_log.events() == ""_av);
     RED_CHECK(!gd.is_slased_circle_cursor);
 
@@ -653,7 +616,7 @@ RED_AUTO_TEST_CASE(TestViewAndControlSharingFront)
     using namespace TestFrontData;
 
 sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
-    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION name=\"guest-1\" mode=\"view-control\"\n"_av);
+    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION guest=\"guest-1\" mode=\"view-control\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
         RED_CHECK(!gd.is_slased_circle_cursor);
@@ -681,19 +644,6 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
 
         RED_TEST_CONTEXT("guest send Give") {
             RED_CHECK(shortcut(guest, Shortcut::Give) == no_keys);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == no_keys);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == no_unis);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == no_locks);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == no_mouse);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("guest send Common") {
-            RED_CHECK(shortcut(guest, Shortcut::Common) == no_keys);
             RED_CHECK(!gd.is_slased_circle_cursor);
             RED_CHECK(keyA(guest) == no_keys);
             RED_CHECK(keyA(user) == keyA_av);
@@ -758,19 +708,6 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
             RED_CHECK(mouse(user) == no_mouse);
         }
 
-        RED_TEST_CONTEXT("guest send Common") {
-            RED_CHECK(shortcut(guest, Shortcut::Common) == keys_common);
-            RED_CHECK(gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == no_keys);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == no_unis);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == no_locks);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == no_mouse);
-        }
-
         RED_TEST_CONTEXT("user send Give") {
             RED_CHECK(shortcut(user, Shortcut::Give) == no_keys);
             RED_CHECK(gd.is_slased_circle_cursor);
@@ -785,170 +722,12 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
         }
     }
 
-    RED_TEST_CONTEXT("user + guest control") {
-        RED_CHECK(shortcut(user, Shortcut::Common) == guest_to_user_and_guest_log_event);
-        RED_CHECK(!gd.is_slased_circle_cursor);
-        RED_CHECK(keyA(guest) == keyA_av);
-        RED_CHECK(keyA(user) == keyA_av);
-        RED_CHECK(uniA(guest) == uniA_av);
-        RED_CHECK(uniA(user) == uniA_av);
-        RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-        RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-        RED_CHECK(mouse(guest) == mouse_pos);
-        RED_CHECK(mouse(user) == mouse_pos);
-
-        RED_TEST_CONTEXT("guest send Take") {
-            RED_CHECK(shortcut(guest, Shortcut::Take) == keys_take);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("guest send Give") {
-            RED_CHECK(shortcut(guest, Shortcut::Give) == keys_give);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("guest send Common") {
-            RED_CHECK(shortcut(guest, Shortcut::Common) == keys_common);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("user send Common") {
-            RED_CHECK(shortcut(user, Shortcut::Common) == keys_common_intercept);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-    }
-
-    RED_TEST_CONTEXT("transitions: Take -> Give -> Take -> Common -> Give -> Common -> Take") {
-        RED_TEST_CONTEXT("Take") {
-            RED_CHECK(shortcut(user, Shortcut::Take) == common_to_user_log_event);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == no_keys);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == no_unis);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == no_locks);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == no_mouse);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("Take -> Give") {
-            RED_CHECK(shortcut(user, Shortcut::Give) == user_to_guest_log_event);
-            RED_CHECK(gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == no_keys);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == no_unis);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == no_locks);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == no_mouse);
-        }
-
-        RED_TEST_CONTEXT("Take -> Give -> Take") {
-            RED_CHECK(shortcut(user, Shortcut::Take) == guest_to_user_log_event);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == no_keys);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == no_unis);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == no_locks);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == no_mouse);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("Take -> Give -> Take -> Common") {
-            RED_CHECK(shortcut(user, Shortcut::Common) == user_to_user_and_guest_log_event);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("Take -> Give -> Take -> Common -> Give") {
-            RED_CHECK(shortcut(user, Shortcut::Give) == user_to_guest_log_event);
-            RED_CHECK(gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == no_keys);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == no_unis);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == no_locks);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == no_mouse);
-        }
-
-        RED_TEST_CONTEXT("Take -> Give -> Take -> Common -> Give -> Common") {
-            RED_CHECK(shortcut(user, Shortcut::Common) == guest_to_user_and_guest_log_event);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == keyA_av);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == uniA_av);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == lock_caps);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == mouse_pos);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
-        RED_TEST_CONTEXT("Take -> Give -> Take -> Common -> Give -> Common -> Take") {
-            RED_CHECK(shortcut(user, Shortcut::Take) == common_to_user_log_event);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == no_keys);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == no_unis);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == no_locks);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == no_mouse);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-    }
-
     RED_CHECK(draw(guest) == 1);
     RED_CHECK(draw(user) == 1);
 
     RED_TEST_CONTEXT("toggle graphics") {
         RED_TEST_CONTEXT("disable graphics") {
-            RED_CHECK(shortcut(user, Shortcut::ToggleGraphics) == user_mask_log_event);
+            RED_CHECK(shortcut(user, Shortcut::ToggleGraphics) == guest_to_user_and_mask_log_event);
             RED_CHECK(!gd.is_slased_circle_cursor);
             RED_CHECK(keyA(guest) == no_keys);
             RED_CHECK(keyA(user) == keyA_av);
@@ -1006,7 +785,7 @@ sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& g
         user.front.remove_guest(guest.front);
         RED_CHECK(!gd.is_slased_circle_cursor);
         RED_CHECK(mod.session_log.events() ==
-            "SESSION_INVITE_GUEST_DISCONNECTION name=\"guest-1\" duration=\"00:00:00\"\n"_av);
+            "SESSION_INVITE_GUEST_DISCONNECTION guest=\"guest-1\" duration=\"00:00:00\"\n"_av);
         RED_CHECK(keyA(user) == keyA_av);
         RED_CHECK(uniA(user) == uniA_av);
         RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
@@ -1021,7 +800,7 @@ RED_AUTO_TEST_CASE(TestViewOnlySharingFront)
     using namespace TestFrontData;
 
 sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
-    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION name=\"guest-1\" mode=\"view-only\"\n"_av);
+    RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION guest=\"guest-1\" mode=\"view-only\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
         RED_CHECK(!gd.is_slased_circle_cursor);
@@ -1060,19 +839,6 @@ sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& 
             RED_CHECK(mouse(user) == mouse_pos);
         }
 
-        RED_TEST_CONTEXT("guest send Common") {
-            RED_CHECK(shortcut(guest, Shortcut::Common) == no_keys);
-            RED_CHECK(!gd.is_slased_circle_cursor);
-            RED_CHECK(keyA(guest) == no_keys);
-            RED_CHECK(keyA(user) == keyA_av);
-            RED_CHECK(uniA(guest) == no_unis);
-            RED_CHECK(uniA(user) == uniA_av);
-            RED_CHECK(locks(guest, KeyLocks::CapsLock) == no_locks);
-            RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-            RED_CHECK(mouse(guest) == no_mouse);
-            RED_CHECK(mouse(user) == mouse_pos);
-        }
-
         RED_TEST_CONTEXT("user send Take") {
             // shortcut scancode is skipped
             RED_CHECK(shortcut(user, Shortcut::Take) == keys_take);
@@ -1090,19 +856,6 @@ sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& 
 
     RED_TEST_CONTEXT("guest control (disabled)") {
         RED_CHECK(shortcut(user, Shortcut::Give) == keys_give);
-        RED_CHECK(!gd.is_slased_circle_cursor);
-        RED_CHECK(keyA(guest) == no_keys);
-        RED_CHECK(keyA(user) == keyA_av);
-        RED_CHECK(uniA(guest) == no_unis);
-        RED_CHECK(uniA(user) == uniA_av);
-        RED_CHECK(locks(guest, KeyLocks::CapsLock) == no_locks);
-        RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);
-        RED_CHECK(mouse(guest) == no_mouse);
-        RED_CHECK(mouse(user) == mouse_pos);
-    }
-
-    RED_TEST_CONTEXT("user + guest control (disabled)") {
-        RED_CHECK(shortcut(user, Shortcut::Common) == keys_common);
         RED_CHECK(!gd.is_slased_circle_cursor);
         RED_CHECK(keyA(guest) == no_keys);
         RED_CHECK(keyA(user) == keyA_av);
@@ -1172,7 +925,7 @@ sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& 
         user.front.remove_guest(guest.front);
         RED_CHECK(!gd.is_slased_circle_cursor);
         RED_CHECK(mod.session_log.events() ==
-            "SESSION_INVITE_GUEST_DISCONNECTION name=\"guest-1\" duration=\"00:00:00\"\n"_av);
+            "SESSION_INVITE_GUEST_DISCONNECTION guest=\"guest-1\" duration=\"00:00:00\"\n"_av);
         RED_CHECK(keyA(user) == keyA_av);
         RED_CHECK(uniA(user) == uniA_av);
         RED_CHECK(locks(user, KeyLocks::ScrollLock) == lock_scroll);

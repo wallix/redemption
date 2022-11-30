@@ -85,6 +85,7 @@ struct ClientInfo
     char hostname[16] = {0};
     uint32_t build = 0;
     KeyLayout::KbdId keylayout {};
+    // TODO should be a Sized array
     char username[257] = {0};
     char password[257] = {0};
     char domain[257] = {0};
