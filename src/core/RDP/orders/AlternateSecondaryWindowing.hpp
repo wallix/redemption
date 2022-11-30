@@ -1138,8 +1138,8 @@ public:
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
-            stream.out_uint32_le(this->ClientOffsetX_);
-            stream.out_uint32_le(this->ClientOffsetY_);
+            stream.out_sint32_le(this->ClientOffsetX_);
+            stream.out_sint32_le(this->ClientOffsetY_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
@@ -1285,8 +1285,8 @@ public:
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             // ClientOffsetX(4) + ClientOffsetY(4)
             ::check_throw(stream, 8, "NewOrExistingWindow (5)", ERR_RAIL_PDU_TRUNCATED);
-            this->ClientOffsetX_ = stream.in_uint32_le();
-            this->ClientOffsetY_ = stream.in_uint32_le();
+            this->ClientOffsetX_ = stream.in_sint32_le();
+            this->ClientOffsetY_ = stream.in_sint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
