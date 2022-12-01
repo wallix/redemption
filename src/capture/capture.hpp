@@ -266,4 +266,6 @@ private:
     RailScreenVisibility rail_screen_visibility;
 
     bool old_kbd_input_mask_state = false;
+
+    Point primary_monitor_offset;
 };

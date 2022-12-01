@@ -995,6 +995,9 @@ public:
         return res;
     }
 
+    MonitorLayoutPDU precapture_monitor_layout_pdu;
+    bool precapture_monitor_layout_pdu_is_available = false;
+
     void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) override {
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout");
@@ -1003,6 +1006,11 @@ public:
 
         if (this->capture) {
             this->capture->relayout(monitor_layout_pdu_ref);
+        }
+        else {
+            this->precapture_monitor_layout_pdu = monitor_layout_pdu_ref;
+
+            this->precapture_monitor_layout_pdu_is_available = true;
         }
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
@@ -1211,6 +1219,14 @@ public:
 
         if (capture_png && !this->ini.get<cfg::context::rt_ready>()){
             this->ini.set_acl<cfg::context::rt_ready>(true);
+        }
+
+        if (this->precapture_monitor_layout_pdu_is_available) {
+            this->capture->relayout(this->precapture_monitor_layout_pdu);
+
+            this->precapture_monitor_layout_pdu = MonitorLayoutPDU();
+
+            this->precapture_monitor_layout_pdu_is_available = false;
         }
 
         for (auto&& kv_event : this->session_update_buffer) {

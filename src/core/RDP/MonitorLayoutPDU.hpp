@@ -225,6 +225,22 @@ public:
         return Dimension(rect.cx, rect.cy);
     }
 
+    [[nodiscard]] Point get_primary_monitor_offset() const {
+        int16_t min_x = 0;
+        int16_t min_y = 0;
+
+        for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
+            if (this->monitorDefArray[monitorIndex].left < min_x) {
+                min_x = this->monitorDefArray[monitorIndex].left;
+            }
+            if (this->monitorDefArray[monitorIndex].top < min_y) {
+                min_y = this->monitorDefArray[monitorIndex].top;
+            }
+        }
+
+        return Point(-min_x, -min_y);
+    }
+
     void recv(InStream & stream) {
 
         ::check_throw(stream, 4,

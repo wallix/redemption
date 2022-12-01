@@ -1521,6 +1521,8 @@ void Capture::relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
     if (this->wrm_capture_obj) {
         this->wrm_capture_obj->relayout(monitor_layout_pdu);
     }
+
+    this->primary_monitor_offset = monitor_layout_pdu.get_primary_monitor_offset();
 }
 
 void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
@@ -1693,6 +1695,9 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
 }
 
 void Capture::visibility_rects_event(Rect rect) {
+    rect.x += this->primary_monitor_offset.x;
+    rect.y += this->primary_monitor_offset.y;
+
     if (this->png_real_time_capture_obj) {
         this->png_real_time_capture_obj->visibility_rects_event(rect);
     }
@@ -1701,7 +1706,6 @@ void Capture::visibility_rects_event(Rect rect) {
     }
 
     if (this->smart_video_cropping == SmartVideoCropping::disable
-     || this->smart_video_cropping == SmartVideoCropping::v1
      || !this->video_cropper
     ) {
         return;
