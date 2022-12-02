@@ -757,6 +757,7 @@ private:
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
         chars_view name {};
+        chars_view control_owner {};
         MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
         int input_id = 0;
@@ -3210,7 +3211,27 @@ public:
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
     {
         if (this->capture) {
-            this->capture->session_update(now, id, kv_list);
+            if (!this->sharing_ctx.is_sharing_mode) {
+                this->capture->session_update(now, id, kv_list);
+            }
+            // add "control_owner" key
+            else {
+                KVLog kvs[16];
+                auto* pkv = kvs;
+
+                std::unique_ptr<KVLog[]> mem;
+                if (kv_list.size() >= 16) {
+                    mem = std::make_unique<KVLog[]>(kv_list.size() + 1);
+                    pkv = mem.get();
+                }
+
+                for (auto kv : kv_list) {
+                    *pkv++ = kv;
+                }
+                *pkv++ = {"control_owner"_av, this->sharing_ctx.control_owner};
+
+                this->capture->session_update(now, id, array_view{kvs, pkv});
+            }
         }
         else if (this->ini.get<cfg::globals::is_rec>()) {
             this->session_update_buffer.append(now, id, kv_list);
@@ -5203,6 +5224,7 @@ private:
             }
         );
         this->sharing_ctx.session_log->set_control_owner_ctx(new_control_owner);
+        this->sharing_ctx.control_owner = new_control_owner;
     }
 
     void session_sharing_take_control(Callback & cb)
@@ -5444,6 +5466,7 @@ public:
         assert(!this->sharing_ctx.guest);
 
         this->sharing_ctx.name = std::string_view{this->client_info.username};
+        this->sharing_ctx.control_owner = this->sharing_ctx.name;
 
         this->sharing_ctx.is_sharing_mode = true;
         guest_front.sharing_ctx.is_sharing_mode = true;
