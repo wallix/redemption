@@ -444,7 +444,7 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
 void mod_vnc::rdp_input_synchronize(KeyLocks locks)
 {
     (void)locks;
-    LOG_IF(bool(this->verbose & VNCVerbose::keymap), LOG_INFO,
+    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
         "KeymapSym::synchronize(param1=%04x",
         underlying_cast(locks));
     this->keymapSym.set_locks(locks);
