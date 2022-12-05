@@ -61,6 +61,8 @@ public:
 private:
     bool target_info_is_shown = false;
     bool enable_osd = false;
+    bool is_disable_by_input = false;
+    bool bogus_refresh_rect_ex = false;
 
     ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
@@ -75,9 +77,6 @@ private:
 
     RDPColor color;
     RDPColor background_color;
-    bool allow_disable_osd_message = false;
-    bool is_disable_by_input = false;
-    bool bogus_refresh_rect_ex = false;
     const Font & glyphs;
     Keymap & keymap;
 
@@ -166,7 +165,7 @@ public:
             switch (omu)
             {
             case gdi::OsdMsgUrgency::NORMAL:
-                this->color = color_encode(BLACK, bpp);
+                this->color = RDPColor::from(0);
                 break;
 
             case gdi::OsdMsgUrgency::INFO:
@@ -188,9 +187,7 @@ public:
             str_assign(this->osd_message,
                        prefix, message, '\n',
                        TR(trkeys::disable_osd, language(this->ini)));
-            this->allow_disable_osd_message = true;
-            this->is_disable_by_input = true;
-            this->draw_osd_message();
+            this->draw_osd_message(true);
         }
     }
 
@@ -302,12 +299,10 @@ private:
                     }
                     if (!msg.empty()) {
                         this->osd_message = std::move(msg);
-                        this->allow_disable_osd_message = false;
-                        this->is_disable_by_input = false;
                         auto bpp = this->client_info.screen_info.bpp;
-                        this->color = color_encode(BLACK, bpp);
+                        this->color = RDPColor::from(0);
                         this->background_color = color_encode(LIGHT_YELLOW, bpp);
-                        this->draw_osd_message();
+                        this->draw_osd_message(false);
                     }
 
                     this->target_info_is_shown = true;
@@ -414,7 +409,7 @@ private:
         unsigned line_width = this->line_metrics.max_width() + padw * 2;
         unsigned line_height = this->line_metrics.lines().size() * this->glyphs.max_height()
                              + padh * 2
-                             + (this->allow_disable_osd_message ? 4 : 0)
+                             + (this->is_disable_by_input ? 4 : 0)
                              ;
 
         Rect clip(
@@ -431,8 +426,10 @@ private:
         return clip;
     }
 
-    void draw_osd_message()
+    void draw_osd_message(bool disable_by_input)
     {
+        this->is_disable_by_input = disable_by_input;
+
         auto clip = prepare_osd_message();
         gdi::GraphicApi& drawable = this->gfilter.get_graphic_proxy();
         drawable.begin_update();
@@ -467,7 +464,7 @@ private:
         auto lines = this->line_metrics.lines();
         int16_t dy = padh;
 
-        if (this->allow_disable_osd_message) {
+        if (this->is_disable_by_input) {
             lines = lines.drop_back(1);
         }
 
@@ -485,7 +482,7 @@ private:
             dy += this->glyphs.max_height();
         }
 
-        if (this->allow_disable_osd_message) {
+        if (this->is_disable_by_input) {
             gdi::server_draw_text(
                 drawable,
                 this->glyphs,
