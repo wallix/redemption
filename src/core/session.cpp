@@ -291,6 +291,64 @@ class Session
         }
     };
 
+    struct SessionFront final : Front
+    {
+        MonotonicTimePoint target_connection_start_time {};
+        Inifile& ini;
+
+        SessionFront(
+            EventContainer& events,
+            AclReportApi& acl_report,
+            Transport& trans,
+            Random& gen,
+            Inifile& ini,
+            CryptoContext& cctx
+        )
+        : Front(events, acl_report, trans, gen, ini, cctx)
+        , ini(ini)
+        {}
+
+        // secondary session is ready, set target_connection_time
+        bool can_be_start_capture(SessionLogApi& session_log) override
+        {
+            if (this->target_connection_start_time != MonotonicTimePoint{}) {
+                auto elapsed = MonotonicTimePoint::clock::now()
+                                - this->target_connection_start_time;
+                this->ini.set_acl<cfg::globals::target_connection_time>(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
+                this->target_connection_start_time = {};
+            }
+
+            this->ini.set_acl<cfg::context::sharing_ready>(true);
+
+            if (this->Front::can_be_start_capture(session_log)) {
+                // Must be synchronized with Front::can_be_start_capture()
+
+                CaptureFlags const capture_flags
+                    = (this->ini.get<cfg::globals::is_rec>()
+                    || this->ini.get<cfg::video::allow_rt_without_recording>()
+                    )
+                    ? this->ini.get<cfg::video::capture_flags>()
+                    : CaptureFlags::none;
+
+                if (bool(capture_flags & CaptureFlags::wrm)) {
+                    this->ini.set_acl<cfg::context::recording_started>(true);
+                }
+
+                if (bool(capture_flags & CaptureFlags::png)
+                    && this->ini.get<cfg::video::png_limit>() > 0
+                    && !this->ini.get<cfg::context::rt_ready>()
+                ){
+                    this->ini.set_acl<cfg::context::rt_ready>(true);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    };
+
     Inifile & ini;
     PidFile & pid_file;
     SessionVerbose verbose;
@@ -456,7 +514,7 @@ private:
         ModuleName next_state, SecondarySession& secondary_session,
         ModFactory & mod_factory, ModWrapper& mod_wrapper,
         Inactivity& inactivity, KeepAlive& keepalive,
-        Front& front, ClientExecute& rail_client_execute,
+        SessionFront& front, ClientExecute& rail_client_execute,
         EventManager& event_manager)
     {
         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
@@ -484,11 +542,11 @@ private:
         if (is_target_module(next_state)) {
             keepalive.start();
             event_manager.set_time_base(current_time_base());
-            this->target_connection_start_time = event_manager.get_monotonic_time();
+            front.target_connection_start_time = event_manager.get_monotonic_time();
         }
         else {
             keepalive.stop();
-            this->target_connection_start_time = MonotonicTimePoint();
+            front.target_connection_start_time = MonotonicTimePoint();
         }
 
         if (next_state == ModuleName::INTERNAL) {
@@ -678,7 +736,7 @@ private:
 
     bool retry_rdp(
         SecondarySession & secondary_session, ModFactory & mod_factory,
-        ModWrapper & mod_wrapper, Front & front,
+        ModWrapper & mod_wrapper, SessionFront & front,
         ClientExecute & rail_client_execute,
         PerformAutomaticReconnection perform_automatic_reconnection)
     {
@@ -699,7 +757,7 @@ private:
 
         SessionLogApi& session_log = secondary_session.get_secondary_session_log();
         try {
-            this->target_connection_start_time = MonotonicTimePoint::clock::now();
+            front.target_connection_start_time = MonotonicTimePoint::clock::now();
             mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log, perform_automatic_reconnection));
             this->ini.set<cfg::context::auth_error_message>("");
             return true;
@@ -716,8 +774,6 @@ private:
 
         return false;
     }
-
-    MonotonicTimePoint target_connection_start_time {};
 
     struct NextDelay
     {
@@ -751,7 +807,7 @@ private:
     };
 
     static inline void front_process(
-        TpduBuffer& buffer, Front& front, InTransport front_trans,
+        TpduBuffer& buffer, SessionFront& front, InTransport front_trans,
         Callback& callback)
     {
         buffer.load_data(front_trans);
@@ -765,7 +821,7 @@ private:
 
     template<class Fn>
     bool internal_front_loop(
-        Front& front,
+        SessionFront& front,
         SocketTransport& front_trans,
         TpduBuffer& rbuf,
         EventManager& event_manager,
@@ -862,7 +918,7 @@ private:
     inline EndLoopState main_loop(
         int auth_sck, EventManager& event_manager,
         CryptoContext& cctx, UdevRandom& rnd,
-        TpduBuffer& rbuf, SocketTransport& front_trans, Front& front,
+        TpduBuffer& rbuf, SocketTransport& front_trans, SessionFront& front,
         RedirectionInfo& redir_info, ClientExecute& rail_client_execute,
         ModWrapper& mod_wrapper, ModFactory& mod_factory
     )
@@ -1465,60 +1521,8 @@ public:
         EventManager event_manager;
         event_manager.set_time_base(current_time_base());
 
-        struct SessionFront final : Front
-        {
-            MonotonicTimePoint* target_connection_start_time_ptr = nullptr;
-            Inifile* ini_ptr = nullptr;
-
-            using Front::Front;
-
-            // secondary session is ready, set target_connection_time
-            bool can_be_start_capture(SessionLogApi& session_log) override
-            {
-                if (*this->target_connection_start_time_ptr != MonotonicTimePoint{}) {
-                    auto elapsed = MonotonicTimePoint::clock::now()
-                                 - *this->target_connection_start_time_ptr;
-                    this->ini_ptr->set_acl<cfg::globals::target_connection_time>(
-                        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
-                    *this->target_connection_start_time_ptr = {};
-                }
-
-                this->ini_ptr->set_acl<cfg::context::sharing_ready>(true);
-
-                if (this->Front::can_be_start_capture(session_log)) {
-                    // Must be synchronized with Front::can_be_start_capture()
-
-                    CaptureFlags const capture_flags
-                      = (this->ini_ptr->get<cfg::globals::is_rec>()
-                      || this->ini_ptr->get<cfg::video::allow_rt_without_recording>()
-                        )
-                        ? this->ini_ptr->get<cfg::video::capture_flags>()
-                        : CaptureFlags::none;
-
-                    if (bool(capture_flags & CaptureFlags::wrm)) {
-                        this->ini_ptr->set_acl<cfg::context::recording_started>(true);
-                    }
-
-                    if (bool(capture_flags & CaptureFlags::png)
-                     && this->ini_ptr->get<cfg::video::png_limit>() > 0
-                     && !this->ini_ptr->get<cfg::context::rt_ready>()
-                    ){
-                        this->ini_ptr->set_acl<cfg::context::rt_ready>(true);
-                    }
-
-                    return true;
-                }
-
-                return false;
-            }
-        };
-
         AclReport acl_report{ini};
-        SessionFront front(event_manager.get_events(), acl_report,
-            front_trans, rnd, ini, cctx
-        );
-        front.ini_ptr = &ini;
-        front.target_connection_start_time_ptr = &this->target_connection_start_time;
+        SessionFront front(event_manager.get_events(), acl_report, front_trans, rnd, ini, cctx);
 
         TpduBuffer rbuf;
         int auth_sck = INVALID_SOCKET;
