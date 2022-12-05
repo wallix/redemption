@@ -62,7 +62,7 @@ namespace
             return front_;
         }
 
-        void enable_keymap()
+        void enable_input()
         {
             mod_wrapper_.set_mod(ModuleName::RDP, ModPack{
                 .mod = new GdRedraw(front_.gd()),
@@ -80,13 +80,21 @@ namespace
             auto flags = Keymap::KbdFlags(0x100);
             auto scancode = Keymap::Scancode(0x52);
             keymap_.event(flags, scancode);
-            mod_wrapper_.get_callback().rdp_input_scancode(flags, scancode, 0, keymap_);
-            return front_;
+            return this->scancode(flags, scancode);
         }
 
         ImageView scancode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode)
         {
             mod_wrapper_.get_callback().rdp_input_scancode(flags, scancode, 0, keymap_);
+            return front_;
+        }
+
+        ImageView click_on_osd()
+        {
+            int flags = MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN;
+            int x = client_info_.screen_info.width / 2;
+            int y = 5;
+            mod_wrapper_.get_callback().rdp_input_mouse(flags, x, y);
             return front_;
         }
 
@@ -118,7 +126,7 @@ namespace
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalMultiLine,
                       TestOSDMessageDisplayFixture)
 {
-    enable_keymap();
+    enable_input();
 
     RED_CHECK_IMG(
         draw_osd("Hello\nWorld !"sv, gdi::OsdMsgUrgency::NORMAL),
@@ -131,10 +139,14 @@ RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalMultiLine,
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalUrgency,
                       TestOSDMessageDisplayFixture)
 {
+    enable_input();
+
     RED_CHECK_IMG(
         draw_osd("Hello World !"sv, gdi::OsdMsgUrgency::NORMAL),
         IMG_TEST_PATH "osd_message_normal.png"
     );
+
+    RED_CHECK_IMG(click_on_osd(), IMG_TEST_PATH "osd_message_empty.png");
 }
 
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_InfoUrgency,
@@ -191,7 +203,7 @@ RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_EmptyMessage,
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_F12,
                       TestOSDMessageDisplayFixture)
 {
-    enable_keymap();
+    enable_input();
 
     RED_CHECK_IMG(
         scancode(kbdtypes::KbdFlags(), kbdtypes::Scancode::F12),

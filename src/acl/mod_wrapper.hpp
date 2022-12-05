@@ -318,15 +318,16 @@ private:
 
     void rdp_input_mouse(int device_flags, int x, int y) override
     {
-        if (!this->try_input_mouse(device_flags, x, y)) {
-            if (this->enable_osd) {
-                if (this->try_input_mouse(device_flags, x, y)) {
-                    this->target_info_is_shown = false;
-                    return ;
-                }
-            }
-            this->get_mod().rdp_input_mouse(device_flags, x, y);
+        if (this->is_disable_by_input
+         && this->get_protected_rect().contains_pt(x, y)
+         && device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)
+        ) {
+            this->target_info_is_shown = false;
+            this->disable_osd();
+            return;
         }
+
+        this->get_mod().rdp_input_mouse(device_flags, x, y);
     }
 
     void rdp_input_invalidate(Rect r) override
@@ -522,17 +523,5 @@ private:
         if (!this->get_protected_rect().isempty()) {
             this->disable_osd();
         }
-    }
-
-    bool try_input_mouse(int device_flags, int x, int y)
-    {
-        if (this->is_disable_by_input
-         && this->get_protected_rect().contains_pt(x, y)
-         && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)
-        ) {
-            this->disable_osd();
-            return true;
-        }
-        return false;
     }
 };
