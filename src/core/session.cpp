@@ -518,7 +518,7 @@ private:
     {
         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
             LOG_INFO, "Current Mod is %s Previous %s",
-            get_module_name(mod_wrapper.current_mod),
+            get_module_name(mod_wrapper.get_mod_name()),
             get_module_name(next_state)
         );
 
@@ -743,9 +743,9 @@ private:
 
         auto next_state = ModuleName::RDP;
 
-        if (mod_wrapper.current_mod != next_state) {
+        if (mod_wrapper.get_mod_name() != next_state) {
             LOG(LOG_ERR, "Previous module is %s, RDP is expected",
-                get_module_name(mod_wrapper.current_mod));
+                get_module_name(mod_wrapper.get_mod_name()));
             throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
         }
 
@@ -1118,7 +1118,7 @@ private:
                     }
 
                     if (has_field(cfg::context::module())) {
-                        if ((ini.get<cfg::context::module>() != mod_wrapper.current_mod)
+                        if ((ini.get<cfg::context::module>() != mod_wrapper.get_mod_name())
                          || ini.get<cfg::context::try_alternate_target>()) {
                             next_module = ini.get<cfg::context::module>();
                             back_event = BACK_EVENT_NEXT;
@@ -1206,7 +1206,7 @@ private:
                         updated_fields.clear(owned_fields);
                         if (!updated_fields.is_empty()
                          && (next_module == ModuleName::UNKNOWN
-                          || next_module == mod_wrapper.current_mod
+                          || next_module == mod_wrapper.get_mod_name()
                         )) {
                             auto& mod = mod_wrapper.get_mod();
                             mod.acl_update(updated_fields);
@@ -1383,7 +1383,7 @@ private:
                     {
                     case EndSessionResult::close_box:
                         if (ini.get<cfg::globals::enable_close_box>()) {
-                            if (!is_close_module(mod_wrapper.current_mod)) {
+                            if (!is_close_module(mod_wrapper.get_mod_name())) {
                                 if (mod_wrapper.is_connected()) {
                                     this->ini.set_acl<cfg::context::module>(ModuleName::close);
                                 }
@@ -1491,7 +1491,7 @@ private:
         guest_ctx.stop();
 
         const bool show_close_box = auth_trans.get_fd() == INVALID_SOCKET;
-        if (!show_close_box || mod_wrapper.current_mod != ModuleName::close) {
+        if (!show_close_box || mod_wrapper.get_mod_name() != ModuleName::close) {
             mod_wrapper.disconnect();
         }
         front.must_be_stop_capture();
@@ -1628,7 +1628,7 @@ public:
              && ini.get<cfg::globals::enable_close_box>()
             ) {
                 auto mod_name = ModuleName::close;
-                const bool is_already_close_mod = (mod_wrapper.current_mod == mod_name);
+                const bool is_already_close_mod = (mod_wrapper.get_mod_name() == mod_name);
 
                 if (!is_already_close_mod) {
                     rail_client_execute.enable_remote_program(front.get_client_info().remote_program);

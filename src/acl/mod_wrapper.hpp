@@ -52,13 +52,10 @@ class ModWrapper final : public gdi::OsdApi, private Callback
         using gdi::ProtectedGraphics::ProtectedGraphics;
     } gfilter;
 
-    bool connected = false;
-
-public:
-    // TODO should be private
     ModuleName current_mod = ModuleName::UNKNOWN;
 
-private:
+    bool connected = false;
+
     bool target_info_is_shown = false;
     bool enable_osd = false;
     bool is_disable_by_input = false;
@@ -194,6 +191,11 @@ public:
     void acl_update(AclFieldMask const& acl_fields)
     {
         this->get_mod().acl_update(acl_fields);
+    }
+
+    ModuleName get_mod_name() const
+    {
+        return current_mod;
     }
 
     mod_api& get_mod()
