@@ -352,7 +352,6 @@ class Session
     Inifile & ini;
     PidFile & pid_file;
     SessionVerbose verbose;
-    GuestCtx guest_ctx;
 
 private:
     enum class EndSessionResult
@@ -514,8 +513,8 @@ private:
         ModuleName next_state, SecondarySession& secondary_session,
         ModFactory & mod_factory, ModWrapper& mod_wrapper,
         Inactivity& inactivity, KeepAlive& keepalive,
-        SessionFront& front, ClientExecute& rail_client_execute,
-        EventManager& event_manager)
+        SessionFront& front, GuestCtx& guest_ctx,
+        ClientExecute& rail_client_execute, EventManager& event_manager)
     {
         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
             LOG_INFO, "Current Mod is %s Previous %s",
@@ -918,7 +917,8 @@ private:
     inline EndLoopState main_loop(
         int auth_sck, EventManager& event_manager,
         CryptoContext& cctx, UdevRandom& rnd,
-        TpduBuffer& rbuf, SocketTransport& front_trans, SessionFront& front,
+        TpduBuffer& rbuf, SocketTransport& front_trans,
+        SessionFront& front, GuestCtx& guest_ctx,
         RedirectionInfo& redir_info, ClientExecute& rail_client_execute,
         ModWrapper& mod_wrapper, ModFactory& mod_factory
     )
@@ -1274,8 +1274,8 @@ private:
                     this->next_backend_module(
                         std::exchange(next_module, ModuleName::UNKNOWN),
                         secondary_session, mod_factory, mod_wrapper,
-                        inactivity, keepalive, front, rail_client_execute,
-                        event_manager);
+                        inactivity, keepalive, front, guest_ctx,
+                        rail_client_execute, event_manager);
                 }
 
 
@@ -1389,7 +1389,7 @@ private:
                                 }
                                 this->next_backend_module(
                                     ModuleName::close, secondary_session, mod_factory,
-                                    mod_wrapper, inactivity, keepalive, front,
+                                    mod_wrapper, inactivity, keepalive, front, guest_ctx,
                                     rail_client_execute, event_manager);
                                 run_session = true;
                             }
@@ -1610,12 +1610,17 @@ public:
                 front, front, redir_info, ini, font, theme,
                 rail_client_execute, front.keymap, rnd, cctx);
 
+            GuestCtx guest_ctx;
+
             auto end_loop = EndLoopState::ShowCloseBox;
 
             if (auth_sck != INVALID_SOCKET) {
                 end_loop = this->main_loop(
-                    auth_sck, event_manager, cctx, rnd, rbuf, front_trans,
-                    front, redir_info, rail_client_execute, mod_wrapper, mod_factory);
+                    auth_sck, event_manager, cctx, rnd,
+                    rbuf, front_trans, front, guest_ctx,
+                    redir_info, rail_client_execute,
+                    mod_wrapper, mod_factory
+                );
             }
 
             if (end_loop == EndLoopState::ShowCloseBox

@@ -191,9 +191,7 @@ struct GuestCtx
 
     ~GuestCtx()
     {
-        if (listen_sck.is_open()) {
-            close_listen_sck();
-        }
+        stop();
     }
 
 private:
