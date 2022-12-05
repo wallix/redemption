@@ -45,7 +45,7 @@ namespace gdi
     class GraphicApi;
 }
 
-class ClientExecute : public windowing_api
+class ClientExecute final : public windowing_api
 {
 public:
     enum {
