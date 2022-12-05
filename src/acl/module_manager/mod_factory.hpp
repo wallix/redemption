@@ -418,7 +418,6 @@ public:
             this->cctx,
             this->server_auto_reconnect_packet,
             perform_automatic_reconnection);
-        this->mod_wrapper.target_info_is_shown = false;
         mod_pack.enable_osd = true;
         mod_pack.connected = true;
         return mod_pack;
@@ -436,7 +435,6 @@ public:
             this->glyphs, this->theme,
             this->events,
             session_log);
-        this->mod_wrapper.target_info_is_shown = false;
         mod_pack.enable_osd = true;
         mod_pack.connected = true;
         return mod_pack;

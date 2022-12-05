@@ -57,10 +57,9 @@ class ModWrapper final : public gdi::OsdApi, private Callback
 public:
     // TODO should be private
     ModuleName current_mod = ModuleName::UNKNOWN;
-    // TODO should be private
-    bool target_info_is_shown = false;
 
 private:
+    bool target_info_is_shown = false;
     bool enable_osd = false;
 
     ClientInfo const & client_info;
@@ -74,7 +73,6 @@ private:
 
     std::string osd_message;
 
-    Rect clip;
     RDPColor color;
     RDPColor background_color;
     bool allow_disable_osd_message = false;
@@ -192,7 +190,6 @@ public:
                        TR(trkeys::disable_osd, language(this->ini)));
             this->allow_disable_osd_message = true;
             this->is_disable_by_input = true;
-            this->prepare_osd_message();
             this->draw_osd_message();
         }
     }
@@ -242,6 +239,10 @@ public:
         this->connected = mod_pack.connected;
         this->psocket_transport = mod_pack.psocket_transport;
         this->enable_osd = mod_pack.enable_osd;
+
+        if (this->connected) {
+            this->target_info_is_shown = false;
+        }
 
         this->modi->init();
     }
@@ -306,7 +307,6 @@ private:
                         auto bpp = this->client_info.screen_info.bpp;
                         this->color = color_encode(BLACK, bpp);
                         this->background_color = color_encode(LIGHT_YELLOW, bpp);
-                        this->prepare_osd_message();
                         this->draw_osd_message();
                     }
 
@@ -389,7 +389,7 @@ private:
     static constexpr int padw = 16;
     static constexpr int padh = 16;
 
-    void prepare_osd_message()
+    Rect prepare_osd_message()
     {
         this->bogus_refresh_rect_ex
           = (this->ini.get<cfg::globals::bogus_refresh_rect>()
@@ -417,44 +417,46 @@ private:
                              + (this->allow_disable_osd_message ? 4 : 0)
                              ;
 
-        this->clip = Rect(
+        Rect clip(
             dx + w < line_width ? 0 : (w - line_width) / 2,
             0,
             line_width,
             line_height);
 
-        this->set_protected_rect(this->clip);
-
         if (this->winapi) {
-            this->winapi->create_auxiliary_window(this->clip);
+            this->set_protected_rect(clip);
+            this->winapi->create_auxiliary_window(clip);
         }
+
+        return clip;
     }
 
     void draw_osd_message()
     {
-        auto rect = this->get_protected_rect();
-        this->set_protected_rect(Rect{});
-        this->get_graphics().begin_update();
-        this->draw_osd_message_impl(this->get_graphics(), rect.x);
-        this->get_graphics().end_update();
-        this->set_protected_rect(rect);
+        auto clip = prepare_osd_message();
+        gdi::GraphicApi& drawable = this->gfilter.get_graphic_proxy();
+        drawable.begin_update();
+        this->draw_osd_message_impl(drawable, clip);
+        drawable.end_update();
+        this->set_protected_rect(clip);
     }
 
-    void draw_osd_message_impl(gdi::GraphicApi & drawable, int16_t x)
+    void draw_osd_message_impl(gdi::GraphicApi& drawable, Rect clip)
     {
-        if (this->clip.isempty()) {
+        if (clip.isempty()) {
             return ;
         }
 
         auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->palette);
 
-        drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
+        drawable.draw(RDPOpaqueRect(clip, this->background_color), clip, color_ctx);
 
         auto draw_line = [&](int startx, int starty, int endx, int endy){
-            RDPLineTo line_ileft(1, startx, starty, endx, endy,
-                                 encode_color24()(BLACK), 0x0D,
-                                 RDPPen(0, 0, encode_color24()(BLACK)));
-            drawable.draw(line_ileft, this->clip, color_ctx);
+            auto black = RDPColor::from(0);
+            drawable.draw(
+                RDPLineTo(1, startx, starty, endx, endy, black, 0x0D, RDPPen(0, 0, black)),
+                clip, color_ctx
+            );
         };
 
         draw_line(clip.x, clip.y, clip.x, clip.y + clip.cy - 1);
@@ -473,13 +475,13 @@ private:
             gdi::server_draw_text(
                 drawable,
                 this->glyphs,
-                x + padw,
+                clip.x + padw,
                 dy,
                 line.str,
                 this->color,
                 this->background_color,
                 color_ctx,
-                this->clip);
+                clip);
             dy += this->glyphs.max_height();
         }
 
@@ -487,17 +489,15 @@ private:
             gdi::server_draw_text(
                 drawable,
                 this->glyphs,
-                x + padw,
+                clip.x + padw,
                 dy + 4,
                 this->line_metrics.lines().back().str,
                 color_encode(BGRColor(BLACK),
                              this->client_info.screen_info.bpp),
                 this->background_color,
                 color_ctx,
-                this->clip);
+                clip);
         }
-
-        this->clip = Rect();
     }
 
     void disable_osd()
