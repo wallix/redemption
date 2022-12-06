@@ -30,7 +30,6 @@
 #include "acl/session_inactivity.hpp"
 #include "acl/acl_serializer.hpp"
 #include "acl/mod_pack.hpp"
-#include "acl/mod_wrapper.hpp"
 #include "acl/session_logfile.hpp"
 
 #include "capture/capture.hpp"
@@ -45,7 +44,6 @@
 #include "utils/netutils.hpp"
 #include "utils/select.hpp"
 #include "utils/log_siem.hpp"
-#include "utils/load_theme.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/local_err_msg.hpp"
@@ -362,7 +360,7 @@ private:
         redirection,
     };
 
-    EndSessionResult end_session_exception(Error const& e, Inifile & ini, const ModWrapper & mod_wrapper)
+    EndSessionResult end_session_exception(Error const& e, Inifile & ini, ModFactory const& mod_factory)
     {
         if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
             ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
@@ -453,11 +451,11 @@ private:
         }
 
         if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
-         && mod_wrapper.get_mod_transport()
-         && static_cast<uintptr_t>(mod_wrapper.get_mod_transport()->get_fd()) == e.data
+         && mod_factory.mod_sck_transport()
+         && static_cast<uintptr_t>(mod_factory.mod_sck_transport()->get_fd()) == e.data
          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
-         && mod_wrapper.get_mod().is_auto_reconnectable()
-         && !mod_wrapper.get_mod().server_error_encountered()
+         && mod_factory.mod().is_auto_reconnectable()
+         && !mod_factory.mod().server_error_encountered()
         ) {
             LOG(LOG_INFO, "Session::end_session_exception: target link exception. %s",
                 ERR_TRANSPORT_WRITE_FAILED == e.id
@@ -468,11 +466,11 @@ private:
 
         LOG(LOG_INFO,
             "ModTrans=<%p> Sock=%d AutoReconnection=%s AutoReconnectable=%s ErrorEncountered=%s",
-            mod_wrapper.get_mod_transport(),
-            (mod_wrapper.get_mod_transport() ? mod_wrapper.get_mod_transport()->get_fd() : -1),
+            mod_factory.mod_sck_transport(),
+            (mod_factory.mod_sck_transport() ? mod_factory.mod_sck_transport()->get_fd() : -1),
             (ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>() ? "Yes" : "No"),
-            (mod_wrapper.get_mod().is_auto_reconnectable() ? "Yes" : "No"),
-            (mod_wrapper.get_mod().server_error_encountered() ? "Yes" : "No")
+            (mod_factory.mod().is_auto_reconnectable() ? "Yes" : "No"),
+            (mod_factory.mod().server_error_encountered() ? "Yes" : "No")
             );
 
         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -510,22 +508,25 @@ private:
     std::string session_type;
 
     void next_backend_module(
-        ModuleName next_state, SecondarySession& secondary_session,
-        ModFactory & mod_factory, ModWrapper& mod_wrapper,
-        Inactivity& inactivity, KeepAlive& keepalive,
-        SessionFront& front, GuestCtx& guest_ctx,
-        ClientExecute& rail_client_execute, EventManager& event_manager)
+        ModuleName next_state,
+        SecondarySession& secondary_session,
+        ModFactory& mod_factory,
+        Inactivity& inactivity,
+        KeepAlive& keepalive,
+        SessionFront& front,
+        GuestCtx& guest_ctx,
+        EventManager& event_manager)
     {
         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
             LOG_INFO, "Current Mod is %s Previous %s",
-            get_module_name(mod_wrapper.get_mod_name()),
+            get_module_name(mod_factory.mod_name()),
             get_module_name(next_state)
         );
 
-        if (mod_wrapper.is_connected()) {
+        if (mod_factory.is_connected()) {
             LOG(LOG_INFO, "Exited from target connection");
             guest_ctx.stop();
-            mod_wrapper.disconnect();
+            mod_factory.disconnect();
             if (!ini.get<cfg::context::has_more_target>()) {
                 front.must_be_stop_capture();
                 secondary_session.close_secondary_session();
@@ -535,7 +536,7 @@ private:
             }
         }
         else {
-            mod_wrapper.disconnect();
+            mod_factory.disconnect();
         }
 
         if (is_target_module(next_state)) {
@@ -556,9 +557,6 @@ private:
 
         LOG(LOG_INFO, "New Module: %s", get_module_name(next_state));
 
-        null_mod mod;
-        ModPack mod_pack {&mod, nullptr, nullptr, false, false, nullptr};
-
         enum class SecondarySessionType { RDP, VNC, };
         auto open_secondary_session = [&](SecondarySessionType secondary_session_type){
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
@@ -572,13 +570,13 @@ private:
                             ? secondary_session.get_secondary_session_log()
                             : secondary_session.open_secondary_session("RDP");
 
-                        mod_pack = mod_factory.create_rdp_mod(
+                        mod_factory.create_rdp_mod(
                             session_log_api,
                             PerformAutomaticReconnection::No);
                         break;
                     }
                     case SecondarySessionType::VNC:
-                        mod_pack = mod_factory.create_vnc_mod(
+                        mod_factory.create_vnc_mod(
                             secondary_session.open_secondary_session("VNC"));
                         break;
                 }
@@ -588,15 +586,13 @@ private:
             }
             catch (Error const& /*error*/) {
                 this->secondary_session_creation_failed(secondary_session, this->ini.get<cfg::context::has_more_target>());
-                mod_pack = mod_factory.create_transition_mod();
+                mod_factory.create_transition_mod();
             }
             catch (...) {
                 this->secondary_session_creation_failed(secondary_session, this->ini.get<cfg::context::has_more_target>());
                 throw;
             }
         };
-
-        rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
 
         switch (next_state)
         {
@@ -609,31 +605,31 @@ private:
             break;
 
         case ModuleName::close:
-            mod_pack = mod_factory.create_close_mod();
+            mod_factory.create_close_mod();
             inactivity.stop();
             break;
 
         case ModuleName::close_back:
-            mod_pack = mod_factory.create_close_mod_back_to_selector();
+            mod_factory.create_close_mod_back_to_selector();
             inactivity.stop();
             break;
 
         case ModuleName::login:
             log_siem::set_user("");
             inactivity.stop();
-            mod_pack = mod_factory.create_login_mod();
+            mod_factory.create_login_mod();
             break;
 
         case ModuleName::waitinfo:
             log_siem::set_user("");
             inactivity.stop();
-            mod_pack = mod_factory.create_wait_info_mod();
+            mod_factory.create_wait_info_mod();
             break;
 
         case ModuleName::confirm:
             log_siem::set_user("");
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
-            mod_pack = mod_factory.create_display_message_mod();
+            mod_factory.create_display_message_mod();
             break;
 
         case ModuleName::link_confirm:
@@ -646,19 +642,19 @@ private:
             else {
                 inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
             }
-            mod_pack = mod_factory.create_display_link_mod();
+            mod_factory.create_display_link_mod();
             break;
 
         case ModuleName::valid:
             log_siem::set_user("");
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
-            mod_pack = mod_factory.create_valid_message_mod();
+            mod_factory.create_valid_message_mod();
             break;
 
         case ModuleName::challenge:
             log_siem::set_user("");
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
-            mod_pack = mod_factory.create_dialog_challenge_mod();
+            mod_factory.create_dialog_challenge_mod();
             break;
 
         case ModuleName::selector:
@@ -677,39 +673,39 @@ private:
                 }
             }
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
-            mod_pack = mod_factory.create_selector_mod();
+            mod_factory.create_selector_mod();
             break;
 
         case ModuleName::bouncer2:
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
-            mod_pack = mod_factory.create_mod_bouncer();
+            mod_factory.create_mod_bouncer();
             break;
 
         case ModuleName::autotest:
             inactivity.stop();
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
-            mod_pack = mod_factory.create_mod_replay();
+            mod_factory.create_mod_replay();
             break;
 
         case ModuleName::widgettest:
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
-            mod_pack = mod_factory.create_widget_test_mod();
+            mod_factory.create_widget_test_mod();
             break;
 
         case ModuleName::card:
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
-            mod_pack = mod_factory.create_test_card_mod();
+            mod_factory.create_test_card_mod();
             break;
 
         case ModuleName::interactive_target:
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             inactivity.start(this->ini.get<cfg::globals::base_inactivity_timeout>());
-            mod_pack = mod_factory.create_interactive_target_mod();
+            mod_factory.create_interactive_target_mod();
             break;
 
         case ModuleName::transitory:
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
-            mod_pack = mod_factory.create_transition_mod();
+            mod_factory.create_transition_mod();
             break;
 
         case ModuleName::INTERNAL:
@@ -717,8 +713,6 @@ private:
             LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", unsigned(next_state));
             throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
-
-        mod_wrapper.set_mod(next_state, mod_pack);
     }
 
     void secondary_session_creation_failed(SecondarySession & secondary_session, bool has_other_target_to_try)
@@ -735,36 +729,31 @@ private:
 
     bool retry_rdp(
         SecondarySession & secondary_session, ModFactory & mod_factory,
-        ModWrapper & mod_wrapper, SessionFront & front,
-        ClientExecute & rail_client_execute,
-        PerformAutomaticReconnection perform_automatic_reconnection)
+        SessionFront & front, PerformAutomaticReconnection perform_automatic_reconnection)
     {
         LOG(LOG_INFO, "Retry RDP");
 
-        auto next_state = ModuleName::RDP;
-
-        if (mod_wrapper.get_mod_name() != next_state) {
+        if (mod_factory.mod_name() != ModuleName::RDP) {
             LOG(LOG_ERR, "Previous module is %s, RDP is expected",
-                get_module_name(mod_wrapper.get_mod_name()));
+                get_module_name(mod_factory.mod_name()));
             throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
         }
 
-        rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
         log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
 
-        mod_wrapper.disconnect();
+        mod_factory.disconnect();
 
         SessionLogApi& session_log = secondary_session.get_secondary_session_log();
         try {
             front.target_connection_start_time = MonotonicTimePoint::clock::now();
-            mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log, perform_automatic_reconnection));
+            mod_factory.create_rdp_mod(session_log, perform_automatic_reconnection);
             this->ini.set<cfg::context::auth_error_message>("");
             return true;
         }
         catch (Error const& /*error*/) {
             front.must_be_stop_capture();
             this->secondary_session_creation_failed(secondary_session, false);
-            mod_wrapper.set_mod(next_state, mod_factory.create_transition_mod());
+            mod_factory.create_transition_mod();
         }
         catch (...) {
             front.must_be_stop_capture();
@@ -919,8 +908,7 @@ private:
         CryptoContext& cctx, UdevRandom& rnd,
         TpduBuffer& rbuf, SocketTransport& front_trans,
         SessionFront& front, GuestCtx& guest_ctx,
-        RedirectionInfo& redir_info, ClientExecute& rail_client_execute,
-        ModWrapper& mod_wrapper, ModFactory& mod_factory
+        ModFactory& mod_factory
     )
     {
         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
@@ -972,7 +960,7 @@ private:
 
                 loop_state = LoopState::Select;
 
-                auto* pmod_trans = mod_wrapper.get_mod_transport();
+                auto* pmod_trans = mod_factory.mod_sck_transport();
                 const bool front_has_data_to_write     = front_trans.has_data_to_write();
                 const bool front_has_tls_pending_data  = front_trans.has_tls_pending_data();
                 const bool front2_has_data_to_write    = guest_ctx.has_front()
@@ -1086,7 +1074,7 @@ private:
                     }
                 }
                 else if (ioswitch.is_set_for_reading(front_trans.get_fd())) {
-                    auto& callback = mod_wrapper.get_callback();
+                    auto& callback = mod_factory.callback();
                     front_process(rbuf, front, front_trans, callback);
 
                     // TODO should be replaced by callback.rdp_gdi_up/down() when is_up_and_running changes
@@ -1118,7 +1106,7 @@ private:
                     }
 
                     if (has_field(cfg::context::module())) {
-                        if ((ini.get<cfg::context::module>() != mod_wrapper.get_mod_name())
+                        if ((ini.get<cfg::context::module>() != mod_factory.mod_name())
                          || ini.get<cfg::context::try_alternate_target>()) {
                             next_module = ini.get<cfg::context::module>();
                             back_event = BACK_EVENT_NEXT;
@@ -1136,7 +1124,7 @@ private:
                         auto const elapsed = ini.get<cfg::context::end_date_cnx>() - sys_date;
                         auto const new_end_date = time_base.monotonic_time + elapsed;
                         end_session_warning.set_time(new_end_date);
-                        mod_wrapper.set_time_close(new_end_date);
+                        mod_factory.set_time_close(new_end_date);
                     }
 
                     if (has_field(cfg::globals::inactivity_timeout())) {
@@ -1152,7 +1140,7 @@ private:
                          && rt_status == Capture::RTDisplayResult::Enabled
                         ) {
                             zstring_view msg = TR(trkeys::enable_rt_display, language(ini));
-                            mod_wrapper.display_osd_message(msg.to_sv());
+                            mod_factory.display_osd_message(msg.to_sv());
                         }
                     }
 
@@ -1160,8 +1148,8 @@ private:
                         GuestCtx::ResultError result = {0xffff, "Sharing not available"};
 
                         if (front.is_up_and_running()
-                         && mod_wrapper.is_connected()
-                         && mod_wrapper.is_up_and_running()
+                         && mod_factory.is_connected()
+                         && mod_factory.mod().is_up_and_running()
                         ) {
                             if (guest_ctx.is_started()) {
                                 guest_ctx.stop();
@@ -1170,7 +1158,7 @@ private:
                             result = guest_ctx.start(
                                 app_path(AppPath::SessionTmpDir),
                                 this->ini.get<cfg::context::session_id>(),
-                                events, front, mod_wrapper.get_callback(),
+                                events, front, mod_factory.callback(),
                                 secondary_session.get_secondary_session_log(),
                                 this->ini.get<cfg::context::session_sharing_ttl>(), rnd, ini,
                                 this->ini.get<cfg::context::session_sharing_enable_control>()
@@ -1200,15 +1188,15 @@ private:
                         this->ini.set<cfg::context::auth_error_message>(
                             this->ini.get<cfg::context::disconnect_reason>());
                         this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
-                        back_event = std::max(BACK_EVENT_NEXT, mod_wrapper.get_mod_signal());
+                        back_event = std::max(BACK_EVENT_NEXT, mod_factory.mod().get_mod_signal());
                     }
                     else if (!back_event) {
                         updated_fields.clear(owned_fields);
                         if (!updated_fields.is_empty()
                          && (next_module == ModuleName::UNKNOWN
-                          || next_module == mod_wrapper.get_mod_name()
+                          || next_module == mod_factory.mod_name()
                         )) {
-                            auto& mod = mod_wrapper.get_mod();
+                            auto& mod = mod_factory.mod();
                             mod.acl_update(updated_fields);
                             back_event = std::max(back_event, mod.get_mod_signal());
                         }
@@ -1220,7 +1208,7 @@ private:
 
                 if (!back_event) {
                     if (REDEMPTION_UNLIKELY(mod_has_data_to_write)) {
-                        pmod_trans = mod_wrapper.get_mod_transport();
+                        pmod_trans = mod_factory.mod_sck_transport();
                         if (pmod_trans && ioswitch.is_set_for_writing(pmod_trans->get_fd())) {
                             pmod_trans->send_waiting_data();
                         }
@@ -1230,7 +1218,7 @@ private:
                         [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd); },
                         bool(this->verbose & SessionVerbose::Event));
 
-                    back_event = mod_wrapper.get_mod_signal();
+                    back_event = mod_factory.mod().get_mod_signal();
                 }
                 else {
                     event_manager.execute_events(
@@ -1250,7 +1238,7 @@ private:
                     assert(back_event == BACK_EVENT_NEXT);
 
                     if (next_module == ModuleName::UNKNOWN) {
-                        if (mod_wrapper.is_connected()) {
+                        if (mod_factory.is_connected()) {
                             next_module = ModuleName::close;
                             this->ini.set_acl<cfg::context::module>(ModuleName::close);
                         }
@@ -1273,9 +1261,8 @@ private:
 
                     this->next_backend_module(
                         std::exchange(next_module, ModuleName::UNKNOWN),
-                        secondary_session, mod_factory, mod_wrapper,
-                        inactivity, keepalive, front, guest_ctx,
-                        rail_client_execute, event_manager);
+                        secondary_session, mod_factory, inactivity,
+                        keepalive, front, guest_ctx, event_manager);
                 }
 
 
@@ -1287,11 +1274,11 @@ private:
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){
                         if (ini.get<cfg::globals::enable_osd>()
-                         && mod_wrapper.is_up_and_running()
+                         && mod_factory.mod().is_up_and_running()
                         ) {
                             loop_state = LoopState::UpdateOsd;
                             auto lang = language(ini);
-                            mod_wrapper.display_osd_message(str_concat(
+                            mod_factory.display_osd_message(str_concat(
                                 int_to_decimal_chars(minutes.count()),
                                 ' ',
                                 TR(trkeys::minute, lang),
@@ -1329,13 +1316,13 @@ private:
                     if (e.id == ERR_TRANSPORT_WRITE_FAILED
                      || e.id == ERR_TRANSPORT_NO_MORE_DATA
                     ) {
-                        SocketTransport* socket_transport_ptr = mod_wrapper.get_mod_transport();
+                        SocketTransport* socket_transport_ptr = mod_factory.mod_sck_transport();
 
                         if (socket_transport_ptr
                          && e.data == static_cast<uintptr_t>(socket_transport_ptr->get_fd())
                          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
-                         && mod_wrapper.get_mod().is_auto_reconnectable()
-                         && !mod_wrapper.get_mod().server_error_encountered())
+                         && mod_factory.mod().is_auto_reconnectable()
+                         && !mod_factory.mod().server_error_encountered())
                         {
                             LOG(LOG_INFO, "Session::Session: target link exception. %s",
                                 (ERR_TRANSPORT_WRITE_FAILED == e.id)
@@ -1344,9 +1331,8 @@ private:
                             );
 
                             run_session = this->retry_rdp(
-                                secondary_session, mod_factory, mod_wrapper,
-                                front, rail_client_execute,
-                                PerformAutomaticReconnection::Yes);
+                                secondary_session, mod_factory,
+                                front, PerformAutomaticReconnection::Yes);
                         }
                     }
                     else {
@@ -1379,18 +1365,18 @@ private:
                         break;
                     }
 
-                    switch (end_session_exception(e, ini, mod_wrapper))
+                    switch (end_session_exception(e, ini, mod_factory))
                     {
                     case EndSessionResult::close_box:
                         if (ini.get<cfg::globals::enable_close_box>()) {
-                            if (!is_close_module(mod_wrapper.get_mod_name())) {
-                                if (mod_wrapper.is_connected()) {
+                            if (!is_close_module(mod_factory.mod_name())) {
+                                if (mod_factory.is_connected()) {
                                     this->ini.set_acl<cfg::context::module>(ModuleName::close);
                                 }
                                 this->next_backend_module(
                                     ModuleName::close, secondary_session, mod_factory,
-                                    mod_wrapper, inactivity, keepalive, front, guest_ctx,
-                                    rail_client_execute, event_manager);
+                                    inactivity, keepalive, front, guest_ctx,
+                                    event_manager);
                                 run_session = true;
                             }
                         }
@@ -1401,6 +1387,7 @@ private:
 
                     case EndSessionResult::redirection: {
                         // SET new target in ini
+                        auto& redir_info = mod_factory.get_redir_info();
                         const char * host = char_ptr_cast(redir_info.host);
                         const char * username = char_ptr_cast(redir_info.username);
                         const char * change_user = "";
@@ -1427,17 +1414,15 @@ private:
                     // TODO: should we put some counter to avoid retrying indefinitely?
                     case EndSessionResult::retry:
                         run_session = this->retry_rdp(
-                            secondary_session, mod_factory, mod_wrapper,
-                            front, rail_client_execute,
-                            PerformAutomaticReconnection::No);
+                            secondary_session, mod_factory,
+                            front, PerformAutomaticReconnection::No);
                         break;
 
                     // TODO: should we put some counter to avoid retrying indefinitely?
                     case EndSessionResult::reconnection:
                         run_session = this->retry_rdp(
-                            secondary_session, mod_factory, mod_wrapper,
-                            front, rail_client_execute,
-                            PerformAutomaticReconnection::Yes);
+                            secondary_session, mod_factory,
+                            front, PerformAutomaticReconnection::Yes);
                         break;
                     }
 
@@ -1491,12 +1476,12 @@ private:
         guest_ctx.stop();
 
         const bool show_close_box = auth_trans.get_fd() == INVALID_SOCKET;
-        if (!show_close_box || mod_wrapper.get_mod_name() != ModuleName::close) {
-            mod_wrapper.disconnect();
+        if (!show_close_box || mod_factory.mod_name() != ModuleName::close) {
+            mod_factory.disconnect();
         }
         front.must_be_stop_capture();
 
-        return show_close_box && mod_wrapper.get_mod_signal() == BACK_EVENT_NONE
+        return show_close_box && mod_factory.mod().get_mod_signal() == BACK_EVENT_NONE
              ? EndLoopState::ShowCloseBox
              : EndLoopState::ImmediateDisconnection;
     }
@@ -1540,18 +1525,18 @@ public:
 
             if (is_connected) {
                 if (unique_fd client_sck = addr_connect_blocking(
-                    this->ini.get<cfg::globals::authfile>().c_str(),
-                    this->ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
+                    ini.get<cfg::globals::authfile>().c_str(),
+                    ini.get<cfg::all_target_mod::connection_establishment_timeout>(),
                     prevent_early_log)
                 ) {
                     auth_sck = client_sck.release();
 
-                    this->ini.set_acl<cfg::globals::front_connection_time>(
+                    ini.set_acl<cfg::globals::front_connection_time>(
                         std::chrono::duration_cast<std::chrono::milliseconds>(
                             MonotonicTimePoint::clock::now() - sck_start_time));
                 }
                 else {
-                    this->ini.set<cfg::context::auth_error_message>("No authentifier available");
+                    ini.set<cfg::context::auth_error_message>("No authentifier available");
                 }
             }
         }
@@ -1583,7 +1568,7 @@ public:
         ) {
             // silent message for localhost or probe IPs for watchdog
             if (!prevent_early_log) {
-                log_siem::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
+                log_siem::disconnection(ini.get<cfg::context::auth_error_message>().c_str());
             }
 
             return ;
@@ -1592,23 +1577,10 @@ public:
         this->acl_auth_info(front.get_client_info());
 
         try {
-            Theme theme;
-            ::load_theme(theme, ini);
-
-            RedirectionInfo redir_info;
-
-            ClientExecute rail_client_execute(
-                event_manager.get_time_base(), front, front,
-                front.get_client_info().window_list_caps,
-                ini.get<cfg::debug::mod_internal>() & 1);
-
-            ModWrapper mod_wrapper(
-                event_manager.get_time_base(), front.get_palette(), front, front.keymap,
-                front.get_client_info(), font, rail_client_execute, this->ini);
             ModFactory mod_factory(
-                mod_wrapper, event_manager.get_events(), front.get_client_info(),
-                front, front, redir_info, ini, font, theme,
-                rail_client_execute, front.keymap, rnd, cctx);
+                event_manager.get_events(), event_manager.get_time_base(),
+                front.get_client_info(), front, front, front.get_palette(),
+                font, ini, front.keymap, rnd, cctx);
 
             GuestCtx guest_ctx;
 
@@ -1618,8 +1590,7 @@ public:
                 end_loop = this->main_loop(
                     auth_sck, event_manager, cctx, rnd,
                     rbuf, front_trans, front, guest_ctx,
-                    redir_info, rail_client_execute,
-                    mod_wrapper, mod_factory
+                    mod_factory
                 );
             }
 
@@ -1627,15 +1598,11 @@ public:
              && front.is_up_and_running()
              && ini.get<cfg::globals::enable_close_box>()
             ) {
-                auto mod_name = ModuleName::close;
-                const bool is_already_close_mod = (mod_wrapper.get_mod_name() == mod_name);
-
-                if (!is_already_close_mod) {
-                    rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
-                    mod_wrapper.set_mod(mod_name, mod_factory.create_close_mod());
+                if (mod_factory.mod_name() != ModuleName::close) {
+                    mod_factory.create_close_mod();
                 }
 
-                auto& mod = mod_wrapper.get_mod();
+                auto& mod = mod_factory.mod();
                 this->internal_front_loop(
                     front, front_trans, rbuf, event_manager, mod,
                     [&]{
@@ -1663,7 +1630,7 @@ public:
         if (!ini.is_asked<cfg::globals::host>()) {
             LOG(LOG_INFO, "Client Session Disconnected");
         }
-        log_siem::disconnection(this->ini.get<cfg::context::auth_error_message>().c_str());
+        log_siem::disconnection(ini.get<cfg::context::auth_error_message>().c_str());
 
         front.must_be_stop_capture();
     }

@@ -195,12 +195,12 @@ ModPack create_mod_vnc(
         vnc_verbose
     );
 
-    auto tmp_psocket_transport = &new_mod->get_transport();
+    auto* socket_transport = &new_mod->get_transport();
 
     if (!client_info.remote_program) {
-        return ModPack{new_mod.release(), nullptr, nullptr, false, false, tmp_psocket_transport};
+        return ModPack{new_mod.release(), nullptr, socket_transport};
     }
 
     host_mod->set_mod(std::move(new_mod));
-    return ModPack{host_mod.release(), nullptr, nullptr, false, false, tmp_psocket_transport};
+    return ModPack{host_mod.release(), nullptr, socket_transport};
 }

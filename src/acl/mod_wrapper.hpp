@@ -21,8 +21,6 @@
 #pragma once
 
 #include "RAIL/client_execute.hpp"
-#include "acl/auth_api.hpp"
-#include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "acl/time_before_closing.hpp"
 #include "keyboard/keymap.hpp"
@@ -35,6 +33,7 @@
 #include "utils/translation.hpp"
 #include "utils/timebase.hpp"
 #include "utils/ref.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 #include "core/callback.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/bitmapupdate.hpp"
@@ -52,10 +51,6 @@ class ModWrapper final : public gdi::OsdApi, private Callback
         using gdi::ProtectedGraphics::ProtectedGraphics;
     } gfilter;
 
-    ModuleName current_mod = ModuleName::UNKNOWN;
-
-    bool connected = false;
-
     bool target_info_is_shown = false;
     bool enable_osd = false;
     bool is_disable_by_input = false;
@@ -65,7 +60,6 @@ class ModWrapper final : public gdi::OsdApi, private Callback
     ClientExecute & rail_client_execute;
     BGRPalette const & palette;
 
-    rdp_api * rdpapi = nullptr;
     windowing_api * winapi = nullptr;
 
     Inifile & ini;
@@ -75,11 +69,8 @@ class ModWrapper final : public gdi::OsdApi, private Callback
     RDPColor color;
     RDPColor background_color;
     const Font & glyphs;
-    Keymap & keymap;
 
-    SocketTransport * psocket_transport = nullptr;
-    null_mod no_mod;
-    not_null_ptr<mod_api> modi = &no_mod;
+    not_null_ptr<mod_api> modi;
 
     MonotonicTimePoint end_time_session {};
     TimeBase const& time_base;
@@ -88,62 +79,25 @@ class ModWrapper final : public gdi::OsdApi, private Callback
 
 public:
    explicit ModWrapper(
-        CRef<TimeBase> time_base, BGRPalette const & palette, gdi::GraphicApi& graphics,
-        Keymap & keymap, ClientInfo const & client_info, const Font & glyphs,
-        ClientExecute & rail_client_execute, Inifile & ini)
+       mod_api& mod, CRef<TimeBase> time_base, BGRPalette const & palette,
+       gdi::GraphicApi& graphics, ClientInfo const & client_info,
+       const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini)
     : gfilter(graphics, static_cast<RdpInput&>(*this), Rect{})
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
     , palette(palette)
     , ini(ini)
     , glyphs(glyphs)
-    , keymap(keymap)
+    , modi(&mod)
     , time_base(time_base)
     {}
-
-    ~ModWrapper()
-    {
-        if (this->modi != &this->no_mod){
-            delete this->modi;
-        }
-    }
-
-    void disconnect()
-    {
-        if (this->modi != &this->no_mod) {
-            try {
-                this->get_mod().disconnect();
-            }
-            catch (Error const& e) {
-                LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
-            }
-
-            delete this->modi;
-            this->modi = &this->no_mod;
-            this->rdpapi = nullptr;
-            this->winapi = nullptr;
-            this->connected = false;
-            this->psocket_transport = nullptr;
-            this->current_mod = ModuleName::UNKNOWN;
-        }
-    }
 
     Callback & get_callback() noexcept
     {
         return static_cast<Callback&>(*this);
     }
 
-    bool is_connected() const
-    {
-        return this->connected;
-    }
-
-    rdp_api* get_rdp_api() const
-    {
-        return this->rdpapi;
-    }
-
-    gdi::GraphicApi & get_graphics()
+    gdi::GraphicApi & get_graphics() noexcept
     {
         return this->gfilter;
     }
@@ -188,67 +142,25 @@ public:
         }
     }
 
-    void acl_update(AclFieldMask const& acl_fields)
-    {
-        this->get_mod().acl_update(acl_fields);
-    }
-
-    ModuleName get_mod_name() const
-    {
-        return current_mod;
-    }
-
-    mod_api& get_mod()
+    mod_api& get_mod() noexcept
     {
         return *this->modi;
     }
 
-    [[nodiscard]] mod_api const& get_mod() const
+    [[nodiscard]] mod_api const& get_mod() const noexcept
     {
         return *this->modi;
     }
 
-    BackEvent_t get_mod_signal()
+    void set_mod(mod_api& new_mod, windowing_api* winapi, bool enable_osd)
     {
-        return this->get_mod().get_mod_signal();
-    }
-
-    bool is_up_and_running() const
-    {
-        return (this->modi != &this->no_mod) && this->get_mod().is_up_and_running();
-    }
-
-    void set_mod(ModuleName next_state, ModPack mod_pack)
-    {
-        // LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
-        this->keymap.reset_decoded_keys();
-
-        this->clear_osd_message();
-
-        if (this->modi != &this->no_mod) {
-            delete this->modi;
-        }
-
-        this->current_mod = next_state;
-
-        this->modi = mod_pack.mod;
-
-        this->rdpapi = mod_pack.rdpapi;
-        this->winapi = mod_pack.winapi;
-        this->connected = mod_pack.connected;
-        this->psocket_transport = mod_pack.psocket_transport;
-        this->enable_osd = mod_pack.enable_osd;
-
-        if (this->connected) {
+        if (!this->get_protected_rect().isempty()) {
             this->target_info_is_shown = false;
+            this->disable_osd(true);
         }
-
-        this->modi->init();
-    }
-
-    [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
-    {
-        return this->psocket_transport;
+        this->modi = &new_mod;
+        this->winapi = winapi;
+        this->enable_osd = enable_osd;
     }
 
     void set_time_close(MonotonicTimePoint t)
@@ -256,11 +168,19 @@ public:
         this->end_time_session = t;
     }
 
+    void clear_osd_message(bool redraw = true)
+    {
+        if (!this->get_protected_rect().isempty()) {
+            this->target_info_is_shown = false;
+            this->disable_osd(redraw);
+        }
+    }
+
 private:
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
         if (this->is_disable_by_input && keymap.last_kevent() == Keymap::KEvent::Insert) {
-            this->disable_osd();
+            this->disable_osd(true);
             return;
         }
 
@@ -273,7 +193,6 @@ private:
                 bool const f12_released = bool(flags & KbdFlags::Release);
                 if (this->target_info_is_shown && f12_released) {
                     this->clear_osd_message();
-                    this->target_info_is_shown = false;
                 }
                 else if (!this->target_info_is_shown && !f12_released) {
                     std::string msg;
@@ -305,9 +224,8 @@ private:
                         this->color = RDPColor::from(0);
                         this->background_color = color_encode(LIGHT_YELLOW, bpp);
                         this->draw_osd_message(false);
+                        this->target_info_is_shown = true;
                     }
-
-                    this->target_info_is_shown = true;
                 }
             }
         }
@@ -325,7 +243,7 @@ private:
          && device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)
         ) {
             this->target_info_is_shown = false;
-            this->disable_osd();
+            this->disable_osd(true);
             return;
         }
 
@@ -500,7 +418,7 @@ private:
         }
     }
 
-    void disable_osd()
+    void disable_osd(bool redraw)
     {
         this->is_disable_by_input = false;
         auto const protected_rect = this->get_protected_rect();
@@ -517,13 +435,8 @@ private:
             this->winapi->destroy_auxiliary_window();
         }
 
-        this->get_mod().rdp_input_invalidate(protected_rect);
-    }
-
-    void clear_osd_message()
-    {
-        if (!this->get_protected_rect().isempty()) {
-            this->disable_osd();
+        if (redraw) {
+            this->get_mod().rdp_input_invalidate(protected_rect);
         }
     }
 };

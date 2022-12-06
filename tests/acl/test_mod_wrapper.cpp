@@ -45,34 +45,24 @@ namespace
                                  front_,
                                  client_info_.window_list_caps,
                                  false),
-            mod_wrapper_(time_base_,
+            mod_wrapper_(mod_,
+                         time_base_,
                          BGRPalette::classic_332(),
                          front_.gd(),
-                         keymap_,
                          client_info_,
                          font_,
                          rail_client_execute_,
                          ini_)
-        {}
+        {
+            mod_wrapper_.set_mod(mod_, nullptr, true);
+            ini_.set<cfg::globals::target_device>("127.0.0.1");
+        }
 
     protected:
         ImageView draw_osd(std::string_view msg, gdi::OsdMsgUrgency omu)
         {
             mod_wrapper_.display_osd_message(msg, omu);
             return front_;
-        }
-
-        void enable_input()
-        {
-            mod_wrapper_.set_mod(ModuleName::RDP, ModPack{
-                .mod = new GdRedraw(front_.gd()),
-                .rdpapi = nullptr,
-                .winapi = nullptr,
-                .enable_osd = true,
-                .connected = false,
-                .psocket_transport = nullptr,
-            });
-            ini_.set<cfg::globals::target_device>("127.0.0.1");
         }
 
         ImageView scancode_insert()
@@ -105,6 +95,7 @@ namespace
         Keymap keymap_{KeyLayout::null_layout()};
         Inifile ini_;
         FakeFront front_;
+        GdRedraw mod_{front_.gd()};
         ClientExecute rail_client_execute_;
         ModWrapper mod_wrapper_;
 
@@ -126,8 +117,6 @@ namespace
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalMultiLine,
                       TestOSDMessageDisplayFixture)
 {
-    enable_input();
-
     RED_CHECK_IMG(
         draw_osd("Hello\nWorld !"sv, gdi::OsdMsgUrgency::NORMAL),
         IMG_TEST_PATH "osd_message_multi_line.png"
@@ -139,8 +128,6 @@ RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalMultiLine,
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_NormalUrgency,
                       TestOSDMessageDisplayFixture)
 {
-    enable_input();
-
     RED_CHECK_IMG(
         draw_osd("Hello World !"sv, gdi::OsdMsgUrgency::NORMAL),
         IMG_TEST_PATH "osd_message_normal.png"
@@ -203,8 +190,6 @@ RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_EmptyMessage,
 RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_F12,
                       TestOSDMessageDisplayFixture)
 {
-    enable_input();
-
     RED_CHECK_IMG(
         scancode(kbdtypes::KbdFlags(), kbdtypes::Scancode::F12),
         IMG_TEST_PATH "osd_message_f12.png"

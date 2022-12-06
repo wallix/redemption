@@ -26,17 +26,12 @@
 #include "utils/sugar/not_null_ptr.hpp"
 
 class mod_api;
-class rdp_api;
 class windowing_api;
-class RailModuleHostMod;
 class SocketTransport;
 
 struct ModPack
 {
     not_null_ptr<mod_api> mod;
-    rdp_api* rdpapi;
     windowing_api* winapi;
-    bool enable_osd;
-    bool connected;
     SocketTransport* psocket_transport;
 };

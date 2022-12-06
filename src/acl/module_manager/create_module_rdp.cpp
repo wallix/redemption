@@ -911,14 +911,14 @@ ModPack create_mod_rdp(
         }
     }
 
-    auto tmp_psocket_transport = &new_mod->get_transport();
+    auto* socket_transport = &new_mod->get_transport();
 
     if (!host_mod) {
         auto mod = new_mod.release();
-        return ModPack{mod, mod, mod->get_windowing_api(), false, false, tmp_psocket_transport};
+        return ModPack{mod, mod->get_windowing_api(), socket_transport};
     }
 
     host_mod->set_mod(std::move(new_mod));
     auto mod = host_mod.release();
-    return ModPack{mod, nullptr, &rail_client_execute, false, false, tmp_psocket_transport};
+    return ModPack{mod, &rail_client_execute, socket_transport};
 }

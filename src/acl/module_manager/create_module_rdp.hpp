@@ -40,6 +40,7 @@ class EventContainer;
 class LicenseApi;
 class Random;
 class CryptoContext;
+class SessionLogApi;
 
 namespace gdi
 {

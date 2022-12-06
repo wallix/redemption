@@ -23,13 +23,18 @@
 
 #pragma once
 
-#include "acl/module_manager/enums.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
+#include "acl/file_system_license_store.hpp"
+#include "acl/module_manager/create_module_rdp.hpp"
+#include "acl/module_manager/create_module_vnc.hpp"
 
 #include "configs/config.hpp"
 #include "RAIL/client_execute.hpp"
 #include "utils/strutils.hpp"
+#include "utils/redirection_info.hpp"
+#include "utils/translation.hpp"
+#include "utils/load_theme.hpp"
 
 // Modules
 #include "mod/internal/bouncer2_mod.hpp"
@@ -45,81 +50,170 @@
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
 
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "utils/translation.hpp"
-#include "acl/file_system_license_store.hpp"
-#include "acl/module_manager/create_module_rdp.hpp"
-#include "acl/module_manager/create_module_vnc.hpp"
-
 
 class ModFactory
 {
-    ModWrapper & mod_wrapper;
+    struct NoMod final : null_mod
+    {
+        bool is_up_and_running() const override { return false; }
+    };
+
+    SocketTransport * psocket_transport = nullptr;
+    ModuleName current_mod = ModuleName::UNKNOWN;
+
     EventContainer & events;
     ClientInfo const& client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
-    RedirectionInfo & redir_info;
     Inifile & ini;
     Font const & glyphs;
-    Theme & theme;
-    ClientExecute & rail_client_execute;
     Keymap & keymap;
-    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
     Random & gen;
     CryptoContext & cctx;
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
+    NoMod no_mod;
+    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
+
+    Theme theme;
+    ClientExecute rail_client_execute;
+    ModWrapper mod_wrapper;
+    RedirectionInfo redir_info;
 
 public:
-    struct ClientInfoRef
-    {
-        ClientInfoRef(ClientInfo const&&) = delete;
-        ClientInfoRef(ClientInfo const& client_info) : ref(client_info) {}
-
-        ClientInfo const& ref;
-    };
-
-    ModFactory(ModWrapper & mod_wrapper,
-               EventContainer & events,
-               ClientInfoRef client_info_ref,
+    ModFactory(EventContainer & events,
+               CRef<TimeBase> time_base,
+               CRef<ClientInfo> client_info,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
-               RedirectionInfo & redir_info,
+               CRef<BGRPalette> palette,
+               CRef<Font> glyphs,
                Inifile & ini,
-               Ref<Font const> glyphs,
-               Theme & theme,
-               ClientExecute & rail_client_execute,
                Keymap & keymap,
                Random & gen,
                CryptoContext & cctx
         )
-        : mod_wrapper(mod_wrapper)
-        , events(events)
-        , client_info(client_info_ref.ref)
+        : events(events)
+        , client_info(client_info)
         , front(front)
         , graphics(graphics)
-        , redir_info(redir_info)
         , ini(ini)
         , glyphs(glyphs)
-        , theme(theme)
-        , rail_client_execute(rail_client_execute)
         , keymap(keymap)
         , gen(gen)
         , cctx(cctx)
+        , rail_client_execute(
+            time_base, graphics, front,
+            this->client_info.window_list_caps,
+            ini.get<cfg::debug::mod_internal>() & 1)
+        , mod_wrapper(
+            no_mod, time_base, palette, graphics,
+            client_info, glyphs, rail_client_execute, ini)
     {
+        ::load_theme(theme, ini);
     }
 
-    auto create_mod_bouncer() -> ModPack
+    ~ModFactory()
+    {
+        if (&this->mod() != &this->no_mod){
+            delete &this->mod();
+        }
+    }
+
+public:
+    RedirectionInfo& get_redir_info() noexcept
+    {
+        return redir_info;
+    }
+
+    ModuleName mod_name() const noexcept
+    {
+        return current_mod;
+    }
+
+    mod_api& mod() noexcept
+    {
+        return mod_wrapper.get_mod();
+    }
+
+    mod_api const& mod() const noexcept
+    {
+        return mod_wrapper.get_mod();
+    }
+
+    [[nodiscard]] SocketTransport* mod_sck_transport() const noexcept
+    {
+        return psocket_transport;
+    }
+
+    Callback& callback() noexcept
+    {
+        return mod_wrapper.get_callback();
+    }
+
+    void display_osd_message(std::string_view message,
+                             gdi::OsdMsgUrgency omu = gdi::OsdMsgUrgency::NORMAL)
+    {
+        return mod_wrapper.display_osd_message(message, omu);
+    }
+
+    void set_time_close(MonotonicTimePoint t)
+    {
+        mod_wrapper.set_time_close(t);
+    }
+
+    bool is_connected() const noexcept
+    {
+        return this->psocket_transport;
+    }
+
+    void disconnect()
+    {
+        if (&mod() != &no_mod) {
+            try {
+                mod().disconnect();
+            }
+            catch (Error const& e) {
+                LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
+            }
+
+            delete &mod();
+            psocket_transport = nullptr;
+            current_mod = ModuleName::UNKNOWN;
+            mod_wrapper.set_mod(no_mod, nullptr, false);
+        }
+    }
+
+private:
+    void set_mod(ModuleName name, ModPack mod_pack, bool enable_osd)
+    {
+        this->keymap.reset_decoded_keys();
+
+        this->mod_wrapper.clear_osd_message(false);
+
+        if (&this->mod() != &this->no_mod){
+            delete &this->mod();
+        }
+
+        this->current_mod = name;
+        this->psocket_transport = mod_pack.psocket_transport;
+        rail_client_execute.enable_remote_program(client_info.remote_program);
+        mod_wrapper.set_mod(*mod_pack.mod, mod_pack.winapi, enable_osd);
+
+        mod_pack.mod->init();
+    }
+
+public:
+    void create_mod_bouncer()
     {
         auto new_mod = new Bouncer2Mod(
             this->graphics,
             this->events,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height);
-        return {new_mod, nullptr, nullptr, true, false, nullptr};
+        set_mod(ModuleName::bouncer2, {new_mod, nullptr, nullptr}, true);
     }
 
-    auto create_mod_replay() -> ModPack
+    void create_mod_replay()
     {
         auto new_mod = new ReplayMod(
             this->events,
@@ -138,10 +232,10 @@ public:
             this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
             safe_cast<FileToGraphicVerbose>(this->ini.get<cfg::debug::capture>())
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::autotest, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_widget_test_mod() -> ModPack
+    void create_widget_test_mod()
     {
         auto new_mod = new WidgetTestMod(
             this->graphics,
@@ -152,10 +246,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::widgettest, {new_mod, nullptr, nullptr}, true);
     }
 
-    auto create_test_card_mod() -> ModPack
+    void create_test_card_mod()
     {
         auto new_mod = new TestCardMod(
             this->graphics,
@@ -164,10 +258,10 @@ public:
             this->glyphs,
             false
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::card, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_selector_mod() -> ModPack
+    void create_selector_mod()
     {
         auto new_mod = new SelectorMod(
             this->ini,
@@ -181,27 +275,27 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::selector, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_close_mod() -> ModPack
+    void create_close_mod()
     {
         LOG(LOG_INFO, "----------------------- create_close_mod() -----------------");
 
         bool back_to_selector = false;
-        return this->_create_close_mod(back_to_selector);
+        set_mod(ModuleName::close, this->_create_close_mod(back_to_selector), false);
     }
 
-    auto create_close_mod_back_to_selector() -> ModPack
+    void create_close_mod_back_to_selector()
     {
         LOG(LOG_INFO, "----------------------- create_close_mod_back_to_selector() -----------------");
 
         bool back_to_selector = true;
-        return this->_create_close_mod(back_to_selector);
+        set_mod(ModuleName::close_back, this->_create_close_mod(back_to_selector), false);
     }
 
 private:
-    auto _create_close_mod(bool back_to_selector) -> ModPack
+    ModPack _create_close_mod(bool back_to_selector)
     {
         zstring_view auth_error_message = this->ini.get<cfg::context::auth_error_message>();
         if (auth_error_message.empty()) {
@@ -222,11 +316,11 @@ private:
             this->theme,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr};
     }
 
 public:
-    auto create_interactive_target_mod() -> ModPack
+    void create_interactive_target_mod()
     {
         auto new_mod = new InteractiveTargetMod(
             this->ini,
@@ -239,34 +333,34 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::interactive_target, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_valid_message_mod() -> ModPack
+    void create_valid_message_mod()
     {
         const char * button = TR(trkeys::refused, language(this->ini));
         const char * caption = "Information";
-        return this->_create_dialog(button, caption, NO_CHALLENGE);
+        set_mod(ModuleName::valid, this->_create_dialog(button, caption, NO_CHALLENGE), false);
     }
 
-    auto create_display_message_mod() -> ModPack
+    void create_display_message_mod()
     {
         const char * button = nullptr;
         const char * caption = "Information";
-        return this->_create_dialog(button, caption, NO_CHALLENGE);
+        set_mod(ModuleName::confirm, this->_create_dialog(button, caption, NO_CHALLENGE), false);
     }
 
-    auto create_dialog_challenge_mod() -> ModPack
+    void create_dialog_challenge_mod()
     {
         const char * button = nullptr;
         const char * caption = "Challenge";
         const ChallengeOpt challenge = this->ini.get<cfg::context::authentication_challenge>()
             ? CHALLENGE_ECHO
             : CHALLENGE_HIDE;
-        return this->_create_dialog(button, caption, challenge);
+        set_mod(ModuleName::challenge, this->_create_dialog(button, caption, challenge), false);
     }
 
-    auto create_display_link_mod() -> ModPack
+    void create_display_link_mod()
     {
         const char * caption = "URL Redirection";
         const char * link_label = "Copy to clipboard: ";
@@ -286,11 +380,11 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::link_confirm, {new_mod, nullptr, nullptr}, false);
     }
 
 private:
-    auto _create_dialog(const char * button, const char * caption, ChallengeOpt challenge) -> ModPack
+    ModPack _create_dialog(const char * button, const char * caption, ChallengeOpt challenge)
     {
         auto new_mod = new DialogMod(
             this->ini,
@@ -307,11 +401,11 @@ private:
             this->theme,
             challenge
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr};
     }
 
 public:
-    auto create_wait_info_mod() -> ModPack
+    void create_wait_info_mod()
     {
         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
         const char * caption = TR(trkeys::information, language(this->ini));
@@ -333,10 +427,10 @@ public:
             showform,
             flag
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::waitinfo, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_transition_mod() -> ModPack
+    void create_transition_mod()
     {
         auto new_mod = new TransitionMod(
             TR(trkeys::wait_msg, language(this->ini)),
@@ -349,10 +443,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::transitory, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_login_mod() -> ModPack
+    void create_login_mod()
     {
         char username[255]; // should use string
         username[0] = 0;
@@ -371,7 +465,7 @@ public:
                         , this->ini.get<cfg::globals::target_user>().c_str()
                         , this->ini.get<cfg::globals::target_device>().c_str()
                         , this->ini.get<cfg::context::target_protocol>().c_str()
-                        , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
+                        , this->ini.get<cfg::context::target_protocol>().empty() ? "" : ":"
                         , this->ini.get<cfg::globals::auth_user>().c_str()
                         );
             }
@@ -393,13 +487,13 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        set_mod(ModuleName::waitinfo, {new_mod, nullptr, nullptr}, false);
     }
 
-    auto create_rdp_mod(
+    void create_rdp_mod(
         SessionLogApi& session_log,
         PerformAutomaticReconnection perform_automatic_reconnection
-    ) -> ModPack
+    )
     {
         auto mod_pack = create_mod_rdp(
             this->mod_wrapper.get_graphics(),
@@ -418,12 +512,10 @@ public:
             this->cctx,
             this->server_auto_reconnect_packet,
             perform_automatic_reconnection);
-        mod_pack.enable_osd = true;
-        mod_pack.connected = true;
-        return mod_pack;
+        set_mod(ModuleName::RDP, mod_pack, true);
     }
 
-    auto create_vnc_mod(SessionLogApi& session_log) -> ModPack
+    void create_vnc_mod(SessionLogApi& session_log)
     {
         auto mod_pack = create_mod_vnc(
             this->mod_wrapper.get_graphics(),
@@ -435,8 +527,6 @@ public:
             this->glyphs, this->theme,
             this->events,
             session_log);
-        mod_pack.enable_osd = true;
-        mod_pack.connected = true;
-        return mod_pack;
+        set_mod(ModuleName::VNC, mod_pack, true);
     }
 };
