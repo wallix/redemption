@@ -756,7 +756,7 @@ private:
         gdi::GraphicApi* guest_old_gd = nullptr;
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
-        chars_view name {};
+        std::string name;
         chars_view control_owner {};
         MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))
@@ -5465,12 +5465,12 @@ public:
     {
         assert(!this->sharing_ctx.guest);
 
-        this->sharing_ctx.name = std::string_view{this->client_info.username};
+        this->sharing_ctx.name = this->ini.get<cfg::globals::auth_user>();
         this->sharing_ctx.control_owner = this->sharing_ctx.name;
 
         this->sharing_ctx.is_sharing_mode = true;
         guest_front.sharing_ctx.is_sharing_mode = true;
-        guest_front.sharing_ctx.name = std::string_view{guest_front.client_info.username};
+        guest_front.sharing_ctx.name = guest_front.client_info.username;
 
         this->sharing_ctx.guest = &guest_front;
         this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;

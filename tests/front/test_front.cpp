@@ -596,8 +596,9 @@ void sharing_test(bool enable_shared_control, F f)
     RED_CHECK(event_manager.is_empty());
 
     // start test
+    ini.set_acl<cfg::globals::auth_user>("user");
 
-    std::memcpy(const_cast<ClientInfo&>(user.front.get_client_info()).username, "user", 5); // NOLINT
+    std::memcpy(const_cast<ClientInfo&>(user.front.get_client_info()).username, "user-original", 5); // NOLINT
     std::memcpy(const_cast<ClientInfo&>(guest.front.get_client_info()).username, "guest-1", 7); // NOLINT
 
     RED_CHECK(session_log.events() == ""_av);
