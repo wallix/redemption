@@ -1110,12 +1110,12 @@ private:
                         this->pid_file.rename(this->ini.get<cfg::context::session_id>());
                     }
 
-                    if (has_field(cfg::context::module())) {
-                        if ((ini.get<cfg::context::module>() != mod_factory.mod_name())
-                         || ini.get<cfg::context::try_alternate_target>()) {
-                            next_module = ini.get<cfg::context::module>();
-                            back_event = BACK_EVENT_NEXT;
-                        }
+                    if (has_field(cfg::context::module())
+                     && ((ini.get<cfg::context::module>() != mod_factory.mod_name()
+                       || ini.get<cfg::context::try_alternate_target>())
+                    )) {
+                        next_module = ini.get<cfg::context::module>();
+                        back_event = BACK_EVENT_NEXT;
                     }
 
                     if (has_field(cfg::context::keepalive())) {
