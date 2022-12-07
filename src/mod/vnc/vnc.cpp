@@ -358,7 +358,7 @@ void mod_vnc::send_keyevents(KeymapSym::Keys keys)
     for (auto key : keys) {
         LOG_IF(bool(verbose & VNCVerbose::keymap_stack), LOG_INFO,
             "keyloop::ksym=%u (0x%x) %s",
-            key.keysym, key.keysym, (key.down_flag == KeymapSym::VncDownFlag::Up) ? "UP" : "DOWN");
+            key.keysym, key.keysym, (key.down_flag == KeymapSym::VncKeyState::Up) ? "UP" : "DOWN");
 
         stream.out_uint8(4);
         stream.out_uint8(underlying_cast(key.down_flag));
@@ -443,11 +443,10 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
 
 void mod_vnc::rdp_input_synchronize(KeyLocks locks)
 {
-    (void)locks;
     LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
-        "KeymapSym::synchronize(param1=%04x",
-        underlying_cast(locks));
-    this->keymapSym.set_locks(locks);
+        "KeymapSym::synchronize(%04x)", underlying_cast(locks));
+
+    this->send_keyevents(this->keymapSym.reset_mods(locks));
 }
 
 void mod_vnc::update_screen(Rect r, uint8_t incr) {

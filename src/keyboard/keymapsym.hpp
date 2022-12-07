@@ -30,7 +30,7 @@
 
 struct KeymapSym
 {
-    enum class VncDownFlag : uint8_t
+    enum class VncKeyState : uint8_t
     {
         Up = 0,
         Down = 1,
@@ -51,7 +51,7 @@ struct KeymapSym
     struct Key
     {
         uint32_t keysym;
-        VncDownFlag down_flag;
+        VncKeyState down_flag;
     };
 
     struct Keys
@@ -71,6 +71,8 @@ struct KeymapSym
         static constexpr std::size_t max_capacity = 12;
 
     private:
+        friend KeymapSym;
+
         std::array<Key, max_capacity> keys;
         unsigned len = 0;
     };
@@ -86,7 +88,7 @@ struct KeymapSym
 
     Keys scancode_to_keysyms(KbdFlags flags, Scancode scancode) noexcept;
 
-    void set_locks(KeyLocks locks) noexcept;
+    Keys reset_mods(KeyLocks locks) noexcept;
 
     Keys utf16_to_keysyms(KbdFlags flag, uint16_t utf16) noexcept;
 

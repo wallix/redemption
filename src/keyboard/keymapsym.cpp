@@ -44,6 +44,15 @@ inline uint32_t unicode_to_ksym(uint32_t uc) noexcept
     return uc | 0x01000000;
 }
 
+constexpr uint32_t vnc_key_LCtrl = 0xffe3;
+constexpr uint32_t vnc_key_RCtrl = 0xffe4;
+constexpr uint32_t vnc_key_LShift = 0xffe1;
+constexpr uint32_t vnc_key_RShift = 0xffe2;
+constexpr uint32_t vnc_key_LAlt = 0xffe9;
+constexpr uint32_t vnc_key_RAlt = 0xffea;
+constexpr uint32_t vnc_key_LWin = 0xffeb;
+constexpr uint32_t vnc_key_RWin = 0xffec;
+
 inline uint32_t keycode_to_sym(kbdtypes::KeyCode keycode, kbdtypes::KeyModFlags mods) noexcept
 {
     using kbdtypes::KeyCode;
@@ -80,14 +89,14 @@ inline uint32_t keycode_to_sym(kbdtypes::KeyCode keycode, kbdtypes::KeyModFlags 
         case KeyCode::PrintScreen: return 0xfd1d;
         case KeyCode::PauseFirstPart: return 0xff13;
 
-        case KeyCode::LCtrl: return 0xffe3;
-        case KeyCode::RCtrl: return 0xffe4;
-        case KeyCode::LShift: return 0xffe1;
-        case KeyCode::RShift: return 0xffe2;
-        case KeyCode::LAlt: return 0xffe9;
-        case KeyCode::RAlt: return 0xffea;
-        case KeyCode::LWin: return 0xffeb;
-        case KeyCode::RWin: return 0xffec;
+        case KeyCode::LCtrl: return vnc_key_LCtrl;
+        case KeyCode::RCtrl: return vnc_key_RCtrl;
+        case KeyCode::LShift: return vnc_key_LShift;
+        case KeyCode::RShift: return vnc_key_RShift;
+        case KeyCode::LAlt: return vnc_key_LAlt;
+        case KeyCode::RAlt: return vnc_key_RAlt;
+        case KeyCode::LWin: return vnc_key_LWin;
+        case KeyCode::RWin: return vnc_key_RWin;
         case KeyCode::ContextMenu: return 0xff67;
 
         case KeyCode::CapsLock: return 0xffe5;
@@ -410,7 +419,7 @@ sized_array_view<KeyLayout::unicode_t, 256> macos_layout_for(kbdtypes::KeyModFla
 
 void push_alt_gr_state(
     KeymapSym::Keys& keys, kbdtypes::KeyModFlags mods,
-    KeymapSym::VncDownFlag down_flag, bool is_win) noexcept
+    KeymapSym::VncKeyState down_flag, bool is_win) noexcept
 {
     using kbdtypes::KeyMod;
     using kbdtypes::KeyCode;
@@ -441,19 +450,19 @@ bool is_ctrl_alt(kbdtypes::KeyModFlags mods) noexcept
     return ctrl_alt.as_uint();
 }
 
-KeymapSym::VncDownFlag to_vnc_flag(kbdtypes::KbdFlags flags) noexcept
+KeymapSym::VncKeyState to_vnc_key_state(kbdtypes::KbdFlags flags) noexcept
 {
     return bool(flags & kbdtypes::KbdFlags::Release)
-        ? KeymapSym::VncDownFlag::Up
-        : KeymapSym::VncDownFlag::Down;
+        ? KeymapSym::VncKeyState::Up
+        : KeymapSym::VncKeyState::Down;
 }
 
-void push_key(KeymapSym::Keys& keys, uint32_t uc, KeymapSym::VncDownFlag down_flag, kbdtypes::KeyModFlags mods, bool is_win) noexcept
+void push_key(KeymapSym::Keys& keys, uint32_t uc, KeymapSym::VncKeyState down_flag, kbdtypes::KeyModFlags mods, bool is_win) noexcept
 {
     const auto ksym = unicode_to_ksym(uc);
-    push_alt_gr_state(keys, mods, KeymapSym::VncDownFlag::Up, is_win);
+    push_alt_gr_state(keys, mods, KeymapSym::VncKeyState::Up, is_win);
     keys.push({ksym, down_flag});
-    push_alt_gr_state(keys, mods, KeymapSym::VncDownFlag::Down, is_win);
+    push_alt_gr_state(keys, mods, KeymapSym::VncKeyState::Down, is_win);
 }
 
 using kbdtypes::KeyMod;
@@ -477,7 +486,7 @@ KeymapSym::Keys KeymapSym::scancode_to_keysyms(KbdFlags flags, Scancode scancode
     Keys keys;
 
     const auto keycode = kbdtypes::to_keycode(flags, scancode);
-    const auto down_flag = to_vnc_flag(flags);
+    const auto down_flag = to_vnc_key_state(flags);
 
     auto set_mod = [&](KeyMod mod){
         keys.push({keycode_to_sym(keycode, mods_), down_flag});
@@ -559,11 +568,11 @@ KeymapSym::Keys KeymapSym::scancode_to_keysyms(KbdFlags flags, Scancode scancode
                     else if (keycode != KeyCode::Backspace) {
                         const auto ksym1 = unicode_to_ksym(dkeys_.accent());
                         const auto ksym2 = unicode_to_ksym(unicode & ~KeyLayout::DK);
-                        push_alt_gr_state(keys, mods_, VncDownFlag::Up, is_win_);
-                        keys.push({ksym1, VncDownFlag::Down});
-                        keys.push({ksym1, VncDownFlag::Up});
-                        keys.push({ksym2, VncDownFlag::Down});
-                        push_alt_gr_state(keys, mods_, VncDownFlag::Down, is_win_);
+                        push_alt_gr_state(keys, mods_, VncKeyState::Up, is_win_);
+                        keys.push({ksym1, VncKeyState::Down});
+                        keys.push({ksym1, VncKeyState::Up});
+                        keys.push({ksym2, VncKeyState::Down});
+                        push_alt_gr_state(keys, mods_, VncKeyState::Down, is_win_);
                     }
                     dkeys_ = {};
                 }
@@ -579,10 +588,30 @@ KeymapSym::Keys KeymapSym::scancode_to_keysyms(KbdFlags flags, Scancode scancode
     return keys;
 }
 
-void KeymapSym::set_locks(KeyLocks locks) noexcept
+KeymapSym::Keys KeymapSym::reset_mods(KeyLocks locks) noexcept
 {
+    KeymapSym::Keys keys;
+
+    auto push = [&](uint32_t ksym, KeyMod mod){
+        keys.keys[keys.len] = Key{ksym, VncKeyState::Up};
+        keys.len += mods_.test_as_uint(mod);
+    };
+
+    push(vnc_key_RAlt, KeyMod::RAlt);
+    push(vnc_key_LAlt, KeyMod::LAlt);
+    push(vnc_key_LCtrl, KeyMod::LCtrl);
+    push(vnc_key_RCtrl, KeyMod::RCtrl);
+    push(vnc_key_LShift, KeyMod::LShift);
+    push(vnc_key_RShift, KeyMod::RShift);
+    // Window key has an event on release, discard
+    // push(vnc_key_LWin, KeyMod::LMeta);
+    // push(vnc_key_RWin, KeyMod::RMeta);
+
+    mods_.reset();
     mods_.sync_locks(locks);
     _update_keymap();
+
+    return keys;
 }
 
 void KeymapSym::_update_keymap() noexcept
@@ -650,7 +679,7 @@ KeymapSym::Keys KeymapSym::utf16_to_keysyms(KbdFlags flag, uint16_t utf16) noexc
     Keys keys;
 
     if (unicode) {
-        push_key(keys, unicode, to_vnc_flag(flag), mods_, is_win_);
+        push_key(keys, unicode, to_vnc_key_state(flag), mods_, is_win_);
     }
 
     return keys;

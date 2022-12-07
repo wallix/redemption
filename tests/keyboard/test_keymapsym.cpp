@@ -77,7 +77,7 @@ static ut::assertion_result test_comp_keysyms(Keysyms const& a, Keysyms const& b
                     return "";
                 };
 
-                out << "{" << (key.down_flag == KeymapSym::VncDownFlag::Down ? "down" : "up")
+                out << "{" << (key.down_flag == KeymapSym::VncKeyState::Down ? "down" : "up")
                     << ", .ksym=0x" << int_to_fixed_hexadecimal_upper_zchars(key.keysym)
                     << to_ascii(uchar, key.keysym) << "},";
             }
@@ -110,8 +110,8 @@ namespace
     const auto extended = kbdtypes::KbdFlags::Extended;
     const auto extended1 = kbdtypes::KbdFlags::Extended1;
 
-    KeymapSym::Key vnc_up(uint32_t uc) { return {uc, KeymapSym::VncDownFlag::Up}; }
-    KeymapSym::Key vnc_down(uint32_t uc) { return {uc, KeymapSym::VncDownFlag::Down}; }
+    KeymapSym::Key stUp(uint32_t uc) { return {uc, KeymapSym::VncKeyState::Up}; }
+    KeymapSym::Key stDown(uint32_t uc) { return {uc, KeymapSym::VncKeyState::Down}; }
 
     template<class... Key>
     Keysyms ksyms(Key... key)
@@ -124,147 +124,165 @@ namespace
     auto* layout_fr = find_layout_by_id(KeyLayout::KbdId(0x040C));
 }
 
+namespace
+{
+    struct KeymapSymTest
+    {
+        KeymapSymTest(KeymapSym::IsApple is_apple, KeymapSym::IsUnix is_unix)
+        : keymapSym(*layout_fr, KeyLocks(), is_apple, is_unix, false)
+        {}
+
+        Keysyms utf16(KeymapSym::KbdFlags flag, uint16_t utf16)
+        {
+            return Keysyms{keymapSym.utf16_to_keysyms(flag, utf16)};
+        }
+
+        Keysyms scancode(KbdFlags flags, Scancode sc)
+        {
+            return Keysyms{keymapSym.scancode_to_keysyms(flags, sc)};
+        }
+
+        Keysyms reset_mods()
+        {
+            return Keysyms{keymapSym.reset_mods({})};
+        }
+
+    private:
+        KeymapSym keymapSym;
+    };
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestKeymapSymTounicode)
 {
-    KeymapSym keymap(*layout_fr, KeyLocks(), KeymapSym::IsApple::No, KeymapSym::IsUnix::No, false);
-
-    auto utf16_to_keysyms = [&keymap](KeymapSym::KbdFlags flag, uint16_t utf16) {
-        return Keysyms{keymap.utf16_to_keysyms(flag, utf16)};
-    };
-
-    auto scancode_to_keysyms = [&keymap](KbdFlags flags, Scancode sc) {
-        return Keysyms{keymap.scancode_to_keysyms(flags, sc)};
-    };
+    KeymapSymTest keymap(KeymapSym::IsApple::No, KeymapSym::IsUnix::No);
 
     // null
-    RED_CHECK(utf16_to_keysyms(down, 0) == ksyms());
-    RED_CHECK(utf16_to_keysyms(release, 0) == ksyms());
+    RED_CHECK(keymap.utf16(down, 0) == ksyms());
+    RED_CHECK(keymap.utf16(release, 0) == ksyms());
 
     // a
-    RED_CHECK(utf16_to_keysyms(down, 'a') == ksyms(vnc_down('a')));
-    RED_CHECK(utf16_to_keysyms(release, 'a') == ksyms(vnc_up('a')));
+    RED_CHECK(keymap.utf16(down, 'a') == ksyms(stDown('a')));
+    RED_CHECK(keymap.utf16(release, 'a') == ksyms(stUp('a')));
 
     // é
-    RED_CHECK(utf16_to_keysyms(down, eacute) == ksyms(vnc_down(0x01000000 | eacute)));
-    RED_CHECK(utf16_to_keysyms(release, eacute) == ksyms(vnc_up(0x01000000 | eacute)));
+    RED_CHECK(keymap.utf16(down, eacute) == ksyms(stDown(0x01000000 | eacute)));
+    RED_CHECK(keymap.utf16(release, eacute) == ksyms(stUp(0x01000000 | eacute)));
 
     // 🚀 (rocket)
-    RED_CHECK(utf16_to_keysyms(down, 0xd83d) == ksyms());
-    RED_CHECK(utf16_to_keysyms(down, 0xde80) == ksyms(vnc_down(0x01000000 | 0x1f680)));
-    RED_CHECK(utf16_to_keysyms(release, 0xd83d) == ksyms());
-    RED_CHECK(utf16_to_keysyms(release, 0xde80) == ksyms(vnc_up(0x01000000 | 0x1f680)));
+    RED_CHECK(keymap.utf16(down, 0xd83d) == ksyms());
+    RED_CHECK(keymap.utf16(down, 0xde80) == ksyms(stDown(0x01000000 | 0x1f680)));
+    RED_CHECK(keymap.utf16(release, 0xd83d) == ksyms());
+    RED_CHECK(keymap.utf16(release, 0xde80) == ksyms(stUp(0x01000000 | 0x1f680)));
 
     // a (again)
-    RED_CHECK(utf16_to_keysyms(down, 'a') == ksyms(vnc_down('a')));
-    RED_CHECK(utf16_to_keysyms(release, 'a') == ksyms(vnc_up('a')));
+    RED_CHECK(keymap.utf16(down, 'a') == ksyms(stDown('a')));
+    RED_CHECK(keymap.utf16(release, 'a') == ksyms(stUp('a')));
 
     // shift + altgr + 🚀 (rocket)
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LShift) == ksyms(vnc_down(0xffe1)));
-    RED_CHECK(scancode_to_keysyms(down | extended, Scancode::LAlt) == ksyms(vnc_down(0xffea)));
-    RED_CHECK(utf16_to_keysyms(down, 0xd83d) == ksyms());
-    RED_CHECK(utf16_to_keysyms(down, 0xde80) == ksyms(vnc_up(0xffea), vnc_down(0x01000000 | 0x1f680), vnc_down(0xffea)));
-    RED_CHECK(utf16_to_keysyms(release, 0xd83d) == ksyms());
-    RED_CHECK(utf16_to_keysyms(release, 0xde80) == ksyms(vnc_up(0xffea), vnc_up(0x01000000 | 0x1f680), vnc_down(0xffea)));
-    RED_CHECK(scancode_to_keysyms(release | extended, Scancode::LAlt) == ksyms(vnc_up(0xffea)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LShift) == ksyms(vnc_up(0xffe1)));
+    RED_CHECK(keymap.scancode(down, Scancode::LShift) == ksyms(stDown(0xffe1)));
+    RED_CHECK(keymap.scancode(down | extended, Scancode::LAlt) == ksyms(stDown(0xffea)));
+    RED_CHECK(keymap.utf16(down, 0xd83d) == ksyms());
+    RED_CHECK(keymap.utf16(down, 0xde80) == ksyms(stUp(0xffea), stDown(0x01000000 | 0x1f680), stDown(0xffea)));
+    RED_CHECK(keymap.utf16(release, 0xd83d) == ksyms());
+    RED_CHECK(keymap.utf16(release, 0xde80) == ksyms(stUp(0xffea), stUp(0x01000000 | 0x1f680), stDown(0xffea)));
+    RED_CHECK(keymap.scancode(release | extended, Scancode::LAlt) == ksyms(stUp(0xffea)));
+    RED_CHECK(keymap.scancode(release, Scancode::LShift) == ksyms(stUp(0xffe1)));
 }
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {
-    KeymapSym keymap(*layout_fr, KeyLocks(), KeymapSym::IsApple::No, KeymapSym::IsUnix::No, false);
-
-    auto scancode_to_keysyms = [&keymap](KbdFlags flags, Scancode sc) {
-        return Keysyms{keymap.scancode_to_keysyms(flags, sc)};
-    };
+    KeymapSymTest keymap(KeymapSym::IsApple::No, KeymapSym::IsUnix::No);
 
     // a
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('a')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('a')));
+    RED_CHECK(keymap.scancode(down, Scancode(0x10)) == ksyms(stDown('a')));
+    RED_CHECK(keymap.scancode(release, Scancode(0x10)) == ksyms(stUp('a')));
 
     // shift + a
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LShift) == ksyms(vnc_down(0xffe1)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('A')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('A')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LShift) == ksyms(vnc_up(0xffe1)));
+    RED_CHECK(keymap.scancode(down, Scancode::LShift) == ksyms(stDown(0xffe1)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x10)) == ksyms(stDown('A')));
+    RED_CHECK(keymap.scancode(release, Scancode(0x10)) == ksyms(stUp('A')));
+    RED_CHECK(keymap.scancode(release, Scancode::LShift) == ksyms(stUp(0xffe1)));
 
     // é
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x03)) == ksyms(vnc_down(0xe9)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x03)) == ksyms(vnc_up(0xe9)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x03)) == ksyms(stDown(0xe9)));
+    RED_CHECK(keymap.scancode(release, Scancode(0x03)) == ksyms(stUp(0xe9)));
 
     const uint16_t euro = 0x20ac /* € */;
 
     // altgr + e (remove altgr, push €)
-    RED_CHECK(scancode_to_keysyms(down | extended, Scancode::LAlt) == ksyms(vnc_down(0xffea)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x12))
-        == ksyms(vnc_up(0xffea), vnc_down(0x01000000 | euro), vnc_down(0xffea)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x12))
-        == ksyms(vnc_up(0xffea), vnc_up(0x01000000 | euro), vnc_down(0xffea)));
-    RED_CHECK(scancode_to_keysyms(release | extended, Scancode::LAlt) == ksyms(vnc_up(0xffea)));
+    RED_CHECK(keymap.scancode(down | extended, Scancode::LAlt) == ksyms(stDown(0xffea)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x12))
+        == ksyms(stUp(0xffea), stDown(0x01000000 | euro), stDown(0xffea)));
+    RED_CHECK(keymap.scancode(release, Scancode(0x12))
+        == ksyms(stUp(0xffea), stUp(0x01000000 | euro), stDown(0xffea)));
+    RED_CHECK(keymap.scancode(release | extended, Scancode::LAlt) == ksyms(stUp(0xffea)));
 
     // ctrl + alt + e (remove ctrl+alt, push €)
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LCtrl) == ksyms(vnc_down(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LAlt) == ksyms(vnc_down(0xffe9)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x12))
-        == ksyms(vnc_up(0xffe9), vnc_up(0xffe3), vnc_down(0x01000000 | euro), vnc_down(0xffe9), vnc_down(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x12))
-        == ksyms(vnc_up(0xffe9), vnc_up(0xffe3), vnc_up(0x01000000 | euro), vnc_down(0xffe9), vnc_down(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LCtrl) == ksyms(vnc_up(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LAlt) == ksyms(vnc_up(0xffe9)));
+    RED_CHECK(keymap.scancode(down, Scancode::LCtrl) == ksyms(stDown(0xffe3)));
+    RED_CHECK(keymap.scancode(down, Scancode::LAlt) == ksyms(stDown(0xffe9)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x12))
+        == ksyms(stUp(0xffe9), stUp(0xffe3), stDown(0x01000000 | euro), stDown(0xffe9), stDown(0xffe3)));
+    RED_CHECK(keymap.scancode(release, Scancode(0x12))
+        == ksyms(stUp(0xffe9), stUp(0xffe3), stUp(0x01000000 | euro), stDown(0xffe9), stDown(0xffe3)));
+    RED_CHECK(keymap.scancode(release, Scancode::LCtrl) == ksyms(stUp(0xffe3)));
+    RED_CHECK(keymap.scancode(release, Scancode::LAlt) == ksyms(stUp(0xffe9)));
 
     // dead key
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x1a)) == ksyms());
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x1a)) == ksyms());
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x1a)) == ksyms(vnc_down('^'), vnc_up('^'), vnc_down('^')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x1a)) == ksyms(vnc_up('^')));
+    RED_CHECK(keymap.scancode(down, Scancode(0x1a)) == ksyms());
+    RED_CHECK(keymap.scancode(release, Scancode(0x1a)) == ksyms());
+    RED_CHECK(keymap.scancode(down, Scancode(0x1a)) == ksyms(stDown('^'), stUp('^'), stDown('^')));
+    RED_CHECK(keymap.scancode(release, Scancode(0x1a)) == ksyms(stUp('^')));
 
     // end
-    RED_CHECK(scancode_to_keysyms(down | extended, Scancode(0x4F)) == ksyms(vnc_down(0xff57)));
-    RED_CHECK(scancode_to_keysyms(release | extended, Scancode(0x4F)) == ksyms(vnc_up(0xff57)));
+    RED_CHECK(keymap.scancode(down | extended, Scancode(0x4F)) == ksyms(stDown(0xff57)));
+    RED_CHECK(keymap.scancode(release | extended, Scancode(0x4F)) == ksyms(stUp(0xff57)));
 
     // ctrl+alt+end -> ctrl+alt+del
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LCtrl) == ksyms(vnc_down(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LAlt) == ksyms(vnc_down(0xffe9)));
-    RED_CHECK(scancode_to_keysyms(down | extended, Scancode(0x4F)) == ksyms(vnc_down(0xffff)));
-    RED_CHECK(scancode_to_keysyms(release | extended, Scancode(0x4F)) == ksyms(vnc_up(0xffff)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LCtrl) == ksyms(vnc_up(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LAlt) == ksyms(vnc_up(0xffe9)));
+    RED_CHECK(keymap.scancode(down, Scancode::LCtrl) == ksyms(stDown(0xffe3)));
+    RED_CHECK(keymap.scancode(down, Scancode::LAlt) == ksyms(stDown(0xffe9)));
+    RED_CHECK(keymap.scancode(down | extended, Scancode(0x4F)) == ksyms(stDown(0xffff)));
+    RED_CHECK(keymap.scancode(release | extended, Scancode(0x4F)) == ksyms(stUp(0xffff)));
+    RED_CHECK(keymap.scancode(release, Scancode::LCtrl) == ksyms(stUp(0xffe3)));
+    RED_CHECK(keymap.scancode(release, Scancode::LAlt) == ksyms(stUp(0xffe9)));
 
     // pause
-    RED_CHECK(scancode_to_keysyms(down | extended1, Scancode::LCtrl) == ksyms(vnc_down(0xff13)));
+    RED_CHECK(keymap.scancode(down | extended1, Scancode::LCtrl) == ksyms(stDown(0xff13)));
     // 0x0000ff7f (numlocks) is acceptable ?
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x45)) == ksyms(vnc_down(0x0000ff7f)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x45)) == ksyms(vnc_up(0x0000ff7f)));
-    RED_CHECK(scancode_to_keysyms(release | extended1, Scancode::LCtrl) == ksyms(vnc_up(0xff13)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x45)) == ksyms(stDown(0x0000ff7f)));
+    RED_CHECK(keymap.scancode(release, Scancode(0x45)) == ksyms(stUp(0x0000ff7f)));
+    RED_CHECK(keymap.scancode(release | extended1, Scancode::LCtrl) == ksyms(stUp(0xff13)));
 }
 
-RED_AUTO_TEST_CASE(TestKeymapMacOS)
+RED_AUTO_TEST_CASE(TestKeymapSymMacOS)
 {
-    KeymapSym keymap(*layout_fr, KeyLocks(), KeymapSym::IsApple::Yes, KeymapSym::IsUnix::No, false);
-
-    auto scancode_to_keysyms = [&keymap](KbdFlags flags, Scancode sc) {
-        return Keysyms{keymap.scancode_to_keysyms(flags, sc)};
-    };
+    KeymapSymTest keymap(KeymapSym::IsApple::Yes, KeymapSym::IsUnix::No);
 
     // a
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('q')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('q')));
+    RED_CHECK(keymap.scancode(down, Scancode(0x10)) == ksyms(stDown('q')));
+    RED_CHECK(keymap.scancode(release, Scancode(0x10)) == ksyms(stUp('q')));
 
     // shift + a
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LShift) == ksyms(vnc_down(0xffe1)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x10)) == ksyms(vnc_down('Q')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x10)) == ksyms(vnc_up('Q')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LShift) == ksyms(vnc_up(0xffe1)));
+    RED_CHECK(keymap.scancode(down, Scancode::LShift) == ksyms(stDown(0xffe1)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x10)) == ksyms(stDown('Q')));
+    RED_CHECK(keymap.scancode(release, Scancode(0x10)) == ksyms(stUp('Q')));
+    RED_CHECK(keymap.scancode(release, Scancode::LShift) == ksyms(stUp(0xffe1)));
 
     // ctrl
-    RED_CHECK(scancode_to_keysyms(down, Scancode::LCtrl) == ksyms(vnc_down(0xffe3)));
-    RED_CHECK(scancode_to_keysyms(release, Scancode::LCtrl) == ksyms(vnc_up(0xffe3)));
+    RED_CHECK(keymap.scancode(down, Scancode::LCtrl) == ksyms(stDown(0xffe3)));
+    RED_CHECK(keymap.scancode(release, Scancode::LCtrl) == ksyms(stUp(0xffe3)));
 
     // altgr + e
-    RED_CHECK(scancode_to_keysyms(down | extended, Scancode::LAlt) == ksyms(vnc_down(0xffea)));
-    RED_CHECK(scancode_to_keysyms(down, Scancode(0x12)) == ksyms(vnc_down('e')));
-    RED_CHECK(scancode_to_keysyms(release, Scancode(0x12)) == ksyms(vnc_up('e')));
-    RED_CHECK(scancode_to_keysyms(release | extended, Scancode::LAlt) == ksyms(vnc_up(0xffea)));
+    RED_CHECK(keymap.scancode(down | extended, Scancode::LAlt) == ksyms(stDown(0xffea)));
+    RED_CHECK(keymap.scancode(down, Scancode(0x12)) == ksyms(stDown('e')));
+    RED_CHECK(keymap.scancode(release, Scancode(0x12)) == ksyms(stUp('e')));
+    RED_CHECK(keymap.scancode(release | extended, Scancode::LAlt) == ksyms(stUp(0xffea)));
 }
 
+RED_AUTO_TEST_CASE(TestKeymapSymResetMods)
+{
+    KeymapSymTest keymap(KeymapSym::IsApple::Yes, KeymapSym::IsUnix::No);
 
+    // shift
+    RED_CHECK(keymap.scancode(down, Scancode::LShift) == ksyms(stDown(0xffe1)));
+    RED_CHECK(keymap.reset_mods() == ksyms(stUp(0xffe1)));
+}
