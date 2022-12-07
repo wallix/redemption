@@ -22,9 +22,11 @@ exe rdpproxy :
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
   <library>src/acl/kv_list_from_strings.o
+  <library>src/acl/mod_wrapper.o
   <library>src/acl/module_manager/create_module_rail.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
+  <library>src/acl/module_manager/mod_factory.o
   <library>src/acl/session_inactivity.o
   <library>src/acl/session_logfile.o
   <library>src/capture/agent_data_extractor.o
@@ -693,6 +695,7 @@ test-run tests/acl/test_mod_wrapper :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/mod_wrapper.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
@@ -5062,9 +5065,11 @@ obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_C
 obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp ;
 obj src/acl/kv_list_from_strings.o : $(REDEMPTION_SRC_PATH)/acl/kv_list_from_strings.cpp ;
+obj src/acl/mod_wrapper.o : $(REDEMPTION_SRC_PATH)/acl/mod_wrapper.cpp ;
 obj src/acl/module_manager/create_module_rail.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rail.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
+obj src/acl/module_manager/mod_factory.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mod_factory.cpp ;
 obj src/acl/session_inactivity.o : $(REDEMPTION_SRC_PATH)/acl/session_inactivity.cpp ;
 obj src/acl/session_logfile.o : $(REDEMPTION_SRC_PATH)/acl/session_logfile.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
@@ -6149,9 +6154,11 @@ explicit
   src/RAIL/client_execute.o
   src/acl/acl_serializer.o
   src/acl/kv_list_from_strings.o
+  src/acl/mod_wrapper.o
   src/acl/module_manager/create_module_rail.o
   src/acl/module_manager/create_module_rdp.o
   src/acl/module_manager/create_module_vnc.o
+  src/acl/module_manager/mod_factory.o
   src/acl/session_inactivity.o
   src/acl/session_logfile.o
   src/capture/agent_data_extractor.o

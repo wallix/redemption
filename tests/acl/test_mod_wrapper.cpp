@@ -5,13 +5,14 @@
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 
-#include "gdi/screen_info.hpp"
-#include "utils/timebase.hpp"
-#include "utils/colors.hpp"
-#include "core/client_info.hpp"
-#include "RAIL/client_execute.hpp"
-
 #include "acl/mod_wrapper.hpp"
+#include "core/client_info.hpp"
+#include "configs/config.hpp"
+#include "gdi/screen_info.hpp"
+#include "keyboard/keymap.hpp"
+#include "mod/null/null.hpp"
+#include "RAIL/client_execute.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/acl/"
