@@ -72,10 +72,10 @@ namespace
     {
         constexpr inline auto arcsight_escaped_table = []{
             std::array<char, 256> t{};
-            t[int('=')] = '=';
-            t[int('\\')] = '\\';
-            t[int('\n')] = 'n';
-            t[int('\r')] = 'r';
+            t['='] = '=';
+            t['\\'] = '\\';
+            t['\n'] = 'n';
+            t['\r'] = 'r';
             return t;
         }();
 

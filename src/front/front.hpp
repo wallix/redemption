@@ -756,7 +756,7 @@ private:
         gdi::GraphicApi* guest_old_gd = nullptr;
         Front* guest = nullptr;
         SessionLogApi* session_log = nullptr;
-        std::string name;
+        std::string name {};
         chars_view control_owner {};
         MonotonicTimePoint::duration session_time_start {};
         // TODO int for multi sharing (always 0 or 1 for guest (bool like))

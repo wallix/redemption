@@ -44,7 +44,7 @@ namespace detail
         memcpy(p, ints2digits + n * 2, 2);
         return p + 2;
     }
-}
+} // namespace detail
 
 namespace dateformats
 {
@@ -108,4 +108,4 @@ namespace dateformats
             return p;
         }
     };
-}
+} // namespace dateformats

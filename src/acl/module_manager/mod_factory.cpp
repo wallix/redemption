@@ -21,8 +21,6 @@
 
 */
 
-#pragma once
-
 #include "acl/module_manager/mod_factory.hpp"
 #include "acl/mod_pack.hpp"
 
