@@ -89,6 +89,11 @@ namespace
             return front_;
         }
 
+        void time_close(std::chrono::seconds t)
+        {
+            mod_wrapper_.set_time_close(MonotonicTimePoint() + t);
+        }
+
     private:
         TimeBase time_base_;
         ClientInfo client_info_;
@@ -195,12 +200,32 @@ RED_FIXTURE_TEST_CASE(TestOSDMessageDisplay_F12,
         scancode(kbdtypes::KbdFlags(), kbdtypes::Scancode::F12),
         IMG_TEST_PATH "osd_message_f12.png"
     );
+
     RED_CHECK_IMG(
         scancode(kbdtypes::KbdFlags::Release, kbdtypes::Scancode::F12),
         IMG_TEST_PATH "osd_message_empty.png"
     );
+
     RED_CHECK_IMG(
         scancode(kbdtypes::KbdFlags(), kbdtypes::Scancode::F12),
         IMG_TEST_PATH "osd_message_f12.png"
     );
+
+    RED_CHECK_IMG(
+        scancode(kbdtypes::KbdFlags::Release, kbdtypes::Scancode::F12),
+        IMG_TEST_PATH "osd_message_empty.png"
+    );
+
+    time_close(std::chrono::seconds(1234));
+
+    RED_CHECK_IMG(
+        scancode(kbdtypes::KbdFlags(), kbdtypes::Scancode::F12),
+        IMG_TEST_PATH "osd_message_f12_timed.png"
+    );
+
+    RED_CHECK_IMG(
+        scancode(kbdtypes::KbdFlags::Release, kbdtypes::Scancode::F12),
+        IMG_TEST_PATH "osd_message_empty.png"
+    );
+
 }

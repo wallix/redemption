@@ -6,7 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 
 #include "acl/mod_wrapper.hpp"
-#include "acl/time_before_closing.hpp"
 #include "configs/config.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -16,6 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "keyboard/keymap.hpp"
 #include "mod/null/null.hpp"
 #include "utils/translation.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "RAIL/client_execute.hpp"
 
 
@@ -75,6 +75,50 @@ void ModWrapper::clear_osd_message(bool redraw)
     }
 }
 
+namespace
+{
+
+inline void append_time_before_closing(std::string& msg, Translator tr, std::chrono::seconds elapsed_time)
+{
+    const auto hours = elapsed_time.count() / 3600;
+    const auto minutes = elapsed_time.count() / 60 - hours * 60;
+    const auto seconds = elapsed_time.count() - hours * 3600 - minutes * 60;
+
+    msg += "  [";
+
+    if (hours || minutes) {
+        if (hours) {
+            str_append(
+                msg,
+                int_to_decimal_chars(hours),
+                ' ',
+                tr(trkeys::hour),
+                (hours > 1) ? "s, " : ", "
+            );
+        }
+
+        str_append(
+            msg,
+            int_to_decimal_chars(minutes),
+            ' ',
+            tr(trkeys::minute),
+            (minutes > 1) ? "s, " : ", "
+        );
+    }
+
+    str_append(
+        msg,
+        int_to_decimal_chars(seconds),
+        ' ',
+        tr(trkeys::second),
+        (seconds > 1) ? "s " : " ",
+        tr(trkeys::before_closing),
+        ']'
+    );
+}
+
+}
+
 void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     if (this->is_disable_by_input && keymap.last_kevent() == Keymap::KEvent::Insert) {
@@ -87,7 +131,7 @@ void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
     if (this->enable_osd) {
         Inifile const& ini = this->ini;
 
-        if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (scancode == Scancode::F12)) {
+        if (scancode == Scancode::F12 && ini.get<cfg::globals::enable_osd_display_remote_target>()) {
             bool const f12_released = bool(flags & KbdFlags::Release);
             if (this->target_info_is_shown && f12_released) {
                 this->clear_osd_message();
@@ -95,27 +139,29 @@ void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             else if (!this->target_info_is_shown && !f12_released) {
                 std::string msg;
                 msg.reserve(64);
+
                 if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
                     str_append(msg, ini.get<cfg::globals::target_user>(), '@');
                 }
+
                 msg += ini.get<cfg::globals::target_device>();
+
                 if (this->end_time_session.time_since_epoch().count()) {
-                    const auto elapsed_time
-                        = this->end_time_session- this->time_base.monotonic_time;
-                    // only if "reasonable" time
+                    const auto elapsed_time = this->end_time_session - this->time_base.monotonic_time;
+                    // only if "reasonable" time (1 year)
                     using namespace std::chrono_literals;
                     if (elapsed_time < MonotonicTimePoint::duration(60s*60*24*366)) {
-                        str_append(msg,
-                            "  [",
-                            time_before_closing(
-                                std::chrono::duration_cast<std::chrono::seconds>(elapsed_time),
-                                Translator(language(ini))),
-                            ']');
+                        append_time_before_closing(
+                            msg, Translator(language(ini)),
+                            std::chrono::duration_cast<std::chrono::seconds>(elapsed_time)
+                        );
                     }
                 }
+
                 if (msg != this->osd_message) {
                     this->clear_osd_message();
                 }
+
                 if (!msg.empty()) {
                     this->osd_message = std::move(msg);
                     this->color = RDPColor::from(0);

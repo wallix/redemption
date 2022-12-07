@@ -27,7 +27,6 @@ exe rdpproxy :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mod_factory.o
-  <library>src/acl/session_inactivity.o
   <library>src/acl/session_logfile.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
