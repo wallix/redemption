@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     auto logfile = wd.add_file("log5_6.log");
     auto hashlog = wd.add_file("hash_log5_6.log");
 
-    auto session_type = ""_av;
+    auto session_type = "RDP"_av;
 
     auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
@@ -90,11 +90,13 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
         });
 
         auto expected =
-            "[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
-            "Jan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|24|INPUT_LANGUAGE|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 identifier=ident display_name=name\n"
+            "[RDP Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
+            "Jan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|24|INPUT_LANGUAGE|5|WallixBastionSessionType=RDP WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 identifier=ident display_name=name\n"
             ""_av;
         RED_CHECK(logbuf.buf() == expected);
     }
+
+    session_type = ""_av;
 
     {
         ut::log_buffered logbuf;

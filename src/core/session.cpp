@@ -108,6 +108,8 @@ class Session
 
     struct SecondarySession final : private SessionLogApi
     {
+        enum class Type { RDP, VNC, };
+
         SecondarySession(
             Inifile& ini,
             CryptoContext& cctx,
@@ -133,11 +135,15 @@ class Session
         }
 
         [[nodiscard]]
-        SessionLogApi& open_secondary_session(std::string session_type)
+        SessionLogApi& open_secondary_session(Type session_type)
         {
             assert(!this->is_open());
 
-            this->session_type = std::move(session_type);
+            switch (session_type)
+            {
+                case Type::RDP: this->session_type = "RDP"; break;
+                case Type::VNC: this->session_type = "VNC"; break;
+            }
 
             this->cctx.set_master_key(this->ini.get<cfg::crypto::encryption_key>());
             this->cctx.set_hmac_key(this->ini.get<cfg::crypto::sign_key>());
@@ -172,7 +178,7 @@ class Session
         void close_secondary_session()
         {
             assert(this->is_open());
-            this->session_type.clear();
+            this->session_type = {};
             this->log_file.close_session_log();
         }
 
@@ -219,7 +225,7 @@ class Session
         gdi::CaptureProbeApi& probe_api;
         TimeBase const& time_base;
         CryptoContext & cctx;
-        std::string session_type;
+        std::string_view session_type;
         LogCategoryFlags dont_log {};
         SessionLogFile log_file;
         std::string sharing_ctx_extra_log;
@@ -557,27 +563,26 @@ private:
 
         LOG(LOG_INFO, "New Module: %s", get_module_name(next_state));
 
-        enum class SecondarySessionType { RDP, VNC, };
-        auto open_secondary_session = [&](SecondarySessionType secondary_session_type){
+        auto open_secondary_session = [&](SecondarySession::Type secondary_session_type){
             log_siem::set_user(this->ini.get<cfg::globals::auth_user>());
             try {
                 switch (secondary_session_type)
                 {
-                    case SecondarySessionType::RDP:
+                    case SecondarySession::Type::RDP:
                     {
                         SessionLogApi& session_log_api =
                               this->ini.get<cfg::context::try_alternate_target>()
                             ? secondary_session.get_secondary_session_log()
-                            : secondary_session.open_secondary_session("RDP");
+                            : secondary_session.open_secondary_session(secondary_session_type);
 
                         mod_factory.create_rdp_mod(
                             session_log_api,
                             PerformAutomaticReconnection::No);
                         break;
                     }
-                    case SecondarySessionType::VNC:
+                    case SecondarySession::Type::VNC:
                         mod_factory.create_vnc_mod(
-                            secondary_session.open_secondary_session("VNC"));
+                            secondary_session.open_secondary_session(secondary_session_type));
                         break;
                 }
                 this->ini.set<cfg::context::auth_error_message>("");
@@ -597,11 +602,11 @@ private:
         switch (next_state)
         {
         case ModuleName::RDP:
-            open_secondary_session(SecondarySessionType::RDP);
+            open_secondary_session(SecondarySession::Type::RDP);
             break;
 
         case ModuleName::VNC:
-            open_secondary_session(SecondarySessionType::VNC);
+            open_secondary_session(SecondarySession::Type::VNC);
             break;
 
         case ModuleName::close:

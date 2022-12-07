@@ -161,9 +161,10 @@ void SessionLogFile::log(
             {"account=\""_av,    ini.get<cfg::globals::target_user>()},
         };
 
-        auto real_session_type = session_type.empty() ? "Neutral Session"_av : session_type;
+        auto suffix_type = " Session"_av;
+        auto prefix_type = session_type.empty() ? "Neutral"_av : session_type;
 
-        len += real_session_type.size() + 3 /* '[' + ']' + ' ' */;
+        len += suffix_type.size() + prefix_type.size() + 3 /* '[' + ']' + ' ' */;
         for (Data d : pairs) {
             len += d.prefix.size() + safe_size_for_escaped_qvalue(d.value) + 2;
         }
@@ -171,7 +172,8 @@ void SessionLogFile::log(
         p = buffer.grow_without_copy(len).as_charp();
 
         *p++ = '[';
-        p = qvalue_table_formats::append(p, real_session_type);
+        p = qvalue_table_formats::append(p, prefix_type);
+        p = qvalue_table_formats::append(p, suffix_type);
         *p++ = ']';
         for (Data d : pairs) {
             *p++ = ' ';
