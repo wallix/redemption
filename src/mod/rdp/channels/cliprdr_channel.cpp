@@ -355,7 +355,7 @@ public:
 
 namespace
 {
-    constexpr std::size_t file_content_memory_max = 64*1024;
+    constexpr std::size_t file_content_memory_max = 512*1024;
     constexpr std::size_t requested_len_max = 512*1024;
 }
 
