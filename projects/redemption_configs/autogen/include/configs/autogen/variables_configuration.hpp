@@ -5327,6 +5327,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
+    /// - Log   = 0x01 <br/>
     /// - Event = 0x02 <br/>
     /// - Acl   = 0x04 <br/>
     /// - Trace = 0x08 <br/>

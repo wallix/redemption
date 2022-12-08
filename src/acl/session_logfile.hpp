@@ -37,8 +37,13 @@ class Inifile;
 class SessionLogFile
 {
 public:
+    enum class Siem : bool { Disable, Enable, };
+    enum class Syslog : bool { Disable, Enable, };
+    enum class Arcsight : bool { Disable, Enable, };
+
     SessionLogFile(
         CryptoContext & cctx, Random & rnd,
+        Siem siem, Syslog syslog, Arcsight arcsight,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();
@@ -55,8 +60,11 @@ public:
     void close_session_log();
 
 private:
-    OutCryptoTransport ct;
     UninitDynamicBuffer buffer;
     UninitDynamicBuffer control_owner_extra_log;
     std::size_t control_owner_extra_log_len = 0;
+    const bool enable_siem;
+    const bool enable_syslog;
+    const bool enable_arcsight;
+    OutCryptoTransport ct;
 };

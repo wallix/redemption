@@ -1442,6 +1442,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hex
 #auth = 0
 
+# - Log   = 0x01
 # - Event = 0x02
 # - Acl   = 0x04
 # - Trace = 0x08

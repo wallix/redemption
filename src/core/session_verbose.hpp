@@ -26,6 +26,7 @@ Author(s): Proxies Team
 
 REDEMPTION_VERBOSE_FLAGS_DEF(SessionVerbose)
 {
+    Log   = 0x01,
     Event = 0x02,
     Acl   = 0x04,
     Trace = 0x08,

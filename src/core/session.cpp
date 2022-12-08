@@ -68,19 +68,6 @@ struct FinalSocketTransport final : ::SocketTransport
     using ::SocketTransport::SocketTransport;
 };
 
-enum class SessionVerbose : uint32_t
-{
-    Event   = 0x02,
-    Acl     = 0x04,
-    Trace   = 0x08,
-};
-
-SessionVerbose operator & (SessionVerbose x, SessionVerbose y) noexcept
-{
-    using int_type = uint32_t;
-    return SessionVerbose(int_type(x) & int_type(y));
-}
-
 class Session
 {
     struct AclReport final : AclReportApi
@@ -108,17 +95,23 @@ class Session
             CryptoContext& cctx,
             Random& rnd,
             gdi::CaptureProbeApi& probe_api,
-            TimeBase const& time_base)
+            TimeBase const& time_base,
+            bool log6_in_syslog)
         : ini(ini)
         , probe_api(probe_api)
         , time_base(time_base)
         , cctx(cctx)
-        , log_file(cctx, rnd, [&ini](Error const& error){
-            if (error.errnum == ENOSPC) {
-                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                AclReport{ini}.report("FILESYSTEM_FULL", "100|unknown");
-            }
-        })
+        , log_file(
+            cctx, rnd,
+            SessionLogFile::Siem(ini.get<cfg::session_log::enable_session_log>()),
+            SessionLogFile::Syslog(log6_in_syslog),
+            SessionLogFile::Arcsight(ini.get<cfg::session_log::enable_arcsight_log>()),
+            [&ini](Error const& error){
+                if (error.errnum == ENOSPC) {
+                    // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    AclReport{ini}.report("FILESYSTEM_FULL", "100|unknown");
+                }
+            })
         {
             auto has_drive = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
             auto has_clipboard = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
@@ -930,7 +923,9 @@ private:
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SecondarySession secondary_session(ini, cctx, rnd, front, event_manager.get_time_base());
+        SecondarySession secondary_session(
+            ini, cctx, rnd, front, event_manager.get_time_base(),
+            bool(this->verbose & SessionVerbose::Log));
 
         enum class LoopState
         {

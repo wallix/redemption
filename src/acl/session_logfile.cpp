@@ -95,8 +95,12 @@ namespace
 
 SessionLogFile::SessionLogFile(
     CryptoContext& cctx, Random& rnd,
-    std::function<void (const Error &)> notify_error)
-: ct(cctx, rnd, std::move(notify_error))
+    Siem siem, Syslog syslog, Arcsight arcsight,
+    std::function<void(const Error &)> notify_error)
+: enable_siem(safe_int(siem))
+, enable_syslog(safe_int(syslog))
+, enable_arcsight(safe_int(arcsight))
+, ct(cctx, rnd, std::move(notify_error))
 {
     buffer.grow_without_copy(512);
 }
@@ -140,12 +144,10 @@ void SessionLogFile::log(
 
     char* p;
 
-    bool const enable_siem_log = ini.get<cfg::session_log::enable_session_log>();
-
     constexpr std::size_t meta_prefix_len = 20 /* "YYYY-MM-DD HH:MM:SS " */;
     constexpr std::size_t meta_suffix_len = 1 /* \n */;
 
-    if (enable_siem_log) {
+    if (enable_siem) {
         struct Data {
             chars_view prefix;
             chars_view value;
@@ -194,9 +196,15 @@ void SessionLogFile::log(
     p = log_format_append_info(p, id, kv_list);
     p = qvalue_table_formats::append(p, {control_owner_extra_log.buffer().as_charp(), control_owner_extra_log_len});
 
-    if (enable_siem_log) {
-        char* data = buffer.buffer().as_charp();
+    if (enable_siem) {
+        char const* data = buffer.buffer().as_charp();
         LOG_REDEMPTION_INTERNAL_IMPL(LOG_INFO, "%.*s", int(p - data), data);
+    }
+
+    if (REDEMPTION_UNLIKELY(enable_syslog)) {
+        LOG(LOG_INFO, "<%.*s> %.*s",
+            int(session_type.size()), session_type.data(),
+            int(p - start_meta_format), start_meta_format);
     }
 
     *p++ = '\n';
@@ -206,7 +214,7 @@ void SessionLogFile::log(
     *dateformats::YYYY_mm_dd_HH_MM_SS::to_chars(meta, tm) = ' ';
     this->ct.send({meta, p});
 
-    if (ini.get<cfg::session_log::enable_arcsight_log>()) {
+    if (enable_arcsight) {
         GmTimeBuffer str_time{time_now};
         chars_view contexts[] {
             str_time.sv(),

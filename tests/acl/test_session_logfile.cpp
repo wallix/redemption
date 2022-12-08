@@ -63,7 +63,6 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     ini.set_acl<cfg::globals::auth_user>("admin");
     ini.set_acl<cfg::globals::target_user>("user1");
     ini.set_acl<cfg::globals::host>("10.10.13.12");
-    ini.set<cfg::session_log::enable_arcsight_log>(true);
 
     auto logfile = wd.add_file("log5_6.log");
     auto hashlog = wd.add_file("hash_log5_6.log");
@@ -72,7 +71,12 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
-    SessionLogFile log_file(cctx, rnd, notify_error);
+    SessionLogFile log_file(
+        cctx, rnd,
+        SessionLogFile::Siem(true),
+        SessionLogFile::Syslog(false),
+        SessionLogFile::Arcsight(true),
+        notify_error);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
