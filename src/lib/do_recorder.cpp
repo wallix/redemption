@@ -1758,293 +1758,292 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
 } // anonymous namespace
 
-extern "C" {
-    REDEMPTION_LIB_EXPORT
-    int do_main(int argc, char const ** argv,
-            uint8_t const * hmac_key,
-            get_trace_key_prototype * trace_fn)
+REDEMPTION_LIB_EXPORT
+extern "C"
+int do_main(int argc, char const ** argv,
+        uint8_t const * hmac_key,
+        get_trace_key_prototype * trace_fn)
+{
+    ScopedCryptoInit scoped_crypto;
+
+    int arg_used = 0;
+    int command = 0;
+
+    if (argc > arg_used + 1){
+        std::string_view scmd = argv[arg_used+1];
+        command = "redrec"sv == scmd ? 1
+                : "redver"sv == scmd ? 2
+                : "reddec"sv == scmd ? 3
+                : 0;
+        if (command) {
+            --command;
+            ++arg_used;
+        }
+        // default command is previous one;
+    }
+
+    UdevRandom rnd;
+    CryptoContext cctx;
+    if (hmac_key) {
+        cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));
+    }
+    cctx.set_get_trace_key_cb(trace_fn);
+
+    for (auto a : {0, 1}) {
+        if (argc <= arg_used + 1) {
+            break;
+        }
+
+        std::string_view k = argv[arg_used+1];
+        if (k.size() != 64) {
+            break;
+        }
+
+        uint8_t tmp[32];
+        // if any character not an hexa digit, ignore option
+        if (!hexadecimal_string_to_buffer(k, make_writable_array_view(tmp))) {
+            break;
+        }
+
+        if (a == 0){
+            cctx.set_hmac_key(tmp);
+        }
+        else {
+            cctx.set_master_key(tmp);
+        }
+
+        arg_used++;
+    }
+
+    argv += arg_used;
+    argc -= arg_used;
+    int res = -1;
+
+    RecorderParams rp {};
+
+    switch (parse_command_line_options(argc, argv, rp)) {
+        case ClRes::Exit: return 0;
+        case ClRes::Err: return -1;
+        case ClRes::Ok: ;
+    }
+
     {
-        ScopedCryptoInit scoped_crypto;
+        size_t base_len = 0;
+        char const * base = basename_len(rp.input_filename.c_str(), base_len);
+        cctx.set_master_derivator({base, base_len});
+    }
 
-        int arg_used = 0;
-        int command = 0;
+    switch (command){
+    case 0: // RECorder
+    try {
+        init_signals();
 
-        if (argc > arg_used + 1){
-            std::string_view scmd = argv[arg_used+1];
-            command = "redrec"sv == scmd ? 1
-                    : "redver"sv == scmd ? 2
-                    : "reddec"sv == scmd ? 3
-                    : 0;
-            if (command) {
-                --command;
-                ++arg_used;
-            }
-            // default command is previous one;
+        if (rp.input_filename.empty()) {
+            std::cerr << "Missing input filename : use -i filename\n\n";
+            return -1;
         }
 
-        UdevRandom rnd;
-        CryptoContext cctx;
-        if (hmac_key) {
-            cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));
+        if (!rp.show_file_metadata
+         && !rp.show_statistics
+         && rp.output_filename.empty()
+        ) {
+            std::cerr << "Missing output filename : use -o filename\n\n";
+            return -1;
         }
-        cctx.set_get_trace_key_cb(trace_fn);
 
-        for (auto a : {0, 1}) {
-            if (argc <= arg_used + 1) {
-                break;
-            }
+        if (!rp.output_filename.empty()
+         && !rp.full_video
+         && !bool(rp.capture_flags)
+         && !rp.show_file_metadata
+         && !rp.show_statistics
+        ) {
+            std::cerr << "Missing target format : need --png, --ocr, --video, --full, --wrm, --meta, --statistics or --chunk" << std::endl;
+            return 1;
+        }
 
-            std::string_view k = argv[arg_used+1];
-            if (k.size() != 64) {
-                break;
-            }
+        // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
 
-            uint8_t tmp[32];
-            // if any character not an hexa digit, ignore option
-            if (!hexadecimal_string_to_buffer(k, make_writable_array_view(tmp))) {
-                break;
-            }
+        auto const encryption_mode = rp.infile_is_encrypted ? EncryptionMode::Encrypted
+                                                            : EncryptionMode::NotEncrypted;
+        auto const mwrm_prefix = str_concat(rp.mwrm_path, rp.input_basename);
+        auto const mwrm_filename = str_concat(mwrm_prefix, rp.infile_extension);
 
-            if (a == 0){
-                cctx.set_hmac_key(tmp);
+        auto mwrm_infos = load_mwrm_file_data(mwrm_filename.c_str(), cctx, encryption_mode);
+        auto& wrms = mwrm_infos.wrms;
+
+        if (wrms.empty()) {
+            return raise_error_and_log(
+                rp.output_filename, -1, "wrm file not found in mwrm file"_zv
+            );
+        }
+
+        CaptureTimes capture_times {rp.begin_cap, rp.end_cap};
+
+        // consumes the first wrm
+        if (capture_times.begin_cap.count()) {
+            auto it = std::find_if(wrms.begin(), wrms.end(), [&](MetaLine const& meta_line){
+                using Seconds = std::chrono::seconds;
+                return Seconds(meta_line.stop_time) > capture_times.begin_cap;
+            });
+            if (it != wrms.end()) {
+                wrms.erase(wrms.begin(), it);
             }
             else {
-                cctx.set_master_key(tmp);
-            }
-
-            arg_used++;
-        }
-
-        argv += arg_used;
-        argc -= arg_used;
-        int res = -1;
-
-        RecorderParams rp {};
-
-        switch (parse_command_line_options(argc, argv, rp)) {
-            case ClRes::Exit: return 0;
-            case ClRes::Err: return -1;
-            case ClRes::Ok: ;
-        }
-
-        {
-            size_t base_len = 0;
-            char const * base = basename_len(rp.input_filename.c_str(), base_len);
-            cctx.set_master_derivator({base, base_len});
-        }
-
-        switch (command){
-        case 0: // RECorder
-        try {
-            init_signals();
-
-            if (rp.input_filename.empty()) {
-                std::cerr << "Missing input filename : use -i filename\n\n";
-                return -1;
-            }
-
-            if (!rp.show_file_metadata
-             && !rp.show_statistics
-             && rp.output_filename.empty()
-            ) {
-                std::cerr << "Missing output filename : use -o filename\n\n";
-                return -1;
-            }
-
-            if (!rp.output_filename.empty()
-             && !rp.full_video
-             && !bool(rp.capture_flags)
-             && !rp.show_file_metadata
-             && !rp.show_statistics
-            ) {
-                std::cerr << "Missing target format : need --png, --ocr, --video, --full, --wrm, --meta, --statistics or --chunk" << std::endl;
-                return 1;
-            }
-
-            // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
-
-            auto const encryption_mode = rp.infile_is_encrypted ? EncryptionMode::Encrypted
-                                                                : EncryptionMode::NotEncrypted;
-            auto const mwrm_prefix = str_concat(rp.mwrm_path, rp.input_basename);
-            auto const mwrm_filename = str_concat(mwrm_prefix, rp.infile_extension);
-
-            auto mwrm_infos = load_mwrm_file_data(mwrm_filename.c_str(), cctx, encryption_mode);
-            auto& wrms = mwrm_infos.wrms;
-
-            if (wrms.empty()) {
                 return raise_error_and_log(
-                    rp.output_filename, -1, "wrm file not found in mwrm file"_zv
+                    rp.output_filename, -1, "no recording on the requested time slot"_zv
                 );
             }
+        }
 
-            CaptureTimes capture_times {rp.begin_cap, rp.end_cap};
+        std::vector<std::string> wrm_filenames;
 
-            // consumes the first wrm
-            if (capture_times.begin_cap.count()) {
-                auto it = std::find_if(wrms.begin(), wrms.end(), [&](MetaLine const& meta_line){
-                    using Seconds = std::chrono::seconds;
-                    return Seconds(meta_line.stop_time) > capture_times.begin_cap;
-                });
-                if (it != wrms.end()) {
-                    wrms.erase(wrms.begin(), it);
-                }
-                else {
-                    return raise_error_and_log(
-                        rp.output_filename, -1, "no recording on the requested time slot"_zv
-                    );
-                }
-            }
+        if (int r = update_filename_and_check_size(rp.output_filename,
+                                                   wrms,
+                                                   wrm_filenames,
+                                                   rp.mwrm_path,
+                                                   rp.ignore_file_size)
+        ) {
+            return r;
+        }
 
-            std::vector<std::string> wrm_filenames;
+        Rect      crop_rect {};
+        Point     screen_position {};
+        Dimension max_screen_dim {};
+        std::unique_ptr<unsigned long long[]> updatable_frame_marker_end_bitset;
+        try {
+            InMultiCryptoTransport trans(wrm_filenames, cctx, mwrm_infos.encryption_mode);
+            auto r = RegionsCapture::compute_regions(
+                trans,
+                rp.smart_video_cropping,
+                (rp.full_video || bool(rp.capture_flags & CaptureFlags::video))
+                    ? std::chrono::microseconds(1000000L / rp.video_params.frame_rate)
+                    : MonotonicTimePoint::duration(),
+                MonotonicTimePoint(capture_times.begin_cap),
+                MonotonicTimePoint(capture_times.end_cap),
+                rp.play_video_with_corrupted_bitmap,
+                ExplicitCRef(program_requested_to_shutdown),
+                safe_cast<FileToGraphic::Verbose>(rp.verbosity));
+            crop_rect = r.crop_rect;
+            max_screen_dim = r.max_screen_dim;
+            screen_position = r.screen_position;
+            updatable_frame_marker_end_bitset = std::move(r.updatable_frame_marker_end.p);
+            rp.video_params.updatable_frame_marker_end_bitset_view = {
+                updatable_frame_marker_end_bitset.get(),
+                r.updatable_frame_marker_end.len
+            };
+        }
+        catch (Error const& e) {
+            const bool msg_with_error_id = false;
+            raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
+        }
 
-            if (int r = update_filename_and_check_size(rp.output_filename,
-                                                       wrms,
-                                                       wrm_filenames,
-                                                       rp.mwrm_path,
-                                                       rp.ignore_file_size)
-            ) {
-                return r;
-            }
+        capture_times.adjust_time(
+            std::chrono::seconds(wrms.back().start_time),
+            std::chrono::seconds(wrms.front().stop_time));
 
-            Rect      crop_rect {};
-            Point     screen_position {};
-            Dimension max_screen_dim {};
-            std::unique_ptr<unsigned long long[]> updatable_frame_marker_end_bitset;
-            try {
-                InMultiCryptoTransport trans(wrm_filenames, cctx, mwrm_infos.encryption_mode);
-                auto r = RegionsCapture::compute_regions(
-                    trans,
-                    rp.smart_video_cropping,
-                    (rp.full_video || bool(rp.capture_flags & CaptureFlags::video))
-                        ? std::chrono::microseconds(1000000L / rp.video_params.frame_rate)
-                        : MonotonicTimePoint::duration(),
-                    MonotonicTimePoint(capture_times.begin_cap),
-                    MonotonicTimePoint(capture_times.end_cap),
-                    rp.play_video_with_corrupted_bitmap,
-                    ExplicitCRef(program_requested_to_shutdown),
-                    safe_cast<FileToGraphic::Verbose>(rp.verbosity));
-                crop_rect = r.crop_rect;
-                max_screen_dim = r.max_screen_dim;
-                screen_position = r.screen_position;
-                updatable_frame_marker_end_bitset = std::move(r.updatable_frame_marker_end.p);
-                rp.video_params.updatable_frame_marker_end_bitset_view = {
-                    updatable_frame_marker_end_bitset.get(),
-                    r.updatable_frame_marker_end.len
-                };
-            }
-            catch (Error const& e) {
-                const bool msg_with_error_id = false;
-                raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
-            }
+        InMultiCryptoTransport in_wrm_trans(
+            std::move(wrm_filenames),
+            cctx,
+            mwrm_infos.encryption_mode);
 
-            capture_times.adjust_time(
-                std::chrono::seconds(wrms.back().start_time),
-                std::chrono::seconds(wrms.front().stop_time));
+        res = replay(std::move(in_wrm_trans),
+                     wrms,
+                     rp,
+                     capture_times,
+                     cctx,
+                     crop_rect,
+                     screen_position,
+                     max_screen_dim,
+                     rnd);
 
-            InMultiCryptoTransport in_wrm_trans(
-                std::move(wrm_filenames),
-                cctx,
-                mwrm_infos.encryption_mode);
+        } catch (const Error & e) {
+            std::cout << "decrypt failed: with id=" << e.id << std::endl;
+        }
+    break;
 
-            res = replay(std::move(in_wrm_trans),
-                         wrms,
-                         rp,
-                         capture_times,
-                         cctx,
-                         crop_rect,
-                         screen_position,
-                         max_screen_dim,
-                         rnd);
+    case 1: { // VERifier
+        Error out_error{NO_ERROR};
+        switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), bytes_view{}, &out_error))
+        {
+            case EncryptionSchemeTypeResult::OldScheme:
+                cctx.old_encryption_scheme = true;
+                [[fallthrough]];
+            case EncryptionSchemeTypeResult::NewScheme:
+            case EncryptionSchemeTypeResult::NoEncrypted:
+                res = check_encrypted_or_checksumed(
+                    rp.input_filename, rp.mwrm_path, rp.hash_path,
+                    rp.quick_check, cctx, rp.verbosity
+                );
+                break;
+            case EncryptionSchemeTypeResult::Error:
+                break;
+        }
 
-            } catch (const Error & e) {
-                std::cout << "decrypt failed: with id=" << e.id << std::endl;
-            }
-        break;
+        std::cout << "verify " << (res == 0 ? "ok" : "failed") << std::endl;
+    }
+    break;
 
-        case 1: { // VERifier
+    default: // DECrypter
+        try {
+            InCryptoTransport in_t(cctx, EncryptionMode::Auto);
             Error out_error{NO_ERROR};
-            switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), bytes_view{}, &out_error))
+            switch (open_if_possible_and_get_encryption_scheme_type(
+                in_t, rp.full_path.c_str(), bytes_view{}, &out_error))
             {
+                case EncryptionSchemeTypeResult::Error:
+                    std::cerr
+                      << "can't open file " << rp.full_path.c_str()
+                      << ": " << out_error.errmsg() << std::endl;
+                    std::cout << "decrypt failed" << std::endl;
+                    return -1;
+                case EncryptionSchemeTypeResult::NoEncrypted:
+                    std::cout << "Input file is not encrypted." << std::endl;
+                    return 0;
                 case EncryptionSchemeTypeResult::OldScheme:
                     cctx.old_encryption_scheme = true;
-                    [[fallthrough]];
+                    in_t.open(rp.full_path.c_str());
+                    break;
                 case EncryptionSchemeTypeResult::NewScheme:
-                case EncryptionSchemeTypeResult::NoEncrypted:
-                    res = check_encrypted_or_checksumed(
-                        rp.input_filename, rp.mwrm_path, rp.hash_path,
-                        rp.quick_check, cctx, rp.verbosity
-                    );
-                    break;
-                case EncryptionSchemeTypeResult::Error:
                     break;
             }
 
-            std::cout << "verify " << (res == 0 ? "ok" : "failed") << std::endl;
-        }
-        break;
+            size_t res = -1ull;
+            unique_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
-        default: // DECrypter
-            try {
-                InCryptoTransport in_t(cctx, EncryptionMode::Auto);
-                Error out_error{NO_ERROR};
-                switch (open_if_possible_and_get_encryption_scheme_type(
-                    in_t, rp.full_path.c_str(), bytes_view{}, &out_error))
-                {
-                    case EncryptionSchemeTypeResult::Error:
-                        std::cerr
-                          << "can't open file " << rp.full_path.c_str()
-                          << ": " << out_error.errmsg() << std::endl;
-                        std::cout << "decrypt failed" << std::endl;
-                        return -1;
-                    case EncryptionSchemeTypeResult::NoEncrypted:
-                        std::cout << "Input file is not encrypted." << std::endl;
-                        return 0;
-                    case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = true;
+            if (fd1.is_open()) {
+                OutFileTransport out_t(std::move(fd1));
+
+                try {
+                    if (!in_t.is_open()) {
                         in_t.open(rp.full_path.c_str());
-                        break;
-                    case EncryptionSchemeTypeResult::NewScheme:
-                        break;
-                }
-
-                size_t res = -1ull;
-                unique_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
-
-                if (fd1.is_open()) {
-                    OutFileTransport out_t(std::move(fd1));
-
-                    try {
-                        if (!in_t.is_open()) {
-                            in_t.open(rp.full_path.c_str());
-                        }
-
-                        char mem[128*1024];
-                        while ((res = in_t.partial_read(mem, sizeof(mem)))) {
-                            out_t.send(mem, res);
-                        }
                     }
-                    catch (Error const & e) {
-                        LOG(LOG_INFO, "Exited on exception: %s", e.errmsg());
-                        res = -1ull;
+
+                    char mem[128*1024];
+                    while ((res = in_t.partial_read(mem, sizeof(mem)))) {
+                        out_t.send(mem, res);
                     }
                 }
-                else {
-                    std::cerr << strerror(errno) << std::endl << std::endl;
+                catch (Error const & e) {
+                    LOG(LOG_INFO, "Exited on exception: %s", e.errmsg());
+                    res = -1ull;
                 }
-
-                if (res == 0){
-                    std::cout << "decrypt ok" << std::endl;
-                    return 0;
-                }
-
-                std::cout << "decrypt failed" << std::endl;
-                return -1;
-            } catch (const Error & e) {
-                std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }
-        break;
-        }
+            else {
+                std::cerr << strerror(errno) << std::endl << std::endl;
+            }
 
-        return res;
+            if (res == 0){
+                std::cout << "decrypt ok" << std::endl;
+                return 0;
+            }
+
+            std::cout << "decrypt failed" << std::endl;
+            return -1;
+        } catch (const Error & e) {
+            std::cout << "decrypt failed: with id=" << e.id << std::endl;
+        }
+    break;
     }
+
+    return res;
 }
