@@ -756,67 +756,6 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.pgs"), R"js({"percentage":100,"eta":0,"videos":1})js"_av);
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.meta"), "2016-02-18 18:27:01 + (break)\n"_av);
 }
-#endif
-
-RED_AUTO_TEST_CASE(TestClearTargetFiles)
-{
-    WorkingDirectory wd;
-
-    struct Data
-    {
-        std::string name;
-        WorkingFileBase path;
-        std::array<bool, 5> sizes;
-    };
-
-    auto create_file = [&wd](std::string filename, auto... exists){
-        filename[filename.find_last_of('_')] = '.';
-        auto f = wd.add_file(filename);
-        RED_TEST(::close(::open(f.c_str(), 0777, O_RDONLY | O_CREAT)) == 0);
-        return Data{std::move(filename), std::move(f), {bool(exists)...}};
-    };
-    const std::array prefixes       {"", "ddd", "toto", "titititi", "tititi"};
-    const std::array datas{
-        create_file("toto_mwrm",     1,   1,     1,      1,          1),
-        create_file("toto_0_wrm",    1,   1,     1,      1,          1),
-        create_file("toto_1_wrm",    1,   1,     1,      1,          1),
-        create_file("toto_0_flv",    1,   1,     0,      0,          0),
-        create_file("toto_1_flv",    1,   1,     0,      0,          0),
-        create_file("toto_meta",     1,   1,     0,      0,          0),
-        create_file("toto_0_png",    1,   1,     0,      0,          0),
-        create_file("toto_1_png",    1,   1,     0,      0,          0),
-        create_file("tititi_mwrm",   1,   1,     1,      1,          1),
-        create_file("tititi_0_wrm",  1,   1,     1,      1,          1),
-        create_file("tititi_1_wrm",  1,   1,     1,      1,          1),
-        create_file("tititi_0_flv",  1,   1,     1,      1,          0),
-        create_file("tititi_1_flv",  1,   1,     1,      1,          0),
-        create_file("tititi_meta",   1,   1,     1,      1,          0),
-        create_file("tititi_0_png",  1,   1,     1,      1,          0),
-        create_file("tititi_1_png",  1,   1,     1,      1,          0)
-    };
-
-    for (std::size_t i = 0; i < prefixes.size(); ++i)
-    {
-        if (prefixes[i][0])
-        {
-            clear_files_flv_meta_png(wd.dirname(), prefixes[i]);
-        }
-
-        RED_TEST_CONTEXT("i = " << i)
-        {
-            for (Data const& data : datas)
-            {
-                if (!data.sizes[i] && data.sizes[i-1])
-                {
-                    wd.remove_file(data.name);
-                }
-            }
-            RED_CHECK_WORKSPACE(wd);
-        }
-    }
-}
-
-#ifndef REDEMPTION_NO_FFMPEG
 
 RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
 {

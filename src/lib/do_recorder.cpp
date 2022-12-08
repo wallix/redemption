@@ -49,27 +49,20 @@
 #include "utils/cli_chrono.hpp"
 #include "utils/recording_progress.hpp"
 #include "utils/redemption_info_version.hpp"
-#include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/strutils.hpp"
 #include "utils/hexadecimal_string_to_buffer.hpp"
-#include "utils/ref.hpp"
-
 
 #include <string>
 #include <vector>
-#include <cerrno>
-#include <cstdio>
-#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <optional>
 #include <charconv>
 
-// opendir/closedir
-#include <sys/types.h>
-#include <dirent.h>
-
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
 #include <csignal>
 
 using namespace std::chrono_literals;
@@ -962,7 +955,6 @@ struct RecorderParams
 
     // miscellaneous options
     CaptureFlags capture_flags = CaptureFlags::none; // output control
-    bool clear = true;
     bool infile_is_encrypted = false;
 
     // verifier options
@@ -1072,224 +1064,214 @@ static inline int replay(
                                   << '\n' << std::endl;
                     }
 
-                    if (rp.clear) {
-                        clear_files_flv_meta_png(outfile.directory.c_str(), outfile.basename.c_str());
-                    }
+                    char progress_filename[4096];
+                    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                                    , outfile.directory.c_str(), outfile.basename.c_str());
 
-                    {
-                        char progress_filename[4096];
-                        std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                                     , outfile.directory.c_str(), outfile.basename.c_str());
+                    UpdateProgressData update_progress_data(progress_filename,
+                                                            progress_start_time,
+                                                            progress_stop_time);
 
-                        UpdateProgressData update_progress_data(progress_filename,
-                                                                progress_start_time,
-                                                                progress_stop_time);
+                    const char * record_tmp_path = outfile.directory.c_str();
+                    const char * record_path = record_tmp_path;
 
-                        const char * record_tmp_path = outfile.directory.c_str();
-                        const char * record_path = record_tmp_path;
+                    const bool capture_wrm = bool(rp.capture_flags & CaptureFlags::wrm);
+                    const bool capture_png = bool(rp.capture_flags & CaptureFlags::png);
+                    const bool capture_pattern_checker = false;
 
-                        const bool capture_wrm = bool(rp.capture_flags & CaptureFlags::wrm);
-                        const bool capture_png = bool(rp.capture_flags & CaptureFlags::png);
-                        const bool capture_pattern_checker = false;
+                    const bool capture_ocr = bool(rp.capture_flags & CaptureFlags::ocr)
+                                            || capture_pattern_checker;
+                    const bool capture_video = bool(rp.capture_flags & CaptureFlags::video);
+                    const bool capture_video_full = rp.full_video;
+                    const bool capture_meta = capture_ocr;
+                    const bool capture_kbd = false;
 
-                        const bool capture_ocr = bool(rp.capture_flags & CaptureFlags::ocr)
-                                              || capture_pattern_checker;
-                        const bool capture_video = bool(rp.capture_flags & CaptureFlags::video);
-                        const bool capture_video_full = rp.full_video;
-                        const bool capture_meta = capture_ocr;
-                        const bool capture_kbd = false;
+                    const auto spath = ParsePath(rp.output_filename);
 
-                        const auto spath = ParsePath(rp.output_filename);
+                    PngParams png_params{
+                        rp.png_geometry.w,
+                        rp.png_geometry.h,
+                        rp.png_interval,
+                        /*png_limit = */0,
+                        /*real_time_image_capture = */false,
+                        /*remote_program_session = */false,
+                        /*use_redis_with_rt_display = */false,
+                        /*real_basename = */spath.basename.c_str(),
+                        /*redis_key_name = */nullptr,
+                    };
 
-                        PngParams png_params{
-                            rp.png_geometry.w,
-                            rp.png_geometry.h,
-                            rp.png_interval,
-                            /*png_limit = */0,
-                            /*real_time_image_capture = */false,
-                            /*remote_program_session = */false,
-                            /*use_redis_with_rt_display = */false,
-                            /*real_basename = */spath.basename.c_str(),
-                            /*redis_key_name = */nullptr,
+                    RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};
+
+                    cctx.set_trace_type(rp.encryption_type);
+
+                    std::optional<Capture> retarded_capture {};
+                    auto set_capture_consumer = [&](
+                        MonotonicTimePoint now, RealTimePoint real_time
+                    ) mutable {
+                        DrawableParams const drawable_params{
+                            rdp_drawable,
+                            player.pointers_view()
                         };
 
-                        RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};
+                        MetaParams const meta_params{
+                            MetaParams::EnableSessionLog::No,
+                            MetaParams::HideNonPrintable::No,
+                            rp.log_cliboard_activities,
+                            rp.log_file_system_activities,
+                            rp.log_only_relevant_clipboard_activities,
+                        };
 
-                        cctx.set_trace_type(rp.encryption_type);
+                        KbdLogParams const kbd_log_params{
+                            rp.wrm_keyboard_log,
+                            false,
+                            false,
+                            rp.meta_keyboard_log,
+                        };
 
-                        std::optional<Capture> retarded_capture {};
-                        auto set_capture_consumer = [&](
-                            MonotonicTimePoint now, RealTimePoint real_time
-                        ) mutable {
-                            DrawableParams const drawable_params{
-                                rdp_drawable,
-                                player.pointers_view()
-                            };
+                        WrmParams const wrm_params = WrmParams{
+                            rp.wrm_color_depth.get_or(player.get_wrm_info().bpp),
+                            player.get_wrm_info().remote_app,
+                            cctx,
+                            rnd,
+                            rp.hash_path.c_str(),
+                            rp.wrm_break_interval,
+                            rp.wrm_compression_algorithm.get_or(
+                                player.get_wrm_info().compression_algorithm),
+                            rp.wrm_verbosity,
+                            rp.file_permissions
+                        };
 
-                            MetaParams const meta_params{
-                                MetaParams::EnableSessionLog::No,
-                                MetaParams::HideNonPrintable::No,
-                                rp.log_cliboard_activities,
-                                rp.log_file_system_activities,
-                                rp.log_only_relevant_clipboard_activities,
-                            };
+                        CaptureParams capture_params{
+                            now,
+                            real_time,
+                            spath.basename.c_str(),
+                            record_tmp_path,
+                            record_path,
+                            nullptr,
+                            rp.smart_video_cropping,
+                            0
+                        };
 
-                            KbdLogParams const kbd_log_params{
-                                rp.wrm_keyboard_log,
-                                false,
-                                false,
-                                rp.meta_keyboard_log,
-                            };
+                        auto* ptr = &retarded_capture.emplace(
+                                capture_params
+                            , drawable_params
+                            , capture_wrm, wrm_params
+                            , capture_png, png_params
+                            , capture_pattern_checker, PatternParams{}
+                            , capture_ocr, rp.ocr_params
+                            , capture_video, rp.sequenced_video_params
+                            , capture_video_full, rp.full_video_params
+                            , capture_meta, meta_params
+                            , capture_kbd, kbd_log_params
+                            , rp.video_params
+                            , &update_progress_data
+                            , Capture::CropperInfo{crop_rect, screen_position}
+                            // TODO rail_window_rect
+                            , Rect()
+                        );
 
-                            WrmParams const wrm_params = WrmParams{
-                                rp.wrm_color_depth.get_or(player.get_wrm_info().bpp),
-                                player.get_wrm_info().remote_app,
-                                cctx,
-                                rnd,
-                                rp.hash_path.c_str(),
-                                rp.wrm_break_interval,
-                                rp.wrm_compression_algorithm.get_or(
-                                    player.get_wrm_info().compression_algorithm),
-                                rp.wrm_verbosity,
-                                rp.file_permissions
-                            };
+                        player.clear_consumer();
+                        player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr, ptr);
+                    };
 
-                            CaptureParams capture_params{
-                                now,
-                                real_time,
-                                spath.basename.c_str(),
-                                record_tmp_path,
-                                record_path,
-                                nullptr,
-                                rp.smart_video_cropping,
-                                0
-                            };
+                    struct CaptureMaker final : gdi::ExternalCaptureApi
+                    {
+                        void external_breakpoint() override {}
 
-                            auto* ptr = &retarded_capture.emplace(
-                                  capture_params
-                                , drawable_params
-                                , capture_wrm, wrm_params
-                                , capture_png, png_params
-                                , capture_pattern_checker, PatternParams{}
-                                , capture_ocr, rp.ocr_params
-                                , capture_video, rp.sequenced_video_params
-                                , capture_video_full, rp.full_video_params
-                                , capture_meta, meta_params
-                                , capture_kbd, kbd_log_params
-                                , rp.video_params
-                                , &update_progress_data
-                                , Capture::CropperInfo{crop_rect, screen_position}
-                                // TODO rail_window_rect
-                                , Rect()
+                        // old format starts with timestamp (real_time = monotonic_time)
+                        void external_monotonic_time_point(MonotonicTimePoint now) override
+                        {
+                            if (this->begin_capture > now) {
+                                return;
+                            }
+
+                            this->load_capture(now, RealTimePoint{now.time_since_epoch()});
+                        }
+
+                        // new format starts with time_points
+                        void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override
+                        {
+                            auto begin_capture = this->begin_capture.time_since_epoch();
+
+                            if (begin_capture > monotonic_delay) {
+                                return;
+                            }
+
+                            auto elapsed = monotonic_delay - begin_capture;
+                            this->load_capture(
+                                MonotonicTimePoint(monotonic_delay - elapsed),
+                                real_time - elapsed
                             );
 
-                            player.clear_consumer();
-                            player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr, ptr);
-                        };
-
-                        struct CaptureMaker final : gdi::ExternalCaptureApi
-                        {
-                            void external_breakpoint() override {}
-
-                            // old format starts with timestamp (real_time = monotonic_time)
-                            void external_monotonic_time_point(MonotonicTimePoint now) override
-                            {
-                                if (this->begin_capture > now) {
-                                    return;
-                                }
-
-                                this->load_capture(now, RealTimePoint{now.time_since_epoch()});
+                            if (elapsed > 250ms) {
+                                this->retarded_capture->external_times(
+                                    monotonic_delay, real_time);
                             }
-
-                            // new format starts with time_points
-                            void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override
-                            {
-                                auto begin_capture = this->begin_capture.time_since_epoch();
-
-                                if (begin_capture > monotonic_delay) {
-                                    return;
-                                }
-
-                                auto elapsed = monotonic_delay - begin_capture;
-                                this->load_capture(
-                                    MonotonicTimePoint(monotonic_delay - elapsed),
-                                    real_time - elapsed
-                                );
-
-                                if (elapsed > 250ms) {
-                                    this->retarded_capture->external_times(
-                                        monotonic_delay, real_time);
-                                }
-                            }
-
-                            explicit CaptureMaker(
-                                decltype(set_capture_consumer) & load_capture,
-                                std::optional<Capture> & retarded_capture,
-                                MonotonicTimePoint begin_capture)
-                            : begin_capture(begin_capture)
-                            , load_capture(load_capture)
-                            , retarded_capture(retarded_capture)
-                            {}
-
-                        private:
-                            MonotonicTimePoint begin_capture;
-                            decltype(set_capture_consumer) & load_capture;
-                            std::optional<Capture> & retarded_capture;
-                        };
-
-                        CaptureMaker capture_maker(set_capture_consumer,
-                                                   retarded_capture,
-                                                   video_start_time);
-
-                        if (capture_times.begin_cap.count()) {
-                            player.add_consumer(
-                                &rdp_drawable, nullptr, nullptr, nullptr,
-                                &capture_maker, nullptr, nullptr);
-                        }
-                        else {
-                            set_capture_consumer(
-                                player.get_monotonic_time(), player.get_real_time());
                         }
 
-                        if (update_progress_data.is_valid()) {
-                            try {
-                                player.play(std::ref(update_progress_data),
-                                            program_requested_to_shutdown,
-                                            video_start_time,
-                                            video_stop_time);
+                        explicit CaptureMaker(
+                            decltype(set_capture_consumer) & load_capture,
+                            std::optional<Capture> & retarded_capture,
+                            MonotonicTimePoint begin_capture)
+                        : begin_capture(begin_capture)
+                        , load_capture(load_capture)
+                        , retarded_capture(retarded_capture)
+                        {}
 
-                                if (program_requested_to_shutdown) {
-                                    update_progress_data.raise_error(
-                                        65537, "Program requested to shutdown"_sized_av
-                                    );
-                                }
-                            }
-                            catch (Error const & e) {
-                                const bool msg_with_error_id = false;
+                    private:
+                        MonotonicTimePoint begin_capture;
+                        decltype(set_capture_consumer) & load_capture;
+                        std::optional<Capture> & retarded_capture;
+                    };
+
+                    CaptureMaker capture_maker(set_capture_consumer,
+                                                retarded_capture,
+                                                video_start_time);
+
+                    if (capture_times.begin_cap.count()) {
+                        player.add_consumer(
+                            &rdp_drawable, nullptr, nullptr, nullptr,
+                            &capture_maker, nullptr, nullptr);
+                    }
+                    else {
+                        set_capture_consumer(
+                            player.get_monotonic_time(), player.get_real_time());
+                    }
+
+                    if (update_progress_data.is_valid()) {
+                        try {
+                            player.play(std::ref(update_progress_data),
+                                        program_requested_to_shutdown,
+                                        video_start_time,
+                                        video_stop_time);
+
+                            if (program_requested_to_shutdown) {
                                 update_progress_data.raise_error(
-                                    e.id,
-                                    truncated_bounded_array_view(
-                                        e.errmsg(msg_with_error_id)
-                                    )
+                                    65537, "Program requested to shutdown"_sized_av
                                 );
-
-                                return_code = -1;
-                            }
-                            catch (...) {
-                                update_progress_data.raise_error(
-                                    65536, "Unknown error"_sized_av
-                                );
-
-                                return_code = -1;
                             }
                         }
-                        else {
+                        catch (Error const & e) {
+                            const bool msg_with_error_id = false;
+                            update_progress_data.raise_error(
+                                e.id,
+                                truncated_bounded_array_view(
+                                    e.errmsg(msg_with_error_id)
+                                )
+                            );
+
+                            return_code = -1;
+                        }
+                        catch (...) {
+                            update_progress_data.raise_error(
+                                65536, "Unknown error"_sized_av
+                            );
+
                             return_code = -1;
                         }
                     }
-
-                    if (!return_code && program_requested_to_shutdown) {
-                        clear_files_flv_meta_png(outfile.directory.c_str(), outfile.basename.c_str());
+                    else {
+                        return_code = -1;
                     }
                 }
                 else {
@@ -1427,10 +1409,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         cli::option('c', "chunk").help("chunk splitting on title bar change detection")
             .parser(cli::on_off_location(chunk)),
-
-        cli::option("clear")
-            .help("clear old capture files with same prefix (default on, 0 to disable)")
-            .parser(cli::on_off_location(recorder.clear)),
 
         cli::option("verbose").help("more logs")
             .parser(cli::arg_location(recorder.verbosity)).argname("<verbosity>"),
@@ -2068,62 +2046,5 @@ extern "C" {
         }
 
         return res;
-    }
-
-    void clear_files_flv_meta_png(const char * path, const char * prefix)
-    {
-        DIR * d{opendir(path)};
-        if (!d){
-            LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
-            return;
-        }
-        SCOPE_EXIT(closedir(d));
-
-        char buffer[8192];
-        size_t path_len = strlen(path);
-        size_t prefix_len = strlen(prefix);
-        size_t file_len = 1024;
-        if (file_len + path_len + 1 > sizeof(buffer)) {
-            LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
-            return;
-        }
-        strncpy(buffer, path, file_len + path_len + 1);
-        if (buffer[path_len] != '/'){
-            buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
-        }
-
-        while (struct dirent * result = readdir(d)) {
-            if (dirname_is_dot(result->d_name)) {
-                continue;
-            }
-
-            if (0 != strncmp(result->d_name, prefix, prefix_len)){
-                continue;
-            }
-
-            strncpy(buffer + path_len, result->d_name, file_len);
-            std::string_view filename = result->d_name;
-            const bool extension = utils::ends_with(filename, ".flv"_av)
-                                || utils::ends_with(filename, ".png"_av)
-                                || utils::ends_with(filename, ".pgs"_av)
-                                || utils::ends_with(filename, ".meta"_av);
-
-            if (!extension){
-                continue;
-            }
-
-            struct stat st;
-            if (stat(buffer, &st) < 0){
-                int errnum = errno;
-                LOG(LOG_WARNING, "Failed to read file %s [%d: %s]",
-                    buffer, errnum, strerror(errnum));
-                continue;
-            }
-            if (unlink(buffer) < 0){
-                int errnum = errno;
-                LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]",
-                    buffer, errnum, strerror(errnum));
-            }
-        }
     }
 }
