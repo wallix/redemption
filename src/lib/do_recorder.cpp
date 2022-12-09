@@ -1758,8 +1758,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
 } // anonymous namespace
 
-REDEMPTION_LIB_EXPORT
 extern "C"
+REDEMPTION_LIB_EXPORT
 int do_main(int argc, char const ** argv,
         uint8_t const * hmac_key,
         get_trace_key_prototype * trace_fn)
