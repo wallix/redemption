@@ -110,7 +110,7 @@ namespace
         auto r = decimal_chars_to_int<Int>(s);
         s = r.ptr;
         return r.val;
-    };
+    }
 } // namespace
 
 MwrmReader::MwrmReader(InTransport ibuf) noexcept
