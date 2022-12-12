@@ -433,14 +433,14 @@ bytes_view ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
         }
 
         if (this->requested_buffer.remaining() < n) {
-            size_t const remaining = this->requested_buffer.remaining();
+            size_t const used = this->requested_buffer.remaining();
             auto* const p = this->requested_buffer.buf.get();
-            memmove(p, this->requested_buffer.current(), remaining);
-            auto const len = std::min(requested_len_max - remaining, this->data_len - this->data_pos);
-            this->requested_buffer.capacity = remaining + len;
+            memmove(p, this->requested_buffer.current(), used);
+            auto const len = std::min(requested_len_max - used, this->data_len - this->data_pos);
+            this->requested_buffer.capacity = used + len;
             this->requested_buffer.pos = 0;
 
-            if (ssize_t(len) != ::read(this->fd.fd(), p + remaining, len)) {
+            if (ssize_t(len) != ::read(this->fd.fd(), p + used, len)) {
                 const int errnum = errno;
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::FileContent::read: error on temporary file: %s",
