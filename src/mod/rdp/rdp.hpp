@@ -359,7 +359,6 @@ public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
 private:
-    RDPECLIP::CliprdrLogState cliprdrLogStatus;
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
     const RDPVerbose verbose;
@@ -881,11 +880,6 @@ public:
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            InStream clone = stream.clone();
-            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);// FIX
-        }
-
         if (this->session_probe.session_probe_launcher) {
             if (!this->session_probe.session_probe_launcher->process_server_cliprdr_message(stream, length, flags, this->clipboard_to_client_sender == nullptr)) {
                 return;
@@ -1105,11 +1099,6 @@ public:
         }
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
-
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            InStream clone = chunk.clone();
-            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
-        }
 
         if (this->session_probe.session_probe_launcher) {
             if (!this->session_probe.session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
