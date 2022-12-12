@@ -200,23 +200,40 @@ struct ClipboardVirtualChannel::OSD::D
     }
 };
 
+#define X_TRANSFER_STATE(f)     \
+    f(Empty)                    \
+    f(Size)                     \
+    f(Range)                    \
+    f(GetRange)                 \
+    f(SyncRange)                \
+    f(RequestedRange)           \
+    f(RequestedSyncRange)       \
+    f(WaitingContinuationRange) \
+    f(WaitingFileValidator)     \
+                                \
+    f(Text)                     \
+    f(TextAccumulate)           \
+    f(WaitingTextValidator)     \
+    f(RejectedText)             \
+
+#define X_TRANSFER_STATE_STR(x) #x,
+#define X_TRANSFER_STATE_ENUM(x) x,
+
 enum class ClipboardVirtualChannel::ClipCtx::TransferState : uint8_t
 {
-    Empty,
-    Size,
-    Range,
-    GetRange,
-    SyncRange,
-    RequestedRange,
-    RequestedSyncRange,
-    WaitingContinuationRange,
-    WaitingFileValidator,
-
-    Text,
-    TextAccumulate,
-    WaitingTextValidator,
-    RejectedText,
+    X_TRANSFER_STATE(X_TRANSFER_STATE_ENUM)
 };
+
+namespace
+{
+    inline constexpr char const* transfer_state_string_table[] {
+        X_TRANSFER_STATE(X_TRANSFER_STATE_STR)
+    };
+}
+
+#undef X_TRANSFER_STATE_ENUM
+#undef X_TRANSFER_STATE_STR
+#undef X_TRANSFER_STATE
 
 struct ClipboardVirtualChannel::ClipCtx::NoLockData::D
 {
@@ -792,64 +809,6 @@ namespace
         });
     }
 
-    [[nodiscard]]
-    uint16_t process_header_message(
-        uint16_t current_message_type, uint32_t total_length, uint32_t flags, InStream& chunk,
-        RDPECLIP::CliprdrHeader& header, Direction direction, RDPVerbose verbose)
-    {
-        char const* funcname = (direction == Direction::FileFromClient)
-            ? "ClipboardVirtualChannel::process_client_message"
-            : "ClipboardVirtualChannel::process_server_message";
-
-        auto dump = [&]{
-            if (bool(verbose & RDPVerbose::cliprdr_dump)) {
-                const bool send              = false;
-                const bool from_or_to_client = (direction == Direction::FileFromClient);
-                ::msgdump_c(
-                    send, from_or_to_client, total_length,
-                    flags, chunk.remaining_bytes());
-            }
-        };
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            /* msgType(2) + msgFlags(2) + dataLen(4) */
-            if (!chunk.in_check_rem(8)) {
-                LOG(LOG_INFO, "%s: total_length=%u flags=0x%08X chunk_data_length=%zu",
-                    funcname, total_length, flags, chunk.in_remain());
-
-                dump();
-
-                LOG(LOG_ERR, "Truncated %s: expected=8 remains=%zu",
-                    funcname, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            header.recv(chunk);
-            current_message_type = header.msgType();
-        }
-
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            LOG(LOG_INFO, "%s: total_length=%u flags=0x%08X chunk_data_length=%zu %s (%u)%s%s",
-                funcname, total_length, flags, chunk.in_remain(),
-                RDPECLIP::get_msgType_name(current_message_type),
-                current_message_type,
-                ((flags & first_last) == first_last) ? " FIRST|LAST"
-                : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? " FIRST"
-                : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? " LAST"
-                : "",
-                not (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? ""
-                : (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) ? " RESPONSE_OK"
-                : (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) ? " RESPONSE_FAIL"
-                : ""
-            );
-        }
-
-        dump();
-
-        return current_message_type;
-    }
-
     bool check_header_response(RDPECLIP::CliprdrHeader const& in_header, uint32_t flags)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -884,6 +843,75 @@ namespace
 struct ClipboardVirtualChannel::ClipCtx::D
 {
     using Self = D;
+
+    [[nodiscard]]
+    static uint16_t process_header_message(
+        uint16_t current_message_type, uint32_t total_length, uint32_t flags, InStream& chunk,
+        RDPECLIP::CliprdrHeader& header, Direction direction, ClipboardVirtualChannel const& chann)
+    {
+        char const* funcname = (direction == Direction::FileFromClient)
+            ? "ClipboardVirtualChannel::process_client_message"
+            : "ClipboardVirtualChannel::process_server_message";
+
+        auto dump = [&]{
+            if (REDEMPTION_UNLIKELY(bool(chann.verbose & RDPVerbose::cliprdr_dump))) {
+                const bool send              = false;
+                const bool from_or_to_client = (direction == Direction::FileFromClient);
+                ::msgdump_c(
+                    send, from_or_to_client, total_length,
+                    flags, chunk.remaining_bytes());
+            }
+        };
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            /* msgType(2) + msgFlags(2) + dataLen(4) */
+            if (!chunk.in_check_rem(8)) {
+                LOG(LOG_INFO, "%s: total_length=%u flags=0x%08X chunk_data_length=%zu",
+                    funcname, total_length, flags, chunk.in_remain());
+
+                dump();
+
+                LOG(LOG_ERR, "Truncated %s: expected=8 remains=%zu",
+                    funcname, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            header.recv(chunk);
+            current_message_type = header.msgType();
+        }
+
+        if (REDEMPTION_UNLIKELY(bool(chann.verbose & RDPVerbose::cliprdr))) {
+            const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            LOG(LOG_INFO, "%s: total_length=%u flags=0x%08X chunk_data_length=%zu %s (%u)%s%s",
+                funcname, total_length, flags, chunk.in_remain(),
+                RDPECLIP::get_msgType_name(current_message_type),
+                current_message_type,
+                ((flags & first_last) == first_last) ? " FIRST|LAST"
+                : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? " FIRST"
+                : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? " LAST"
+                : "",
+                not (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? ""
+                : (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) ? " RESPONSE_OK"
+                : (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) ? " RESPONSE_FAIL"
+                : ""
+            );
+
+            if (chann.client_ctx.verify_file_before_transfer
+             || chann.client_ctx.verify_text_before_transfer
+             || chann.server_ctx.verify_file_before_transfer
+             || chann.server_ctx.verify_text_before_transfer
+            ) {
+                LOG(LOG_INFO,
+                    "ClipboardVirtualChannel::ClipCtx::TransferState: server=%s client=%s",
+                    transfer_state_string_table[underlying_cast(chann.client_ctx.nolock_data.transfer_state)],
+                    transfer_state_string_table[underlying_cast(chann.server_ctx.nolock_data.transfer_state)]);
+            }
+        }
+
+        dump();
+
+        return current_message_type;
+    }
 
     static void filecontents_response_data(
         VirtualChannelDataSender& sender,
@@ -2772,9 +2800,9 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
     RDPECLIP::CliprdrHeader header;
     bool send_message_to_client = true;
 
-    this->server_ctx.message_type = process_header_message(
+    this->server_ctx.message_type = ClipCtx::D::process_header_message(
         this->server_ctx.message_type, total_length, flags, chunk, header,
-        Direction::FileFromServer, this->verbose);
+        Direction::FileFromServer, *this);
 
     switch (this->server_ctx.message_type)
     {
@@ -2934,9 +2962,9 @@ void ClipboardVirtualChannel::process_client_message(
     RDPECLIP::CliprdrHeader header;
     bool send_message_to_server = true;
 
-    this->client_ctx.message_type = process_header_message(
+    this->client_ctx.message_type = ClipCtx::D::process_header_message(
         this->client_ctx.message_type, total_length, flags, chunk, header,
-        Direction::FileFromClient, this->verbose);
+        Direction::FileFromClient, *this);
 
     // break process when states is incorrect
     #define IGNORE_OUT_OF_SEQUENCE(accepted_states) do {                   \
