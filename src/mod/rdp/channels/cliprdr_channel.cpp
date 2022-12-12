@@ -1808,7 +1808,9 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         NoLockData::D::init_empty(clip.nolock_data, self);
                         LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                                " Unsupported random access for a FILECONTENTS_RANGE (2)");
+                                " Unsupported random access for a FILECONTENTS_RANGE (2)"
+                                "  req_offset=%lu  current_offset=%lu",
+                            req_offset, file_contents.offset());
                         return send_error();
                     }
                     else {
@@ -2129,6 +2131,9 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         NoLockData::D::requested_range_to_get_range(
                             clip.nolock_data, validator_id, new_tfl());
 
+                        // file_rng.file_size_requested is modified in update_file_range_data
+                        auto file_size_requested = file_rng.file_size_requested;
+
                         auto contents = update_file_range_data(
                             file_rng, in_stream.remaining_bytes());
                         file_rng.file_content.append(contents);
@@ -2147,8 +2152,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                             data_len = file_rng.file_content.size();
                         }
                         else {
-                            data_len = std::min(
-                                in_header.dataLen(), file_rng.file_size_requested);
+                            data_len = std::min(in_header.dataLen() - 4u, file_size_requested);
                         }
 
                         file_rng.response_size = send_filecontents_response_header(
