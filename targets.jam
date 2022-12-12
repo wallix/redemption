@@ -725,11 +725,6 @@ test-run tests/acl/test_mod_wrapper :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(MUSL_GETTEXT)
 ;
-test-run tests/acl/test_session_inactivity :
-  $(REDEMPTION_TEST_PATH)/acl/test_session_inactivity.cpp
-:
-  <library>src/acl/session_inactivity.o
-;
 test-run tests/acl/test_session_logfile :
   $(REDEMPTION_TEST_PATH)/acl/test_session_logfile.cpp
 :
@@ -5069,7 +5064,6 @@ obj src/acl/module_manager/create_module_rail.o : $(REDEMPTION_SRC_PATH)/acl/mod
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/mod_factory.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mod_factory.cpp ;
-obj src/acl/session_inactivity.o : $(REDEMPTION_SRC_PATH)/acl/session_inactivity.cpp ;
 obj src/acl/session_logfile.o : $(REDEMPTION_SRC_PATH)/acl/session_logfile.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
@@ -5253,7 +5247,6 @@ alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_kv_list_from_strings : tests/acl/test_kv_list_from_strings ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_mod_wrapper : tests/acl/test_mod_wrapper ;
-alias test_session_inactivity : tests/acl/test_session_inactivity ;
 alias test_session_logfile : tests/acl/test_session_logfile ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
 alias test_capture : tests/capture/test_capture ;
@@ -5561,7 +5554,6 @@ alias tests/acl.norec :
   tests/acl/test_kv_list_from_strings
   tests/acl/test_license_api
   tests/acl/test_mod_wrapper
-  tests/acl/test_session_inactivity
   tests/acl/test_session_logfile
 ;
 alias tests/capture/ocr/locale.norec :
@@ -6158,7 +6150,6 @@ explicit
   src/acl/module_manager/create_module_rdp.o
   src/acl/module_manager/create_module_vnc.o
   src/acl/module_manager/mod_factory.o
-  src/acl/session_inactivity.o
   src/acl/session_logfile.o
   src/capture/agent_data_extractor.o
   src/capture/capture.o
@@ -6344,7 +6335,6 @@ explicit
   test_kv_list_from_strings
   test_license_api
   test_mod_wrapper
-  test_session_inactivity
   test_session_logfile
   test_latin_to_cyrillic
   test_capture
