@@ -2765,7 +2765,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
     uint32_t flags, bytes_view chunk_data)
 {
-    if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+    if (flags && !(flags & ~(CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
         this->send_message_to_client(total_length, flags, chunk_data);
         return;
     }
