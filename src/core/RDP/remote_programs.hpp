@@ -754,9 +754,9 @@ public:
     }
 
     void Flags(uint16_t flags) { this->windows_execute_shell_params.flags = flags; }
-    void ExeOrFile(const char * ExeOrFile_) { this->windows_execute_shell_params.exe_or_file = ExeOrFile_; }
-    void WorkingDir(const char * WorkingDir_) { this->windows_execute_shell_params.working_dir = WorkingDir_; }
-    void Arguments(const char * Arguments_) { this->windows_execute_shell_params.arguments = Arguments_; }
+    void ExeOrFile(std::string_view ExeOrFile_) { this->windows_execute_shell_params.exe_or_file = ExeOrFile_; }
+    void WorkingDir(std::string_view WorkingDir_) { this->windows_execute_shell_params.working_dir = WorkingDir_; }
+    void Arguments(std::string_view Arguments_) { this->windows_execute_shell_params.arguments = Arguments_; }
 
     [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -994,7 +994,7 @@ public:
 
     [[nodiscard]] std::string const& ExeOrFile() const { return this->exe_or_file; }
 
-    void ExeOrFile(std::string ExeOrFile_) { this->exe_or_file = std::move(ExeOrFile_); }
+    void ExeOrFile(std::string_view ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 
     [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)

@@ -105,12 +105,12 @@ template<std::size_t N>
 
 //@{
 void str_replace_inplace(std::string& str,
-                         std::string_view pattern,
-                         std::string_view replacement);
+                         chars_view pattern,
+                         chars_view replacement);
 
 void str_replace_inplace_between_pattern(std::string& str,
                                          char pattern,
-                                         std::string_view replacement);
+                                         chars_view replacement);
 //@}
 
 } // namespace utils

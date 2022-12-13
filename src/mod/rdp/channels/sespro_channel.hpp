@@ -1691,27 +1691,21 @@ public:
             out_s.get_produced_bytes());
     }
 
-    void rail_exec(const char* application_name, const char* command_line,
-        const char* current_directory, bool show_maximized, uint16_t flags) {
+    void rail_exec(chars_view application_name, chars_view command_line,
+        chars_view current_directory, bool show_maximized, uint16_t flags)
+    {
         StaticOutStream<8192> out_s;
 
         const size_t message_length_offset = out_s.get_offset();
         out_s.out_skip_bytes(sizeof(uint16_t));
         out_s.out_copy_bytes("Execute="_av);
-
-        if (application_name && *application_name) {
-            out_s.out_copy_bytes(application_name, ::strlen(application_name));
-        }
+        out_s.out_copy_bytes(application_name);
 
         out_s.out_uint8('\x01');
-        if (command_line && *command_line) {
-            out_s.out_copy_bytes(command_line, ::strlen(command_line));
-        }
+        out_s.out_copy_bytes(command_line);
 
         out_s.out_uint8('\x01');
-        if (current_directory && *current_directory) {
-            out_s.out_copy_bytes(current_directory, ::strlen(current_directory));
-        }
+        out_s.out_copy_bytes(current_directory);
 
         out_s.out_uint8('\x01');
         if (show_maximized) {
@@ -1734,33 +1728,36 @@ public:
             out_s.get_produced_bytes());
     }
 
-    void create_shadow_session(const char * userdata, const char * type) {
+    void create_shadow_session(std::string_view userdata, std::string_view type)
+    {
         LOG(LOG_INFO, "sespro_channel::create_shadow_session()");
 
         bool bTakeControl       = true;
         bool bRequestPermission = true;
 
-        if (!strcasecmp(type, "PermissionControl")) {
+        auto upper_type = ascii_to_limited_upper<64>(type);
+
+        if (upper_type == "PermissionControl"_ascii_upper) {
             bTakeControl       = true;
             bRequestPermission = true;
         }
-        else if (!strcasecmp(type, "PermissionView")) {
+        else if (upper_type == "PermissionView"_ascii_upper) {
             bTakeControl       = false;
             bRequestPermission = true;
         }
-        else if (!strcasecmp(type, "SilentControl")) {
+        else if (upper_type == "SilentControl"_ascii_upper) {
             bTakeControl       = true;
             bRequestPermission = false;
         }
-        else if (!strcasecmp(type, "SilentView")) {
+        else if (upper_type == "SilentView"_ascii_upper) {
             bTakeControl       = false;
             bRequestPermission = false;
         }
         else {
             LOG(LOG_WARNING,
                 "SessionProbeVirtualChannel::create_shadow_session: "
-                    "Invalid shadow session type! Operation canceled. Type=%s",
-                type);
+                    "Invalid shadow session type! Operation canceled. Type=%.*s",
+                int(type.size()), type.data());
 
             this->set_rd_shadow_invitation(
                     0x80004005, // E_FAIL
@@ -1795,8 +1792,7 @@ public:
 
             out_s.out_uint8('\x01');
 
-            out_s.out_copy_bytes(userdata, ::strlen(userdata));
-
+            out_s.out_copy_bytes(userdata);
         });
     }
 

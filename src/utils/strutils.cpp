@@ -66,9 +66,7 @@ std::size_t strlcpy(char* dest, char const* src, std::size_t buflen) noexcept
 }
 
 
-void str_replace_inplace(std::string& str,
-                         std::string_view tag,
-                         std::string_view replacement)
+void str_replace_inplace(std::string& str, chars_view tag, chars_view replacement)
 {
     assert(!tag.empty());
 
@@ -96,7 +94,7 @@ void str_replace_inplace(std::string& str,
 
 void str_replace_inplace_between_pattern(std::string& str,
                                          char pattern,
-                                         std::string_view replacement)
+                                         chars_view replacement)
 {
     auto it = str.begin();
 

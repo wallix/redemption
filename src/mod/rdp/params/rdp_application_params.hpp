@@ -22,23 +22,24 @@
 #pragma once
 
 #include "mod/rdp/channels/sespro_channel_params.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <string>
 
 struct ApplicationParams
 {
-    const char * primary_user_id = "";
-    const char * target_application = "";
+    chars_view primary_user_id = ""_av;
+    chars_view target_application = ""_av;
 
     // Application Bastion
     std::string alternate_shell;
     std::string shell_arguments;
-    const char * shell_working_dir = "";
+    chars_view shell_working_dir = ""_av;
 
     bool use_client_provided_alternate_shell = false;
 
-    const char * target_application_account = "";
-    const char * target_application_password = "";
+    chars_view target_application_account = ""_av;
+    chars_view target_application_password = ""_av;
 
     time_t shadow_invite_time = 0;
 };

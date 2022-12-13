@@ -92,16 +92,18 @@ private:
 
     ModRdpVariables vars;
 
-    class LaunchPendingApp {
+    class LaunchPendingApp
+    {
         std::string original_exe_or_file;
         std::string exe_or_file;
         uint16_t    flags;
 
     public:
-        explicit LaunchPendingApp(const char* original_exe_or_file_,
-                                  const char* exe_or_file_, uint16_t flags_)
-        : original_exe_or_file(original_exe_or_file_)
-        , exe_or_file(exe_or_file_)
+        explicit LaunchPendingApp(chars_view original_exe_or_file_,
+                                  chars_view exe_or_file_,
+                                  uint16_t flags_)
+        : original_exe_or_file(original_exe_or_file_.as<std::string>())
+        , exe_or_file(exe_or_file_.as<std::string>())
         , flags(flags_)
         {}
 
@@ -1303,43 +1305,43 @@ public:
         this->session_probe_stop_launch_sequence_notifier = launcher;
     }
 
-    void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
-            const char* exe_or_file, const char* working_dir,
-            const char* arguments, const char* account, const char* password) override {
+    void auth_rail_exec(uint16_t flags, chars_view original_exe_or_file,
+            chars_view exe_or_file, chars_view working_dir,
+            chars_view arguments, chars_view account, chars_view password) override
+    {
         LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
             "RemoteProgramsVirtualChannel::auth_rail_exec: "
-                "original_exe_or_file=\"%s\" "
-                "exe_or_file=\"%s\" "
-                "working_dir=\"%s\" "
-                "arguments=\"%s\" "
-                "account=\"%s\" "
+                "original_exe_or_file=\"%.*s\" "
+                "exe_or_file=\"%.*s\" "
+                "working_dir=\"%.*s\" "
+                "arguments=\"%.*s\" "
+                "account=\"%.*s\" "
                 "flags=%u",
-            original_exe_or_file, exe_or_file, working_dir, arguments, account, flags);
+            int(original_exe_or_file.size()), original_exe_or_file.data(),
+            int(exe_or_file.size()), exe_or_file.data(),
+            int(working_dir.size()), working_dir.data(),
+            int(arguments.size()), arguments.data(),
+            int(account.size()), account.data(),
+            flags);
 
         launch_pending_apps.emplace_back(LaunchPendingApp(original_exe_or_file, exe_or_file, flags));
 
-        std::string arguments_(arguments);
+        auto arguments_ = arguments.as<std::string>();
 
-        utils::str_replace_inplace(arguments_,
-                                   "${APPID}",
-                                   original_exe_or_file);
+        utils::str_replace_inplace(arguments_, "${APPID}"_av, original_exe_or_file);
 
-        if (account && *account) {
-            utils::str_replace_inplace(arguments_,
-                                       "${USER}",
-                                       account);
+        if (!account.empty()) {
+            utils::str_replace_inplace(arguments_, "${USER}"_av, account);
         }
-        if (password && *password) {
-            utils::str_replace_inplace(arguments_,
-                                       "${PASSWORD}",
-                                       str_concat('\x03', password, '\x03'));
+        if (!password.empty()) {
+            utils::str_replace_inplace(arguments_, "${PASSWORD}"_av, str_concat('\x03', password, '\x03'));
         }
 
         if (this->param_use_session_probe_to_launch_remote_program &&
             this->session_probe_channel) {
                 this->session_probe_channel->rail_exec(
                         exe_or_file,
-                        arguments_.c_str(),
+                        arguments_,
                         working_dir,
                         false,  // Show maximized
                         flags
@@ -1356,8 +1358,8 @@ public:
             ClientExecutePDU cepdu;
 
             cepdu.Flags(flags);
-            cepdu.ExeOrFile(exe_or_file);
-            cepdu.WorkingDir(working_dir);
+            cepdu.ExeOrFile(exe_or_file.as<std::string_view>());
+            cepdu.WorkingDir(working_dir.as<std::string_view>());
             cepdu.Arguments(arguments_.c_str());
 
             cepdu.emit(out_s);
@@ -1384,14 +1386,14 @@ public:
         }
     }
 
-    void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
-            uint16_t exec_result) override {
+    void auth_rail_exec_cancel(uint16_t flags, chars_view original_exe_or_file, uint16_t exec_result) override
+    {
         LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
             "RemoteProgramsVirtualChannel::auth_rail_exec_cancel: "
                 "exec_result=%u "
-                "original_exe_or_file=\"%s\" "
+                "original_exe_or_file=\"%.*s\" "
                 "flags=%u",
-            exec_result, original_exe_or_file, flags);
+            exec_result, int(original_exe_or_file.size()), original_exe_or_file.data(), flags);
 
         StaticOutStream<1024> out_s;
         RAILPDUHeader header;
@@ -1402,7 +1404,7 @@ public:
         serpdu.Flags(flags);
         serpdu.ExecResult(exec_result);
         serpdu.RawResult(0xFFFFFFFF);
-        serpdu.ExeOrFile(original_exe_or_file);
+        serpdu.ExeOrFile(original_exe_or_file.as<std::string_view>());
 
         serpdu.emit(out_s);
 

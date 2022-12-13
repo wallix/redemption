@@ -394,23 +394,22 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
     ap.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>();
     ap.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>();
 
-    const char* shell_working_directory = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
-    const char* sep = strchr(shell_working_directory, '*');
+    zstring_view shell_working_directory = ini.get<cfg::mod_rdp::shell_working_directory>();
+    const char* sep = strchr(shell_working_directory.c_str(), '*');
     if (sep)
     {
         ap.shadow_invite_time = decimal_chars_to_int<time_t>(shell_working_directory).val;
-
-        ap.shell_working_dir = sep + 1;
+        ap.shell_working_dir = chars_view{sep + 1, shell_working_directory.end()};
     }
     else
     {
         ap.shell_working_dir = shell_working_directory;
     }
     ap.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
-    ap.target_application_account = ini.get<cfg::globals::target_application_account>().c_str();
-    ap.target_application_password = ini.get<cfg::globals::target_application_password>().c_str();
-    ap.primary_user_id = ini.get<cfg::globals::primary_user_id>().c_str();
-    ap.target_application = ini.get<cfg::globals::target_application>().c_str();
+    ap.target_application_account = ini.get<cfg::globals::target_application_account>();
+    ap.target_application_password = ini.get<cfg::globals::target_application_password>();
+    ap.primary_user_id = ini.get<cfg::globals::primary_user_id>();
+    ap.target_application = ini.get<cfg::globals::target_application>();
 
     return ap;
 }
@@ -540,8 +539,7 @@ ModPack create_mod_rdp(
         rap.windows_execute_shell_params = rail_client_execute.get_windows_execute_shell_params();
 
         bool const rail_is_required = (ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
-            && ((mod_rdp_params.application_params.target_application
-                && *mod_rdp_params.application_params.target_application)
+            && (!mod_rdp_params.application_params.target_application.empty()
              || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
                 && not rap.windows_execute_shell_params.exe_or_file.empty())));
 

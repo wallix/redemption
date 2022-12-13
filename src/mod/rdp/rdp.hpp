@@ -156,9 +156,9 @@ public:
     const CHANNELS::ChannelNameId checkout_channel;
 #ifndef __EMSCRIPTEN__
     uint32_t auth_channel_flags = 0;
-    int auth_channel_chanid     = 0;
-    int checkout_channel_flags  = 0;
-    int checkout_channel_chanid = 0;
+    uint32_t checkout_channel_flags = 0;
+    uint16_t auth_channel_chanid = 0;
+    uint16_t checkout_channel_chanid = 0;
 
 private:
     Random & gen;
@@ -1119,15 +1119,15 @@ public:
     ){
         utils::str_replace_inplace(
                  text_with_tags,
-                 "${APPID}",
+                 "${APPID}"_av,
                  application_params.target_application);
         utils::str_replace_inplace(
                  text_with_tags,
-                 "${USER}",
+                 "${USER}"_av,
                  application_params.target_application_account);
         utils::str_replace_inplace(
                  text_with_tags,
-                 "${PASSWORD}",
+                 "${PASSWORD}"_av,
                  str_concat('\x03', application_params.target_application_password, '\x03'));
     }
 
@@ -1161,7 +1161,7 @@ public:
         const ModRdpSessionProbeParams & session_probe_params,
         char const* session_probe_window_title)
     {
-        bool has_target = (application_params.target_application && *application_params.target_application);
+        bool has_target = !application_params.target_application.empty();
         bool use_client_provided_remoteapp
           = (remote_app_params.use_client_provided_remoteapp
           && not remote_app_params.windows_execute_shell_params.exe_or_file.empty());
@@ -1178,7 +1178,7 @@ public:
                         application_params.alternate_shell, ' ', shell_arguments);
                 }
 
-                this->session_probe.channel_params.real_working_dir     = application_params.shell_working_dir;
+                this->session_probe.channel_params.real_working_dir = application_params.shell_working_dir.as<std::string_view>();
             }
             else {
                 mod_rdp_channels::replace_shell_arguments(
@@ -1214,7 +1214,7 @@ public:
 
             // Target informations
             str_assign(this->session_probe.target_informations, application_params.target_application, ':',
-                session_probe_params.is_public_session ? "" : application_params.primary_user_id);
+                session_probe_params.is_public_session ? ""_av : application_params.primary_user_id);
 
             std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
 
@@ -1247,10 +1247,10 @@ public:
         const ModRDPParams::RemoteAppParams & remote_app_params,
         const ApplicationParams & application_params)
     {
-        if (application_params.target_application && *application_params.target_application) {
+        if (!application_params.target_application.empty()) {
             this->remote_app.windows_execute_shell_params.exe_or_file = application_params.alternate_shell;
             this->remote_app.windows_execute_shell_params.arguments   = get_shell_arguments(application_params);
-            this->remote_app.windows_execute_shell_params.working_dir = application_params.shell_working_dir;
+            this->remote_app.windows_execute_shell_params.working_dir = application_params.shell_working_dir.as<std::string_view>();
             this->remote_app.windows_execute_shell_params.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
         }
         else if (remote_app_params.use_client_provided_remoteapp
@@ -1278,13 +1278,11 @@ public:
         // Target informations
         str_assign(this->session_probe.target_informations,
             application_params.target_application, ':',
-            session_probe_params.is_public_session
-                ? std::string_view()
-                : std::string_view(application_params.primary_user_id)
+            session_probe_params.is_public_session ? chars_view() : application_params.primary_user_id
         );
 
         if (session_probe_params.used_clipboard_based_launcher
-            && application_params.target_application && *application_params.target_application
+            && !application_params.target_application.empty()
         ) {
             LOG(LOG_WARNING, "mod_rdp: "
                 "Clipboard based Session Probe launcher is not compatible with application. "
@@ -1293,7 +1291,7 @@ public:
 
         bool const used_clipboard_based_launcher =
             session_probe_params.used_clipboard_based_launcher
-         && (!application_params.target_application || !*application_params.target_application)
+         && application_params.target_application.empty()
          && (!application_params.use_client_provided_alternate_shell
           || !application_params.alternate_shell[0]
         );
@@ -1343,13 +1341,13 @@ public:
 
         std::string alternate_shell = str_concat(exe_or_file, ' ', arguments);
 
-        if (application_params.target_application && *application_params.target_application) {
+        if (!application_params.target_application.empty()) {
             std::string shell_arguments = get_shell_arguments(application_params);
 
             this->session_probe.channel_params.real_alternate_shell = shell_arguments.empty()
-                ? std::string(application_params.alternate_shell)
+                ? application_params.alternate_shell
                 : str_concat(application_params.alternate_shell, ' ', shell_arguments);
-            this->session_probe.channel_params.real_working_dir     = application_params.shell_working_dir;
+            this->session_probe.channel_params.real_working_dir     = application_params.shell_working_dir.as<std::string_view>();
         }
         else if (application_params.use_client_provided_alternate_shell
             && info.alternate_shell[0] && !info.remote_program
@@ -1368,14 +1366,11 @@ public:
             return ;
         }
 
-        strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-        program[sizeof(program) - 1] = 0;
+        utils::strlcpy(program, alternate_shell);
         //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
 
         if (session_probe_params.alternate_directory_environment_variable.empty()) {
-            const char * session_probe_working_dir = "%TMP%";
-            strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
-            directory[sizeof(directory) - 1] = 0;
+            strcpy(directory, "%TMP%");
         }
         else {
             snprintf(directory, sizeof(directory), "%%%s%%", session_probe_params.alternate_directory_environment_variable.c_str());
@@ -1392,7 +1387,7 @@ public:
         char (&program)[512],
         char (&directory)[512])
     {
-        if (application_params.target_application && *application_params.target_application) {
+        if (!application_params.target_application.empty()) {
             std::string shell_arguments = get_shell_arguments(application_params);
 
             std::string alternate_shell(application_params.alternate_shell);
@@ -1401,19 +1396,15 @@ public:
                 str_append(alternate_shell, ' ', shell_arguments);
             }
 
-            strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-            program[sizeof(program) - 1] = 0;
-            strncpy(directory, application_params.shell_working_dir, sizeof(directory) - 1);
-            directory[sizeof(directory) - 1] = 0;
+            utils::strlcpy(program, alternate_shell);
+            utils::strlcpy(directory, application_params.shell_working_dir);
         }
         else if (application_params.use_client_provided_alternate_shell
               && info.alternate_shell[0]
               && !info.remote_program
         ) {
-            strncpy(program, info.alternate_shell, sizeof(program) - 1);
-            program[sizeof(program) - 1] = 0;
-            strncpy(directory, info.working_dir, sizeof(directory) - 1);
-            directory[sizeof(directory) - 1] = 0;
+            utils::strlcpy(program, info.alternate_shell);
+            utils::strlcpy(directory, info.working_dir);
         }
     }
 
@@ -1627,9 +1618,9 @@ public:
     }
 
     void auth_rail_exec(
-        uint16_t flags, const char* original_exe_or_file,
-        const char* exe_or_file, const char* working_dir,
-        const char* arguments, const char* account, const char* password,
+        uint16_t flags, chars_view original_exe_or_file,
+        chars_view exe_or_file, chars_view working_dir,
+        chars_view arguments, chars_view account, chars_view password,
         FrontAPI& front,
         ServerTransportContext & stc,
         ModRdpVariables vars,
@@ -1650,7 +1641,7 @@ public:
     }
 
     void auth_rail_exec_cancel(
-        uint16_t flags, const char* original_exe_or_file, uint16_t exec_result,
+        uint16_t flags, chars_view original_exe_or_file, uint16_t exec_result,
         FrontAPI& front,
         ServerTransportContext & stc,
         ModRdpVariables vars,
@@ -2297,47 +2288,48 @@ public:
             }
         }
 
+#ifndef __EMSCRIPTEN__
         // AuthCHANNEL CHECK
         if (acl_fields.has<cfg::context::auth_channel_answer>()
          && this->channels.auth_channel != CHANNELS::ChannelNameId()
         ) {
             // Get sesman answer to AUTHCHANNEL_TARGET
-            auto & auth_channel_answer = this->vars.get<cfg::context::auth_channel_answer>();
+            auto const& auth_channel_answer = this->vars.get<cfg::context::auth_channel_answer>();
             if (!auth_channel_answer.empty()) {
-                this->send_auth_channel_data(auth_channel_answer.c_str());
+                this->send_auth_channel_data(auth_channel_answer);
             }
         }
 
         // CheckoutCHANNEL CHECK
         if (acl_fields.has<cfg::context::pm_response>()) {
             // Get sesman answer to AUTHCHANNEL_TARGET
-            auto & pm_response = this->vars.get<cfg::context::pm_response>();
+            auto const& pm_response = this->vars.get<cfg::context::pm_response>();
             if (!pm_response.empty()
             ) {
                 // If set, transmit to auth_channel channel
-                this->send_checkout_channel_data(pm_response.c_str());
+                this->send_checkout_channel_data(pm_response);
             }
         }
 
         if (acl_fields.has<cfg::context::rd_shadow_type>()) {
-            auto & rd_shadow_type = this->vars.get<cfg::context::rd_shadow_type>();
+            auto const& rd_shadow_type = this->vars.get<cfg::context::rd_shadow_type>();
             if (!rd_shadow_type.empty()) {
-                auto & rd_shadow_userdata = this->vars.get<cfg::context::rd_shadow_userdata>();
+                auto const& rd_shadow_userdata = this->vars.get<cfg::context::rd_shadow_userdata>();
                 LOG(LOG_INFO, "got rd_shadow_type calling create_shadow_session()");
-                this->create_shadow_session(rd_shadow_userdata.c_str(), rd_shadow_type.c_str());
+                this->create_shadow_session(rd_shadow_userdata, rd_shadow_type);
             }
         }
 
         if (acl_fields.has<cfg::context::auth_command>()) {
             if (this->vars.get<cfg::context::auth_command>() == "rail_exec") {
-                const uint16_t flags                = this->vars.get<cfg::context::auth_command_rail_exec_flags>();
-                const char*    original_exe_or_file = this->vars.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
-                const char*    exe_or_file          = this->vars.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
-                const char*    working_dir          = this->vars.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
-                const char*    arguments            = this->vars.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
-                const uint16_t exec_result          = this->vars.get<cfg::context::auth_command_rail_exec_exec_result>();
-                const char*    account              = this->vars.get<cfg::context::auth_command_rail_exec_account>().c_str();
-                const char*    password             = this->vars.get<cfg::context::auth_command_rail_exec_password>().c_str();
+                const uint16_t flags       = this->vars.get<cfg::context::auth_command_rail_exec_flags>();
+                chars_view original_exe_or_file = this->vars.get<cfg::context::auth_command_rail_exec_original_exe_or_file>();
+                chars_view exe_or_file     = this->vars.get<cfg::context::auth_command_rail_exec_exe_or_file>();
+                chars_view working_dir     = this->vars.get<cfg::context::auth_command_rail_exec_working_dir>();
+                chars_view arguments       = this->vars.get<cfg::context::auth_command_rail_exec_arguments>();
+                const uint16_t exec_result = this->vars.get<cfg::context::auth_command_rail_exec_exec_result>();
+                chars_view account         = this->vars.get<cfg::context::auth_command_rail_exec_account>();
+                chars_view password        = this->vars.get<cfg::context::auth_command_rail_exec_password>();
 
                 if (!exec_result) {
                     //LOG(LOG_INFO,
@@ -2361,6 +2353,7 @@ public:
                 }
             }
         }
+#endif
     }
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
@@ -2474,42 +2467,35 @@ public:
 #endif
     }
 
+#ifndef __EMSCRIPTEN__
     // Method used by session to transmit sesman answer for auth_channel
     // TODO: move to channels
-    void send_auth_channel_data(const char * string_data)
+    void send_auth_channel_data(zstring_view string_data)
     {
-#ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-        StaticOutStream<65536> stream_data;
-        uint32_t data_size = std::min(::strlen(string_data) + 1, stream_data.get_capacity());
+        auto data = string_data.to_av_with_null_terminated();
+        data = data.first(std::min(data.size(), std::size_t(32768)));
 
-        stream_data.out_copy_bytes(string_data, data_size);
-
-        ServerTransportContext stc{
-            this->trans, this->encrypt, this->negociation_result};
+        ServerTransportContext stc{this->trans, this->encrypt, this->negociation_result};
         virtual_channel_pdu.send_to_server(stc, this->channels.auth_channel_chanid
-                                          , stream_data.get_offset()
+                                          , checked_int(data.size())
                                           , this->channels.auth_channel_flags
-                                          , stream_data.get_produced_bytes());
-#else
-        (void)string_data;
-#endif
+                                          , data);
     }
 
     // TODO: move to channels (and also remains here as it is mod API)
-    void send_checkout_channel_data(const char * string_data)
+    void send_checkout_channel_data(chars_view string_data)
     {
-#ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         StaticOutStream<65536> stream_data;
 
-        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity());
+        uint16_t data_size = checked_int(std::min(string_data.size(), stream_data.get_capacity() / 2));
 
         stream_data.out_uint16_le(1);           // Version
         stream_data.out_uint16_le(data_size);
-        stream_data.out_copy_bytes(string_data, data_size);
+        stream_data.out_copy_bytes(string_data.data(), data_size);
 
         ServerTransportContext stc{
             this->trans, this->encrypt, this->negociation_result};
@@ -2518,23 +2504,16 @@ public:
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
           , stream_data.get_produced_bytes());
-#else
-        (void)string_data;
-#endif
     }
 
-    void create_shadow_session(const char * userdata, const char * type)
+    void create_shadow_session(std::string_view userdata, std::string_view type)
     {
-#ifndef __EMSCRIPTEN__
         LOG(LOG_INFO, "mod_rdp::create_shadow_session()");
         if (this->channels.session_probe_virtual_channel) {
             this->channels.session_probe_virtual_channel->create_shadow_session(userdata, type);
         }
-#else
-        (void)userdata;
-        (void)type;
-#endif
     }
+#endif
 
 public:
     // Capabilities Exchange
@@ -6169,15 +6148,17 @@ public:
         this->rdp_input_synchronize(this->status_of_keyboard_toggle_keys);
     }
 
-    void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
-            const char* exe_or_file, const char* working_dir,
-            const char* arguments, const char* account, const char* password) override {
+    void auth_rail_exec(uint16_t flags, chars_view original_exe_or_file,
+            chars_view exe_or_file, chars_view working_dir,
+            chars_view arguments, chars_view account, chars_view password) override
+    {
 #ifndef __EMSCRIPTEN__
         ServerTransportContext stc{
             this->trans, this->encrypt, this->negociation_result};
-        this->channels.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
-                                working_dir, arguments, account, password,
-                                this->front, stc, this->vars, this->client_rail_caps);
+        this->channels.auth_rail_exec(
+            flags, original_exe_or_file, exe_or_file,
+            working_dir, arguments, account, password,
+            this->front, stc, this->vars, this->client_rail_caps);
 #else
         (void)flags;
         (void)original_exe_or_file;
@@ -6189,7 +6170,8 @@ public:
 #endif
     }
 
-    void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file, uint16_t exec_result) override {
+    void auth_rail_exec_cancel(uint16_t flags, chars_view original_exe_or_file, uint16_t exec_result) override
+    {
 #ifndef __EMSCRIPTEN__
             ServerTransportContext stc{
                 this->trans, this->encrypt, this->negociation_result};

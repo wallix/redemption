@@ -230,7 +230,7 @@ RdpNegociation::RdpNegociation(
 #ifndef __EMSCRIPTEN__
     , session_probe_use_clipboard_based_launcher(
         mod_rdp_params.session_probe_params.used_clipboard_based_launcher
-        && (!mod_rdp_params.application_params.target_application || !(*mod_rdp_params.application_params.target_application))
+        && mod_rdp_params.application_params.target_application.empty()
         && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)
     )

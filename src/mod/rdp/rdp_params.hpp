@@ -251,6 +251,7 @@ struct ModRDPParams
     {
         auto yes_or_no = [](bool x) -> char const * { return x ? "yes" : "no"; };
         auto hidden_or_null = [](bool x) -> char const * { return x ? "<hidden>" : "<null>"; };
+        auto av_hidden_or_null = [](chars_view s) -> char const * { return s.empty() ? "<hidden>" : "<null>"; };
         auto s_or_null = [](char const * s) -> char const * { return s ? s : "<null>"; };
         auto s_or_none = [](char const * s) -> char const * { return s ? s : "<none>"; };
         auto from_sec = [](std::chrono::seconds sec) { return static_cast<unsigned>(sec.count()); };
@@ -258,6 +259,7 @@ struct ModRDPParams
 
 #define RDP_PARAMS_LOG(format, get, member) \
     LOG(LOG_INFO, "ModRDPParams " #member "=" format, get (this->member))
+#define RDP_PARAMS_LOG_AV(av) int(av.size()), av.data()
 #define RDP_PARAMS_LOG_GET
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_user);
         RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        target_password);
@@ -267,8 +269,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        krb_armoring_password);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             krb_armoring_keytab_path);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.primary_user_id);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application);
+        RDP_PARAMS_LOG("\"%.*s\"", RDP_PARAMS_LOG_AV,   application_params.primary_user_id);
+        RDP_PARAMS_LOG("\"%.*s\"", RDP_PARAMS_LOG_AV,   application_params.target_application);
 
         RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  disabled_orders.as_uint());
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);
@@ -364,10 +366,10 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    application_params.alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    application_params.shell_arguments);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.shell_working_dir);
+        RDP_PARAMS_LOG("\"%.*s\"", RDP_PARAMS_LOG_AV,   application_params.shell_working_dir);
         RDP_PARAMS_LOG("%s",     yes_or_no,             application_params.use_client_provided_alternate_shell);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application_account);
-        RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        application_params.target_application_password);
+        RDP_PARAMS_LOG("\"%.*s\"", RDP_PARAMS_LOG_AV,   application_params.target_application_account);
+        RDP_PARAMS_LOG("\"%s\"", av_hidden_or_null,     application_params.target_application_password);
 
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, rdp_compression);
 
@@ -464,6 +466,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);
 
 #undef RDP_PARAMS_LOG
+#undef RDP_PARAMS_LOG_AV
 #undef RDP_PARAMS_LOG_GET
     }   // void log() const
 };  // struct ModRDPParams
