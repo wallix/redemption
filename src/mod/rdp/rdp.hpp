@@ -826,8 +826,7 @@ private:
                 this->session_log, this->verbose);
     }
 
-    // TODO: make that private again when callers will be moved to channels
-    static void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
+    static void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, uint32_t flags) {
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);

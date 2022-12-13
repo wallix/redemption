@@ -804,7 +804,7 @@ public:
     //--------------------------------
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
-                        , std::size_t /*total_length*/, int flags) override {
+                        , std::size_t /*total_length*/, uint32_t flags) override {
 
         const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
         if (!mod_channel) {

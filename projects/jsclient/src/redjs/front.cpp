@@ -78,7 +78,7 @@ Front::ResizeResult Front::server_resize(ScreenInfo screen_server)
 
 void Front::send_to_channel(
     CHANNELS::ChannelDef const& channel_def, bytes_view chunk_data,
-    std::size_t total_data_len, int channel_flags)
+    std::size_t total_data_len, uint32_t channel_flags)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
         LOG_INFO, "Front::send_to_channel('%s', ...)", channel_def.name.c_str());

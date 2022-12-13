@@ -1514,11 +1514,11 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef & channel
                         , bytes_view chunk_data
                         , std::size_t total_length
-                        , int flags) override {
+                        , uint32_t flags) override {
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
             "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)",
             channel.name, channel.chanid, voidp(chunk_data.data()),
-            total_length, chunk_data.size(), unsigned(flags));
+            total_length, chunk_data.size(), flags);
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
             (channel.chanid != this->rail_channel_id)) {

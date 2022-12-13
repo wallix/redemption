@@ -79,7 +79,7 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
 
     void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, bytes_view /*chunk_data*/
-                        , std::size_t /*total_length*/, int /*flags*/) override {
+                        , std::size_t /*total_length*/, uint32_t /*flags*/) override {
         LOG_IF(this->verbose, LOG_INFO, "ClientFront::send_to_channel");
     }
 

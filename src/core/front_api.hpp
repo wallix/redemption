@@ -50,7 +50,7 @@ public:
 
     [[nodiscard]] virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
-                                , std::size_t total_length, int flags) = 0;
+                                , std::size_t total_length, uint32_t flags) = 0;
 
     enum class [[nodiscard]] ResizeResult
     {

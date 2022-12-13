@@ -77,7 +77,7 @@ public:
         const CHANNELS::ChannelDef & /*channel*/,
         bytes_view /*chunk_data*/,
         std::size_t /*total_length*/,
-        int  /*flags*/) override
+        uint32_t /*flags*/) override
     {
     }
 };
