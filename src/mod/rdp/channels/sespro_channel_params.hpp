@@ -21,6 +21,7 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <chrono>
 #include <string>
@@ -34,12 +35,9 @@ class ExtraSystemProcesses
 public:
     explicit ExtraSystemProcesses() = default;
 
-    explicit ExtraSystemProcesses(const char * comme_separated_processes);
+    explicit ExtraSystemProcesses(zstring_view comma_separated_processes);
 
-    bool get(
-        size_t index,
-        std::string & out_name
-    ) const;
+    std::string const* get(size_t index) const;
 
     [[nodiscard]] std::string to_string() const;
 };

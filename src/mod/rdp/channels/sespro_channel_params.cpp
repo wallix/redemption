@@ -20,6 +20,7 @@
 
 #include "mod/rdp/channels/sespro_channel_params.hpp"
 #include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/split.hpp"
 #include "utils/strutils.hpp"
 
 #include <iterator>
@@ -27,49 +28,21 @@
 #include <cassert>
 
 
-ExtraSystemProcesses::ExtraSystemProcesses(const char * comme_separated_processes)
+ExtraSystemProcesses::ExtraSystemProcesses(zstring_view comma_separated_processes)
 {
-    if (comme_separated_processes) {
-        const char * process = comme_separated_processes;
-
-        while (*process) {
-            if ((*process == ',') || (*process == '\t') || (*process == ' ')) {
-                process++;
-                continue;
-            }
-
-            char const * process_begin = process;
-
-            const char * process_separator = strchr(process, ',');
-
-            this->processes.emplace_back(
-                process_begin,
-                (process_separator ? process_separator - process_begin : ::strlen(process_begin))
-            );
-
-            if (!process_separator) {
-                break;
-            }
-
-            process = process_separator + 1;
+    for (auto process : split_with(comma_separated_processes, ',')) {
+        process = trim(process);
+        if (!process.empty()) {
+            this->processes.emplace_back(process.begin(), process.end());
         }
     }
 }
 
-// TODO {std:string const&, bool} ?
-bool ExtraSystemProcesses::get(
-    size_t index,
-    std::string & out_name
-) const {
-    if (this->processes.size() <= index) {
-        out_name.clear();
-
-        return false;
-    }
-
-    out_name = this->processes[index];
-
-    return true;
+std::string const* ExtraSystemProcesses::get(size_t index) const
+{
+    return (index < this->processes.size())
+        ? &this->processes[index]
+        : nullptr;
 }
 
 std::string ExtraSystemProcesses::to_string() const

@@ -861,18 +861,16 @@ public:
                 send_client_message([this, proc_index](OutStream & out_s) {
                     out_s.out_copy_bytes("ExtraSystemProcess="_av);
 
-                    std::string name;
-
-                    const bool result =
-                        this->sespro_params.extra_system_processes.get(proc_index, name);
+                    std::string const* name =
+                        this->sespro_params.extra_system_processes.get(proc_index);
 
                     out_s.out_copy_bytes(int_to_decimal_chars(proc_index));
                     out_s.out_uint8('\x01');
-                    out_selected_string(out_s, result, "0"_av, "-1"_av);
+                    out_selected_string(out_s, name, "0"_av, "-1"_av);
 
-                    if (result) {
+                    if (name) {
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(name);
+                        out_s.out_copy_bytes(*name);
                     }
                 });
             }
@@ -957,18 +955,16 @@ public:
                 send_client_message([this, app_index](OutStream & out_s) {
                     out_s.out_copy_bytes("WindowsOfApplicationAsUnidentifiedInputField="_av);
 
-                    std::string name;
-
-                    const bool result =
-                        this->sespro_params.windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
+                    std::string const* name =
+                        this->sespro_params.windows_of_these_applications_as_unidentified_input_field.get(app_index);
 
                     out_s.out_copy_bytes(int_to_decimal_chars(app_index));
                     out_s.out_uint8('\x01');
-                    out_selected_string(out_s, result, "0"_av, "-1"_av);
+                    out_selected_string(out_s, name, "0"_av, "-1"_av);
 
-                    if (result) {
+                    if (name) {
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(name);
+                        out_s.out_copy_bytes(*name);
                     }
                 });
             }
