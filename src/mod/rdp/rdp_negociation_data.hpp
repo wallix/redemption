@@ -38,8 +38,8 @@ struct RdpNegociationResult
     uint16_t front_height = 0;
     bool use_rdp5 = true;
     uint16_t userid = 0;
-    int encryptionLevel = 0;
-    int encryptionMethod = 0;
+    uint32_t encryptionLevel = 0;
+    uint32_t encryptionMethod = 0;
 };
 
 struct RdpLogonInfo

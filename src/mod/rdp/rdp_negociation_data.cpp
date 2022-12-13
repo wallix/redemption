@@ -44,47 +44,38 @@ RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool h
         this->_hostname = hostname;
     }
 
-    const char * domain_pos   = nullptr;
-    size_t       domain_len   = 0;
-    const char * username_pos = nullptr;
-    size_t       username_len = 0;
+    chars_view target {target_user, strlen(target_user)};
+    chars_view username = target;
+    chars_view domain {};
+
     const char * separator = strchr(target_user, '\\');
     const char * separator_a = strchr(target_user, '@');
-
-    username_pos = target_user;
-    username_len = strlen(username_pos);
 
     if (separator && !separator_a)
     {
         // Legacy username
         // Split only if there's no @, otherwise not a legacy username
-        domain_pos   = target_user;
-        domain_len   = separator - target_user;
-        username_pos = ++separator;
-        username_len = strlen(username_pos);
+        domain = {target_user, separator};
+        username = chars_view{separator + 1, target.end()};
     }
     else if (split_domain)
     {
         // Old behavior
         if (separator)
         {
-            domain_pos   = target_user;
-            domain_len   = separator - target_user;
-            username_pos = ++separator;
-            username_len = strlen(username_pos);
+            domain = {target_user, separator};
+            username = chars_view{separator + 1, target.end()};
         }
         else if (separator_a)
         {
-            domain_pos   = separator_a + 1;
-            domain_len   = strlen(domain_pos);
-            username_pos = target_user;
-            username_len = separator_a - target_user;
-            LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
+            domain = {separator_a + 1, target.end()};
+            username = chars_view{target_user, separator_a};
+            LOG(LOG_INFO, "mod_rdp: username_len=%zu", username.size());
         }
     }
 
-    this->_username.assign(username_pos, username_pos+username_len);
-    this->_domain.assign(domain_pos, domain_pos+domain_len);
+    this->_username.assign(username.begin(), username.end());
+    this->_domain.assign(domain.begin(), domain.end());
 
     LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
         this->_domain, this->_username, this->_hostname);

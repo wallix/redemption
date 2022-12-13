@@ -58,7 +58,7 @@ namespace CHANNELS
             );
         }
 
-        void send_to_client( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
+        void send_to_client( OutTransport trans, CryptContext & crypt_context, uint32_t encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
                            , bytes_view chunk) {
             this->send_<true, MCS::SendDataIndication_Send>(
@@ -70,7 +70,7 @@ namespace CHANNELS
     private:
         template<bool enable_verbose, class MCS_SendData>
         void send_(
-          OutTransport trans, CryptContext & crypt_context, int encryptionLevel
+          OutTransport trans, CryptContext & crypt_context, uint32_t encryptionLevel
         , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
         , bytes_view chunk) {
             write_packets(

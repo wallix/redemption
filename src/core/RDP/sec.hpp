@@ -791,7 +791,7 @@ enum {
 
     class Sec_Recv
     {
-        public:
+    public:
         uint32_t flags;
         InStream payload;
         Sec_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
@@ -859,7 +859,7 @@ enum {
     {
         uint32_t flags;
         CryptContext & encrypt;
-        int encryption_level;
+        uint32_t encryption_level;
 
         void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, writable_bytes_view packet) const {
             SEC::Sec_Send sec(sec_header, packet, this->flags, this->encrypt, this->encryption_level);

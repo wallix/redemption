@@ -1734,7 +1734,7 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     uint32_t front_multifragment_maxsize = 0;
 
-    int share_id = 0;
+    uint32_t share_id = 0;
     bool enable_fastpath_client_input_event = false;
     bool remote_apps_not_enabled = false;
 
