@@ -81,8 +81,6 @@
 #include "core/RDP/virtual_channel_pdu.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 
-#include "core/RDPEA/audio_output.hpp"
-
 #include "utils/timebase.hpp"
 #include "core/log_id.hpp"
 #include "core/channel_list.hpp"
@@ -1089,13 +1087,8 @@ public:
 
     void process_unknown_channel_event(const CHANNELS::ChannelDef & channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
-            FrontAPI& front) {
-
-        if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
-            InStream clone = stream.clone();
-            rdpsnd::streamLogServer(clone, flags);
-        }
-
+            FrontAPI& front)
+    {
         this->send_to_front_channel(front, channel.name, stream.get_current(), length, chunk_size, flags);
     }
 
@@ -1467,11 +1460,6 @@ public:
         bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
-        if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
-            InStream clone(chunk);
-            rdpsnd::streamLogClient(clone, flags);
-        }
-
         if (bool(this->verbose & RDPVerbose::channels)) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk.size());
             channel.log(-1u);
