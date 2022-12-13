@@ -45,7 +45,7 @@ public:
     void must_flush_capture() override {}
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override;
-    void add_channel(CHANNELS::ChannelNameId name_id, uint32_t flags, int chanid);
+    void add_channel(CHANNELS::ChannelNameId name_id, uint32_t flags, uint16_t chanid);
 
     void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, uint32_t /*flags*/) override {}

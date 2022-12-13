@@ -2931,19 +2931,19 @@ public:
             // TODO: this should move to channels
             LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
 
-            int num_channel_src = this->channels.mod_channel_list.get_index_by_id(mcs.channelId);
-            if (num_channel_src == -1) {
+            const auto* mod_channel_ptr = this->channels.mod_channel_list.get_by_id(mcs.channelId);
+            if (!mod_channel_ptr) {
                 LOG(LOG_ERR, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel id=%d", mcs.channelId);
                 throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
             }
 
-            const CHANNELS::ChannelDef & mod_channel = this->channels.mod_channel_list[num_channel_src];
+            const CHANNELS::ChannelDef & mod_channel = *mod_channel_ptr;
             if (bool(this->verbose & RDPVerbose::channels)) {
-                mod_channel.log(num_channel_src);
+                mod_channel.log(checked_int(mod_channel_ptr - this->channels.mod_channel_list.begin()));
             }
 
             uint32_t length = sec.payload.in_uint32_le();
-            int flags = sec.payload.in_uint32_le();
+            uint32_t flags = sec.payload.in_uint32_le();
             size_t chunk_size = sec.payload.in_remain();
 
 #ifndef __EMSCRIPTEN__

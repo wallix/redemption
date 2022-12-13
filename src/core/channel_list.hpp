@@ -55,97 +55,101 @@ namespace CHANNELS {
 
     struct ChannelDef
     {
-        static const size_t max_size_name = 7;
-
         ChannelNameId name;
         uint32_t flags{0};
-        int      chanid{0};
+        uint16_t chanid{0};
 
         ChannelDef() = default;
 
-        ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
+        ChannelDef(ChannelNameId name, uint32_t flags, uint16_t chanid)
         : name(name)
         , flags(flags)
         , chanid(chanid)
         {}
 
-        void log(unsigned index) const {
+        void log(uint16_t index) const
+        {
             LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = 0x%8X, chanid = %u)",
-                index, this->name, static_cast<unsigned>(this->flags),
-                static_cast<unsigned>(this->chanid));
+                index, this->name, this->flags, this->chanid);
         }
     };
 
-    class ChannelDefArray {
+    class ChannelDefArray
+    {
+        static constexpr size_t max_len_channel = MAX_STATIC_VIRTUAL_CHANNELS + 2; // + global channel + wab channel
+
         // The number of requested static virtual channels (the maximum allowed is 31).
         // TODO static_vector<., 32>
         size_t     channelCount{0};
-        ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS + 2];  // + global channel + wab channel
+        ChannelDef items[max_len_channel];
 
     public:
-        ChannelDefArray()  = default;
+        ChannelDefArray() = default;
 
         void clear_channels()
         {
             this->channelCount = 0;
         }
 
-        const ChannelDef & operator[](size_t index) const {
+        const ChannelDef & operator[](size_t index) const
+        {
             return this->items[index];
         }
 
-        void set_chanid(size_t index, int chanid) {
+        void set_chanid(size_t index, uint16_t chanid)
+        {
             this->items[index].chanid = chanid;
         }
 
-        [[nodiscard]] size_t size() const {
+        [[nodiscard]]
+        size_t size() const
+        {
             return this->channelCount;
         }
 
-        void push_back(const ChannelDef & item) {
-            assert(this->channelCount < MAX_STATIC_VIRTUAL_CHANNELS + 2);
+        const ChannelDef * begin() const
+        {
+            return this->items;
+        }
+
+        const ChannelDef * end() const
+        {
+            return this->begin() + size();
+        }
+
+        void push_back(const ChannelDef & item)
+        {
+            assert(this->channelCount < max_len_channel);
             this->items[this->channelCount] = item;
             this->channelCount++;
         }
 
-        [[nodiscard]] const ChannelDef * get_by_name(ChannelNameId name) const {
-            const ChannelDef * channel = nullptr;
-            for (size_t index = 0; index < this->size(); index++) {
-                const ChannelDef & item = this->items[index];
-                if (name == item.name) {
-                    channel = &item;
-                    break;
+        [[nodiscard]]
+        const ChannelDef * get_by_name(ChannelNameId name) const
+        {
+            for (ChannelDef const& chann : *this) {
+                if (name == chann.name) {
+                    return &chann;
                 }
             }
-            return channel;
+            return nullptr;
         }
 
-        [[nodiscard]] const ChannelDef * get_by_id(int chanid) const {
-           const ChannelDef * channel = nullptr;
-           for (size_t index = 0; index < this->size(); index++) {
-               const ChannelDef & item = this->items[index];
-               if (item.chanid == chanid) {
-                   channel = &item;
-                   break;
-               }
-           }
-           return channel;
-        }
-
-        [[nodiscard]] int get_index_by_id(int chanid) const {
-            int res = -1;
-            for (size_t index = 0; index < this->size(); index++) {
-                if (this->items[index].chanid == chanid) {
-                    res = index;
-                    break;
+        [[nodiscard]]
+        const ChannelDef * get_by_id(uint16_t chanid) const
+        {
+            for (ChannelDef const& chann : *this) {
+                if (chanid == chann.chanid) {
+                    return &chann;
                 }
             }
-            return res;
+            return nullptr;
         }
 
-        void log(char * name) const {
+        void log(char const * name) const
+        {
             LOG(LOG_INFO, "%s channels %zu channels defined", name, this->channelCount);
-            for (unsigned index = 0 ; index < this->channelCount ; index++) {
+            for (uint16_t index = 0; index < this->channelCount; ++index) {
                 this->items[index].log(index);
             }
         }
