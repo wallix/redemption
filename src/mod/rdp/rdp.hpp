@@ -152,8 +152,8 @@ public:
 
     const ChannelsAuthorizations channels_authorizations;
 
-public:
     const bool enable_auth_channel;
+
     const CHANNELS::ChannelNameId auth_channel;
     const CHANNELS::ChannelNameId checkout_channel;
 #ifndef __EMSCRIPTEN__
@@ -171,7 +171,6 @@ public:
         const bool enable_session_probe;
         const bool enable_launch_mask;
         const bool start_launch_timeout_timer_only_after_logon;
-
 
     private:
         const bool used_to_launch_remote_program;
@@ -241,48 +240,17 @@ public:
     } remote_app;
 
 private:
-    struct Clipboard
-    {
-        const bool disable_log_syslog;
-        const bool log_only_relevant_activities;
+    ModRDPParams::ClipboardParams clipboard;
 
-        Clipboard(ModRDPParams::ClipboardParams const& clipboard_params)
-        : disable_log_syslog(clipboard_params.disable_log_syslog)
-        , log_only_relevant_activities(clipboard_params.log_only_relevant_activities)
-        {}
-    } clipboard;
-
-    struct DynamicChannels
-    {
-        zstring_view allowed_channels;
-        zstring_view denied_channels;
-
-        DynamicChannels(ModRDPParams::DynamicChannelsParams const& dynamic_channels_params)
-        : allowed_channels(dynamic_channels_params.allowed_channels)
-        , denied_channels(dynamic_channels_params.denied_channels)
-        {}
-    } dynamic_channels;
+    ModRDPParams::DynamicChannelsParams dynamic_channels;
 
 public:
-    struct FileSystem
-    {
-        const bool disable_log_syslog;
-        const bool bogus_ios_rdpdr_virtual_channel;
+    ModRDPParams::FileSystemParams file_system;
 
-        const bool enable_rdpdr_data_analysis;
-
-        const bool smartcard_passthrough;
-
-        FileSystem(ModRDPParams::FileSystemParams const& file_system_params)
-        : disable_log_syslog(file_system_params.disable_log_syslog)
-        , bogus_ios_rdpdr_virtual_channel(file_system_params.bogus_ios_rdpdr_virtual_channel)
-        , enable_rdpdr_data_analysis(file_system_params.enable_rdpdr_data_analysis)
-        , smartcard_passthrough(file_system_params.smartcard_passthrough)
-        {}
-    } file_system;
-
+private:
     AsynchronousTaskContainer asynchronous_tasks;
 
+public:
     class Drive
     {
         const bool use_application_driver;
@@ -327,6 +295,7 @@ public:
         friend class mod_rdp_channels;
     } drive;
 
+private:
     ModRdpFactory& mod_rdp_factory;
 
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
