@@ -520,29 +520,6 @@ RED_AUTO_TEST_CASE(RDP_Lock_Info)
     }
 }
 
-RED_AUTO_TEST_CASE(streamLog)
-{
-    const char data[] =
-    /* 0000 */ "\x01\x00\x00\x00"                                                 //....
-    /* 0000 */ "\x00\x00\x00\x00"                                                 //....
-    /* 0000 */ "\x03\x00\x00\x00"                                                 //....
-    /* 0000 */ "\x54\x00\x00\x00"                                                 //T...
-    /* 0000 */ "\x72\x44\x50\x43\x05\x00\x00\x00\x01\x00\x2c\x00\x02\x00\x00\x00" //rDPC......,.....
-    /* 0010 */ "\x02\x00\x00\x00\x01\x00\x06\x00\x01\x00\x0c\x00\xff\xff\x00\x00" //................
-    /* 0020 */ "\x00\x00\x00\x00\x07\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................
-    /* 0030 */ "\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00\x03\x00\x08\x00" //................
-    /* 0040 */ "\x01\x00\x00\x00\x04\x00\x08\x00\x01\x00\x00\x00\x05\x00\x08\x00" //................
-    /* 0050 */ "\x01\x00\x00\x00";
-
-    InStream in_stream(data);
-
-    rdpdr::RdpDrStatus status;
-
-    rdpdr::streamLog(in_stream, status);
-
-    // TODO TEST this not a test
-}
-
 RED_AUTO_TEST_CASE(ServerDriveLockControlRequest)
 {
     auto data =

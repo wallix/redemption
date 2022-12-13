@@ -359,8 +359,6 @@ public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
 private:
-    rdpdr::RdpDrStatus rdpdrLogStatus;
-
     const RDPVerbose verbose;
 
     gdi::OsdApi & osd;
@@ -1142,24 +1140,6 @@ public:
         if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
         &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                LOG_IF(bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump)),
-                    LOG_INFO,
-                    "mod_rdp::process_rdpdr_event: sending to Client, "
-                    "send Chunked Virtual Channel Data transparently.");
-
-                if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
-                    const bool send              = false;
-                    const bool from_or_to_client = false;
-
-                    ::msgdump_d(send, from_or_to_client, length, flags,
-                        {stream.get_data()+8, chunk_size});
-
-                    rdpdr::streamLog(stream, this->rdpdrLogStatus);
-                }
-            }
-
             this->send_to_front_channel(front, channel_names::rdpdr, stream.get_current(), length, chunk_size, flags);
             return;
         }
@@ -1487,27 +1467,6 @@ public:
         if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
         &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                LOG_IF(bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump)),
-                    LOG_INFO,
-                    "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
-                    "send Chunked Virtual Channel Data transparently.");
-
-                if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
-                    const bool send              = false;
-                    const bool from_or_to_client = false;
-                    uint32_t total_length = length;
-                    if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-                        total_length = chunk.get_capacity() - chunk.get_offset();
-                    }
-                    ::msgdump_d(send, from_or_to_client, length, flags,
-                    {chunk.get_data(), total_length});
-
-                    rdpdr::streamLog(chunk, this->rdpdrLogStatus);
-                }
-            }
-
             this->send_to_channel(*rdpdr_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
             return;
         }
