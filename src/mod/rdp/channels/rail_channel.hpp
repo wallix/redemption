@@ -92,32 +92,11 @@ private:
 
     ModRdpVariables vars;
 
-    class LaunchPendingApp
+    struct LaunchPendingApp
     {
         std::string original_exe_or_file;
         std::string exe_or_file;
         uint16_t    flags;
-
-    public:
-        explicit LaunchPendingApp(chars_view original_exe_or_file_,
-                                  chars_view exe_or_file_,
-                                  uint16_t flags_)
-        : original_exe_or_file(original_exe_or_file_.as<std::string>())
-        , exe_or_file(exe_or_file_.as<std::string>())
-        , flags(flags_)
-        {}
-
-        [[nodiscard]] const char* OriginalExeOrFile() const {
-            return this->original_exe_or_file.c_str();
-        }
-
-        [[nodiscard]] const char* ExeOrFile() const {
-            return this->exe_or_file.c_str();
-        }
-
-        [[nodiscard]] uint16_t Flags() const {
-            return this->flags;
-        }
     };
 
     std::vector<LaunchPendingApp> launch_pending_apps;
@@ -696,7 +675,6 @@ public:
     bool process_server_execute_result_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-
         // TODO: see use of is_auth_application, looks like it is used for
         // executionflow control. We should avoid to do that
         bool is_auth_application = false;
@@ -712,9 +690,9 @@ public:
         auto iter = std::find_if(
                 this->launch_pending_apps.begin(),
                 this->launch_pending_apps.end(),
-                [&serpdu](LaunchPendingApp& app) -> bool {
-                    return app.ExeOrFile() == serpdu.ExeOrFile()
-                        && app.Flags() == serpdu.Flags();
+                [&serpdu](LaunchPendingApp const& app) -> bool {
+                    return app.original_exe_or_file == serpdu.ExeOrFile()
+                        && app.flags == serpdu.Flags();
                 }
             );
         if (this->launch_pending_apps.end() != iter) {
@@ -722,9 +700,9 @@ public:
                 "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
                     "Bastion Application found. OriginalExeOrFile=\"%s\" "
                     "ExeOrFile=\"%s\"",
-                iter->OriginalExeOrFile(), serpdu.ExeOrFile());
+                iter->original_exe_or_file, serpdu.ExeOrFile());
 
-            serpdu.ExeOrFile(iter->OriginalExeOrFile());
+            serpdu.ExeOrFile(iter->original_exe_or_file);
 
             this->launch_pending_apps.erase(iter);
 
@@ -1324,7 +1302,11 @@ public:
             int(account.size()), account.data(),
             flags);
 
-        launch_pending_apps.emplace_back(LaunchPendingApp(original_exe_or_file, exe_or_file, flags));
+        launch_pending_apps.emplace_back(LaunchPendingApp{
+            original_exe_or_file.as<std::string>(),
+            exe_or_file.as<std::string>(),
+            flags
+        });
 
         auto arguments_ = arguments.as<std::string>();
 
