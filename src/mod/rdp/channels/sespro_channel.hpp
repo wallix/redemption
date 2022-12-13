@@ -182,6 +182,21 @@ private:
         }
     }
 
+    static void out_selected_string(OutStream & out, bool cond, chars_view yes, chars_view no) noexcept
+    {
+        if (cond) {
+            out.out_copy_bytes(yes);
+        }
+        else {
+            out.out_copy_bytes(no);
+        }
+    }
+
+    static void out_yes_or_no(OutStream & out, bool cond) noexcept
+    {
+        out_selected_string(out, cond, "Yes"_av, "No"_av);
+    }
+
 public:
 
     struct Params
@@ -662,25 +677,14 @@ public:
                 if (this->sespro_params.on_account_manipulation != SessionProbeOnAccountManipulation::allow) {
                     send_client_message([this](OutStream & out_s) {
                         out_s.out_copy_bytes("AccountManipulationAction="_av);
-
-                        if (this->sespro_params.on_account_manipulation == SessionProbeOnAccountManipulation::notify) {
-                            out_s.out_copy_bytes("notify"_av);
-                        }
-                        else {
-                            out_s.out_copy_bytes("deny"_av);
-                        }
+                        out_selected_string(out_s, this->sespro_params.on_account_manipulation == SessionProbeOnAccountManipulation::notify,
+                                            "notify"_av, "deny"_av);
                     });
                 }
 
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("ChildlessWindowAsUnidentifiedInputField="_av);
-
-                    if (this->sespro_params.childless_window_as_unidentified_input_field) {
-                        out_s.out_copy_bytes("Yes"_av);
-                    }
-                    else {
-                        out_s.out_copy_bytes("No"_av);
-                    }
+                    out_yes_or_no(out_s, this->sespro_params.childless_window_as_unidentified_input_field);
                 });
 
                 send_client_message([](OutStream & out_s) {
@@ -690,13 +694,7 @@ public:
 
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("AutomaticallyEndDisconnectedSession="_av);
-
-                    if (this->sespro_params.end_disconnected_session) {
-                        out_s.out_copy_bytes("Yes"_av);
-                    }
-                    else {
-                        out_s.out_copy_bytes("No"_av);
-                    }
+                    out_yes_or_no(out_s, this->sespro_params.end_disconnected_session);
                 });
 
                 {
@@ -737,13 +735,7 @@ public:
 
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("EnableCrashDump="_av);
-
-                    if (this->sespro_params.enable_crash_dump) {
-                        out_s.out_copy_bytes("Yes"_av);
-                    }
-                    else {
-                        out_s.out_copy_bytes("No"_av);
-                    }
+                    out_yes_or_no(out_s, this->sespro_params.enable_crash_dump);
                 });
 
                 send_client_message([this](OutStream & out_s) {
@@ -757,13 +749,7 @@ public:
 
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("BestSafeIntegration="_av);
-
-                    if (this->sespro_params.bestsafe_integration) {
-                        out_s.out_copy_bytes("Yes"_av);
-                    }
-                    else {
-                        out_s.out_copy_bytes("No"_av);
-                    }
+                    out_yes_or_no(out_s, this->sespro_params.bestsafe_integration);
                 });
 
                 send_client_message([this](OutStream & out_s) {
@@ -882,7 +868,7 @@ public:
 
                     out_s.out_copy_bytes(int_to_decimal_chars(proc_index));
                     out_s.out_uint8('\x01');
-                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
+                    out_selected_string(out_s, result, "0"_av, "-1"_av);
 
                     if (result) {
                         out_s.out_uint8('\x01');
@@ -949,7 +935,7 @@ public:
 
                     out_s.out_copy_bytes(int_to_decimal_chars(rule_index));
                     out_s.out_uint8('\x01');
-                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
+                    out_selected_string(out_s, result, "0"_av, "-1"_av);
 
                     if (result) {
                         out_s.out_uint8('\x01');
@@ -978,7 +964,7 @@ public:
 
                     out_s.out_copy_bytes(int_to_decimal_chars(app_index));
                     out_s.out_uint8('\x01');
-                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
+                    out_selected_string(out_s, result, "0"_av, "-1"_av);
 
                     if (result) {
                         out_s.out_uint8('\x01');
@@ -1025,12 +1011,7 @@ public:
 
                     if (0x0103 <= this->other_version) {
                         out_s.out_uint8('\x01');
-                        if (this->sespro_params.enable_log_rotation) {
-                            out_s.out_copy_bytes("Yes"_av);
-                        }
-                        else {
-                            out_s.out_copy_bytes("No"_av);
-                        }
+                        out_yes_or_no(out_s, this->sespro_params.enable_log_rotation);
 
                         if (0x0104 <= this->other_version) {
                             out_s.out_uint8('\x01');
@@ -1708,12 +1689,7 @@ public:
         out_s.out_copy_bytes(current_directory);
 
         out_s.out_uint8('\x01');
-        if (show_maximized) {
-            out_s.out_copy_bytes("Minimized"_av);
-        }
-        else {
-            out_s.out_copy_bytes("Normal"_av);
-        }
+        out_selected_string(out_s, show_maximized, "Minimized"_av, "Normal"_av);
 
         out_s.out_uint8('\x01');
         out_s.out_copy_bytes(int_to_decimal_chars(flags));
@@ -1774,21 +1750,11 @@ public:
         send_client_message([bTakeControl, bRequestPermission, userdata](OutStream & out_s) {
             out_s.out_copy_bytes("SHADOW_SESSION_REQUEST="_av);
 
-            if (bTakeControl) {
-                out_s.out_copy_bytes("Yes"_av);
-            }
-            else {
-                out_s.out_copy_bytes("No"_av);
-            }
+            out_yes_or_no(out_s, bTakeControl);
 
             out_s.out_uint8('\x01');
 
-            if (bRequestPermission) {
-                out_s.out_copy_bytes("Yes"_av);
-            }
-            else {
-                out_s.out_copy_bytes("No"_av);
-            }
+            out_yes_or_no(out_s, bRequestPermission);
 
             out_s.out_uint8('\x01');
 
