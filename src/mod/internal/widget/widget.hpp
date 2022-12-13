@@ -193,7 +193,7 @@ public:
     }
 
     // - mouve event (mouse moves or a button went up or down)
-    void rdp_input_mouse(int device_flags, int x, int y) override
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
     {
         (void)device_flags;
         (void)x;

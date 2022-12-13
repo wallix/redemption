@@ -464,7 +464,7 @@ void WidgetSelector::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint3
     }
 }
 
-void WidgetSelector::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget *wid = this->widget_at_pos(x, y);

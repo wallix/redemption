@@ -2432,7 +2432,8 @@ public:
         }
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y) override {
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
         if (UP_AND_RUNNING == this->connection_finalization_state
          && !this->input_event_disabled
         ) {

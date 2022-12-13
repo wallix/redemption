@@ -262,7 +262,7 @@ Dimension WidgetScrollBar::get_optimal_dim() const
 }
 
 // RdpInput
-void WidgetScrollBar::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetScrollBar::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
         this->mouse_down = true;

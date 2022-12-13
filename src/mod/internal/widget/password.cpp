@@ -136,7 +136,7 @@ Rect WidgetPassword::get_cursor_rect() const
                 this->h_char);
 }
 
-void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetPassword::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     (void)y;
 

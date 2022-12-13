@@ -76,8 +76,8 @@ private:
 
     MouseOwner current_mouse_owner;
 
-    int old_mouse_x = 0;
-    int old_mouse_y = 0;
+    uint16_t old_mouse_x = 0;
+    uint16_t old_mouse_y = 0;
 
 public:
     RailModuleHostMod(
@@ -101,7 +101,7 @@ public:
 
     // RdpInput
 
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void rdp_gdi_down() override {}
 

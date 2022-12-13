@@ -192,7 +192,7 @@ Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
     return w;
 }
 
-void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (x > this->editbox->eright()) {
         this->button.rdp_input_mouse(device_flags, x, y);

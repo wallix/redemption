@@ -49,7 +49,7 @@ public:
     void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
     void rdp_input_invalidate(Rect r) override;
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
     {
@@ -93,6 +93,6 @@ private:
 
     MouseOwner current_mouse_owner;
 
-    int old_mouse_x = 0;
-    int old_mouse_y = 0;
+    uint16_t old_mouse_x = 0;
+    uint16_t old_mouse_y = 0;
 };

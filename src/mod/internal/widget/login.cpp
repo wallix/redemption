@@ -398,7 +398,7 @@ void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t
     REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetLogin::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetLogin::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = this->widget_at_pos(x, y);

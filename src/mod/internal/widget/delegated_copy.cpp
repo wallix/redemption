@@ -120,7 +120,7 @@ static bool operator&(WidgetDelegatedCopy::MouseButton a,
     return underlying_cast(a) & underlying_cast(b);
 }
 
-void WidgetDelegatedCopy::rdp_input_mouse(int device_flags, int /*x*/, int /*y*/)
+void WidgetDelegatedCopy::rdp_input_mouse(uint16_t device_flags, uint16_t /*x*/, uint16_t /*y*/)
 {
     uint32_t mouse_match = (
       ((this->copy_buttons & MouseButton::Left)  ? MOUSE_FLAG_BUTTON1 : 0)

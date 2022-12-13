@@ -90,7 +90,7 @@ public:
     Dimension get_optimal_dim() const override;
 
     // RdpInput
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
 private:
     void compute_step_value();

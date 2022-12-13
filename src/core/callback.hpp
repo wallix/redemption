@@ -68,7 +68,7 @@ struct RdpInput : private noncopyable
     virtual ~RdpInput() = default;
     virtual void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) = 0;
     virtual void rdp_input_unicode(KbdFlags flag, uint16_t unicode) { (void)unicode; (void)flag; }
-    virtual void rdp_input_mouse(int device_flags, int x, int y) = 0;
+    virtual void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) = 0;
     virtual void rdp_input_synchronize(KeyLocks locks) = 0;
     virtual void rdp_input_invalidate(Rect r) = 0;
     virtual void rdp_input_invalidate2(array_view<Rect> vr) {
@@ -105,7 +105,7 @@ struct NullCallback : Callback
         (void)keymap;
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y) override
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
     {
         (void)device_flags;
         (void)x;

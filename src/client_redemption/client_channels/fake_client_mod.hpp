@@ -89,7 +89,12 @@ public:
         (void)keymap;
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y) override {(void) device_flags; (void) x; (void) y; }
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        (void)device_flags;
+        (void)x;
+        (void)y;
+    }
 
     void rdp_input_synchronize(KeyLocks locks) override { (void)locks; }
 

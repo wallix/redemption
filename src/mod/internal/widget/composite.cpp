@@ -455,7 +455,7 @@ void WidgetParent::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
     }
 }
 
-void WidgetParent::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetParent::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;

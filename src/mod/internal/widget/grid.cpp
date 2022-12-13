@@ -316,13 +316,13 @@ void WidgetGrid::blur()
     }
 }
 
-void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y)
+void WidgetGrid::rdp_input_mouse(uint16_t device_flags, uint16_t mouse_x, uint16_t mouse_y)
 {
     using namespace std::chrono_literals;
 
     if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
-        uint16_t y = this->y();
-        uint16_t const x = this->x();
+        int16_t y = this->y();
+        int16_t const x = this->x();
         auto&& row_heights = this->widgets.row_heights();
         for (uint16_t row_index = 0; row_index < this->widgets.nb_rows; row_index++) {
             Rect rectRow(x, y, this->cx(), row_heights[row_index] + this->border * 2);

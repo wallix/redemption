@@ -157,7 +157,7 @@ void WidgetVerticalScrollText::_scroll_up()
     }
 }
 
-void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetVerticalScrollText::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (!this->has_scroll) {
         this->Widget::rdp_input_mouse(device_flags, x, y);

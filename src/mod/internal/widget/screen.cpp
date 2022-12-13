@@ -129,7 +129,7 @@ bool WidgetScreen::previous_focus()
     return false;
 }
 
-void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetScreen::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     this->redo_mouse_pointer_change(x, y);
 

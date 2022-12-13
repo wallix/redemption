@@ -104,7 +104,7 @@ void RailModuleHostMod::rdp_gdi_up_and_running()
     mod.rdp_gdi_up_and_running();
 }
 
-void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y)
+void RailModuleHostMod::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     Rect client_execute_auxiliary_window_rect = this->rail_client_execute.get_auxiliary_window_rect();
 

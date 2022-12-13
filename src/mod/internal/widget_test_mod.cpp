@@ -94,7 +94,7 @@ void WidgetTestMod::rdp_input_invalidate(Rect clip)
     this->d->screen.rdp_input_invalidate(clip);
 }
 
-void WidgetTestMod::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetTestMod::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     this->d->screen.rdp_input_mouse(device_flags, x, y);
 }

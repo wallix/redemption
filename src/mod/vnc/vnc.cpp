@@ -279,7 +279,7 @@ void mod_vnc::initial_clear_screen()
                                );
 }
 
-void mod_vnc::rdp_input_mouse(int device_flags, int x, int y)
+void mod_vnc::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (this->state != UP_AND_RUNNING) {
         return;

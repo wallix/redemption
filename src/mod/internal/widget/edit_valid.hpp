@@ -65,7 +65,7 @@ public:
 
     Widget * widget_at_pos(int16_t x, int16_t y) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 

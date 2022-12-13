@@ -126,13 +126,15 @@ public:
      *
      */
     struct Mouse {
-        void move(OutStream & out_stream, int x, int y) {
+        void move(OutStream & out_stream, uint16_t x, uint16_t y)
+        {
             this->x = x;
             this->y = y;
             this->send(out_stream);
         }
 
-        void click(OutStream & out_stream, int x, int y, int mask, bool set) {
+        void click(OutStream & out_stream, uint16_t x, uint16_t y, uint8_t mask, bool set)
+        {
             if (set) {
                 this->mod_mouse_state |= mask;
             }
@@ -144,24 +146,27 @@ public:
             this->send(out_stream);
         }
 
-        void scroll(OutStream & out_stream, int mask) const {
+        void scroll(OutStream & out_stream, uint8_t mask) const
+        {
             this->write(out_stream, this->mod_mouse_state | mask);
             this->write(out_stream, this->mod_mouse_state);
         }
 
     private:
         uint8_t mod_mouse_state = 0;
-        int x = 0;
-        int y = 0;
+        uint16_t x = 0;
+        uint16_t y = 0;
 
-        void write(OutStream & stream, uint8_t state) const {
+        void write(OutStream & stream, uint8_t state) const
+        {
             stream.out_uint8(5);
             stream.out_uint8(state);
             stream.out_uint16_be(this->x);
             stream.out_uint16_be(this->y);
         }
 
-        void send(OutStream & out_stream) const {
+        void send(OutStream & out_stream) const
+        {
             this->write(out_stream, this->mod_mouse_state);
         }
     } mouse;
@@ -773,7 +778,7 @@ public:
     void initial_clear_screen();
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 

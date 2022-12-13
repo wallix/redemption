@@ -173,7 +173,7 @@ void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
     }
 }
 
-void ModWrapper::rdp_input_mouse(int device_flags, int x, int y)
+void ModWrapper::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (this->is_disable_by_input
      && this->get_protected_rect().contains_pt(x, y)

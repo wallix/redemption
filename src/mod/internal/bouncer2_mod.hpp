@@ -45,8 +45,8 @@ class Bouncer2Mod : public mod_api
 
     bool draw_green_carpet = true;
 
-    int mouse_x = 0;
-    int mouse_y = 0;
+    uint16_t mouse_x = 0;
+    uint16_t mouse_y = 0;
 
     EventsGuard events_guard;
     gdi::GraphicApi & gd;
@@ -70,7 +70,7 @@ public:
         this->draw_green_carpet = true;
     }
 
-    void rdp_input_mouse(int /*device_flags*/, int x, int y) override
+    void rdp_input_mouse(uint16_t /*device_flags*/, uint16_t x, uint16_t y) override
     {
         this->mouse_x = x;
         this->mouse_y = y;

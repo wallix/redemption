@@ -161,7 +161,7 @@ void WidgetButton::draw(
     }
 }
 
-void WidgetButton::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetButton::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && this->state == State::Normal) {
         this->state = State::Pressed;

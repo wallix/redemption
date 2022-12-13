@@ -136,28 +136,24 @@ public:
         this->send_rdp_scanCode(flags, Keymap::Scancode::Delete);
     }
 
-    void mouseButtonEvent(int x, int y, int flag) {
+    void mouseButtonEvent(uint16_t x, uint16_t y, uint16_t flag)
+    {
         if (this->mod != nullptr && flag != MOUSE_FLAG_BUTTON4) {
             this->mod->rdp_input_mouse(flag, x, y);
         }
     }
 
-    void wheelEvent(int delta) {
-        int flag(0);
-        if (delta < 0) {
-            flag = MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE;
-        }
-        else {
-            flag = MOUSE_FLAG_BUTTON4;
-        }
+    void wheelEvent(int delta)
+    {
+        uint16_t flag = (delta < 0) ? MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE : MOUSE_FLAG_BUTTON4;
 
         if (this->mod != nullptr) {
             this->mod->rdp_input_mouse(flag, 0, 0);
         }
     }
 
-    bool mouseMouveEvent(int x, int y) {
-
+    bool mouseMouveEvent(uint16_t x, uint16_t y)
+    {
         if (this->mod != nullptr /*&& y < this->config.info.height*/) {
             this->mouse_data.x = x;
             this->mouse_data.y = y;

@@ -87,8 +87,8 @@ class WidgetParent : public Widget
 
     Color bg_color;
 
-    int old_mouse_x = 0;
-    int old_mouse_y = 0;
+    uint16_t old_mouse_x = 0;
+    uint16_t old_mouse_y = 0;
 
 protected:
     CompositeContainer * impl;
@@ -144,7 +144,7 @@ public:
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 };
 
 

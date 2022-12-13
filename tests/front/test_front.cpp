@@ -127,12 +127,12 @@ struct AppendBuffer
     }
 };
 
-void append_mouse(std::string& output, int device_flags, int x, int y)
+void append_mouse(std::string& output, uint16_t device_flags, uint16_t x, uint16_t y)
 {
     AppendBuffer buffer;
     char* p = buffer.buffer;
     p = cpy(p, "{flags=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, static_cast<uint16_t>(device_flags));
+    p = int_to_fixed_hexadecimal_upper_chars(p, device_flags);
     p = cpy(p, ", x="_av);
     p = cpy(p, int_to_decimal_chars(x));
     p = cpy(p, ", y="_av);
@@ -343,7 +343,7 @@ namespace
 
 struct Mod : null_mod
 {
-    void rdp_input_mouse(int device_flags, int x, int y) override
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
     {
         append_mouse(session_log.messages, device_flags, x, y);
     }

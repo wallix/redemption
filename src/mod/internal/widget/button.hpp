@@ -89,7 +89,7 @@ public:
                      Color fg_color, Color bg_color, Color focuscolor, gdi::ColorCtx color_ctx,
                      Rect label_rect, State state, unsigned border_width, Font const& font, int xtext, int ytext);
 
-    void rdp_input_mouse(int device_flags, int x, int y) override;
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 

@@ -333,7 +333,7 @@ void WidgetEdit::move_to_first_character()
     this->update_draw_cursor(old_cursor_rect);
 }
 
-void WidgetEdit::rdp_input_mouse(int device_flags, int x, int y)
+void WidgetEdit::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
         if (x <= this->x() + this->label.x_text) {
