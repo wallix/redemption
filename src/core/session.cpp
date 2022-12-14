@@ -195,11 +195,9 @@ class Session
 
             this->log_file.log(tp.tv_sec, this->ini, this->session_type, id, kv_list);
 
-            if (this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
-                return ;
+            if (!this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
+                this->probe_api.session_update(this->time_base.monotonic_time, id, kv_list);
             }
-
-            this->probe_api.session_update(this->time_base.monotonic_time, id, kv_list);
         }
 
         void set_control_owner_ctx(chars_view name) override
