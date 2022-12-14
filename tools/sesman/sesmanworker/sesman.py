@@ -2823,7 +2823,11 @@ class Sesman():
             session_sharing_token = {
                 "native_session_sharing": True,
                 "sharing_pass":
-                self.shared.get("session_sharing_invitation_id"),
+                    self.shared.get("session_sharing_invitation_id"),
+                "sharing_target_ip":
+                    self.shared["session_sharing_target_ip"],
+                "sharing_account":
+                    self.shared["session_sharing_target_login"],
                 "shadow_ip": sharing_addr,
                 "shadow_port": 0,  # force 0 to use Unix Socket
             }

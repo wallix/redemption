@@ -237,6 +237,8 @@ namespace configs
         "session_sharing_invitation_error_message"_zv,
         "session_sharing_invitation_id"_zv,
         "session_sharing_invitation_addr"_zv,
+        "session_sharing_target_ip"_zv,
+        "session_sharing_target_login"_zv,
         "smartcard_login"_zv,
         "banner_message"_zv,
         "banner_type"_zv,

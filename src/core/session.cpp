@@ -1149,9 +1149,13 @@ private:
                             result = guest_ctx.start(
                                 app_path(AppPath::SessionTmpDir),
                                 this->ini.get<cfg::context::session_id>(),
-                                events, front, mod_factory.callback(),
+                                events,
+                                front,
+                                mod_factory.callback(),
                                 secondary_session.get_secondary_session_log(),
-                                this->ini.get<cfg::context::session_sharing_ttl>(), rnd, ini,
+                                this->ini.get<cfg::context::session_sharing_ttl>(),
+                                rnd,
+                                ini,
                                 this->ini.get<cfg::context::session_sharing_enable_control>()
                             );
                         }
@@ -1164,6 +1168,10 @@ private:
                         else {
                             this->ini.set_acl<cfg::context::session_sharing_invitation_addr>(guest_ctx.sck_path());
                             this->ini.set_acl<cfg::context::session_sharing_invitation_id>(guest_ctx.sck_password());
+                            this->ini.set_acl<cfg::context::session_sharing_target_login>(
+                                this->ini.get<cfg::globals::target_user>());
+                            this->ini.set_acl<cfg::context::session_sharing_target_ip>(
+                                SessionLogFile::get_target_ip(this->ini));
                         }
                     }
 

@@ -37,11 +37,11 @@ namespace configs
         // inline constexpr int section19 = 142; /* websocket */
         // inline constexpr int section20 = 142; /* vnc_over_ssh */
         inline constexpr int section21 = 142; /* context */
-        // inline constexpr int section22 = 230; /* internal_mod */
-        inline constexpr int section23 = 230; /* mod_replay */
-        inline constexpr int section24 = 232; /* translation */
-        // inline constexpr int section25 = 234; /* theme */
-        // inline constexpr int section26 = 234; /* debug */
+        // inline constexpr int section22 = 232; /* internal_mod */
+        inline constexpr int section23 = 232; /* mod_replay */
+        inline constexpr int section24 = 234; /* translation */
+        // inline constexpr int section25 = 236; /* theme */
+        // inline constexpr int section26 = 236; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -4907,6 +4907,34 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_target_ip {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 85};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// default: {} <br/>
+    struct context::session_sharing_target_login {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 86};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
     /// type: bool <br/>
     /// default: false <br/>
     struct context::rail_module_host_mod_is_active {
@@ -4924,7 +4952,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = true;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 85};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 87};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4938,7 +4966,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 86};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 88};
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4952,7 +4980,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 87};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 89};
         using type = BannerType;
         using sesman_and_spec_type = BannerType;
         using mapped_type = sesman_and_spec_type;
@@ -5956,6 +5984,8 @@ struct context
 , cfg::context::session_sharing_invitation_error_message
 , cfg::context::session_sharing_invitation_id
 , cfg::context::session_sharing_invitation_addr
+, cfg::context::session_sharing_target_ip
+, cfg::context::session_sharing_target_login
 , cfg::context::smartcard_login
 , cfg::context::banner_message
 , cfg::context::redirection_password_or_cookie
@@ -6314,6 +6344,8 @@ using VariablesAclPack = Pack<
 , cfg::context::session_sharing_invitation_error_message
 , cfg::context::session_sharing_invitation_id
 , cfg::context::session_sharing_invitation_addr
+, cfg::context::session_sharing_target_ip
+, cfg::context::session_sharing_target_login
 , cfg::context::smartcard_login
 , cfg::context::banner_message
 , cfg::context::banner_type
@@ -6328,7 +6360,7 @@ constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111101111111111111111111111111111111111111111011111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
 , 0b1111111111111111111111111111101011111101111111111100111111111111
-, 0b0000000000000000000000111111110111111111111111111011111111111111
+, 0b0000000000000000000011111111110111111111111111111011111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000

@@ -420,6 +420,8 @@ namespace cfg
         struct session_sharing_invitation_error_message;
         struct session_sharing_invitation_id;
         struct session_sharing_invitation_addr;
+        struct session_sharing_target_ip;
+        struct session_sharing_target_login;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
         struct banner_message;

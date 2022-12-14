@@ -480,6 +480,8 @@ cfg::context::session_sharing_invitation_error_code ⇒ session_sharing_invitati
 cfg::context::session_sharing_invitation_error_message ⇒ session_sharing_invitation_error_message   [std::string]
 cfg::context::session_sharing_invitation_id ⇒ session_sharing_invitation_id   [std::string]
 cfg::context::session_sharing_invitation_addr ⇒ session_sharing_invitation_addr   [std::string]
+cfg::context::session_sharing_target_ip ⇒ session_sharing_target_ip   [std::string]
+cfg::context::session_sharing_target_login ⇒ session_sharing_target_login   [std::string]
 cfg::context::smartcard_login ⇒ smartcard_login   [std::string]
 cfg::context::banner_message ⇐ banner_message   [std::string]
 cfg::context::banner_type ⇐ banner_type   [BannerType]

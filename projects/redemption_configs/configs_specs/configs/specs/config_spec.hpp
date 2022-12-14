@@ -1105,6 +1105,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_invitation_error_message"});
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, NL, type_<std::string>(), names{"session_sharing_invitation_id"});
         W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_invitation_addr"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_target_ip"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_sharing_target_login"});
 
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), names{"rail_module_host_mod_is_active"}, set(false));
 

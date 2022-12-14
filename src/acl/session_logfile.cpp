@@ -81,15 +81,6 @@ namespace
 
         using qvalue_table_formats::siem_escaped_table;
     } // namespace table_formats
-
-    inline chars_view get_target_ip(const Inifile & ini)
-    {
-        char c = ini.get<cfg::context::target_host>()[0];
-        using av = chars_view;
-        return ('0' <= c && c <= '9')
-            ? av(ini.get<cfg::context::target_host>())
-            : av(ini.get<cfg::context::ip_target>());
-    }
 } // anonymous namespace
 
 
@@ -133,6 +124,19 @@ void SessionLogFile::set_control_owner_ctx(chars_view name)
     }
 }
 
+std::string const& SessionLogFile::get_target_ip(Inifile const& ini)
+{
+    char c = ini.get<cfg::context::target_host>()[0];
+    return ('0' <= c && c <= '9')
+        ? ini.get<cfg::context::target_host>()
+        : ini.get<cfg::context::ip_target>();
+}
+
+std::string const& SessionLogFile::get_account(Inifile const& ini)
+{
+    return ini.get<cfg::globals::target_user>();
+}
+
 void SessionLogFile::log(
     std::time_t time_now, Inifile& ini,
     chars_view session_type, LogId id, KVLogList kv_list)
@@ -160,7 +164,7 @@ void SessionLogFile::log(
             {"user=\""_av,       ini.get<cfg::globals::auth_user>()},
             {"device=\""_av,     ini.get<cfg::globals::target_device>()},
             {"service=\""_av,    ini.get<cfg::context::target_service>()},
-            {"account=\""_av,    ini.get<cfg::globals::target_user>()},
+            {"account=\""_av,    get_account(ini)},
         };
 
         auto suffix_type = " Session"_av;

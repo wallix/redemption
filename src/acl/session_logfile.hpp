@@ -59,6 +59,9 @@ public:
 
     void close_session_log();
 
+    static std::string const& get_target_ip(Inifile const& ini);
+    static std::string const& get_account(Inifile const& ini);
+
 private:
     UninitDynamicBuffer buffer;
     UninitDynamicBuffer control_owner_extra_log;
