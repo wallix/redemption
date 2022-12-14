@@ -31,7 +31,7 @@
 ExtraSystemProcesses::ExtraSystemProcesses(zstring_view comma_separated_processes)
 {
     for (auto process : split_with(comma_separated_processes, ',')) {
-        process = trim(process);
+        process = ltrim(process);
         if (!process.empty()) {
             this->processes.emplace_back(process.begin(), process.end());
         }
@@ -179,73 +179,59 @@ std::string OutboundConnectionMonitorRules::to_string() const
 }
 
 
-ProcessMonitorRules::ProcessMonitorRules(const char * comme_separated_rules)
+ProcessMonitorRules::Rule::Rule(Type type, unsigned pattern_start_index, chars_view description)
+: type_(type)
+, pattern_start_index_(pattern_start_index)
+, description_(description.begin(), description.end())
 {
-    if (comme_separated_rules) {
-        const char * rule = comme_separated_rules;
+}
 
-        auto RULE_PREFIX_NOTIFY = "$notify:"_zv;
-        auto RULE_PREFIX_DENY   = "$deny:"_zv;
+chars_view ProcessMonitorRules::Rule::pattern() const noexcept
+{
+    return {description_.data() + pattern_start_index_, description_.data() + description_.size()};
+}
 
-        while (*rule) {
-            if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
-                rule++;
-                continue;
-            }
+chars_view ProcessMonitorRules::Rule::description() const noexcept
+{
+    return description_;
+}
 
-            char const * rule_begin = rule;
+ProcessMonitorRules::ProcessMonitorRules(zstring_view comma_separated_rules)
+{
+    for (auto rule : split_with(comma_separated_rules, ',')) {
+        rule = ltrim(rule);
+        if (REDEMPTION_UNLIKELY(rule.empty())) {
+            continue;
+        }
 
-            Type uType = Type::Deny;
-            if (strcasestr(rule, RULE_PREFIX_NOTIFY.c_str()) == rule)
-            {
-                uType  = Type::Notify;
-                rule  += RULE_PREFIX_NOTIFY.size();
-            }
-            else if (strcasestr(rule, RULE_PREFIX_DENY.c_str()) == rule)
-            {
-                uType  = Type::Deny;
-                rule  += RULE_PREFIX_DENY.size();
-            }
+        Type type = Type::Deny;
+        char const* pattern = rule.begin();
 
-            const char * rule_separator = strchr(rule, ',');
-
-            std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
-
-            std::string pattern(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
-
-            this->rules.push_back({
-                uType, std::move(pattern), std::move(description_string)
-            });
-
-            if (!rule_separator) {
+        struct D { Type type; chars_view prefix; };
+        for (D d : {
+            D{Type::Notify, "$notify:"_zv},
+            D{Type::Deny, "$deny:"_zv},
+        }) {
+            if (utils::starts_with(rule, d.prefix)) {
+                type = d.type;
+                pattern += d.prefix.size();
                 break;
             }
-
-            rule = rule_separator + 1;
         }
+
+        if (REDEMPTION_UNLIKELY(pattern == rule.end())) {
+            continue;
+        }
+
+        this->rules.push_back({type, checked_int(pattern - rule.begin()), rule});
     }
 }
 
-// TODO {std:string const&, bool} ?
-bool ProcessMonitorRules::get(
-    size_t index,
-    unsigned int & out_type,
-    std::string & out_pattern,
-    std::string & out_description
-) const {
-    if (this->rules.size() <= index) {
-        out_type = 0;
-        out_pattern.clear();
-        out_description.clear();
-
-        return false;
-    }
-
-    out_type                   = unsigned(this->rules[index].type);
-    out_pattern                = this->rules[index].pattern;
-    out_description            = this->rules[index].description;
-
-    return true;
+ProcessMonitorRules::Rule const* ProcessMonitorRules::get(size_t index) const
+{
+    return (index < this->rules.size())
+        ? &this->rules[index]
+        : nullptr;
 }
 
 std::string ProcessMonitorRules::to_string() const
@@ -256,11 +242,11 @@ std::string ProcessMonitorRules::to_string() const
         "Deny"_av,
     };
     for (auto& x : this->rules) {
-        assert(unsigned(x.type) < std::size(type_s));
+        assert(unsigned(x.type()) < std::size(type_s));
         str_append(r, '{',
-            type_s[unsigned(x.type)], ", ",
-            x.pattern, ", ",
-            x.description, "}, "
+            type_s[unsigned(x.type())], ", ",
+            x.pattern(), ", ",
+            x.description(), "}, "
         );
     }
     return r;

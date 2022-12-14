@@ -88,7 +88,7 @@ public:
 };
 
 
-class ProcessMonitorRules
+struct ProcessMonitorRules
 {
     enum class Type : bool
     {
@@ -96,26 +96,29 @@ class ProcessMonitorRules
         Deny,
     };
 
-    struct process_monitor_rule
+    struct Rule
     {
-        Type type;
-        std::string pattern;
-        std::string description;
+        Type type() const noexcept { return type_; }
+        chars_view pattern() const noexcept;
+        chars_view description() const noexcept;
+
+        Rule(Type type, unsigned pattern_start_index, chars_view description);
+
+    private:
+        Type type_;
+        unsigned pattern_start_index_;
+        std::vector<char> description_;
     };
 
-    std::vector<process_monitor_rule> rules;
+private:
+    std::vector<Rule> rules;
 
 public:
     explicit ProcessMonitorRules() = default;
 
-    explicit ProcessMonitorRules(const char * comme_separated_rules);
+    explicit ProcessMonitorRules(zstring_view comma_separated_rules);
 
-    bool get(
-        size_t index,
-        unsigned int & out_type,
-        std::string & out_pattern,
-        std::string & out_description
-    ) const;
+    Rule const* get(size_t index) const;
 
     [[nodiscard]] std::string to_string() const;
 };

@@ -18,7 +18,7 @@ RED_AUTO_TEST_CASE(TestExtraSystemProcesses)
 {
     ExtraSystemProcesses esp("  abcd.exe, aaaaa.exe  ,   bbbb.exe,cccc.exe"_zv);
     RED_CHECK(*esp.get(0) == "abcd.exe"_av);
-    RED_CHECK(*esp.get(1) == "aaaaa.exe"_av);
+    RED_CHECK(*esp.get(1) == "aaaaa.exe  "_av);
     RED_CHECK(*esp.get(2) == "bbbb.exe"_av);
     RED_CHECK(*esp.get(3) == "cccc.exe"_av);
     RED_CHECK(esp.get(4) == nullptr);
@@ -26,9 +26,9 @@ RED_AUTO_TEST_CASE(TestExtraSystemProcesses)
 
 namespace
 {
-    struct Rule
+    struct OutboundConnectionMonitorRule
     {
-        Rule(OutboundConnectionMonitorRules::Rule const* rule = nullptr)
+        OutboundConnectionMonitorRule(OutboundConnectionMonitorRules::Rule const* rule = nullptr)
         : has_rule(rule)
         , type(rule ? rule->type() : OutboundConnectionMonitorRules::Type())
         , address(rule ? rule->address().as<std::string>() : std::string())
@@ -36,7 +36,7 @@ namespace
         , description(rule ? rule->description().as<std::string>() : std::string())
         {}
 
-        Rule(OutboundConnectionMonitorRules::Type type,
+        OutboundConnectionMonitorRule(OutboundConnectionMonitorRules::Type type,
              std::string address,
              std::string port_range,
              std::string description)
@@ -47,7 +47,7 @@ namespace
         , description(description)
         {}
 
-        bool operator==(Rule const& other) const
+        bool operator==(OutboundConnectionMonitorRule const& other) const
         {
             if (!has_rule || !other.has_rule) {
                 return has_rule == other.has_rule;
@@ -68,9 +68,9 @@ namespace
     };
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-    static ut::assertion_result test_comp_rule(Rule const& a, Rule const& b)
+    static ut::assertion_result test_comp_ocm_rule(OutboundConnectionMonitorRule const& a, OutboundConnectionMonitorRule const& b)
     {
-        auto put = [&](std::ostream& oss, Rule const& rule){
+        auto put = [&](std::ostream& oss, OutboundConnectionMonitorRule const& rule){
             if (rule.has_rule) {
                 oss
                   << "{.type=" << rule.type
@@ -91,12 +91,13 @@ namespace
 }
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-RED_TEST_DISPATCH_COMPARISON_EQ((), (::Rule), (::Rule), ::test_comp_rule)
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::OutboundConnectionMonitorRule), (::OutboundConnectionMonitorRule), ::test_comp_ocm_rule)
 #endif
 
 RED_AUTO_TEST_CASE(TestOutboundConnectionMonitorRules)
 {
     using Type = OutboundConnectionMonitorRules::Type;
+    using Rule = OutboundConnectionMonitorRule;
 
     OutboundConnectionMonitorRules ocmr;
 
@@ -137,4 +138,25 @@ RED_AUTO_TEST_CASE(TestOutboundConnectionMonitorRules)
     ocmr = OutboundConnectionMonitorRules(":"_zv);
     RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Deny, ":", "", ":"));
     RED_CHECK(Rule(ocmr.get(1)) == Rule());
+}
+
+RED_AUTO_TEST_CASE(TestProcessMonitorRules)
+{
+    using Type = ProcessMonitorRules::Type;
+
+    ProcessMonitorRules pmr("$notify:task1,task2,$deny:task3"_zv);
+
+    RED_CHECK(pmr.get(0)->type() == Type::Notify);
+    RED_CHECK(pmr.get(0)->pattern() == "task1"_av);
+    RED_CHECK(pmr.get(0)->description() == "$notify:task1"_av);
+
+    RED_CHECK(pmr.get(1)->type() == Type::Deny);
+    RED_CHECK(pmr.get(1)->pattern() == "task2"_av);
+    RED_CHECK(pmr.get(1)->description() == "task2"_av);
+
+    RED_CHECK(pmr.get(2)->type() == Type::Deny);
+    RED_CHECK(pmr.get(2)->pattern() == "task3"_av);
+    RED_CHECK(pmr.get(2)->description() == "$deny:task3"_av);
+
+    RED_CHECK(!pmr.get(3));
 }

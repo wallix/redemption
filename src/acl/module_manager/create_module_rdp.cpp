@@ -364,7 +364,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
         OutboundConnectionMonitorRules(
             ini.get<cfg::session_probe::outbound_connection_monitoring_rules>());
     spp.vc_params.process_monitor_rules =
-        ProcessMonitorRules(ini.get<cfg::session_probe::process_monitoring_rules>().c_str());
+        ProcessMonitorRules(ini.get<cfg::session_probe::process_monitoring_rules>());
     spp.vc_params.windows_of_these_applications_as_unidentified_input_field = ExtraSystemProcesses(
         ini.get<cfg::session_probe::windows_of_these_applications_as_unidentified_input_field>());
     spp.vc_params.enable_log = ini.get<cfg::session_probe::enable_log>();

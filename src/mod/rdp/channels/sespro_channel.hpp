@@ -916,23 +916,18 @@ public:
                 send_client_message([this, rule_index](OutStream & out_s) {
                     out_s.out_copy_bytes("ProcessMonitoringRule="_av);
 
-                    unsigned int type = 0;
-                    std::string  pattern;
-                    std::string  description;
-
-                    const bool result =
-                        this->sespro_params.process_monitor_rules.get(
-                            rule_index, type, pattern, description);
+                    auto const* rule =
+                        this->sespro_params.process_monitor_rules.get(rule_index);
 
                     out_s.out_copy_bytes(int_to_decimal_chars(rule_index));
                     out_s.out_uint8('\x01');
-                    out_selected_string(out_s, result, "0"_av, "-1"_av);
+                    out_selected_string(out_s, rule, "0"_av, "-1"_av);
 
-                    if (result) {
+                    if (rule) {
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(int_to_decimal_chars(type));
+                        out_s.out_copy_bytes(int_to_decimal_chars(underlying_cast(rule->type())));
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(pattern);
+                        out_s.out_copy_bytes(rule->pattern());
                     }
                 });
             }
@@ -1310,18 +1305,14 @@ public:
 
                     if ((!deny && (parameters_.size() == 3)) ||
                         (deny && (parameters_.size() == 4))) {
-                        unsigned int type = 0;
-                        std::string  pattern;
-                        std::string  description;
-                        const bool result =
+                        auto const* rule =
                             this->sespro_params.process_monitor_rules.get(
-                                unchecked_decimal_chars_to_int(parameters_[0]),
-                                type, pattern, description);
+                                unchecked_decimal_chars_to_int(parameters_[0]));
 
-                        if (result) {
+                        if (rule) {
                             this->log6(
                                 deny ? LogId::PROCESS_BLOCKED : LogId::PROCESS_DETECTED, {
-                                KVLog("rule"_av,         description),
+                                KVLog("rule"_av,         rule->description()),
                                 KVLog("app_name"_av,     parameters_[1]),
                                 KVLog("app_cmd_line"_av, parameters_[2]),
                             });
@@ -1330,8 +1321,8 @@ public:
                                 char message[4096];
 
                                 // rule, app_name, app_cmd_line
-                                snprintf(message, sizeof(message), "%s|%.*s|%.*s",
-                                    description.c_str(),
+                                snprintf(message, sizeof(message), "%.*s|%.*s|%.*s",
+                                    int(rule->description().size()), rule->description().data(),
                                     int(parameters_[1].size()), parameters_[1].data(),
                                     int(parameters_[2].size()), parameters_[2].data());
 
