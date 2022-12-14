@@ -705,7 +705,7 @@ remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
-remoteapp_bypass_legal_notice_timeout = integer(min=0, default=2000)
+remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)
 
 #_advanced
 log_only_relevant_clipboard_activities = boolean(default=True)
