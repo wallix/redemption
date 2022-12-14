@@ -2547,7 +2547,7 @@ namespace cfg {
     /// Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
     /// Set to 0 to disable this feature. <br/>
     /// type: std::chrono::milliseconds <br/>
-    /// value{20000} <br/>
+    /// value{2000} <br/>
     struct mod_rdp::remoteapp_bypass_legal_notice_timeout {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2556,7 +2556,7 @@ namespace cfg {
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
-        type value{20000};
+        type value{2000};
     };
     /// type: bool <br/>
     /// value{true} <br/>
