@@ -56,78 +56,69 @@ std::string ExtraSystemProcesses::to_string() const
 
 
 OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
-    const char * comme_separated_monitoring_rules
+    zstring_view comma_separated_monitoring_rules
 ) {
-    if (comme_separated_monitoring_rules) {
-        const char * rule = comme_separated_monitoring_rules;
+    for (auto rule : split_with(comma_separated_monitoring_rules, ',')) {
+        rule = trim(rule);
+        if (REDEMPTION_UNLIKELY(rule.empty())) {
+            continue;
+        }
 
-        auto RULE_PREFIX_ALLOW  = "$allow:"_zv;
-        auto RULE_PREFIX_NOTIFY = "$notify:"_zv;
-        auto RULE_PREFIX_DENY   = "$deny:"_zv;
+        Type type = Type::Deny;
+        chars_view addr = rule;
 
-        while (*rule) {
-            if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
-                rule++;
-                continue;
-            }
-
-            char const * rule_begin = rule;
-
-            Type uType = Type::Deny;
-            if (strcasestr(rule, RULE_PREFIX_ALLOW.c_str()) == rule)
-            {
-                uType  = Type::Allow;
-                rule  += RULE_PREFIX_ALLOW.size();
-            }
-            else if (strcasestr(rule, RULE_PREFIX_NOTIFY.c_str()) == rule)
-            {
-                uType  = Type::Notify;
-                rule  += RULE_PREFIX_NOTIFY.size();
-            }
-            else if (strcasestr(rule, RULE_PREFIX_DENY.c_str()) == rule)
-            {
-                uType  = Type::Deny;
-                rule  += RULE_PREFIX_DENY.size();
-            }
-
-            const char * rule_separator = strchr(rule, ',');
-
-            std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
-
-            const char * rule_c_str = rule_string.c_str();
-
-            const char * info_separator = strrchr(rule_c_str, ':');
-
-            const bool has_quare_brackets = (
-                    ('[' == *rule_c_str) &&
-                    (']' == *(info_separator - 1))
-                );
-
-
-            if (info_separator)
-            {
-                std::string description_string(rule_begin,
-                    (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
-
-                std::string host_address_or_subnet(
-                        rule_c_str + (has_quare_brackets ? 1 : 0),
-                        info_separator - rule_c_str - (has_quare_brackets ? 2 : 0)
-                    );
-
-                this->rules.push_back({
-                    uType,
-                    std::move(host_address_or_subnet),
-                    std::string(info_separator + 1),
-                    std::move(description_string)
-                });
-            }
-
-            if (!rule_separator) {
+        struct D { Type type; chars_view prefix; };
+        for (D d : {
+            D{Type::Allow, "$allow:"_zv},
+            D{Type::Notify, "$notify:"_zv},
+            D{Type::Deny, "$deny:"_zv},
+        }) {
+            if (utils::starts_with(rule, d.prefix)) {
+                type = d.type;
+                addr = rule.drop_front(d.prefix.size());
                 break;
             }
-
-            rule = rule_separator + 1;
         }
+
+        if (REDEMPTION_UNLIKELY(addr.empty())) {
+            continue;
+        }
+
+        auto reverse_find = [](char const* first, char const* last, char c){
+            while (first < --last) {
+                if (*last == c) {
+                    return last;
+                }
+            }
+            return first;
+        };
+
+        chars_view host_address_or_subnet = addr;
+        char const* port_sep = addr.end();
+
+        char const* start = addr.begin() + 1;
+        char const* end_bracket;
+
+        if (addr[0] == '[' && start != (end_bracket = reverse_find(start, addr.end(), ']'))) {
+            host_address_or_subnet = {start, end_bracket};
+            if (end_bracket[1] == ':') {
+                port_sep = end_bracket + 2;
+            }
+        }
+        else {
+            char const* pos = reverse_find(start, addr.end(), ':');
+            if (pos != start) {
+                port_sep = pos + 1;
+                host_address_or_subnet = {addr.begin(), pos};
+            }
+        }
+
+        this->rules.push_back({
+            type,
+            host_address_or_subnet.as<std::string>(),
+            chars_view{port_sep, addr.end()}.as<std::string>(),
+            rule.as<std::string>(),
+        });
     }
 }
 

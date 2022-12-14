@@ -69,4 +69,40 @@ RED_AUTO_TEST_CASE(TestOutboundConnectionMonitorRules)
     RED_CHECK(out_port_range == "22"_av);
     RED_CHECK(out_description == "10.1.0.0/16:22"_av);
     RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+
+    // bad format
+    ocmr = OutboundConnectionMonitorRules("$allow:[20D1:0:3238:DFE1:63::FEFB]"_zv);
+    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(out_type == 2);
+    RED_CHECK(out_host_address_or_subnet == "20D1:0:3238:DFE1:63::FEFB"_av);
+    RED_CHECK(out_port_range == ""_av);
+    RED_CHECK(out_description == "$allow:[20D1:0:3238:DFE1:63::FEFB]"_av);
+    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+
+    // bad format
+    ocmr = OutboundConnectionMonitorRules("$allow:[20D1:0:3238:DFE1:63::FEFB:21"_zv);
+    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(out_type == 2);
+    RED_CHECK(out_host_address_or_subnet == "[20D1:0:3238:DFE1:63::FEFB"_av);
+    RED_CHECK(out_port_range == "21"_av);
+    RED_CHECK(out_description == "$allow:[20D1:0:3238:DFE1:63::FEFB:21"_av);
+    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+
+    // bad format
+    ocmr = OutboundConnectionMonitorRules("10.1.0.0/16"_zv);
+    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(out_type == 1);
+    RED_CHECK(out_host_address_or_subnet == "10.1.0.0/16"_av);
+    RED_CHECK(out_port_range == ""_av);
+    RED_CHECK(out_description == "10.1.0.0/16"_av);
+    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+
+    // bad format
+    ocmr = OutboundConnectionMonitorRules(":"_zv);
+    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(out_type == 1);
+    RED_CHECK(out_host_address_or_subnet == ":"_av);
+    RED_CHECK(out_port_range == ""_av);
+    RED_CHECK(out_description == ":"_av);
+    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
 }

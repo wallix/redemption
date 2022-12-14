@@ -52,7 +52,7 @@ class OutboundConnectionMonitorRules
         Allow,
     };
 
-    struct outbound_connection_monitor_rule
+    struct Rule
     {
         Type type;
         std::string address;
@@ -60,13 +60,13 @@ class OutboundConnectionMonitorRules
         std::string description;
     };
 
-    std::vector<outbound_connection_monitor_rule> rules;
+    std::vector<Rule> rules;
 
 public:
     explicit OutboundConnectionMonitorRules() = default;
 
     explicit OutboundConnectionMonitorRules(
-        const char * comme_separated_monitoring_rules
+        zstring_view comma_separated_monitoring_rules
     );
 
     bool get(
