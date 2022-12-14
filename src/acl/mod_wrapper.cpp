@@ -24,7 +24,7 @@ void ModWrapper::display_osd_message(std::string_view message, gdi::OsdMsgUrgenc
     this->clear_osd_message();
 
     if (!message.empty()) {
-        std::string_view prefix;
+        std::string_view prefix = "";
         BitsPerPixel bpp = this->client_info.screen_info.bpp;
 
         switch (omu)

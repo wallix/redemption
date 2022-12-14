@@ -69,6 +69,7 @@ namespace
 
         LCGRandom rnd;
         CryptoContext cctx;
+        NullSessionLog session_log;
 
         bool capture_wrm;
         bool capture_png;
@@ -139,7 +140,7 @@ namespace
             basename,
             record_tmp_path,
             record_path,
-            nullptr,
+            &session_log,
             SmartVideoCropping::disable,
             0
         }
