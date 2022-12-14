@@ -722,10 +722,7 @@ bool SessionProbeClipboardBasedLauncher::process_server_cliprdr_message(InStream
 
     if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) &&
         (chunk.in_remain() >= 8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
-        const uint8_t* current_chunk_pos  = chunk.get_current();
-        const size_t   current_chunk_size = chunk.in_remain();
-
-        assert(current_chunk_size == length);
+        assert(chunk.in_remain() == length);
 
         const uint16_t msgType = chunk.in_uint16_le();
         if (msgType == RDPECLIP::CB_CLIP_CAPS) {
