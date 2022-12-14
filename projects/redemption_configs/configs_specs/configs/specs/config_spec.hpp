@@ -474,7 +474,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::milliseconds>(), "remoteapp_bypass_legal_notice_timeout", desc{
             "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
             "Set to 0 to disable this feature."
-        }, set(2000));
+        }, set(20000));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "log_only_relevant_clipboard_activities", set(true));
 

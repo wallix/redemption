@@ -771,7 +771,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Set to 0 to disable this feature.
 # (is in millisecond)
 #_advanced
-#remoteapp_bypass_legal_notice_timeout = 2000
+#remoteapp_bypass_legal_notice_timeout = 20000
 
 # value: 0 or 1
 #_advanced
