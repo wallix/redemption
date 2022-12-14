@@ -261,6 +261,7 @@ void SessionLogFile::open_session_log(
 
 void SessionLogFile::close_session_log()
 {
+    this->control_owner_extra_log_len = 0;
     if (this->ct.is_open()) {
         uint8_t qhash[MD_HASH::DIGEST_LENGTH];
         uint8_t fhash[MD_HASH::DIGEST_LENGTH];
