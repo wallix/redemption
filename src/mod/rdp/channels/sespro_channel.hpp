@@ -885,27 +885,20 @@ public:
                 send_client_message([this, rule_index](OutStream & out_s) {
                     out_s.out_copy_bytes("OutboundConnectionMonitoringRule="_av);
 
-                    unsigned int type = 0;
-                    std::string  host_address_or_subnet;
-                    std::string  port_range;
-                    std::string  description;
-
-                    const bool result =
-                        this->sespro_params.outbound_connection_monitor_rules.get(
-                            rule_index, type, host_address_or_subnet, port_range,
-                            description);
+                    auto const* rule =
+                        this->sespro_params.outbound_connection_monitor_rules.get(rule_index);
 
                     out_s.out_copy_bytes(int_to_decimal_chars(rule_index));
                     out_s.out_uint8('\x01');
 
-                    if (result) {
+                    if (rule) {
                         out_s.out_uint8('0');
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(int_to_decimal_chars(type));
+                        out_s.out_copy_bytes(int_to_decimal_chars(underlying_cast(rule->type())));
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(host_address_or_subnet);
+                        out_s.out_copy_bytes(rule->address());
                         out_s.out_uint8('\x01');
-                        out_s.out_copy_bytes(port_range);
+                        out_s.out_copy_bytes(rule->port_range());
                     }
                     else {
                         out_s.out_copy_bytes("-1"_av);
@@ -1252,25 +1245,19 @@ public:
                          upper_order == "OUTBOUND_CONNECTION_DETECTED_2"_ascii_upper) {
                     bool deny = (upper_order == "OUTBOUND_CONNECTION_BLOCKED_2"_ascii_upper);
 
-                    if ((!deny && (parameters_.size() == 5)) ||
-                        (deny && (parameters_.size() == 6))) {
-                        unsigned int type = 0;
-                        std::string  host_address_or_subnet;
-                        std::string  port_range;
-                        std::string  description;
-
-                        const bool result =
+                    if ((!deny && (parameters_.size() == 5))
+                     || (deny && (parameters_.size() == 6))
+                    ) {
+                        auto const* rule =
                             this->sespro_params.outbound_connection_monitor_rules.get(
-                                unchecked_decimal_chars_to_int(parameters_[0]),
-                                type, host_address_or_subnet, port_range,
-                                description);
+                                unchecked_decimal_chars_to_int(parameters_[0]));
 
-                        if (result) {
+                        if (rule) {
                             this->log6(
                                 deny
                                     ? LogId::OUTBOUND_CONNECTION_BLOCKED_2
                                     : LogId::OUTBOUND_CONNECTION_DETECTED_2, {
-                                KVLog("rule"_av,         description),
+                                KVLog("rule"_av,         rule->description()),
                                 KVLog("app_name"_av,     parameters_[1]),
                                 KVLog("app_cmd_line"_av, parameters_[2]),
                                 KVLog("dst_addr"_av,     parameters_[3]),
@@ -1281,8 +1268,8 @@ public:
                                 char message[4096];
 
                                 // rule, app_name, app_cmd_line, dst_addr, dst_port
-                                snprintf(message, sizeof(message), "%s|%.*s|%.*s|%.*s|%.*s",
-                                    description.c_str(),
+                                snprintf(message, sizeof(message), "%.*s|%.*s|%.*s|%.*s|%.*s",
+                                    int(rule->description().size()), rule->description().data(),
                                     int(parameters_[1].size()), parameters_[1].data(),
                                     int(parameters_[2].size()), parameters_[2].data(),
                                     int(parameters_[3].size()), parameters_[3].data(),

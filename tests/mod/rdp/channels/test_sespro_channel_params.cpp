@@ -5,8 +5,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/compare_collection.hpp"
 
 #include "mod/rdp/channels/sespro_channel_params.hpp"
+
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+#include <iomanip>
+#endif
 
 
 RED_AUTO_TEST_CASE(TestExtraSystemProcesses)
@@ -19,90 +24,117 @@ RED_AUTO_TEST_CASE(TestExtraSystemProcesses)
     RED_CHECK(esp.get(4) == nullptr);
 }
 
+namespace
+{
+    struct Rule
+    {
+        Rule(OutboundConnectionMonitorRules::Rule const* rule = nullptr)
+        : has_rule(rule)
+        , type(rule ? rule->type() : OutboundConnectionMonitorRules::Type())
+        , address(rule ? rule->address().as<std::string>() : std::string())
+        , port_range(rule ? rule->port_range().as<std::string>() : std::string())
+        , description(rule ? rule->description().as<std::string>() : std::string())
+        {}
+
+        Rule(OutboundConnectionMonitorRules::Type type,
+             std::string address,
+             std::string port_range,
+             std::string description)
+        : has_rule(true)
+        , type(type)
+        , address(address)
+        , port_range(port_range)
+        , description(description)
+        {}
+
+        bool operator==(Rule const& other) const
+        {
+            if (!has_rule || !other.has_rule) {
+                return has_rule == other.has_rule;
+            }
+            return (
+                type == other.type
+             && address == other.address
+             && port_range == other.port_range
+             && description == other.description
+            );
+        }
+
+        bool has_rule;
+        OutboundConnectionMonitorRules::Type type;
+        std::string address;
+        std::string port_range;
+        std::string description;
+    };
+
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+    static ut::assertion_result test_comp_rule(Rule const& a, Rule const& b)
+    {
+        auto put = [&](std::ostream& oss, Rule const& rule){
+            if (rule.has_rule) {
+                oss
+                  << "{.type=" << rule.type
+                  << ", .address=" << rule.address
+                  << ", .port_range=" << rule.port_range
+                  << ", .description=" << rule.description
+                  << "}"
+                ;
+            }
+            else {
+                oss << "nullptr";
+            }
+        };
+
+        return ut::create_assertion_result(a == b, a, "!=", b, put);
+    }
+#endif
+}
+
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::Rule), (::Rule), ::test_comp_rule)
+#endif
+
 RED_AUTO_TEST_CASE(TestOutboundConnectionMonitorRules)
 {
+    using Type = OutboundConnectionMonitorRules::Type;
+
     OutboundConnectionMonitorRules ocmr;
 
-    unsigned    out_type;
-    std::string out_host_address_or_subnet;
-    std::string out_port_range;
-    std::string out_description;
-
     ocmr = OutboundConnectionMonitorRules("$deny:192.168.0.0/24:5900,$allow:192.168.0.110:21"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 1);
-    RED_CHECK(out_host_address_or_subnet == "192.168.0.0/24"_av);
-    RED_CHECK(out_port_range == "5900"_av);
-    RED_CHECK(out_description == "$deny:192.168.0.0/24:5900"_av);
-    RED_CHECK(ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 2);
-    RED_CHECK(out_host_address_or_subnet == "192.168.0.110"_av);
-    RED_CHECK(out_port_range == "21"_av);
-    RED_CHECK(out_description == "$allow:192.168.0.110:21"_av);
-    RED_CHECK(!ocmr.get(2, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Deny, "192.168.0.0/24", "5900", "$deny:192.168.0.0/24:5900"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule(Type::Allow, "192.168.0.110", "21", "$allow:192.168.0.110:21"));
+    RED_CHECK(Rule(ocmr.get(2)) == Rule());
 
     ocmr = OutboundConnectionMonitorRules("$deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 1);
-    RED_CHECK(out_host_address_or_subnet == "2001:0db8:85a3:0000:0000:8a2e:0370:7334"_av);
-    RED_CHECK(out_port_range == "3389"_av);
-    RED_CHECK(out_description == "$deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389"_av);
-    RED_CHECK(ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 2);
-    RED_CHECK(out_host_address_or_subnet == "20D1:0:3238:DFE1:63::FEFB"_av);
-    RED_CHECK(out_port_range == "21"_av);
-    RED_CHECK(out_description == "$allow:[20D1:0:3238:DFE1:63::FEFB]:21"_av);
-    RED_CHECK(!ocmr.get(2, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Deny, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "3389", "$deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule(Type::Allow, "20D1:0:3238:DFE1:63::FEFB", "21", "$allow:[20D1:0:3238:DFE1:63::FEFB]:21"));
+    RED_CHECK(Rule(ocmr.get(2)) == Rule());
 
     ocmr = OutboundConnectionMonitorRules("$allow:host.domain.net:3389"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 2);
-    RED_CHECK(out_host_address_or_subnet == "host.domain.net"_av);
-    RED_CHECK(out_port_range == "3389"_av);
-    RED_CHECK(out_description == "$allow:host.domain.net:3389"_av);
-    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Allow, "host.domain.net", "3389", "$allow:host.domain.net:3389"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule());
 
     ocmr = OutboundConnectionMonitorRules("10.1.0.0/16:22"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 1);
-    RED_CHECK(out_host_address_or_subnet == "10.1.0.0/16"_av);
-    RED_CHECK(out_port_range == "22"_av);
-    RED_CHECK(out_description == "10.1.0.0/16:22"_av);
-    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Deny, "10.1.0.0/16", "22", "10.1.0.0/16:22"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule());
 
     // bad format
     ocmr = OutboundConnectionMonitorRules("$allow:[20D1:0:3238:DFE1:63::FEFB]"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 2);
-    RED_CHECK(out_host_address_or_subnet == "20D1:0:3238:DFE1:63::FEFB"_av);
-    RED_CHECK(out_port_range == ""_av);
-    RED_CHECK(out_description == "$allow:[20D1:0:3238:DFE1:63::FEFB]"_av);
-    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Allow, "20D1:0:3238:DFE1:63::FEFB", "", "$allow:[20D1:0:3238:DFE1:63::FEFB]"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule());
 
     // bad format
     ocmr = OutboundConnectionMonitorRules("$allow:[20D1:0:3238:DFE1:63::FEFB:21"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 2);
-    RED_CHECK(out_host_address_or_subnet == "[20D1:0:3238:DFE1:63::FEFB"_av);
-    RED_CHECK(out_port_range == "21"_av);
-    RED_CHECK(out_description == "$allow:[20D1:0:3238:DFE1:63::FEFB:21"_av);
-    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Allow, "[20D1:0:3238:DFE1:63::FEFB", "21", "$allow:[20D1:0:3238:DFE1:63::FEFB:21"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule());
 
     // bad format
     ocmr = OutboundConnectionMonitorRules("10.1.0.0/16"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 1);
-    RED_CHECK(out_host_address_or_subnet == "10.1.0.0/16"_av);
-    RED_CHECK(out_port_range == ""_av);
-    RED_CHECK(out_description == "10.1.0.0/16"_av);
-    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Deny, "10.1.0.0/16", "", "10.1.0.0/16"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule());
 
     // bad format
     ocmr = OutboundConnectionMonitorRules(":"_zv);
-    RED_CHECK(ocmr.get(0, out_type, out_host_address_or_subnet, out_port_range, out_description));
-    RED_CHECK(out_type == 1);
-    RED_CHECK(out_host_address_or_subnet == ":"_av);
-    RED_CHECK(out_port_range == ""_av);
-    RED_CHECK(out_description == ":"_av);
-    RED_CHECK(!ocmr.get(1, out_type, out_host_address_or_subnet, out_port_range, out_description));
+    RED_CHECK(Rule(ocmr.get(0)) == Rule(Type::Deny, ":", "", ":"));
+    RED_CHECK(Rule(ocmr.get(1)) == Rule());
 }

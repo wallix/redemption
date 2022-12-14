@@ -55,6 +55,34 @@ std::string ExtraSystemProcesses::to_string() const
 }
 
 
+OutboundConnectionMonitorRules::Rule::Rule(
+    Type type,
+    unsigned address_start_index, unsigned address_stop_index,
+    unsigned port_range_start_index,
+    chars_view description)
+: type_(type)
+, address_start_index_(address_start_index)
+, address_stop_index_(address_stop_index)
+, port_range_start_index_(port_range_start_index)
+, description_(description.begin(), description.end())
+{
+}
+
+chars_view OutboundConnectionMonitorRules::Rule::address() const noexcept
+{
+    return {description_.data() + address_start_index_, description_.data() + address_stop_index_};
+}
+
+chars_view OutboundConnectionMonitorRules::Rule::port_range() const noexcept
+{
+    return {description_.data() + port_range_start_index_, description_.data() + description_.size()};
+}
+
+chars_view OutboundConnectionMonitorRules::Rule::description() const noexcept
+{
+    return description_;
+}
+
 OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
     zstring_view comma_separated_monitoring_rules
 ) {
@@ -113,38 +141,21 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
             }
         }
 
-        this->rules.push_back({
+        this->rules.push_back(Rule{
             type,
-            host_address_or_subnet.as<std::string>(),
-            chars_view{port_sep, addr.end()}.as<std::string>(),
-            rule.as<std::string>(),
+            checked_int(host_address_or_subnet.begin() - rule.begin()),
+            checked_int(host_address_or_subnet.end() - rule.begin()),
+            checked_int(port_sep - rule.begin()),
+            rule,
         });
     }
 }
 
-// TODO {std:string const&, bool} ?
-bool OutboundConnectionMonitorRules::get(
-    size_t index,
-    unsigned int & out_type,
-    std::string & out_host_address_or_subnet,
-    std::string & out_port_range,
-    std::string & out_description
-) const {
-    if (this->rules.size() <= index) {
-        out_type = 0;
-        out_host_address_or_subnet.clear();
-        out_port_range.clear();
-        out_description.clear();
-
-        return false;
-    }
-
-    out_type                   = unsigned(this->rules[index].type);
-    out_host_address_or_subnet = this->rules[index].address;
-    out_port_range             = this->rules[index].port_range;
-    out_description            = this->rules[index].description;
-
-    return true;
+OutboundConnectionMonitorRules::Rule const* OutboundConnectionMonitorRules::get(size_t index) const
+{
+    return (index < this->rules.size())
+        ? &this->rules[index]
+        : nullptr;
 }
 
 std::string OutboundConnectionMonitorRules::to_string() const
@@ -156,12 +167,12 @@ std::string OutboundConnectionMonitorRules::to_string() const
         "Allow"_av,
     };
     for (auto& x : this->rules) {
-        assert(unsigned(x.type) < std::size(type_s));
+        assert(unsigned(x.type()) < std::size(type_s));
         str_append(r, '{',
-            type_s[unsigned(x.type)], ", ",
-            x.address, ", ",
-            x.port_range, ", ",
-            x.description, "}, "
+            type_s[unsigned(x.type())], ", ",
+            x.address(), ", ",
+            x.port_range(), ", ",
+            x.description(), "}, "
         );
     }
     return r;

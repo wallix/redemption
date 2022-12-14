@@ -43,7 +43,7 @@ public:
 };
 
 
-class OutboundConnectionMonitorRules
+struct OutboundConnectionMonitorRules
 {
     enum class Type : unsigned char
     {
@@ -54,12 +54,25 @@ class OutboundConnectionMonitorRules
 
     struct Rule
     {
-        Type type;
-        std::string address;
-        std::string port_range;
-        std::string description;
+        Type type() const noexcept { return type_; }
+        chars_view address() const noexcept;
+        chars_view port_range() const noexcept;
+        chars_view description() const noexcept;
+
+        Rule(Type type,
+             unsigned address_start_index, unsigned address_stop_index,
+             unsigned port_range_start_index,
+             chars_view description);
+
+    private:
+        Type type_;
+        unsigned address_start_index_;
+        unsigned address_stop_index_;
+        unsigned port_range_start_index_;
+        std::vector<char> description_;
     };
 
+private:
     std::vector<Rule> rules;
 
 public:
@@ -69,13 +82,7 @@ public:
         zstring_view comma_separated_monitoring_rules
     );
 
-    bool get(
-        size_t index,
-        unsigned int & out_type,
-        std::string & out_host_address_or_subnet,
-        std::string & out_port_range,
-        std::string & out_description
-    ) const;
+    Rule const* get(size_t index) const;
 
     [[nodiscard]] std::string to_string() const;
 };
