@@ -2810,7 +2810,6 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
             send_message_to_client = ClipCtx::D::clip_caps(
                 *this, this->server_ctx, chunk.remaining_bytes(),
                 "server", this->to_client_sender_ptr());
-            send_message_to_client = send_message_to_client;
         }
         break;
 
