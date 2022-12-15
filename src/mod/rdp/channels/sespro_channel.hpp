@@ -1077,28 +1077,28 @@ public:
                     }
                 }
                 else if (upper_order == "PASSWORD_TEXT_BOX_GET_FOCUS"_ascii_upper) {
-                    this->log6(
-                        LogId::PASSWORD_TEXT_BOX_GET_FOCUS, {
-                        KVLog("status"_av, parameters_[0]),
-                    });
-
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_password_textbox(
                             insensitive_eq(parameters_[0], "yes"_ascii_upper));
+
+                        this->log6(
+                            LogId::PASSWORD_TEXT_BOX_GET_FOCUS, {
+                            KVLog("status"_av, parameters_[0]),
+                        });
                     }
                     else {
                         message_format_invalid = true;
                     }
                 }
                 else if (upper_order == "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"_ascii_upper) {
-                    this->log6(
-                        LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, {
-                        KVLog("status"_av, parameters_[0]),
-                    });
-
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_unidentified_input_field(
                             insensitive_eq(parameters_[0], "yes"_ascii_upper));
+
+                        this->log6(
+                            LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, {
+                            KVLog("status"_av, parameters_[0]),
+                        });
                     }
                     else {
                         message_format_invalid = true;
@@ -1106,12 +1106,12 @@ public:
                 }
                 else if (upper_order == "UAC_PROMPT_BECOME_VISIBLE"_ascii_upper) {
                     if (parameters_.size() == 1) {
+                        this->front.set_consent_ui_visible(insensitive_eq(parameters_[0], "yes"_ascii_upper));
+
                         this->log6(
                             LogId::UAC_PROMPT_BECOME_VISIBLE, {
                             KVLog("status"_av, parameters_[0]),
                         });
-
-                        this->front.set_consent_ui_visible(insensitive_eq(parameters_[0], "yes"_ascii_upper));
                     }
                     else {
                         message_format_invalid = true;
@@ -1119,12 +1119,12 @@ public:
                 }
                 else if (upper_order == "SESSION_LOCKED"_ascii_upper) {
                     if (parameters_.size() == 1) {
+                        this->front.set_session_locked(insensitive_eq(parameters_[0], "yes"_ascii_upper));
+
                         this->log6(
                             LogId::SESSION_LOCKED, {
                             KVLog("status"_av, parameters_[0]),
                         });
-
-                        this->front.set_session_locked(insensitive_eq(parameters_[0], "yes"_ascii_upper));
                     }
                     else {
                         message_format_invalid = true;
