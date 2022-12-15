@@ -2164,6 +2164,9 @@ class Sesman():
                 kv[u'target_port'] = physical_info.service_port
                 kv[u'device_id'] = physical_info.device_id
 
+                kv[u'target_device'] = target_login_info.target_name
+                kv[u'target_service'] = target_login_info.service_name
+
                 try:
                     auth_policy_methods = self.engine.get_target_auth_methods(
                         physical_target)
