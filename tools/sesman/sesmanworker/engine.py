@@ -1725,8 +1725,10 @@ class Engine(object):
             status, infos = self.check_target(physical_target)
             token = infos.get("shadow_token", {})
             return PhysicalTarget(
-                device_host=physical_target['device_host'],
-                account_login=physical_target.get('account_login'),
+                device_host=(token.get('host_target_ip')
+                             or physical_target['device_host']),
+                account_login=(token.get('host_target_login')
+                               or physical_target.get('account_login')),
                 service_port=token.get('shadow_port'),
                 device_id=physical_target.get('device_uid'),
                 sharing_host=token.get('shadow_ip'),

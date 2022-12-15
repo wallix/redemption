@@ -221,10 +221,11 @@ class CheckoutEngine(object):
             target_uid = right['target_uid']
             if self.session_credentials.get(target_uid) is None:
                 creds = infos.get(CRED_INDEX, {})
-                shadow_pass = infos.get("shadow_token", {}).get("sharing_pass")
+                shadow_token = infos.get("shadow_token", {})
+                shadow_pass = shadow_token.get("sharing_pass")
                 if shadow_pass:
                     creds = {
-                        CRED_DATA_LOGIN: "guest",
+                        CRED_DATA_LOGIN: shadow_token.get("host_target_login"),
                         CRED_TYPE_PASSWORD: [shadow_pass],
                     }
                 self.session_credentials[target_uid] = (right, creds)
