@@ -25,6 +25,7 @@ namespace configs
         "globals:inactivity_timeout"_zv,
         "trace_type"_zv,
         "is_rec"_zv,
+        "enable_osd_display_remote_target"_zv,
         "mod_recv_timeout"_zv,
         "keyboard_layout"_zv,
         "disable_tsk_switch_shortcuts"_zv,

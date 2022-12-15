@@ -18,6 +18,21 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/sugar/int_to_chars.hpp"
 #include "RAIL/client_execute.hpp"
 
+ModWrapper::ModWrapper(
+    mod_api& mod, CRef<TimeBase> time_base, CRef<BGRPalette> palette,
+    gdi::GraphicApi& graphics, CRef<ClientInfo> client_info,
+    CRef<Font> glyphs, CRef<ClientExecute> rail_client_execute,
+    CRef<Inifile> ini)
+: gfilter(graphics, static_cast<RdpInput&>(*this), Rect{})
+, enable_osd_display_remote_target(ini.get().get<cfg::globals::enable_osd_display_remote_target>())
+, client_info(client_info)
+, rail_client_execute(rail_client_execute)
+, palette(palette)
+, ini(ini)
+, glyphs(glyphs)
+, modi(&mod)
+, time_base(time_base)
+{}
 
 void ModWrapper::display_osd_message(std::string_view message, gdi::OsdMsgUrgency omu)
 {
@@ -131,7 +146,7 @@ void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
     if (this->enable_osd) {
         Inifile const& ini = this->ini;
 
-        if (scancode == Scancode::F12 && ini.get<cfg::globals::enable_osd_display_remote_target>()) {
+        if (scancode == Scancode::F12 && this->enable_osd_display_remote_target) {
             bool const f12_released = bool(flags & KbdFlags::Release);
             if (this->target_info_is_shown && f12_released) {
                 this->clear_osd_message();

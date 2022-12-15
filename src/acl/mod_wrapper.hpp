@@ -30,16 +30,8 @@ public:
    explicit ModWrapper(
        mod_api& mod, CRef<TimeBase> time_base, CRef<BGRPalette> palette,
        gdi::GraphicApi& graphics, CRef<ClientInfo> client_info,
-       CRef<Font> glyphs, CRef<ClientExecute> rail_client_execute, Inifile& ini)
-    : gfilter(graphics, static_cast<RdpInput&>(*this), Rect{})
-    , client_info(client_info)
-    , rail_client_execute(rail_client_execute)
-    , palette(palette)
-    , ini(ini)
-    , glyphs(glyphs)
-    , modi(&mod)
-    , time_base(time_base)
-    {}
+       CRef<Font> glyphs, CRef<ClientExecute> rail_client_execute,
+       CRef<Inifile> ini);
 
     Callback& get_callback() noexcept
     {
@@ -72,6 +64,11 @@ public:
     void clear_osd_message(bool redraw = true);
 
     void set_mod(mod_api& new_mod, windowing_api* winapi, bool enable_osd);
+
+    void set_enable_osd_display_remote_target(bool enable) noexcept
+    {
+        this->enable_osd_display_remote_target = enable;
+    }
 
 private:
     void rdp_input_invalidate(Rect r) override;
@@ -138,6 +135,7 @@ private:
         using gdi::ProtectedGraphics::ProtectedGraphics;
     } gfilter;
 
+    bool enable_osd_display_remote_target;
     bool target_info_is_shown = false;
     bool enable_osd = false;
     bool is_disable_by_input = false;
@@ -149,7 +147,7 @@ private:
 
     windowing_api* winapi = nullptr;
 
-    Inifile& ini;
+    Inifile const& ini;
 
     std::string osd_message;
 

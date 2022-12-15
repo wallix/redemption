@@ -66,6 +66,11 @@ public:
         return mod_wrapper.get_callback();
     }
 
+    void set_enable_osd_display_remote_target(bool enable) noexcept
+    {
+        mod_wrapper.set_enable_osd_display_remote_target(enable);
+    }
+
     void display_osd_message(std::string_view message)
     {
         return mod_wrapper.display_osd_message(message);

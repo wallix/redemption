@@ -16,32 +16,32 @@ namespace configs
     namespace cfg_indexes
     {
         inline constexpr int section0 = 0; /* globals */
-        inline constexpr int section1 = 16; /* client */
-        inline constexpr int section2 = 18; /* all_target_mod */
-        // inline constexpr int section3 = 19; /* remote_program */
-        inline constexpr int section4 = 19; /* mod_rdp */
-        inline constexpr int section5 = 55; /* protocol */
-        inline constexpr int section6 = 56; /* session_probe */
-        inline constexpr int section7 = 97; /* server_cert */
-        inline constexpr int section8 = 106; /* mod_vnc */
-        inline constexpr int section9 = 114; /* session_log */
-        // inline constexpr int section10 = 115; /* ocr */
-        inline constexpr int section11 = 115; /* capture */
-        inline constexpr int section12 = 119; /* video */
-        inline constexpr int section13 = 122; /* audit */
-        inline constexpr int section14 = 131; /* file_verification */
-        inline constexpr int section15 = 139; /* file_storage */
-        // inline constexpr int section16 = 140; /* icap_server_down */
-        // inline constexpr int section17 = 140; /* icap_server_up */
-        inline constexpr int section18 = 140; /* crypto */
-        // inline constexpr int section19 = 142; /* websocket */
-        // inline constexpr int section20 = 142; /* vnc_over_ssh */
-        inline constexpr int section21 = 142; /* context */
-        // inline constexpr int section22 = 232; /* internal_mod */
-        inline constexpr int section23 = 232; /* mod_replay */
-        inline constexpr int section24 = 234; /* translation */
-        // inline constexpr int section25 = 236; /* theme */
-        // inline constexpr int section26 = 236; /* debug */
+        inline constexpr int section1 = 17; /* client */
+        inline constexpr int section2 = 19; /* all_target_mod */
+        // inline constexpr int section3 = 20; /* remote_program */
+        inline constexpr int section4 = 20; /* mod_rdp */
+        inline constexpr int section5 = 56; /* protocol */
+        inline constexpr int section6 = 57; /* session_probe */
+        inline constexpr int section7 = 98; /* server_cert */
+        inline constexpr int section8 = 107; /* mod_vnc */
+        inline constexpr int section9 = 115; /* session_log */
+        // inline constexpr int section10 = 116; /* ocr */
+        inline constexpr int section11 = 116; /* capture */
+        inline constexpr int section12 = 120; /* video */
+        inline constexpr int section13 = 123; /* audit */
+        inline constexpr int section14 = 132; /* file_verification */
+        inline constexpr int section15 = 140; /* file_storage */
+        // inline constexpr int section16 = 141; /* icap_server_down */
+        // inline constexpr int section17 = 141; /* icap_server_up */
+        inline constexpr int section18 = 141; /* crypto */
+        // inline constexpr int section19 = 143; /* websocket */
+        // inline constexpr int section20 = 143; /* vnc_over_ssh */
+        inline constexpr int section21 = 143; /* context */
+        // inline constexpr int section22 = 233; /* internal_mod */
+        inline constexpr int section23 = 233; /* mod_replay */
+        inline constexpr int section24 = 235; /* translation */
+        // inline constexpr int section25 = 237; /* theme */
+        // inline constexpr int section26 = 237; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -432,10 +432,14 @@ namespace cfg
     };
     /// Show target address with F12. <br/>
     /// type: bool <br/>
+    /// sesman ⇒ proxy <br/>
     /// default: true <br/>
     struct globals::enable_osd_display_remote_target {
-        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 15};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -520,7 +524,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 15};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 16};
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
         using mapped_type = sesman_and_spec_type;
@@ -6132,6 +6136,7 @@ using VariablesAclPack = Pack<
 , cfg::globals::inactivity_timeout
 , cfg::globals::trace_type
 , cfg::globals::is_rec
+, cfg::globals::enable_osd_display_remote_target
 , cfg::globals::mod_recv_timeout
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts
@@ -6357,15 +6362,15 @@ using VariablesAclPack = Pack<
 
 
 constexpr U64BitFlags<4> loggable_field{ {
-  0b1111111111101111111111111111111111111111111111111111011111111111
+  0b1111111111011111111111111111111111111111111111111111011111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
-, 0b1111111111111111111111111111101011111101111111111100111111111111
-, 0b0000000000000000000011111111110111111111111111111011111111111111
+, 0b1111111111111111111111111111010111111011111111111001111111111111
+, 0b0000000000000000000111111111101111111111111111110111111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000010000000000000000000000000000000000
+, 0b0000000000000000000000000000100000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

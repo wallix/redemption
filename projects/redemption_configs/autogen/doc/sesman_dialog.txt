@@ -28,6 +28,8 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
       2: Encryption enabled.
     When session records are encrypted, they can be read only by the WAB where they have been generated.
 cfg::globals::is_rec ⇐ is_rec   [bool]
+cfg::globals::enable_osd_display_remote_target ⇐ enable_osd_display_remote_target   [bool]
+    Show target address with F12.
 cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
 
 cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]

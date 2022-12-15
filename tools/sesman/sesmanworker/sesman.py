@@ -2136,6 +2136,10 @@ class Sesman():
                     # kv[u'target_application'] = selected_target.service_login
                     if not self.engine.is_sharing_session(selected_target):
                         kv[u'disable_tsk_switch_shortcuts'] = u'yes'
+
+                if self.engine.is_sharing_session(selected_target):
+                    kv[u'enable_osd_display_remote_target'] = u'0'
+
                 self.cn = target_login_info.target_name
 
                 if self.target_context.host:

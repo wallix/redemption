@@ -1081,6 +1081,10 @@ private:
                 BackEvent_t back_event = BACK_EVENT_NONE;
 
                 if (ioswitch.is_set_for_reading(auth_sck)) {
+                    mod_factory.set_enable_osd_display_remote_target(
+                        ini.get<cfg::globals::enable_osd_display_remote_target>()
+                    );
+
                     AclFieldMask updated_fields = acl_serial.incoming();
 
                     loop_state = LoopState::AclUpdate;
