@@ -242,6 +242,7 @@ int main(int argc, char** argv)
     bool enable_kill = false;
     bool enable_force = false;
     bool enable_nofork = false;
+    bool ignore_lock_file = false;
 
     auto const options = cli::options(
         cli::option('h', "help").help("produce help message")
@@ -272,6 +273,9 @@ int main(int argc, char** argv)
 
         cli::option('f', "force").help("remove application lock file")
             .parser(cli::on_off_location(enable_force)),
+
+        cli::option('F', "ignore-lock-file").help("ignore application lock file")
+            .parser(cli::on_off_location(ignore_lock_file)),
 
         cli::option('N', "nofork").help("not forkable (debug)")
             .parser(cli::on_off_location(enable_nofork)),
@@ -385,32 +389,37 @@ int main(int argc, char** argv)
     // force remove pid file
     // don't check if it fails (proxy may be allready stopped)
     // and try to continue normal start process afterward
+    if (!ignore_lock_file) {
+        auto lock_dir = app_path(AppPath::LockDir);
 
-    if (!file_exist(app_path(AppPath::LockDir)) && recursive_create_directory(app_path(AppPath::LockDir), 0700) < 0){
-        LOG(LOG_ERR, "Failed to create %s: %s", app_path(AppPath::LockDir), strerror(errno));
-        return 1;
-    }
+        if (!file_exist(lock_dir) && recursive_create_directory(lock_dir, 0700) < 0){
+            LOG(LOG_ERR, "Failed to create %s: %s", lock_dir, strerror(errno));
+            return 1;
+        }
 
-    if (chown(app_path(AppPath::LockDir), euid, egid) < 0){
-        LOG(LOG_ERR, "Failed to set owner %u.%u to %s", euid, egid, app_path(AppPath::LockDir));
-        return 1;
-    }
+        if (chown(lock_dir, euid, egid) < 0){
+            LOG(LOG_ERR, "Failed to set owner %u.%u to %s", euid, egid, lock_dir);
+            return 1;
+        }
 
-    if (enable_force){
-        shutdown();
-    }
+        if (enable_force){
+            shutdown();
+        }
 
-    if (0 == access(app_path(AppPath::LockFile), F_OK)) {
-        std::clog <<
-        "File " << app_path(AppPath::LockFile) << " already exists. "
-        "It looks like rdpproxy is already running, "
-        "if not, try again with -f (force) option or delete the "
-        << app_path(AppPath::LockFile) << " file and try again\n";
-        return 1;
-    }
+        auto lock_file = app_path(AppPath::LockFile);
 
-    if (!write_pid_file(getpid())) {
-        return 1;
+        if (0 == access(lock_file, F_OK)) {
+            std::clog <<
+            "File " << lock_file << " already exists. "
+            "It looks like rdpproxy is already running, "
+            "if not, try again with -f (force) option or delete the "
+            << lock_file << " file and try again\n";
+            return 1;
+        }
+
+        if (!write_pid_file(getpid())) {
+            return 1;
+        }
     }
 
     if (!is_nodeamon) {
