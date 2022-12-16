@@ -42,19 +42,19 @@ enum class KeyMod : unsigned
 
 struct KeyModFlags
 {
-    KeyModFlags() noexcept = default;
+    constexpr KeyModFlags() noexcept = default;
 
-    KeyModFlags(KeyMod mod) noexcept
+    constexpr KeyModFlags(KeyMod mod) noexcept
     {
         set(mod);
     }
 
-    KeyModFlags(KeyLocks locks) noexcept
+    constexpr KeyModFlags(KeyLocks locks) noexcept
     {
         sync_locks(locks);
     }
 
-    void sync_locks(KeyLocks locks) noexcept
+    constexpr void sync_locks(KeyLocks locks) noexcept
     {
         clear(KeyMod::NumLock);
         clear(KeyMod::CapsLock);
@@ -66,68 +66,78 @@ struct KeyModFlags
         set_if(bool(locks & KeyLocks::ScrollLock), KeyMod::ScrollLock);
     }
 
-    unsigned test_as_uint(KeyMod mod) const noexcept
+    constexpr unsigned test_as_uint(KeyMod mod) const noexcept
     {
         return (mods >> bitpos(mod)) & 1u;
     }
 
-    bool test(KeyMod mod) const noexcept
+    constexpr bool test(KeyMod mod) const noexcept
     {
         return test_as_uint(mod);
     }
 
-    void set(KeyMod mod) noexcept
+    constexpr void set(KeyMod mod) noexcept
     {
         mods |= 1u << bitpos(mod);
     }
 
-    void set_if(bool b, KeyMod mod) noexcept
+    constexpr void set_if(bool b, KeyMod mod) noexcept
     {
         mods |= b ? (1u << bitpos(mod)) : 0u;
     }
 
-    void flip(KeyMod mod) noexcept
+    constexpr void flip(KeyMod mod) noexcept
     {
         mods ^= 1u << bitpos(mod);
     }
 
-    void clear(KeyMod mod) noexcept
+    constexpr void clear(KeyMod mod) noexcept
     {
         mods &= ~(1u << bitpos(mod));
     }
 
-    void update(KbdFlags flags, KeyMod mod) noexcept
+    constexpr void update(KbdFlags flags, KeyMod mod) noexcept
     {
         clear(mod);
         // 0x8000 (Release) -> 0x1
         mods |= ((~static_cast<unsigned>(flags) >> 15) & 1u) << bitpos(mod);
     }
 
-    unsigned as_uint() const noexcept
+    constexpr unsigned as_uint() const noexcept
     {
         return mods;
     }
 
-    void reset() noexcept
+    constexpr void reset() noexcept
     {
         mods = 0;
     }
 
-    friend KeyModFlags operator & (KeyModFlags const& mods1, KeyModFlags const& mods2) noexcept
+    friend constexpr KeyModFlags operator & (KeyModFlags const& mods1, KeyModFlags const& mods2) noexcept
     {
         return KeyModFlags(mods1.mods & mods2.mods);
     }
 
-    friend KeyModFlags operator | (KeyModFlags mods, KeyMod const& mod) noexcept
+    friend constexpr KeyModFlags operator | (KeyModFlags mods, KeyMod const& mod) noexcept
     {
         mods.set(mod);
         return mods;
     }
 
-private:
-    explicit KeyModFlags(unsigned mods) noexcept : mods(mods) {}
+    friend constexpr bool operator == (KeyModFlags const& a, KeyModFlags const& b) noexcept
+    {
+        return a.mods == b.mods;
+    }
 
-    static unsigned bitpos(KeyMod mod) noexcept
+    friend constexpr bool operator != (KeyModFlags const& a, KeyModFlags const& b) noexcept
+    {
+        return a.mods != b.mods;
+    }
+
+private:
+    constexpr explicit KeyModFlags(unsigned mods) noexcept : mods(mods) {}
+
+    constexpr static unsigned bitpos(KeyMod mod) noexcept
     {
         return static_cast<unsigned>(mod);
     }
@@ -135,7 +145,7 @@ private:
     unsigned mods = 0;
 };
 
-inline KeyModFlags operator | (KeyMod mod1, KeyMod mod2) noexcept
+constexpr KeyModFlags operator | (KeyMod mod1, KeyMod mod2) noexcept
 {
     KeyModFlags f;
     f.set(mod1);

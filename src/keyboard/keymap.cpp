@@ -70,12 +70,10 @@ namespace
                                  Keymap::DecodedKeys const& decoded_key,
                                  kbdtypes::KeyModFlags mods) noexcept
     {
+        constexpr auto expected_mods = KeyMod::LCtrl | KeyMod::LShift | KeyMod::LAlt;
         return decoded_key.keycode == shortcut
             && !bool(decoded_key.flags & kbdtypes::KbdFlags::Release)
-            && (mods.test_as_uint(KeyMod::LCtrl)
-              | mods.test_as_uint(KeyMod::LShift)
-              | mods.test_as_uint(KeyMod::LAlt)
-            );
+            && (mods & expected_mods) == expected_mods;
     }
 
     struct KEventKeymaps
