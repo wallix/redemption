@@ -1,32 +1,18 @@
 from logger import Logger
-
-try:
-    from wabengine.client.checker import Checker
-    from wabengine.common.exception import (
-        LicenseException,
-    )
-    from wallixauthentication.api import (
-        AuthenticationFailed,
-        AuthenticationChallenge,
-        IdentificationFailed,
-    )
-    from wallixconst.authentication import (
-        IDENTIFICATION_TYPES as IDENT,
-        AUTHENTICATION_TYPES as AUTH,
-    )
-    from wabx509 import AuthX509
-except Exception:
-    import traceback
-    tracelog = traceback.format_exc()
-    try:
-        from .fake.proxyengine import *
-        from .fake.const import (
-            IDENTIFICATION_TYPES as IDENT,
-            AUTHENTICATION_TYPES as AUTH,
-        )
-    except Exception:
-        Logger().info("Wabengine const LOADING FAILED %s" % tracelog)
-
+from wabengine.client.checker import Checker
+from wabengine.common.exception import (
+    LicenseException,
+)
+from wallixauthentication.api import (
+    AuthenticationFailed,
+    AuthenticationChallenge,
+    IdentificationFailed,
+)
+from wallixconst.authentication import (
+    IDENTIFICATION_TYPES as IDENT,
+    AUTHENTICATION_TYPES as AUTH,
+)
+from wabx509 import AuthX509
 
 from .challenge import (
     Challenge,

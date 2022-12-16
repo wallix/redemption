@@ -3,54 +3,34 @@ import json
 from logger import Logger
 from .transaction import manage_transaction
 
-try:
-    from wallixconst.approval import (
-        APPROVAL_PENDING as S_PENDING,
-        APPROVAL_NONE as S_NONE,
-        APPROVAL_ACCEPTED as SHADOW_ACCEPTED,
-        APPROVAL_REJECTED as SHADOW_REJECTED,
-    )
-    from wallixconst.misc import (
-        OK as S_OK,
-        ERROR as S_ERROR,
-    )
-    from wallixconst.chgpasswd import (
-        CRED_TYPE_PASSWORD,
-        CRED_TYPE_SSH_KEY,
-        CRED_DATA_PRIVATE_KEY,
-        CRED_DATA_SSH_CERTIFICATE,
-    )
-    CRED_DATA_LOGIN = "login"
-    CRED_DATA_ACCOUNT_UID = "account_uid"
-    CRED_INDEX = "credentials"
-    CRED_DATA_DOMAIN = "domain_name"
-except Exception:
-    import traceback
-    tracelog = traceback.format_exc()
-    try:
-        from .fake.const import (
-            APPROVAL_PENDING as S_PENDING,
-            APPROVAL_NONE as S_NONE,
-            APPROVAL_ACCEPTED as SHADOW_ACCEPTED,
-            APPROVAL_REJECTED as SHADOW_REJECTED,
-            OK as S_OK,
-            ERROR as S_ERROR,
-            CRED_TYPE_PASSWORD,
-            CRED_TYPE_SSH_KEY,
-            CRED_DATA_PRIVATE_KEY,
-            CRED_DATA_SSH_CERTIFICATE,
-            CRED_DATA_LOGIN,
-            CRED_DATA_DOMAIN,
-            CRED_DATA_ACCOUNT_UID,
-            CRED_INDEX,
-        )
-    except Exception:
-        Logger().info("Wabengine const LOADING FAILED %s" % tracelog)
+from wallixconst.approval import (
+    APPROVAL_PENDING as S_PENDING,
+    APPROVAL_NONE as S_NONE,
+    APPROVAL_ACCEPTED as SHADOW_ACCEPTED,
+    APPROVAL_REJECTED as SHADOW_REJECTED,
+)
+from wallixconst.misc import (
+    OK as S_OK,
+    ERROR as S_ERROR,
+)
+from wallixconst.chgpasswd import (
+    CRED_TYPE_PASSWORD,
+    CRED_TYPE_SSH_KEY,
+    CRED_DATA_PRIVATE_KEY,
+    CRED_DATA_SSH_CERTIFICATE,
+)
+
+
+CRED_DATA_LOGIN = "login"
+CRED_DATA_ACCOUNT_UID = "account_uid"
+CRED_INDEX = "credentials"
+CRED_DATA_DOMAIN = "domain_name"
 
 APPROVAL_ACCEPTED = "APPROVAL_ACCEPTED"
 APPROVAL_REJECTED = "APPROVAL_REJECTED"
 APPROVAL_PENDING = "APPROVAL_PENDING"
 APPROVAL_NONE = "APPROVAL_NONE"
+
 STATUS_SUCCESS = [S_OK]
 STATUS_PENDING = [S_PENDING]
 STATUS_APPR_NEEDED = [S_NONE]

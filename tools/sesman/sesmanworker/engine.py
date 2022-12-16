@@ -3,59 +3,35 @@
 
 from __future__ import absolute_import
 from logger import Logger
-try:
-    from wabengine.common.exception import (
-        LicenseException,
-        SessionAlreadyStopped,
-    )
-    from wallixgenericnotifier import (
-        Notify,
-        CX_EQUIPMENT,
-        PATTERN_FOUND,
-        PRIMARY_CX_FAILED,
-        SECONDARY_CX_FAILED,
-        NEW_FINGERPRINT,
-        WRONG_FINGERPRINT,
-        RDP_PATTERN_FOUND,
-        RDP_PROCESS_FOUND,
-        RDP_OUTCXN_FOUND,
-        FILESYSTEM_FULL,
-    )
-    from wabconfig import Config
-    from wallixconst.protocol import RDP, VNC # noqa: F401
-    from wallixconst.authentication import (  # noqa: F401
-        PASSWORD_VAULT,
-        PASSWORD_INTERACTIVE,
-        PASSWORD_MAPPING,
-    )
-    from wallixconst.account import AM_IL_DOMAIN
-    from wallixconst.trace import LOCAL_TRACE_PATH_RDP
-    from wallixredis import redis
-    from wallixutils import is_cloud_configuration
-    CRED_DATA_LOGIN = "login"
-    CRED_DATA_ACCOUNT_UID = "account_uid"
-    CRED_INDEX = "credentials"
-    APPREQ_REQUIRED = 1
-    APPREQ_OPTIONAL = 0
-    SOCK_PATH_DIR = "/var/run/redemption"
-except Exception:
-    import traceback
-    tracelog = traceback.format_exc()
-    try:
-        from .fake.proxyengine import *
-        import os
-        RDP = 'RDP'
-        VNC = 'VNC'
-        LOCAL_TRACE_PATH_RDP = os.getenv('LOCAL_TRACE_PATH_RDP') or u'/var/wab/recorded/rdp/'
-        SOCK_PATH_DIR = "/tmp/"
-        Logger().info("================================")
-        Logger().info("==== Load Fake PROXY ENGINE ====")
-        Logger().info("================================")
-    except Exception:
-        # Logger().info("FAKE LOADING FAILED>>>>>> %s" %
-        #               traceback.format_exc())
-        Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % str(tracelog))
 
+from wabengine.common.exception import (
+    LicenseException,
+    SessionAlreadyStopped,
+)
+from wallixgenericnotifier import (
+    Notify,
+    CX_EQUIPMENT,
+    PATTERN_FOUND,
+    PRIMARY_CX_FAILED,
+    SECONDARY_CX_FAILED,
+    NEW_FINGERPRINT,
+    WRONG_FINGERPRINT,
+    RDP_PATTERN_FOUND,
+    RDP_PROCESS_FOUND,
+    RDP_OUTCXN_FOUND,
+    FILESYSTEM_FULL,
+)
+from wabconfig import Config
+from wallixconst.protocol import RDP, VNC # noqa: F401
+from wallixconst.authentication import (  # noqa: F401
+    PASSWORD_VAULT,
+    PASSWORD_INTERACTIVE,
+    PASSWORD_MAPPING,
+)
+from wallixconst.account import AM_IL_DOMAIN
+from wallixconst.trace import LOCAL_TRACE_PATH_RDP
+from wallixredis import redis
+from wallixutils import is_cloud_configuration
 
 from .logtime import logtime_function_pause
 import time
@@ -77,6 +53,16 @@ from .addrutils import (
     is_ip_address,
     resolve_reverse_dns,
 )
+
+
+CRED_DATA_LOGIN = "login"
+CRED_DATA_ACCOUNT_UID = "account_uid"
+CRED_INDEX = "credentials"
+
+APPREQ_REQUIRED = 1
+APPREQ_OPTIONAL = 0
+
+SOCK_PATH_DIR = "/var/run/redemption"
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
 DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
