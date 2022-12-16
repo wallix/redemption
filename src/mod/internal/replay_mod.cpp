@@ -178,6 +178,8 @@ bool ReplayMod::next_timestamp()
             reader.interpret_order();
             if (this->internal_reader->wait_resize_response) {
                 this->internal_reader->wait_resize_response = false;
+                this->timer_event.get_optional_event()-> alarm.pause();
+                this->gdi_down_time = this->time_base_ref.monotonic_time;
                 break;
             }
             if (previous != reader.get_monotonic_time()) {
@@ -229,8 +231,10 @@ void ReplayMod::rdp_gdi_down()
 {
     if (auto* timer = this->timer_event.get_optional_event()) {
         LOG(LOG_DEBUG, "ReplayMod::rdp_gdi_down()");
-        timer->alarm.pause();
-        this->gdi_down_time = this->time_base_ref.monotonic_time;
+        if (timer->alarm.is_active()) {
+            timer->alarm.pause();
+            this->gdi_down_time = this->time_base_ref.monotonic_time;
+        }
     }
 }
 
