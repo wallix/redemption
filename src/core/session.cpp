@@ -1167,7 +1167,8 @@ private:
                         }
                         else {
                             this->ini.set_acl<cfg::context::session_sharing_invitation_addr>(guest_ctx.sck_path());
-                            this->ini.set_acl<cfg::context::session_sharing_invitation_id>(guest_ctx.sck_password());
+                            this->ini.set_acl<cfg::context::session_sharing_invitation_id>(
+                                guest_ctx.sck_password().as<std::string_view>());
                             this->ini.set_acl<cfg::context::session_sharing_target_login>(
                                 this->ini.get<cfg::globals::target_user>());
                             this->ini.set_acl<cfg::context::session_sharing_target_ip>(

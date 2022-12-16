@@ -1122,12 +1122,18 @@ class Engine(object):
     def get_target_passwords(self, target_device):
         Logger().debug("Engine get_target_passwords ...")
         try:
-            return self.checkout.get_target_passwords(target_device)
+            passwords = self.checkout.get_target_passwords(target_device)
         except Exception:
             import traceback
             Logger().debug("Engine get_target_passwords failed:"
                            " (((%s)))" % (traceback.format_exc()))
-        return []
+            return []
+        if self.is_sharing_session(target_device):
+            return [
+                password + ' ' + self.user_cn
+                for password in passwords
+            ]
+        return passwords
 
     def get_target_password(self, target_device):
         passwords = self.get_target_passwords(target_device)

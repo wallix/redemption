@@ -5461,7 +5461,7 @@ private:
     }
 
 public:
-    void add_guest(Front& guest_front, SessionLogApi& session_log)
+    void add_guest(Front& guest_front, SessionLogApi& session_log, chars_view guest_name)
     {
         assert(!this->sharing_ctx.guest);
 
@@ -5470,7 +5470,7 @@ public:
 
         this->sharing_ctx.is_sharing_mode = true;
         guest_front.sharing_ctx.is_sharing_mode = true;
-        guest_front.sharing_ctx.name = guest_front.client_info.username;
+        guest_front.sharing_ctx.name = guest_name.as<std::string_view>();
 
         this->sharing_ctx.guest = &guest_front;
         this->sharing_ctx.guest->sharing_ctx.session_log = &session_log;

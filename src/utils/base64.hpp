@@ -22,7 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "utils/sugar/bytes_view.hpp"
 
-constexpr std::size_t base64_encode_size(size_t data_n)
+constexpr std::size_t base64_encode_size(std::size_t data_n)
 {
     return 4 * ((data_n + 2) / 3);
 }

@@ -67,9 +67,9 @@ struct GuestCtx
         return sck_path_;
     }
 
-    zstring_view sck_password() const noexcept
+    chars_view sck_password() const noexcept
     {
-        return sck_password_;
+        return sck_password_.as_chars();
     }
 
     struct ResultError
@@ -113,7 +113,7 @@ struct GuestCtx
         }
 
         // generate random password
-        str_assign(sck_password_, RandomText().text(rnd, 32));
+        sck_password_.init(rnd);
 
         LOG(LOG_INFO, "Guest::start(delay=%lds) start server",
             std::chrono::duration_cast<std::chrono::seconds>(invitation_delay).count());
@@ -138,20 +138,24 @@ struct GuestCtx
                     unique_fd(conn_sck), event_container, front, original_ini, rnd,
                     enable_shared_control, kill_fn, this);
 
-                guest_ptr->set_io_event([
-                    this, &callback, &session_log, password = std::move(sck_password_)
-                ](Event& /*event*/) {
+                guest_ptr->set_io_event([this, &callback, &session_log](Event& /*event*/) {
                     // no input
                     NullCallback null_callback;
                     process_guest(null_callback);
                     // possibly closed by process_guest
                     if (!guest_ptr) {
-                        return ;
+                        return;
                     }
 
                     if (guest_ptr->is_up_and_running()) {
                         // check credential
-                        if (password != guest_ptr->get_client_info().password) {
+                        // format: password + space + target_user
+                        std::string_view guest_pass_and_name = guest_ptr->get_client_info().password;
+                        auto password = sck_password_.as_chars();
+                        if (password.size() >= guest_pass_and_name.size()
+                         || 0 != memcmp(password.data(), guest_pass_and_name.data(), password.size())
+                         || guest_pass_and_name[password.size()] != ' '
+                        ) {
                             LOG(LOG_ERR, "Guest: bad credential of session sharing");
                             session_log.log6(LogId::SESSION_INVITE_GUEST_CONNECTION_REJECTED, {
                                 KVLog("name"_av, "guest-1"_av),
@@ -161,7 +165,8 @@ struct GuestCtx
                             return;
                         }
 
-                        guest_ptr->start_sharing(callback, session_log);
+                        guest_pass_and_name.remove_prefix(password.size() + 1);
+                        guest_ptr->start_sharing(callback, session_log, guest_pass_and_name);
                         guest_ptr->set_io_event([this, &callback](Event& /*event*/) {
                             process_guest(callback);
                         });
@@ -195,16 +200,25 @@ struct GuestCtx
     }
 
 private:
-    struct RandomText
+    class PasswordText
     {
-        char text_buffer[64];
+        constexpr static std::size_t original_password_len = 32;
+        char text_buffer[base64_encode_size(original_password_len)];
 
-        chars_view text(Random& rnd, std::size_t bytes_len)
+    public:
+        chars_view as_chars() const noexcept
         {
-            char buffer[32];
-            assert(sizeof(buffer) >= bytes_len);
-            rnd.random(buffer, bytes_len);
-            return base64_encode({buffer, bytes_len}, make_writable_array_view(text_buffer)).as_chars();
+            return make_array_view(text_buffer);
+        }
+
+        void init(Random& rnd)
+        {
+            char buffer[original_password_len];
+            rnd.random(buffer, original_password_len);
+            base64_encode(
+                {buffer, original_password_len},
+                make_writable_array_view(text_buffer)
+            );
         }
     };
 
@@ -283,9 +297,9 @@ private:
               .create_event_fd_without_timeout("GuestClient", this, get_fd(), f);
         }
 
-        void start_sharing(Callback& callback, SessionLogApi& session_log)
+        void start_sharing(Callback& callback, SessionLogApi& session_log, chars_view guest_name)
         {
-            user_front.add_guest(*this, session_log);
+            user_front.add_guest(*this, session_log, guest_name);
             is_synchronized = true;
             auto screen = user_front.get_client_info().screen_info;
             callback.rdp_input_invalidate({0, 0, screen.width, screen.height});
@@ -361,5 +375,5 @@ private:
 
     unsigned sck_counter_ = 0;
     std::string sck_path_;
-    std::string sck_password_;
+    PasswordText sck_password_;
 };

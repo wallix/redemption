@@ -599,12 +599,11 @@ void sharing_test(bool enable_shared_control, F f)
     ini.set_acl<cfg::globals::auth_user>("user");
 
     std::memcpy(const_cast<ClientInfo&>(user.front.get_client_info()).username, "user-original", 5); // NOLINT
-    std::memcpy(const_cast<ClientInfo&>(guest.front.get_client_info()).username, "guest-1", 7); // NOLINT
 
     RED_CHECK(session_log.events() == ""_av);
     RED_CHECK(!gd.is_slased_circle_cursor);
 
-    user.front.add_guest(guest.front, session_log);
+    user.front.add_guest(guest.front, session_log, "guest-1"_av);
 
     f(user, guest, mod, gd, guest_killed);
 }
