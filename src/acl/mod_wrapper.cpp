@@ -75,7 +75,7 @@ void ModWrapper::set_mod(mod_api& new_mod, windowing_api* winapi, bool enable_os
 {
     if (!this->get_protected_rect().isempty()) {
         this->target_info_is_shown = false;
-        this->disable_osd(true);
+        this->disable_osd(false);
     }
     this->modi = &new_mod;
     this->winapi = winapi;
