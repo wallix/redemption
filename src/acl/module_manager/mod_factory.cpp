@@ -109,10 +109,11 @@ void ModFactory::disconnect()
             LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
         }
 
-        delete &mod();
         psocket_transport = nullptr;
         current_mod = ModuleName::UNKNOWN;
+        auto * previous_mod = &mod();
         mod_wrapper.set_mod(no_mod, nullptr, false);
+        delete previous_mod;
     }
 }
 
@@ -460,4 +461,3 @@ void ModFactory::create_vnc_mod(SessionLogApi& session_log)
         session_log);
     D::set_mod(*this, ModuleName::VNC, mod_pack, true);
 }
-
