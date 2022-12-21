@@ -38,9 +38,12 @@ def get_time(current_time=None):
     return current_time
 
 
-def print_debug(msg):
-    if DEBUG:
+if DEBUG:
+    def print_debug(msg):
         print(msg)
+else:
+    def print_debug(msg):
+        pass
 
 
 class Logtime(object):
@@ -114,12 +117,6 @@ class Logtime(object):
             self.last_time = current_time
             self.paused = False
 
-    @set_time
-    def begin(self, step, current_time):
-        # Alias for start and pause
-        self.start(step, current_time=current_time)
-        self.pause(current_time=current_time)
-
     def is_paused(self):
         return self.paused
 
@@ -132,14 +129,14 @@ class Logtime(object):
         return self.saved_times
 
     def total_metrics(self):
-        total = sum((self.saved_times[step] for step in self.saved_times))
+        total = sum(self.saved_times.values())
         return round(total, 3)
 
     def report_metrics(self):
         metrics = {
-            STEPS[step]: self.saved_times[step]
-            for step in self.saved_times
-            if STEPS.get(step) is not None
+            STEPS[step]: value
+            for step, value in self.saved_times.items()
+            if step in STEPS
         }
         metrics['total'] = self.total_metrics()
         return metrics
