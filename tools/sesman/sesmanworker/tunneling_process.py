@@ -39,6 +39,11 @@ except Exception:
 try:
     from wabsshkeys.utils import openssh_pkcs1_passphrase_private
 except Exception:
+    class OpenSSLException(Exception):
+        pass
+
+    SSH_KEYGEN = "/usr/bin/ssh-keygen"
+
     def openssh_pkcs1_passphrase_private(key, passphrase=None):
         """
         transform an internal representation (pem) of a private key to an openssh
@@ -63,16 +68,14 @@ except Exception:
         if i == 0:
             ssh_keygen.sendline(passphrase)
         else:
-            msg = "Error setting the passphrase for the exported private key"
             os.remove(prk_path)
-            raise RuntimeError(msg)
+            raise OpenSSLException("Error setting the passphrase for the exported private key")
         i = ssh_keygen.expect([confirm_passphrase, pexpect.EOF])
         if i == 0:
             ssh_keygen.sendline(passphrase)
         else:
-            msg = "Error setting the passphrase for the exported private key"
             os.remove(prk_path)
-            raise RuntimeError(msg)
+            raise OpenSSLException("Error setting the passphrase for the exported private key")
         ssh_keygen.expect([pexpect.EOF])
         if ssh_keygen.isalive():
             ssh_keygen.wait()
@@ -84,8 +87,6 @@ except Exception:
 
 RANDOM_NAME_SIZE = 10
 CONNECTION_TIMEOUT = 5
-
-SSH_KEYGEN = "/usr/bin/ssh-keygen"
 SSHPASS_COPYABLE_VAR_ENV = ('LANG', 'PATH')
 
 
