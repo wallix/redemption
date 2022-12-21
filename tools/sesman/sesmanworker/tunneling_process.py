@@ -86,6 +86,7 @@ RANDOM_NAME_SIZE = 10
 CONNECTION_TIMEOUT = 5
 
 SSH_KEYGEN = "/usr/bin/ssh-keygen"
+SSHPASS_COPYABLE_VAR_ENV = ('LANG', 'PATH')
 
 
 def crypto_random_str_by_bytes_size(bytes_size):
@@ -102,30 +103,24 @@ def set_non_blocking_fd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
 
-def popen_command(command):
+def popen_command(command, env):
     args = shlex.split(command)
     process = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-                    universal_newlines=True, bufsize=1)
+                    universal_newlines=True, bufsize=1, env=env)
     set_non_blocking_fd(process.stdout)
     set_non_blocking_fd(process.stderr)
     return process
 
 
 def popen_sshpass_ssh(command, ssh_password, ssh_private_key_passphrase):
+    env = {k: os.environ[k] for k in SSHPASS_COPYABLE_VAR_ENV if k in os.environ}
     if ssh_private_key_passphrase:
         command = f"sshpass -P passphrase -e {command}"
+        env["SSHPASS"] = ssh_private_key_passphrase
     else:
         command = f"sshpass -e {command}"
-    os.environ["SSHPASS"] = (
-        f"{ssh_private_key_passphrase}"
-        if ssh_private_key_passphrase
-        else f"{ssh_password}"
-    )
-    process = popen_command(command)
-    if os.getenv("SSHPASS"):
-        os.environ["SSHPASS"] = ""
-        del os.environ["SSHPASS"]
-    return process
+        env["SSHPASS"] = ssh_password
+    return popen_command(command, env)
 
 
 # p = Popen("./a.out", stdin = PIPE, stdout = PIPE, stderr = PIPE, bufsize = 1)
