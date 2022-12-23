@@ -19,7 +19,7 @@ from struct import unpack_from, pack
 from select     import select
 import socket
 
-# import uuid # for random rec_path
+import uuid # for random rec_path and .log
 
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
@@ -107,7 +107,7 @@ class AuthentifierSharedData():
             except Exception:
                 # Logger().info("%s <<<%s>>>" % (
                 #     u"Failed to read data from rdpproxy authentifier socket",
-                #     traceback.format_exc(e))
+                #     traceback.format_exc())
                 # )
                 raise AuthentifierSocketClosed()
 
@@ -280,20 +280,16 @@ class ACLPassthrough():
 
         kv = {}
         # kv[u'is_rec'] = u'1'
-        # kv[u'record_filebase'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
+        kv[u'record_filebase'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
         kv[u'login'] = self.shared.get(u'target_login')
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"
         kv[u'session_id'] = str(datetime.now())
         kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else 'INTERNAL'
-        kv[u'mode_console'] = u"allow"
         kv[u'target_password'] = self.shared.get(u'target_password')
         kv[u'target_login'] = self.shared.get(u'target_login')
         kv[u'target_host'] = self.shared.get(u'target_host')
         kv[u'target_device'] = self.shared.get(u'target_host')
-        kv[u'session_log_path'] = datetime.now().strftime(
-            "session_log-%Y-%m-%d-%I:%M%p.log")
-        kv[u'session_probe'] = u'0'
 
         if '$' in kv[u'target_host']:
             app_params = kv[u'target_host']
@@ -323,7 +319,7 @@ class ACLPassthrough():
                     if DEBUG:
                         Logger().info("exception: '%s'" % e)
                         import traceback
-                        Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                        Logger().info("<<<<%s>>>>" % traceback.format_exc())
                     if e[0] != 4:
                         raise
                     Logger().info("Got Signal %s" % e)
@@ -342,16 +338,16 @@ class ACLPassthrough():
             Logger().debug(u"End Of Keep Alive")
 
 
-        except AuthentifierSocketClosed as e:
+        except AuthentifierSocketClosed:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-        except Exception as e:
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
+        except Exception:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
 
         try:
             Logger().info(u"Close connection ...")
@@ -362,7 +358,7 @@ class ACLPassthrough():
         except IOError:
             if DEBUG:
                 Logger().info(u"Close connection: Exception")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
     # END METHOD - START
 
 
