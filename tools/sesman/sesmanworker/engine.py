@@ -79,15 +79,26 @@ def read_config_file(modulename="sesman",
     return Config(modulename=modulename, confdir=confdir, specdir=specdir)
 
 
-def decode_rawtext_data(data):
-    encoding_try = ['utf-8', 'iso-8859-1']
-    for encoding in encoding_try:
+def decode_rawtext_data(data: bytes, default_msg: str) -> str:
+    for encoding in ('utf-8', 'iso-8859-1'):
         try:
-            data = data.decode(encoding)
-        except Exception:
-            continue
-        break
-    return data
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            pass
+    return default_msg
+
+
+def _read_message(filename: str, default_msg: str, format_terminal: bool) -> str:
+    try:
+        with open(filename, "rb") as f:
+            msg = decode_rawtext_data(f.read(), default_msg)
+    except IOError:
+        msg = default_msg
+
+    if format_terminal:
+        msg += '\n'
+        msg = msg.replace('\n', '\r\n')
+    return msg
 
 
 class Engine(object):
@@ -196,47 +207,23 @@ class Engine(object):
                           "Session management License is not available.")
         return res
 
-    @staticmethod
-    def format_terminal(message):
-        message += '\n'
-        message = message.replace('\n', '\r\n')
-        return message
+    def get_banner(self, lang='', format_terminal=False):
+        banner = ("Warning! Your remotée session may be recorded and "
+                  "kept in electronic format.")
+        return _read_message(f'/var/wab/etc/proxys/messages/motd.{lang}',
+                             banner, format_terminal)
 
-    def get_banner(self, lang=None, format_terminal=False):
-        if not lang:
-            lang = self.get_language()
-        banner = (u"Warning! Your remotée session may be recorded and "
-                  u"kept in electronic format.")
-        try:
-            motdfile = '/var/wab/etc/proxys/messages/motd.%s' % lang
-            with open(motdfile, "rb") as f:
-                banner = f.read()
-            banner = decode_rawtext_data(banner)
-        except IOError:
-            pass
-        if format_terminal:
-            banner = self.format_terminal(banner)
-        return banner
-
-    def get_warning_message(self, lang=None, format_terminal=False):
-        if lang == 'en':
-            msg = (u"Warning! Unauthorizedé access to this system is"
-                   u" forbidden and will be prosecuted by law.")
-        elif lang == 'fr':
-            msg = (u"Attention! Toute tentative d'acces sans"
-                   u" autorisation ou de maintien frauduleux"
-                   u" dans ce systeme fera l'objet de"
-                   u" poursuites judiciaires.")
-        try:
-            loginfile = '/var/wab/etc/proxys/messages/login.%s' % lang
-            with open(loginfile, "rb") as f:
-                msg = f.read()
-            msg = decode_rawtext_data(msg)
-        except IOError:
-            pass
-        if format_terminal:
-            msg = self.format_terminal(msg)
-        return msg
+    def get_warning_message(self, lang='', format_terminal=False):
+        if lang == 'fr':
+            msg = ("Attention! Toute tentative d'acces sans"
+                   " autorisation ou de maintien frauduleux"
+                   " dans ce systeme fera l'objet de"
+                   " poursuites judiciaires.")
+        else:
+            msg = ("Warning! Unauthorizedé access to this system is"
+                   " forbidden and will be prosecuted by law.")
+        return _read_message(f'/var/wab/etc/proxys/messages/login.{lang}',
+                             msg, format_terminal)
 
     def get_deconnection_time_msg(self, lang):
         message = ""
@@ -1068,13 +1055,6 @@ class Engine(object):
             Logger().debug("Engine get_primary_password failed: "
                            "(((%s)))" % (traceback.format_exc()))
         return None
-
-    def checkout_target(self, target):
-        """
-        Checkout target and get credentials object
-        Deprecated (replaced by checkout_account called in check_target)
-        """
-        return True, "OK"
 
     def get_account_infos(self, account_name, domain_name, device_name):
         Logger().debug("Engine get_account_infos ...")
