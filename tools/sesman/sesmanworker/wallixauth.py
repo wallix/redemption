@@ -426,13 +426,6 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def check_mobile_device(self, wab_login, ip_client, ip_server):
-        if not self._init_identify(ip_client, ip_server, login=wab_login,
-                                   auth_state=AuthState.MOBILE_DEVICE):
-            return False
-        auth_type = self.auth_challenge.get('auth_type')
-        return auth_type == AUTH.MOBILE_DEVICE
-
     def mobile_device_authenticate(self, enginei):
         if self.auth_state != AuthState.MOBILE_DEVICE:
             self._reset_auth()
@@ -451,14 +444,6 @@ class Authenticator(object):
             raise
         self._reset_auth()
         return False
-
-    def check_url_redirect(self, wab_login, ip_client, ip_server):
-        if not self._init_identify(ip_client, ip_server, login=wab_login,
-                                   auth_state=AuthState.URL_REDIRECT):
-            return False
-        auth_type = self.auth_challenge.get('auth_type')
-        self.challenge = ur_to_challenge(self.auth_challenge)
-        return auth_type == AUTH.URL_REDIRECT
 
     def url_redirect_authenticate(self, enginei):
         if self.auth_state != AuthState.URL_REDIRECT:

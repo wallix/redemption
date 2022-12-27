@@ -311,18 +311,8 @@ class Engine(object):
             self, ip_client, ip_server
         )
 
-    def check_mobile_device(self, wab_login, ip_client, ip_server):
-        return self.authenticator.check_mobile_device(
-            wab_login, ip_client, ip_server
-        )
-
     def mobile_device_authenticate(self):
         return self.authenticator.mobile_device_authenticate(self)
-
-    def check_url_redirect(self, wab_login, ip_client, ip_server):
-        return self.authenticator.check_url_redirect(
-            wab_login, ip_client, ip_server
-        )
 
     def url_redirect_authenticate(self):
         return self.authenticator.url_redirect_authenticate(self)
