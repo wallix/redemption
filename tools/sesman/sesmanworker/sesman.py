@@ -84,6 +84,22 @@ def collection_has_more(
     yield cur_item, False
 
 
+def parse_duration(duration: str) -> int:
+    """
+    duration format: {hours}h{min}m or {hours}h or {min}m
+    """
+    if duration:
+        mres = re.search(r"(?:(\d+)h)?(?:(\d+)m)?", duration)
+        if mres is not None:
+            d = (
+                60 * 60 * int(mres.group(1) or 0)
+              + 60 * int(mres.group(2) or 0)
+            )
+            return d or 3600
+
+    return 3600
+
+
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
@@ -1617,33 +1633,11 @@ class Sesman():
                     # should parse the ticket info
                     desc = self.shared.get(u'comment')
                     ticketno = self.shared.get(u'ticket')
-                    duration = self.parse_duration(
-                        self.shared.get(u'duration')
-                    )
+                    duration = parse_duration(self.shared.get(u'duration'))
                     ticket = {u"description": desc if desc else None,
                               u"ticket": ticketno if ticketno else None,
                               u"duration": duration}
         return False, ""
-
-    def parse_duration(self, duration):
-        if duration:
-            try:
-                mpat = re.compile(r"(\d+)m")
-                hpat = re.compile(r"(\d+)h")
-                hres = hpat.search(duration)
-                mres = mpat.search(duration)
-                duration = 0
-                if mres:
-                    duration += 60 * int(mres.group(1))
-                if hres:
-                    duration += 60 * 60 * int(hres.group(1))
-                if duration == 0:
-                    duration = 3600
-            except Exception:
-                duration = 3600
-        else:
-            duration = 3600
-        return duration
 
     @staticmethod
     def _get_tf_flags(ticketfields):
