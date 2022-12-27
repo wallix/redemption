@@ -59,42 +59,6 @@ import syslog
 
 from .logtime import logtimer, logtime_function_pause
 
-# Python 2.7 compatibility layer
-if sys.version_info[0] < 3:
-    def bytes(data, encoding="utf-8"):
-        return data.encode(encoding)
-
-    text_type = unicode
-    binary_type = str
-
-    def to_syslog(data):
-        return to_utf8(data)
-
-    def bin2hex(bstr):
-        return bstr.encode('hex')
-else:
-    text_type = str
-    binary_type = (bytes, bytearray)
-    unicode = None
-
-    def to_syslog(data):
-        return to_unicode(data)
-
-    def bin2hex(bstr):
-        return bstr.hex()
-
-
-def to_utf8(string):
-    if isinstance(string, text_type):
-        return bytes(string, "utf-8")
-    return string
-
-
-def to_unicode(string):
-    if isinstance(string, binary_type):
-        return string.decode("utf-8")
-    return string
-
 
 def print_exception_caught(func):
     def method_wrapper(self, *args, **kwargs):
@@ -136,12 +100,12 @@ class RdpProxyLog(object):
         arg_list[:0] = [('type', type)]
         args = ' '.join(('%s="%s"' % (k, self.escape_bs_dq(v)))
                         for (k, v) in arg_list if v)
-        line = to_utf8(' '.join((self._context, args)))
-        syslog.syslog(syslog.LOG_INFO, to_syslog(line))
+        line = ' '.join((self._context, args))
+        syslog.syslog(syslog.LOG_INFO, line)
 
     @staticmethod
     def escape_bs_dq(string):
-        if type(string) in (str, unicode):
+        if isinstance(string, str):
             return string.replace('\\', '\\\\').replace('"', '\\"')
         return string
 
@@ -575,8 +539,8 @@ class Sesman():
         self.shared.update(data)
 
         def _toval(key, value):
-            key = to_utf8(key)
-            value = to_utf8(str(value))
+            key = key.encode()
+            value = str(value).encode()
             key_len = len(key)
             value_len = len(value)
             return (
@@ -586,7 +550,7 @@ class Sesman():
             )
 
         def _toask(key):
-            key = to_utf8(key)
+            key = key.encode()
             key_len = len(key)
             return (
                 False, key,
@@ -1478,9 +1442,9 @@ class Sesman():
     def get_trace_keys(self):
         derivator = self.record_filebase + u".mwrm"
         encryption_key = self.engine.get_trace_encryption_key(derivator, False)
-        formated_encryption_key = bin2hex(encryption_key)
+        formated_encryption_key = encryption_key.hex()
         sign_key = self.engine.get_trace_sign_key()
-        formated_sign_key = bin2hex(sign_key)
+        formated_sign_key = sign_key.hex()
         return formated_encryption_key, formated_sign_key
 
     def interactive_ask_recording(self, user):
@@ -2892,7 +2856,7 @@ class Sesman():
 
     @staticmethod
     def convert_value(value, cotype):
-        if not isinstance(value, (str, text_type)):
+        if not isinstance(value, str):
             return value
         if cotype == 'int':
             return int(value)
