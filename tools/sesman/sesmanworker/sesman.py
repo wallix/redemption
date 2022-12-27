@@ -100,9 +100,9 @@ def parse_duration(duration: str) -> int:
     return 3600
 
 
-_convert_to_int = lambda(value): int(value) if isinstance(value, str) else value
-_convert_to_bool = lambda(value): (value.lower() == 'true') if isinstance(value, str) value
-_identity = lambda(value): value
+_convert_to_int = lambda x: (int(x) if isinstance(x, str) else x)
+_convert_to_bool = lambda x: (x.lower() == 'true' if isinstance(x, str) else x)
+_identity = lambda x: x
 
 KEYMAPPING = {
     # exchange key : (acl key, convert func)
@@ -613,7 +613,7 @@ class Sesman():
         return r
 
     @logtime_function_pause
-    def receive_data(self, expected_list=None, blocking_call=True):
+    def receive_data(self, expected_list=(), blocking_call=True):
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded
         * Packet format:
         uint16                   request_count
@@ -729,11 +729,8 @@ class Sesman():
             if DEBUG:
                 Logger().info("received_buffer (several packet)")
 
-        if not (expected_list and isinstance(expected_list, list)):
-            expected_list = []
-        for key in expected_list:
-            if (key in _data and _data[key] != self.shared.get(key)):
-                self._changed_keys.append(key)
+        self._changed_keys += (key for key in expected_list
+            if key in _data and _data[key] != self.shared.get(key))
         self.shared.update(_data)
 
         return True, u''
@@ -1659,21 +1656,25 @@ class Sesman():
     @staticmethod
     def _get_tf_flags(ticketfields):
         flag = 0
+
         field = ticketfields.get("description")
         if field is not None:
             flag += 0x01
             if field == APPREQ_REQUIRED:
                 flag += 0x02
+
         field = ticketfields.get("ticket")
         if field is not None:
             flag += 0x04
             if field == APPREQ_REQUIRED:
                 flag += 0x08
+
         field = ticketfields.get("duration")
         if field is not None:
             flag += 0x10
             if field == APPREQ_REQUIRED:
                 flag += 0x20
+
         return flag
 
     # 'request_fields':{
@@ -2847,8 +2848,7 @@ class Sesman():
             acl_key: convert(val) for (acl_key, convert), val in (
                 (KEYMAPPING[key], self.shared[key])
                 for key in changed_keys if (
-                    key in KEYMAPPING
-                    and self.shared.get(key) is not None
+                    self.shared.get(key) is not None
                 )
             )
         }
