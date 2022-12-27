@@ -239,16 +239,15 @@ class Engine(object):
         return message
 
     def init_timeframe(self, auth):
-        if (auth['deconnection_time']
-            and auth['deconnection_time'] != u"-"
-            and auth['deconnection_time'][0:4] <= u"2034"):
-            self.deconnection_time = auth['deconnection_time']
+        deconnection_time = auth['deconnection_time']
+        if (deconnection_time
+            and deconnection_time != u"-"
+            and deconnection_time[0:4] <= u"2034"
+        ):
+            self.deconnection_time = deconnection_time
             self.deconnection_epoch = int(
                 time.mktime(
-                    time.strptime(
-                        auth['deconnection_time'],
-                        "%Y-%m-%d %H:%M:%S"
-                    )
+                    time.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S")
                 )
             )
 
