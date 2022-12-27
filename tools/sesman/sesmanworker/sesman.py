@@ -100,6 +100,23 @@ def parse_duration(duration: str) -> int:
     return 3600
 
 
+_convert_to_int = lambda(value): int(value) if isinstance(value, str) else value
+_convert_to_bool = lambda(value): (value.lower() == 'true') if isinstance(value, str) value
+_identity = lambda(value): value
+
+KEYMAPPING = {
+    # exchange key : (acl key, convert func)
+    'height': ('video_height', _convert_to_int),
+    'width': ('video_width', _convert_to_int),
+    'rt_ready': ('rt', _convert_to_bool),
+    'sharing_ready': ('sharing_allow', _convert_to_bool),
+    'fdx_path': ('fdx_path', _identity),
+    'smartcard_login': ('effective_login', _identity),
+    'native_session_id': ('native_session_id', _identity),
+}
+EXPECTING_KEYS = list(KEYMAPPING.keys())
+
+
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
@@ -2287,7 +2304,7 @@ class Sesman():
                             self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data(
-                                    Sesman.EXPECTING_KEYS,
+                                    EXPECTING_KEYS,
                                     blocking_call=False
                                 )
 
@@ -2559,13 +2576,13 @@ class Sesman():
         elif _reporting_reason == u'SESSION_EVENT':
             (event_level, event_id, event_details) = \
                 _reporting_message.split(" : ", 2)
-            update_args = {}
-            update_args["event_level"] = event_level
-            update_args["event_id"] = event_id
-            update_args["event_details"] = event_details
-            self.engine.update_session(**update_args)
+            self.engine.update_session(
+                event_level=event_level,
+                event_id=event_id,
+                event_details=event_details,
+            )
 
-            if u'FATAL' == update_args["event_level"]:
+            if u'FATAL' == event_level:
                 Logger().info(
                     u'RDP connection terminated. Reason: Application '
                     u'fatal error'
@@ -2668,35 +2685,33 @@ class Sesman():
         elif (reason == u'FINDCONNECTION_DENY'
               or reason == u'FINDCONNECTION_NOTIFY'):
             pattern = message.split(u'|')
-            notify_params = {
-                'rule': pattern[0],
-                'deny': (reason == u'FINDCONNECTION_DENY'),
-                'app_name': pattern[1],
-                'app_cmd_line': pattern[2],
-                'dst_addr': pattern[3],
-                'dst_port': pattern[4],
-                'user_login': self.shared.get(u'login'),
-                'user': self.shared.get(u'target_login'),
-                'host': self.shared.get(u'target_device'),
-                'cn': self.cn,
-                'service': self.target_service_name
-            }
-            self.engine.notify_find_connection_rdp(**notify_params)
+            self.engine.notify_find_connection_rdp(
+                rule=pattern[0],
+                deny=(reason == u'FINDCONNECTION_DENY'),
+                app_name=pattern[1],
+                app_cmd_line=pattern[2],
+                dst_addr=pattern[3],
+                dst_port=pattern[4],
+                user_login=self.shared.get(u'login'),
+                user=self.shared.get(u'target_login'),
+                host=self.shared.get(u'target_device'),
+                cn=self.cn,
+                service=self.target_service_name
+            )
         elif (reason == u'FINDPROCESS_DENY'
               or reason == u'FINDPROCESS_NOTIFY'):
             pattern = message.split(u'|')
-            notify_params = {
-                'regex': pattern[0],
-                'deny': (reason == u'FINDPROCESS_DENY'),
-                'app_name': pattern[1],
-                'app_cmd_line': pattern[2],
-                'user_login': self.shared.get(u'login'),
-                'user': self.shared.get(u'target_login'),
-                'host': self.shared.get(u'target_device'),
-                'cn': self.cn,
-                'service': self.target_service_name
-            }
-            self.engine.notify_find_process_rdp(**notify_params)
+            self.engine.notify_find_process_rdp(
+                regex=pattern[0],
+                deny=(reason == u'FINDPROCESS_DENY'),
+                app_name=pattern[1],
+                app_cmd_line=pattern[2],
+                user_login=self.shared.get(u'login'),
+                user=self.shared.get(u'target_login'),
+                host=self.shared.get(u'target_device'),
+                cn=self.cn,
+                service=self.target_service_name
+            )
         elif reason == u'SESSION_EVENT':
             pass
         else:
@@ -2744,9 +2759,7 @@ class Sesman():
 
     def handle_shadowing(self):
         if self.shared.get("rd_shadow_available") == 'True':
-            update_args = {}
-            update_args["shadow_allow"] = True
-            self.engine.update_session(**update_args)
+            self.engine.update_session(shadow_allow=True)
             self.shared["rd_shadow_available"] = 'False'
 
         if self.shared.get("rd_shadow_invitation_error_code"):
@@ -2829,35 +2842,12 @@ class Sesman():
             self.send_data({u'rejected': TR(u'error_getting_record_path')})
         return _status, _error
 
-    KEYMAPPING = {
-        # exchange key : (acl key, type)
-        'height': ('video_height', 'int'),
-        'width': ('video_width', 'int'),
-        'rt_ready': ('rt', 'bool'),
-        'sharing_ready': ('sharing_allow', 'bool'),
-        'fdx_path': ('fdx_path', 'str'),
-        'smartcard_login': ('effective_login', 'str'),
-        'native_session_id': ('native_session_id', 'str'),
-    }
-    EXPECTING_KEYS = list(KEYMAPPING.keys())
-
-    @staticmethod
-    def convert_value(value, cotype):
-        if not isinstance(value, str):
-            return value
-        if cotype == 'int':
-            return int(value)
-        if cotype == 'bool':
-            return (value.lower() == 'true')
-        return value
-
     def update_session_data(self, changed_keys):
         data_to_update = {
-            acl_key: Sesman.convert_value(val, cotype)
-            for (acl_key, cotype), val in (
-                (Sesman.KEYMAPPING.get(key), self.shared.get(key))
+            acl_key: convert(val) for (acl_key, convert), val in (
+                (KEYMAPPING[key], self.shared[key])
                 for key in changed_keys if (
-                    Sesman.KEYMAPPING.get(key) is not None
+                    key in KEYMAPPING
                     and self.shared.get(key) is not None
                 )
             )
