@@ -65,7 +65,7 @@ def parse_account(param, replace_dict, force_device=False):
     return acc_tuple
 
 
-def resolve_scenario_account(enginei, field, param, force_device=True, default=None):
+def resolve_scenario_account(enginei, param, force_device=True):
     """
     Get password or login field from scenario account
 
@@ -74,8 +74,6 @@ def resolve_scenario_account(enginei, field, param, force_device=True, default=N
         - get_target_login_info
         - get_username
         - get_account_infos_by_type
-    :param field: str
-        requested field of scenario account, must be "password" or "login"
     :param param: str
         string representing scenario account:
         string format is account_name@domain_name[@device_name]
@@ -83,22 +81,16 @@ def resolve_scenario_account(enginei, field, param, force_device=True, default=N
     :param force_device: bool
         force device_name part in param to match current device
         True by default
-    :param default: bool
-        default value to be returned in case resolution fails;
-        if set to None, param will be returned
-        True by default
 
-    :return: requested field (password or login) of scenario account
-             if param is not a scenario account, returns its value
-    :rtype: str
+    :return: requested account infos of scenario account
+             if param is not a scenario account, returns None
+    :rtype: AccountInfos
     """
-    if default is None:
-        default = param
     session_infos = enginei.get_target_login_info().get_target_dict()
     session_infos["user"] = enginei.get_username()
     acc_tuple = parse_account(param, session_infos, force_device)
     if acc_tuple is None:
-        return default
+        return None
     acc_infos = enginei.get_account_infos_by_type(
         *acc_tuple,
         with_ssh_key=True,
@@ -109,5 +101,4 @@ def resolve_scenario_account(enginei, field, param, force_device=True, default=N
             "Error: Unable to retrieve account info from '%s'" %
             param
         )
-        return default
-    return acc_infos.get(field.lower())
+    return acc_infos

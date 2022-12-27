@@ -469,18 +469,16 @@ def check_tunneling(engine, opts, target_host, target_port,
             ssh_password = opts.get("ssh_password")
             ssh_key = None
         else:
-            ssh_login = engine.get_scenario_account_field(
-                field="login", param=opts.get("scenario_account_name"),
-                force_device=True
-            )
-            ssh_password = engine.get_scenario_account_field(
-                field="password", param=opts.get("scenario_account_name"),
-                force_device=True
-            )
-            ssh_key = engine.get_scenario_account_field(
-                field="ssh_key", param=opts.get("scenario_account_name"),
-                force_device=True
-            )
+            param = opts.get("scenario_account_name")
+            acc_infos = engine.get_scenario_account(param=param, force_device=True)
+            if acc_infos:
+                ssh_login = acc_infos.get('login')
+                ssh_password = acc_infos.get('password')
+                ssh_key = acc_infos.get('ssh_key')
+            else:
+                ssh_login = param
+                ssh_password = param
+                ssh_key = param
 
         tunneling_type = opts.get("tunneling_type", "pxssh")
         tunneling_class = TunnelingProcessPXSSH

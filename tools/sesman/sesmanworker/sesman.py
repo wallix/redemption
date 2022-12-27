@@ -3117,30 +3117,16 @@ class Sesman():
             rdp_opts = conn_opts.get('rdp', {})
             krb_armoring_account = rdp_opts.get('krb_armoring_account')
             krb_armoring_realm = rdp_opts.get('krb_armoring_realm')
-            krb_armoring_fallback_user = rdp_opts.get(
-                'krb_armoring_fallback_user', ''
-            )
-            krb_armoring_fallback_password = rdp_opts.get(
-                'krb_armoring_fallback_password', ''
-            )
+            effective_krb_armoring_user = rdp_opts.get('krb_armoring_fallback_user') or ''
+            effective_krb_armoring_password = rdp_opts.get('krb_armoring_fallback_password') or ''
 
             if krb_armoring_account:
-                effective_krb_armoring_user = \
-                    self.engine.get_scenario_account_field(
-                        u'login', krb_armoring_account,
-                        force_device=False,
-                        default=krb_armoring_fallback_user
-                    )
-                effective_krb_armoring_password = \
-                    self.engine.get_scenario_account_field(
-                        u'password', krb_armoring_account,
-                        force_device=False,
-                        default=krb_armoring_fallback_password
-                    )
-            else:
-                effective_krb_armoring_user = krb_armoring_fallback_user
-                effective_krb_armoring_password = \
-                    krb_armoring_fallback_password
+                acc_infos = self.engine.get_scenario_account(
+                    krb_armoring_account,
+                    force_device=False,
+                ) or {}
+                effective_krb_armoring_user = acc_infos.get('login', effective_krb_armoring_user)
+                effective_krb_armoring_password = acc_infos.get('password', effective_krb_armoring_password)
 
             if krb_armoring_realm:
                 effective_krb_armoring_user += '@' + krb_armoring_realm
