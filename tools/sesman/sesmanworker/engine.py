@@ -1515,7 +1515,7 @@ class Engine(object):
             return self.wabengine.read_session_parameters(self.session_id,
                                                           key=key)
 
-    def check_target(self, target, pid=None, request_ticket=None):
+    def check_target(self, target, request_ticket=None):
         if self.checktarget_cache == (APPROVAL_ACCEPTED, target['target_uid']):
             # Logger().info("** CALL Check_target SKIPED**")
             return self.checktarget_cache[0], self.checktarget_infos_cache

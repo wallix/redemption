@@ -1003,10 +1003,7 @@ class Sesman():
                                                  self.target_service_name)
                 else:
                     target_info = u"%s@%s" % (target_login, target_device)
-                try:
-                    target_info = target_info.encode('utf8')
-                except Exception:
-                    target_info = None
+                target_info = target_info.encode('utf8')
 
             # Check if we are using OTP
             # before trying any authentification method
@@ -1564,9 +1561,7 @@ class Sesman():
             Logger().info(u"Begin check_target ticket = %s..." % ticket)
             previous_status = status
             previous_info_message = info_message
-            status, infos = self.engine.check_target(selected_target,
-                                                     self.pid,
-                                                     ticket)
+            status, infos = self.engine.check_target(selected_target, ticket)
             ticket = None
             info_message = infos.get('message')
             refresh_page = (got_signal
@@ -2025,9 +2020,7 @@ class Sesman():
                 close_box = False
                 kv[u'recording_started'] = "False"
 
-                cstatus, infos = self.engine.check_target(physical_target,
-                                                          self.pid,
-                                                          None)
+                cstatus, infos = self.engine.check_target(physical_target)
                 if cstatus != APPROVAL_ACCEPTED:
                     Logger().info("Jump server unavailable (%s)"
                                   % infos.get('message'))
@@ -3000,7 +2993,7 @@ class Sesman():
             if not self.engine.check_effective_target(ar, effective_target):
                 Logger().debug("check_application: jump server not compatible")
                 continue
-            _status, _infos = self.engine.check_target(ar, self.pid, None)
+            _status, _infos = self.engine.check_target(ar)
             if _status != APPROVAL_ACCEPTED:
                 Logger().debug("check_application: approval not accepted")
                 continue
