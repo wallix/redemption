@@ -239,17 +239,19 @@ class CheckoutEngine(object):
             Logger().debug("check_account_by_type: missing password & ssh key")
             return None
 
-        passwords = creds.get(CRED_TYPE_PASSWORD, []) if has_password else None
-
-        ssh_keys = [(cred.get(CRED_DATA_PRIVATE_KEY),
-                     cred.get("passphrase"),
-                     cred.get(CRED_DATA_SSH_CERTIFICATE))
-                    for cred in creds.get(CRED_TYPE_SSH_KEY, [])]
+        passwords = creds.get(CRED_TYPE_PASSWORD) if has_password else None
+        ssh_keys = creds.get(CRED_TYPE_SSH_KEY)
+        ssh_key = None
+        if ssh_keys:
+            cred = ssh_keys[0]
+            ssh_key = (cred.get(CRED_DATA_PRIVATE_KEY),
+                       cred.get("passphrase"),
+                       cred.get(CRED_DATA_SSH_CERTIFICATE))
 
         a_infos = {
             'password': passwords[0] if passwords else None,
             'login': creds.get(CRED_DATA_LOGIN, None),
-            'ssh_key': ssh_keys[0] if ssh_keys else None
+            'ssh_key': ssh_key
         }
         return a_infos
 
