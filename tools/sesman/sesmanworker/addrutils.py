@@ -106,10 +106,9 @@ def resolve_reverse_dns(ip_str):
     found_fqdn = None
     try:
         found_fqdn = socket.gethostbyaddr(ip_str)[0]
+        Logger().debug("Found fqdn %s for %s" % (found_fqdn, ip_str))
     except Exception:
         Logger().debug("Unable to reverse dns %s" % ip_str)
-    else:
-        Logger().debug("Found fqdn %s for %s" % (found_fqdn, ip_str))
     return found_fqdn
 
 

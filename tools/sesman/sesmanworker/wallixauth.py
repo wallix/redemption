@@ -593,29 +593,31 @@ def extract_pubkey(pubkeystr):
     return pubkey
 
 
+def _ssh_public_key(pubkey):
+    import base64
+    import struct
+
+    keydata = base64.b64decode(pubkey)
+
+    i = 0
+    parts = []
+    while len(keydata) != i:
+        # read the length of the data
+        dlen = struct.unpack_from('>I', keydata, i)[0]
+        i += 4
+        # read in <length> bytes
+        data = keydata[i:dlen + i]
+        i += dlen
+        # remove leading zeros
+        parts.append(data.lstrip(b'\x00'))
+
+    return parts
+
+
 def compare_pubkeys(pubkey1, pubkey2):
-    class SshPublicKey:
-        def __init__(self, pubkey):
-            import base64
-            import struct
-
-            keydata = base64.b64decode(pubkey)
-
-            parts = []
-            while keydata:
-                # read the length of the data
-                dlen = struct.unpack('>I', keydata[:4])[0]
-                # read in <length> bytes
-                data, keydata = keydata[4:dlen + 4], keydata[4 + dlen:]
-                parts.append(data)
-
-            # remove leading zeros
-            self.fields = [s.lstrip(b'\x00') for s in parts]
-
-        def __cmp__(self, key):
-            if self.fields == key.fields:
-                return 0
-            return -1
+    if not (pubkey1 and pubkey2):
+        # failure if one of the key is empty
+        return False
 
     return ((pubkey1 == pubkey2)
-            or (SshPublicKey(pubkey1) == SshPublicKey(pubkey2)))
+            or (_ssh_public_key(pubkey1) == _ssh_public_key(pubkey2)))
