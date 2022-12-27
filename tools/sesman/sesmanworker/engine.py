@@ -238,37 +238,6 @@ class Engine(object):
                            str(self.deconnection_time))
         return message
 
-    def check_device_fingerprint(self, hname, service_cn, finger_raw,
-                                 hash_type=FINGERPRINT_SHA1):
-        finger_host = ''
-        fingerprint_len = (FINGERPRINT_SHA1_LEN
-                           if hash_type == FINGERPRINT_SHA1
-                           else FINGERPRINT_MD5_LEN)
-        for i, char in enumerate(finger_raw):
-            try:
-                finger_host += '%02x' % ord(char)
-            except Exception:
-                finger_host += '%02x' % char
-            if i < fingerprint_len - 1:
-                finger_host += ':'
-
-        with manage_transaction(self.wabengine):
-            finger = self.wabengine.get_fingerprint(hname, service_cn)
-
-        with manage_transaction(self.wabengine):
-            if not finger:
-                self.wabengine.save_fingerprint(
-                    hname,
-                    service_cn,
-                    finger_host
-                )
-                Notify(self.wabengine, NEW_FINGERPRINT, {'device': hname})
-            elif (finger != finger_host):
-                Notify(self.wabengine, WRONG_FINGERPRINT, {'device': hname})
-                return False, ("Host Key received is different from host key in "
-                               "DB, please contact your administrator")
-        return True, "OK"
-
     def init_timeframe(self, auth):
         if (auth['deconnection_time']
             and auth['deconnection_time'] != u"-"
@@ -473,19 +442,6 @@ class Engine(object):
         except Exception:
             import traceback
             Logger().info("Engine NotifyConnectionToCriticalEquipment failed: "
-                          "(((%s)))" % (traceback.format_exc()))
-
-    def NotifyPrimaryConnectionFailed(self, user, ip):
-        try:
-            notif_data = {
-                u'user': user,
-                u'ip': ip
-            }
-
-            Notify(self.wabengine, PRIMARY_CX_FAILED, notif_data)
-        except Exception:
-            import traceback
-            Logger().info("Engine NotifyPrimaryConnectionFailed failed: "
                           "(((%s)))" % (traceback.format_exc()))
 
     def NotifySecondaryConnectionFailed(self, user, ip, account, device):
