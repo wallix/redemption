@@ -149,7 +149,7 @@ class Authenticator(object):
 
     def _reset_auth(self, remove_auth_state=None, cancel=True):
         if remove_auth_state:
-            Logger().debug(">> PA remove state %s" % remove_auth_state)
+            Logger().debug(f">> PA remove state {remove_auth_state}")
             # do not try this auth method again
             self.removed_auth_state.add(remove_auth_state)
         self.challenge = None
@@ -190,11 +190,10 @@ class Authenticator(object):
 
         if auth_state in self.removed_auth_state:
             # this auth method has been definitively banned
-            Logger().debug(">> PA method %s banned" % auth_state)
+            Logger().debug(f">> PA method {auth_state} banned")
             return False
 
-        Logger().debug(">> PA init_identify current:%s  asked:%s" %
-                       (self.auth_key, auth_state))
+        Logger().debug(f">> PA init_identify current:{self.auth_key}  asked:{auth_state}")
         self.auth_state = auth_state
         self.auth_ident = IDENT_PROXY[auth_state]
         data = {}
@@ -217,13 +216,13 @@ class Authenticator(object):
             }
 
         if not data:
-            Logger().debug(">> PA init_identify unknown state %s" % auth_state)
+            Logger().debug(f">> PA init_identify unknown state {auth_state}")
             self._reset_auth()
             return False
 
         auth_type = None
         try:
-            Logger().debug("Call BEGIN identify %s" % data)
+            Logger().debug(f"Call BEGIN identify {data}")
             self.auth_key = self.checker.identify(
                 data=data,
                 identification=self.auth_ident,
@@ -232,25 +231,22 @@ class Authenticator(object):
                 client=client_name,
                 no_delay=(AuthState.PASSWORD != self.auth_state),
             )
-            # Logger().debug("Call END identify %s" % self.auth_key)
+            # Logger().debug(f"Call END identify {self.auth_key}")
             Logger().debug("Call END identify")
             compatibility = COMPATIBILITY_PROXY[auth_state]
-            Logger().debug("Call BEGIN compatibility (%s)" %
-                           compatibility)
+            Logger().debug(f"Call BEGIN compatibility ({compatibility})")
             self.auth_challenge = self.checker.compatibility(
                 key=self.auth_key,
                 compatibility=compatibility,
                 priority=get_auth_priority(auth_state),
                 no_delay=(AuthState.PASSWORD != self.auth_state),
             )
-            Logger().debug("Call END compatibility %s" %
-                           self.auth_challenge)
+            Logger().debug(f"Call END compatibility {self.auth_challenge}")
             auth_type = self.auth_challenge.get('auth_type')
             if (auth_type not in EXPECTED_FIRST_COMPAT[auth_state]):
                 Logger().debug(
-                    ">> PA init_identify challenge auth type %s"
-                    " not expected for %s" %
-                    (auth_type, auth_state)
+                    f">> PA init_identify challenge auth type {auth_type}"
+                    f" not expected for {auth_state}"
                 )
                 remove_state = None
                 if auth_state in BANNABLE_STATES:
@@ -260,7 +256,7 @@ class Authenticator(object):
                 self._reset_auth(remove_auth_state=remove_state)
                 return False
         except AuthenticationFailed as a:
-            Logger().debug(">> PA init_identify AuthenticationFailed %s" % a)
+            Logger().debug(f">> PA init_identify AuthenticationFailed {a}")
             remove_state = None
             if auth_state in BANNABLE_STATES:
                 # if identification failed on "automatic" method,
@@ -272,7 +268,7 @@ class Authenticator(object):
                                                     AuthState.KBDINT_CHECK)))
             return False
         except IdentificationFailed as a:
-            Logger().debug(">> PA init_identify IdentificationFailed %s" % a)
+            Logger().debug(f">> PA init_identify IdentificationFailed {a}")
             remove_state = None
             if auth_state in BANNABLE_STATES:
                 # if identification failed on "automatic" method,
@@ -293,38 +289,37 @@ class Authenticator(object):
 
     def _authentify(self, enginei, data, debug_str="None", no_delay=False):
         try:
-            Logger().debug("Call BEGIN authenticate (%s)" %
-                           (debug_str))
+            Logger().debug(f"Call BEGIN authenticate ({debug_str})")
             enginei.wabengine = self.checker.authenticate(
                 key=self.auth_key,
                 data=data,
                 no_delay=no_delay
             )
-            Logger().debug("Call END authenticate (%s)" % (debug_str))
+            Logger().debug(f"Call END authenticate ({debug_str})")
             self.challenge = None
             if enginei.wabengine is not None:
                 enginei._post_authentication()
                 return True
         except AuthenticationChallenge as ac:
-            Logger().debug("AuthenticationChallenge %s" % ac.__dict__)
+            Logger().debug(f"AuthenticationChallenge {ac.__dict__}")
             self.set_challenge(ac.challenge)
             if self.auth_state == AuthState.MOBILE_DEVICE:
                 return self._authentify(
                     enginei, {}, "mobile_device",
                     no_delay=True
                 )
-            # Logger().debug("Challenge %s" % self.challenge.__dict__)
+            # Logger().debug(f"Challenge {self.challenge.__dict__}")
             return False
         except AuthenticationFailed as exp:
-            Logger().info("%s" % exp)
+            Logger().info(f"{exp}")
             self._reset_auth(cancel=False)
             return False
         except Exception:
             self._reset_auth(cancel=False)
             import traceback
             Logger().info(
-                "Engine authenticate (%s) failed: "
-                "(((%s)))" % (debug_str, traceback.format_exc()))
+                f"Engine authenticate ({debug_str}) failed: "
+                f"((({traceback.format_exc()})))")
             raise
         self._reset_auth()
         return False
@@ -369,7 +364,7 @@ class Authenticator(object):
         except Exception:
             import traceback
             Logger().info("Engine is_x509_connected failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
         return False
 
     def is_x509_validated(self):
@@ -379,8 +374,7 @@ class Authenticator(object):
                 result = self.auth_x509.is_validated()
         except Exception:
             import traceback
-            Logger().info("Engine is_x509_validated failed: (((%s)))" %
-                          traceback.format_exc())
+            Logger().info(f"Engine is_x509_validated failed: ((({traceback.format_exc()})))")
         return result
 
     def check_kbdint_authenticate(self, enginei, login, ip_client, ip_server):
@@ -410,7 +404,7 @@ class Authenticator(object):
         except Exception:
             import traceback
             Logger().info("Engine x509_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
         return False
 
     def otp_authenticate(self, enginei, otp, ip_client, ip_server):
@@ -440,7 +434,7 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine mobile_device_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
             raise
         self._reset_auth()
         return False
@@ -459,7 +453,7 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine url_redirect_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
             raise
         self._reset_auth()
         return False
@@ -486,7 +480,7 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine password_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
             raise
         self._reset_auth()
         return False
@@ -508,7 +502,7 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine passthrough_authenticate failed: "
-                          "%s (%s)" % (a, traceback.format_exc()))
+                          f"{a} ({traceback.format_exc()})")
             raise
         self._reset_auth()
         return False
@@ -529,7 +523,7 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine gssapi_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
             raise
         self._reset_auth()
         return False
@@ -545,8 +539,8 @@ class Authenticator(object):
             if auth_type == AUTH.SSH_KEY:
                 ssh_keys = self.auth_challenge.get('ssh_keys')
                 for stored_key in ssh_keys:
-                    # Logger().debug("stored key %s" % stored_key)
-                    # Logger().debug("pubkey %s" % pubkey)
+                    # Logger().debug(f"stored key {stored_key}")
+                    # Logger().debug(f"pubkey {pubkey}")
                     if compare_pubkeys_str(stored_key, pubkey):
                         data['result'] = True
                         break
@@ -557,7 +551,7 @@ class Authenticator(object):
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine pubkey_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
+                          f"((({traceback.format_exc()})))")
             raise
         return False
 
