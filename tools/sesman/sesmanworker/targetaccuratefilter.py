@@ -103,22 +103,18 @@ class SelectorFilterMode:
 class FilterKeywordSyntaxError(RuntimeError):
     def __init__(self, keyword):
         super().__init__(
-            self, ("unknown filter keyword with '%s'"
-                   % keyword))
+            self, f"unknown filter keyword with '{keyword}'")
 
 class FilterKeywordDuplicateError(RuntimeError):
     def __init__(self, keyword):
         super().__init__(
-            self, ("duplicated filter keyword with '%s'"
-                   % keyword))
+            self, f"duplicated filter keyword with '{keyword}'")
 
 class ParsingError(RuntimeError):
     def __init__(self, bad_string):
         super().__init__(
-            self, ("'keyword"
-                   + FILTER_KV_SEPARATOR
-                   + "value' format parsing error with '%s'"
-                   % bad_string))
+            self,
+            f"'keyword{FILTER_KV_SEPARATOR}value' format parsing error with '{bad_string}'")
 
 def get_selector_filter_mode(pattern):
     if not pattern:
