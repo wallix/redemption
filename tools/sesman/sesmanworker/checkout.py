@@ -120,31 +120,6 @@ class CheckoutEngine(object):
         )
         return a_infos
 
-    def get_pm_account_infos(self, account_name,
-                             domain_name, device_name):
-        # TODO: same as check_account_by_type with 'pm' account_type
-        #       with namedtuple result instead of dict
-        # Logger().debug("CHECKOUTENGINE get_pm_account_infos")
-        account = (account_name, domain_name, device_name)
-        res = self._update_creds_with_account_by_type(
-            account_name=account_name,
-            domain_name=domain_name,
-            device_name=device_name,
-            account_type='pm'
-        )
-        if not res:
-            return None
-        right, creds = self.pm_credentials.get(account, (None, {}))
-        if not creds:
-            return None
-        from collections import namedtuple
-        account_infos = namedtuple('account_infos', 'passwords login')
-        a_infos = account_infos(
-            creds.get(CRED_TYPE_PASSWORD, []),
-            creds.get(CRED_DATA_LOGIN, None)
-        )
-        return a_infos
-
     def check_target(self, right, request_ticket=None):
         """
         This function check a target:
