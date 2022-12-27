@@ -110,10 +110,7 @@ class Engine(object):
         self.wabengine_conf = Config('wabengine')
         self.authenticator = Authenticator()
         self.session_id = None
-        self.auth_x509 = None
-        self._trace_type = None                 # local ?
         self._selector_banner = {}
-        self.challenge = None
         self.session_record = None
         self.session_record_type = None
         self.deconnection_epoch = 0xffffffff
@@ -126,10 +123,7 @@ class Engine(object):
         self.targetsdom = {}
         self.target_right = None
 
-        self.physical_targets = []
         self.displaytargets = []
-        self.proxyrightsinput = None
-        self.pidhandler = None
 
         self.session_result = True
         self.session_diag = u'Success'
@@ -253,9 +247,7 @@ class Engine(object):
 
     def get_trace_type(self):
         try:
-            self._trace_type = self.wabengine_conf.get('trace',
-                                                       u'localfile_hashed')
-            return self._trace_type
+            return self.wabengine_conf.get('trace', 'localfile_hashed')
         except Exception:
             import traceback
             Logger().info("Engine get_trace_type failed: "
@@ -639,7 +631,6 @@ class Engine(object):
         self.session_record = None
         self.session_record_type = None
         self.session_id = None
-        self.pidhandler = None
         self.session_result = True
         self.session_diag = u'Success'
         self.failed_secondary_set = False
@@ -691,15 +682,14 @@ class Engine(object):
             prights = self.get_proxy_user_rights(
                 protocols, target_device)
             # Logger().debug("** END VALIDATOR DEVICE NAME Get_proxy_right **")
+            if prights:
+                self.proxy_rights = prights
+                return True
         except Exception:
             # import traceback
             # Logger().info("valid_device_name failed: (((%s)))" %
             #               (traceback.format_exc()))
-            return False
-        rights = prights
-        if rights:
-            self.proxy_rights = prights
-            return True
+            pass
         return False
 
     def _filter_rights(self, target_context):
@@ -883,9 +873,9 @@ class Engine(object):
                     break
                 if r['auth_has_approval'] is False:
                     right = r
-        if right:
-            self.init_timeframe(right)
-            self.target_right = right
+            if right:
+                self.init_timeframe(right)
+                self.target_right = right
         return right
 
     def get_target_rights(self, target_login, target_device, target_service,
@@ -1298,13 +1288,9 @@ class Engine(object):
                     #                (restriction.action, restriction.data,
                     #                 restriction.subprotocol.cn))
                     if restriction.action == 'kill':
-                        if not kill_patterns.get(subproto):
-                            kill_patterns[subproto] = []
-                        kill_patterns[subproto].append(restriction.data)
+                        kill_patterns.setdefault(subproto, []).append(restriction.data)
                     elif restriction.action == 'notify':
-                        if not notify_patterns.get(subproto):
-                            notify_patterns[subproto] = []
-                        notify_patterns[subproto].append(restriction.data)
+                        notify_patterns.setdefault(subproto, []).append(restriction.data)
 
             Logger().info("patterns_kill = [%s]" % (kill_patterns))
             Logger().info("patterns_notify = [%s]" % (notify_patterns))
