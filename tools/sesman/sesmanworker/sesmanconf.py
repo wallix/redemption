@@ -8,22 +8,21 @@ def TR(key):
     from logger import Logger
     originalkey = key
     key.replace(" %s", "")
-    # Logger().warning(u"Looking for translation for key '%s' (in '%s')" %
-    #                  (key, SESMANCONF.language))
-    trans = SESMANCONF.get(SESMANCONF.language)
+    language = SESMANCONF.language
+    # Logger().warning(f"Looking for translation for key '{key}' (in '{language}')")
+    trans = SESMANCONF.get(language)
     if trans is None:
-        Logger().warning(u"No translation available for language '%s', "
-                         u"falling back to english" % SESMANCONF.language)
+        Logger().warning(f"No translation available for language '{language}', "
+                         "falling back to english")
         trans = SESMANCONF.get('en')
     message = trans.get(originalkey)
     if message is None:
-        Logger().warning(u"No '%s' translation available for key '%s' "
-                         u"using key as message" % (SESMANCONF.language, key))
+        Logger().warning(f"No '{language}' translation available for key '{key}' "
+                         "using key as message")
         message = originalkey
     if originalkey.count(u'%s') != message.count(u'%s'):
-        Logger().warning(u"Variable parameters mismatch in '%s' "
-                         u"message for key '%s' => '%s'" %
-                         (SESMANCONF.language, originalkey, message))
+        Logger().warning(f"Variable parameters mismatch in '{language}' "
+                         f"message for key '{originalkey}' => '{message}'")
     return message
 
 
