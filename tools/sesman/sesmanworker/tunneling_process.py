@@ -11,30 +11,18 @@ import fcntl
 import shlex
 import binascii
 import pexpect
-import string
-from subprocess import Popen, PIPE
 import tempfile
 from time import (
     monotonic as get_time,
     sleep,
 )
-try:
-    from logger import Logger
-except Exception:
-    class Logger(object):
-        def info(self, msg):
-            print(msg)
-
-        def debug(self, msg):
-            print(msg)
+from logger import Logger
+from subprocess import Popen, PIPE
 
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 
-try:
-    from wallixconst.misc import VOLATILE_FOLDER
-except Exception:
-    VOLATILE_FOLDER = "/tmp"
+from wallixconst.misc import VOLATILE_FOLDER
 
 try:
     from wabsshkeys.utils import openssh_pkcs1_passphrase_private
