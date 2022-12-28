@@ -60,21 +60,19 @@ class Logtime(object):
     @set_time
     def _add_time(self, current_time):
         diff_time = (current_time - self.last_time)
-        print_debug(">>>>> Time ADDED %s for state %s" %
-                    (diff_time, self.current_step))
+        print_debug(f">>>>> Time ADDED {diff_time} for state {self.current_step}")
         self.step_time += diff_time
         self.last_time = current_time
 
     @set_time
     def _save_time(self, current_time):
-        print_debug(">>>>> Time SAVED %s for state %s" %
-                    (self.step_time, self.current_step))
+        print_debug(f">>>>> Time SAVED {self.step_time} for state {self.current_step}")
         self.saved_times[self.current_step] = round(self.step_time, 3)
         self._reset()
 
     @set_time
     def start(self, step, current_time):
-        print_debug(">>>>> START %s" % step)
+        print_debug(f">>>>> START {step}")
         if self.current_step == step:
             # step already started
             # resume it if it was paused
@@ -87,7 +85,7 @@ class Logtime(object):
         self.last_time = current_time
 
     def stop(self, step=None, current_time=None):
-        print_debug(">>>>> STOP %s" % (step or self.current_step))
+        print_debug(f">>>>> STOP {step or self.current_step}")
         if step is not None and step != self.current_step:
             return
         if self.current_step is not None:
@@ -97,7 +95,7 @@ class Logtime(object):
             self._save_time(current_time=current_time)
 
     def pause(self, step=None, current_time=None):
-        print_debug(">>>>> PAUSE %s" % (step or self.current_step))
+        print_debug(f">>>>> PAUSE {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
             return
@@ -108,7 +106,7 @@ class Logtime(object):
         print_debug(self.get_metrics())
 
     def resume(self, step=None, current_time=None):
-        print_debug(">>>>> RESUME %s" % (step or self.current_step))
+        print_debug(f">>>>> RESUME {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
             return
