@@ -98,7 +98,6 @@ def resolve_scenario_account(enginei, param, force_device=True):
     )
     if acc_infos is None:
         Logger().debug(
-            "Error: Unable to retrieve account info from '%s'" %
-            param
+            f"Error: Unable to retrieve account info from '{param}'"
         )
     return acc_infos
