@@ -650,7 +650,7 @@ class Engine(object):
         self.avatar_id = None
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
-        Logger().debug(f"** CALL Get_proxy_right ** proto={protocols}, target_device={target_device}")
+        Logger().debug(f"** CALL Get_proxy_right ** proto={protocols}, {target_device=}")
         with manage_transaction(self.wabengine):
             urights = self.wabengine.get_proxy_user_rights(protocols,
                                                            target_device,
@@ -924,7 +924,7 @@ class Engine(object):
 
     def get_app_params(self, selected_target, effective_target):
         # Logger().info("Engine get_app_params: "
-        #               "service_login={service_login} effective_target={effective_target}")
+        #               "{service_login=} {effective_target=}")
         if self.is_sharing_session(selected_target):
             from collections import namedtuple
             status, infos = self.check_target(selected_target)
@@ -1484,10 +1484,10 @@ class Engine(object):
         Logger().debug(f"** CALL Check_target ** ticket={request_ticket}")
         status, infos = self.checkout.check_target(target, request_ticket)
         Logger().debug("** END Check_target ** returns => "
-                       f"status={status}, info fields={infos.keys()}")
+                       f"{status=}, info fields={infos.keys()}")
         self.checktarget_cache = (status, target['target_uid'])
         self.checktarget_infos_cache = infos
-        # Logger().info(f"returns => status={status}, info={infos}")
+        # Logger().info(f"returns => {status=}, {infos=}")
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
             target['deconnection_time'] = deconnection_time

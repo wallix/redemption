@@ -355,7 +355,7 @@ class RTManager(object):
 
     def send_rtdisplay(self, rt_display):
         if self.sesman.shared.get("rt_display") != rt_display:
-            Logger().debug(f"sending rt_display={rt_display}")
+            Logger().debug(f"sending {rt_display=}")
             self.sesman.send_data({"rt_display": rt_display})
 
 
@@ -2114,7 +2114,7 @@ class Sesman():
                         else:
                             target_password = self.shared.get(u'password')
                         # Logger().info(
-                        #     f"auth_mode_passthrough target_password={target_password}"
+                        #     f"auth_mode_passthrough {target_password=}"
                         # )
                         kv[u'password'] = u'password'
                     elif PASSWORD_VAULT in auth_policy_methods:
@@ -2853,8 +2853,8 @@ class Sesman():
             sharing_mode = params.get("sharing_mode")
             sharing_type = params.get("sharing_type")
             sharing_ttl = params.get("sharing_request_ttl")
-            Logger().debug(f"sending _sharing_mode={sharing_mode}")
-            Logger().debug(f"sending _sharing_type={sharing_type}")
+            Logger().debug(f"sending {sharing_mode=}")
+            Logger().debug(f"sending {sharing_type=}")
             if sharing_type == "SHADOWING":
                 self.send_data({
                     u'rd_shadow_type': sharing_mode,
