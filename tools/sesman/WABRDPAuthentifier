@@ -17,9 +17,9 @@ import socket
 import sys
 
 #syslog = type(sys)('syslog')
-#syslog.openlog = lambda name: None
-#syslog.LOG_INFO = 0
-#syslog.syslog = lambda lvl, text: print('\x1b[1m', text, '\x1b[0m', sep='')
+#syslog.openlog = lambda name: None  # type: ignore
+#syslog.LOG_INFO = 0  # type: ignore
+#syslog.syslog = lambda lvl, text: print('\x1b[1m', text, '\x1b[0m', sep='')  # type: ignore
 #sys.modules['syslog'] = syslog
 
 from socket import fromfd

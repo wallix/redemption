@@ -985,7 +985,7 @@ class Sesman():
 
         return _status, _error
 
-    def authentify(self) -> (Optional[bool], str):
+    def authentify(self):
         """ Authentify the user through password engine and then retreive his rights
              The user preferred language will be set as the language to use in
              interactive messages
@@ -1027,10 +1027,10 @@ class Sesman():
                 and not target_device == MAGICASK):
                 if (self.target_service_name
                     and not self.target_service_name == MAGICASK):
-                    target_info = f"{target_login}@{target_device}:{self.target_service_name}"
+                    target_info_str = f"{target_login}@{target_device}:{self.target_service_name}"
                 else:
-                    target_info = f"{target_login}@{target_device}"
-                target_info = target_info.encode('utf8')
+                    target_info_str = f"{target_login}@{target_device}"
+                target_info = target_info_str.encode('utf8')
 
             # Check if we are using OTP
             # before trying any authentification method
