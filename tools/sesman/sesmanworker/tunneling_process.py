@@ -142,7 +142,7 @@ def expect_connection_ready(file_path: str) -> bool:
 def remove_file(file_path: str) -> None:
     try:
         os.remove(file_path)
-    except Exception:
+    except OSError:
         pass
 
 
@@ -155,6 +155,8 @@ def add_passphrase_to_private_key(private_key: AnyStr, passphrase: str) -> str:
 
 
 class TunnelingProcessInterface:
+    sock_path: str
+
     def start(self) -> bool:
         return False
 
@@ -169,7 +171,6 @@ class TunnelingProcessInterface:
 
 
 class TunnelingProcessSSH(TunnelingProcessInterface):
-    sock_path: Optional[str]
     process: Optional[Any]
 
     def __init__(self,
@@ -177,11 +178,11 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
                  vnc_port: Union[int, str],
                  ssh_port: Union[int, str],
                  ssh_login: str,
-                 ssh_password: Optional[str],
+                 ssh_password: str,
                  ssh_key: Optional[Tuple[AnyStr, Any, str]],
                  sock_path_dir: str) -> None:
         self.process = None
-        self.sock_path = None
+        self.sock_path = ''
         self.target_host = target_host
         self.vnc_port = vnc_port
         self.ssh_port = ssh_port
@@ -230,13 +231,11 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
                 raise
 
     def _generate_sock_path(self) -> None:
-        if self.sock_path is None:
-            pid = os.getpid()
-            generated_name = (
-                f"vnc-{pid}-"
-                f"{crypto_random_str_by_bytes_size(RANDOM_NAME_SIZE)}.sock"
-            )
-            self.sock_path = os.path.join(self.sock_path_dir, generated_name)
+        assert not self.sock_path
+        pid = os.getpid()
+        random_text = crypto_random_str_by_bytes_size(RANDOM_NAME_SIZE)
+        generated_name = f"vnc-{pid}-{random_text}.sock"
+        self.sock_path = os.path.join(self.sock_path_dir, generated_name)
 
     def start(self) -> bool:
         self._generate_sock_path()
@@ -263,9 +262,9 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
             self._remove_ssh_key_files()
 
     def _remove_socket_file(self) -> None:
-        if self.sock_path is not None:
+        if self.sock_path:
             remove_file(self.sock_path)
-            self.sock_path = None
+            self.sock_path = ''
 
     def _remove_ssh_key_files(self) -> None:
         if self.ssh_key_private_key_filename:
@@ -377,9 +376,10 @@ def ssh_tunneling_vnc(local_usocket_name: str,
     remove_file(local_usocket_name)
     Logger().debug(f"ssh_tunneling_vnc {tunneling_command}")
     try:
-        process_fn = popen_sshpass_ssh
         if use_pexpect:
             process_fn = pexpect_prompt_ssh
+        else:
+            process_fn = popen_sshpass_ssh
         process = process_fn(
             tunneling_command,
             ssh_password,
@@ -412,7 +412,6 @@ def pxssh_ssh_tunneling_vnc(local_usocket_name: str,
     ssh_private_key_passphrase : ssh private key passphrase
     """
     from pexpect import pxssh
-    p = None
     try:
         p = pxssh.pxssh(
             ignore_sighup=False,
@@ -436,50 +435,43 @@ def pxssh_ssh_tunneling_vnc(local_usocket_name: str,
                 'local': [f'{local_usocket_name}:localhost:{vnc_port}']
             }
         )
+        return p
     except Exception as e:
         Logger().info(f"Tunneling with PXSSH Error {e}")
-        p = None
-    return p
+        return None
 
 
 def check_tunneling(engine,
                     opts: Dict[str, Any],
                     target_host: str,
                     target_port: Union[int, str],
-                    sock_path_dir: Optional[str] = None) -> Optional[TunnelingProcessInterface]:
-    if not opts.get("enable"):
-        return None
-    try:
-        ssh_port = opts.get("ssh_port")
-        if opts.get("tunneling_credential_source") == "static_login":
-            ssh_login = opts.get("ssh_login")
-            ssh_password = opts.get("ssh_password")
-            ssh_key = None
-        else:
-            acc_infos = engine.get_scenario_account(param=opts.get("scenario_account_name"),
-                                                    force_device=True)
-            ssh_login = acc_infos.get('login')
-            ssh_password = acc_infos.get('password')
-            ssh_key = acc_infos.get('ssh_key')
+                    sock_path_dir: str) -> TunnelingProcessInterface:
+    ssh_port = opts.get("ssh_port")
+    if opts.get("tunneling_credential_source") == "static_login":
+        ssh_login = opts.get("ssh_login")
+        ssh_password = opts.get("ssh_password")
+        ssh_key = None
+    else:
+        acc_infos = engine.get_scenario_account(param=opts.get("scenario_account_name"),
+                                                force_device=True)
+        ssh_login = acc_infos.get('login')
+        ssh_password = acc_infos.get('password')
+        ssh_key = acc_infos.get('ssh_key')
 
-        tunneling_type = opts.get("tunneling_type", "pxssh")
-        if tunneling_type == "pexpect":
-            tunneling_class = TunnelingProcessPEXPECTSSH
-        elif tunneling_type == "popen":
-            tunneling_class = TunnelingProcessSSH  # type: ignore
-        else:
-            tunneling_class = TunnelingProcessPXSSH  # type: ignore
-        tunneling_process = tunneling_class(
-            target_host=target_host,
-            vnc_port=target_port,
-            ssh_port=ssh_port,
-            ssh_login=ssh_login,
-            ssh_password=ssh_password,
-            ssh_key=ssh_key,
-            sock_path_dir=sock_path_dir
-        )
-    except Exception:
-        import traceback
-        Logger().debug(traceback.format_exc())
-        return None
-    return tunneling_process
+    tunneling_type = opts.get("tunneling_type", "pxssh")
+    if tunneling_type == "pexpect":
+        tunneling_class = TunnelingProcessPEXPECTSSH
+    elif tunneling_type == "popen":
+        tunneling_class = TunnelingProcessSSH  # type: ignore
+    else:
+        tunneling_class = TunnelingProcessPXSSH  # type: ignore
+
+    return tunneling_class(
+        target_host=target_host,
+        vnc_port=target_port,
+        ssh_port=ssh_port,
+        ssh_login=ssh_login,
+        ssh_password=ssh_password or '',
+        ssh_key=ssh_key,
+        sock_path_dir=sock_path_dir
+    )

@@ -59,6 +59,8 @@ import syslog
 
 from .logtime import logtimer, logtime_function_pause
 
+from typing import Dict, Any, Tuple
+
 
 def print_exception_caught(func):
     def method_wrapper(self, *args, **kwargs):
@@ -2202,7 +2204,7 @@ class Sesman():
                         and 'vnc_over_ssh' in conn_opts
                         and conn_opts.get("vnc_over_ssh").get("enable")):
                         _status, _error = \
-                            self._load_vnc_over_ssh_options(kv, conn_opts)
+                            self._load_vnc_over_ssh_options(kv, conn_opts.get("vnc_over_ssh"))
 
                     if not _status:
                         login = mundane(self.shared.get('login'))
@@ -3008,30 +3010,30 @@ class Sesman():
                 effective_krb_armoring_password
         return krb_data
 
-    def _load_vnc_over_ssh_options(self, kv, conn_opts):
+    def _load_vnc_over_ssh_options(self, kv: Dict[str, Any], opts: Dict[str, Any]) -> Tuple[bool, str]:
         from .tunneling_process import check_tunneling
-        enable = conn_opts.get("vnc_over_ssh", {}).get("enable")
-        Logger().debug(f"CHECK TUNNELLING {enable}")
-        _status = False
-        _error = "VNC over SSH Tunneling Error"
-        self.tun_process = check_tunneling(
-            self.engine, conn_opts.get("vnc_over_ssh"),
-            self._physical_target_host,
-            kv['target_port'],
-            sock_path_dir=SOCK_PATH_DIR
-        )
-        if self.tun_process:
-            _status = self.tun_process.start()
-            if _status:
-                kv['tunneling_target_host'] = \
-                    self.tun_process.sock_path
-                _status = self.tun_process.pre_connect()
-        if _status:
-            _error = "No Error"
-        return _status, _error
+        Logger().debug("VNC over SSH Tunneling")
+        try:
+            self.tun_process = check_tunneling(
+                self.engine,
+                opts,
+                self._physical_target_host,
+                kv['target_port'],
+                sock_path_dir=SOCK_PATH_DIR
+            )
 
+            status = self.tun_process.start()
+            if status:
+                kv['tunneling_target_host'] = self.tun_process.sock_path
+                status = self.tun_process.pre_connect()
+                if status:
+                    return status, "No Error"
 
+        except Exception:
+            import traceback
+            Logger().debug(traceback.format_exc())
 
+        return False, "VNC over SSH Tunneling Error"
 
 
 # END CLASS - Sesman
