@@ -114,7 +114,7 @@ class Engine(object):
         self.session_record = None
         self.session_record_type = None
         self.deconnection_epoch = 0xffffffff
-        self.deconnection_time = u"-"
+        self.deconnection_time = "-"
         self.start_time = None
 
         self.proxy_rights = None
@@ -126,7 +126,7 @@ class Engine(object):
         self.displaytargets = []
 
         self.session_result = True
-        self.session_diag = u'Success'
+        self.session_diag = 'Success'
         self.trace_hash = None
         self.failed_secondary_set = False
 
@@ -232,8 +232,8 @@ class Engine(object):
     def init_timeframe(self, auth):
         deconnection_time = auth['deconnection_time']
         if (deconnection_time
-            and deconnection_time != u"-"
-            and deconnection_time[0:4] <= u"2034"
+            and deconnection_time != "-"
+            and deconnection_time[0:4] <= "2034"
         ):
             self.deconnection_time = deconnection_time
             self.deconnection_epoch = int(
@@ -251,7 +251,7 @@ class Engine(object):
                           "configuration file section "
                           "'wabengine', key 'trace', "
                           f"((({traceback.format_exc()})))")
-        return u'localfile_hashed'
+        return 'localfile_hashed'
 
     def get_selector_banner(self):
         try:
@@ -400,18 +400,18 @@ class Engine(object):
                                             time, url):
         try:
             notif_data = {
-                u'protocol': protocol,
-                u'user': user,
-                u'source': source,
-                u'ip_source': ip_source,
-                u'login': login,
-                u'device': device,
-                u'ip': ip,
-                u'time': time
+                'protocol': protocol,
+                'user': user,
+                'source': source,
+                'ip_source': ip_source,
+                'login': login,
+                'device': device,
+                'ip': ip,
+                'time': time
             }
 
             if not (url is None):
-                notif_data[u'url'] = url
+                notif_data['url'] = url
 
             Notify(self.wabengine, CX_EQUIPMENT, notif_data)
         except Exception:
@@ -422,10 +422,10 @@ class Engine(object):
     def NotifySecondaryConnectionFailed(self, user, ip, account, device):
         try:
             notif_data = {
-                u'user': user,
-                u'ip': ip,
-                u'account': account,
-                u'device': device,
+                'user': user,
+                'ip': ip,
+                'account': account,
+                'device': device,
             }
 
             Notify(self.wabengine, SECONDARY_CX_FAILED, notif_data)
@@ -437,8 +437,8 @@ class Engine(object):
     def NotifyFilesystemIsFullOrUsedAtXPercent(self, filesystem, used):
         try:
             notif_data = {
-                u'filesystem': filesystem,
-                u'used': used
+                'filesystem': filesystem,
+                'used': used
             }
 
             Notify(self.wabengine, FILESYSTEM_FULL, notif_data)
@@ -451,13 +451,13 @@ class Engine(object):
                                    host, cn, service):
         try:
             notif_data = {
-                u'regexp': regexp,
-                u'string': string,
-                u'user_login': user_login,
-                u'user': user,
-                u'host': host,
-                u'device': cn,
-                u'service': service,
+                'regexp': regexp,
+                'string': string,
+                'user_login': user_login,
+                'user': user,
+                'host': host,
+                'device': cn,
+                'service': service,
             }
 
             Notify(self.wabengine, RDP_PATTERN_FOUND, notif_data)
@@ -477,17 +477,17 @@ class Engine(object):
                                    host, cn, service):
         try:
             notif_data = {
-                u'rule': rule,
-                u'deny': deny,
-                u'app_name': app_name,
-                u'app_cmd_line': app_cmd_line,
-                u'dst_addr': dst_addr,
-                u'dst_port': dst_port,
-                u'user_login': user_login,
-                u'user': user,
-                u'host': host,
-                u'device': cn,
-                u'service': service
+                'rule': rule,
+                'deny': deny,
+                'app_name': app_name,
+                'app_cmd_line': app_cmd_line,
+                'dst_addr': dst_addr,
+                'dst_port': dst_port,
+                'user_login': user_login,
+                'user': user,
+                'host': host,
+                'device': cn,
+                'service': service
             }
             Notify(self.wabengine, RDP_OUTCXN_FOUND, notif_data)
             Logger().info(
@@ -504,15 +504,15 @@ class Engine(object):
                                 user_login, user, host, cn, service):
         try:
             notif_data = {
-                u'regex': regex,
-                u'deny': deny,
-                u'app_name': app_name,
-                u'app_cmd_line': app_cmd_line,
-                u'user_login': user_login,
-                u'user': user,
-                u'host': host,
-                u'device': cn,
-                u'service': service
+                'regex': regex,
+                'deny': deny,
+                'app_name': app_name,
+                'app_cmd_line': app_cmd_line,
+                'user_login': user_login,
+                'user': user,
+                'host': host,
+                'device': cn,
+                'service': service
             }
             Notify(self.wabengine, RDP_PROCESS_FOUND, notif_data)
             Logger().info(
@@ -545,15 +545,15 @@ class Engine(object):
         for target_info in self.displaytargets:
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
-            if not target_info.protocol == u"APP":
-                if (target_info.target_name == u'autotest'
-                    or target_info.target_name == u'bouncer2'
-                    or target_info.target_name == u'widget2_message'
-                    or target_info.target_name == u'widgettest'
-                    or target_info.target_name == u'card'):
+            if not target_info.protocol == "APP":
+                if (target_info.target_name == 'autotest'
+                    or target_info.target_name == 'bouncer2'
+                    or target_info.target_name == 'widget2_message'
+                    or target_info.target_name == 'widgettest'
+                    or target_info.target_name == 'card'):
                     temp_service_login = target_info.service_login.replace(
-                        u':RDP',
-                        u':INTERNAL', 1)
+                        ':RDP',
+                        ':INTERNAL', 1)
                     temp_resource_service_protocol_cn = 'INTERNAL'
 
             if (not fc(group_filter) in fc(target_info.group)
@@ -613,14 +613,14 @@ class Engine(object):
 
         self.target_right = None
         self.deconnection_epoch = 0xffffffff
-        self.deconnection_time = u"-"
+        self.deconnection_time = "-"
         self.start_time = None
 
         self.session_record = None
         self.session_record_type = None
         self.session_id = None
         self.session_result = True
-        self.session_diag = u'Success'
+        self.session_diag = 'Success'
         self.failed_secondary_set = False
         self.trace_hash = None
 
@@ -699,8 +699,8 @@ class Engine(object):
                 auth_name = right['target_group']
             if right['application_cn']:
                 target_name = right['application_cn']
-                service_name = u"APP"
-                protocol = u"APP"
+                service_name = "APP"
+                protocol = "APP"
                 host = None
                 alias = None
                 subprotocols = []
@@ -859,7 +859,7 @@ class Engine(object):
     def get_target_rights(self, target_login, target_device, target_service,
                           target_group, target_context=None):
         try:
-            self.get_proxy_rights([u'SSH', u'TELNET', u'RLOGIN', u'RAWTCPIP'],
+            self.get_proxy_rights(['SSH', 'TELNET', 'RLOGIN', 'RAWTCPIP'],
                                   target_device=target_device,
                                   target_context=target_context)
             right = self._find_target_right(target_login, target_device,
@@ -884,7 +884,7 @@ class Engine(object):
         # Logger().info(
         #     f">>==GET_SELECTED_TARGET {target_device}@{target_login}:{target_service}:{target_group}"
         # )
-        self.get_proxy_rights([u'RDP', u'VNC'], target_device,
+        self.get_proxy_rights(['RDP', 'VNC'], target_device,
                               target_context=target_context)
         return self._find_target_right(target_login, target_device,
                                        target_service, target_group)
@@ -1006,7 +1006,7 @@ class Engine(object):
 
     def get_target_password(self, target_device):
         passwords = self.get_target_passwords(target_device)
-        return passwords[0] if passwords else u""
+        return passwords[0] if passwords else ""
 
     def get_target_privkeys(self, target_device):
         Logger().debug("Engine get_target_privkeys ...")
@@ -1196,7 +1196,7 @@ class Engine(object):
             Logger().info("Engine sharing_response failed:"
                           f" ((({traceback.format_exc()})))")
 
-    def stop_session(self, title=u"End session"):
+    def stop_session(self, title="End session"):
         try:
             if self.session_id:
                 # Logger().info(
@@ -1228,10 +1228,10 @@ class Engine(object):
 
     # RESTRICTIONS
     def get_all_restrictions(self, auth, proxytype):
-        if proxytype == u"RDP":
+        if proxytype == "RDP":
             def matchproto(x):
-                return x == u"RDP"
-        elif proxytype == u"SSH":
+                return x == "RDP"
+        elif proxytype == "SSH":
             def matchproto(x):
                 return x in ["SSH_SHELL_SESSION",
                              "SSH_REMOTE_COMMAND",
@@ -1275,9 +1275,9 @@ class Engine(object):
             return None, None
         if proxytype == "RDP":
             def matchproto(x):
-                return x == u"RDP"
-            separator = u"\x01"
-        elif proxytype == u"SSH":
+                return x == "RDP"
+            separator = "\x01"
+        elif proxytype == "SSH":
             def matchproto(x):
                 return x in ["SSH_SHELL_SESSION",
                              "SSH_REMOTE_COMMAND",
@@ -1285,7 +1285,7 @@ class Engine(object):
                              "SSH_SCP_DOWN",
                              "SFTP_SESSION",
                              "RLOGIN", "TELNET"]
-            separator = u"|"
+            separator = "|"
         else:
             return None, None
         try:
@@ -1363,7 +1363,7 @@ class Engine(object):
             self.session_result = False
 
     def globalsize_limit_notify(self, action, globalsize, limit_globalsize):
-        self.session_diag = u'Filesize restriction detected'
+        self.session_diag = 'Filesize restriction detected'
         data = {
             "regexp": f"globalsize > {globalsize}",
             "string": f"globalsize > {limit_globalsize}",
@@ -1395,7 +1395,7 @@ class Engine(object):
                     self.session_record = self.wabengine.get_trace_writer(
                         self.session_id,
                         filename=filename,
-                        trace_type=u'pcap'
+                        trace_type='pcap'
                     )
                 self.session_record_type = "pcap"
                 self.session_record.initialize()
@@ -1422,7 +1422,7 @@ class Engine(object):
                     self.session_record = self.wabengine.get_trace_writer(
                         self.session_id,
                         filename=filename,
-                        trace_type=u'ttyrec'
+                        trace_type='ttyrec'
                     )
                 self.session_record_type = "ttyrec"
                 self.session_record.initialize()
@@ -1454,14 +1454,14 @@ class Engine(object):
 
     def write_trace(self, video_path):
         try:
-            _status, _error = True, u"No error"
+            _status, _error = True, "No error"
             if video_path:
                 with manage_transaction(self.wabengine):
                     # Notify WabEngine with Trace file descriptor
                     trace = self.wabengine.get_trace_writer(
                         self.session_id,
                         filename=video_path,
-                        trace_type=u"rdptrc"
+                        trace_type="rdptrc"
                     )
                 trace.initialize()
                 trace.writeframe(f"{video_path}.mwrm".encode('utf-8'))
@@ -1469,7 +1469,7 @@ class Engine(object):
                 self.session_record_type = "rdptrc"
         except Exception as e:
             Logger().info(f"Engine write_trace failed: {e}")
-            _status, _error = False, u"Exception"
+            _status, _error = False, "Exception"
         return _status, _error
 
     def read_session_parameters(self, key=None):
@@ -1530,7 +1530,7 @@ class Engine(object):
         if not target:
             return None
         if self.is_sharing_session(target):
-            return u'-'
+            return '-'
         return target['deconnection_time']
 
     def get_server_pubkey_options(self, selected_target=None):

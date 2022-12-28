@@ -20,7 +20,7 @@ def TR(key):
         Logger().warning(f"No '{language}' translation available for key '{key}' "
                          "using key as message")
         message = originalkey
-    if originalkey.count(u'%s') != message.count(u'%s'):
+    if originalkey.count('%s') != message.count('%s'):
         Logger().warning(f"Variable parameters mismatch in '{language}' "
                          f"message for key '{originalkey}' => '{message}'")
     return message
@@ -31,203 +31,203 @@ class SesmanConfig(object):
     def __init__(self):
         self.language = 'en'
         self.conf = {
-            u'sesman': {
-                u'record_warning': True,
-                u'debug': False,
-                u'auth_mode_passthrough': False,
-                u'default_login': u'',
-                u'selector_filters_case_sensitive': False,
+            'sesman': {
+                'record_warning': True,
+                'debug': False,
+                'auth_mode_passthrough': False,
+                'default_login': '',
+                'selector_filters_case_sensitive': False,
             },
-            u'fr': {
-                u'session_closed_at %s': u"Votre session sera fermée à %s.",
-                u'licence_blocker': (
-                    u"Connexion refusée (par rapport à votre licence)"
+            'fr': {
+                'session_closed_at %s': "Votre session sera fermée à %s.",
+                'licence_blocker': (
+                    "Connexion refusée (par rapport à votre licence)"
                 ),
-                u'auth_failed_wab %s': (
-                    u"Echec de l'authentification pour l'utilisateur du wab %s"
+                'auth_failed_wab %s': (
+                    "Echec de l'authentification pour l'utilisateur du wab %s"
                 ),
-                u'error_getting_record_path': (
-                    u"Impossible d'obtenir le répertoire d'enregistrement"
+                'error_getting_record_path': (
+                    "Impossible d'obtenir le répertoire d'enregistrement"
                 ),
-                u'error_getting_record_path %s': (
-                    u"Impossible d'obtenir le répertoire d'enregistrement %s"
+                'error_getting_record_path %s': (
+                    "Impossible d'obtenir le répertoire d'enregistrement %s"
                 ),
-                u'valid_authorisation': (
-                    u"Veuillez valider l'autorisation sur votre navigateur"
+                'valid_authorisation': (
+                    "Veuillez valider l'autorisation sur votre navigateur"
                 ),
-                u'not_display_message': u"Impossible d'afficher le message",
-                u'changepassword': (
-                    u"Vous devez changer votre mot de passe "
-                    u"pour vous connecter."
+                'not_display_message': "Impossible d'afficher le message",
+                'changepassword': (
+                    "Vous devez changer votre mot de passe "
+                    "pour vous connecter."
                 ),
-                u"Connection closed by client": (
-                    u'Connection terminée par le client'
+                "Connection closed by client": (
+                    'Connection terminée par le client'
                 ),
-                u"Empty user, try again": u"Utilisteur non défini, reessayez.",
-                u"Invalid user, try again": (
-                    u"Utilisateur non valide, réessayez."
+                "Empty user, try again": "Utilisteur non défini, reessayez.",
+                "Invalid user, try again": (
+                    "Utilisateur non valide, réessayez."
                 ),
-                u"No error": u"Pas d'erreur",
-                u"Target %s not found in user rights": (
-                    u"Cible %s inconnu dans les droits de l'utilisateur"
+                "No error": "Pas d'erreur",
+                "Target %s not found in user rights": (
+                    "Cible %s inconnu dans les droits de l'utilisateur"
                 ),
-                u"Target unreachable": u"Target unreachable",
-                u"Too many login failures or selector orders, closing": (
-                    u"Trop de login incorrect, fermeture"
+                "Target unreachable": "Target unreachable",
+                "Too many login failures or selector orders, closing": (
+                    "Trop de login incorrect, fermeture"
                 ),
-                u"Trace writer failed for %s": (
-                    u"Echec de l'enregistrement des traces pour %s"
+                "Trace writer failed for %s": (
+                    "Echec de l'enregistrement des traces pour %s"
                 ),
-                u"x509 browser authentication not validated by user": (
-                    u"Authentification X509 via le navigateur non validée."
+                "x509 browser authentication not validated by user": (
+                    "Authentification X509 via le navigateur non validée."
                 ),
-                u'not_accept_message': u"Message de confirmation refusé.",
-                u'selected_target': u'Cible sélectionnée',
-                u'Username_parse_error %s': (
-                    u"Erreur de parsing du nom d'utilisateur %s"
+                'not_accept_message': "Message de confirmation refusé.",
+                'selected_target': 'Cible sélectionnée',
+                'Username_parse_error %s': (
+                    "Erreur de parsing du nom d'utilisateur %s"
                 ),
-                u'Your Bastion password will expire in %s days. Please change it.': (
-                    u'Votre mot de passe Bastion expirera dans %s jours. '
-                    u'Vous devriez le changer.'
+                'Your Bastion password will expire in %s days. Please change it.': (
+                    'Votre mot de passe Bastion expirera dans %s jours. '
+                    'Vous devriez le changer.'
                 ),
-                u'Your Bastion password will expire soon. Please change it.': (
-                    u"L'expiration de votre mot de passe Bastion est imminente."
-                    u" Saisissez un nouveau mot de passe."
+                'Your Bastion password will expire soon. Please change it.': (
+                    "L'expiration de votre mot de passe Bastion est imminente."
+                    " Saisissez un nouveau mot de passe."
                 ),
-                u'passthrough_auth_failed_wab %s': (
-                    u"Echec de l'authentification passthrough pour "
-                    u"l'utilisateur %s."
+                'passthrough_auth_failed_wab %s': (
+                    "Echec de l'authentification passthrough pour "
+                    "l'utilisateur %s."
                 ),
-                u'In_subnet %s': u"dans le sous-réseau %s.",
-                u'no_match_subnet %s %s': (
-                    u"%s n'appartient pas au sous-réseau %s."
+                'In_subnet %s': "dans le sous-réseau %s.",
+                'no_match_subnet %s %s': (
+                    "%s n'appartient pas au sous-réseau %s."
                 ),
-                u'error %s': u'Erreur: %s',
-                u'authentication_failed': u"Echec d'authentification.",
-                u'account_locked': u"Compte verrouillé.",
-                u'start_session_failed': u'Echec de démarage de session.',
-                u'pattern_kill': (
-                    u'Motif interdit detecté, le gestionnaire de session a '
-                    u'coupé la connexion.'
+                'error %s': 'Erreur: %s',
+                'authentication_failed': "Echec d'authentification.",
+                'account_locked': "Compte verrouillé.",
+                'start_session_failed': 'Echec de démarage de session.',
+                'pattern_kill': (
+                    'Motif interdit detecté, le gestionnaire de session a '
+                    'coupé la connexion.'
                 ),
-                u'session_probe_launch_failed': (
-                    u'Impossible de lancer Session Probe, le gestionnaire de '
-                    u'session a coupé la connexion.'
+                'session_probe_launch_failed': (
+                    'Impossible de lancer Session Probe, le gestionnaire de '
+                    'session a coupé la connexion.'
                 ),
-                u'session_probe_keepalive_missed': (
-                    u'Keepalive de Session Probe est manquant, le '
-                    u'gestionnaire de session a coupé la connexion.'
+                'session_probe_keepalive_missed': (
+                    'Keepalive de Session Probe est manquant, le '
+                    'gestionnaire de session a coupé la connexion.'
                 ),
-                u'session_probe_outbound_connection_blocking_failed': (
-                    u'Connexion sortante potentiellement indésirable detectée'
-                    u', le gestionnaire de session a coupé la connexion.'
+                'session_probe_outbound_connection_blocking_failed': (
+                    'Connexion sortante potentiellement indésirable detectée'
+                    ', le gestionnaire de session a coupé la connexion.'
                 ),
-                u'session_probe_process_blocking_failed': (
-                    u'Processus potentiellement indésirable détecté, '
-                    u'le gestionnaire de session a coupé la connexion.'
+                'session_probe_process_blocking_failed': (
+                    'Processus potentiellement indésirable détecté, '
+                    'le gestionnaire de session a coupé la connexion.'
                 ),
-                u'session_probe_failed_to_run_startup_application': (
-                    u"Echec de lancement d'application de démarrage, "
-                    u"le gestionnaire de session a coupé la connexion."
+                'session_probe_failed_to_run_startup_application': (
+                    "Echec de lancement d'application de démarrage, "
+                    "le gestionnaire de session a coupé la connexion."
                 ),
-                u'session_probe_reconnection': (
-                    u"Une reconnexion de Session Probe non autorisée est "
-                    u"détectée."
+                'session_probe_reconnection': (
+                    "Une reconnexion de Session Probe non autorisée est "
+                    "détectée."
                 ),
-                u'application_fatal_error': (
-                    u"Une erreur fatale s'est produite et cette application a "
-                    u"été interrompue."
+                'application_fatal_error': (
+                    "Une erreur fatale s'est produite et cette application a "
+                    "été interrompue."
                 ),
             },
-            u'en': {
-                u'session_closed_at %s': u"Your session will close at %s.",
-                u'licence_blocker': (
-                    u"Connection rejected (due to licence limitation)"
+            'en': {
+                'session_closed_at %s': "Your session will close at %s.",
+                'licence_blocker': (
+                    "Connection rejected (due to licence limitation)"
                 ),
-                u'auth_failed_wab %s': (
-                    u"Authentication failed for wab user %s"
+                'auth_failed_wab %s': (
+                    "Authentication failed for wab user %s"
                 ),
-                u'error_getting_record_path': (
-                    u"Failed to get recording path"
+                'error_getting_record_path': (
+                    "Failed to get recording path"
                 ),
-                u'error_getting_record_path %s': (
-                    u"Failed to get recording path for %s"
+                'error_getting_record_path %s': (
+                    "Failed to get recording path for %s"
                 ),
-                u'valid_authorisation': (
-                    u"Validate your authorisation on your browser"
+                'valid_authorisation': (
+                    "Validate your authorisation on your browser"
                 ),
-                u'not_display_message': (
-                    u"Unable to display message"
+                'not_display_message': (
+                    "Unable to display message"
                 ),
-                u'changepassword': (
-                    u"You must change your password to login"
+                'changepassword': (
+                    "You must change your password to login"
                 ),
-                u"Connection closed by client": (
-                    u"Connection closed by client"
+                "Connection closed by client": (
+                    "Connection closed by client"
                 ),
-                u"Empty user, try again": u"Empty user, try again",
-                u"Invalid user, try again": u"Invalid user, try again",
-                u"No error": u"No error",
-                u"Target %s not found in user rights": (
-                    u"Target %s not found in user rights"
+                "Empty user, try again": "Empty user, try again",
+                "Invalid user, try again": "Invalid user, try again",
+                "No error": "No error",
+                "Target %s not found in user rights": (
+                    "Target %s not found in user rights"
                 ),
-                u"Target unreachable": u"Target unreachable",
-                u"Too many login failures or selector orders, closing": (
-                    u"Too many login failures or selector orders, closing"
+                "Target unreachable": "Target unreachable",
+                "Too many login failures or selector orders, closing": (
+                    "Too many login failures or selector orders, closing"
                 ),
-                u"Trace writer failed for %s": u"Trace writer failed for %s",
-                u"x509 browser authentication not validated by user": (
-                    u"x509 browser authentication not validated by user"
+                "Trace writer failed for %s": "Trace writer failed for %s",
+                "x509 browser authentication not validated by user": (
+                    "x509 browser authentication not validated by user"
                 ),
-                u'not_accept_message': u'Confirmation message refused.',
-                u'selected_target': u'Selected target',
-                u'Username_parse_error %s': u'Username_parse_error %s',
-                u'Your Bastion password will expire in %s days. Please change it.': (
-                    u'Your Bastion password will expire in %s days. Please '
-                    u'change it.'
+                'not_accept_message': 'Confirmation message refused.',
+                'selected_target': 'Selected target',
+                'Username_parse_error %s': 'Username_parse_error %s',
+                'Your Bastion password will expire in %s days. Please change it.': (
+                    'Your Bastion password will expire in %s days. Please '
+                    'change it.'
                 ),
-                u'Your Bastion password will expire soon. Please change it.': (
-                    u'Your Bastion password will expire soon. Please change it.'
+                'Your Bastion password will expire soon. Please change it.': (
+                    'Your Bastion password will expire soon. Please change it.'
                 ),
-                u'passthrough_auth_failed_wab %s': (
-                    u'Passthrough authentication failed for user %s.'
+                'passthrough_auth_failed_wab %s': (
+                    'Passthrough authentication failed for user %s.'
                 ),
-                u'in_subnet %s': u"in %s subnet.",
-                u'no_match_subnet %s %s': u"%s not in %s subnet.",
-                u'error %s': u'Error: %s',
-                u'authentication_failed': u'Authentication failed.',
-                u'account_locked': u"Account locked.",
-                u'start_session_failed': u'Failed to start session.',
-                u'pattern_kill': (
-                    u'Forbidden pattern detected, '
-                    u'connection closed by manager.'
+                'in_subnet %s': "in %s subnet.",
+                'no_match_subnet %s %s': "%s not in %s subnet.",
+                'error %s': 'Error: %s',
+                'authentication_failed': 'Authentication failed.',
+                'account_locked': "Account locked.",
+                'start_session_failed': 'Failed to start session.',
+                'pattern_kill': (
+                    'Forbidden pattern detected, '
+                    'connection closed by manager.'
                 ),
-                u'session_probe_launch_failed': (
-                    u'Could not launch Session Probe, '
-                    u'connection closed by manager.'
+                'session_probe_launch_failed': (
+                    'Could not launch Session Probe, '
+                    'connection closed by manager.'
                 ),
-                u'session_probe_keepalive_missed': (
-                    u'Session Probe keepalive missed, '
-                    u'connection closed by manager.'
+                'session_probe_keepalive_missed': (
+                    'Session Probe keepalive missed, '
+                    'connection closed by manager.'
                 ),
-                u'session_probe_outbound_connection_blocking_failed': (
-                    u'Potentially undesirable outbound connection detected, '
-                    u'connection closed by manager.'
+                'session_probe_outbound_connection_blocking_failed': (
+                    'Potentially undesirable outbound connection detected, '
+                    'connection closed by manager.'
                 ),
-                u'session_probe_process_blocking_failed': (
-                    u'Potentially undesirable process detected, connection '
-                    u'closed by manager.'
+                'session_probe_process_blocking_failed': (
+                    'Potentially undesirable process detected, connection '
+                    'closed by manager.'
                 ),
-                u'session_probe_failed_to_run_startup_application': (
-                    u'Startup application launch failed, '
-                    u'connection closed by manager.'
+                'session_probe_failed_to_run_startup_application': (
+                    'Startup application launch failed, '
+                    'connection closed by manager.'
                 ),
-                u'session_probe_reconnection': (
-                    u"Unauthorized Session Probe reconnection is detected."
+                'session_probe_reconnection': (
+                    "Unauthorized Session Probe reconnection is detected."
                 ),
-                u'application_fatal_error': (
-                    u"A fatal error has occurred and this application has been "
-                    u"terminated."
+                'application_fatal_error': (
+                    "A fatal error has occurred and this application has been "
+                    "terminated."
                 ),
             }
         }

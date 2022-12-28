@@ -168,9 +168,8 @@ class CheckoutEngine(object):
         except Exception as e:
             Logger().info(f"Engine checkout_account failed: {e}")
             status = S_ERROR
-            infos = {'message':
-                     u'An internal error has occured on account retrieval. '
-                     u'Please contact your administrator.'}
+            infos = {'message': 'An internal error has occured on account retrieval. '
+                                'Please contact your administrator.'}
         return_status = APPROVAL_REJECTED
         if status in STATUS_SUCCESS:
             target_uid = right['target_uid']
