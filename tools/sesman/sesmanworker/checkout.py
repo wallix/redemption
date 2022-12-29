@@ -20,6 +20,8 @@ from wallixconst.chgpasswd import (
     CRED_DATA_SSH_CERTIFICATE,
 )
 
+from typing import Dict, List, Optional, Tuple, Any
+
 
 CRED_DATA_LOGIN = "login"
 CRED_DATA_ACCOUNT_UID = "account_uid"
@@ -36,7 +38,21 @@ STATUS_PENDING = [S_PENDING]
 STATUS_APPR_NEEDED = [S_NONE]
 
 
-class CheckoutEngine(object):
+RightType = Dict[str, Any]
+
+KeyType = Tuple[
+    str,  # account
+    str,  # domaine
+    str,  # device
+]
+
+class CheckoutEngine:
+    session_credentials: Dict[KeyType, Tuple[Optional[Dict[str, Any]], Dict[str, Any]]]
+    scenario_credentials: Dict[KeyType, Tuple[Optional[Dict[str, Any]], Dict[str, Any]]]
+    scenario_rights: Optional[List[Dict[str, Any]]]
+    pm_credentials: Dict[KeyType, Tuple[Optional[Dict[str, Any]], Dict[str, Any]]]
+    pm_rights: Optional[List[Dict[str, Any]]]
+
     def __init__(self, engine):
         self.engine = engine
         self.session_credentials = {}
@@ -45,7 +61,7 @@ class CheckoutEngine(object):
         self.pm_credentials = {}
         self.pm_rights = None
 
-    def get_target_login(self, right):
+    def get_target_login(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
@@ -53,7 +69,7 @@ class CheckoutEngine(object):
         login = credentials.get(CRED_DATA_LOGIN)
         return login
 
-    def get_target_domain(self, right):
+    def get_target_domain(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
@@ -61,7 +77,7 @@ class CheckoutEngine(object):
         domain = credentials.get(CRED_DATA_DOMAIN)
         return domain
 
-    def get_target_passwords(self, right):
+    def get_target_passwords(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
         # Use for password vault or mapping
         target_uid = right['target_uid']
@@ -70,7 +86,7 @@ class CheckoutEngine(object):
         passwords = credentials.get(CRED_TYPE_PASSWORD, [])
         return passwords
 
-    def get_target_privkeys(self, right):
+    def get_target_privkeys(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE get_target_privkeys")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
@@ -81,7 +97,7 @@ class CheckoutEngine(object):
                     for cred in credentials.get(CRED_TYPE_SSH_KEY, [])]
         return privkeys
 
-    def get_primary_password(self, right):
+    def get_primary_password(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE get_primary_password")
         if not right.get('is_am'):
             # if is_am, password in credentials is from primary account
@@ -401,7 +417,7 @@ class CheckoutEngine(object):
                 return right, infos[CRED_INDEX]
         return None, {}
 
-    def release_target(self, right):
+    def release_target(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE release_target")
         target_uid = right['target_uid']
         if target_uid in self.session_credentials:
