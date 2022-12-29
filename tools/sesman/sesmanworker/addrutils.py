@@ -4,63 +4,54 @@
 import ipaddress
 import socket
 from logger import Logger
+from typing import Union, Optional, Tuple
 
 
-def _get_adapted_device_ipaddr_from_subnet(device, subnet_ipaddr):
-    adapted_device_ipaddr = None
+IPInterface = Union[ipaddress.IPv4Interface, ipaddress.IPv6Interface]
+IPAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 
+
+def _get_adapted_device_ipaddr_from_subnet(device: str, subnet_ipaddr: IPAddress) -> Optional[IPAddress]:
     try:
         device_ipaddr = ipaddress.ip_address(device)
-        device_ipversion = device_ipaddr.version
 
-        if device_ipversion != subnet_ipaddr.version:
-            if device_ipversion == 4:
+        if isinstance(subnet_ipaddr, ipaddress.IPv6Address):
+            if isinstance(device_ipaddr, ipaddress.IPv4Address):
                 if subnet_ipaddr.ipv4_mapped is not None:
                     # "IPv4-mapped IPv6" mechanism from ipv4
-                    adapted_device_ipaddr = ipaddress.IPv6Address(
-                        "::ffff:" + device)
+                    return ipaddress.IPv6Address("::ffff:" + device)
                 else:
                     # "6to4" mechanism from ipv4
-                    adapted_device_ipaddr = ipaddress.IPv6Address(
-                        "2002::" + device)
-            else:
-                # try "IPv4-mapped IPv6" mechanism
-                adapted_device_ipaddr = device_ipaddr.ipv4_mapped
+                    return ipaddress.IPv6Address("2002::" + device)
+
+        elif isinstance(device_ipaddr, ipaddress.IPv6Address):
+            # try "IPv4-mapped IPv6" mechanism or try "6to4" mechanism from IPv6
+            adapted_device_ipaddr = device_ipaddr.ipv4_mapped or device_ipaddr.sixtofour
+            if adapted_device_ipaddr is not None:
+                return adapted_device_ipaddr
+
+            # try "teredo" mechanism by getting server IP address
+            # from couple (server, client)
+            if device_ipaddr.teredo is not None:
+                adapted_device_ipaddr = device_ipaddr.teredo[0]
                 if adapted_device_ipaddr is not None:
                     return adapted_device_ipaddr
 
-                # try "6to4" mechanism from IPv6
-                adapted_device_ipaddr = device_ipaddr.sixtofour
-                if adapted_device_ipaddr is not None:
-                    return adapted_device_ipaddr
+            Logger().debug(f"Cannot adapt '{device}' device to ipv4 format")
+            return None
 
-                # try "teredo" mechanism by getting server IP address
-                # from couple (server, client)
-                if device_ipaddr.teredo is not None:
-                    adapted_device_ipaddr = device_ipaddr.teredo[0]
-
-                    if adapted_device_ipaddr is not None:
-                        return adapted_device_ipaddr
-                Logger().debug(f"Cannot adapt '{device}' device to ipv4 format")
-        else:
-            adapted_device_ipaddr = device_ipaddr
-
+        return device_ipaddr
     except (ValueError, ipaddress.AddressValueError) as e:
         Logger().debug(f"Invalid IP address of device '{device}' : {e}")
 
-    return adapted_device_ipaddr
+    return None
 
 
-def is_device_in_subnet(device, subnet):
-    if subnet is None:
-        Logger().debug("No value for subnet")
-        return False
-
+def is_device_in_subnet(device: str, subnet: str) -> bool:
     try:
         subnet_ipface = ipaddress.ip_interface(subnet)
     except ValueError as e:
         Logger().debug(f"Invalid IP address of subnet '{subnet}' : {e}")
-
         return False
 
     adapted_device_ipaddr = _get_adapted_device_ipaddr_from_subnet(
@@ -72,9 +63,8 @@ def is_device_in_subnet(device, subnet):
     if '/' in subnet:
         try:
             adapted_device_ipface_with_nmask = ipaddress.ip_interface(
-                str(adapted_device_ipaddr)
-                + '/'
-                + str(subnet_ipface.network.prefixlen))
+                f'{adapted_device_ipaddr}/{subnet_ipface.network.prefixlen}'
+            )
         except ValueError as e:
             Logger().debug("Invalid IP address with "
                            "adapted IP version device "
@@ -85,11 +75,11 @@ def is_device_in_subnet(device, subnet):
     else:
         result = adapted_device_ipaddr == subnet_ipface.ip
 
-    Logger().debug(f"checking if device {device} is in subnet {subnet} -> {['No', 'Yes'][result]}")
+    Logger().debug(f"checking if device {device} is in subnet {subnet} -> {result}")
     return result
 
 
-def is_ip_address(host):
+def is_ip_address(host: str) -> bool:
     try:
         ipaddress.ip_address(host)
     except ValueError:
@@ -97,17 +87,20 @@ def is_ip_address(host):
     return True
 
 
-def resolve_reverse_dns(ip_str):
+def resolve_reverse_dns(ip: str) -> Optional[str]:
     found_fqdn = None
     try:
-        found_fqdn = socket.gethostbyaddr(ip_str)[0]
-        Logger().debug(f"Found fqdn {found_fqdn} for {ip_str}")
+        found_fqdn = socket.gethostbyaddr(ip)[0]
+        Logger().debug(f"Found fqdn {found_fqdn} for {ip}")
     except Exception:
-        Logger().debug(f"Unable to reverse dns {ip_str}")
+        Logger().debug(f"Unable to reverse dns {ip}")
     return found_fqdn
 
 
-def check_hostname_in_subnet(host, subnet):
+def check_hostname_in_subnet(host: str, subnet: str) -> Tuple[bool, Optional[str]]:
+    """
+    return (family, type, proto, canonname, sockaddr)
+    """
     try:
         family = (socket.AF_INET6
                   if ipaddress.ip_network(subnet, strict=False).version == 6
