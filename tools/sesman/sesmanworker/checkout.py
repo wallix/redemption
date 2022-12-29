@@ -441,7 +441,7 @@ class CheckoutEngine:
         # Logger().debug("CHECKOUTENGINE release_scenario_account")
         account = (acc_name, dom_name, dev_name)
         if account in self.scenario_credentials:
-            sright, creds = self.scenario_credentials.get(account)
+            sright, creds = self.scenario_credentials[account]
             with manage_transaction(self.engine, 'checkin_account (scenario)', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
@@ -453,7 +453,7 @@ class CheckoutEngine:
         # Logger().debug("CHECKOUTENGINE release_pm_account")
         account = (acc_name, dom_name, dev_name)
         if account in self.pm_credentials:
-            sright, creds = self.pm_credentials.get(account)
+            sright, creds = self.pm_credentials[account]
             with manage_transaction(self.engine, 'checkin_account (pm)', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
@@ -468,7 +468,7 @@ class CheckoutEngine:
                        self.scenario_credentials)
         account = (acc_name, dom_name, dev_name)
         if account in table_creds:
-            sright, creds = table_creds.get(account)
+            sright, creds = table_creds[account]
             with manage_transaction(self.engine, f'checkin_account ({account_type})', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
@@ -478,16 +478,14 @@ class CheckoutEngine:
 
     def release_all(self):
         # Logger().debug("CHECKOUTENGINE release_all")
-        for target_uid in self.session_credentials:
-            tright, creds = self.session_credentials.get(target_uid, ({}, {}))
+        for tright, creds in self.session_credentials.values():
             with manage_transaction(self.engine, 'checkin_account', reraise=False):
                 self.engine.checkin_account(
                     right=tright,
                     session=True
                 )
         self.session_credentials.clear()
-        for account in self.scenario_credentials:
-            sright, creds = self.scenario_credentials.get(account)
+        for sright, creds in self.scenario_credentials.values():
             with manage_transaction(self.engine, 'checkin_account (scenario)', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
@@ -495,8 +493,7 @@ class CheckoutEngine:
                 )
         self.scenario_credentials.clear()
         self.scenario_rights = None
-        for account in self.pm_credentials:
-            sright, creds = self.pm_credentials.get(account)
+        for sright, creds in self.pm_credentials.values():
             with manage_transaction(self.engine, 'checkin_account (pm)', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
