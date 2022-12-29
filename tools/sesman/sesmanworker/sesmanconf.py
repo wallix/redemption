@@ -8,8 +8,6 @@ from typing import Dict
 
 def TR(key: str) -> str:
     from logger import Logger
-    originalkey = key
-    key.replace(" %s", "")
     language = SESMANCONF.language
     # Logger().warning(f"Looking for translation for key '{key}' (in '{language}')")
     trans = SESMANCONF.conf.get(language)
@@ -17,14 +15,14 @@ def TR(key: str) -> str:
         Logger().warning(f"No translation available for language '{language}', "
                          "falling back to english")
         trans = SESMANCONF['en']
-    message = trans.get(originalkey)
+    message = trans.get(key)
     if message is None:
         Logger().warning(f"No '{language}' translation available for key '{key}' "
                          "using key as message")
-        message = originalkey
-    if originalkey.count('%s') != message.count('%s'):
+        message = key
+    if key.count('%s') != message.count('%s'):
         Logger().warning(f"Variable parameters mismatch in '{language}' "
-                         f"message for key '{originalkey}' => '{message}'")
+                         f"message for key '{key}' => '{message}'")
     return message
 
 
