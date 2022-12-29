@@ -31,6 +31,7 @@ from socket import gethostname
 from ipaddress import ip_network
 from typing import Iterable, Any, Tuple, Generator, Optional
 
+from .addrutils import check_hostname_in_subnet, is_device_in_subnet
 from .sesmanconf import TR, SESMANCONF
 from . import engine
 from .sesmanconnpolicyspec import cp_spec
@@ -948,7 +949,7 @@ class Sesman():
                         extkv['target_login'] = \
                             self.shared.get('target_login')
                     if interactive_data.get('target_host') == MAGICASK:
-                        hostok, resolved_ip = self.check_hostname_in_subnet(
+                        hostok, resolved_ip = check_hostname_in_subnet(
                             self.shared.get('target_host'),
                             target_subnet)
 
@@ -2817,18 +2818,6 @@ class Sesman():
             self.proxy_conx.close()
         except Exception:
             pass
-
-    def check_hostname_in_subnet(self, host, subnet):
-        try:
-            family = (socket.AF_INET6
-                      if ip_network(subnet, strict=False).version == 6
-                      else socket.AF_INET)
-            host_ip = socket.getaddrinfo(host, None, family=family)[0][4][0]
-
-            Logger().info(f"Resolve DNS Hostname {host} -> {host_ip}")
-        except Exception:
-            return False, None
-        return engine.is_device_in_subnet(host_ip, subnet), host_ip
 
     def update_session_parameters(self, current_time: float) -> None:
         params = self.engine.read_session_parameters()
