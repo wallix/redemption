@@ -90,6 +90,8 @@ ModFactory::ModFactory(
     client_info, glyphs, rail_client_execute, ini)
 {
     ::load_theme(theme, ini);
+
+    this->rail_client_execute.enable_remote_program(this->client_info.remote_program);
 }
 
 ModFactory::~ModFactory()
