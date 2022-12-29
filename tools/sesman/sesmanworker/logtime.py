@@ -10,6 +10,8 @@
 
 import time
 
+from typing import Optional, Dict
+
 
 STEPS = {
     "PRIMARY_CONN": "primary_connection",
@@ -32,9 +34,9 @@ def set_time(func):
     return wrapper
 
 
-def get_time(current_time=None):
+def get_time(current_time: Optional[float] = None) -> float:
     if current_time is None:
-        current_time = time.time()
+        return time.time()
     return current_time
 
 
@@ -46,7 +48,13 @@ else:
         pass
 
 
-class Logtime(object):
+class Logtime:
+    saved_times: Dict[str, float]
+    current_step: Optional[str]
+    last_time: float
+    step_time: float
+    paused: bool
+
     def __init__(self):
         self.saved_times = {}
         self._reset()
@@ -58,20 +66,20 @@ class Logtime(object):
         self.paused = False
 
     @set_time
-    def _add_time(self, current_time):
+    def _add_time(self, current_time: float) -> None:
         diff_time = (current_time - self.last_time)
         print_debug(f">>>>> Time ADDED {diff_time} for state {self.current_step}")
         self.step_time += diff_time
         self.last_time = current_time
 
     @set_time
-    def _save_time(self, current_time):
+    def _save_time(self, current_time: float) -> None:
         print_debug(f">>>>> Time SAVED {self.step_time} for state {self.current_step}")
         self.saved_times[self.current_step] = round(self.step_time, 3)
         self._reset()
 
     @set_time
-    def start(self, step, current_time):
+    def start(self, step: str, current_time: float) -> None:
         print_debug(f">>>>> START {step}")
         if self.current_step == step:
             # step already started
@@ -84,7 +92,7 @@ class Logtime(object):
         self.current_step = step
         self.last_time = current_time
 
-    def stop(self, step=None, current_time=None):
+    def stop(self, step: Optional[str] = None, current_time: Optional[float] = None) -> None:
         print_debug(f">>>>> STOP {step or self.current_step}")
         if step is not None and step != self.current_step:
             return
@@ -94,7 +102,7 @@ class Logtime(object):
                 self._add_time(current_time=current_time)
             self._save_time(current_time=current_time)
 
-    def pause(self, step=None, current_time=None):
+    def pause(self, step: Optional[str] = None, current_time: Optional[float] = None) -> None:
         print_debug(f">>>>> PAUSE {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
@@ -105,7 +113,7 @@ class Logtime(object):
             self.paused = True
         print_debug(self.get_metrics())
 
-    def resume(self, step=None, current_time=None):
+    def resume(self, step: Optional[str] = None, current_time: Optional[float] = None) -> None:
         print_debug(f">>>>> RESUME {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
@@ -115,22 +123,22 @@ class Logtime(object):
             self.last_time = current_time
             self.paused = False
 
-    def is_paused(self):
+    def is_paused(self) -> bool:
         return self.paused
 
-    def is_started(self, step=None):
+    def is_started(self, step=None) -> bool:
         if step is None:
             return self.current_step is not None
         return self.current_step == step
 
-    def get_metrics(self):
+    def get_metrics(self) -> Dict[str, float]:
         return self.saved_times
 
-    def total_metrics(self):
+    def total_metrics(self) -> float:
         total = sum(self.saved_times.values())
         return round(total, 3)
 
-    def report_metrics(self):
+    def report_metrics(self) -> Dict[str, float]:
         metrics = {
             STEPS[step]: value
             for step, value in self.saved_times.items()
@@ -139,7 +147,7 @@ class Logtime(object):
         metrics['total'] = self.total_metrics()
         return metrics
 
-    def add_step_time(self, step, step_time):
+    def add_step_time(self, step: str, step_time: float) -> None:
         self.saved_times[step] = round(step_time, 3)
 
 
