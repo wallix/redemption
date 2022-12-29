@@ -10,9 +10,16 @@
 import re
 
 from logger import Logger
+from typing import Optional, Tuple, Dict
 
 
-def parse_param(param, forced_device=None):
+AccoutName = str
+DomainName = str
+DeviceName = str
+AccountResult = Tuple[AccoutName, DomainName, Optional[DeviceName]]
+
+
+def parse_param(param: str, forced_device: Optional[str] = None) -> Optional[AccountResult]:
     """
     Extract account representation
 
@@ -35,20 +42,17 @@ def parse_param(param, forced_device=None):
             and forced_device
             and (parsed[2] != forced_device)):
             return None
-        device_name = (forced_device or parsed[2]) if len(parsed) == 3 \
-            else None
+        device_name = (forced_device or parsed[2]) if len(parsed) == 3 else None
         return account_name, domain_name, device_name
     else:
         return None
 
 
-def replace_token(param, replace_dict):
+def replace_token(param: str, replace_dict: Dict[str, str]) -> str:
     """
     token = match.group(0) # <..>
     field = match.group(1) # field
     """
-    if param is None:
-        return None
     field_token = re.compile(r"\<(\w*)\>")
     matches = field_token.finditer(param)
     for res in matches:
@@ -58,14 +62,15 @@ def replace_token(param, replace_dict):
     return param
 
 
-def parse_account(param, replace_dict, force_device=False):
+def parse_account(param: Optional[str], replace_dict: Dict[str, str], force_device: bool = False) -> Optional[AccountResult]:
+    if param is None:
+        return None
     param = replace_token(param, replace_dict)
     device_name = replace_dict.get("device") if force_device else None
-    acc_tuple = parse_param(param, device_name)
-    return acc_tuple
+    return parse_param(param, device_name)
 
 
-def resolve_scenario_account(enginei, param, force_device=True):
+def resolve_scenario_account(enginei, param: str, force_device: bool = True):
     """
     Get password or login field from scenario account
 
