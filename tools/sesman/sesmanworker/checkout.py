@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import json
 from logger import Logger
-from .transaction import manage_transaction
 
 from wallixconst.approval import (
     APPROVAL_PENDING as S_PENDING,
@@ -21,6 +20,8 @@ from wallixconst.chgpasswd import (
 )
 
 from typing import Dict, List, Optional, Tuple, Any
+from contextlib import contextmanager
+
 
 
 CRED_DATA_LOGIN = "login"
@@ -45,6 +46,24 @@ KeyType = Tuple[
     str,  # domaine
     str,  # device
 ]
+
+
+@contextmanager
+def manage_transaction(wabengine, ctx: str, reraise: bool):
+    Logger().debug(f"** CALL {ctx}")
+    wabengine.begin_transaction(silent=True)
+    try:
+        yield
+    except Exception as e:
+        wabengine.rollback_transaction()
+        Logger().info(f"Engine {ctx} failed: {e}")
+        if reraise:
+            raise
+    else:
+        wabengine.commit_transaction()
+    finally:
+        Logger().debug(f"** END {ctx}")
+
 
 class CheckoutEngine:
     session_credentials: Dict[KeyType, Tuple[Optional[Dict[str, Any]], Dict[str, Any]]]
@@ -163,29 +182,24 @@ class CheckoutEngine:
         """
         # Logger().debug("CHECKOUTENGINE check_target")
         if request_ticket:
-            try:
-                Logger().debug("** CALL request_approval")
-                with manage_transaction(self.engine):
-                    status, infos = self.engine.request_approval(
-                        right=right,
-                        approval_fields=request_ticket
-                    )
-                Logger().debug("** END request_approval")
-            except Exception as e:
-                Logger().info(f"Engine request_approval failed: {e}")
+            with manage_transaction(self.engine, 'request_approval', reraise=False):
+                status, infos = self.engine.request_approval(
+                    right=right,
+                    approval_fields=request_ticket
+                )
+
         try:
-            Logger().debug("** CALL checkout_account")
-            with manage_transaction(self.engine):
+            with manage_transaction(self.engine, 'checkout_account', reraise=True):
                 status, infos = self.engine.checkout_account(
                     right=right,
                     session=True
                 )
-            Logger().debug("** END checkout_account")
-        except Exception as e:
-            Logger().info(f"Engine checkout_account failed: {e}")
-            status = S_ERROR
-            infos = {'message': 'An internal error has occured on account retrieval. '
+        except Exception:
+            return (APPROVAL_REJECTED,
+                    {'message': 'An internal error has occured on account retrieval. '
                                 'Please contact your administrator.'}
+                    )
+
         return_status = APPROVAL_REJECTED
         if status in STATUS_SUCCESS:
             target_uid = right['target_uid']
@@ -325,7 +339,7 @@ class CheckoutEngine:
         """
         if account_type is None:
             account_type = 'scenario'
-        table_rights = None
+
         if account_type == 'scenario':
             table_rights = self.scenario_rights
         elif account_type == 'pm':
@@ -333,14 +347,13 @@ class CheckoutEngine:
         else:
             Logger().debug(f"_get_rights_by_type: Invalid account_type {account_type}")
             return None
+
         if table_rights is None:
             try:
-                Logger().debug(f"** CALL get_user_rights_by_type ({account_type})")
-                with manage_transaction(self.engine):
+                with manage_transaction(self.engine, f'get_user_rights_by_type ({account_type})', reraise=True):
                     rights = self.engine.get_user_rights_by_type(
                         'account', scenario=(account_type == 'scenario')
                     )
-                Logger().debug("** END get_user_rights_by_type")
                 if rights and (type(rights[0]) == str):
                     rights = list(map(json.loads, rights))
                 table_rights = rights
@@ -349,7 +362,7 @@ class CheckoutEngine:
                 elif account_type == 'pm':
                     self.pm_rights = rights
             except Exception as e:
-                Logger().info(f"Engine get_user_rights_by_type failed: {e}")
+                pass
         return table_rights
 
     def _checkout_account_by_type(self, account_name, domain_name, device_name,
@@ -401,20 +414,15 @@ class CheckoutEngine:
 
         for right in matched_rights:
             try:
-                Logger().debug(f"** CALL checkout_account ({account_type})")
-                with manage_transaction(self.engine):
+                with manage_transaction(self.engine, f'checkout_account ({account_type})', reraise=True):
                     status, infos = self.engine.checkout_account(
                         right,
                         session=True
                     )
-                Logger().debug(f"** END checkout_account ({account_type})")
+                if status in STATUS_SUCCESS and CRED_INDEX in infos:
+                    return right, infos[CRED_INDEX]
             except Exception as e:
-                Logger().debug(
-                    f"Engine checkout_account ({account_type}) failed: {e}"
-                )
                 continue
-            if status in STATUS_SUCCESS and CRED_INDEX in infos:
-                return right, infos[CRED_INDEX]
         return None, {}
 
     def release_target(self, right: RightType):
@@ -422,16 +430,11 @@ class CheckoutEngine:
         target_uid = right['target_uid']
         if target_uid in self.session_credentials:
             tright, creds = self.session_credentials.get(target_uid, ({}, {}))
-            try:
-                Logger().debug("** CALL checkin_account")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=tright,
-                        session=True
-                    )
-                Logger().debug("** END checkin_account")
-            except Exception as e:
-                Logger().debug(f"Engine checkin_account failed: {e}")
+            with manage_transaction(self.engine, 'checkin_account', reraise=False):
+                self.engine.checkin_account(
+                    right=tright,
+                    session=True
+                )
             self.session_credentials.pop(target_uid, None)
 
     def release_scenario_account(self, acc_name, dom_name, dev_name):
@@ -439,17 +442,10 @@ class CheckoutEngine:
         account = (acc_name, dom_name, dev_name)
         if account in self.scenario_credentials:
             sright, creds = self.scenario_credentials.get(account)
-            try:
-                Logger().debug("** CALL checkin_account (scenario)")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=sright,
-                        session=True
-                    )
-                Logger().debug("** END checkin_account (scenario)")
-            except Exception as e:
-                Logger().debug(
-                    f"Engine checkin_scenario_account failed: {e}"
+            with manage_transaction(self.engine, 'checkin_account (scenario)', reraise=False):
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
             self.scenario_credentials.pop(account, None)
 
@@ -458,17 +454,10 @@ class CheckoutEngine:
         account = (acc_name, dom_name, dev_name)
         if account in self.pm_credentials:
             sright, creds = self.pm_credentials.get(account)
-            try:
-                Logger().debug("** CALL checkin_account (pm)")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=sright,
-                        session=True
-                    )
-                Logger().debug("** END checkin_account (pm)")
-            except Exception as e:
-                Logger().debug(
-                    f"Engine checkin_pm_account failed: {e}"
+            with manage_transaction(self.engine, 'checkin_account (pm)', reraise=False):
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
             self.pm_credentials.pop(account, None)
 
@@ -480,17 +469,10 @@ class CheckoutEngine:
         account = (acc_name, dom_name, dev_name)
         if account in table_creds:
             sright, creds = table_creds.get(account)
-            try:
-                Logger().debug(f"** CALL checkin_account ({account_type})")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=sright,
-                        session=True
-                    )
-                Logger().debug(f"** END checkin_account ({account_type})")
-            except Exception as e:
-                Logger().debug(
-                    f"Engine checkin_account failed: {e}"
+            with manage_transaction(self.engine, f'checkin_account ({account_type})', reraise=False):
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
             table_creds.pop(account, None)
 
@@ -498,46 +480,27 @@ class CheckoutEngine:
         # Logger().debug("CHECKOUTENGINE release_all")
         for target_uid in self.session_credentials:
             tright, creds = self.session_credentials.get(target_uid, ({}, {}))
-            try:
-                Logger().debug("** CALL checkin_account")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=tright,
-                        session=True
-                    )
-                Logger().debug("** END checkin_account")
-            except Exception as e:
-                Logger().debug(f"Engine checkin_account failed: {e}")
+            with manage_transaction(self.engine, 'checkin_account', reraise=False):
+                self.engine.checkin_account(
+                    right=tright,
+                    session=True
+                )
         self.session_credentials.clear()
         for account in self.scenario_credentials:
             sright, creds = self.scenario_credentials.get(account)
-            try:
-                Logger().debug("** CALL checkin_account (scenario)")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=sright,
-                        session=True
-                    )
-                Logger().debug("** END checkin_account (scenario)")
-            except Exception as e:
-                Logger().debug(
-                    f"Engine checkin_scenario_account failed: {e}"
+            with manage_transaction(self.engine, 'checkin_account (scenario)', reraise=False):
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
         self.scenario_credentials.clear()
         self.scenario_rights = None
         for account in self.pm_credentials:
             sright, creds = self.pm_credentials.get(account)
-            try:
-                Logger().debug("** CALL checkin_account (pm)")
-                with manage_transaction(self.engine):
-                    self.engine.checkin_account(
-                        right=sright,
-                        session=True
-                    )
-                Logger().debug("** END checkin_account (pm)")
-            except Exception as e:
-                Logger().debug(
-                    f"Engine checkin_pm_account failed: {e}"
+            with manage_transaction(self.engine, 'checkin_account (pm)', reraise=False):
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
         self.pm_credentials.clear()
         self.pm_rights = None
