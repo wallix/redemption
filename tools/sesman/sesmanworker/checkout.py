@@ -430,30 +430,6 @@ class CheckoutEngine:
                 )
             self.session_credentials.pop(target_uid, None)
 
-    def release_scenario_account(self, acc_name, dom_name, dev_name):
-        # Logger().debug("CHECKOUTENGINE release_scenario_account")
-        account = (acc_name, dom_name, dev_name)
-        if account in self.scenario_credentials:
-            sright, creds = self.scenario_credentials[account]
-            with manage_transaction(self.engine, 'checkin_account (scenario)', reraise=False):
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
-            self.scenario_credentials.pop(account, None)
-
-    def release_pm_account(self, acc_name, dom_name, dev_name):
-        # Logger().debug("CHECKOUTENGINE release_pm_account")
-        account = (acc_name, dom_name, dev_name)
-        if account in self.pm_credentials:
-            sright, creds = self.pm_credentials[account]
-            with manage_transaction(self.engine, 'checkin_account (pm)', reraise=False):
-                self.engine.checkin_account(
-                    right=sright,
-                    session=True
-                )
-            self.pm_credentials.pop(account, None)
-
     def release_account_by_type(self, acc_name, dom_name, dev_name,
                                 account_type=None):
         # Logger().debug("CHECKOUTENGINE release_account_by_type")

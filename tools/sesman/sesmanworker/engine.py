@@ -1027,17 +1027,6 @@ class Engine(object):
                            f" ((({traceback.format_exc()})))")
         return True
 
-    def release_account(self, acc_name, dom_name, dev_name):
-        try:
-            self.checkout.release_scenario_account(
-                acc_name, dom_name, dev_name
-            )
-        except Exception:
-            import traceback
-            Logger().debug("Engine checkin_scenario_account failed:"
-                           f" ({traceback.format_exc()})")
-        return True
-
     def release_account_by_type(self, account_name, domain_name,
                                 device_name, account_type=None):
         try:
