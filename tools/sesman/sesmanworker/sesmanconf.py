@@ -3,18 +3,20 @@
 
 # from fileconf import parse_conf_file
 
+from typing import Dict
 
-def TR(key):
+
+def TR(key: str) -> str:
     from logger import Logger
     originalkey = key
     key.replace(" %s", "")
     language = SESMANCONF.language
     # Logger().warning(f"Looking for translation for key '{key}' (in '{language}')")
-    trans = SESMANCONF.get(language)
+    trans = SESMANCONF.conf.get(language)
     if trans is None:
         Logger().warning(f"No translation available for language '{language}', "
                          "falling back to english")
-        trans = SESMANCONF.get('en')
+        trans = SESMANCONF['en']
     message = trans.get(originalkey)
     if message is None:
         Logger().warning(f"No '{language}' translation available for key '{key}' "
@@ -26,8 +28,7 @@ def TR(key):
     return message
 
 
-class SesmanConfig(object):
-
+class SesmanConfig:
     def __init__(self):
         self.language = 'en'
         self.conf = {
@@ -232,12 +233,8 @@ class SesmanConfig(object):
             }
         }
 
-    def __getitem__(self, para):
+    def __getitem__(self, para: str) -> Dict[str, str]:
         return self.conf[para]
-
-    def get(self, para, default=None):
-        return self.conf.get(para, None)
-# END CLASS - sesmanConfigUnicode
 
 
 SESMANCONF = SesmanConfig()
