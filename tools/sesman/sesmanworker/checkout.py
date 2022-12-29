@@ -47,6 +47,9 @@ KeyType = Tuple[
     str,  # device
 ]
 
+# TODO AccountType as Enum
+AccountType = Optional[str]
+
 
 @contextmanager
 def manage_transaction(wabengine, ctx: str, reraise: bool):
@@ -72,7 +75,7 @@ class CheckoutEngine:
     pm_credentials: Dict[KeyType, Tuple[Optional[Dict[str, Any]], Dict[str, Any]]]
     pm_rights: Optional[List[Dict[str, Any]]]
 
-    def __init__(self, engine):
+    def __init__(self, engine) -> None:
         self.engine = engine
         self.session_credentials = {}
         self.scenario_credentials = {}
@@ -80,7 +83,7 @@ class CheckoutEngine:
         self.pm_credentials = {}
         self.pm_rights = None
 
-    def get_target_login(self, right: RightType):
+    def get_target_login(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
@@ -88,7 +91,7 @@ class CheckoutEngine:
         login = credentials.get(CRED_DATA_LOGIN)
         return login
 
-    def get_target_domain(self, right: RightType):
+    def get_target_domain(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
@@ -96,7 +99,7 @@ class CheckoutEngine:
         domain = credentials.get(CRED_DATA_DOMAIN)
         return domain
 
-    def get_target_passwords(self, right: RightType):
+    def get_target_passwords(self, right: RightType) -> List[str]:
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
         # Use for password vault or mapping
         target_uid = right['target_uid']
@@ -116,7 +119,7 @@ class CheckoutEngine:
                     for cred in credentials.get(CRED_TYPE_SSH_KEY, [])]
         return privkeys
 
-    def get_primary_password(self, right: RightType):
+    def get_primary_password(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_primary_password")
         if not right.get('is_am'):
             # if is_am, password in credentials is from primary account
@@ -130,8 +133,8 @@ class CheckoutEngine:
             password = passwords[0]
         return password
 
-    def get_scenario_account_infos(self, account_name,
-                                   domain_name, device_name):
+    def get_scenario_account_infos(self, account_name: str,
+                                   domain_name: str, device_name: str):
         # TODO: same as check_account_by_type with 'scenario' account_type
         #       with namedtuple result instead of dict
         # Logger().debug("CHECKOUTENGINE get_scenario_account_infos")
@@ -155,7 +158,7 @@ class CheckoutEngine:
         )
         return a_infos
 
-    def check_target(self, right, request_ticket=None):
+    def check_target(self, right: RightType, request_ticket: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:
         """
         This function check a target:
         It checkout an account and returns the status and infos
@@ -220,8 +223,8 @@ class CheckoutEngine:
             return_status = APPROVAL_NONE
         return return_status, infos
 
-    def check_account_by_type(self, account_name, domain_name, device_name,
-                              with_ssh_key=False, account_type=None):
+    def check_account_by_type(self, account_name: str, domain_name: str, device_name: str,
+                              with_ssh_key: bool = False, account_type: AccountType = None):
         """
         This function retrieve informations (credentials, login)
         of a scenario or password management account specified by its
@@ -284,8 +287,8 @@ class CheckoutEngine:
         }
         return a_infos
 
-    def _update_creds_with_account_by_type(self, account_name, domain_name,
-                                           device_name, account_type=None):
+    def _update_creds_with_account_by_type(self, account_name: str, domain_name: str,
+                                           device_name: str, account_type: AccountType = None) -> bool:
         """
         This function retrieve account credentials by type (scenario or pm)
         and save them on cache.
@@ -326,7 +329,7 @@ class CheckoutEngine:
             table_creds[account] = (right, creds)
         return True
 
-    def _update_rights_by_type(self, account_type=None):
+    def _update_rights_by_type(self, account_type: AccountType = None) -> Optional[List]:
         """
         This function retrieve rights by type (scenario or pm)
         and save them on cache.
@@ -365,8 +368,8 @@ class CheckoutEngine:
                 pass
         return table_rights
 
-    def _checkout_account_by_type(self, account_name, domain_name, device_name,
-                                  account_type=None):
+    def _checkout_account_by_type(self, account_name: str, domain_name: str, device_name: str,
+                                  account_type: AccountType = None) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
         """
         This function checkout an account by type (scenario or pm)
         It first retrieve the rights allowed for the session
@@ -418,7 +421,7 @@ class CheckoutEngine:
                 continue
         return None, {}
 
-    def release_target(self, right: RightType):
+    def release_target(self, right: RightType) -> None:
         # Logger().debug("CHECKOUTENGINE release_target")
         target_uid = right['target_uid']
         if target_uid in self.session_credentials:
@@ -430,8 +433,8 @@ class CheckoutEngine:
                 )
             self.session_credentials.pop(target_uid, None)
 
-    def release_account_by_type(self, acc_name, dom_name, dev_name,
-                                account_type=None):
+    def release_account_by_type(self, acc_name: str, dom_name: str, dev_name: str,
+                                account_type: AccountType = None) -> None:
         # Logger().debug("CHECKOUTENGINE release_account_by_type")
         table_creds = (self.pm_credentials if account_type == 'pm' else
                        self.scenario_credentials)
@@ -445,7 +448,7 @@ class CheckoutEngine:
                 )
             table_creds.pop(account, None)
 
-    def release_all(self):
+    def release_all(self) -> None:
         # Logger().debug("CHECKOUTENGINE release_all")
         for tright, creds in self.session_credentials.values():
             with manage_transaction(self.engine, 'checkin_account', reraise=False):
