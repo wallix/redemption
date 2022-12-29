@@ -388,27 +388,20 @@ class CheckoutEngine:
         if list_rights is None:
             return None, {}
 
-        def match_account_name(x):
-            return x['account_name'] == account_name
-
-        def match_domain_name(x):
-            return x['domain_cn'] == domain_name
-
-        def match_global_domain(x):
-            return (not device_name
-                    and x['device_cn'] is None
-                    and x['application_cn'] is None)
-
-        def match_local_domain(x):
-            return (device_name is not None
-                    and device_name in (x['device_cn'], x['application_cn']))
-
         matched_rights = (
             right for right in list_rights if (
-                match_account_name(right)
-                and match_domain_name(right)
-                and (match_global_domain(right)
-                     or match_local_domain(right))
+                right['account_name'] == account_name
+                and right['domain_cn'] == domain_name
+                and ((
+                    # match global domain
+                    not device_name
+                    and right['device_cn'] is None
+                    and right['application_cn'] is None
+                ) or (
+                    # match local domain
+                    device_name is not None
+                    and device_name in (right['device_cn'], right['application_cn'])
+                ))
             )
         )
 
