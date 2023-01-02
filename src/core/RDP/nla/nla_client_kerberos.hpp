@@ -837,7 +837,7 @@ public:
                bytes_view domain,
                std::string_view username,
                const uint8_t * password,
-               std::string_view /*keytab_path*/,
+/*               std::string_view keytab_path,*/
                const bool restricted_admin_mode,
                std::string_view service_username,
                const uint8_t * service_password,

@@ -415,7 +415,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
             this->credsspKerberos = std::make_unique<rdpCredsspClientKerberos>(
                 trans,
                 this->hostname, this->target_host, this->domain,
-                this->user, this->current_password, nullptr,
+                this->user, this->current_password,/* nullptr,*/
                 this->restricted_admin_mode,
                 this->service_user, this->current_service_password, this->service_keytab_path,
                 this->rand, this->extra_message, this->lang,
