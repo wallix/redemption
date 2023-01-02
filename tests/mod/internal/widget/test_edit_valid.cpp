@@ -29,7 +29,6 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
-#include "test_only/mod/internal/widget/widget_receive_event.hpp"
 
 #include <string_view>
 
@@ -355,8 +354,6 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 {
     TestGraphic drawable(800, 600);
-
-    WidgetReceiveEvent widget_for_receive_event(drawable);
 
     NotifyTrace notifier;
 

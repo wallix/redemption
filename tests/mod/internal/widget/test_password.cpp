@@ -29,7 +29,6 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
-#include "test_only/mod/internal/widget/widget_receive_event.hpp"
 
 #include <string_view>
 
@@ -361,17 +360,11 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    WidgetReceiveEvent widget_for_receive_event(drawable);
-
     wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
-    widget_for_receive_event.last_widget = nullptr;
-    widget_for_receive_event.last_event = 0;
 
     wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_20.png");
