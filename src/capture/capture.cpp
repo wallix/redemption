@@ -1349,11 +1349,12 @@ Capture::Capture(
         }
     }
 
-    if (cropper_info.crop_rect.isempty() || !(capture_png || capture_video || capture_video_full)) {
+    if (!(capture_png && png_params.real_time_image_capture) &&
+        (cropper_info.crop_rect.isempty() || !(capture_png || capture_video || capture_video_full))) {
         smart_video_cropping = SmartVideoCropping::disable;
     }
 
-    Rect real_crop_rect = (SmartVideoCropping::disable == smart_video_cropping)
+    Rect real_crop_rect = (SmartVideoCropping::disable == smart_video_cropping || cropper_info.crop_rect.isempty())
         ? Rect(0, 0, this->gd_drawable.width(), this->gd_drawable.height())
         : cropper_info.crop_rect;
 
