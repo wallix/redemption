@@ -30,169 +30,83 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/rect/"
 
-RED_AUTO_TEST_CASE(TraceWidgetRect)
+
+struct WidgetRectFixture
 {
-    TestGraphic drawable(800, 600);
+    TestGraphic drawable{800, 600};
+    WidgetScreen parent{drawable, 800, 600, global_font(), nullptr, Theme{}};
+    WidgetRect wrect{drawable, parent, nullptr, /*id=*/0, BGRColor(0xCCF604)};
+};
 
 
-    // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
-    BGRColor color(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, color);
+RED_FIXTURE_TEST_CASE(TraceWidgetRect, WidgetRectFixture)
+{
     wrect.set_wh(800, 600);
     wrect.set_xy(0, 0);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
-                                    0 + wrect.y(),
-                                    wrect.cx(),
-                                    wrect.cy()));
+    wrect.rdp_input_invalidate(wrect.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_1.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRect2)
+RED_FIXTURE_TEST_CASE(TraceWidgetRect2, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(-100, -100);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
-                                    0 + wrect.y(),
-                                    wrect.cx(),
-                                    wrect.cy()));
+    wrect.rdp_input_invalidate(wrect.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_2.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRect3)
+RED_FIXTURE_TEST_CASE(TraceWidgetRect3, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(-100, 500);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
-                                    0 + wrect.y(),
-                                    wrect.cx(),
-                                    wrect.cy()));
+    wrect.rdp_input_invalidate(wrect.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_3.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRect4)
+RED_FIXTURE_TEST_CASE(TraceWidgetRect4, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(700, 500);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
-                                    0 + wrect.y(),
-                                    wrect.cx(),
-                                    wrect.cy()));
+    wrect.rdp_input_invalidate(wrect.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_4.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRect5)
+RED_FIXTURE_TEST_CASE(TraceWidgetRect5, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(700, -100);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
-                                    0 + wrect.y(),
-                                    wrect.cx(),
-                                    wrect.cy()));
+    wrect.rdp_input_invalidate(wrect.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_5.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRect6)
+RED_FIXTURE_TEST_CASE(TraceWidgetRect6, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(300, 200);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
-                                    0 + wrect.y(),
-                                    wrect.cx(),
-                                    wrect.cy()));
+    wrect.rdp_input_invalidate(wrect.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_6.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRectClip)
+RED_FIXTURE_TEST_CASE(TraceWidgetRectClip, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(300, 200);
 
@@ -205,22 +119,10 @@ RED_AUTO_TEST_CASE(TraceWidgetRectClip)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_7.png");
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetRectClip2)
+RED_FIXTURE_TEST_CASE(TraceWidgetRectClip2, WidgetRectFixture)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    BGRColor bgcolor(0xCCF604); /* BGR */
-
-    WidgetRect wrect(drawable, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
     wrect.set_xy(700, -100);
-
 
     // ask to widget to redraw at position 720,20 and of size 50x50
     wrect.rdp_input_invalidate(Rect(20 + wrect.x(),
@@ -230,9 +132,3 @@ RED_AUTO_TEST_CASE(TraceWidgetRectClip2)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "rect_8.png");
 }
-
-/* TODO
- * As soon as composite widgets will be available, we will have to check these tests
- * are still working with two combination layers (conversion of coordinates
- * from parent coordinates to screen_coordinates can be tricky)")
- */
