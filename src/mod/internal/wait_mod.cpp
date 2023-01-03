@@ -37,7 +37,7 @@ WaitMod::WaitMod(
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
-    , wait_widget(drawable, widget_rect,
+    , wait_widget(drawable, copy_paste, widget_rect,
         this->screen, this, caption, message, 0, &this->language_button,
         font, theme, language(vars), showform, flag, vars.get<cfg::context::duration_max>())
     , vars(vars)
@@ -75,17 +75,11 @@ void WaitMod::init()
 
 void WaitMod::notify(Widget & sender, notify_event_t event)
 {
+    (void)sender;
     switch (event) {
         case NOTIFY_SUBMIT: this->accepted(); break;
         case NOTIFY_CANCEL: this->refused(); break;
         case NOTIFY_TEXT_CHANGED: this->confirm(); break;
-        case NOTIFY_PASTE:
-        case NOTIFY_COPY:
-        case NOTIFY_CUT:
-            if (this->copy_paste) {
-                copy_paste_process_event(this->copy_paste, sender, event);
-            }
-            break;
         default:;
     }
 }

@@ -27,11 +27,12 @@
 
 class WidgetEdit;
 class WidgetLabel;
+class CopyPaste;
 
 class WidgetEditValid : public Widget
 {
 public:
-    WidgetEditValid(gdi::GraphicApi & drawable,
+    WidgetEditValid(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
                     Widget & parent, NotifyApi* notifier, const char * text,
                     int group_id, Color fgcolor, Color bgcolor,
                     Color focus_color, Color border_none_color, Font const & font,

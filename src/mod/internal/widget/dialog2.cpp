@@ -192,7 +192,7 @@ void WidgetDialog2::notify(Widget& widget, NotifyApi::notify_event_t event)
     if (event == NOTIFY_SUBMIT && &widget == &this->ok) {
         this->send_notify(NOTIFY_SUBMIT);
     }
-    else if (event == NOTIFY_COPY) {
+    else if (event == NOTIFY_DELEGATE) {
         this->copy_paste.copy(this->link_value);
     }
     else {

@@ -63,18 +63,19 @@ private:
     Color bg_color;
 
 public:
-    WidgetLogin(gdi::GraphicApi & drawable,
-              int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
-              NotifyApi* notifier, const char* caption,
-              const char * login, const char * password, const char * target,
-              const char * label_text_login,
-              const char * label_text_password,
-              const char * label_text_target,
-              const char * label_error_message,
-              const char * login_message,
-              WidgetButton * extra_button,
-              bool enable_target_field,
-              Font const & font, Translator tr, Theme const & theme);
+    WidgetLogin(
+        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+        int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
+        NotifyApi* notifier, const char* caption,
+        const char * login, const char * password, const char * target,
+        const char * label_text_login,
+        const char * label_text_password,
+        const char * label_text_target,
+        const char * label_error_message,
+        const char * login_message,
+        WidgetButton * extra_button,
+        bool enable_target_field,
+        Font const & font, Translator tr, Theme const & theme);
 
     ~WidgetLogin() override;
 

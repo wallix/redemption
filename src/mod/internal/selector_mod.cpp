@@ -89,7 +89,7 @@ SelectorMod::SelectorMod(
         return params;
     }())
     , selector(
-        drawable, temporary_login(ini).buffer,
+        drawable, copy_paste, temporary_login(ini).buffer,
         widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this,
         ini.is_asked<cfg::context::selector_current_page>()
@@ -259,14 +259,6 @@ void SelectorMod::notify(Widget& widget, notify_event_t event)
 
         break;
     }
-
-    case NOTIFY_PASTE:
-    case NOTIFY_COPY:
-    case NOTIFY_CUT:
-        if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, widget, event);
-        }
-        break;
 
     default:;
     }

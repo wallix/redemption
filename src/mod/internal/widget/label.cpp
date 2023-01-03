@@ -173,9 +173,3 @@ void WidgetLabel::auto_resize()
     Dimension dim = this->get_optimal_dim();
     this->set_wh(dim);
 }
-
-void WidgetLabel::clipboard_copy(CopyPaste& copy_paste)
-{
-    auto str = this->get_text();
-    copy_paste.copy({str, strlen(str)});
-}

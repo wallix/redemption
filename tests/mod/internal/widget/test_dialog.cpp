@@ -25,6 +25,7 @@
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
 
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
@@ -39,6 +40,7 @@
 RED_AUTO_TEST_CASE(TraceWidgetDialog)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -48,13 +50,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "test1",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier, "test1",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
@@ -65,7 +68,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog)
 RED_AUTO_TEST_CASE(TraceWidgetDialog2)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -75,13 +78,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog2)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 640, 480}, parent, notifier, "test2",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 640, 480}, parent, notifier, "test2",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
@@ -95,7 +99,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog2)
 RED_AUTO_TEST_CASE(TraceWidgetDialog3)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -105,13 +109,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog3)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 1280, 1024}, parent, notifier, "test3",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 1280, 1024}, parent, notifier, "test3",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
@@ -125,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog3)
 RED_AUTO_TEST_CASE(TraceWidgetDialog4)
 {
     TestGraphic drawable(1280, 1024);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 1280, 1024, global_font_deja_vu_14(), nullptr, Theme{});
@@ -135,13 +140,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog4)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 1280, 1024}, parent, notifier, "test4",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 1280, 1024}, parent, notifier, "test4",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
@@ -155,7 +161,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog4)
 RED_AUTO_TEST_CASE(TraceWidgetDialog5)
 {
     TestGraphic drawable(640, 480);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 640, 480, global_font_deja_vu_14(), nullptr, Theme{});
@@ -165,13 +171,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog5)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 640, 480}, parent, notifier, "test5",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 640, 480}, parent, notifier, "test5",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
@@ -185,7 +192,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog5)
 RED_AUTO_TEST_CASE(TraceWidgetDialog6)
 {
     TestGraphic drawable(352, 500);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 300, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -195,13 +202,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog6)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 350, 500}, parent, notifier, "test6",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 350, 500}, parent, notifier, "test6",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
@@ -215,7 +223,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog6)
 RED_AUTO_TEST_CASE(TraceWidgetDialogClip)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -225,13 +233,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 300, 600}, parent, notifier, "test6",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 300, 600}, parent, notifier, "test6",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.x(),
@@ -245,7 +254,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip)
 RED_AUTO_TEST_CASE(TraceWidgetDialogClip2)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -255,13 +264,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip2)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "test6",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier, "test6",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.x(),
@@ -275,7 +285,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip2)
 RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
     NotifyTrace notifier;
@@ -283,13 +293,14 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, &notifier, "test6",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button, colors, global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, &notifier, "test6",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == 0);
@@ -348,7 +359,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 RED_AUTO_TEST_CASE(EventWidgetChallenge)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
@@ -357,22 +368,23 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetButton * extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable, {0, 0, 800, 600}, parent, &notifier, "test6",
-                           "Lorem ipsum dolor sit amet, consectetur\n"
-                           "adipiscing elit. Nam purus lacus, luctus sit\n"
-                           "amet suscipit vel, posuere quis turpis. Sed\n"
-                           "venenatis rutrum sem ac posuere. Phasellus\n"
-                           "feugiat dui eu mauris adipiscing sodales.\n"
-                           "Mauris rutrum molestie purus, in tempor lacus\n"
-                           "tincidunt et. Sed eu ligula mauris, a rutrum\n"
-                           "est. Vestibulum in nunc vel massa condimentum\n"
-                           "iaculis nec in arcu. Pellentesque accumsan,\n"
-                           "quam sit amet aliquam mattis, odio purus\n"
-                           "porttitor tortor, sit amet tincidunt odio\n"
-                           "erat ut ligula. Fusce sit amet mauris neque.\n"
-                           "Sed orci augue, luctus in ornare sed,\n"
-                           "adipiscing et arcu.", extra_button, colors, global_font_deja_vu_14(),
-                           "Ok", "Cancel", CHALLENGE_ECHO);
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, &notifier, "test6",
+        "Lorem ipsum dolor sit amet, consectetur\n"
+        "adipiscing elit. Nam purus lacus, luctus sit\n"
+        "amet suscipit vel, posuere quis turpis. Sed\n"
+        "venenatis rutrum sem ac posuere. Phasellus\n"
+        "feugiat dui eu mauris adipiscing sodales.\n"
+        "Mauris rutrum molestie purus, in tempor lacus\n"
+        "tincidunt et. Sed eu ligula mauris, a rutrum\n"
+        "est. Vestibulum in nunc vel massa condimentum\n"
+        "iaculis nec in arcu. Pellentesque accumsan,\n"
+        "quam sit amet aliquam mattis, odio purus\n"
+        "porttitor tortor, sit amet tincidunt odio\n"
+        "erat ut ligula. Fusce sit amet mauris neque.\n"
+        "Sed orci augue, luctus in ornare sed,\n"
+        "adipiscing et arcu.", extra_button, colors, global_font_deja_vu_14(),
+        "Ok", "Cancel", CHALLENGE_ECHO);
 
     RED_CHECK(notifier.last_widget == &flat_dialog);
     RED_CHECK(notifier.last_event == 0);
@@ -393,11 +405,10 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
 }
 
-
-
 RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
     WidgetScreen parent(drawable,
                         800,
                         600,
@@ -414,19 +425,15 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
     colors.global.logo_path = FIXTURES_PATH "/wablogoblue-transparent.png";
 
     WidgetButton *extra_button = nullptr;
-    WidgetDialog flat_dialog(drawable,
-                           {0, 0, 800, 600},
-                           parent,
-                           notifier,
-                           "test1",
-                           "line 1\n"
-                           "line 2\n"
-                           "\n"
-                           "line 3, blah blah\n"
-                           "line 4",
-                           extra_button,
-                           colors,
-                           global_font_deja_vu_14());
+    WidgetDialog flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier,
+        "test1",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        extra_button, colors, global_font_deja_vu_14());
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 

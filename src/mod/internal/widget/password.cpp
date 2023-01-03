@@ -20,18 +20,19 @@
  */
 
 #include "mod/internal/widget/password.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "keyboard/keymap.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
 #include "utils/utf.hpp"
 
 WidgetPassword::WidgetPassword(
-    gdi::GraphicApi & drawable,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     Widget& parent, NotifyApi* notifier, const char * text,
     int group_id, Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext
 )
-    : WidgetEdit(drawable, parent, notifier, text,
+    : WidgetEdit(drawable, copy_paste, parent, notifier, text,
                  group_id, fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
     , masked_text(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font,
                   xtext, ytext)
@@ -182,10 +183,21 @@ void WidgetPassword::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
 void WidgetPassword::rdp_input_scancode(
     KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    WidgetEdit::rdp_input_scancode(flags, scancode, event_time, keymap);
-
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::Paste:
+            this->copy_paste.paste(*this);
+            break;
+        case Keymap::KEvent::Copy:
+            return;
+        case Keymap::KEvent::Cut:
+            this->set_text("");
+            break;
+        default:
+            WidgetEdit::rdp_input_scancode(flags, scancode, event_time, keymap);
+    }
+
     switch (keymap.last_kevent()) {
         case Keymap::KEvent::Backspace:
         case Keymap::KEvent::Delete:
@@ -219,15 +231,4 @@ void WidgetPassword::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
     this->masked_text.shift_text(this->edit_pos * this->w_char);
 
     this->rdp_input_invalidate(this->get_rect());
-}
-
-void WidgetPassword::clipboard_cut(CopyPaste& copy_paste)
-{
-    (void)copy_paste;
-    this->set_text("");
-}
-
-void WidgetPassword::clipboard_copy(CopyPaste& copy_paste)
-{
-    (void)copy_paste;
 }

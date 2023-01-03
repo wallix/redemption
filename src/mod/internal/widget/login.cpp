@@ -33,7 +33,7 @@ enum {
 };
 
 WidgetLogin::WidgetLogin(
-    gdi::GraphicApi & drawable,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
     NotifyApi* notifier, const char* caption,
     const char * login, const char * password, const char * target,
@@ -52,21 +52,21 @@ WidgetLogin::WidgetLogin(
                     font)
     , login_label(drawable, *this, nullptr, label_text_login, -11,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , login_edit(drawable, *this, this,
+    , login_edit(drawable, copy_paste, *this, this,
                  login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
                  theme.edit.focus_color, theme.global.bgcolor, font,
                  label_text_login, (width <= 640), -1u, 1, 1, false)
     , password_label(drawable, *this, nullptr, label_text_password, -13,
                      theme.global.fgcolor, theme.global.bgcolor,
                      font)
-    , password_edit(drawable, *this, this,
+    , password_edit(drawable, copy_paste, *this, this,
                     password, -14, theme.edit.fgcolor,
                     theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                     font, label_text_password, (width <= 640),
                     -1u, 1, 1, true)
     , target_label(drawable, *this, nullptr, label_text_target, -17,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_edit(drawable, *this, this,
+    , target_edit(drawable, copy_paste, *this, this,
                   target, -18, theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font,
                   label_text_target, (width <= 640), -1u, 1, 1, false)
@@ -358,9 +358,6 @@ void WidgetLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
       )
     ) {
         this->send_notify(NOTIFY_SUBMIT);
-    }
-    if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        this->send_notify(widget, event);
     }
 }
 

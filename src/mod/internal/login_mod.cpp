@@ -71,7 +71,7 @@ LoginMod::LoginMod(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
     , login(
-        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        drawable, copy_paste, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this, "Redemption " VERSION,
         nullptr, nullptr, nullptr,
         TR(trkeys::login, login_language(vars)),
@@ -133,6 +133,7 @@ void LoginMod::init()
 
 void LoginMod::notify(Widget& sender, notify_event_t event)
 {
+    (void)sender;
     switch (event) {
     case NOTIFY_SUBMIT: {
         std::string auth_user = concat_target_login(
@@ -151,13 +152,6 @@ void LoginMod::notify(Widget& sender, notify_event_t event)
     }
     case NOTIFY_CANCEL:
         this->set_mod_signal(BACK_EVENT_STOP);
-        break;
-    case NOTIFY_PASTE:
-    case NOTIFY_COPY:
-    case NOTIFY_CUT:
-        if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, sender, event);
-        }
         break;
     default:;
     }

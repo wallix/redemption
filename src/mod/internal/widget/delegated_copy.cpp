@@ -135,7 +135,7 @@ void WidgetDelegatedCopy::rdp_input_mouse(uint16_t device_flags, uint16_t /*x*/,
             this->active_color, this->bg_color, this->x_icon, this->y_icon
         );
         this->is_active = true;
-        this->send_notify(*this, NOTIFY_COPY);
+        this->send_notify(*this, NOTIFY_DELEGATE);
     }
     else if ((device_flags & mouse_match) && this->is_active) {
         this->draw(

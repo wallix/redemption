@@ -24,6 +24,7 @@
 
 #include "mod/internal/widget/edit_valid.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -40,6 +41,7 @@ using namespace std::string_view_literals;
 RED_AUTO_TEST_CASE(TraceWidgetEdit)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -55,8 +57,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
     int ytext = 1;
     size_t edit_pos = 2;
 
-    WidgetEditValid wedit(drawable, parent, notifier, "test1", id,
-                          fg_color, bg_color, ANTHRACITE, bg_color, global_font_deja_vu_14(), nullptr, false, edit_pos, xtext, ytext);
+    WidgetEditValid wedit(drawable, copy_paste, parent, notifier, "test1", id,
+                          fg_color, bg_color, ANTHRACITE, bg_color, global_font_deja_vu_14(),
+                          nullptr, false, edit_pos, xtext, ytext);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -75,7 +78,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
 RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -91,8 +94,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     int ytext = 1;
     size_t edit_pos = -1;
 
-    WidgetEditValid wedit(drawable, parent, notifier, nullptr, id,
-                          fg_color, bg_color, ANTHRACITE, bg_color, global_font_deja_vu_14(), nullptr, false, edit_pos, xtext, ytext);
+    WidgetEditValid wedit(drawable, copy_paste, parent, notifier, nullptr, id,
+                          fg_color, bg_color, ANTHRACITE, bg_color, global_font_deja_vu_14(),
+                          nullptr, false, edit_pos, xtext, ytext);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -140,6 +144,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -152,12 +157,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.tab_flag = Widget::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(), nullptr, false, 0);
+    WidgetEditValid wedit1(drawable, copy_paste, parent, notifier, "dLorz", id,
+                           fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(),
+                           nullptr, false, 0);
     Dimension dim = wedit1.get_optimal_dim();
     wedit1.set_wh(150, dim.h);
     wedit1.set_xy(54, 105);
 
-    WidgetEditValid wedit2(drawable, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(), nullptr, false, 0);
+    WidgetEditValid wedit2(drawable, copy_paste, parent, notifier, "", id,
+                           WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
+                           nullptr, false, 0);
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
@@ -206,6 +215,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -218,12 +228,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.tab_flag = Widget::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(), "edition1", true, 0, 0, 0, false);
+    WidgetEditValid wedit1(drawable, copy_paste, parent, notifier, "dLorz", id,
+                           fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(),
+                           "edition1", true, 0, 0, 0, false);
     Dimension dim = wedit1.get_optimal_dim();
     wedit1.set_wh(150, dim.h);
     wedit1.set_xy(54, 105);
 
-    WidgetEditValid wedit2(drawable, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(), "edition2", true, 0, 0, 0, false);
+    WidgetEditValid wedit2(drawable, copy_paste, parent, notifier, "", id,
+                           WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
+                           "edition2", true, 0, 0, 0, false);
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
@@ -280,6 +294,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -292,12 +307,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.tab_flag = Widget::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(), "edition1", true, 0, 0, 0, true);
+    WidgetEditValid wedit1(drawable, copy_paste, parent, notifier, "dLorz", id,
+                           fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(),
+                           "edition1", true, 0, 0, 0, true);
     Dimension dim = wedit1.get_optimal_dim();
     wedit1.set_wh(150, dim.h);
     wedit1.set_xy(54, 105);
 
-    WidgetEditValid wedit2(drawable, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(), "edition2", true, 0, 0, 0, true);
+    WidgetEditValid wedit2(drawable, copy_paste, parent, notifier, "", id,
+                           WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
+                           "edition2", true, 0, 0, 0, true);
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
@@ -354,6 +373,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -363,7 +383,9 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEditValid wedit(drawable, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, WHITE, global_font_deja_vu_14(), nullptr, false);
+    WidgetEditValid wedit(drawable, copy_paste, parent, &notifier, "abcdef", 0,
+                          BLACK, WHITE, DARK_BLUE, WHITE, global_font_deja_vu_14(),
+                          nullptr, false);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);

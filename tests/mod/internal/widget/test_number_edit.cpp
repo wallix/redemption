@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/number_edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap.hpp"
@@ -37,6 +38,7 @@
 RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -47,7 +49,9 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetNumberEdit wnumber_edit(drawable, parent, &notifier, "123456", 0, GREEN, RED, RED, global_font_lato_light_16());
+    WidgetNumberEdit wnumber_edit(
+        drawable, copy_paste, parent, &notifier, "123456", 0,
+        GREEN, RED, RED, global_font_lato_light_16());
     Dimension dim = wnumber_edit.get_optimal_dim();
     wnumber_edit.set_wh(cx, dim.h);
     wnumber_edit.set_xy(x, y);

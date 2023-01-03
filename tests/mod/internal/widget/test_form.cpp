@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/form.hpp"
 #include "mod/internal/widget/screen.hpp"
 
@@ -34,6 +35,7 @@
 RED_AUTO_TEST_CASE(TestWidgetForm)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -48,7 +50,8 @@ RED_AUTO_TEST_CASE(TestWidgetForm)
 
     flag += WidgetForm::DURATION_MANDATORY;
 
-    WidgetForm form(drawable, 0, 0, 600, 150, parent, notifier, 0, global_font_lato_light_16(), colors, Language::en, flag);
+    WidgetForm form(drawable, copy_paste, 0, 0, 600, 150, parent, notifier, 0,
+                    global_font_lato_light_16(), colors, Language::en, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.get_rect());

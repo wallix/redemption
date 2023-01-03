@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "mod/internal/widget/notify_api.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
@@ -55,6 +54,7 @@ public:
     }
 
     void paste(Widget & widget);
+    void stop_paste_for(Widget & widget);
 
     void copy(chars_view str);
 
@@ -65,13 +65,17 @@ private:
     const CHANNELS::ChannelDef * channel_ = nullptr;
     Widget * pasted_widget_ = nullptr;
 
+    size_t long_data_response_size = 0;
+    bool has_clipboard_ = false;
+    bool client_use_long_format_names = false;
+    bool verbose;
+
     class LimitString
     {
-    public:
         static const std::size_t static_size = 2048/* * 4*/;
 
-        char buf_[static_size];
         std::size_t size_ = 0;
+        char buf_[static_size];
 
     public:
         LimitString() = default;
@@ -94,12 +98,4 @@ private:
     };
 
     LimitString clipboard_str_;
-    size_t long_data_response_size = 0;
-    bool has_clipboard_ = false;
-    bool client_use_long_format_names = false;
-    bool verbose;
 };
-
-void copy_paste_process_event(
-    CopyPaste & copy_paste, Widget & widget,
-    NotifyApi::notify_event_t event);

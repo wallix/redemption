@@ -46,13 +46,14 @@ private:
     bool hide_back_to_selector;
 
 public:
-    WidgetWait(gdi::GraphicApi & drawable, Rect const widget_rect,
-             Widget & parent, NotifyApi* notifier,
-             const char* caption, const char * text, int group_id,
-             WidgetButton * extra_button,
-             Font const & font, Theme const & theme, Language lang,
-             bool showform = false, unsigned flags = WidgetForm::NONE,
-             std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
+    WidgetWait(
+        gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
+        Widget & parent, NotifyApi* notifier,
+        const char* caption, const char * text, int group_id,
+        WidgetButton * extra_button,
+        Font const & font, Theme const & theme, Language lang,
+        bool showform = false, unsigned flags = WidgetForm::NONE,
+        std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
     ~WidgetWait();
 

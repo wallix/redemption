@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap.hpp"
@@ -37,7 +38,7 @@
 RED_AUTO_TEST_CASE(TraceWidgetSelector)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -52,7 +53,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
@@ -94,7 +97,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 {
     TestGraphic drawable(640, 480);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 648, 480, global_font_deja_vu_14(), nullptr, Theme{});
@@ -112,9 +115,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
-                            "1", "1",  extra_button, params,
-                            global_font_deja_vu_14(), Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
+        "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -161,7 +164,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -179,7 +182,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
@@ -190,7 +195,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -208,7 +213,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -222,9 +229,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
@@ -241,7 +248,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -255,7 +264,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -273,7 +282,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -343,7 +354,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -362,7 +373,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     params.label[2] = "Protocol";
 
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "reptile"_av, "snake@10.10.14.111"_av,
@@ -454,7 +467,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 RED_AUTO_TEST_CASE(TraceWidgetSelectorTargetHelpIcon)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -472,7 +485,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorTargetHelpIcon)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en, true);
+    WidgetSelector selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
+        extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en, true);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());

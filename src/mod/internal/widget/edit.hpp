@@ -23,6 +23,10 @@
 
 #include "mod/internal/widget/widget.hpp"
 #include "mod/internal/widget/label.hpp"
+#include "utils/sugar/zstring_view.hpp"
+
+
+class CopyPaste;
 
 class WidgetEdit : public Widget
 {
@@ -46,11 +50,16 @@ public:
 private:
     Font const & font;
 
+protected:
+    CopyPaste & copy_paste;
+
 public:
-    WidgetEdit(gdi::GraphicApi & drawable,
+    WidgetEdit(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
                Widget & parent, NotifyApi* notifier, const char * text,
                int group_id, Color fgcolor, Color bgcolor, Color focus_color,
                Font const & font, std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
+
+    ~WidgetEdit();
 
     Dimension get_optimal_dim() const override;
 
@@ -58,7 +67,7 @@ public:
 
     virtual void insert_text(const char * text/*, int position = 0*/);
 
-    [[nodiscard]] const char * get_text() const;
+    zstring_view get_text() const;
 
     void set_xy(int16_t x, int16_t y) override;
 
@@ -93,9 +102,6 @@ public:
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    void clipboard_paste(CopyPaste& copy_paste) override;
-    void clipboard_copy(CopyPaste& copy_paste) override;
-    void clipboard_cut(CopyPaste& copy_paste) override;
     void clipboard_insert_utf8(zstring_view text) override;
 
 private:

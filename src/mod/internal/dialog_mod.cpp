@@ -38,7 +38,7 @@ DialogMod::DialogMod(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
     , dialog_widget(
-        drawable, widget_rect,
+        drawable, copy_paste, widget_rect,
         this->screen, this, caption, message, &this->language_button, theme, font,
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)
@@ -67,16 +67,10 @@ void DialogMod::init()
 
 void DialogMod::notify(Widget& sender, notify_event_t event)
 {
+    (void)sender;
     switch (event) {
         case NOTIFY_SUBMIT: this->accepted(); break;
         case NOTIFY_CANCEL: this->refused(); break;
-        case NOTIFY_PASTE:
-        case NOTIFY_COPY:
-        case NOTIFY_CUT:
-            if (this->copy_paste) {
-                copy_paste_process_event(this->copy_paste, sender, event);
-            }
-            break;
         default:;
     }
 }

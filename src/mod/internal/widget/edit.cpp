@@ -31,7 +31,7 @@
 
 
 WidgetEdit::WidgetEdit(
-    gdi::GraphicApi & drawable,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     Widget & parent, NotifyApi* notifier, const char * text,
     int group_id, Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext)
@@ -44,6 +44,7 @@ WidgetEdit::WidgetEdit(
 , drawall(false)
 , draw_border_focus(true)
 , font(font)
+, copy_paste(copy_paste)
 {
     if (text) {
         this->buffer_size = strlen(text);
@@ -74,6 +75,11 @@ WidgetEdit::WidgetEdit(
     this->h_text -= 1;
 
     this->pointer_flag = PointerType::Edit;
+}
+
+WidgetEdit::~WidgetEdit()
+{
+    this->copy_paste.stop_paste_for(*this);
 }
 
 Dimension WidgetEdit::get_optimal_dim() const
@@ -157,9 +163,9 @@ void WidgetEdit::insert_text(const char * text/*, int position = 0*/)
     }
 }
 
-const char * WidgetEdit::get_text() const
+zstring_view WidgetEdit::get_text() const
 {
-    return this->label.get_text();
+    return zstring_view::from_null_terminated(this->label.get_text());
 }
 
 void WidgetEdit::set_xy(int16_t x, int16_t y)
@@ -549,15 +555,21 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             break;
 
         case Keymap::KEvent::Paste:
-            this->send_notify(NOTIFY_PASTE);
+            this->copy_paste.paste(*this);
             break;
 
         case Keymap::KEvent::Copy:
-            this->send_notify(NOTIFY_COPY);
+            if (this->copy_paste) {
+                this->copy_paste.copy(this->get_text());
+            }
             break;
 
         case Keymap::KEvent::Cut:
-            this->send_notify(NOTIFY_CUT);
+            if (this->copy_paste) {
+                this->copy_paste.copy(this->get_text());
+            }
+
+            this->set_text("");
             this->drawable.begin_update();
             this->label.rdp_input_invalidate(this->label.get_rect());
             this->draw_cursor(this->get_cursor_rect());
@@ -600,23 +612,6 @@ void WidgetEdit::insert_unicode_char(uint16_t unicode_char)
         this->w_text - pxtmp + 1,
         this->h_text
     ));
-}
-
-void WidgetEdit::clipboard_paste(CopyPaste& copy_paste)
-{
-    copy_paste.paste(*this);
-}
-
-void WidgetEdit::clipboard_copy(CopyPaste& copy_paste)
-{
-    auto str = this->get_text();
-    copy_paste.copy({str, strlen(str)});
-}
-
-void WidgetEdit::clipboard_cut(CopyPaste& copy_paste)
-{
-    this->clipboard_copy(copy_paste);
-    this->set_text("");
 }
 
 void WidgetEdit::clipboard_insert_utf8(zstring_view text)

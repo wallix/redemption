@@ -23,7 +23,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/interactive_target.hpp"
 #include "mod/internal/widget/screen.hpp"
 
@@ -35,6 +35,13 @@
 
 RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 {
+    CopyPaste copy_paste(false);
+    Theme colors;
+    colors.global.bgcolor = DARK_BLUE_BIS;
+    colors.global.fgcolor = WHITE;
+    NotifyApi * notifier = nullptr;
+    WidgetButton * extra_button = nullptr;
+
     {
         // ASK ALL (DEVICE + LOGIN + PASSWORD)
         TestGraphic drawable(800, 600);
@@ -42,15 +49,11 @@ RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
         // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
-        NotifyApi * notifier = nullptr;
-        Theme colors;
-        colors.global.bgcolor = DARK_BLUE_BIS;
-        colors.global.fgcolor = WHITE;
-        WidgetButton * extra_button = nullptr;
-        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
-                                          true, true, true, colors, "Target Infos",
-                                          "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password", global_font_lato_light_16(), extra_button);
+        WidgetInteractiveTarget interactive(
+            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
+            true, true, true, colors, "Target Infos",
+            "Host", "in 192.168.16.0/24 subnet", "Login",
+            "user1", "Password", global_font_lato_light_16(), extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
@@ -62,15 +65,11 @@ RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 
         // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        NotifyApi * notifier = nullptr;
-        Theme colors;
-        colors.global.bgcolor = DARK_BLUE_BIS;
-        colors.global.fgcolor = WHITE;
-        WidgetButton * extra_button = nullptr;
-        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
-                                          true, false, false, colors, "Target Infos",
-                                          "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password", global_font_lato_light_16(), extra_button);
+        WidgetInteractiveTarget interactive(
+            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
+            true, false, false, colors, "Target Infos",
+            "Host", "in 192.168.16.0/24 subnet", "Login",
+            "user1", "Password", global_font_lato_light_16(), extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
@@ -82,15 +81,11 @@ RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 
         // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        NotifyApi * notifier = nullptr;
-        Theme colors;
-        colors.global.bgcolor = DARK_BLUE_BIS;
-        colors.global.fgcolor = WHITE;
-        WidgetButton * extra_button = nullptr;
-        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
-                                          false, false, true, colors, "Target Infos",
-                                          "Host", "machinetruc", "Login", "user1",
-                                          "Password", global_font_lato_light_16(), extra_button);
+        WidgetInteractiveTarget interactive(
+            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
+            false, false, true, colors, "Target Infos",
+            "Host", "machinetruc", "Login", "user1",
+            "Password", global_font_lato_light_16(), extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
@@ -102,15 +97,11 @@ RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 
         // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        NotifyApi * notifier = nullptr;
-        Theme colors;
-        colors.global.bgcolor = DARK_BLUE_BIS;
-        colors.global.fgcolor = WHITE;
-        WidgetButton * extra_button = nullptr;
-        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
-                                          false, true, true, colors, "Target Infos",
-                                          "Host", "machinetruc", "Login", "user1",
-                                          "Password", global_font_lato_light_16(), extra_button);
+        WidgetInteractiveTarget interactive(
+            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
+            false, true, true, colors, "Target Infos",
+            "Host", "machinetruc", "Login", "user1",
+            "Password", global_font_lato_light_16(), extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
@@ -122,15 +113,11 @@ RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 
         // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        NotifyApi * notifier = nullptr;
-        Theme colors;
-        colors.global.bgcolor = DARK_BLUE_BIS;
-        colors.global.fgcolor = WHITE;
-        WidgetButton * extra_button = nullptr;
-        WidgetInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
-                                          true, false, true, colors, "Target Infos",
-                                          "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password", global_font_lato_light_16(), extra_button);
+        WidgetInteractiveTarget interactive(
+            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
+            true, false, true, colors, "Target Infos",
+            "Host", "in 192.168.16.0/24 subnet", "Login",
+            "user1", "Password", global_font_lato_light_16(), extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 

@@ -27,7 +27,8 @@
 
 
 WidgetInteractiveTarget::WidgetInteractiveTarget(
-    gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+    int16_t left, int16_t top, uint16_t width, uint16_t height,
     Widget & parent, NotifyApi* notifier,
     bool ask_device, bool ask_login, bool ask_password,
     Theme const & theme, const char* caption,
@@ -48,19 +49,19 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
                     theme.global.fgcolor, theme.global.bgcolor, font)
     , device(drawable, *this, nullptr, device_str, -13,
                 theme.global.fgcolor, theme.global.bgcolor, font)
-    , device_edit(drawable, *this, this, nullptr, -14,
-                    theme.edit.fgcolor, theme.edit.bgcolor,
-                    theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
+    , device_edit(drawable, copy_paste, *this, this, nullptr, -14,
+                  theme.edit.fgcolor, theme.edit.bgcolor,
+                  theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
     , login_label(drawable, *this, nullptr, text_login, -13,
-                    theme.global.fgcolor, theme.global.bgcolor, font)
+                  theme.global.fgcolor, theme.global.bgcolor, font)
     , login(drawable, *this, nullptr, login_str, -13,
             theme.global.fgcolor, theme.global.bgcolor, font)
-    , login_edit(drawable, *this, this, nullptr, -14,
-                    theme.edit.fgcolor, theme.edit.bgcolor,
-                    theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
+    , login_edit(drawable, copy_paste, *this, this, nullptr, -14,
+                 theme.edit.fgcolor, theme.edit.bgcolor,
+                 theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
     , password_label(drawable, *this, nullptr, text_password, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-    , password_edit(drawable, *this, this, nullptr, -14,
+    , password_edit(drawable, copy_paste, *this, this, nullptr, -14,
                     theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
     , extra_button(extra_button)
@@ -245,9 +246,6 @@ void WidgetInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t e
     }
     else if (event == NOTIFY_SUBMIT) {
         this->next_focus();
-    }
-    if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        this->send_notify(widget, event);
     }
 }
 

@@ -61,7 +61,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
 
     delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 10);
 
-    RED_CHECK(notifier.last_event == NOTIFY_COPY);
+    RED_CHECK(notifier.last_event == NOTIFY_DELEGATE);
     RED_CHECK(notifier.last_widget == &delegated);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_2.png");
 

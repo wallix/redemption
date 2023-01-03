@@ -69,9 +69,9 @@ void CopyPaste::LimitString::utf16_push_back(const uint8_t * s, size_t n)
 
 void CopyPaste::LimitString::assign(char const * s, size_t n)
 {
-    this->size_ = ((this->max_size() >= n)
+    this->size_ = (this->max_size() >= n)
         ? n
-        : ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(s), this->max_size()));
+        : ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(s), this->max_size());
     memcpy(this->buf_, s, this->size_);
     this->buf_[this->size_] = 0;
 }
@@ -130,6 +130,13 @@ void CopyPaste::paste(Widget & widget)
             RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_NONE,
             RDPECLIP::FormatDataRequestPDU(RDPECLIP::CF_UNICODETEXT)
         );
+    }
+}
+
+void CopyPaste::stop_paste_for(Widget& widget)
+{
+    if (this->pasted_widget_ == &widget) {
+        this->pasted_widget_ = nullptr;
     }
 }
 
@@ -213,7 +220,7 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             // format_data_request.recv(stream);
 
             constexpr auto header_size = RDPECLIP::CliprdrHeader::size();
-            StaticOutStream<header_size + LimitString::static_size*2 + 2> out;
+            StaticOutStream<header_size + LimitString::max_size() * 2 + 4> out;
             auto header_data = out.out_skip_bytes(header_size);
 
             auto data_len = UTF8toUTF16(this->clipboard_str_.zstring(), out.get_tail());
@@ -297,17 +304,5 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             }
         }
         break;
-    }
-}
-
-
-void copy_paste_process_event(
-    CopyPaste & copy_paste, Widget & widget,
-    NotifyApi::notify_event_t event)
-{
-    switch(event) {
-        case NOTIFY_PASTE: widget.clipboard_paste(copy_paste); break;
-        case NOTIFY_COPY: widget.clipboard_copy(copy_paste); break;
-        case NOTIFY_CUT: widget.clipboard_cut(copy_paste); break;
     }
 }

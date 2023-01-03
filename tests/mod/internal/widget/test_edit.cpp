@@ -24,6 +24,7 @@
 
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -37,7 +38,7 @@
 RED_AUTO_TEST_CASE(TraceWidgetEdit)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -53,7 +54,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
     int ytext = 1;
     size_t edit_pos = 2;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test1", id,
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test1", id,
                      fg_color, bg_color, bg_color, global_font_deja_vu_14(), edit_pos, xtext, ytext);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
@@ -71,7 +72,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
 RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -84,7 +85,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test2", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test2", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -101,7 +103,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -114,7 +116,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test3", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test3", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -131,7 +134,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 RED_AUTO_TEST_CASE(TraceWidgetEdit4)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -144,7 +147,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test4", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test4", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -161,7 +165,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit4)
 RED_AUTO_TEST_CASE(TraceWidgetEdit5)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -174,7 +178,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test5", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test5", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -191,7 +196,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit5)
 RED_AUTO_TEST_CASE(TraceWidgetEdit6)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -204,7 +209,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test6", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test6", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -221,7 +227,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit6)
 RED_AUTO_TEST_CASE(TraceWidgetEditClip)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -234,7 +240,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test6", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test6", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -251,7 +258,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip)
 RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -264,7 +271,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, parent, notifier, "test6", id, fg_color, bg_color, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, notifier, "test6", id,
+                     fg_color, bg_color, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -281,6 +289,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
 RED_AUTO_TEST_CASE(EventWidgetEdit)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -290,7 +299,8 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEdit wedit(drawable, parent, &notifier, "abcdef", 0, GREEN, RED, RED, global_font_deja_vu_14());
+    WidgetEdit wedit(drawable, copy_paste, parent, &notifier, "abcdef", 0,
+                     GREEN, RED, RED, global_font_deja_vu_14());
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -389,7 +399,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -400,37 +410,37 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetEdit wedit1(drawable, wcomposite, notifier,
+    WidgetEdit wedit1(drawable, copy_paste, wcomposite, notifier,
                       "abababab", 4, YELLOW, BLACK, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit1.get_optimal_dim();
     wedit1.set_wh(50, dim.h);
     wedit1.set_xy(0, 0);
 
-    WidgetEdit wedit2(drawable, wcomposite, notifier,
+    WidgetEdit wedit2(drawable, copy_paste, wcomposite, notifier,
                       "ggghdgh", 2, WHITE, RED, RED, global_font_deja_vu_14());
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(50, dim.h);
     wedit2.set_xy(0, 100);
 
-    WidgetEdit wedit3(drawable, wcomposite, notifier,
+    WidgetEdit wedit3(drawable, copy_paste, wcomposite, notifier,
                       "lldlslql", 1, BLUE, RED, RED, global_font_deja_vu_14());
     dim = wedit3.get_optimal_dim();
     wedit3.set_wh(50, dim.h);
     wedit3.set_xy(100, 100);
 
-    WidgetEdit wedit4(drawable, wcomposite, notifier,
+    WidgetEdit wedit4(drawable, copy_paste, wcomposite, notifier,
                       "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, global_font_deja_vu_14());
     dim = wedit4.get_optimal_dim();
     wedit4.set_wh(50, dim.h);
     wedit4.set_xy(300, 300);
 
-    WidgetEdit wedit5(drawable, wcomposite, notifier,
+    WidgetEdit wedit5(drawable, copy_paste, wcomposite, notifier,
                       "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_deja_vu_14());
     dim = wedit5.get_optimal_dim();
     wedit5.set_wh(50, dim.h);
     wedit5.set_xy(700, -10);
 
-    WidgetEdit wedit6(drawable, wcomposite, notifier,
+    WidgetEdit wedit6(drawable, copy_paste, wcomposite, notifier,
                       "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_deja_vu_14());
     dim = wedit6.get_optimal_dim();
     wedit6.set_wh(50, dim.h);
@@ -459,7 +469,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
@@ -467,8 +477,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEdit wedit(drawable, parent, &parent, "abcde", 0, BLACK, WHITE, WHITE, global_font_deja_vu_14(),
-                     -1u, 1, 1);
+    WidgetEdit wedit(drawable, copy_paste, parent, &parent, "abcde", 0,
+                     BLACK, WHITE, WHITE, global_font_deja_vu_14(), -1u, 1, 1);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);

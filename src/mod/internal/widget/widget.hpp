@@ -26,7 +26,6 @@
 #include "utils/sugar/zstring_view.hpp"
 #include "core/callback.hpp"
 
-class CopyPaste;
 
 struct Keymap;
 namespace gdi
@@ -43,9 +42,7 @@ enum NotifyEventType
     NOTIFY_SUBMIT,
     NOTIFY_CANCEL,
     NOTIFY_SELECTION_CHANGED,
-    NOTIFY_COPY,
-    NOTIFY_PASTE,
-    NOTIFY_CUT,
+    NOTIFY_DELEGATE,
     NOTIFY_HSCROLL,
     NOTIFY_VSCROLL,
 };
@@ -290,10 +287,10 @@ public:
         return Dimension(0, 0);
     }
 
-    virtual void clipboard_paste(CopyPaste& copy_paste) { (void)copy_paste; }
-    virtual void clipboard_copy(CopyPaste& copy_paste) { (void)copy_paste; }
-    virtual void clipboard_cut(CopyPaste& copy_paste) { (void)copy_paste; }
-    virtual void clipboard_insert_utf8(zstring_view text) { (void)text; }
+    virtual void clipboard_insert_utf8(zstring_view text)
+    {
+        (void)text;
+    }
 
     ///Return x position in it's screen
     [[nodiscard]] int16_t x() const

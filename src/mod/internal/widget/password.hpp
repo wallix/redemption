@@ -32,7 +32,7 @@ class WidgetPassword : public WidgetEdit
     int h_char;
 
 public:
-    WidgetPassword(gdi::GraphicApi & drawable,
+    WidgetPassword(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
                    Widget& parent, NotifyApi* notifier, const char * text,
                    int group_id, Color fgcolor, Color bgcolor, Color focus_color,
                    Font const & font,
@@ -63,7 +63,4 @@ public:
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
-
-    void clipboard_copy(CopyPaste& copy_paste) override;
-    void clipboard_cut(CopyPaste& copy_paste) override;
 };

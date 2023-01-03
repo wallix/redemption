@@ -27,18 +27,20 @@
 using namespace std::chrono_literals;
 
 WidgetForm::WidgetForm(
-    gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+    int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetForm(drawable, parent, notifier, group_id, font, theme, lang, flags, duration_max)
+    : WidgetForm(drawable, copy_paste, parent, notifier, group_id,
+                 font, theme, lang, flags, duration_max)
 {
     this->move_size_widget(left, top, width, height);
 }
 
 WidgetForm::WidgetForm(
-    gdi::GraphicApi& drawable,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
@@ -48,19 +50,19 @@ WidgetForm::WidgetForm(
                     theme.global.error_color, theme.global.bgcolor, font)
     , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang).to_sv(),
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , duration_edit(drawable, *this, this,
+    , duration_edit(drawable, copy_paste, *this, this,
                     nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
     , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang).to_sv(),
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
     , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang).to_sv(),
                     group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , ticket_edit(drawable, *this, this,
+    , ticket_edit(drawable, copy_paste, *this, this,
                     nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
     , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang).to_sv(),
                     group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , comment_edit(drawable, *this, this,
+    , comment_edit(drawable, copy_paste, *this, this,
                     nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
     , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang).to_sv(),
@@ -199,20 +201,10 @@ void WidgetForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
 
 void WidgetForm::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
-    if ((widget.group_id == this->confirm.group_id)
-     && (NOTIFY_COPY != event)
-     && (NOTIFY_CUT != event)
-     && (NOTIFY_PASTE != event)
-    ) {
+    if (widget.group_id == this->confirm.group_id) {
         if (NOTIFY_SUBMIT == event) {
             this->check_confirmation();
         }
-    }
-    else if ((NOTIFY_COPY == event)
-          || (NOTIFY_CUT == event)
-          || (NOTIFY_PASTE == event)
-    ) {
-        this->send_notify(widget, event);
     }
     else {
         WidgetParent::notify(widget, event);

@@ -34,7 +34,7 @@ enum {
 };
 
 WidgetDialog::WidgetDialog(
-    gdi::GraphicApi & drawable, Rect const widget_rect,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text,
     WidgetButton * extra_button,
@@ -80,14 +80,14 @@ WidgetDialog::WidgetDialog(
     if (has_challenge) {
         if (CHALLENGE_ECHO == has_challenge) {
             this->challenge = std::make_unique<WidgetEdit>(
-                this->drawable, *this, this, nullptr, -13,
+                this->drawable, copy_paste, *this, this, nullptr, -13,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
         else {
             this->challenge = std::make_unique<WidgetPassword>(
-                this->drawable, *this, this, nullptr, -13,
+                this->drawable, copy_paste, *this, this, nullptr, -13,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
@@ -214,9 +214,6 @@ void WidgetDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
     else if ((event == NOTIFY_SUBMIT) &&
              ((&widget == &this->ok) || (&widget == this->challenge.get()))) {
         this->send_notify(NOTIFY_SUBMIT);
-    }
-    else if (event == NOTIFY_PASTE) {
-        this->send_notify(widget, event);
     }
     else {
         WidgetParent::notify(widget, event);

@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap.hpp"
@@ -30,10 +31,6 @@
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
 
-#include <string_view>
-
-using namespace std::string_view_literals;
-
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/password/"
 
@@ -41,6 +38,7 @@ using namespace std::string_view_literals;
 RED_AUTO_TEST_CASE(TraceWidgetPassword)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -56,8 +54,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword)
     int ytext = 1;
     size_t password_pos = 2;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test1", id,
-                     fg_color, bg_color, BLACK, global_font_lato_light_16(), password_pos, xtext, ytext);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test1", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), password_pos, xtext, ytext);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -74,6 +73,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword)
 RED_AUTO_TEST_CASE(TraceWidgetPassword2)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -86,7 +86,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test2", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test2", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -103,6 +105,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword2)
 RED_AUTO_TEST_CASE(TraceWidgetPassword3)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -115,7 +118,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test3", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test3", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -132,6 +137,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword3)
 RED_AUTO_TEST_CASE(TraceWidgetPassword4)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -144,7 +150,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test4", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test4", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -161,6 +169,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword4)
 RED_AUTO_TEST_CASE(TraceWidgetPassword5)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -173,7 +182,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test5", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test5", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -190,6 +201,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword5)
 RED_AUTO_TEST_CASE(TraceWidgetPassword6)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -202,7 +214,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test6", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test6", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -219,6 +233,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword6)
 RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -231,7 +246,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test6", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test6", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -248,6 +265,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -260,7 +278,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, parent, notifier, "test6", id, fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, notifier, "test6", id,
+        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -277,6 +297,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 RED_AUTO_TEST_CASE(EventWidgetPassword)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -287,7 +308,9 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, parent, &notifier, "abcdef", 0, YELLOW, RED, RED, global_font_lato_light_16());
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, &notifier, "abcdef", 0,
+        YELLOW, RED, RED, global_font_lato_light_16());
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -373,6 +396,7 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
 RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
@@ -383,37 +407,37 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetPassword wpassword1(drawable, wcomposite, notifier,
+    WidgetPassword wpassword1(drawable, copy_paste, wcomposite, notifier,
                               "abababab", 4, YELLOW, BLACK, BLACK, global_font_lato_light_16());
     Dimension dim = wpassword1.get_optimal_dim();
     wpassword1.set_wh(50, dim.h);
     wpassword1.set_xy(0, 0);
 
-    WidgetPassword wpassword2(drawable, wcomposite, notifier,
+    WidgetPassword wpassword2(drawable, copy_paste, wcomposite, notifier,
                               "ggghdgh", 2, WHITE, RED, RED, global_font_lato_light_16());
     dim = wpassword2.get_optimal_dim();
     wpassword2.set_wh(50, dim.h);
     wpassword2.set_xy(0, 100);
 
-    WidgetPassword wpassword3(drawable, wcomposite, notifier,
+    WidgetPassword wpassword3(drawable, copy_paste, wcomposite, notifier,
                               "lldlslql", 1, BLUE, RED, RED, global_font_lato_light_16());
     dim = wpassword3.get_optimal_dim();
     wpassword3.set_wh(50, dim.h);
     wpassword3.set_xy(100, 100);
 
-    WidgetPassword wpassword4(drawable, wcomposite, notifier,
+    WidgetPassword wpassword4(drawable, copy_paste, wcomposite, notifier,
                               "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, global_font_lato_light_16());
     dim = wpassword4.get_optimal_dim();
     wpassword4.set_wh(50, dim.h);
     wpassword4.set_xy(300, 300);
 
-    WidgetPassword wpassword5(drawable, wcomposite, notifier,
+    WidgetPassword wpassword5(drawable, copy_paste, wcomposite, notifier,
                               "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_lato_light_16());
     dim = wpassword5.get_optimal_dim();
     wpassword5.set_wh(50, dim.h);
     wpassword5.set_xy(700, -10);
 
-    WidgetPassword wpassword6(drawable, wcomposite, notifier,
+    WidgetPassword wpassword6(drawable, copy_paste, wcomposite, notifier,
                               "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_lato_light_16());
     dim = wpassword6.get_optimal_dim();
     wpassword6.set_wh(50, dim.h);
@@ -443,6 +467,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 RED_AUTO_TEST_CASE(DataWidgetPassword)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -453,7 +478,9 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, global_font_lato_light_16());
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, &notifier, "aurélie", 0,
+        YELLOW, RED, RED, global_font_lato_light_16());
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -466,7 +493,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    RED_CHECK("aurélie"sv == wpassword.get_text());
+    RED_CHECK("aurélie"_av == wpassword.get_text());
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
@@ -497,12 +524,13 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     rdp_input_scancode(Keymap::KeyCode::Backspace);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
 
-    RED_CHECK("aurlie"sv == wpassword.get_text());
+    RED_CHECK("aurlie"_av == wpassword.get_text());
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword2)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -513,7 +541,9 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, global_font_lato_light_16());
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, &notifier, "aurélie", 0,
+        YELLOW, RED, RED, global_font_lato_light_16());
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -526,7 +556,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    RED_CHECK("aurélie"sv == wpassword.get_text());
+    RED_CHECK("aurélie"_av == wpassword.get_text());
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
@@ -562,12 +592,13 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     rdp_input_scancode(Keymap::KeyCode::Delete);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
 
-    RED_CHECK("aurlie"sv == wpassword.get_text());
+    RED_CHECK("aurlie"_av == wpassword.get_text());
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword3)
 {
     TestGraphic drawable(800, 600);
+    CopyPaste copy_paste(false);
 
     NotifyTrace notifier;
 
@@ -578,7 +609,9 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, global_font_lato_light_16());
+    WidgetPassword wpassword(
+        drawable, copy_paste, parent, &notifier, "aurélie", 0,
+        YELLOW, RED, RED, global_font_lato_light_16());
     parent.add_widget(&wpassword);
 
     Dimension dim = wpassword.get_optimal_dim();
@@ -594,7 +627,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    RED_CHECK("aurélie"sv == wpassword.get_text());
+    RED_CHECK("aurélie"_av == wpassword.get_text());
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
@@ -639,7 +672,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
 
-    RED_CHECK("aurézlie"sv == wpassword.get_text());
+    RED_CHECK("aurézlie"_av == wpassword.get_text());
 
     // cursor overflow
 

@@ -32,7 +32,6 @@
 #include "mod/internal/widget/screen.hpp"
 
 #include <string>
-#include <string_view>
 
 using namespace std::string_view_literals;
 
@@ -131,21 +130,6 @@ private:
     std::string str;
 };
 
-class CopyPasteProcess : public NotifyApi
-{
-    CopyPaste & copy_paste;
-
-public:
-    CopyPasteProcess(CopyPaste & copy_paste)
-    : copy_paste(copy_paste)
-    {}
-
-    void notify(Widget & sender, notify_event_t event) override
-    {
-        copy_paste_process_event(this->copy_paste, sender, event);
-    }
-};
-
 RED_AUTO_TEST_CASE(TestPaste)
 {
     ScreenInfo screen_info{120, 20, BitsPerPixel{24}};
@@ -154,11 +138,9 @@ RED_AUTO_TEST_CASE(TestPaste)
     CopyPasteFront front(screen_info, copy_paste);
     TestGraphic gd(screen_info.width, screen_info.height);
 
-    CopyPasteProcess notifier(copy_paste);
-
     WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_lato_light_16(), nullptr, Theme{});
 
-    WidgetEdit edit(gd, parent, &notifier, "", 0, PINK, ORANGE, RED, global_font_lato_light_16());
+    WidgetEdit edit(gd, copy_paste, parent, nullptr, "", 0, PINK, ORANGE, RED, global_font_lato_light_16());
     Dimension dim = edit.get_optimal_dim();
     edit.set_wh(120, dim.h);
     edit.set_xy(0, 0);
@@ -167,7 +149,7 @@ RED_AUTO_TEST_CASE(TestPaste)
 
     #define edit_paste(s, imgref) do {              \
         copy_paste.paste(edit);                     \
-        RED_CHECK_EQUAL(s ""sv, edit.get_text());   \
+        RED_CHECK_EQUAL(s ""_av, edit.get_text());   \
         edit.rdp_input_invalidate(edit.get_rect()); \
         RED_CHECK_IMG(gd, imgref);                  \
     } while (0)

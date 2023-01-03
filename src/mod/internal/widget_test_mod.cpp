@@ -59,7 +59,8 @@ struct WidgetTestMod::WidgetTestModPrivate : NotifyApi
 
     void notify(Widget& sender, NotifyApi::notify_event_t event) override
     {
-        copy_paste_process_event(this->copy_paste, sender, event);
+        (void)sender;
+        (void)event;
     }
 
     gdi::GraphicApi & gd;

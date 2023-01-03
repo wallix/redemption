@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/wait.hpp"
 #include "mod/internal/widget/screen.hpp"
 
@@ -34,7 +35,7 @@
 RED_AUTO_TEST_CASE(TraceWidgetWait)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -73,8 +74,9 @@ RED_AUTO_TEST_CASE(TraceWidgetWait)
 
 
     WidgetButton * extra_button = nullptr;
-    WidgetWait flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
-                         text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en);
+    WidgetWait flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
+        text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en);
     // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
@@ -91,7 +93,7 @@ RED_AUTO_TEST_CASE(TraceWidgetWait)
 RED_AUTO_TEST_CASE(TraceWidgetWaitWithForm)
 {
     TestGraphic drawable(800, 600);
-
+    CopyPaste copy_paste(false);
 
     // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
@@ -129,11 +131,12 @@ RED_AUTO_TEST_CASE(TraceWidgetWaitWithForm)
     //     "Otherwise, you can either return to selector or exit.";
 
     WidgetButton * extra_button = nullptr;
-    WidgetWait flat_dialog(drawable, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
-                         text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en, true,
-                         WidgetForm::COMMENT_DISPLAY | WidgetForm::COMMENT_MANDATORY |
-                            WidgetForm::TICKET_DISPLAY | WidgetForm::TICKET_MANDATORY |
-                            WidgetForm::DURATION_DISPLAY);
+    WidgetWait flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
+        text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en, true,
+        WidgetForm::COMMENT_DISPLAY | WidgetForm::COMMENT_MANDATORY |
+        WidgetForm::TICKET_DISPLAY | WidgetForm::TICKET_MANDATORY |
+        WidgetForm::DURATION_DISPLAY);
     // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",

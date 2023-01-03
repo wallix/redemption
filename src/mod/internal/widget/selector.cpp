@@ -40,7 +40,7 @@ WidgetSelector::temporary_number_of_page::temporary_number_of_page(const char * 
 }
 
 WidgetSelector::WidgetSelector(
-    gdi::GraphicApi & drawable,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     const char * device_name,
     int16_t left, int16_t top, uint16_t width, uint16_t height,
     Widget & parent, NotifyApi* notifier,
@@ -91,19 +91,19 @@ WidgetSelector::WidgetSelector(
 }
 , edit_filters{
     WidgetEdit{
-        drawable, *this, this,
+        drawable, copy_paste, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
     WidgetEdit{
-        drawable, *this, this,
+        drawable, copy_paste, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
     WidgetEdit{
-        drawable, *this, this,
+        drawable, copy_paste, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
@@ -127,10 +127,10 @@ WidgetSelector::WidgetSelector(
 , prev_page(drawable, *this, notifier, "◀", -15,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2, true)
-, current_page(drawable, *this, notifier,
-                current_page ? current_page : "XXXX", -15,
-                theme.edit.fgcolor, theme.edit.bgcolor,
-                theme.edit.focus_color, font, std::size_t(-1), 1, 1)
+, current_page(drawable, copy_paste, *this, notifier,
+               current_page ? current_page : "XXXX", -15,
+               theme.edit.fgcolor, theme.edit.bgcolor,
+               theme.edit.focus_color, font, std::size_t(-1), 1, 1)
 , number_page(drawable, *this, nullptr,
                 number_of_page ? temporary_number_of_page(number_of_page).buffer
                 : "/XXX", -100, theme.global.fgcolor,
@@ -404,7 +404,7 @@ void WidgetSelector::notify(Widget& widget, notify_event_t event)
         }
     }
     else if (widget.group_id == this->apply.group_id) {
-        if (NOTIFY_SUBMIT == event || NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+        if (NOTIFY_SUBMIT == event) {
             this->send_notify(widget, event);
         }
     }

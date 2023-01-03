@@ -28,7 +28,7 @@
 #include "gdi/graphic_api.hpp"
 
 WidgetEditValid::WidgetEditValid(
-    gdi::GraphicApi & drawable,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     Widget & parent, NotifyApi* notifier, const char * text,
     int group_id, Color fgcolor, Color bgcolor,
     Color focus_color, Color border_none_color, Font const & font,
@@ -39,15 +39,17 @@ WidgetEditValid::WidgetEditValid(
     : Widget(drawable, parent, notifier, group_id)
     , button(drawable, *this, this, "\xe2\x9e\x9c",
                 group_id, bgcolor, focus_color, focus_color, 1, font, 6, 2)
-    , editbox(pass ? new WidgetPassword(drawable, *this,
-                                        this, text, group_id, fgcolor, bgcolor,
-                                        focus_color, font, edit_position, 1, 2)
-                : new WidgetEdit(drawable, *this, this,
-                                text, group_id, fgcolor, bgcolor, focus_color, font,
-                                edit_position, 1, 2))
-    , label(title ? new WidgetLabel(drawable, *this, nullptr, title,
-                                    group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
-            : nullptr)
+    , editbox(pass
+        ? new WidgetPassword(drawable, copy_paste, *this,
+                             this, text, group_id, fgcolor, bgcolor,
+                             focus_color, font, edit_position, 1, 2)
+        : new WidgetEdit(drawable, copy_paste, *this, this,
+                         text, group_id, fgcolor, bgcolor, focus_color, font,
+                         edit_position, 1, 2))
+    , label(title
+        ? new WidgetLabel(drawable, *this, nullptr, title,
+                          group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
+        : nullptr)
     , use_label_(use_title)
     , border_none_color(border_none_color)
 {
@@ -231,8 +233,5 @@ void WidgetEditValid::notify(Widget& widget, NotifyApi::notify_event_t event)
         if (this->editbox->num_chars == 1) {
             this->editbox->rdp_input_invalidate(this->get_rect());
         }
-    }
-    if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        this->send_notify(widget, event);
     }
 }

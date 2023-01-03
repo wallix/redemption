@@ -34,7 +34,7 @@ enum {
 constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 
 WidgetWait::WidgetWait(
-    gdi::GraphicApi & drawable, Rect const widget_rect,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text, int group_id,
     WidgetButton * extra_button,
@@ -47,7 +47,7 @@ WidgetWait::WidgetWait(
     , dialog(drawable, this->groupbox, nullptr, text, -10,
              theme.global.fgcolor, theme.global.bgcolor, font,
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , form(drawable, *this, this, -20, font, theme, lang,
+    , form(drawable, copy_paste, *this, this, -20, font, theme, lang,
            flags & ~HIDE_BACK_TO_SELECTOR, duration_max)
     , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
                  theme.global.fgcolor, theme.global.bgcolor,
@@ -145,9 +145,6 @@ void WidgetWait::notify(Widget& widget, NotifyApi::notify_event_t event)
     }
     else if ((event == NOTIFY_SUBMIT) && (widget.group_id == this->form.group_id)) {
         this->send_notify(NOTIFY_TEXT_CHANGED);
-    }
-    else if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
-        this->send_notify(widget, event);
     }
     else {
         WidgetParent::notify(widget, event);

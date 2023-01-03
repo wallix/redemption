@@ -37,6 +37,7 @@ enum ChallengeOpt
 
 class WidgetEdit;
 class Theme;
+class CopyPaste;
 
 class WidgetDialog : public WidgetParent
 {
@@ -57,14 +58,15 @@ private:
     Color bg_color;
 
 public:
-    WidgetDialog(gdi::GraphicApi & drawable,
-               Rect const widget_rect,
-               Widget & parent, NotifyApi* notifier,
-               const char* caption, const char * text,
-               WidgetButton * extra_button,
-               Theme const & theme, Font const & font, const char * ok_text = "Ok", /*NOLINT*/
-               const char * cancel_text = "Cancel", /*NOLINT*/
-               ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
+    WidgetDialog(
+        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+        Rect const widget_rect,
+        Widget & parent, NotifyApi* notifier,
+        const char* caption, const char * text,
+        WidgetButton * extra_button,
+        Theme const & theme, Font const & font, const char * ok_text = "Ok", /*NOLINT*/
+        const char * cancel_text = "Cancel", /*NOLINT*/
+        ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
 
     ~WidgetDialog() override;
 

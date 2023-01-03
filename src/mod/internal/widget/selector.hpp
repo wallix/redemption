@@ -121,7 +121,7 @@ private:
     const char * label[WidgetSelectorParams::nb_max_columns] = {nullptr};
 
 public:
-    WidgetSelector(gdi::GraphicApi & drawable,
+    WidgetSelector(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
                    const char * device_name,
                    int16_t left, int16_t top, uint16_t width, uint16_t height,
                    Widget & parent, NotifyApi* notifier,
