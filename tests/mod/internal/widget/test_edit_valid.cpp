@@ -38,429 +38,336 @@ using namespace std::string_view_literals;
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/edit_valid/"
 
+struct TestWidgetEditValid
+{
+    struct Colors
+    {
+        BGRColor fg = BLACK;
+        BGRColor bg = WHITE;
+        BGRColor focus = ANTHRACITE;
+    };
+
+    TestGraphic drawable{800, 600};
+    CopyPaste copy_paste{false};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetEditValid wedit;
+
+    TestWidgetEditValid(
+        Colors colors, const char * text, std::size_t edit_position = -1u,
+        const char * title = "", bool pass = false, NotifyApi* notifier = nullptr)
+    : wedit(drawable, copy_paste, parent, notifier, text, /*id=*/0,
+            colors.fg, colors.bg, colors.focus, colors.bg,
+            global_font_deja_vu_14(), title, false, edit_position, 0, 0, pass)
+    {
+    }
+
+    void click_down(int x, int y)
+    {
+        parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
+                               wedit.x() + x, wedit.y() + y);
+    }
+
+    void click_up(int x, int y)
+    {
+        parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                               wedit.x() + x, wedit.y() + y);
+    }
+
+    void click(int x, int y)
+    {
+        click_down(x, y);
+        click_up(x, y);
+    }
+
+    struct KeyBoard
+    {
+        TestWidgetEditValid& ctx;
+        Keymap keymap;
+
+        void send_scancode(uint16_t scancode_and_flags)
+        {
+            using KFlags = Keymap::KbdFlags;
+            using Scancode = Keymap::Scancode;
+            auto scancode = Scancode(scancode_and_flags);
+            auto flags = KFlags(scancode_and_flags & 0xff00u);
+            keymap.event(flags, scancode);
+            ctx.parent.rdp_input_scancode(flags, scancode, 0, keymap);
+            keymap.event(flags | KFlags::Release, scancode);
+            ctx.parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
+        }
+    };
+
+    KeyBoard keyboard()
+    {
+        return KeyBoard{*this, Keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))}};
+    }
+};
+
+
 RED_AUTO_TEST_CASE(TraceWidgetEdit)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetEditValid ctx({}, "test1", 2);
 
-    // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    Dimension dim = ctx.wedit.get_optimal_dim();
+    ctx.wedit.set_wh(100, dim.h);
+    ctx.wedit.set_xy(0, 0);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLACK;
-    BGRColor bg_color = WHITE;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 100;
-    int xtext = 4;
-    int ytext = 1;
-    size_t edit_pos = 2;
+    ctx.parent.set_widget_focus(&ctx.wedit, Widget::focus_reason_tabkey);
 
-    WidgetEditValid wedit(drawable, copy_paste, parent, notifier, "test1", id,
-                          fg_color, bg_color, ANTHRACITE, bg_color, global_font_deja_vu_14(),
-                          nullptr, false, edit_pos, xtext, ytext);
-    Dimension dim = wedit.get_optimal_dim();
-    wedit.set_wh(cx, dim.h);
-    wedit.set_xy(x, y);
+    ctx.wedit.rdp_input_invalidate(ctx.wedit.get_rect());
 
-    parent.set_widget_focus(&wedit, Widget::focus_reason_tabkey);
-    // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
-                                    0 + wedit.y(),
-                                    wedit.cx(),
-                                    wedit.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_1.png");
 }
-
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetEditValid ctx({}, "");
 
-    // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    Dimension dim = ctx.wedit.get_optimal_dim();
+    ctx.wedit.set_wh(100, dim.h);
+    ctx.wedit.set_xy(50, 100);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLACK;
-    BGRColor bg_color = WHITE;
-    int id = 0;
-    int16_t x = 50;
-    int16_t y = 100;
-    uint16_t cx = 100;
-    int xtext = 4;
-    int ytext = 1;
-    size_t edit_pos = -1;
+    ctx.parent.add_widget(&ctx.wedit);
 
-    WidgetEditValid wedit(drawable, copy_paste, parent, notifier, nullptr, id,
-                          fg_color, bg_color, ANTHRACITE, bg_color, global_font_deja_vu_14(),
-                          nullptr, false, edit_pos, xtext, ytext);
-    Dimension dim = wedit.get_optimal_dim();
-    wedit.set_wh(cx, dim.h);
-    wedit.set_xy(x, y);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    parent.add_widget(&wedit);
-    // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_2.png");
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_2.png");
-
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit.x() + 2, wedit.y() + 2);
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                           wedit.x() + 2, wedit.y() + 2);
+    ctx.click(2, 2);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
-                                    0 + wedit.y(),
-                                    wedit.cx(),
-                                    wedit.cy()));
+    ctx.wedit.rdp_input_invalidate(ctx.wedit.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_3.png");
 
-    wedit.set_text("Ylajali");
+    ctx.wedit.set_text("Ylajali");
 
-    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
-                                    0 + wedit.y(),
-                                    wedit.cx(),
-                                    wedit.cy()));
+    ctx.wedit.rdp_input_invalidate(ctx.wedit.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_4.png");
 
-    RED_CHECK_EQUAL("Ylajali"sv, wedit.get_text());
+    RED_CHECK_EQUAL("Ylajali"sv, ctx.wedit.get_text());
 
 
-    wedit.set_xy(192,242);
+    ctx.wedit.set_xy(192, 242);
 
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_5.png");
 
-    parent.clear();
+    ctx.parent.clear();
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetEditValid ctx({RED, YELLOW, GREEN}, "dLorz", 0);
 
-    // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.parent.tab_flag = Widget::NORMAL_TAB;
+    Dimension dim = ctx.wedit.get_optimal_dim();
+    ctx.wedit.set_wh(150, dim.h);
+    ctx.wedit.set_xy(54, 105);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    BGRColor bbg_color = GREEN;
-    int id = 0;
-
-    parent.tab_flag = Widget::NORMAL_TAB;
-
-    WidgetEditValid wedit1(drawable, copy_paste, parent, notifier, "dLorz", id,
-                           fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(),
-                           nullptr, false, 0);
-    Dimension dim = wedit1.get_optimal_dim();
-    wedit1.set_wh(150, dim.h);
-    wedit1.set_xy(54, 105);
-
-    WidgetEditValid wedit2(drawable, copy_paste, parent, notifier, "", id,
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, nullptr, "", 0,
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            nullptr, false, 0);
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
 
-    parent.add_widget(&wedit1);
-    parent.add_widget(&wedit2);
+    ctx.parent.add_widget(&ctx.wedit);
+    ctx.parent.add_widget(&wedit2);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_6.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit1.x() + 50, wedit1.y() + 3);
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                           wedit1.x() + 50, wedit1.y() + 3);
+    ctx.click(50, 3);
 
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_7.png");
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
-        using KFlags = Keymap::KbdFlags;
-        using Scancode = Keymap::Scancode;
-        auto scancode = Scancode(scancode_and_flags);
-        auto flags = KFlags(scancode_and_flags & 0xff00u);
-        keymap.event(flags, scancode);
-        parent.rdp_input_scancode(flags, scancode, 0, keymap);
-        keymap.event(flags | KFlags::Release, scancode);
-        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
-    };
+    keyboard.send_scancode(0x0F); // tab
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    rdp_input_scancode(0x0F); // tab
-    parent.rdp_input_invalidate(parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_8.png");
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_8.png");
+    keyboard.send_scancode(0x10); // 'a'
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    rdp_input_scancode(0x10); // 'a'
-    parent.rdp_input_invalidate(parent.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_9.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_9.png");
 }
-
 
 RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetEditValid ctx({RED, YELLOW, GREEN}, "dLorz", 0, "edition1");
 
-    // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.parent.tab_flag = Widget::NORMAL_TAB;
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    BGRColor bbg_color = GREEN;
-    int id = 0;
+    Dimension dim = ctx.wedit.get_optimal_dim();
+    ctx.wedit.set_wh(150, dim.h);
+    ctx.wedit.set_xy(54, 105);
 
-    parent.tab_flag = Widget::NORMAL_TAB;
-
-    WidgetEditValid wedit1(drawable, copy_paste, parent, notifier, "dLorz", id,
-                           fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(),
-                           "edition1", true, 0, 0, 0, false);
-    Dimension dim = wedit1.get_optimal_dim();
-    wedit1.set_wh(150, dim.h);
-    wedit1.set_xy(54, 105);
-
-    WidgetEditValid wedit2(drawable, copy_paste, parent, notifier, "", id,
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, nullptr, "", 0,
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            "edition2", true, 0, 0, 0, false);
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
 
-    parent.add_widget(&wedit1);
-    parent.add_widget(&wedit2);
+    ctx.parent.add_widget(&ctx.wedit);
+    ctx.parent.add_widget(&wedit2);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_10.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_10.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit1.x() + 50, wedit1.y() + 2);
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                           wedit1.x() + 50, wedit1.y() + 2);
+    ctx.click(50, 2);
 
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_11.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_11.png");
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
-        using KFlags = Keymap::KbdFlags;
-        using Scancode = Keymap::Scancode;
-        auto scancode = Scancode(scancode_and_flags);
-        auto flags = KFlags(scancode_and_flags & 0xff00u);
-        keymap.event(flags, scancode);
-        parent.rdp_input_scancode(flags, scancode, 0, keymap);
-        keymap.event(flags | KFlags::Release, scancode);
-        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
-    };
+    keyboard.send_scancode(0x0F); // tab
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_12.png");
 
-    rdp_input_scancode(0x0F); // tab
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_12.png");
+    keyboard.send_scancode(0x10); // 'a'
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_9.png");
 
-    rdp_input_scancode(0x10); // 'a'
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_9.png");
+    keyboard.send_scancode(0x0F); // tab
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_14.png");
 
-    rdp_input_scancode(0x0F); // tab
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_14.png");
+    keyboard.send_scancode(0x0F); // tab
+    keyboard.send_scancode(0x0E); // backspace
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_15.png");
 
-    rdp_input_scancode(0x0F); // tab
-    rdp_input_scancode(0x0E); // backspace
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_15.png");
-
-    rdp_input_scancode(0x0F); // tab
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_11.png");
+    keyboard.send_scancode(0x0F); // tab
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_11.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetEditValid ctx({RED, YELLOW, GREEN}, "dLorz", 0, "edition1", true);
 
-    // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.parent.tab_flag = Widget::NORMAL_TAB;
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    BGRColor bbg_color = GREEN;
-    int id = 0;
+    Dimension dim = ctx.wedit.get_optimal_dim();
+    ctx.wedit.set_wh(150, dim.h);
+    ctx.wedit.set_xy(54, 105);
 
-    parent.tab_flag = Widget::NORMAL_TAB;
-
-    WidgetEditValid wedit1(drawable, copy_paste, parent, notifier, "dLorz", id,
-                           fg_color, bg_color, bbg_color, bg_color, global_font_deja_vu_14(),
-                           "edition1", true, 0, 0, 0, true);
-    Dimension dim = wedit1.get_optimal_dim();
-    wedit1.set_wh(150, dim.h);
-    wedit1.set_xy(54, 105);
-
-    WidgetEditValid wedit2(drawable, copy_paste, parent, notifier, "", id,
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, nullptr, "", 0,
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            "edition2", true, 0, 0, 0, true);
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
 
-    parent.add_widget(&wedit1);
-    parent.add_widget(&wedit2);
+    ctx.parent.add_widget(&ctx.wedit);
+    ctx.parent.add_widget(&wedit2);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_17.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_17.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit1.x() + 50, wedit1.y() + 2);
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                           wedit1.x() + 50, wedit1.y() + 2);
+    ctx.click(50, 2);
 
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_18.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_18.png");
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
-        using KFlags = Keymap::KbdFlags;
-        using Scancode = Keymap::Scancode;
-        auto scancode = Scancode(scancode_and_flags);
-        auto flags = KFlags(scancode_and_flags & 0xff00u);
-        keymap.event(flags, scancode);
-        parent.rdp_input_scancode(flags, scancode, 0, keymap);
-        keymap.event(flags | KFlags::Release, scancode);
-        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
-    };
+    keyboard.send_scancode(0x0F); // tab
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_19.png");
 
-    rdp_input_scancode(0x0F); // tab
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_19.png");
+    keyboard.send_scancode(0x10); // 'a'
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_20.png");
 
-    rdp_input_scancode(0x10); // 'a'
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_20.png");
+    keyboard.send_scancode(0x0F); // tab
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_21.png");
 
-    rdp_input_scancode(0x0F); // tab
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_21.png");
+    keyboard.send_scancode(0x0F); // tab
+    keyboard.send_scancode(0x0E); // backspace
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_22.png");
 
-    rdp_input_scancode(0x0F); // tab
-    rdp_input_scancode(0x0E); // backspace
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_22.png");
-
-    rdp_input_scancode(0x0F); // tab
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_18.png");
+    keyboard.send_scancode(0x0F); // tab
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_18.png");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
     NotifyTrace notifier;
+    TestWidgetEditValid ctx({BLACK, WHITE, DARK_BLUE}, "abcdef", -1u, "", false, &notifier);
 
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    Dimension dim = ctx.wedit.get_optimal_dim();
+    ctx.wedit.set_wh(100, dim.h);
+    ctx.wedit.set_xy(0, 0);
 
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 100;
+    ctx.parent.add_widget(&ctx.wedit);
+    ctx.parent.set_widget_focus(&ctx.wedit, Widget::focus_reason_tabkey);
 
-    WidgetEditValid wedit(drawable, copy_paste, parent, &notifier, "abcdef", 0,
-                          BLACK, WHITE, DARK_BLUE, WHITE, global_font_deja_vu_14(),
-                          nullptr, false);
-    Dimension dim = wedit.get_optimal_dim();
-    wedit.set_wh(cx, dim.h);
-    wedit.set_xy(x, y);
+    ctx.click_down(95, 2);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    parent.add_widget(&wedit);
-    parent.set_widget_focus(&wedit, Widget::focus_reason_tabkey);
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_24.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit.eright() - 5, wedit.y() + 2);
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.click_up(95, 2);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_24.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                           wedit.eright() - 5, wedit.y() + 2);
-    parent.rdp_input_invalidate(parent.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
-
-    RED_CHECK(notifier.last_widget == &wedit);
+    RED_CHECK(notifier.last_widget == &ctx.wedit);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit.eright() - 5, wedit.y() + 2);
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.click_down(95, 2);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_24.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_24.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                           wedit.x() + 2, wedit.y() + 2);
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.click_up(2, 2);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                           wedit.eright() - 5, wedit.y() + 2);
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.click_down(95, 2);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_24.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_24.png");
 
-    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0);
-    parent.rdp_input_invalidate(parent.get_rect());
+    ctx.parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0);
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](uint16_t scancode_and_flags){
-        using KFlags = Keymap::KbdFlags;
-        using Scancode = Keymap::Scancode;
-        auto scancode = Scancode(scancode_and_flags);
-        auto flags = KFlags(scancode_and_flags & 0xff00u);
-        keymap.event(flags, scancode);
-        parent.rdp_input_scancode(flags, scancode, 0, keymap);
-        keymap.event(flags | KFlags::Release, scancode);
-        parent.rdp_input_scancode(flags | KFlags::Release, scancode, 0, keymap);
-    };
+    keyboard.send_scancode(0x1C); // enter
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
-    rdp_input_scancode(0x1C); // enter
-    parent.rdp_input_invalidate(parent.get_rect());
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_valid_25.png");
-
-    RED_CHECK(notifier.last_widget == &wedit);
+    RED_CHECK(notifier.last_widget == &ctx.wedit);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
