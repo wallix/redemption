@@ -31,76 +31,56 @@
 #include "test_only/core/font.hpp"
 #include "core/events.hpp"
 
-// TODO "Need more tests, with or without device/login/password asking, "
-
-RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
+struct TestInteractiveTargetModFixture
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
+    FakeFront front{screen_info};
     WindowListCaps window_list_caps;
     EventContainer events;
-    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute{events.get_time_base(), front.gd(), front, window_list_caps, false};
 
     Inifile ini;
     Theme theme;
-    ini.set_acl<cfg::context::target_host>("somehost");
-    ini.set_acl<cfg::globals::target_user>("someuser");
-    ini.ask<cfg::context::target_password>();
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
 
-    InteractiveTargetMod d(ini, front.gd(), front, 800, 600, Rect(0, 0, 799, 599), client_execute,
-                           global_font(), theme);
-    d.init();
+    InteractiveTargetMod d{
+        [this]() -> Inifile& {
+            ini.set_acl<cfg::context::target_host>("somehost");
+            ini.set_acl<cfg::globals::target_user>("someuser");
+            ini.ask<cfg::context::target_password>();
+            return ini;
+        }(),
+        front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
+        client_execute, global_font(), theme
+    };
+
+    TestInteractiveTargetModFixture()
+    {
+        d.init();
+    }
+};
+
+// TODO "Need more tests, with or without device/login/password asking, "
+
+RED_FIXTURE_TEST_CASE(TestInteractiveTargetMod, TestInteractiveTargetModFixture)
+{
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c)); // enter
     d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
 
     RED_CHECK(ini.get<cfg::context::display_message>());
 }
 
-
-RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
+RED_FIXTURE_TEST_CASE(TestInteractiveTargetModReject, TestInteractiveTargetModFixture)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
-
-    Inifile ini;
-    Theme theme;
-
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
-
-    InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
-                           client_execute, global_font(), theme);
-    d.init();
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
     d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
 
     RED_CHECK(not ini.get<cfg::context::display_message>());
 }
 
-RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
+RED_FIXTURE_TEST_CASE(TestInteractiveTargetModChallenge, TestInteractiveTargetModFixture)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    WindowListCaps window_list_caps;
-    EventContainer events;
-    ClientExecute client_execute(events.get_time_base(), front.gd(), front, window_list_caps, false);
-
-    Inifile ini;
-    Theme theme;
-    ini.set_acl<cfg::context::target_host>("somehost");
-    ini.set_acl<cfg::globals::target_user>("someuser");
-    ini.ask<cfg::context::target_password>();
-
-    InteractiveTargetMod d(ini, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
-                           client_execute, global_font(), theme);
-    d.init();
-
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
-
     auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
         auto ukeycode = underlying_cast(keycode);
         auto scancode = Keymap::Scancode(ukeycode & 0x7F);
