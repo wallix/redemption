@@ -65,9 +65,6 @@ public:
 
     [[nodiscard]] Dimension get_dim() const override { return Dimension(this->front_width, this->front_height); }
 
-private:
-    [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const;
-
 protected:
     void check_alt_f4(Keymap const& keymap) const;
 

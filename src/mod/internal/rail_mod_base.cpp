@@ -52,10 +52,7 @@ RailModBase::~RailModBase()
 void RailModBase::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
-        this->rail_client_execute.ready(
-            *this, this->screen.font,
-            this->is_resizing_hosted_desktop_allowed());
-
+        this->rail_client_execute.ready(*this, this->screen.font, false);
         this->dvc_manager.ready(this->front);
     }
 }
@@ -135,11 +132,4 @@ void RailModBase::send_to_mod_channel( CHANNELS::ChannelNameId front_channel_nam
             this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
         }
     }
-}
-
-bool RailModBase::is_resizing_hosted_desktop_allowed() const
-{
-    assert(this->rail_enabled);
-
-    return false;
 }

@@ -92,7 +92,7 @@ void RailModuleHostMod::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
-            *this, this->font(), this->is_resizing_hosted_desktop_allowed());
+            *this, this->font(), this->can_resize_hosted_desktop);
         this->dvc_manager.ready(this->front);
     }
 }
@@ -225,11 +225,6 @@ Dimension RailModuleHostMod::get_dim() const
     const mod_api& mod = this->module_host.get_managed_mod();
 
     return mod.get_dim();
-}
-
-bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
-{
-    return this->can_resize_hosted_desktop;
 }
 
 void RailModuleHostMod::acl_update(AclFieldMask const& acl_fields)

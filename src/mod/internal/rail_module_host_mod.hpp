@@ -131,8 +131,6 @@ public:
 
     [[nodiscard]] Dimension get_dim() const override;
 
-    [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const;
-
     void acl_update(AclFieldMask const& acl_fields) override;
 
 private:
