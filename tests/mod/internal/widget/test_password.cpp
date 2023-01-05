@@ -34,303 +34,155 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/password/"
 
+struct TestWidgetPasswordCtx
+{
+    TestGraphic drawable{800, 600};
+    CopyPaste copy_paste{false};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetPassword wpassword;
+
+    struct Colors
+    {
+        BGRColor fg_color = BLUE;
+        BGRColor bg_color = YELLOW;
+        BGRColor focus_color = bg_color;
+    };
+
+    TestWidgetPasswordCtx(
+        char const* text, Colors colors, uint16_t edit_width = 50,
+        NotifyApi* notifier = nullptr,
+        size_t password_pos = -1u, int xtext = 0, int ytext = 0)
+    : wpassword(
+        drawable, copy_paste, parent, notifier, text, 0,
+        colors.fg_color, colors.bg_color, colors.focus_color,
+        global_font_lato_light_16(), password_pos, xtext, ytext)
+    {
+        Dimension dim = wpassword.get_optimal_dim();
+        wpassword.set_wh(edit_width, dim.h);
+    }
+
+    struct Keyboard
+    {
+        TestWidgetPasswordCtx& ctx;
+        Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
+
+        void rdp_input_scancode(Keymap::KeyCode keycode)
+        {
+            auto ukeycode = underlying_cast(keycode);
+            auto scancode = Keymap::Scancode(ukeycode & 0x7F);
+            auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
+            keymap.event(flags, scancode);
+            ctx.wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
+            ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
+        }
+    };
+
+    Keyboard keyboard()
+    {
+        return {*this};
+    }
+};
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test1", {}, 50, nullptr, 2, 4, 1);
 
-    // WidgetPassword is a password widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wpassword.set_xy(0, 0);
+    ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 50;
-    int xtext = 4;
-    int ytext = 1;
-    size_t password_pos = 2;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test1", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), password_pos, xtext, ytext);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
-                                    0 + wpassword.x(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test2", {}, 50);
+    ctx.wpassword.set_xy(10, 100);
+    ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
 
-    // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 10;
-    int16_t y = 100;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test2", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
-                                    0 + wpassword.y(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword3)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test3", {}, 50);
+    ctx.wpassword.set_xy(-10, 500);
+    ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
 
-    // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = -10;
-    int16_t y = 500;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test3", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
-                                    0 + wpassword.y(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword4)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test4", {}, 50);
+    ctx.wpassword.set_xy(770, 500);
+    ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
 
-    // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 770;
-    int16_t y = 500;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test4", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
-                                    0 + wpassword.y(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword5)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test5", {}, 50);
+    ctx.wpassword.set_xy(-20, -7);
+    ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
 
-    // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = -20;
-    int16_t y = -7;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test5", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
-                                    0 + wpassword.y(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword6)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test6", {}, 50);
+    ctx.wpassword.set_xy(760, -7);
+    ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
 
-    // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 760;
-    int16_t y = -7;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test6", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
-                                    0 + wpassword.y(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test6", {}, 50);
+    ctx.wpassword.set_xy(760, -7);
+    ctx.wpassword.rdp_input_invalidate(Rect(
+        20 + ctx.wpassword.x(),
+        0 + ctx.wpassword.y(),
+        ctx.wpassword.cx(),
+        ctx.wpassword.cy()
+    ));
 
-    // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 760;
-    int16_t y = -7;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test6", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wpassword.rdp_input_invalidate(Rect(20 + wpassword.x(),
-                                    0 + wpassword.y(),
-                                    wpassword.cx(),
-                                    wpassword.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_7.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetPasswordCtx ctx("test6", {}, 50);
+    ctx.wpassword.set_xy(0, 0);
+    ctx.wpassword.rdp_input_invalidate(Rect(
+        20 + ctx.wpassword.x(),
+        5 + ctx.wpassword.y(),
+        30,
+        10
+    ));
 
-    // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 50;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, notifier, "test6", id,
-        fg_color, bg_color, BLACK, global_font_lato_light_16(), 0);
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
-
-    // ask to widget to redraw at position 30,12 and of size 30x10.
-    wpassword.rdp_input_invalidate(Rect(20 + wpassword.x(),
-                                    5 + wpassword.y(),
-                                    30,
-                                    10));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_8.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "password_8.png");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetPassword)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
     NotifyTrace notifier;
+    TestWidgetPasswordCtx ctx("abcdef", {YELLOW, RED}, 100, &notifier);
 
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    auto& wpassword = ctx.wpassword;
+    auto& drawable = ctx.drawable;
 
-    // Widget* parent = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 100;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, &notifier, "abcdef", 0,
-        YELLOW, RED, RED, global_font_lato_light_16());
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
+    wpassword.set_xy(0, 0);
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_9.png");
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
-        auto ukeycode = underlying_cast(keycode);
-        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
-        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
-        keymap.event(flags, scancode);
-        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
-        wpassword.rdp_input_invalidate(wpassword.get_rect());
-    };
-
-    rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
+    keyboard.rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
     wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
     RED_CHECK(notifier.last_widget == &wpassword);
@@ -338,46 +190,46 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
+    keyboard.rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_11.png");
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
     notifier.last_event = 0;
     notifier.last_widget = nullptr;
 
-    rdp_input_scancode(Keymap::KeyCode::UpArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::UpArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_12.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::RightArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::RightArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_11.png");
 
-    rdp_input_scancode(Keymap::KeyCode::Backspace);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::Backspace);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
 
-    rdp_input_scancode(Keymap::KeyCode::Delete);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::Delete);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_17.png");
 
-    rdp_input_scancode(Keymap::KeyCode::End);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::End);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_9.png");
 
-    rdp_input_scancode(Keymap::KeyCode::Home);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::Home);
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_19.png");
 
-    rdp_input_scancode(Keymap::KeyCode::Enter);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::Enter);
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
     notifier.last_widget = nullptr;
@@ -466,27 +318,17 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 
 RED_AUTO_TEST_CASE(DataWidgetPassword)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
     NotifyTrace notifier;
+    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, &notifier);
 
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    auto& wpassword = ctx.wpassword;
+    auto& drawable = ctx.drawable;
 
-    // Widget* parent = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 100;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, &notifier, "aurélie", 0,
-        YELLOW, RED, RED, global_font_lato_light_16());
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
+    wpassword.set_xy(0, 0);
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
+
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == 0);
@@ -495,33 +337,24 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
 
     RED_CHECK("aurélie"_av == wpassword.get_text());
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
-        auto ukeycode = underlying_cast(keycode);
-        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
-        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
-        keymap.event(flags, scancode);
-        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
-        wpassword.rdp_input_invalidate(wpassword.get_rect());
-    };
-
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::Backspace);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::Backspace);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
 
     RED_CHECK("aurlie"_av == wpassword.get_text());
@@ -529,27 +362,17 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
 
 RED_AUTO_TEST_CASE(DataWidgetPassword2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
     NotifyTrace notifier;
+    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, &notifier);
 
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    auto& wpassword = ctx.wpassword;
+    auto& drawable = ctx.drawable;
 
-    // Widget* parent = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 100;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, &notifier, "aurélie", 0,
-        YELLOW, RED, RED, global_font_lato_light_16());
-    Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
+    wpassword.set_xy(0, 0);
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
+
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == 0);
@@ -558,38 +381,29 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
 
     RED_CHECK("aurélie"_av == wpassword.get_text());
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
-        auto ukeycode = underlying_cast(keycode);
-        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
-        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
-        keymap.event(flags, scancode);
-        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
-        wpassword.rdp_input_invalidate(wpassword.get_rect());
-    };
-
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_32.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::Delete);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::Delete);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
 
     RED_CHECK("aurlie"_av == wpassword.get_text());
@@ -597,26 +411,18 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
 
 RED_AUTO_TEST_CASE(DataWidgetPassword3)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
     NotifyTrace notifier;
+    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, &notifier);
 
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    auto& wpassword = ctx.wpassword;
+    auto& drawable = ctx.drawable;
 
-    // Widget* parent = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t cx = 100;
-
-    WidgetPassword wpassword(
-        drawable, copy_paste, parent, &notifier, "aurélie", 0,
-        YELLOW, RED, RED, global_font_lato_light_16());
-    parent.add_widget(&wpassword);
+    wpassword.set_xy(0, 0);
+    ctx.parent.add_widget(&wpassword);
 
     Dimension dim = wpassword.get_optimal_dim();
-    wpassword.set_wh(cx, dim.h);
-    wpassword.set_xy(x, y);
+    wpassword.set_wh(100, dim.h);
+    wpassword.set_xy(0, 0);
 
 
     wpassword.focus(Widget::focus_reason_tabkey);
@@ -629,43 +435,34 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
 
     RED_CHECK("aurélie"_av == wpassword.get_text());
 
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    auto keyboard = ctx.keyboard();
 
-    auto rdp_input_scancode = [&](Keymap::KeyCode keycode){
-        auto ukeycode = underlying_cast(keycode);
-        auto scancode = Keymap::Scancode(ukeycode & 0x7F);
-        auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
-        keymap.event(flags, scancode);
-        wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
-        wpassword.rdp_input_invalidate(wpassword.get_rect());
-    };
-
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::LeftArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_32.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode::RightArrow);
+    keyboard.rdp_input_scancode(Keymap::KeyCode::RightArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
-    rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
+    keyboard.rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_40.png");
     RED_CHECK(notifier.last_widget == &wpassword);
     RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
@@ -677,7 +474,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     // cursor overflow
 
     for (int i = 0; i < 10; i++) {
-        rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
+        keyboard.rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     }
     wpassword.rdp_input_invalidate(wpassword.get_rect());
 
