@@ -31,323 +31,132 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/multiline/"
 
+constexpr char const* short_message_ml =
+    "line 1\n"
+    "line 2\n"
+    "\n"
+    "line 3, blah blah\n"
+    "line 4";
+
+struct TestWidgetMultiLineCtx
+{
+    TestGraphic drawable{800, 600};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetMultiLine wmultiline;
+
+    TestWidgetMultiLineCtx(
+        char const* text, NotifyApi* notifier = nullptr,
+        int xtext = 0, int ytext = 0)
+    : wmultiline(
+        drawable, parent, notifier, text, 0, BLUE, CYAN,
+        global_font_deja_vu_14(), xtext, ytext)
+    {
+        wmultiline.set_wh(wmultiline.get_optimal_dim());
+    }
+};
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml, nullptr, 4, 2);
 
+    ctx.wmultiline.set_xy(0, 0);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    int xtext = 4;
-    int ytext = 2;
-
-    /* TODO
-     * I believe users of this widget may wish to control text position and behavior inside rectangle
-     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
-     * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14(), xtext, ytext);
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-
-    // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(10, 100);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 10;
-    int16_t y = 100;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(-10, 500);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = -10;
-    int16_t y = 500;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(770, 500);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 770;
-    int16_t y = 500;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(-20, -7);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = -20;
-    int16_t y = -7;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(760, -7);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 760;
-    int16_t y = -7;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(760, -7);
+    ctx.wmultiline.rdp_input_invalidate(Rect(
+        20 + ctx.wmultiline.x(),
+        ctx.wmultiline.y(),
+        ctx.wmultiline.cx(),
+        ctx.wmultiline.cy()
+    ));
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 760;
-    int16_t y = -7;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.x(),
-                                         wmultiline.y(),
-                                         wmultiline.cx(),
-                                         wmultiline.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_7.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(short_message_ml);
 
+    ctx.wmultiline.set_xy(0, 0);
+    ctx.wmultiline.rdp_input_invalidate(Rect(
+        20 + ctx.wmultiline.x(),
+        5 + ctx.wmultiline.y(),
+        30,
+        10
+    ));
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1\n"
-                               "line 2\n"
-                               "\n"
-                               "line 3, blah blah\n"
-                               "line 4",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at position 30,12 and of size 30x10.
-    wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.x(),
-                                         5 + wmultiline.y(),
-                                         30,
-                                         10));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_8.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_8.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetMultiLineCtx ctx(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
+        "Curabitur sit amet eros rutrum mi ultricies tempor.\n"
+        "Nam non magna sit amet dui vestibulum feugiat.\n"
+        "Praesent vitae purus et lacus tincidunt lobortis.\n"
+        "Nam lacinia purus luctus ante congue facilisis.\n"
+        "Donec sodales mauris luctus ante ultrices blandit.");
 
+    ctx.wmultiline.set_xy(0, 0);
+    ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());
 
-    // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = BLUE;
-    BGRColor bg_color = CYAN;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-
-    WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
-                               "Curabitur sit amet eros rutrum mi ultricies tempor.\n"
-                               "Nam non magna sit amet dui vestibulum feugiat.\n"
-                               "Praesent vitae purus et lacus tincidunt lobortis.\n"
-                               "Nam lacinia purus luctus ante congue facilisis.\n"
-                               "Donec sodales mauris luctus ante ultrices blandit.",
-                               id, fg_color, bg_color, global_font_deja_vu_14());
-    Dimension dim = wmultiline.get_optimal_dim();
-    wmultiline.set_wh(dim);
-    wmultiline.set_xy(x, y);
-
-    // ask to widget to redraw at position 30,12 and of size 30x10.
-    wmultiline.rdp_input_invalidate(wmultiline.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "multiline_9.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "multiline_9.png");
 }
