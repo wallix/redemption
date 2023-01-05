@@ -238,7 +238,9 @@ void config_spec_definition(Writer && W)
             "Set to 0 to disable this feature."
         }, set(0));
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_ipv6"}, desc { "Enable primary connection on ipv6.\nWarning: Service need to be manually restarted to take changes into account" }, set(true));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_ipv6"}, desc{"Enable primary connection on ipv6.\nWarning: Service need to be manually restarted to take changes into account" }, set(true));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<types::u64>(), names{"minimal_memory_available_before_connection_silently_closed"}, desc{"In megabytes. 0 for disabled." }, set(100));
     });
 
     W.section("session_log", [&]

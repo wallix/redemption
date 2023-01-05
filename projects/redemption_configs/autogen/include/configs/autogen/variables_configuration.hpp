@@ -585,6 +585,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { true };
     };
+    /// In megabytes. 0 for disabled. <br/>
+    /// type: uint64_t <br/>
+    /// default: 100 <br/>
+    struct globals::minimal_memory_available_before_connection_silently_closed {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = uint64_t;
+        using sesman_and_spec_type = uint64_t;
+        using mapped_type = sesman_and_spec_type;
+        type value { 100 };
+    };
 
     /// type: unsigned <br/>
     /// sesman ⇐ proxy <br/>
@@ -5649,6 +5660,7 @@ struct globals
 , cfg::globals::experimental_support_resize_session_during_recording
 , cfg::globals::support_connection_redirection_during_recording
 , cfg::globals::enable_ipv6
+, cfg::globals::minimal_memory_available_before_connection_silently_closed
 { static constexpr bool is_section = true; };
 
 struct client

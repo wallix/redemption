@@ -31,6 +31,7 @@
 #include "utils/netutils.hpp"
 #include "utils/strutils.hpp"
 #include "utils/ip.hpp"
+#include "utils/meminfo.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "utils/sugar/chars_to_int.hpp"
 
@@ -38,6 +39,7 @@
 
 #include <charconv>
 
+#include <cinttypes>
 #include <cerrno>
 #include <csignal>
 #include <cstring>
@@ -192,7 +194,9 @@ namespace
 
     void session_server_start(
         int incoming_sck, bool forkable, unsigned uid, unsigned gid,
-        std::string const& config_filename, bool debug_config,
+        char const* config_filename,
+        uint64_t minimal_memory_available_kibi,
+        bool debug_config,
         SocketType socket_type, Font const& font)
     {
         union
@@ -211,6 +215,49 @@ namespace
             _exit(1);
         }
 
+        const MonotonicTimePoint start_time = MonotonicTimePoint::clock::now();
+
+        IpPort source_ip_port;
+
+        if (auto error = source_ip_port.extract_of(u.s, sizeof(u.ss)).error) {
+            LOG(LOG_ERR, "Cannot get ip and port of source : %s", error);
+            _exit(1);
+        }
+
+        const auto source_ip = source_ip_port.ip_address();
+        const auto source_port = source_ip_port.port();
+        const bool is_ipv6 = source_ip_port.is_ipv6();
+
+        using namespace std::string_view_literals;
+        const bool source_is_localhost = source_ip.to_sv() == "127.0.0.1"sv
+                                      || source_ip.to_sv() == "::1"sv;
+
+        auto parse_ini_and_prevent_early_log = [&](Inifile& ini){
+            ini.set<cfg::debug::config>(debug_config);
+            configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), config_filename);
+
+            return source_is_localhost
+                || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
+                                     source_ip, is_ipv6);
+        };
+
+        if (!check_memory_available(minimal_memory_available_kibi)) {
+            fd_set wfds;
+            io_fd_zero(wfds);
+            io_fd_set(sck, wfds);
+            // delay for connection acceptance with watchdog
+            timeval delay{1, 0};
+            select(sck + 1, nullptr, &wfds, &wfds, &delay);
+            close(sck);
+
+            Inifile ini;
+            if (!parse_ini_and_prevent_early_log(ini)) {
+                LOG(LOG_ERR, "memory less than %" PRIu64 "MiB, connection rejected",
+                    minimal_memory_available_kibi / 1024);
+            }
+            return;
+        }
+
         /* start new process */
         const pid_t pid = forkable ? fork() : 0;
         switch (pid) {
@@ -222,30 +269,9 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
-            const MonotonicTimePoint start_time = MonotonicTimePoint::clock::now();
-
-            IpPort source_ip_port;
-
-            if (auto error = source_ip_port.extract_of(u.s, sizeof(u.ss)).error) {
-                LOG(LOG_ERR, "Cannot get ip and port of source : %s", error);
-                _exit(1);
-            }
-
-            const auto source_ip = source_ip_port.ip_address();
-            const auto source_port = source_ip_port.port();
-            bool is_ipv6 = source_ip_port.is_ipv6();
-
-            using namespace std::string_view_literals;
-            const bool source_is_localhost = (source_ip.to_sv() == "127.0.0.1"sv || source_ip.to_sv() == "::1"sv);
             Inifile ini;
 
-            ini.set<cfg::debug::config>(debug_config);
-            configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), config_filename.c_str());
-
-            bool prevent_early_log = (source_is_localhost
-                                      || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
-                                                           source_ip,
-                                                           is_ipv6));
+            bool const prevent_early_log = parse_ini_and_prevent_early_log(ini);
 
             if (ini.get<cfg::debug::session>()){
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
@@ -520,15 +546,19 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     REDEMPTION_DIAGNOSTIC_POP()
 
+    const auto minimal_memory_available_kibi
+      = ini.get<cfg::globals::minimal_memory_available_before_connection_silently_closed>()
+      * 1024;
     const bool debug_config = (ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     const EnableTransparentMode enable_transparent_mode
       = EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>());
-    bool enable_ipv6 = ini.get<cfg::globals::enable_ipv6>();
+    const bool enable_ipv6 = ini.get<cfg::globals::enable_ipv6>();
     unique_fd sck1 = interface_create_server(enable_ipv6,
                                              s_addr,
                                              ini.get<cfg::globals::port>(),
                                              enable_transparent_mode);
     const Font font(app_path(AppPath::DefaultFontFile));
+    const char* config_filename_s = config_filename.c_str();
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {
@@ -546,7 +576,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
                     ? SocketType::Wss
                     : SocketType::Ws
                 : SocketType::Tls;
-            session_server_start(sck, forkable, uid, gid, config_filename,
+            session_server_start(sck, forkable, uid, gid, config_filename_s,
+                                 minimal_memory_available_kibi,
                                  debug_config, socket_type, font);
             return true;
         });
@@ -555,7 +586,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     {
         unique_server_loop(std::move(sck1), [&](int sck)
         {
-            session_server_start(sck, forkable, uid, gid, config_filename,
+            session_server_start(sck, forkable, uid, gid, config_filename_s,
+                                 minimal_memory_available_kibi,
                                  debug_config, SocketType::Tls, font);
             return true;
         });
