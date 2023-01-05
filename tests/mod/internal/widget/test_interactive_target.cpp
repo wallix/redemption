@@ -33,94 +33,69 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/interactive_target/"
 
+struct TestWidgetInteractivePasswordCtx
+{
+    TestGraphic drawable{800, 600};
+    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme()};
+    CopyPaste copy_paste{false};
+    WidgetInteractiveTarget interactive;
+
+    TestWidgetInteractivePasswordCtx(
+        bool ask_device, bool ask_login, bool ask_password,
+        const char * caption,
+        const char * text_device,
+        const char * device_str)
+    : interactive(
+        drawable, copy_paste, 0, 0, 800, 600, parent, /*notifier=*/nullptr,
+        ask_device, ask_login, ask_password, []{
+            Theme colors;
+            colors.global.bgcolor = DARK_BLUE_BIS;
+            colors.global.fgcolor = WHITE;
+            return colors;
+        }(),
+        caption, text_device, device_str,
+        "Login", "user1", "Password",
+        global_font_lato_light_16(), nullptr)
+    {
+        interactive.rdp_input_invalidate(interactive.get_rect());
+    }
+};
+
 RED_AUTO_TEST_CASE(TraceWidgetInteractivePassword)
 {
-    CopyPaste copy_paste(false);
-    Theme colors;
-    colors.global.bgcolor = DARK_BLUE_BIS;
-    colors.global.fgcolor = WHITE;
-    NotifyApi * notifier = nullptr;
-    WidgetButton * extra_button = nullptr;
-
     {
-        // ASK ALL (DEVICE + LOGIN + PASSWORD)
-        TestGraphic drawable(800, 600);
+        TestWidgetInteractivePasswordCtx ctx(
+            true, true, true, "Target Infos",
+            "Host", "in 192.168.16.0/24 subnet");
 
-        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-        WidgetInteractiveTarget interactive(
-            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
-            true, true, true, colors, "Target Infos",
-            "Host", "in 192.168.16.0/24 subnet", "Login",
-            "user1", "Password", global_font_lato_light_16(), extra_button);
-        // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.get_rect());
-
-        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_1.png");
+        RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "interactive_target_1.png");
     }
     {
-        // ASK DEVICE
-        TestGraphic drawable(800, 600);
+        TestWidgetInteractivePasswordCtx ctx(
+            true, false, false, "Target Infos",
+            "Host", "in 192.168.16.0/24 subnet");
 
-        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        WidgetInteractiveTarget interactive(
-            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
-            true, false, false, colors, "Target Infos",
-            "Host", "in 192.168.16.0/24 subnet", "Login",
-            "user1", "Password", global_font_lato_light_16(), extra_button);
-        // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.get_rect());
-
-        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_2.png");
+        RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "interactive_target_2.png");
     }
     {
-        // ASK PASSWORD
-        TestGraphic drawable(800, 600);
+        TestWidgetInteractivePasswordCtx ctx(
+            false, false, true, "Target Infos",
+            "Host", "machinetruc");
 
-        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        WidgetInteractiveTarget interactive(
-            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
-            false, false, true, colors, "Target Infos",
-            "Host", "machinetruc", "Login", "user1",
-            "Password", global_font_lato_light_16(), extra_button);
-        // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.get_rect());
-
-        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_3.png");
+        RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "interactive_target_3.png");
     }
     {
-        // ASK LOGIN + PASSWORD
-        TestGraphic drawable(800, 600);
+        TestWidgetInteractivePasswordCtx ctx(
+            false, true, true, "Target Infos",
+            "Host", "machinetruc");
 
-        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        WidgetInteractiveTarget interactive(
-            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
-            false, true, true, colors, "Target Infos",
-            "Host", "machinetruc", "Login", "user1",
-            "Password", global_font_lato_light_16(), extra_button);
-        // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.get_rect());
-
-        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_4.png");
+        RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "interactive_target_4.png");
     }
     {
-        // ASK DEVICE + PASSWORD
-        TestGraphic drawable(800, 600);
+        TestWidgetInteractivePasswordCtx ctx(
+            true, false, true, "Target Infos",
+            "Host", "in 192.168.16.0/24 subnet");
 
-        // WidgetDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-        WidgetInteractiveTarget interactive(
-            drawable, copy_paste, 0, 0, 800, 600, parent, notifier,
-            true, false, true, colors, "Target Infos",
-            "Host", "in 192.168.16.0/24 subnet", "Login",
-            "user1", "Password", global_font_lato_light_16(), extra_button);
-        // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.get_rect());
-
-        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_5.png");
+        RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "interactive_target_5.png");
     }
 }

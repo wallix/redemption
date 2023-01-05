@@ -41,7 +41,7 @@ public:
         int16_t left, int16_t top, uint16_t width, uint16_t height,
         Widget & parent, NotifyApi* notifier,
         bool ask_device, bool ask_login, bool ask_password,
-        Theme const & theme, const char* caption,
+        Theme const & theme, const char * caption,
         const char * text_device,
         const char * device_str,
         const char * text_login,
