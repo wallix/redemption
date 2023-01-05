@@ -36,273 +36,132 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/label/"
 
+struct TestWidgetLabelCtx
+{
+    struct Colors
+    {
+        BGRColor fg = RED;
+        BGRColor bg = YELLOW;
+    };
+
+    TestGraphic drawable{800, 600};
+    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{}};
+    WidgetLabel wlabel;
+
+    TestWidgetLabelCtx(
+        char const* text, Colors colors = Colors{RED, YELLOW}, int xtext = 0, int ytext = 0)
+    : wlabel(
+        drawable, parent, /*notifier=*/nullptr, text, 0,
+        colors.fg, colors.bg, global_font_lato_light_16(), xtext, ytext)
+    {}
+};
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test1", {}, 4, 1);
 
-    // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(0, 0);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
-    int xtext = 4;
-    int ytext = 1;
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    /* TODO
-     * I believe users of this widget may wish to control text position and behavior inside rectangle
-     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
-     * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetLabel wlabel(drawable, parent, notifier, "test1", id, fg_color, bg_color, global_font_lato_light_16(), xtext, ytext);
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test2");
 
-    // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(10, 100);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 10;
-    int16_t y = 100;
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    WidgetLabel wlabel(drawable, parent, notifier, "test2", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test3");
 
-    // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(-10, 500);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = -10;
-    int16_t y = 500;
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    WidgetLabel wlabel(drawable, parent, notifier, "test3", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test4");
 
-    // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(770, 500);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 770;
-    int16_t y = 500;
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    WidgetLabel wlabel(drawable, parent, notifier, "test4", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test5");
 
-    // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(-20, -7);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = -20;
-    int16_t y = -7;
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    WidgetLabel wlabel(drawable, parent, notifier, "test5", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test6");
 
-    // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(760, -7);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 760;
-    int16_t y = -7;
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    WidgetLabel wlabel(drawable, parent, notifier, "test6", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test6");
 
-    // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 760;
-    int16_t y = -7;
-
-    WidgetLabel wlabel(drawable, parent, notifier, "test6", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(760, -7);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
-                                     wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
+    ctx.wlabel.rdp_input_invalidate(Rect(
+        20 + ctx.wlabel.x(),
+        ctx.wlabel.y(),
+        ctx.wlabel.cx(),
+        ctx.wlabel.cy()
+    ));
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_7.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetLabelCtx ctx("test6");
 
-    // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(0, 0);
 
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 0;
-    int16_t y = 0;
+    // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
+    ctx.wlabel.rdp_input_invalidate(Rect(
+        20 + ctx.wlabel.x(),
+        5 + ctx.wlabel.y(),
+        30,
+        10
+    ));
 
-    WidgetLabel wlabel(drawable, parent, notifier, "test6", id, fg_color, bg_color, global_font_lato_light_16());
-
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    // ask to widget to redraw at position 30,12 and of size 30x10.
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
-                                     5 + wlabel.y(),
-                                     30,
-                                     10));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_8.png");
-}
-
-RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
-{
-    TestGraphic drawable(800, 600);
-
-    WidgetReceiveEvent widget_for_receive_event(drawable);
-
-    Widget& parent = widget_for_receive_event;
-    NotifyApi * notifier = nullptr;
-    int16_t x = 0;
-    int16_t y = 0;
-
-    WidgetLabel wlabel(drawable, parent, notifier, "", 0, BLACK, WHITE, global_font_lato_light_16());
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
-
-    wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-
-    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
-    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x10)); // 'a'
-    wlabel.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x10), 0, keymap);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_8.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
@@ -320,38 +179,32 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
     WidgetLabel wlabel1(drawable, wcomposite, notifier,
                         "abababab", 0, YELLOW, BLACK, global_font_lato_light_16());
-    Dimension dim = wlabel1.get_optimal_dim();
-    wlabel1.set_wh(dim);
+    wlabel1.set_wh(wlabel1.get_optimal_dim());
     wlabel1.set_xy(0, 0);
 
     WidgetLabel wlabel2(drawable, wcomposite, notifier,
                         "ggghdgh", 0, WHITE, BLUE, global_font_lato_light_16());
-    dim = wlabel2.get_optimal_dim();
-    wlabel2.set_wh(dim);
+    wlabel2.set_wh(wlabel2.get_optimal_dim());
     wlabel2.set_xy(0, 100);
 
     WidgetLabel wlabel3(drawable, wcomposite, notifier,
                         "lldlslql", 0, BLUE, RED, global_font_lato_light_16());
-    dim = wlabel3.get_optimal_dim();
-    wlabel3.set_wh(dim);
+    wlabel3.set_wh(wlabel3.get_optimal_dim());
     wlabel3.set_xy(100, 100);
 
     WidgetLabel wlabel4(drawable, wcomposite, notifier,
                         "LLLLMLLM", 0, PINK, DARK_GREEN, global_font_lato_light_16());
-    dim = wlabel4.get_optimal_dim();
-    wlabel4.set_wh(dim);
+    wlabel4.set_wh(wlabel4.get_optimal_dim());
     wlabel4.set_xy(300, 300);
 
     WidgetLabel wlabel5(drawable, wcomposite, notifier,
                         "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, global_font_lato_light_16());
-    dim = wlabel5.get_optimal_dim();
-    wlabel5.set_wh(dim);
+    wlabel5.set_wh(wlabel5.get_optimal_dim());
     wlabel5.set_xy(700, -10);
 
     WidgetLabel wlabel6(drawable, wcomposite, notifier,
                         "xxwwp", 0, ANTHRACITE, PALE_GREEN, global_font_lato_light_16());
-    dim = wlabel6.get_optimal_dim();
-    wlabel6.set_wh(dim);
+    wlabel6.set_wh(wlabel6.get_optimal_dim());
     wlabel6.set_xy(-10, 550);
 
     wcomposite.add_widget(&wlabel1);
@@ -374,43 +227,23 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wcomposite.clear();
 }
 
-/* TODO
- * the entry point exists in module: it's rdp_input_invalidate
- * je just have to change received values to widget messages */
 RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
 {
-    TestGraphic drawable(800, 600);
-
-    // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    BGRColor fg_color = RED;
-    BGRColor bg_color = YELLOW;
-    int id = 0;
-    int16_t x = 10;
-    int16_t y = 100;
-
     auto text =
         "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
         "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
         "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
         "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"_av;
 
-    WidgetLabel wlabel(drawable, parent, notifier, text.data(),
-        id, fg_color, bg_color, global_font_lato_light_16());
-    Dimension dim = wlabel.get_optimal_dim();
-    wlabel.set_wh(dim);
-    wlabel.set_xy(x, y);
+    TestWidgetLabelCtx ctx(text.data());
 
+    ctx.wlabel.set_wh(ctx.wlabel.get_optimal_dim());
+    ctx.wlabel.set_xy(10, 100);
 
-    RED_CHECK(std::string_view(wlabel.get_text()) == text.subarray(0, text.size()-2));
+    RED_CHECK(std::string_view(ctx.wlabel.get_text()) == text.subarray(0, text.size()-2));
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
-                                     wlabel.cx(),
-                                     wlabel.cy()));
+    ctx.wlabel.rdp_input_invalidate(ctx.wlabel.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_11.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "label_11.png");
 }
