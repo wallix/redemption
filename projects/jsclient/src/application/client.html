@@ -375,12 +375,12 @@ function run(openCb, closeCb)
     };
 
     const onKeyUp = (evt) => {
-        console.warn(`keyUp: key=${evt.key} code=${evt.code}`);
+        console.log(`keyUp: key=${evt.key} code=${evt.code}`);
         stopPropagationIf(keyboardForEvent.keyup(evt), evt);
     };
 
     const onKeyDown = (evt) => {
-        console.warn(`keyDown: key=${evt.key} code=${evt.code}`);
+        console.log(`keyDown: key=${evt.key} code=${evt.code}`);
         stopPropagationIf(keyboardForEvent.keydown(evt), evt);
     };
 
