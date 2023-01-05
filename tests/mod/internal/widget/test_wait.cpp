@@ -32,120 +32,42 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wait/"
 
-RED_AUTO_TEST_CASE(TraceWidgetWait)
+struct TestWidgetWaitCtx
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestGraphic drawable{800, 600};
+    CopyPaste copy_paste{false};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetWait flat_dialog;
 
-    // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    Theme colors;
-    colors.global.bgcolor = DARK_BLUE_BIS;
-    colors.global.fgcolor = WHITE;
-
-    // const char * text =
-    //     "The target trucmuch@machinbidule:serv is invalid\n"
-    //     "please enter a valid target\n"
-    //     "You can either return to selector\n"
-    //     "or exit\n"
-    //     "Sorry for the inconvenience";
-
-    // const char * text_timeframe =
-    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.\n"
-    //     "It will be available on Oct 4 at 7:00 am.\n"
-    //     "You can either return to selector or exit.";
-
-    const char * text_invalid =
+    TestWidgetWaitCtx(bool showform = false, unsigned flags = WidgetForm::NONE)
+    : flat_dialog(
+        drawable, copy_paste, {0, 0, 800, 600}, parent, nullptr, "Invalid Target",
         "Target \"trucmuch@machinbidule:serv\" is not allowed because you either\n"
         "has no right to access it or it does not exist.\n"
-        "you can either return to selector or exit.";
+        "you can either return to selector or exit.",
+        0, nullptr, global_font_deja_vu_14(), []{
+            Theme colors;
+            colors.global.bgcolor = DARK_BLUE_BIS;
+            colors.global.fgcolor = WHITE;
+            return colors;
+        }(), Language::en, showform, flags)
+    {
+        flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
+    }
+};
 
-    // const char * text_pending =
-    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".\n"
-    //     "Please wait for approbator confirmation.\n"
-    //     "Otherwise, you can either return to selector or exit.";
-
-    // const char * text_approb =
-    //     "An approbation is required for \"trucmuch@machinbidule:serv\".\n"
-    //     "Please fill following form and enter confirm to ask for an approbation.\n"
-    //     "Otherwise, you can either return to selector or exit.";
-
-
-    WidgetButton * extra_button = nullptr;
-    WidgetWait flat_dialog(
-        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
-        text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en);
-    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
-    //                      text_pending, 0, colors);
-    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
-    //                      text_timeframe, 0, colors);
-    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Approbation needed",
-    //                      text_approb, 0, colors, true);
-
-    // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wait_1.png");
+RED_AUTO_TEST_CASE(TraceWidgetWait)
+{
+    TestWidgetWaitCtx ctx;
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wait_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWaitWithForm)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    Theme colors;
-    colors.global.bgcolor = DARK_BLUE_BIS;
-    colors.global.fgcolor = WHITE;
-
-    // const char * text =
-    //     "The target trucmuch@machinbidule:serv is invalid\n"
-    //     "please enter a valid target\n"
-    //     "You can either return to selector\n"
-    //     "or exit\n"
-    //     "Sorry for the inconvenience";
-
-    // const char * text_timeframe =
-    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.\n"
-    //     "It will be available on Oct 4 at 7:00 am.\n"
-    //     "You can either return to selector or exit.";
-
-    const char * text_invalid =
-        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either\n"
-        "has no right to access it or it does not exist.\n"
-        "you can either return to selector or exit.";
-
-    // const char * text_pending =
-    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".\n"
-    //     "Please wait for approbator confirmation.\n"
-    //     "Otherwise, you can either return to selector or exit.";
-
-    // const char * text_approb =
-    //     "An approbation is required for \"trucmuch@machinbidule:serv\".\n"
-    //     "Please fill following form and enter confirm to ask for an approbation.\n"
-    //     "Otherwise, you can either return to selector or exit.";
-
-    WidgetButton * extra_button = nullptr;
-    WidgetWait flat_dialog(
-        drawable, copy_paste, {0, 0, 800, 600}, parent, notifier, "Invalid Target",
-        text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en, true,
+    TestWidgetWaitCtx ctx(true,
         WidgetForm::COMMENT_DISPLAY | WidgetForm::COMMENT_MANDATORY |
         WidgetForm::TICKET_DISPLAY | WidgetForm::TICKET_MANDATORY |
         WidgetForm::DURATION_DISPLAY);
-    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
-    //                      text_pending, 0, colors);
-    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
-    //                      text_timeframe, 0, colors);
-    // WidgetWait flat_dialog(drawable, 800, 600, parent, notifier, "Approbation needed",
-    //                      text_approb, 0, colors, true);
 
-    // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wait_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wait_2.png");
 }
