@@ -32,42 +32,35 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wab_close/"
 
+struct TestWidgetCloseCtx
+{
+    TestGraphic drawable{800, 600};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetWabClose flat_wab_close;
+
+    TestWidgetCloseCtx(
+        const char * diagnostic_text, const char * username, const char * target,
+        bool showtimer, NotifyApi* notifier = nullptr,
+        Theme theme = Theme())
+    : flat_wab_close(
+        drawable, 0, 0, 800, 600, parent, notifier,
+        diagnostic_text, username, target,
+        showtimer, nullptr, global_font_deja_vu_14(), theme, Language::en, false)
+    {}
+};
 
 RED_AUTO_TEST_CASE(TraceWidgetWabClose)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetCloseCtx ctx("abc\ndef", "rec", "rec", false);
 
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
-    // WidgetWabClose is a flat_wab_close widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    const char* extra_message = nullptr;
-
-    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                "abc\ndef", "rec", "rec",
-                                false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
-
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabClose2)
 {
-    TestGraphic drawable(800, 600);
-
-
-    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    const char* extra_message = nullptr;
-
-    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
+    TestWidgetCloseCtx ctx(
         "Lorem ipsum dolor sit amet, consectetur\n"
         "adipiscing elit. Nam purus lacus, luctus sit\n"
         "amet suscipit vel, posuere quis turpis. Sed\n"
@@ -82,158 +75,85 @@ RED_AUTO_TEST_CASE(TraceWidgetWabClose2)
         "erat ut ligula. Fusce sit amet mauris neque.\n"
         "Sed orci augue, luctus in ornare sed,\n"
         "adipiscing et arcu.",
-        nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
+        nullptr, nullptr, false);
 
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
     // ask to widget to redraw at it's current position
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabClose3)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetCloseCtx ctx("abc\ndef", nullptr, nullptr, false);
 
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
-    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    const char* extra_message = nullptr;
-
-    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                    "abc\ndef",
-                                    nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
-
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabCloseClip)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetCloseCtx ctx("abc\ndef", nullptr, nullptr, false);
 
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect().offset(20,0));
 
-    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    const char* extra_message = nullptr;
-
-    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                    "abc\ndef",
-                                    nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
-
-    // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect().offset(20,0));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabCloseClip2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetCloseCtx ctx("abc\ndef", nullptr, nullptr, false);
 
+    ctx.flat_wab_close.rdp_input_invalidate(Rect(
+        20 + ctx.flat_wab_close.x(),
+        5 + ctx.flat_wab_close.y(),
+        30,
+        10
+    ));
 
-    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    const char* extra_message = nullptr;
-
-    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                    "abc\ndef",
-                                    nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
-
-    // ask to widget to redraw at position 30,12 and of size 30x10.
-    flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.x(),
-                                               5 + flat_wab_close.y(),
-                                               30,
-                                               10));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabCloseExit)
 {
     NotifyTrace notifier;
+    TestWidgetCloseCtx ctx("abc\ndef", "tartempion", "caufield", true, &notifier);
 
-    TestGraphic drawable(800, 600);
+    ctx.flat_wab_close.refresh_timeleft(std::chrono::seconds(183));
 
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
-    // WidgetWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_7.png");
 
-    const char* extra_message = nullptr;
+    ctx.flat_wab_close.refresh_timeleft(std::chrono::seconds(49));
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
-    WidgetWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, &notifier,
-                                "abc\ndef", "tartempion", "caufield",
-                                true, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_8.png");
 
-    flat_wab_close.refresh_timeleft(std::chrono::seconds(183));
+    ctx.flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                                       ctx.flat_wab_close.cancel.x() + 2,
+                                       ctx.flat_wab_close.cancel.y() + 2);
+    ctx.flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                                       ctx.flat_wab_close.cancel.x() + 2,
+                                       ctx.flat_wab_close.cancel.y() + 2);
 
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_7.png");
-
-    flat_wab_close.refresh_timeleft(std::chrono::seconds(49));
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
-
-    flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                                   flat_wab_close.cancel.x() + 2,
-                                   flat_wab_close.cancel.y() + 2);
-    flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                                   flat_wab_close.cancel.x() + 2,
-                                   flat_wab_close.cancel.y() + 2);
-
-    RED_CHECK(notifier.last_widget == &flat_wab_close);
+    RED_CHECK(notifier.last_widget == &ctx.flat_wab_close);
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_8.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetWabClose_transparent_png_with_theme_color)
 {
-    TestGraphic drawable(800, 600);
-    WidgetScreen parent(drawable,
-                        800,
-                        600,
-                        global_font_deja_vu_14(),
-                        nullptr,
-                        Theme { });
-    NotifyApi *notifier = nullptr;
-    const char *extra_message = nullptr;
     Theme colors;
-
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    WidgetWabClose flat_wab_close(drawable,
-                                0,
-                                0,
-                                800,
-                                600,
-                                parent,
-                                notifier,
-                                "abc\ndef",
-                                "rec",
-                                "rec",
-                                false,
-                                extra_message,
-                                global_font_deja_vu_14(),
-                                colors,
-                                Language::en);
+    TestWidgetCloseCtx ctx("abc\ndef", "rec", "rec", false, nullptr, colors);
 
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
+    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_10.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_10.png");
 }
