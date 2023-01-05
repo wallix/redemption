@@ -32,195 +32,99 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/image/"
 
+struct TestWidgetimageCtx
+{
+    TestGraphic drawable{800, 600};
+    WidgetScreen parent{drawable, 800, 600, global_font(), nullptr, Theme{}};
+    WidgetImage wimage;
+
+    TestWidgetimageCtx(const char * filename, BGRColor bg_color = BLACK)
+    : wimage(drawable, filename, parent, nullptr, bg_color)
+    {
+        wimage.set_wh(wimage.get_optimal_dim());
+    }
+};
+
 RED_AUTO_TEST_CASE(TraceWidgetImage)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(0, 0);
+    ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-    // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(0, 0);
-
-    // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                     0 + wimage.y(),
-                                     wimage.cx(),
-                                     wimage.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(10, 100);
+    ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-
-    // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(10, 100);
-
-    // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                     0 + wimage.y(),
-                                     wimage.cx(),
-                                     wimage.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage3)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(-100, 500);
+    ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-
-    // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(-100, 500);
-
-    // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                     0 + wimage.y(),
-                                     wimage.cx(),
-                                     wimage.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage4)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(700, 500);
+    ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-
-    // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(700, 500);
-
-    // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                     0 + wimage.y(),
-                                     wimage.cx(),
-                                     wimage.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage5)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(-100, -100);
+    ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-
-    // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(-100, -100);
-
-    // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                     0 + wimage.y(),
-                                     wimage.cx(),
-                                     wimage.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage6)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(700, -100);
+    ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-
-    // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(700, -100);
-
-    // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                     0 + wimage.y(),
-                                     wimage.cx(),
-                                     wimage.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImageClip)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(700, -100);
+    ctx.wimage.rdp_input_invalidate(Rect(
+        80 + ctx.wimage.x(),
+        10 + ctx.wimage.y(),
+        50,
+        100
+    ));
 
-
-    // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(700, -100);
-
-    // ask to widget to redraw at position 80,10 and of size 50x100. After clip the size is of 20x15
-    wimage.rdp_input_invalidate(Rect(80 + wimage.x(),
-                                     10 + wimage.y(),
-                                     50,
-                                     100));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_clip_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_clip_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
 {
-    TestGraphic drawable(800, 600);
+    TestWidgetimageCtx ctx(FIXTURES_PATH"/logo-redemption.png");
+    ctx.wimage.set_xy(0, 0);
+    ctx.wimage.rdp_input_invalidate(Rect(
+        100 + ctx.wimage.x(),
+        25 + ctx.wimage.y(),
+        100,
+        100
+    ));
 
-
-    // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
-    Dimension dim = wimage.get_optimal_dim();
-    wimage.set_wh(dim);
-    wimage.set_xy(0, 0);
-
-    // ask to widget to redraw at position 100,25 and of size 100x100.
-    wimage.rdp_input_invalidate(Rect(100 + wimage.x(),
-                                     25 + wimage.y(),
-                                     100,
-                                     100));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_clip_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "image_clip_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage_transparent_png)
@@ -308,24 +212,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImage_transparent_png)
         },
     })
     {
-        TestGraphic drawable(800, 600);
-        WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, { });
-        NotifyApi *notifier = nullptr;
-        WidgetImage wimage(drawable,
-                           png.filename,
-                           parent,
-                           notifier,
-                           png.applied_bg_color);
-        Dimension dim = wimage.get_optimal_dim();
+        TestWidgetimageCtx ctx(png.filename, png.applied_bg_color);
+        ctx.wimage.set_xy(0, 0);
 
-        wimage.set_wh(dim);
-        wimage.set_xy(0, 0);
+        ctx.wimage.rdp_input_invalidate(ctx.wimage.get_rect());
 
-        wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
-                                         0 + wimage.y(),
-                                         wimage.cx(),
-                                         wimage.cy()));
-
-        RED_CHECK_IMG(drawable, png.imgref);
+        RED_CHECK_IMG(ctx.drawable, png.imgref);
     }
 }
