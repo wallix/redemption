@@ -34,285 +34,165 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/login/"
 
-
 constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
+
+struct TestWidgetLoginCtx
+{
+    TestGraphic drawable{800, 600};
+    CopyPaste copy_paste{false};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetLogin flat_login;
+
+    TestWidgetLoginCtx(
+        const char * caption,
+        const char * login,
+        const char * password,
+        const char * target,
+        const char * login_message = LOGON_MESSAGE,
+        NotifyApi* notifier = nullptr,
+        Theme theme = Theme(),
+        bool enable_target_field = false)
+    : flat_login(
+        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent, notifier,
+        caption, login, password, target,
+        "Login", "Password", "Target", "",
+        login_message, nullptr, enable_target_field, global_font_deja_vu_14(),
+        Translator{Language::en}, theme)
+    {}
+};
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetLoginCtx ctx("test1", "rec", "rec", "");
 
-    // WidgetLogin is a login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    NotifyApi * notifier = nullptr;
-    WidgetButton * extra_button = nullptr;
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent, notifier,
-        "test1", "rec", "rec", "",
-        "Login", "Password", "Target", "", LOGON_MESSAGE,
-        extra_button, false, global_font_deja_vu_14(),
-        Translator{Language::en}, Theme{});
-
-    // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(flat_login.get_rect());
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-    WidgetButton * extra_button = nullptr;
+    TestWidgetLoginCtx ctx("test2", nullptr, nullptr, nullptr);
 
-    // WidgetLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    NotifyApi * notifier = nullptr;
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, 800, 600, parent, notifier, "test2",
-        nullptr, nullptr, nullptr,
-        "Login", "Password", "Target", "",
-        LOGON_MESSAGE, extra_button, false,
-        global_font_deja_vu_14(),
-        Translator{Language::en}, Theme{});
-
-    // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(flat_login.x(),
-                                         flat_login.y(),
-                                         flat_login.cx(),
-                                         flat_login.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin3)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
     NotifyTrace notifier;
-    WidgetButton * extra_button = nullptr;
+    TestWidgetLoginCtx ctx(
+        "test3", nullptr, nullptr, nullptr,
+        LOGON_MESSAGE, &notifier);
 
-
-    // WidgetLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, 800, 600, parent, &notifier, "test3",
-        nullptr, nullptr, nullptr, "Login", "Password", "Target",
-        "", LOGON_MESSAGE, extra_button, false,
-        global_font_deja_vu_14(), Translator{Language::en}, Theme{});
-
-    flat_login.set_widget_focus(&flat_login.password_edit, Widget::focus_reason_tabkey);
+    ctx.flat_login.set_widget_focus(&ctx.flat_login.password_edit, Widget::focus_reason_tabkey);
 
     RED_CHECK(notifier.last_widget == nullptr);
     RED_CHECK(notifier.last_event == 0);
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c));
-    flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
-    RED_CHECK(notifier.last_widget == &flat_login);
+    ctx.flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
+    RED_CHECK(notifier.last_widget == &ctx.flat_login);
     RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(flat_login.x(),
-                                         flat_login.y(),
-                                         flat_login.cx(),
-                                         flat_login.cy()));
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_3.png");
 
     notifier.last_widget = nullptr;
     notifier.last_event = 0;
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01));
-    flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
-    RED_CHECK(notifier.last_widget == &flat_login);
+    ctx.flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
+    RED_CHECK(notifier.last_widget == &ctx.flat_login);
     RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLoginHelp)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetLoginCtx ctx("test4", nullptr, nullptr, nullptr);
 
-    // WidgetLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    NotifyApi * notifier = nullptr;
-    WidgetButton * extra_button = nullptr;
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_help_1.png");
 
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, 800, 600, parent, notifier, "test4",
-        nullptr, nullptr, nullptr, "Login", "Password", "Target",
-        "", LOGON_MESSAGE, extra_button, false,
-        global_font_deja_vu_14(), Translator{Language::en}, Theme{});
+    ctx.flat_login.rdp_input_mouse(
+        MOUSE_FLAG_MOVE,
+        ctx.flat_login.helpicon.x() + ctx.flat_login.helpicon.cx() / 2,
+        ctx.flat_login.helpicon.y() + ctx.flat_login.helpicon.cy() / 2);
 
-    // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(flat_login.x(),
-                                         flat_login.y(),
-                                         flat_login.cx(),
-                                         flat_login.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_help_1.png");
-
-    flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
-                               flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
-                               flat_login.helpicon.y() + flat_login.helpicon.cy() / 2);
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_help_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_help_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLoginClip)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetLoginCtx ctx("test6", nullptr, nullptr, nullptr);
 
-    // WidgetLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.flat_login.rdp_input_invalidate(Rect(
+        20 + ctx.flat_login.x(),
+        ctx.flat_login.y(),
+        ctx.flat_login.cx(),
+        ctx.flat_login.cy()
+    ));
 
-    NotifyApi * notifier = nullptr;
-    WidgetButton * extra_button = nullptr;
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, 800, 600, parent, notifier, "test6",
-        nullptr, nullptr, nullptr, "Login", "Password", "Target",
-        "", LOGON_MESSAGE, extra_button, false,
-        global_font_deja_vu_14(), Translator{Language::en}, Theme{});
-
-    // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
-                                         flat_login.y(),
-                                         flat_login.cx(),
-                                         flat_login.cy()));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLoginClip2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
+    TestWidgetLoginCtx ctx("test6", nullptr, nullptr, nullptr);
 
-    // WidgetLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    ctx.flat_login.rdp_input_invalidate(Rect(
+        20 + ctx.flat_login.x(),
+        5 + ctx.flat_login.y(),
+        30,
+        10
+    ));
 
-    NotifyApi * notifier = nullptr;
-    WidgetButton * extra_button = nullptr;
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, 800, 600, parent, notifier, "test6",
-        nullptr, nullptr, nullptr, "Login", "Password", "Target",
-        "", LOGON_MESSAGE, extra_button, false,
-        global_font_deja_vu_14(), Translator{Language::en}, Theme{});
-
-    // ask to widget to redraw at position 30,12 and of size 30x10.
-    flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
-                                         5 + flat_login.y(),
-                                         30,
-                                         10));
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_5.png");
-}
-
-RED_AUTO_TEST_CASE(EventWidgetOk)
-{
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyTrace notifier;
-    WidgetButton * extra_button = nullptr;
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, 800, 600, parent, &notifier, "test6",
-        nullptr, nullptr, nullptr, "Login", "Password", "Target",
-        "", LOGON_MESSAGE, extra_button, false,
-        global_font_deja_vu_14(), Translator{Language::en}, Theme{});
-
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin4)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    WidgetButton * extra_button = nullptr;
-
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-        "rec", "rec", "rec", "Login", "Password", "Target", "",
+    TestWidgetLoginCtx ctx(
+        "test1",
+        "rec", "rec", "rec",
         "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.\n\n"
-        "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
-        extra_button, false, global_font_deja_vu_14(), Translator{Language::en}, Theme{});
+        "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.");
 
-    // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(flat_login.get_rect());
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin_transparent_png_with_theme_color)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-    WidgetScreen parent(drawable,
-                        800,
-                        600,
-                        global_font_deja_vu_14(),
-                        nullptr,
-                        Theme { });
-    NotifyApi *notifier = nullptr;
-    WidgetButton *extra_button = nullptr;
     Theme colors;
-
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent, notifier,
-        "test1", "rec", "rec", "rec", "Login", "Password", "Target", "",
-        LOGON_MESSAGE, extra_button, false, global_font_deja_vu_14(),
-        Translator{Language::en}, colors);
+    TestWidgetLoginCtx ctx(
+        "test1", "rec", "rec", "rec",
+        LOGON_MESSAGE, nullptr, colors);
 
-    flat_login.rdp_input_invalidate(flat_login.get_rect());
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_7.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin_target_field)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-    WidgetScreen parent(drawable,
-                        800,
-                        600,
-                        global_font_deja_vu_14(),
-                        nullptr,
-                        Theme { });
-    NotifyApi *notifier = nullptr;
-    WidgetButton *extra_button = nullptr;
     Theme colors;
-
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    WidgetLogin flat_login(
-        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent, notifier,
-        "test1", "rec", "rec", "", "Login", "Password", "Target", "",
-        LOGON_MESSAGE, extra_button, true, global_font_deja_vu_14(),
-        Translator{Language::en}, colors);
+    TestWidgetLoginCtx ctx(
+        "test1", "rec", "rec", "",
+        LOGON_MESSAGE, nullptr, colors, true);
 
-    flat_login.rdp_input_invalidate(flat_login.get_rect());
+    ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_8.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_8.png");
 }
