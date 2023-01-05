@@ -34,48 +34,62 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/selector/"
 
+struct TestWidgetSelectorCtx
+{
+    CopyPaste copy_paste{false};
+    TestGraphic drawable;
+    WidgetScreen parent;
+
+    WidgetSelector selector;
+
+    TestWidgetSelectorCtx(
+        uint16_t width, uint16_t height,
+        WidgetSelectorParams params, bool has_target_helpicon = false)
+    : drawable{width, height}
+    , parent{drawable, width == 640 ? uint16_t(648) : width, height,
+             global_font_deja_vu_14(), nullptr, Theme{}}
+    , selector(
+        drawable, copy_paste, "x@127.0.0.1", 0, 0, width, height, parent,
+        nullptr, "1", "1", nullptr, params, global_font_deja_vu_14(), Theme(),
+        Language::en, has_target_helpicon)
+    {}
+
+    void add_devices()
+    {
+        chars_view const add1[] = {
+            "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
+        selector.add_device(add1);
+
+        chars_view const add2[] = {
+            "rdp"_av, "administrateur@qa@10.10.14.111"_av, "RDP"_av};
+        selector.add_device(add2);
+
+        chars_view const add3[] = {
+            "rdp"_av, "administrateur@qa@10.10.14.27"_av, "RDP"_av};
+        selector.add_device(add3);
+
+        chars_view const add4[] = {
+            "rdp"_av, "administrateur@qa@10.10.14.103"_av, "RDP"_av};
+        selector.add_device(add4);
+
+        chars_view const add5[] = {
+            "rdp"_av, "administrateur@qa@10.10.14.33"_av, "RDP"_av};
+        selector.add_device(add5);
+    }
+};
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(800, 600, params);
+    auto& selector = ctx.selector;
 
-    chars_view const add1[] = {
-        "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
-    selector.add_device(add1);
-
-    chars_view const add2[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.111"_av, "RDP"_av};
-    selector.add_device(add2);
-
-    chars_view const add3[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.27"_av, "RDP"_av};
-    selector.add_device(add3);
-
-    chars_view const add4[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.103"_av, "RDP"_av};
-    selector.add_device(add4);
-
-    chars_view const add5[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.33"_av, "RDP"_av};
-    selector.add_device(add5);
+    ctx.add_devices();
 
     selector.selector_lines.set_selection(0);
 
@@ -84,28 +98,18 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_1.png");
 
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 {
-    TestGraphic drawable(640, 480);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 648, 480, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -115,34 +119,10 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
-        "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(640, 480, params);
+    auto& selector = ctx.selector;
 
-    chars_view const add1[] = {
-        "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add1);
-
-    chars_view const add2[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add2);
-
-    chars_view const add3[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.27"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add3);
-
-    chars_view const add4[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.103"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add4);
-
-    chars_view const add5[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.33"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add5);
+    ctx.add_devices();
 
     selector.selector_lines.set_selection(0);
 
@@ -151,28 +131,18 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_resize_1.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_resize_1.png");
 
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_resize_2.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_resize_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -182,28 +152,15 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(800, 600, params);
 
-    // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.get_rect());
+    ctx.selector.rdp_input_invalidate(ctx.selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -213,32 +170,21 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(800, 600, params);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    selector.rdp_input_invalidate(Rect(20 + selector.x(),
-                                      0 + selector.y(),
-                                      selector.cx(),
-                                      selector.cy()));
+    ctx.selector.rdp_input_invalidate(Rect(
+        20 + ctx.selector.x(),
+        0 + ctx.selector.y(),
+        ctx.selector.cx(),
+        ctx.selector.cy()
+    ));
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_4.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -248,31 +194,21 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(800, 600, params);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    selector.rdp_input_invalidate(Rect(20 + selector.x(),
-                                      5 + selector.y(),
-                                      30,
-                                      10));
+    ctx.selector.rdp_input_invalidate(Rect(
+        20 + ctx.selector.x(),
+        5 + ctx.selector.y(),
+        30,
+        10
+    ));
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_5.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -282,34 +218,10 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(800, 600, params);
+    auto& selector = ctx.selector;
 
-    chars_view const add1[] = {
-        "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add1);
-
-    chars_view const add2[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add2);
-
-    chars_view const add3[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.27"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add3);
-
-    chars_view const add4[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.103"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add4);
-
-    chars_view const add5[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.33"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
-    selector.add_device(add5);
+    ctx.add_devices();
 
     selector.set_widget_focus(&selector.selector_lines, Widget::focus_reason_tabkey);
     selector.selector_lines.set_selection(0);
@@ -322,7 +234,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_6.png");
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
@@ -336,33 +248,23 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     };
 
     rdp_input_scancode(Keymap::KeyCode::UpArrow);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_7.png");
 
     rdp_input_scancode(Keymap::KeyCode::End);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_8.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_8.png");
 
     rdp_input_scancode(Keymap::KeyCode::DownArrow);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_7.png");
 
     rdp_input_scancode(Keymap::KeyCode::DownArrow);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_6.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_6.png");
 
     rdp_input_scancode(Keymap::KeyCode::Home);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_7.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -372,34 +274,32 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
+    TestWidgetSelectorCtx ctx(800, 600, params);
+    auto& selector = ctx.selector;
 
     chars_view const add1[] = {
-        "reptile"_av, "snake@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "reptile"_av, "snake@10.10.14.111"_av, "RDP"_av,
+        ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
     chars_view const add2[] = {
-        "bird"_av, "raven@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "bird"_av, "raven@10.10.14.111"_av, "RDP"_av,
+        ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
     chars_view const add3[] = {
-        "reptile"_av, "lezard@10.10.14.27"_av,
-        "VNC"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "reptile"_av, "lezard@10.10.14.27"_av, "VNC"_av,
+        ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
     chars_view const add4[] = {
-        "fish"_av, "shark@10.10.14.103"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "fish"_av, "shark@10.10.14.103"_av, "RDP"_av,
+        ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
     chars_view const add5[] = {
-        "bird"_av, "eagle@10.10.14.33"_av,
-        "VNC"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "bird"_av, "eagle@10.10.14.33"_av, "VNC"_av,
+        ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
 
     int curx = 0;
@@ -418,7 +318,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_12.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_12.png");
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
 
@@ -432,27 +332,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     };
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_13.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_13.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_14.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_14.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_15.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_15.png");
 
     rdp_input_scancode(Keymap::KeyCode::End);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_16.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_16.png");
 
     rdp_input_scancode(Keymap::KeyCode::UpArrow);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_17.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_17.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_18.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_18.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_19.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_19.png");
 
     rdp_input_scancode(Keymap::KeyCode::RightArrow);
     rdp_input_scancode(Keymap::KeyCode::LeftArrow);
@@ -461,21 +361,11 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     rdp_input_scancode(Keymap::KeyCode::Tab);
     rdp_input_scancode(Keymap::KeyCode::Tab);
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_20.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_20.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorTargetHelpIcon)
 {
-    TestGraphic drawable(800, 600);
-    CopyPaste copy_paste(false);
-
-    // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    NotifyApi * notifier = nullptr;
-    int16_t w = drawable.width();
-    int16_t h = drawable.height();
-    WidgetButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
     params.weight[0] = 33;
@@ -485,12 +375,10 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorTargetHelpIcon)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",
-        extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en, true);
+    TestWidgetSelectorCtx ctx(800, 600, params, true);
 
     // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.get_rect());
+    ctx.selector.rdp_input_invalidate(ctx.selector.get_rect());
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_21.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_21.png");
 }
