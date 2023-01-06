@@ -340,6 +340,36 @@ const scancodesForSynchronizedMods = function(syncFlags) {
     return accu;
 };
 
+/// \return scancodes
+const scancodesReleaseAllMods = function() {
+    return [
+        (LShiftSC | KeyRelease),
+        (RShiftSC | KeyRelease),
+        (LCtrlSC  | KeyRelease),
+        (RCtrlSC  | KeyRelease),
+        (AltSC    | KeyRelease),
+        (AltGrSC  | KeyRelease),
+        (LMetaSC  | KeyRelease),
+        (RMetaSC  | KeyRelease),
+    ];
+};
+
+/// \return scancodes
+const scancodesForKeyAcquireMods = function(syncFlags) {
+    const scancodes = [];
+
+    if (syncFlags & SyncFlags.ShiftLeft)    scancodes.push(LShiftSC | KeyAcquire);
+    if (syncFlags & SyncFlags.ShiftRight)   scancodes.push(RShiftSC | KeyAcquire);
+    if (syncFlags & SyncFlags.ControlLeft)  scancodes.push(LCtrlSC  | KeyAcquire);
+    if (syncFlags & SyncFlags.ControlRight) scancodes.push(RCtrlSC  | KeyAcquire);
+    if (syncFlags & SyncFlags.AltLeft)      scancodes.push(AltSC    | KeyAcquire);
+    if (syncFlags & SyncFlags.AltRight)     scancodes.push(AltGrSC  | KeyAcquire);
+    if (syncFlags & SyncFlags.OSLeft)       scancodes.push(LMetaSC  | KeyAcquire);
+    if (syncFlags & SyncFlags.OSRight)      scancodes.push(RMetaSC  | KeyAcquire);
+
+    return scancodes;
+};
+
 const toHumanReadableMods = function(mods) {
     return `ShiftLeft: ${(mods & ShiftMod) ? '1' : '0'}
 ShiftRight: ${(mods & RightShiftMod) ? '1' : '0'}

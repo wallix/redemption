@@ -159,7 +159,19 @@ class Keyboard
         if (evt.shiftKey) leftOrRight |= (evt.code === 'ShiftRight' && flag === KeyAcquire) ? SyncFlags.ShiftRight : SyncFlags.ShiftLeft;
 
         syncFlags |= leftOrRight;
-        this._driver.sendScancodes(scancodesForSynchronizedMods(syncFlags));
+        this._driver.sendScancodes(scancodesForKeyAcquireMods(syncFlags));
+
+        if(flag === KeyRelease) {
+            switch (evt.code) {
+                case "OSLeft":
+                case "OSRight":
+                case "ShiftLeft":
+                case "ShiftRight":
+                case "ControlLeft":
+                case "ControlRight":
+                    this._driver.sendScancodes([codeToScancodes(evt.code, KeyRelease)])
+            }
+        }
 
         this._keymap.sync(syncFlags);
         this._shiftDown = leftOrRight & (SyncFlags.ShiftRight | SyncFlags.ShiftLeft);

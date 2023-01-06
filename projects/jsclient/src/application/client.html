@@ -505,6 +505,7 @@ function run(openCb, closeCb)
             e.stopImmediatePropagation();
         };
         keyboardForEvent.activeModsSync();
+        sendScancodes(scancodesReleaseAllMods());
     }
 
     function canvasEnableFocus()
