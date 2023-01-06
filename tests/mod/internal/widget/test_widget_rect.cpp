@@ -34,8 +34,8 @@
 struct WidgetRectFixture
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font(), nullptr, Theme{}};
-    WidgetRect wrect{drawable, parent, nullptr, /*id=*/0, BGRColor(0xCCF604)};
+    WidgetScreen parent{drawable, 800, 600, global_font(), Theme{}};
+    WidgetRect wrect{drawable, parent, BGRColor(0xCCF604)};
 };
 
 

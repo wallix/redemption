@@ -32,17 +32,17 @@
 
 WidgetEdit::WidgetEdit(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget & parent, NotifyApi* notifier, const char * text,
-    int group_id, Color fgcolor, Color bgcolor, Color focus_color,
+    Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+    Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext)
-: Widget(drawable, parent, notifier, group_id)
-, label(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font, xtext, ytext)
+: Widget(drawable, parent)
+, onsubmit(onsubmit)
+, label(drawable, *this, text, fgcolor, bgcolor, font, xtext, ytext)
 , w_text(0)
 , h_text(0)
 , cursor_color(0x888888)
 , focus_color(focus_color)
 , drawall(false)
-, draw_border_focus(true)
 , font(font)
 , copy_paste(copy_paste)
 {
@@ -190,12 +190,7 @@ void WidgetEdit::rdp_input_invalidate(Rect clip)
         this->label.rdp_input_invalidate(rect_intersect);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
-            if (this->draw_border_focus) {
-                this->draw_border(rect_intersect, this->focus_color);
-            }
-            else {
-                this->draw_border(rect_intersect, this->label.bg_color);
-            }
+            this->draw_border(rect_intersect, this->focus_color);
         }
         else {
             this->draw_border(rect_intersect, this->label.bg_color);
@@ -551,7 +546,7 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             break;
 
         case Keymap::KEvent::Enter:
-            this->send_notify(NOTIFY_SUBMIT);
+            this->onsubmit();
             break;
 
         case Keymap::KEvent::Paste:
@@ -604,7 +599,6 @@ void WidgetEdit::insert_unicode_char(uint16_t unicode_char)
     this->increment_edit_pos();
     this->buffer_size += this->edit_buffer_pos - tmp;
     this->num_chars++;
-    this->send_notify(NOTIFY_TEXT_CHANGED);
     this->w_text += this->cursor_px_pos - pxtmp;
     this->update_draw_cursor(Rect(
         this->x() + pxtmp + this->label.x_text + 1,

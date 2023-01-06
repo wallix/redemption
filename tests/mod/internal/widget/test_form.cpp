@@ -38,9 +38,8 @@ RED_AUTO_TEST_CASE(TestWidgetForm)
     CopyPaste copy_paste(false);
 
     // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
@@ -50,7 +49,8 @@ RED_AUTO_TEST_CASE(TestWidgetForm)
 
     flag += WidgetForm::DURATION_MANDATORY;
 
-    WidgetForm form(drawable, copy_paste, 0, 0, 600, 150, parent, notifier, 0,
+    WidgetForm form(drawable, copy_paste, 0, 0, 600, 150, parent,
+                    {WidgetEventNotifier(), WidgetEventNotifier()},
                     global_font_lato_light_16(), colors, Language::en, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);

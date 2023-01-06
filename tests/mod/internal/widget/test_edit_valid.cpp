@@ -49,13 +49,14 @@ struct TestWidgetEditValid
 
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
+    NotifyTrace onsubmit;
     WidgetEditValid wedit;
 
     TestWidgetEditValid(
         Colors colors, const char * text, std::size_t edit_position = -1u,
-        const char * title = "", bool pass = false, NotifyApi* notifier = nullptr)
-    : wedit(drawable, copy_paste, parent, notifier, text, /*id=*/0,
+        const char * title = "", bool pass = false)
+    : wedit(drawable, copy_paste, parent, text, onsubmit,
             colors.fg, colors.bg, colors.focus, colors.bg,
             global_font_deja_vu_14(), title, false, edit_position, 0, 0, pass)
     {
@@ -167,7 +168,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
 
-    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, nullptr, "", 0,
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, "", WidgetEventNotifier(),
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            nullptr, false, 0);
     dim = wedit2.get_optimal_dim();
@@ -210,7 +211,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
 
-    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, nullptr, "", 0,
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, "", WidgetEventNotifier(),
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            "edition2", true, 0, 0, 0, false);
     dim = wedit2.get_optimal_dim();
@@ -262,7 +263,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
 
-    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, nullptr, "", 0,
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, "", WidgetEventNotifier(),
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            "edition2", true, 0, 0, 0, true);
     dim = wedit2.get_optimal_dim();
@@ -306,8 +307,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
 RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 {
-    NotifyTrace notifier;
-    TestWidgetEditValid ctx({BLACK, WHITE, DARK_BLUE}, "abcdef", -1u, "", false, &notifier);
+    TestWidgetEditValid ctx({BLACK, WHITE, DARK_BLUE}, "abcdef");
 
     Dimension dim = ctx.wedit.get_optimal_dim();
     ctx.wedit.set_wh(100, dim.h);
@@ -326,10 +326,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
-    RED_CHECK(notifier.last_widget == &ctx.wedit);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_event = 0;
-    notifier.last_widget = nullptr;
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
 
     ctx.click_down(95, 2);
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
@@ -341,10 +338,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
-    notifier.last_event = 0;
-    notifier.last_widget = nullptr;
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
 
     ctx.click_down(95, 2);
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
@@ -356,10 +350,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
-    notifier.last_event = 0;
-    notifier.last_widget = nullptr;
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
 
     auto keyboard = ctx.keyboard();
 
@@ -367,8 +358,5 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
-    RED_CHECK(notifier.last_widget == &ctx.wedit);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_event = 0;
-    notifier.last_widget = nullptr;
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
 }

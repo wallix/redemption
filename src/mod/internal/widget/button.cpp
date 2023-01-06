@@ -30,15 +30,16 @@
 
 WidgetButton::WidgetButton(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, const char * text,
-    int group_id, Color fg_color, Color bg_color, Color focus_color,
+    const char * text, WidgetEventNotifier onsubmit,
+    Color fg_color, Color bg_color, Color focus_color,
     unsigned border_width, Font const & font, int xtext, int ytext,
-    bool logo/*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
-: Widget(drawable, parent, notifier, group_id)
+    bool logo)
+: Widget(drawable, parent)
 , auto_resize_(false)
 , x_text(xtext)
 , y_text(ytext)
 , border_width(border_width)
+, onsubmit(onsubmit)
 , state(State::Normal)
 , fg_color(fg_color)
 , bg_color(bg_color)
@@ -171,7 +172,7 @@ void WidgetButton::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y
         this->state = State::Normal;
         this->rdp_input_invalidate(this->get_rect());
         if (this->get_rect().contains_pt(x, y)) {
-            this->send_notify(NOTIFY_SUBMIT);
+            this->onsubmit();
         }
     }
     else {
@@ -185,12 +186,12 @@ void WidgetButton::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (keymap.last_kevent()){
         case Keymap::KEvent::Enter:
-            this->send_notify(NOTIFY_SUBMIT);
+            this->onsubmit();
             break;
 
         case Keymap::KEvent::KeyDown:
             if (keymap.last_decoded_keys().uchars[0] == ' ') {
-                this->send_notify(NOTIFY_SUBMIT);
+                this->onsubmit();
             }
             break;
 
@@ -204,7 +205,7 @@ void WidgetButton::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
 void WidgetButton::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     if (!bool(flag & KbdFlags::Release) && (unicode == ' ')) {
-        this->send_notify(NOTIFY_SUBMIT);
+        this->onsubmit();
     }
     else {
         Widget::rdp_input_unicode(flag, unicode);

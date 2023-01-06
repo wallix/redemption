@@ -40,7 +40,9 @@ struct TestWidgetLoginCtx
 {
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
+    NotifyTrace onsubmit;
+    NotifyTrace oncancel;
     WidgetLogin flat_login;
 
     TestWidgetLoginCtx(
@@ -49,11 +51,11 @@ struct TestWidgetLoginCtx
         const char * password,
         const char * target,
         const char * login_message = LOGON_MESSAGE,
-        NotifyApi* notifier = nullptr,
         Theme theme = Theme(),
         bool enable_target_field = false)
     : flat_login(
-        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent, notifier,
+        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent,
+        {onsubmit, oncancel, WidgetEventNotifier()},
         caption, login, password, target,
         "Login", "Password", "Target", "",
         login_message, nullptr, enable_target_field, global_font_deja_vu_14(),
@@ -81,33 +83,28 @@ RED_AUTO_TEST_CASE(TraceWidgetLogin2)
 
 RED_AUTO_TEST_CASE(TraceWidgetLogin3)
 {
-    NotifyTrace notifier;
-    TestWidgetLoginCtx ctx(
-        "test3", nullptr, nullptr, nullptr,
-        LOGON_MESSAGE, &notifier);
+    TestWidgetLoginCtx ctx("test3", nullptr, nullptr, nullptr, LOGON_MESSAGE);
 
     ctx.flat_login.set_widget_focus(&ctx.flat_login.password_edit, Widget::focus_reason_tabkey);
 
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c));
     ctx.flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
-    RED_CHECK(notifier.last_widget == &ctx.flat_login);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     // ask to widget to redraw at it's current position
     ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "login_3.png");
 
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01));
     ctx.flat_login.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
-    RED_CHECK(notifier.last_widget == &ctx.flat_login);
-    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 1);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLoginHelp)
@@ -173,9 +170,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLogin_transparent_png_with_theme_color)
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    TestWidgetLoginCtx ctx(
-        "test1", "rec", "rec", "rec",
-        LOGON_MESSAGE, nullptr, colors);
+    TestWidgetLoginCtx ctx("test1", "rec", "rec", "rec", LOGON_MESSAGE, colors);
 
     ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 
@@ -188,9 +183,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLogin_target_field)
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    TestWidgetLoginCtx ctx(
-        "test1", "rec", "rec", "",
-        LOGON_MESSAGE, nullptr, colors, true);
+    TestWidgetLoginCtx ctx("test1", "rec", "rec", "", LOGON_MESSAGE, colors, true);
 
     ctx.flat_login.rdp_input_invalidate(ctx.flat_login.get_rect());
 

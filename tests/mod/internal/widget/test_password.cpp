@@ -38,7 +38,7 @@ struct TestWidgetPasswordCtx
 {
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetPassword wpassword;
 
     struct Colors
@@ -50,10 +50,10 @@ struct TestWidgetPasswordCtx
 
     TestWidgetPasswordCtx(
         char const* text, Colors colors, uint16_t edit_width = 50,
-        NotifyApi* notifier = nullptr,
+        WidgetEventNotifier onsubmit = WidgetEventNotifier(),
         size_t password_pos = -1u, int xtext = 0, int ytext = 0)
     : wpassword(
-        drawable, copy_paste, parent, notifier, text, 0,
+        drawable, copy_paste, parent, text, onsubmit,
         colors.fg_color, colors.bg_color, colors.focus_color,
         global_font_lato_light_16(), password_pos, xtext, ytext)
     {
@@ -85,7 +85,7 @@ struct TestWidgetPasswordCtx
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword)
 {
-    TestWidgetPasswordCtx ctx("test1", {}, 50, nullptr, 2, 4, 1);
+    TestWidgetPasswordCtx ctx("test1", {}, 50, WidgetEventNotifier(), 2, 4, 1);
 
     ctx.wpassword.set_xy(0, 0);
     ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
@@ -168,8 +168,8 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 
 RED_AUTO_TEST_CASE(EventWidgetPassword)
 {
-    NotifyTrace notifier;
-    TestWidgetPasswordCtx ctx("abcdef", {YELLOW, RED}, 100, &notifier);
+    NotifyTrace onsubmit;
+    TestWidgetPasswordCtx ctx("abcdef", {YELLOW, RED}, 100, onsubmit);
 
     auto& wpassword = ctx.wpassword;
     auto& drawable = ctx.drawable;
@@ -185,22 +185,15 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     keyboard.rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
     wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
-    notifier.last_event = 0;
-    notifier.last_widget = nullptr;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_11.png");
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
-    notifier.last_event = 0;
-    notifier.last_widget = nullptr;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::UpArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_12.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::RightArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_11.png");
@@ -215,31 +208,22 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::Delete);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_17.png");
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::End);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_9.png");
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::Home);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_19.png");
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::Enter);
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 1);
 
     wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_20.png");
@@ -251,46 +235,44 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     CopyPaste copy_paste(false);
 
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    NotifyApi * notifier = nullptr;
-
-    WidgetComposite wcomposite(drawable, parent, notifier);
+    WidgetComposite wcomposite(drawable, parent);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetPassword wpassword1(drawable, copy_paste, wcomposite, notifier,
-                              "abababab", 4, YELLOW, BLACK, BLACK, global_font_lato_light_16());
+    WidgetPassword wpassword1(drawable, copy_paste, wcomposite, "abababab",
+                              {WidgetEventNotifier()}, YELLOW, BLACK, BLACK, global_font_lato_light_16());
     Dimension dim = wpassword1.get_optimal_dim();
     wpassword1.set_wh(50, dim.h);
     wpassword1.set_xy(0, 0);
 
-    WidgetPassword wpassword2(drawable, copy_paste, wcomposite, notifier,
-                              "ggghdgh", 2, WHITE, RED, RED, global_font_lato_light_16());
+    WidgetPassword wpassword2(drawable, copy_paste, wcomposite, "ggghdgh",
+                              {WidgetEventNotifier()}, WHITE, RED, RED, global_font_lato_light_16());
     dim = wpassword2.get_optimal_dim();
     wpassword2.set_wh(50, dim.h);
     wpassword2.set_xy(0, 100);
 
-    WidgetPassword wpassword3(drawable, copy_paste, wcomposite, notifier,
-                              "lldlslql", 1, BLUE, RED, RED, global_font_lato_light_16());
+    WidgetPassword wpassword3(drawable, copy_paste, wcomposite, "lldlslql",
+                              {WidgetEventNotifier()}, BLUE, RED, RED, global_font_lato_light_16());
     dim = wpassword3.get_optimal_dim();
     wpassword3.set_wh(50, dim.h);
     wpassword3.set_xy(100, 100);
 
-    WidgetPassword wpassword4(drawable, copy_paste, wcomposite, notifier,
-                              "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, global_font_lato_light_16());
+    WidgetPassword wpassword4(drawable, copy_paste, wcomposite, "LLLLMLLM",
+                              {WidgetEventNotifier()}, PINK, DARK_GREEN, DARK_GREEN, global_font_lato_light_16());
     dim = wpassword4.get_optimal_dim();
     wpassword4.set_wh(50, dim.h);
     wpassword4.set_xy(300, 300);
 
-    WidgetPassword wpassword5(drawable, copy_paste, wcomposite, notifier,
-                              "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_lato_light_16());
+    WidgetPassword wpassword5(drawable, copy_paste, wcomposite, "dsdsdjdjs",
+                              {WidgetEventNotifier()}, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_lato_light_16());
     dim = wpassword5.get_optimal_dim();
     wpassword5.set_wh(50, dim.h);
     wpassword5.set_xy(700, -10);
 
-    WidgetPassword wpassword6(drawable, copy_paste, wcomposite, notifier,
-                              "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_lato_light_16());
+    WidgetPassword wpassword6(drawable, copy_paste, wcomposite, "xxwwp",
+                              {WidgetEventNotifier()}, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_lato_light_16());
     dim = wpassword6.get_optimal_dim();
     wpassword6.set_wh(50, dim.h);
     wpassword6.set_xy(-10, 550);
@@ -319,7 +301,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 RED_AUTO_TEST_CASE(DataWidgetPassword)
 {
     NotifyTrace notifier;
-    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, &notifier);
+    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, notifier);
 
     auto& wpassword = ctx.wpassword;
     auto& drawable = ctx.drawable;
@@ -330,10 +312,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == 0);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     RED_CHECK("aurélie"_av == wpassword.get_text());
 
@@ -341,18 +320,15 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::Backspace);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
@@ -362,8 +338,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
 
 RED_AUTO_TEST_CASE(DataWidgetPassword2)
 {
-    NotifyTrace notifier;
-    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, &notifier);
+    NotifyTrace onsubmit;
+    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, onsubmit);
 
     auto& wpassword = ctx.wpassword;
     auto& drawable = ctx.drawable;
@@ -374,10 +350,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     wpassword.rdp_input_invalidate(wpassword.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == 0);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     RED_CHECK("aurélie"_av == wpassword.get_text());
 
@@ -385,23 +358,19 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_32.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::Delete);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_27.png");
@@ -411,8 +380,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
 
 RED_AUTO_TEST_CASE(DataWidgetPassword3)
 {
-    NotifyTrace notifier;
-    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, &notifier);
+    NotifyTrace onsubmit;
+    TestWidgetPasswordCtx ctx("aurélie", {YELLOW, RED}, 100, onsubmit);
 
     auto& wpassword = ctx.wpassword;
     auto& drawable = ctx.drawable;
@@ -428,10 +397,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == 0);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     RED_CHECK("aurélie"_av == wpassword.get_text());
 
@@ -439,35 +405,27 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_15.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_16.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::LeftArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_32.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode::RightArrow);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_26.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(Keymap::KeyCode(0x11)); // 'z'
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_40.png");
-    RED_CHECK(notifier.last_widget == &wpassword);
-    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     RED_CHECK("aurézlie"_av == wpassword.get_text());
 

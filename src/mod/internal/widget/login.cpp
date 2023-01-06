@@ -35,7 +35,7 @@ enum {
 WidgetLogin::WidgetLogin(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
-    NotifyApi* notifier, const char* caption,
+    Events events, const char* caption,
     const char * login, const char * password, const char * target,
     const char * label_text_login,
     const char * label_text_password,
@@ -46,31 +46,33 @@ WidgetLogin::WidgetLogin(
     bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
 )
-    : WidgetParent(drawable, parent, notifier)
-    , error_message_label(drawable, *this, nullptr, label_error_message, -15,
+    : WidgetParent(drawable, parent)
+    , oncancel(events.oncancel)
+    , onctrl_shift(events.onctrl_shift)
+    , error_message_label(drawable, *this, label_error_message,
                     theme.global.error_color, theme.global.bgcolor,
                     font)
-    , login_label(drawable, *this, nullptr, label_text_login, -11,
+    , login_label(drawable, *this, label_text_login,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , login_edit(drawable, copy_paste, *this, this,
-                 login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
+    , login_edit(drawable, copy_paste, *this, login, events.onsubmit,
+                 theme.edit.fgcolor, theme.edit.bgcolor,
                  theme.edit.focus_color, theme.global.bgcolor, font,
                  label_text_login, (width <= 640), -1u, 1, 1, false)
-    , password_label(drawable, *this, nullptr, label_text_password, -13,
+    , password_label(drawable, *this, label_text_password,
                      theme.global.fgcolor, theme.global.bgcolor,
                      font)
-    , password_edit(drawable, copy_paste, *this, this,
-                    password, -14, theme.edit.fgcolor,
+    , password_edit(drawable, copy_paste, *this, password, events.onsubmit,
+                    theme.edit.fgcolor,
                     theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                     font, label_text_password, (width <= 640),
                     -1u, 1, 1, true)
-    , target_label(drawable, *this, nullptr, label_text_target, -17,
+    , target_label(drawable, *this, label_text_target,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_edit(drawable, copy_paste, *this, this,
-                  target, -18, theme.edit.fgcolor, theme.edit.bgcolor,
+    , target_edit(drawable, copy_paste, *this, target, events.onsubmit,
+                  theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font,
                   label_text_target, (width <= 640), -1u, 1, 1, false)
-    , message_label(drawable, *this, nullptr, -19,
+    , message_label(drawable, *this,
         login_message ? std::string(login_message) : std::string(),
         theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
         font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
@@ -78,15 +80,14 @@ WidgetLogin::WidgetLogin(
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
           *this,
-          nullptr,
-          theme.global.bgcolor,
-          -10)
-    , version_label(drawable, *this, nullptr, caption, -15,
+          theme.global.bgcolor)
+    , version_label(drawable, *this, caption,
                     theme.global.fgcolor, theme.global.bgcolor,
                     font)
-    , helpicon(drawable, *this, nullptr, "?", -16,
-                theme.global.fgcolor, theme.global.bgcolor,
-                theme.global.focus_color, 2, font, 6, 2)
+    // TODO button without notifier
+    , helpicon(drawable, *this, "?", WidgetEventNotifier(),
+               theme.global.fgcolor, theme.global.bgcolor,
+               theme.global.focus_color, 2, font, 6, 2)
     , extra_button(extra_button)
     , tr(tr)
     , show_target(enable_target_field)
@@ -349,25 +350,13 @@ Widget::Color WidgetLogin::get_bg_color() const
     return this->bg_color;
 }
 
-void WidgetLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if (event == NOTIFY_SUBMIT &&
-      ( &widget == &this->login_edit
-     || &widget == &this->target_edit
-     || &widget == &this->password_edit
-      )
-    ) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-}
-
 void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (keymap.last_kevent()){
         case Keymap::KEvent::Esc:
-            this->send_notify(NOTIFY_CANCEL);
+            this->oncancel();
             break;
 
         case Keymap::KEvent::PgUp:
@@ -384,7 +373,7 @@ void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t
                 && keymap.is_shift_pressed()
                 && keymap.is_ctrl_pressed())
             {
-                this->extra_button->notify(*this, NOTIFY_SUBMIT);
+                this->onctrl_shift();
             }
             break;
 
@@ -400,7 +389,7 @@ void WidgetLogin::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = this->widget_at_pos(x, y);
         if (wid == &this->helpicon) {
-            this->show_tooltip(wid, this->tr(trkeys::help_message), x, y, this->get_rect());
+            this->show_tooltip(this->tr(trkeys::help_message), x, y, this->get_rect());
         }
     }
 

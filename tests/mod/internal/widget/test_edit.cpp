@@ -38,7 +38,7 @@ struct TestWidgetEditCtx
 {
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetEdit wedit;
 
     struct Colors
@@ -50,10 +50,10 @@ struct TestWidgetEditCtx
 
     TestWidgetEditCtx(
         char const* text, Colors colors, uint16_t edit_width = 50,
-        NotifyApi* notify = nullptr,
+        WidgetEventNotifier onsubmit = WidgetEventNotifier(),
         size_t edit_pos = -1u, int xtext = 0, int ytext = 0)
     : wedit(
-        drawable, copy_paste, parent, notify, text, 0,
+        drawable, copy_paste, parent, text, onsubmit,
         colors.fg_color, colors.bg_color, colors.bg_color,
         global_font_deja_vu_14(), edit_pos, xtext, ytext)
     {
@@ -86,7 +86,7 @@ struct TestWidgetEditCtx
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit)
 {
-    TestWidgetEditCtx ctx("test1", {}, 50, nullptr, 2, 4, 1);
+    TestWidgetEditCtx ctx("test1", {}, 50, WidgetEventNotifier(), 2, 4, 1);
 
     ctx.wedit.set_xy(0, 0);
 
@@ -192,8 +192,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
 
 RED_AUTO_TEST_CASE(EventWidgetEdit)
 {
-    NotifyTrace notifier;
-    TestWidgetEditCtx ctx("abcdef", {GREEN, RED, RED}, 100, &notifier);
+    NotifyTrace onsubmit;
+    TestWidgetEditCtx ctx("abcdef", {GREEN, RED, RED}, 100, onsubmit);
 
     ctx.wedit.set_xy(0, 0);
 
@@ -207,24 +207,17 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     keyboard.rdp_input_scancode(0x10); // 'a'
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_11.png");
-    RED_CHECK(notifier.last_widget == &ctx.wedit);
-    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(0x11); // 'z'
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_12.png");
-    RED_CHECK(notifier.last_widget == &ctx.wedit);
-    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(0x148); // up
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_13.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keyboard.rdp_input_scancode(0x14d); // right
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
@@ -243,34 +236,26 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_17.png");
 
     keyboard.rdp_input_scancode(0x153); // delete
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_18.png");
 
     keyboard.rdp_input_scancode(0x14f); // end
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_19.png");
 
     keyboard.rdp_input_scancode(0x147); // home
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_20.png");
 
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
     keyboard.rdp_input_scancode(0x1c); // enter
-    RED_CHECK(notifier.last_widget == &ctx.wedit);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(onsubmit.get_and_reset() == 1);
 
     ctx.wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     ctx.wedit.rdp_input_invalidate(Rect(0, 0, ctx.wedit.cx(), ctx.wedit.cx()));
 
@@ -283,46 +268,44 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     CopyPaste copy_paste(false);
 
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), Theme{});
 
-    NotifyApi * notifier = nullptr;
-
-    WidgetComposite wcomposite(drawable, parent, notifier);
+    WidgetComposite wcomposite(drawable, parent);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetEdit wedit1(drawable, copy_paste, wcomposite, notifier,
-                      "abababab", 4, YELLOW, BLACK, BLACK, global_font_deja_vu_14());
+    WidgetEdit wedit1(drawable, copy_paste, wcomposite, "abababab",
+                      {WidgetEventNotifier()}, YELLOW, BLACK, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit1.get_optimal_dim();
     wedit1.set_wh(50, dim.h);
     wedit1.set_xy(0, 0);
 
-    WidgetEdit wedit2(drawable, copy_paste, wcomposite, notifier,
-                      "ggghdgh", 2, WHITE, RED, RED, global_font_deja_vu_14());
+    WidgetEdit wedit2(drawable, copy_paste, wcomposite, "ggghdgh",
+                      {WidgetEventNotifier()}, WHITE, RED, RED, global_font_deja_vu_14());
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(50, dim.h);
     wedit2.set_xy(0, 100);
 
-    WidgetEdit wedit3(drawable, copy_paste, wcomposite, notifier,
-                      "lldlslql", 1, BLUE, RED, RED, global_font_deja_vu_14());
+    WidgetEdit wedit3(drawable, copy_paste, wcomposite, "lldlslql",
+                      {WidgetEventNotifier()}, BLUE, RED, RED, global_font_deja_vu_14());
     dim = wedit3.get_optimal_dim();
     wedit3.set_wh(50, dim.h);
     wedit3.set_xy(100, 100);
 
-    WidgetEdit wedit4(drawable, copy_paste, wcomposite, notifier,
-                      "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, global_font_deja_vu_14());
+    WidgetEdit wedit4(drawable, copy_paste, wcomposite, "LLLLMLLM",
+                      {WidgetEventNotifier()}, PINK, DARK_GREEN, DARK_GREEN, global_font_deja_vu_14());
     dim = wedit4.get_optimal_dim();
     wedit4.set_wh(50, dim.h);
     wedit4.set_xy(300, 300);
 
-    WidgetEdit wedit5(drawable, copy_paste, wcomposite, notifier,
-                      "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_deja_vu_14());
+    WidgetEdit wedit5(drawable, copy_paste, wcomposite, "dsdsdjdjs",
+                      {WidgetEventNotifier()}, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_deja_vu_14());
     dim = wedit5.get_optimal_dim();
     wedit5.set_wh(50, dim.h);
     wedit5.set_xy(700, -10);
 
-    WidgetEdit wedit6(drawable, copy_paste, wcomposite, notifier,
-                      "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_deja_vu_14());
+    WidgetEdit wedit6(drawable, copy_paste, wcomposite, "xxwwp",
+                      {WidgetEventNotifier()}, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_deja_vu_14());
     dim = wedit6.get_optimal_dim();
     wedit6.set_wh(50, dim.h);
     wedit6.set_xy(-10, 550);
@@ -349,7 +332,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 
 RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
 {
-    TestWidgetEditCtx ctx("abcde", {BLACK, WHITE, WHITE}, 100, nullptr, size_t(-1u), 1, 1);
+    TestWidgetEditCtx ctx("abcde", {BLACK, WHITE, WHITE}, 100, {WidgetEventNotifier()}, size_t(-1u), 1, 1);
 
     ctx.wedit.set_xy(0, 0);
 

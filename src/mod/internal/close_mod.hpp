@@ -40,7 +40,7 @@ using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::context::close_box_extra_message, vcfg::accessmode::get | vcfg::accessmode::set>
 >;
 
-class CloseMod : public RailModBase, public NotifyApi
+class CloseMod : public RailModBase
 {
     WidgetWabClose close_widget;
     CloseModVariables vars;
@@ -56,8 +56,6 @@ public:
         Theme const& theme, bool back_selector);
 
     ~CloseMod() override;
-
-    void notify(Widget& sender, notify_event_t event) override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {

@@ -40,27 +40,27 @@ struct TestWidgetDialogCtx
     TestGraphic drawable;
     CopyPaste copy_paste{false};
     WidgetScreen parent;
+    NotifyTrace onsubmit;
+    NotifyTrace oncancel;
     WidgetDialog flat_dialog;
 
     TestWidgetDialogCtx(
         uint16_t w, uint16_t h,
         const char* caption, const char * text,
-        NotifyApi* notify = nullptr,
         ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : TestWidgetDialogCtx(
-        w, h, w, h, w, h, caption, text, notify, has_challenge, logo_path)
+        w, h, w, h, w, h, caption, text, has_challenge, logo_path)
     {}
 
     TestWidgetDialogCtx(
         uint16_t w, uint16_t h,
         uint16_t dialogW, uint16_t dialogH,
         const char* caption, const char * text,
-        NotifyApi* notify = nullptr,
         ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : TestWidgetDialogCtx(
-        w, h, w, h, dialogW, dialogH, caption, text, notify, has_challenge, logo_path)
+        w, h, w, h, dialogW, dialogH, caption, text, has_challenge, logo_path)
     {}
 
     TestWidgetDialogCtx(
@@ -68,13 +68,13 @@ struct TestWidgetDialogCtx
         uint16_t parentW, uint16_t parentH,
         uint16_t dialogW, uint16_t dialogH,
         const char* caption, const char * text,
-        NotifyApi* notify = nullptr,
         ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : drawable{w, h}
-    , parent{drawable, parentW, parentH, global_font_deja_vu_14(), nullptr, Theme{}}
+    , parent{drawable, parentW, parentH, global_font_deja_vu_14(), Theme{}}
     , flat_dialog(
-        drawable, copy_paste, {0, 0, dialogW, dialogH}, parent, notify,
+        drawable, copy_paste, {0, 0, dialogW, dialogH}, parent,
+        {onsubmit, oncancel, WidgetEventNotifier()},
         caption, text, /*extra_button=*/nullptr,
         [logo_path]{
             Theme colors;
@@ -222,36 +222,26 @@ RED_AUTO_TEST_CASE(TraceWidgetDialogClip2)
 
 RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
-    NotifyTrace notifier;
     TestWidgetDialogCtx ctx(800, 600, "test6",
         "line 1\n"
         "line 2\n"
         "\n"
         "line 3, blah blah\n"
-        "line 4",
-        &notifier);
-
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == 0);
+        "line 4");
 
     int x = ctx.flat_dialog.ok.x() + ctx.flat_dialog.ok.cx() / 2 ;
     int y = ctx.flat_dialog.ok.y() + ctx.flat_dialog.ok.cy() / 2 ;
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
-    // ctx.flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_9.png");
 
 
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
-    // ctx.flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-    //                                  ctx.flat_dialog.ok.x(), ctx.flat_dialog.ok.y(), nullptr);
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
 
@@ -261,9 +251,8 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     x = ctx.flat_dialog.cancel->x() + ctx.flat_dialog.cancel->cx() / 2 ;
     y = ctx.flat_dialog.cancel->y() + ctx.flat_dialog.cancel->cy() / 2 ;
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
-    // ctx.flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
@@ -272,22 +261,18 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
-
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 1);
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
     ctx.flat_dialog.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 1);
 }
 
 RED_AUTO_TEST_CASE(EventWidgetChallenge)
 {
-    NotifyTrace notifier;
     TestWidgetDialogCtx ctx(800, 600, "test6",
         "Lorem ipsum dolor sit amet, consectetur\n"
         "adipiscing elit. Nam purus lacus, luctus sit\n"
@@ -303,16 +288,12 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
         "erat ut ligula. Fusce sit amet mauris neque.\n"
         "Sed orci augue, luctus in ornare sed,\n"
         "adipiscing et arcu.",
-        &notifier, CHALLENGE_ECHO);
-
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == 0);
-
+        CHALLENGE_ECHO);
 
     ctx.flat_dialog.challenge->set_text("challenge_test");
 
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_12.png");
@@ -320,8 +301,8 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c)); // enter
     ctx.flat_dialog.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x1c), 0, keymap);
-    RED_CHECK(notifier.last_widget == &ctx.flat_dialog);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
@@ -331,7 +312,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
         "line 2\n"
         "\n"
         "line 3, blah blah\n"
-        "line 4", nullptr, NO_CHALLENGE,
+        "line 4", NO_CHALLENGE,
         FIXTURES_PATH "/wablogoblue-transparent.png");
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());

@@ -29,7 +29,7 @@ class WidgetGroupBox : public WidgetParent
 {
 public:
     WidgetGroupBox( gdi::GraphicApi & drawable, Widget & parent
-                  , NotifyApi * notifier, const char * text
+                  , const char * text
                   , Color fgcolor, Color bgcolor, Font const & font);
 
     ~WidgetGroupBox() override;

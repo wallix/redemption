@@ -28,7 +28,7 @@ class WidgetMultiLine : public Widget
 {
 public:
     WidgetMultiLine(gdi::GraphicApi & drawable, Widget& parent,
-                    NotifyApi* notifier, char const* text, int group_id,
+                    char const* text,
                     Color fgcolor, Color bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0); /*NOLINT*/
 

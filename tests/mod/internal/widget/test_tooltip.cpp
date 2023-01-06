@@ -37,9 +37,8 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     TestGraphic drawable(800, 600);
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
     BGRColor bg_color = YELLOW;
     BGRColor border_color = BLACK;
@@ -47,7 +46,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable, parent, notifier, tooltiptext, fg_color, bg_color, border_color, global_font_lato_light_16());
+    WidgetTooltip wtooltip(drawable, parent, tooltiptext, fg_color, bg_color, border_color, global_font_lato_light_16());
     Dimension dim = wtooltip.get_optimal_dim();
     wtooltip.set_wh(dim);
     wtooltip.set_xy(x, y);
@@ -65,16 +64,16 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     int y = 20;
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    WidgetLabel label(drawable, parent, &parent, "TOOLTIPTEST",
-                      0, BLACK, WHITE, global_font_lato_light_16());
+    WidgetLabel label(drawable, parent, "TOOLTIPTEST",
+                      BLACK, WHITE, global_font_lato_light_16());
     Dimension dim = label.get_optimal_dim();
     label.set_wh(dim);
     label.set_xy(x, y);
 
-    WidgetLabel label2(drawable, parent, &parent, "TOOLTIPTESTMULTI",
-                      0, BLACK, WHITE, global_font_lato_light_16());
+    WidgetLabel label2(drawable, parent, "TOOLTIPTESTMULTI",
+                       BLACK, WHITE, global_font_lato_light_16());
     dim = label2.get_optimal_dim();
     label2.set_wh(dim);
     label2.set_xy(x + 50, y + 90);
@@ -88,7 +87,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
         parent.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y);
         Widget * wid = parent.widget_at_pos(x, y);
         RED_CHECK(wid == &label);
-        parent.show_tooltip(wid, text, x, y, Rect(0, 0, 500, 41));
+        parent.show_tooltip(text, x, y, Rect(0, 0, 500, 41));
         parent.rdp_input_invalidate(parent.get_rect());
     };
 

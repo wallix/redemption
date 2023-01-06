@@ -36,8 +36,10 @@ DialogMod2::DialogMod2(
 )
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , dialog_widget(
-        drawable, widget_rect,
-        this->screen, *this, caption, message, link_value, link_label,
+        drawable, widget_rect, this->screen,
+        {.onsubmit = [this]{ this->accepted(); },
+         .oncancel = [this]{ this->refused(); }},
+        caption, message, link_value, link_label,
         this->copy_paste, theme, font, TR(trkeys::OK, language(vars)))
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
@@ -54,16 +56,6 @@ void DialogMod2::init()
 {
     RailModBase::init();
     this->copy_paste.ready(this->front);
-}
-
-void DialogMod2::notify(Widget& sender, notify_event_t event)
-{
-    (void)sender;
-    switch (event) {
-        case NOTIFY_SUBMIT: this->accepted(); break;
-        case NOTIFY_CANCEL: this->refused(); break;
-        default:;
-    }
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod

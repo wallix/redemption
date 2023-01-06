@@ -38,7 +38,7 @@ using DialogModVariables = vcfg::variables<
 >;
 
 
-class DialogMod : public RailModBase, public NotifyApi
+class DialogMod : public RailModBase
 {
 public:
     DialogMod(
@@ -52,8 +52,6 @@ public:
     ~DialogMod() override;
 
     void init() override;
-
-    void notify(Widget& sender, notify_event_t event) override;
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 

@@ -25,14 +25,14 @@
 
 WidgetTooltip::WidgetTooltip(
     gdi::GraphicApi & drawable, Widget & parent,
-    NotifyApi* notifier, const char * text,
+    const char * text,
     Color fgcolor, Color bgcolor, Color border_color,
     Font const & font
 )
-    : Widget(drawable, parent, notifier, 0)
+    : Widget(drawable, parent)
     , w_border(10)
     , h_border(10)
-    , desc(drawable, *this, this, text, 0, fgcolor, bgcolor, font, 0, 0)
+    , desc(drawable, *this, text, fgcolor, bgcolor, font, 0, 0)
     , border_color(border_color)
 {
     this->tab_flag   = IGNORE_TAB;

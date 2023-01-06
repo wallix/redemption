@@ -32,9 +32,7 @@ public:
     WidgetImage(gdi::GraphicApi& drawable,
                 const char *filename,
                 Widget& parent,
-                NotifyApi *notifier,
-                Color bg_color,
-                int group_id = 0); /*NOLINT*/
+                Color bg_color);
 
     ~WidgetImage();
 

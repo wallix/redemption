@@ -36,16 +36,18 @@ struct TestWidgetWaitCtx
 {
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetWait flat_dialog;
 
     TestWidgetWaitCtx(bool showform = false, unsigned flags = WidgetForm::NONE)
     : flat_dialog(
-        drawable, copy_paste, {0, 0, 800, 600}, parent, nullptr, "Invalid Target",
+        drawable, copy_paste, {0, 0, 800, 600}, parent,
+        {WidgetEventNotifier(), WidgetEventNotifier(), WidgetEventNotifier(), WidgetEventNotifier()},
+        "Invalid Target",
         "Target \"trucmuch@machinbidule:serv\" is not allowed because you either\n"
         "has no right to access it or it does not exist.\n"
         "you can either return to selector or exit.",
-        0, nullptr, global_font_deja_vu_14(), []{
+        nullptr, global_font_deja_vu_14(), []{
             Theme colors;
             colors.global.bgcolor = DARK_BLUE_BIS;
             colors.global.fgcolor = WHITE;

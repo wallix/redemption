@@ -36,7 +36,7 @@
 struct TestWidgetInteractivePasswordCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme()};
+    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), Theme()};
     CopyPaste copy_paste{false};
     WidgetInteractiveTarget interactive;
 
@@ -46,7 +46,8 @@ struct TestWidgetInteractivePasswordCtx
         const char * text_device,
         const char * device_str)
     : interactive(
-        drawable, copy_paste, 0, 0, 800, 600, parent, /*notifier=*/nullptr,
+        drawable, copy_paste, 0, 0, 800, 600, parent,
+        {WidgetEventNotifier(), WidgetEventNotifier(), WidgetEventNotifier()},
         ask_device, ask_login, ask_password, []{
             Theme colors;
             colors.global.bgcolor = DARK_BLUE_BIS;

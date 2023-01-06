@@ -26,11 +26,11 @@
 static WidgetWabClose build_close_widget(
     gdi::GraphicApi & drawable,
     Rect const widget_rect,
-    CloseMod & mod,
     WidgetScreen & screen,
     char const* auth_error_message,
     CloseModVariables vars,
-    Font const& font, Theme const& theme, bool back_selector)
+    Font const& font, Theme const& theme, bool back_selector,
+    WidgetWabClose::Events events)
 {
     struct temporary_text
     {
@@ -65,7 +65,7 @@ static WidgetWabClose build_close_widget(
 
     return WidgetWabClose(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        screen, &mod, auth_error_message,
+        screen, events, auth_error_message,
         is_asked ? nullptr : vars.get<cfg::globals::auth_user>().c_str(),
         is_asked ? nullptr : temporary_text(vars).text,
         true,
@@ -82,8 +82,22 @@ CloseMod::CloseMod(
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool back_selector)
     : RailModBase(gd, front, width, height, rail_client_execute, font, theme)
-    , close_widget(
-        build_close_widget(gd, widget_rect, *this, this->screen, auth_error_message, vars, font, theme, back_selector))
+    , close_widget(build_close_widget(
+        gd, widget_rect, this->screen, auth_error_message, vars, font, theme, back_selector,
+        {
+            .oncancel = [this]{
+                LOG(LOG_INFO, "CloseMod::notify Click on Close Button");
+                this->set_mod_signal(BACK_EVENT_STOP);
+            },
+            .onback_to_selector = [this]{
+                LOG(LOG_INFO, "CloseMod::notify Click on Back to Selector Button");
+                this->vars.ask<cfg::context::selector>();
+                this->vars.ask<cfg::globals::target_user>();
+                this->vars.ask<cfg::globals::target_device>();
+                this->vars.ask<cfg::context::target_protocol>();
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            }
+        }))
     , vars(vars)
     , events_guard(events)
 {
@@ -125,20 +139,3 @@ CloseMod::~CloseMod()
     this->vars.set<cfg::context::close_box_extra_message>("");
 }
 
-void CloseMod::notify(Widget& sender, notify_event_t event)
-{
-    (void)sender;
-    if (NOTIFY_CANCEL == event) {
-        LOG(LOG_INFO, "CloseMod::notify Click on Close Button");
-        this->set_mod_signal(BACK_EVENT_STOP);
-    }
-    else if (NOTIFY_SUBMIT == event) {
-        LOG(LOG_INFO, "CloseMod::notify Click on Back to Selector Button");
-        this->vars.ask<cfg::context::selector>();
-        this->vars.ask<cfg::globals::target_user>();
-        this->vars.ask<cfg::globals::target_device>();
-        this->vars.ask<cfg::context::target_protocol>();
-        this->set_mod_signal(BACK_EVENT_NEXT);
-        // throw Error(ERR_BACK_EVENT_NEXT);
-    }
-}

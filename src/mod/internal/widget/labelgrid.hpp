@@ -30,12 +30,13 @@ struct WidgetLabelGrid : public WidgetGrid
     static constexpr unsigned y_padding_label = 1;
 
     WidgetLabelGrid(gdi::GraphicApi & drawable, Widget & parent,
-               NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
-               Color bg_color_1, Color fg_color_1,
-               Color bg_color_2, Color fg_color_2,
-               Color bg_color_focus, Color fg_color_focus,
-               Color bg_color_selection, Color fg_color_selection,
-               Font const & font, uint16_t border = 0, int group_id = 0); /*NOLINT*/
+                    WidgetEventNotifier onsubmit,
+                    uint16_t nb_lines, uint16_t nb_columns,
+                    Color bg_color_1, Color fg_color_1,
+                    Color bg_color_2, Color fg_color_2,
+                    Color bg_color_focus, Color fg_color_focus,
+                    Color bg_color_selection, Color fg_color_selection,
+                    Font const & font, uint16_t border = 0); /*NOLINT*/
 
     ~WidgetLabelGrid() override;
 

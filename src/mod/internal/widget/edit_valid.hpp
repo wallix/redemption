@@ -33,10 +33,10 @@ class WidgetEditValid : public Widget
 {
 public:
     WidgetEditValid(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-                    Widget & parent, NotifyApi* notifier, const char * text,
-                    int group_id, Color fgcolor, Color bgcolor,
-                    Color focus_color, Color border_none_color, Font const & font,
-                    const char * title, bool use_title, std::size_t edit_position = -1, /*NOLINT*/
+                    Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+                    Color fgcolor, Color bgcolor, Color focus_color, Color border_none_color,
+                    Font const & font, const char * title, bool use_title,
+                    std::size_t edit_position = -1, /*NOLINT*/
                     // TODO re-enable
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false); /*NOLINT*/
 
@@ -71,8 +71,6 @@ public:
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
     [[nodiscard]] static unsigned get_border_height()
     {

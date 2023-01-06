@@ -169,6 +169,68 @@ struct WidgetModuleHost::Impl
             wmh.rdp_input_invalidate(new_clip);
         }
     }
+
+    static void scroll(WidgetModuleHost & wmh, bool horizontal)
+    {
+        if ((horizontal && !wmh.hscroll_added)
+         || (!horizontal && !wmh.vscroll_added)) {
+            return ;
+        }
+
+        Widget* parentWidget = &wmh.parent;
+        while (&parentWidget->parent != &parentWidget->parent.parent) {
+            parentWidget = &parentWidget->parent;
+        }
+
+        Rect visible_vision_rect;
+        Rect dest_rect;
+        Rect src_rect;
+
+        if (horizontal) {
+            int16_t old_mod_visible_rect_x = wmh.mod_visible_rect.x;
+
+            wmh.mod_visible_rect.x = wmh.hscroll.get_current_value();
+
+            visible_vision_rect = wmh.vision_rect.intersect(parentWidget->get_rect());
+            int16_t offset_x = old_mod_visible_rect_x - wmh.mod_visible_rect.x;
+
+            dest_rect = visible_vision_rect.offset(offset_x, 0).intersect(visible_vision_rect);
+            src_rect  = dest_rect.offset(-offset_x, 0);
+        }
+        else {
+            int16_t old_mod_visible_rect_y = wmh.mod_visible_rect.y;
+
+            wmh.mod_visible_rect.y = wmh.vscroll.get_current_value();
+
+            visible_vision_rect = wmh.vision_rect.intersect(parentWidget->get_rect());
+            int16_t offset_y = old_mod_visible_rect_y - wmh.mod_visible_rect.y;
+
+            dest_rect = visible_vision_rect.offset(0, offset_y).intersect(visible_vision_rect);
+            src_rect  = dest_rect.offset(0, -offset_y);
+        }
+
+        if (src_rect.intersect(dest_rect).isempty()) {
+            wmh.managed_mod->rdp_input_invalidate(dest_rect.offset(
+                -wmh.x() + wmh.mod_visible_rect.x,
+                -wmh.y() + wmh.mod_visible_rect.y
+            ));
+        }
+        else {
+            wmh.screen_copy(src_rect, dest_rect);
+
+            SubRegion region;
+
+            region.add_rect(visible_vision_rect);
+            region.subtract_rect(dest_rect);
+
+            assert(region.rects.size() == 1);
+
+            wmh.managed_mod->rdp_input_invalidate(region.rects[0].offset(
+                -wmh.x() + wmh.mod_visible_rect.x,
+                -wmh.y() + wmh.mod_visible_rect.y
+            ));
+        }
+    }
 };
 
 
@@ -224,17 +286,16 @@ void WidgetModuleHost::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerV
 }
 
 WidgetModuleHost::WidgetModuleHost(
-    gdi::GraphicApi& drawable, Widget& parent, NotifyApi* notifier,
+    gdi::GraphicApi& drawable, Widget& parent,
     Ref<mod_api> managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
-    Rect const widget_rect, uint16_t front_width, uint16_t front_height,
-    int group_id)
-: WidgetParent(drawable, parent, notifier, group_id)
+    Rect const widget_rect, uint16_t front_width, uint16_t front_height)
+: WidgetParent(drawable, parent)
 , managed_mod(&managed_mod.get())
 , drawable(drawable)
-, hscroll(drawable, *this, this, true, BLACK,
+, hscroll(drawable, *this, [this]{ Impl::scroll(*this, true); }, true,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
-, vscroll(drawable, *this, this, false, BLACK,
+, vscroll(drawable, *this, [this]{ Impl::scroll(*this, false); }, false,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
 , monitors(cs_monitor)
 , current_cache_pointer_index(gdi::CachePointerIndex(PredefinedPointer::Normal))
@@ -477,87 +538,6 @@ void WidgetModuleHost::set_wh(uint16_t w, uint16_t h)
     }
     if (this->vscroll_added) {
         this->vscroll.rdp_input_invalidate(this->vscroll.get_rect());
-    }
-}
-
-// NotifyApi
-
-void WidgetModuleHost::notify(Widget& /*widget*/, NotifyApi::notify_event_t event)
-{
-    Widget* parentWidget = &this->parent;
-    while (&parentWidget->parent != &parentWidget->parent.parent) {
-        parentWidget = &parentWidget->parent;
-    }
-
-    if (event == NOTIFY_HSCROLL) {
-        if (this->hscroll_added) {
-            int16_t old_mod_visible_rect_x = this->mod_visible_rect.x;
-
-            this->mod_visible_rect.x = this->hscroll.get_current_value();
-
-            Rect visible_vision_rect = this->vision_rect.intersect(parentWidget->get_rect());
-            int16_t offset_x = old_mod_visible_rect_x - this->mod_visible_rect.x;
-
-            Rect dest_rect = visible_vision_rect.offset(offset_x, 0).intersect(visible_vision_rect);
-            Rect src_rect  = dest_rect.offset(-offset_x, 0);
-
-            if (src_rect.intersect(dest_rect).isempty()) {
-                this->managed_mod->rdp_input_invalidate(dest_rect.offset(
-                        -this->x() + this->mod_visible_rect.x,
-                        -this->y() + this->mod_visible_rect.y
-                    ));
-            }
-            else {
-                this->screen_copy(src_rect, dest_rect);
-
-                SubRegion region;
-
-                region.add_rect(visible_vision_rect);
-                region.subtract_rect(dest_rect);
-
-                assert(region.rects.size() == 1);
-
-                this->managed_mod->rdp_input_invalidate(region.rects[0].offset(
-                        -this->x() + this->mod_visible_rect.x,
-                        -this->y() + this->mod_visible_rect.y
-                    ));
-            }
-        }
-    }
-    else if (event == NOTIFY_VSCROLL) {
-        if (this->vscroll_added) {
-            int16_t old_mod_visible_rect_y = this->mod_visible_rect.y;
-
-            this->mod_visible_rect.y = this->vscroll.get_current_value();
-
-            Rect visible_vision_rect = this->vision_rect.intersect(parentWidget->get_rect());
-            int16_t offset_y = old_mod_visible_rect_y - this->mod_visible_rect.y;
-
-            Rect dest_rect = visible_vision_rect.offset(0, offset_y).intersect(visible_vision_rect);
-            Rect src_rect  = dest_rect.offset(0, -offset_y);
-
-            if (src_rect.intersect(dest_rect).isempty()) {
-                this->managed_mod->rdp_input_invalidate(dest_rect.offset(
-                        -this->x() + this->mod_visible_rect.x,
-                        -this->y() + this->mod_visible_rect.y
-                    ));
-            }
-            else {
-                this->screen_copy(src_rect, dest_rect);
-
-                SubRegion region;
-
-                region.add_rect(visible_vision_rect);
-                region.subtract_rect(dest_rect);
-
-                assert(region.rects.size() == 1);
-
-                this->managed_mod->rdp_input_invalidate(region.rects[0].offset(
-                        -this->x() + this->mod_visible_rect.x,
-                        -this->y() + this->mod_visible_rect.y
-                    ));
-            }
-        }
     }
 }
 

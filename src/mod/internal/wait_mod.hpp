@@ -25,7 +25,6 @@
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
-#include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/widget/wait.hpp"
 #include "mod/internal/widget/language_button.hpp"
 #include "core/events.hpp"
@@ -43,7 +42,7 @@ using WaitModVariables = vcfg::variables<
 >;
 
 
-class WaitMod : public RailModBase, public NotifyApi
+class WaitMod : public RailModBase
 {
 public:
     WaitMod(
@@ -58,8 +57,6 @@ public:
     ~WaitMod() override;
 
     void init() override;
-
-    void notify(Widget& sender, notify_event_t event) override;
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 

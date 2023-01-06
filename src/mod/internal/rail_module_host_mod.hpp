@@ -29,7 +29,7 @@
 
 class ClientExecute;
 
-class RailModuleHostMod : public mod_api, public NotifyApi
+class RailModuleHostMod : public mod_api
 {
 public:
     [[nodiscard]] Font const & font() const
@@ -95,9 +95,6 @@ public:
     gdi::GraphicApi& proxy_gd() { return this->module_host; }
 
     void init() override;
-
-    void notify(Widget& /*widget*/, notify_event_t /*event*/) override
-    {}
 
     // RdpInput
 

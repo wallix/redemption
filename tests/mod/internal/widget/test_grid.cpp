@@ -39,12 +39,10 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
     BGRColor bg_color = YELLOW;
-    int id = 0;
     int16_t x = 10;
     int16_t y = 10;
 
@@ -56,9 +54,9 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGrid wgrid(drawable, parent, notifier, line_number, column_number,
+    WidgetGrid wgrid(drawable, parent, WidgetEventNotifier(), line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
-        grid_border, id);
+        grid_border);
     wgrid.set_wh(640, 480);
     wgrid.set_xy(x, y);
 
@@ -69,12 +67,13 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
             std::unique_ptr<Widget> w;
             if ((line_index == 2) && (column_index == 3)) {
                 w = std::make_unique<WidgetButton>(
-                    drawable, wgrid, notifier, text, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2,
+                    drawable, wgrid, text, WidgetEventNotifier(),
+                    WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2,
                     global_font_lato_light_16(), 2, 2);
             }
             else {
                 w = std::make_unique<WidgetLabel>(
-                    drawable, wgrid, notifier, text, id, fg_color, bg_color,
+                    drawable, wgrid, text, fg_color, bg_color,
                     global_font_lato_light_16());
             }
 

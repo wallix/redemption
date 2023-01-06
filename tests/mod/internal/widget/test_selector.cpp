@@ -47,10 +47,21 @@ struct TestWidgetSelectorCtx
         WidgetSelectorParams params, bool has_target_helpicon = false)
     : drawable{width, height}
     , parent{drawable, width == 640 ? uint16_t(648) : width, height,
-             global_font_deja_vu_14(), nullptr, Theme{}}
+             global_font_deja_vu_14(), Theme{}}
     , selector(
         drawable, copy_paste, "x@127.0.0.1", 0, 0, width, height, parent,
-        nullptr, "1", "1", nullptr, params, global_font_deja_vu_14(), Theme(),
+        {
+            .onconnect = WidgetEventNotifier(),
+            .oncancel = WidgetEventNotifier(),
+            .onfilter = WidgetEventNotifier(),
+            .onfirst_page = WidgetEventNotifier(),
+            .onprev_page = WidgetEventNotifier(),
+            .oncurrent_page = WidgetEventNotifier(),
+            .onnext_page = WidgetEventNotifier(),
+            .onlast_page = WidgetEventNotifier(),
+            .onctrl_shift = WidgetEventNotifier(),
+        },
+        "1", "1", nullptr, params, global_font_deja_vu_14(), Theme(),
         Language::en, has_target_helpicon)
     {}
 

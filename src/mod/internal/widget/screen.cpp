@@ -29,9 +29,9 @@
 
 WidgetScreen::WidgetScreen(
     gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
-    Font const & font, NotifyApi * notifier, Theme theme
+    Font const & font, Theme theme
 )
-    : WidgetParent(drawable, *this, notifier)
+    : WidgetParent(drawable, *this)
     , theme(std::move(theme))
     , tooltip(nullptr)
     , current_over(nullptr)
@@ -48,7 +48,7 @@ WidgetScreen::WidgetScreen(
 WidgetScreen::~WidgetScreen() = default;
 
 void WidgetScreen::show_tooltip(
-    Widget * widget, const char * text, int x, int y,
+    const char * text, int x, int y,
     Rect const preferred_display_rect)
 {
     if (text == nullptr) {
@@ -65,9 +65,7 @@ void WidgetScreen::show_tooltip(
         }
 
         this->tooltip = std::make_unique<WidgetTooltip>(
-            this->drawable,
-            *this, widget,
-            "",
+            this->drawable, *this, "",
             this->theme.tooltip.fgcolor,
             this->theme.tooltip.bgcolor,
             this->theme.tooltip.border_color,
@@ -135,11 +133,9 @@ void WidgetScreen::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y
 
     if (this->tooltip) {
         if (device_flags & MOUSE_FLAG_MOVE) {
-            if (this->last_widget_at_pos(x, y) != this->tooltip->notifier) {
-                this->hide_tooltip();
-            }
+            this->hide_tooltip();
         }
-        if (device_flags & (MOUSE_FLAG_BUTTON1)) {
+        if (device_flags & MOUSE_FLAG_BUTTON1) {
             this->hide_tooltip();
         }
     }

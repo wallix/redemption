@@ -28,10 +28,10 @@
 
 WidgetGroupBox::WidgetGroupBox(
     gdi::GraphicApi & drawable, Widget & parent,
-    NotifyApi * notifier, const char * text,
+    const char * text,
     Color fgcolor, Color bgcolor, Font const & font
 )
-  : WidgetParent(drawable, parent, notifier)
+  : WidgetParent(drawable, parent)
   , bg_color(bgcolor)
   , fg_color(fgcolor)
   , font(font)

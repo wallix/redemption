@@ -36,6 +36,33 @@ class Theme;
 
 class WidgetWabClose : public WidgetParent
 {
+public:
+    struct Events
+    {
+        WidgetEventNotifier oncancel;
+        WidgetEventNotifier onback_to_selector;
+    };
+
+    WidgetWabClose(gdi::GraphicApi & drawable,
+                 int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
+                 Events events, const char * diagnostic_text,
+                 const char * username, const char * target,
+                 bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
+                 Language lang, bool back_selector = false); /*NOLINT*/
+
+    ~WidgetWabClose();
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
+
+    [[nodiscard]] Color get_bg_color() const override;
+
+    std::chrono::seconds refresh_timeleft(std::chrono::seconds remaining);
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+private:
+    WidgetEventNotifier oncancel;
+
     CompositeArray composite_array;
 
     WidgetLabel        connection_closed_label;
@@ -69,24 +96,4 @@ private:
 
     std::string  diagnostic_text;
     bool         fixed_format_diagnostic_text;
-
-public:
-    WidgetWabClose(gdi::GraphicApi & drawable,
-                 int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
-                 NotifyApi* notifier, const char * diagnostic_text,
-                 const char * username, const char * target,
-                 bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
-                 Language lang, bool back_selector = false); /*NOLINT*/
-
-    ~WidgetWabClose();
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    [[nodiscard]] Color get_bg_color() const override;
-
-    std::chrono::seconds refresh_timeleft(std::chrono::seconds remaining);
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 };

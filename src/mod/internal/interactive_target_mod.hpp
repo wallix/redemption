@@ -40,7 +40,7 @@ using InteractiveTargetModVariables = vcfg::variables<
 >;
 
 
-class InteractiveTargetMod : public RailModBase, public NotifyApi
+class InteractiveTargetMod : public RailModBase
 {
 public:
     InteractiveTargetMod(
@@ -52,8 +52,6 @@ public:
     ~InteractiveTargetMod() override;
 
     void init() override;
-
-    void notify(Widget& sender, notify_event_t event) override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {

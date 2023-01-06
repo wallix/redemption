@@ -35,24 +35,26 @@ constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 
 WidgetWait::WidgetWait(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
-    Widget & parent, NotifyApi* notifier,
-    const char* caption, const char * text, int group_id,
+    Widget & parent, Events events, const char* caption, const char * text,
     WidgetButton * extra_button,
     Font const & font, Theme const & theme, Language lang,
     bool showform, unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable, parent, notifier, group_id)
-    , groupbox(drawable, *this, nullptr, caption,
+    : WidgetParent(drawable, parent)
+    , onaccept(events.onaccept)
+    , onrefused(events.onrefused)
+    , onctrl_shift(events.onctrl_shift)
+    , groupbox(drawable, *this, caption,
                theme.global.fgcolor, theme.global.bgcolor, font)
-    , dialog(drawable, this->groupbox, nullptr, text, -10,
+    , dialog(drawable, this->groupbox, text,
              theme.global.fgcolor, theme.global.bgcolor, font,
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , form(drawable, copy_paste, *this, this, -20, font, theme, lang,
-           flags & ~HIDE_BACK_TO_SELECTOR, duration_max)
-    , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
+    , form(drawable, copy_paste, *this, {events.onconfirm, events.onrefused},
+           font, theme, lang, flags & ~HIDE_BACK_TO_SELECTOR, duration_max)
+    , goselector(drawable, this->groupbox, TR(trkeys::back_selector, lang), events.onaccept,
                  theme.global.fgcolor, theme.global.bgcolor,
                  theme.global.focus_color, 2, font, 6, 2)
-    , exit(drawable, this->groupbox, this, TR(trkeys::exit, lang), -11,
+    , exit(drawable, this->groupbox, TR(trkeys::exit, lang), events.onrefused,
            theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
            6, 2)
     , extra_button(extra_button)
@@ -134,42 +136,33 @@ void WidgetWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     }
 }
 
-void WidgetWait::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if ((event == NOTIFY_CANCEL) ||
-        ((event == NOTIFY_SUBMIT) && (&widget == &this->exit))) {
-        this->send_notify(NOTIFY_CANCEL);
-    }
-    else if ((event == NOTIFY_SUBMIT) && (&widget == &this->goselector)) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-    else if ((event == NOTIFY_SUBMIT) && (widget.group_id == this->form.group_id)) {
-        this->send_notify(NOTIFY_TEXT_CHANGED);
-    }
-    else {
-        WidgetParent::notify(widget, event);
-    }
-}
-
 void WidgetWait::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
-        if (!this->hide_back_to_selector) {
-            this->send_notify(NOTIFY_SUBMIT);
-        }
-        else {
-            this->send_notify(NOTIFY_CANCEL);
-        }
-    }
-    else {
-        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
-    }
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::Esc:
+            if (this->hide_back_to_selector) {
+                this->onrefused();
+            }
+            else {
+                this->onaccept();
+            }
+            break;
 
-    if (this->extra_button
-        && keymap.is_shift_pressed()
-        && keymap.is_ctrl_pressed())
-    {
-        this->extra_button->notify(*this, NOTIFY_SUBMIT);
-    }
+        case Keymap::KEvent::Ctrl:
+        case Keymap::KEvent::Shift:
+            if (this->extra_button
+                && keymap.is_shift_pressed()
+                && keymap.is_ctrl_pressed())
+            {
+                this->onctrl_shift();
+            }
+            break;
 
+        default:
+            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
+    }
+    REDEMPTION_DIAGNOSTIC_POP()
 }

@@ -59,13 +59,13 @@ RailModuleHostMod::RailModuleHostMod(
     Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
     : front(front)
-    , screen(drawable, width, height, font, nullptr, theme)
+    , screen(drawable, width, height, font, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , disconnection_reconnection_timer(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , managed_mod(std::make_unique<null_mod>())
-    , module_host(drawable, this->screen, /*notifier=*/nullptr,
+    , module_host(drawable, this->screen,
                   *this->managed_mod, font, cs_monitor,
                   widget_rect, width, height)
     , can_resize_hosted_desktop(can_resize_hosted_desktop)

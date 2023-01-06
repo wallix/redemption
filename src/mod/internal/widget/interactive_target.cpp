@@ -29,7 +29,7 @@
 WidgetInteractiveTarget::WidgetInteractiveTarget(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     int16_t left, int16_t top, uint16_t width, uint16_t height,
-    Widget & parent, NotifyApi* notifier,
+    Widget & parent, Events events,
     bool ask_device, bool ask_login, bool ask_password,
     Theme const & theme, const char* caption,
     const char * text_device,
@@ -40,32 +40,39 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
     Font const & font,
     WidgetButton * extra_button
 )
-    : WidgetParent(drawable, parent, notifier)
-    , caption_label(drawable, *this, nullptr, caption, -13,
+    : WidgetParent(drawable, parent)
+    , oncancel(events.oncancel)
+    , onctrl_shift(events.onctrl_shift)
+    , caption_label(drawable, *this, caption,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , separator(drawable, *this, this, -12,
-                theme.global.separator_color)
-    , device_label(drawable, *this, nullptr, text_device, -13,
+    , separator(drawable, *this, theme.global.separator_color)
+    , device_label(drawable, *this, text_device,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , device(drawable, *this, nullptr, device_str, -13,
+    , device(drawable, *this, device_str,
                 theme.global.fgcolor, theme.global.bgcolor, font)
-    , device_edit(drawable, copy_paste, *this, this, nullptr, -14,
+    , device_edit(drawable, copy_paste, *this, nullptr,
+                  (ask_login || ask_password)
+                    ? WidgetEventNotifier([this]{ this->next_focus(); })
+                    : events.onsubmit,
                   theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
-    , login_label(drawable, *this, nullptr, text_login, -13,
+    , login_label(drawable, *this, text_login,
                   theme.global.fgcolor, theme.global.bgcolor, font)
-    , login(drawable, *this, nullptr, login_str, -13,
+    , login(drawable, *this, login_str,
             theme.global.fgcolor, theme.global.bgcolor, font)
-    , login_edit(drawable, copy_paste, *this, this, nullptr, -14,
+    , login_edit(drawable, copy_paste, *this, nullptr,
+                 [this]{ this->next_focus(); },
                  theme.edit.fgcolor, theme.edit.bgcolor,
                  theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
-    , password_label(drawable, *this, nullptr, text_password, -13,
+    , password_label(drawable, *this, text_password,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-    , password_edit(drawable, copy_paste, *this, this, nullptr, -14,
+    , password_edit(drawable, copy_paste, *this, nullptr,
+                    !(ask_login || ask_password)
+                        ? WidgetEventNotifier([this]{ this->next_focus(); })
+                        : events.onsubmit,
                     theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
     , extra_button(extra_button)
-    , last_interactive((ask_login || ask_password) ? &this->password_edit : &this->device_edit)
     , fgcolor(theme.global.fgcolor)
     , bgcolor(theme.global.bgcolor)
     , ask_device(ask_device)
@@ -239,30 +246,28 @@ Widget::Color WidgetInteractiveTarget::get_bg_color() const
     return this->bgcolor;
 }
 
-void WidgetInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if (&widget == this->last_interactive && event == NOTIFY_SUBMIT) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-    else if (event == NOTIFY_SUBMIT) {
-        this->next_focus();
-    }
-}
-
 void WidgetInteractiveTarget::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
-        this->send_notify(NOTIFY_CANCEL);
-    }
-    else {
-        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
-    }
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::Esc:
+            this->oncancel();
+            break;
 
-    if (this->extra_button
-        && keymap.is_shift_pressed()
-        && keymap.is_ctrl_pressed())
-    {
-        this->extra_button->notify(*this, NOTIFY_SUBMIT);
-    }
+        case Keymap::KEvent::Ctrl:
+        case Keymap::KEvent::Shift:
+            if (this->extra_button
+                && keymap.is_shift_pressed()
+                && keymap.is_ctrl_pressed())
+            {
+                this->onctrl_shift();
+            }
+            break;
 
+        default:
+            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
+    }
+    REDEMPTION_DIAGNOSTIC_POP()
 }

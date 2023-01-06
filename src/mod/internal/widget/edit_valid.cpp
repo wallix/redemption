@@ -29,31 +29,26 @@
 
 WidgetEditValid::WidgetEditValid(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget & parent, NotifyApi* notifier, const char * text,
-    int group_id, Color fgcolor, Color bgcolor,
-    Color focus_color, Color border_none_color, Font const & font,
-    const char * title, bool use_title, std::size_t edit_position,
+    Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+    Color fgcolor, Color bgcolor, Color focus_color, Color border_none_color,
+    Font const & font, const char * title, bool use_title, std::size_t edit_position,
     // TODO re-enable
     int /*xtext*/, int /*ytext*/, bool pass
 )
-    : Widget(drawable, parent, notifier, group_id)
-    , button(drawable, *this, this, "\xe2\x9e\x9c",
-                group_id, bgcolor, focus_color, focus_color, 1, font, 6, 2)
+    : Widget(drawable, parent)
+    , button(drawable, *this, "\xe2\x9e\x9c", onsubmit,
+             bgcolor, focus_color, focus_color, 1, font, 6, 2)
     , editbox(pass
-        ? new WidgetPassword(drawable, copy_paste, *this,
-                             this, text, group_id, fgcolor, bgcolor,
-                             focus_color, font, edit_position, 1, 2)
-        : new WidgetEdit(drawable, copy_paste, *this, this,
-                         text, group_id, fgcolor, bgcolor, focus_color, font,
-                         edit_position, 1, 2))
+        ? new WidgetPassword(drawable, copy_paste, *this, text, onsubmit, fgcolor, bgcolor,
+                             bgcolor, font, edit_position, 1, 2)
+        : new WidgetEdit(drawable, copy_paste, *this, text, onsubmit, fgcolor, bgcolor,
+                         bgcolor, font, edit_position, 1, 2))
     , label(title
-        ? new WidgetLabel(drawable, *this, nullptr, title,
-                          group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
+        ? new WidgetLabel(drawable, *this, title, MEDIUM_GREY, bgcolor, font, 1, 2)
         : nullptr)
     , use_label_(use_title)
     , border_none_color(border_none_color)
 {
-    this->editbox->draw_border_focus = false;
 }
 
 Dimension WidgetEditValid::get_optimal_dim() const
@@ -220,18 +215,4 @@ void WidgetEditValid::rdp_input_scancode(
 void WidgetEditValid::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     this->editbox->rdp_input_unicode(flag, unicode);
-}
-
-void WidgetEditValid::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if (event == NOTIFY_SUBMIT) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-    if ((event == NOTIFY_TEXT_CHANGED) &&
-        (&widget == this->editbox) &&
-        this->label && this->use_label_) {
-        if (this->editbox->num_chars == 1) {
-            this->editbox->rdp_input_invalidate(this->get_rect());
-        }
-    }
 }

@@ -14,24 +14,29 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2021
+Copyright (C) Wallix 2022
 Author(s): Proxies Team
 */
 
 #pragma once
 
-#include "mod/internal/widget/notify_api.hpp"
+#include "mod/internal/widget/event_notifier.hpp"
 
-struct NotifyTrace : public NotifyApi
+struct NotifyTrace
 {
-    Widget* last_widget = nullptr;
-    notify_event_t last_event = 0;
+    int event = 0;
 
-    NotifyTrace() = default;
-
-    void notify(Widget& widget, notify_event_t event) override
+    operator WidgetEventNotifier ()
     {
-        this->last_widget = &widget;
-        this->last_event = event;
+        return WidgetEventNotifier([this]{
+            ++event;
+        });
+    }
+
+    int get_and_reset()
+    {
+        int ret = event;
+        event = 0;
+        return ret;
     }
 };

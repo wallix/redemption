@@ -35,27 +35,27 @@ enum {
 
 WidgetDialog::WidgetDialog(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
-    Widget & parent, NotifyApi* notifier,
+    Widget & parent, Events events,
     const char* caption, const char * text,
     WidgetButton * extra_button,
     Theme const & theme, Font const & font, const char * ok_text,
     const char * cancel_text, ChallengeOpt has_challenge
 )
-    : WidgetParent(drawable, parent, notifier)
-    , title(drawable, *this, nullptr, caption, -9,
+    : WidgetParent(drawable, parent)
+    , onctrl_shift(events.onctrl_shift)
+    , title(drawable, *this, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
-    , separator(drawable, *this, this, -12,
-                theme.global.separator_color)
-    , dialog(drawable, *this, nullptr, -10, text,
+    , separator(drawable, *this, theme.global.separator_color)
+    , dialog(drawable, *this, text,
              theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
              font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , challenge(nullptr)
-    , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
-         theme.global.fgcolor, theme.global.bgcolor,
-         theme.global.focus_color, 2, font, 6, 2)
+    , ok(drawable, *this, ok_text ? ok_text : "Ok", events.onsubmit,
+        theme.global.fgcolor, theme.global.bgcolor,
+        theme.global.focus_color, 2, font, 6, 2)
     , cancel(cancel_text
         ? std::make_unique<WidgetButton>(
-            drawable, *this, this, cancel_text, -11,
+            drawable, *this, cancel_text, events.oncancel,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2)
         : std::unique_ptr<WidgetButton>())
@@ -63,10 +63,9 @@ WidgetDialog::WidgetDialog(
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
           *this,
-          nullptr,
-          theme.global.bgcolor,
-          -8)
+          theme.global.bgcolor)
     , extra_button(extra_button)
+    , oncancel(events.oncancel)
     , bg_color(theme.global.bgcolor)
 {
     this->impl = &composite_array;
@@ -80,14 +79,14 @@ WidgetDialog::WidgetDialog(
     if (has_challenge) {
         if (CHALLENGE_ECHO == has_challenge) {
             this->challenge = std::make_unique<WidgetEdit>(
-                this->drawable, copy_paste, *this, this, nullptr, -13,
+                this->drawable, copy_paste, *this, nullptr, events.onsubmit,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
         else {
             this->challenge = std::make_unique<WidgetPassword>(
-                this->drawable, copy_paste, *this, this, nullptr, -13,
+                this->drawable, copy_paste, *this, nullptr, events.onsubmit,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
@@ -205,28 +204,13 @@ Widget::Color WidgetDialog::get_bg_color() const
     return this->bg_color;
 }
 
-void WidgetDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if ((event == NOTIFY_CANCEL) ||
-        ((event == NOTIFY_SUBMIT) && (&widget == this->cancel.get()))) {
-        this->send_notify(NOTIFY_CANCEL);
-    }
-    else if ((event == NOTIFY_SUBMIT) &&
-             ((&widget == &this->ok) || (&widget == this->challenge.get()))) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-    else {
-        WidgetParent::notify(widget, event);
-    }
-}
-
 void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (keymap.last_kevent()) {
         case Keymap::KEvent::Esc:
-            this->send_notify(NOTIFY_CANCEL);
+            this->oncancel();
             break;
         case Keymap::KEvent::LeftArrow:
         case Keymap::KEvent::UpArrow:
@@ -244,7 +228,7 @@ void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
                 && keymap.is_shift_pressed()
                 && keymap.is_ctrl_pressed())
             {
-                this->extra_button->notify(*this, NOTIFY_SUBMIT);
+                this->onctrl_shift();
             }
             break;
         default:

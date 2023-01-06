@@ -36,7 +36,12 @@ InteractiveTargetMod::InteractiveTargetMod(
         drawable, front, font, theme)
     , challenge(
         drawable, copy_paste, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        this->screen, this,
+        this->screen,
+        {
+            .onsubmit = [this]{ this->accepted(); },
+            .oncancel = [this]{ this->refused(); },
+            .onctrl_shift = [this]{ this->language_button.next_layout(); },
+        },
         this->ask_device, this->ask_login, this->ask_password,
         theme,
         TR(trkeys::target_info_required, language(vars)),
@@ -68,16 +73,6 @@ void InteractiveTargetMod::init()
 {
     RailModBase::init();
     this->copy_paste.ready(this->front);
-}
-
-void InteractiveTargetMod::notify(Widget& sender, notify_event_t event)
-{
-    (void)sender;
-    switch (event) {
-        case NOTIFY_SUBMIT: this->accepted(); break;
-        case NOTIFY_CANCEL: this->refused(); break;
-        default: ;
-    }
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod

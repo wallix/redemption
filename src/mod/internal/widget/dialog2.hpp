@@ -34,6 +34,32 @@ class Theme;
 
 class WidgetDialog2 : public WidgetParent
 {
+public:
+    struct Events
+    {
+        WidgetEventNotifier onsubmit;
+        WidgetEventNotifier oncancel;
+    };
+
+    WidgetDialog2(gdi::GraphicApi & drawable,
+                  Rect const widget_rect,
+                  Widget & parent, Events events,
+                  const char* caption, const char * text,
+                  const char * link_value, const char * link_label,
+                  CopyPaste & copy_paste, Theme const & theme,
+                  Font const & font, const char * ok_text = "Ok" /*NOLINT*/);
+
+    ~WidgetDialog2() override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
+
+    [[nodiscard]] Color get_bg_color() const override;
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+private:
+    WidgetEventNotifier oncancel;
+
     CompositeArray composite_array;
 
     WidgetLabel        title;
@@ -51,23 +77,4 @@ private:
     CopyPaste & copy_paste;
 
     Color bg_color;
-
-public:
-    WidgetDialog2(gdi::GraphicApi & drawable,
-                  Rect const widget_rect,
-                  Widget & parent, NotifyApi & notifier,
-                  const char* caption, const char * text,
-                  const char * link_value, const char * link_label,
-                  CopyPaste & copy_paste, Theme const & theme,
-                  Font const & font, const char * ok_text = "Ok" /*NOLINT*/);
-
-    ~WidgetDialog2() override;
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    [[nodiscard]] Color get_bg_color() const override;
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 };

@@ -40,14 +40,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
 
     TestGraphic gd(w, h);
 
-    WidgetScreen screen(gd, w, h, font, nullptr, Theme{});
+    WidgetScreen screen(gd, w, h, font, Theme{});
 
     BGRColor fg_color = RED;
     BGRColor bg_color = YELLOW;
     BGRColor focus_color = BLUE;
 
     NotifyTrace notifier;
-    WidgetDelegatedCopy delegated(gd, screen, notifier, -1, fg_color, bg_color, focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Left);
+    WidgetDelegatedCopy delegated(gd, screen, notifier, fg_color, bg_color, focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Left);
 
     delegated.set_wh(delegated.get_optimal_dim());
     delegated.set_xy(5, 5);
@@ -55,14 +55,12 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     screen.add_widget(&delegated);
     screen.rdp_input_invalidate(screen.get_rect());
 
-    RED_CHECK(notifier.last_event == 0);
-    RED_CHECK(!notifier.last_widget);
+    RED_CHECK(notifier.get_and_reset() == 0);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_1.png");
 
     delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 10);
 
-    RED_CHECK(notifier.last_event == NOTIFY_DELEGATE);
-    RED_CHECK(notifier.last_widget == &delegated);
+    RED_CHECK(notifier.get_and_reset() == 1);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_2.png");
 
     delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 10, 10);

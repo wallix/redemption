@@ -24,23 +24,14 @@ Author(s): Proxies Team
 
 struct WidgetReceiveEvent : public Widget
 {
-    Widget* last_widget = nullptr;
-    NotifyApi::notify_event_t last_event = 0;
-
     WidgetReceiveEvent(gdi::GraphicApi& gd)
-    : Widget(gd, *this, nullptr)
+    : Widget(gd, *this)
     {}
 
     WidgetReceiveEvent(gdi::GraphicApi& gd, Widget& parent)
-    : Widget(gd, parent, nullptr)
+    : Widget(gd, parent)
     {}
 
     void rdp_input_invalidate(Rect /*r*/) override
     {}
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override
-    {
-        this->last_widget = &widget;
-        this->last_event = event;
-    }
 };

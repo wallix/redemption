@@ -36,10 +36,17 @@ public:
     // ASK DEVICE YES/NO
     // ASK CRED : LOGIN+PASSWORD/PASSWORD/NO
 
+    struct Events
+    {
+        WidgetEventNotifier onsubmit;
+        WidgetEventNotifier oncancel;
+        WidgetEventNotifier onctrl_shift;
+    };
+
     WidgetInteractiveTarget(
         gdi::GraphicApi & drawable, CopyPaste & copy_paste,
         int16_t left, int16_t top, uint16_t width, uint16_t height,
-        Widget & parent, NotifyApi* notifier,
+        Widget & parent, Events events,
         bool ask_device, bool ask_login, bool ask_password,
         Theme const & theme, const char * caption,
         const char * text_device,
@@ -56,11 +63,12 @@ public:
 
     [[nodiscard]] Color get_bg_color() const override;
 
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
 private:
+    WidgetEventNotifier oncancel;
+    WidgetEventNotifier onctrl_shift;
+
     CompositeArray composite_array;
 
     WidgetLabel        caption_label;
@@ -80,8 +88,6 @@ public:
     WidgetEditValid    password_edit;
 private:
     WidgetButton * extra_button;
-
-    Widget * last_interactive;
 
     Color fgcolor;
     Color bgcolor;

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
+#include "mod/internal/widget/event_notifier.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/monotonic_clock.hpp"
@@ -30,74 +31,17 @@
 #include <memory>
 
 
-struct WidgetGrid : public Widget
+class WidgetGrid : public Widget
 {
-private:
-    struct Widgets
-    {
-        Widgets(uint16_t nb_rows, uint16_t nb_columns);
-
-        writable_array_view<std::unique_ptr<Widget>> add_line();
-
-        [[nodiscard]] array_view<std::unique_ptr<Widget>> line(uint16_t i) const;
-        writable_array_view<std::unique_ptr<Widget>> line(uint16_t i);
-
-        [[nodiscard]] array_view<uint16_t> row_heights() const;
-        [[nodiscard]] array_view<uint16_t> column_widths() const;
-
-        writable_array_view<uint16_t> row_heights();
-        writable_array_view<uint16_t> column_widths();
-
-        void clear();
-
-    private:
-        friend class WidgetGrid;
-
-        uint16_t nb_rows;
-        uint16_t nb_columns;
-        std::vector<std::unique_ptr<Widget>> widgets;
-        std::vector<uint16_t> column_and_row_height;
-    };
-
-    Widgets widgets;
-
-public:
-    const Color bg_color_1;    // Odd
-    const Color fg_color_1;
-
-    const Color bg_color_2;    // Even
-    const Color fg_color_2;
-
-private:
-    const Color bg_color_focus;
-    const Color fg_color_focus;
-
-    const Color bg_color_selection;
-    const Color fg_color_selection;
-
-public:
-    const uint16_t border;    // Width and height of cell's border.
-
-private:
-    uint16_t selection_y = static_cast<uint16_t>(-1u);   // Index of seleted row.
-
-    struct difftimer
-    {
-        MonotonicTimePoint t {};
-
-        MonotonicTimePoint::duration tick();
-
-        void update();
-    } click_interval {};
-
 public:
     WidgetGrid(gdi::GraphicApi & drawable, Widget & parent,
-               NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
+               WidgetEventNotifier onsubmit,
+               uint16_t nb_rows, uint16_t nb_columns,
                Color bg_color_1, Color fg_color_1,
                Color bg_color_2, Color fg_color_2,
                Color bg_color_focus, Color fg_color_focus,
                Color bg_color_selection, Color fg_color_selection,
-               uint16_t border = 0, int group_id = 0); /*NOLINT*/
+               uint16_t border = 0); /*NOLINT*/
 
     void clear();
 
@@ -139,7 +83,67 @@ public:
 private:
     void refresh_selected();
     void draw_row(uint16_t row_index, Rect const clip);
+
+    struct Widgets
+    {
+        Widgets(uint16_t nb_rows, uint16_t nb_columns);
+
+        writable_array_view<std::unique_ptr<Widget>> add_line();
+
+        [[nodiscard]] array_view<std::unique_ptr<Widget>> line(uint16_t i) const;
+        writable_array_view<std::unique_ptr<Widget>> line(uint16_t i);
+
+        [[nodiscard]] array_view<uint16_t> row_heights() const;
+        [[nodiscard]] array_view<uint16_t> column_widths() const;
+
+        writable_array_view<uint16_t> row_heights();
+        writable_array_view<uint16_t> column_widths();
+
+        void clear();
+
+    private:
+        friend class WidgetGrid;
+
+        uint16_t nb_rows;
+        uint16_t nb_columns;
+        std::vector<std::unique_ptr<Widget>> widgets;
+        std::vector<uint16_t> column_and_row_height;
+    };
+
+    WidgetEventNotifier onsubmit;
+
+    Widgets widgets;
+
+public:
+    const Color bg_color_1;    // Odd
+    const Color fg_color_1;
+
+    const Color bg_color_2;    // Even
+    const Color fg_color_2;
+
+private:
+    const Color bg_color_focus;
+    const Color fg_color_focus;
+
+    const Color bg_color_selection;
+    const Color fg_color_selection;
+
+public:
+    const uint16_t border;    // Width and height of cell's border.
+
+private:
+    uint16_t selection_y = static_cast<uint16_t>(-1u);   // Index of seleted row.
+
+    struct difftimer
+    {
+        MonotonicTimePoint t {};
+
+        MonotonicTimePoint::duration tick();
+
+        void update();
+    } click_interval {};
 };
+
 
 struct ColumnWidthStrategy
 {

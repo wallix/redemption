@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     TestGraphic drawable(800, 600);
     Theme colors;
 
-    WidgetScreen wscreen(drawable, drawable.width(), drawable.height(), global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen wscreen(drawable, drawable.width(), drawable.height(), global_font_lato_light_16(), Theme{});
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     wscreen.tab_flag = Widget::NORMAL_TAB;
@@ -49,26 +49,30 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     NotifyTrace notifier3;
     NotifyTrace notifier4;
 
-    WidgetButton wbutton1(drawable, wscreen, &notifier1, "button 1",
-                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+    WidgetButton wbutton1(
+        drawable, wscreen, "button 1", notifier1,
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
-    WidgetButton wbutton2(drawable, wscreen, &notifier2, "button 2",
-                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+    WidgetButton wbutton2(
+        drawable, wscreen, "button 2", notifier2,
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 30);
 
-    WidgetButton wbutton3(drawable, wscreen, &notifier3, "button 3",
-                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+    WidgetButton wbutton3(
+        drawable, wscreen, "button 3", notifier3,
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 0);
 
-    WidgetButton wbutton4(drawable, wscreen, &notifier4, "button 4",
-                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+    WidgetButton wbutton4(
+        drawable, wscreen, "button 4", notifier4,
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);
     wbutton4.set_xy(100, 30);
@@ -82,11 +86,10 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
 
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == &wbutton2);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == nullptr);
-    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_BEGIN);
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_1.png");
 
 
@@ -102,137 +105,87 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     };
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == &wbutton2);
-    RED_CHECK(notifier3.last_widget == &wbutton3);
-    RED_CHECK(notifier4.last_widget == nullptr);
-    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_BEGIN);
-    notifier2.last_widget = nullptr;
-    notifier3.last_widget = nullptr;
-    notifier2.last_event = 0;
-    notifier3.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_2.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == &wbutton3);
-    RED_CHECK(notifier4.last_widget == &wbutton4);
-    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_BEGIN);
-    notifier3.last_widget = nullptr;
-    notifier4.last_widget = nullptr;
-    notifier3.last_event = 0;
-    notifier4.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK(notifier1.last_widget == &wbutton1);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == &wbutton4);
-    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_BEGIN);
-    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_END);
-    notifier1.last_widget = nullptr;
-    notifier4.last_widget = nullptr;
-    notifier1.last_event = 0;
-    notifier4.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_4.png");
 
     rdp_input_scancode(Keymap::KeyCode::LShift);
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK(notifier1.last_widget == &wbutton1);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == &wbutton4);
-    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_BEGIN);
-    notifier1.last_widget = nullptr;
-    notifier4.last_widget = nullptr;
-    notifier1.last_event = 0;
-    notifier4.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
     rdp_input_scancode(Keymap::KeyCode::LShift, Keymap::KbdFlags::Release);
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == &wbutton3);
-    RED_CHECK(notifier4.last_widget == &wbutton4);
-    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_BEGIN);
-    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_END);
-    notifier3.last_widget = nullptr;
-    notifier4.last_widget = nullptr;
-    notifier3.last_event = 0;
-    notifier4.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_2.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton1.x(), wbutton1.y());
-    RED_CHECK(notifier1.last_widget == &wbutton1);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == &wbutton3);
-    RED_CHECK(notifier4.last_widget == nullptr);
-    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_BEGIN);
-    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_END);
-    notifier1.last_widget = nullptr;
-    notifier3.last_widget = nullptr;
-    notifier1.last_event = 0;
-    notifier3.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_7.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton2.x(), wbutton2.y());
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == nullptr);
-    RED_CHECK(notifier1.last_event == 0);
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_4.png");
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
-    RED_CHECK(notifier1.last_widget == &wbutton1);
-    RED_CHECK(notifier2.last_widget == &wbutton2);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == nullptr);
-    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_BEGIN);
-    notifier1.last_widget = nullptr;
-    notifier2.last_widget = nullptr;
-    notifier1.last_event = 0;
-    notifier2.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_1.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton4.x(), wbutton4.y());
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == &wbutton2);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == &wbutton4);
-    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_BEGIN);
-    notifier2.last_widget = nullptr;
-    notifier4.last_widget = nullptr;
-    notifier2.last_event = 0;
-    notifier4.last_event = 0;
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_10.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton4.x(), wbutton4.y());
-    RED_CHECK(notifier1.last_widget == nullptr);
-    RED_CHECK(notifier2.last_widget == nullptr);
-    RED_CHECK(notifier3.last_widget == nullptr);
-    RED_CHECK(notifier4.last_widget == &wbutton4);
-    RED_CHECK(notifier4.last_event == NOTIFY_SUBMIT);
+    RED_CHECK(notifier1.get_and_reset() == 0);
+    RED_CHECK(notifier2.get_and_reset() == 0);
+    RED_CHECK(notifier3.get_and_reset() == 0);
+    RED_CHECK(notifier4.get_and_reset() == 1);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
-    wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 500, 41));
+    wscreen.show_tooltip("tooltip test", 30, 35, Rect(0, 0, 500, 41));
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_12.png");
 
-    wscreen.show_tooltip(nullptr, nullptr, 30, 35, Rect(0, 0, 0, 0));
+    wscreen.show_tooltip(nullptr, 30, 35, Rect(0, 0, 0, 0));
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
     wscreen.clear();

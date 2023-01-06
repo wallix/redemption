@@ -30,26 +30,18 @@
 
 class WidgetWait : public WidgetParent
 {
-    CompositeArray composite_array;
-
-    WidgetGroupBox     groupbox;
-    WidgetMultiLine    dialog;
 public:
-    WidgetForm           form;
-    WidgetButton   goselector;
-private:
-    WidgetButton   exit;
-    WidgetButton * extra_button;
+    struct Events
+    {
+        WidgetEventNotifier onaccept;
+        WidgetEventNotifier onrefused;
+        WidgetEventNotifier onconfirm;
+        WidgetEventNotifier onctrl_shift;
+    };
 
-    Color bg_color;
-    bool hasform;
-    bool hide_back_to_selector;
-
-public:
     WidgetWait(
         gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
-        Widget & parent, NotifyApi* notifier,
-        const char* caption, const char * text, int group_id,
+        Widget & parent, Events events, const char* caption, const char * text,
         WidgetButton * extra_button,
         Font const & font, Theme const & theme, Language lang,
         bool showform = false, unsigned flags = WidgetForm::NONE,
@@ -64,7 +56,26 @@ public:
         return this->bg_color;
     }
 
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+private:
+    WidgetEventNotifier onaccept;
+    WidgetEventNotifier onrefused;
+    WidgetEventNotifier onctrl_shift;
+
+    CompositeArray composite_array;
+
+    WidgetGroupBox groupbox;
+    WidgetMultiLine dialog;
+public:
+    WidgetForm form;
+    WidgetButton goselector;
+
+private:
+    WidgetButton   exit;
+    WidgetButton * extra_button;
+
+    Color bg_color;
+    bool hasform;
+    bool hide_back_to_selector;
 };

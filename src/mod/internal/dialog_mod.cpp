@@ -38,8 +38,13 @@ DialogMod::DialogMod(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
     , dialog_widget(
-        drawable, copy_paste, widget_rect,
-        this->screen, this, caption, message, &this->language_button, theme, font,
+        drawable, copy_paste, widget_rect, this->screen,
+        {
+            .onsubmit = [this]{ this->accepted(); },
+            .oncancel = [this]{ this->refused(); },
+            .onctrl_shift = [this]{ this->language_button.next_layout(); },
+        },
+        caption, message, &this->language_button, theme, font,
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)
     , vars(vars)
@@ -62,16 +67,6 @@ void DialogMod::init()
     RailModBase::init();
     if (this->dialog_widget.challenge) {
         this->copy_paste.ready(this->front);
-    }
-}
-
-void DialogMod::notify(Widget& sender, notify_event_t event)
-{
-    (void)sender;
-    switch (event) {
-        case NOTIFY_SUBMIT: this->accepted(); break;
-        case NOTIFY_CANCEL: this->refused(); break;
-        default:;
     }
 }
 

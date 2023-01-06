@@ -28,11 +28,13 @@
 #include "utils/utf.hpp"
 
 WidgetDelegatedCopy::WidgetDelegatedCopy(
-    gdi::GraphicApi & drawable, Widget & parent, NotifyApi& notifier,
-    int group_id, Color fgcolor, Color bgcolor, Color activecolor,
+    gdi::GraphicApi & drawable, Widget & parent,
+    WidgetEventNotifier onclick,
+    Color fgcolor, Color bgcolor, Color activecolor,
     Font const & font, int xicon, int yicon, MouseButton copy_buttons
 )
-    : Widget(drawable, parent, &notifier, group_id)
+    : Widget(drawable, parent)
+    , onclick(onclick)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , active_color(activecolor)
@@ -135,7 +137,7 @@ void WidgetDelegatedCopy::rdp_input_mouse(uint16_t device_flags, uint16_t /*x*/,
             this->active_color, this->bg_color, this->x_icon, this->y_icon
         );
         this->is_active = true;
-        this->send_notify(*this, NOTIFY_DELEGATE);
+        this->onclick();
     }
     else if ((device_flags & mouse_match) && this->is_active) {
         this->draw(

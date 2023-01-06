@@ -42,7 +42,6 @@ struct WidgetSelectorParams
 };
 
 
-
 class WidgetSelector : public WidgetParent
 {
 public:
@@ -53,7 +52,58 @@ public:
         explicit temporary_number_of_page(const char * s);
     };
 
+    struct Events
+    {
+        WidgetEventNotifier onconnect;
+        WidgetEventNotifier oncancel;
+
+        WidgetEventNotifier onfilter;
+
+        WidgetEventNotifier onfirst_page;
+        WidgetEventNotifier onprev_page;
+        WidgetEventNotifier oncurrent_page;
+        WidgetEventNotifier onnext_page;
+        WidgetEventNotifier onlast_page;
+
+        WidgetEventNotifier onctrl_shift;
+    };
+
+    WidgetSelector(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+                   const char * device_name,
+                   int16_t left, int16_t top, uint16_t width, uint16_t height,
+                   Widget & parent, Events events,
+                   const char * current_page,
+                   const char * number_of_page,
+                   WidgetButton * extra_button,
+                   WidgetSelectorParams const & selector_params,
+                   Font const & font, Theme const & theme, Language lang,
+                   bool has_target_helpicon = false);
+
+    ~WidgetSelector() override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
+
+    [[nodiscard]] Color get_bg_color() const override;
+
+    void ask_for_connection();
+
+    void add_device(array_view<chars_view> entries);
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
+
+    void show_tooltip(const char * text, int x, int y,
+                      Rect const preferred_display_rect) override;
+
 private:
+    void rearrange();
+
+private:
+    WidgetEventNotifier onconnect;
+    WidgetEventNotifier oncancel;
+    WidgetEventNotifier onctrl_shift;
+
     CompositeArray composite_array;
 
     bool less_than_800;
@@ -75,14 +125,15 @@ public:
     WidgetLabelGrid selector_lines;
 
     WidgetButton first_page;
+private:
     WidgetButton prev_page;
+public:
     WidgetNumberEdit current_page;
     WidgetLabel number_page;
+private:
     WidgetButton next_page;
     WidgetButton last_page;
-private:
     WidgetButton logout;
-public:
     WidgetButton apply;
     WidgetButton connect;
 
@@ -119,38 +170,4 @@ private:
     uint32_t weight[WidgetSelectorParams::nb_max_columns] = {0};
 
     const char * label[WidgetSelectorParams::nb_max_columns] = {nullptr};
-
-public:
-    WidgetSelector(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-                   const char * device_name,
-                   int16_t left, int16_t top, uint16_t width, uint16_t height,
-                   Widget & parent, NotifyApi* notifier,
-                   const char * current_page,
-                   const char * number_of_page,
-                   WidgetButton * extra_button,
-                   WidgetSelectorParams const & selector_params,
-                   Font const & font, Theme const & theme, Language lang,
-                   bool has_target_helpicon = false);
-
-    ~WidgetSelector() override;
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    [[nodiscard]] Color get_bg_color() const override;
-
-    void ask_for_connection();
-
-    void notify(Widget& widget, notify_event_t event) override;
-
-    void add_device(array_view<chars_view> entries);
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
-
-    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
-
-    void show_tooltip(Widget * widget, const char * text, int x, int y,
-                      Rect const preferred_display_rect) override;
-
-private:
-    void rearrange();
 };

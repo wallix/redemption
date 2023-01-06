@@ -29,48 +29,46 @@
 WidgetWabClose::WidgetWabClose(
     gdi::GraphicApi & drawable,
     int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
-    NotifyApi* notifier, const char * diagnostic_text,
+    Events events, const char * diagnostic_text,
     const char * username, const char * target,
     bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
     Language lang, bool back_selector)
-: WidgetParent(drawable, parent, notifier)
-, connection_closed_label(drawable, *this, nullptr, TR(trkeys::connection_closed, lang).to_sv(),
-                            -13, theme.global.fgcolor,
-                            theme.global.bgcolor, font)
-, separator(drawable, *this, this, -12,
-            theme.global.separator_color)
-, username_label(drawable, *this, nullptr, "Username:", -11,
+: WidgetParent(drawable, parent)
+, oncancel(events.oncancel)
+, connection_closed_label(drawable, *this, TR(trkeys::connection_closed, lang).to_sv(),
+                          theme.global.fgcolor, theme.global.bgcolor, font)
+, separator(drawable, *this, theme.global.separator_color)
+, username_label(drawable, *this, "Username:",
                  theme.global.fgcolor, theme.global.bgcolor, font)
-, username_value(drawable, *this, nullptr, username, -11,
+, username_value(drawable, *this, username,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-, target_label(drawable, *this, nullptr, "Target:", -12,
+, target_label(drawable, *this, "Target:",
                theme.global.fgcolor, theme.global.bgcolor, font)
-, target_value(drawable, *this, nullptr, target, -12,
+, target_value(drawable, *this, target,
                theme.global.fgcolor, theme.global.bgcolor, font)
-, diagnostic_label(drawable, *this, nullptr, "Diagnostic:", -15,
+, diagnostic_label(drawable, *this, "Diagnostic:",
                    theme.global.fgcolor, theme.global.bgcolor, font)
-, diagnostic_value(drawable, *this, nullptr, diagnostic_text, -16,
+, diagnostic_value(drawable, *this, diagnostic_text,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-, timeleft_label(drawable, *this, nullptr, "Time left:", -12,
+, timeleft_label(drawable, *this, "Time left:",
                 theme.global.fgcolor, theme.global.bgcolor, font)
-, timeleft_value(drawable, *this, nullptr, nullptr, -12,
+, timeleft_value(drawable, *this, nullptr,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-, cancel(drawable, *this, this, TR(trkeys::close, lang), -14,
+, cancel(drawable, *this, TR(trkeys::close, lang),
+         events.oncancel,
          theme.global.fgcolor, theme.global.bgcolor,
          theme.global.focus_color, 2, font, 6, 2)
-, back(back_selector ? new WidgetButton(drawable, *this, this,
-                                            TR(trkeys::back_selector, lang), -14,
-                                            theme.global.fgcolor,
-                                            theme.global.bgcolor,
-                                            theme.global.focus_color, 2, font,
-                                            6, 2) : nullptr)
+, back(back_selector ? new WidgetButton(drawable, *this, TR(trkeys::back_selector, lang),
+                                        events.onback_to_selector,
+                                        theme.global.fgcolor,
+                                        theme.global.bgcolor,
+                                        theme.global.focus_color, 2, font,
+                                        6, 2) : nullptr)
 , img(drawable,
       theme.global.enable_theme ? theme.global.logo_path.c_str() :
       app_path(AppPath::LoginWabBlue),
       *this,
-      nullptr,
-      theme.global.bgcolor,
-      -10)
+      theme.global.bgcolor)
 , bg_color(theme.global.bgcolor)
 , prev_time(0)
 , lang(lang)
@@ -155,7 +153,7 @@ void WidgetWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width,
 
     uint16_t x = 0;
 
-    if (this->username_value.buffer[0]) {
+    if (this->username_value.get_text()[0]) {
         dim = this->username_label.get_optimal_dim();
         this->username_label.set_wh(dim);
         this->username_label.set_xy(left + (width - this->separator.cx()) / 2,
@@ -185,7 +183,7 @@ void WidgetWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width,
 
     x += 10;
 
-    if (this->username_value.buffer[0]) {
+    if (this->username_value.get_text()[0]) {
         this->username_label.set_xy(this->username_label.x(), top + y);
 
         dim = this->username_value.get_optimal_dim();
@@ -317,23 +315,10 @@ std::chrono::seconds WidgetWabClose::refresh_timeleft(std::chrono::seconds remai
     return std::chrono::seconds(seconds ? 1 : 60);
 }
 
-void WidgetWabClose::notify(Widget & widget, NotifyApi::notify_event_t event)
-{
-    if (&widget == &this->cancel && event == NOTIFY_SUBMIT) {
-        this->send_notify(NOTIFY_CANCEL);
-    }
-    else if (this->back && &widget == this->back && event == NOTIFY_SUBMIT) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-    else {
-        WidgetParent::notify(widget, event);
-    }
-}
-
 void WidgetWabClose::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     if (pressed_scancode(flags, scancode) == Scancode::Esc) {
-        this->send_notify(NOTIFY_CANCEL);
+        oncancel();
     }
     else {
         WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);

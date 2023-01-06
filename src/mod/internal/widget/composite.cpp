@@ -115,10 +115,8 @@ void CompositeArray::clear()
 }
 
 
-WidgetParent::WidgetParent(
-    gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id
-)
-    : Widget(drawable, parent, notifier, group_id)
+WidgetParent::WidgetParent(gdi::GraphicApi & drawable, Widget & parent)
+    : Widget(drawable, parent)
     , pressed(nullptr)
     , bg_color(BLACK)
     , impl(nullptr)
@@ -145,7 +143,6 @@ void WidgetParent::focus(int reason)
     const bool tmp_has_focus = this->has_focus;
     if (!this->has_focus) {
         this->has_focus = true;
-        this->send_notify(NOTIFY_FOCUS_BEGIN);
 
         if (reason == focus_reason_tabkey) {
             this->current_focus = this->get_next_focus(nullptr);
@@ -166,7 +163,6 @@ void WidgetParent::blur()
 {
     if (this->has_focus) {
         this->has_focus = false;
-        this->send_notify(NOTIFY_FOCUS_END);
     }
     if (this->current_focus) {
         this->current_focus->blur();

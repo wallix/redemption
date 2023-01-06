@@ -21,6 +21,7 @@ Author(s): Proxies Team
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
+#include "mod/internal/widget/event_notifier.hpp"
 
 
 class Font;
@@ -36,8 +37,9 @@ public:
     };
 
     WidgetDelegatedCopy(
-        gdi::GraphicApi & drawable, Widget & parent, NotifyApi& notifier,
-        int group_id, Color fgcolor, Color bgcolor, Color activecolor,
+        gdi::GraphicApi & drawable, Widget & parent,
+        WidgetEventNotifier onclick,
+        Color fgcolor, Color bgcolor, Color activecolor,
         Font const & font, int xicon, int yicon,
         MouseButton copy_buttons);
 
@@ -56,6 +58,8 @@ public:
         Color fg, Color bg, int xicon, int yicon);
 
 private:
+    WidgetEventNotifier onclick;
+
     Color bg_color;
     Color fg_color;
     Color active_color;

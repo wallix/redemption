@@ -27,10 +27,10 @@
 
 WidgetMultiLine::WidgetMultiLine(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, char const* text, int group_id,
+    char const* text,
     Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext)
-: Widget(drawable, parent, notifier, group_id)
+: Widget(drawable, parent)
 , x_text(xtext)
 , y_text(ytext)
 , cy_text(0)

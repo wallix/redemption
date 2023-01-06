@@ -23,8 +23,6 @@
 
 #include "mod/internal/widget/widget.hpp"
 
-class NotifyApi;
-
 namespace gdi
 {
     class GraphicApi;
@@ -35,7 +33,7 @@ class WidgetRect : public Widget
     Color color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, Color color = BLACK); /*NOLINT*/
+    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, Color color = BLACK); /*NOLINT*/
 
     void rdp_input_invalidate(Rect clip) override;
 };

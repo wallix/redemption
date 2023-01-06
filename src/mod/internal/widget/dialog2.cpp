@@ -35,37 +35,36 @@ enum {
 
 WidgetDialog2::WidgetDialog2(
     gdi::GraphicApi & drawable, Rect const widget_rect,
-    Widget & parent, NotifyApi & notifier,
+    Widget & parent, Events events,
     const char* caption, const char * text,
     const char * link_value, const char * link_label,
     CopyPaste & copy_paste, Theme const & theme,
     Font const & font, const char * ok_text
 )
-    : WidgetParent(drawable, parent, &notifier)
-    , title(drawable, *this, nullptr, caption, -9,
+    : WidgetParent(drawable, parent)
+    , oncancel(events.oncancel)
+    , title(drawable, *this, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
-    , separator(drawable, *this, this, -12,
-                theme.global.separator_color)
-    , dialog(drawable, *this, nullptr, -10, text,
+    , separator(drawable, *this, theme.global.separator_color)
+    , dialog(drawable, *this, text,
              theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
              font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
+    , ok(drawable, *this, ok_text ? ok_text : "Ok", events.onsubmit,
          theme.global.fgcolor, theme.global.bgcolor,
          theme.global.focus_color, 2, font, 6, 2)
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
           *this,
-          nullptr,
-          theme.global.bgcolor,
-          -8)
-    , link_label(drawable, *this, nullptr, link_label, -16, theme.global.fgcolor, theme.global.bgcolor, font)
+          theme.global.bgcolor)
+    , link_label(drawable, *this, link_label, theme.global.fgcolor, theme.global.bgcolor, font)
     , link_value(link_value)
-    , link_show(drawable, *this, nullptr, -10, link_value,
+    , link_show(drawable, *this, link_value,
                 theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                 font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , link_copy(
-        drawable, *this, *this, -19, theme.global.fgcolor, theme.global.bgcolor,
+        drawable, *this, [this]{ this->copy_paste.copy(this->link_value); },
+        theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
     , copy_paste(copy_paste)
     , bg_color(theme.global.bgcolor)
@@ -187,26 +186,13 @@ Widget::Color WidgetDialog2::get_bg_color() const
     return this->bg_color;
 }
 
-void WidgetDialog2::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if (event == NOTIFY_SUBMIT && &widget == &this->ok) {
-        this->send_notify(NOTIFY_SUBMIT);
-    }
-    else if (event == NOTIFY_DELEGATE) {
-        this->copy_paste.copy(this->link_value);
-    }
-    else {
-        WidgetParent::notify(widget, event);
-    }
-}
-
 void WidgetDialog2::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (keymap.last_kevent()) {
         case Keymap::KEvent::Esc:
-            this->send_notify(NOTIFY_CANCEL);
+            this->oncancel();
             break;
         case Keymap::KEvent::LeftArrow:
         case Keymap::KEvent::UpArrow:

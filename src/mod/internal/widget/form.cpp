@@ -29,11 +29,11 @@ using namespace std::chrono_literals;
 WidgetForm::WidgetForm(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     int16_t left, int16_t top, int16_t width, int16_t height,
-    Widget & parent, NotifyApi* notifier, int group_id,
+    Widget & parent, Events events,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetForm(drawable, copy_paste, parent, notifier, group_id,
+    : WidgetForm(drawable, copy_paste, parent, events,
                  font, theme, lang, flags, duration_max)
 {
     this->move_size_widget(left, top, width, height);
@@ -41,35 +41,40 @@ WidgetForm::WidgetForm(
 
 WidgetForm::WidgetForm(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget & parent, NotifyApi* notifier, int group_id,
+    Widget & parent, Events events,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable, parent, notifier, group_id)
-    , warning_msg(drawable, *this, nullptr, "", group_id,
-                    theme.global.error_color, theme.global.bgcolor, font)
-    , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang).to_sv(),
-                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , duration_edit(drawable, copy_paste, *this, this,
-                    nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+    : WidgetParent(drawable, parent)
+    , events(events)
+    , warning_msg(drawable, *this, "",
+                  theme.global.error_color, theme.global.bgcolor, font)
+    , duration_label(drawable, *this, TR(trkeys::duration, lang).to_sv(),
+                     theme.global.fgcolor, theme.global.bgcolor, font)
+    , duration_edit(drawable, copy_paste, *this, nullptr,
+                    {[this]{ this->check_confirmation(); }},
+                    theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
-    , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang).to_sv(),
-                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang).to_sv(),
-                    group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , ticket_edit(drawable, copy_paste, *this, this,
-                    nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                    theme.edit.focus_color, font, -1, 1, 1)
-    , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang).to_sv(),
-                    group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , comment_edit(drawable, copy_paste, *this, this,
-                    nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                    theme.edit.focus_color, font, -1, 1, 1)
-    , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang).to_sv(),
-            group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
-                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
-                6, 2)
+    , duration_format(drawable, *this, TR(trkeys::note_duration_format, lang).to_sv(),
+                      theme.global.fgcolor, theme.global.bgcolor, font)
+    , ticket_label(drawable, *this, TR(trkeys::ticket, lang).to_sv(),
+                   theme.global.fgcolor, theme.global.bgcolor, font)
+    , ticket_edit(drawable, copy_paste, *this, nullptr,
+                  {[this]{ this->check_confirmation(); }},
+                  theme.edit.fgcolor, theme.edit.bgcolor,
+                  theme.edit.focus_color, font, -1, 1, 1)
+    , comment_label(drawable, *this, TR(trkeys::comment, lang).to_sv(),
+                    theme.global.fgcolor, theme.global.bgcolor, font)
+    , comment_edit(drawable, copy_paste, *this, nullptr,
+                   {[this]{ this->check_confirmation(); }},
+                   theme.edit.fgcolor, theme.edit.bgcolor,
+                   theme.edit.focus_color, font, -1, 1, 1)
+    , notes(drawable, *this, TR(trkeys::note_required, lang).to_sv(),
+            theme.global.fgcolor, theme.global.bgcolor, font)
+    , confirm(drawable, *this, TR(trkeys::confirm, lang),
+              [this]{ return this->check_confirmation(); },
+              theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
+              2, font, 6, 2)
     , tr(lang)
     , flags(flags)
     , duration_max(duration_max == 0min ? 60000min : duration_max)
@@ -199,18 +204,6 @@ void WidgetForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     this->confirm.set_xy(left + width - this->confirm.cx(), top + y + 10);
 }
 
-void WidgetForm::notify(Widget& widget, NotifyApi::notify_event_t event)
-{
-    if (widget.group_id == this->confirm.group_id) {
-        if (NOTIFY_SUBMIT == event) {
-            this->check_confirmation();
-        }
-    }
-    else {
-        WidgetParent::notify(widget, event);
-    }
-}
-
 namespace
 {
     template<class T>
@@ -327,13 +320,13 @@ void WidgetForm::check_confirmation()
         return;
     }
 
-    this->send_notify(this->confirm, NOTIFY_SUBMIT);
+    this->events.submit();
 }
 
 void WidgetForm::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     if (pressed_scancode(flags, scancode) == Scancode::Esc) {
-        this->send_notify(NOTIFY_CANCEL);
+        this->events.cancel();
     }
     else {
         WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);

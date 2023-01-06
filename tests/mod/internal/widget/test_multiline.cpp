@@ -41,14 +41,12 @@ constexpr char const* short_message_ml =
 struct TestWidgetMultiLineCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetMultiLine wmultiline;
 
-    TestWidgetMultiLineCtx(
-        char const* text, NotifyApi* notifier = nullptr,
-        int xtext = 0, int ytext = 0)
+    TestWidgetMultiLineCtx(char const* text, int xtext = 0, int ytext = 0)
     : wmultiline(
-        drawable, parent, notifier, text, 0, BLUE, CYAN,
+        drawable, parent, text, BLUE, CYAN,
         global_font_deja_vu_14(), xtext, ytext)
     {
         wmultiline.set_wh(wmultiline.get_optimal_dim());
@@ -57,7 +55,7 @@ struct TestWidgetMultiLineCtx
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
-    TestWidgetMultiLineCtx ctx(short_message_ml, nullptr, 4, 2);
+    TestWidgetMultiLineCtx ctx(short_message_ml, 4, 2);
 
     ctx.wmultiline.set_xy(0, 0);
     ctx.wmultiline.rdp_input_invalidate(ctx.wmultiline.get_rect());

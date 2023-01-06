@@ -28,11 +28,54 @@
 
 #include <chrono>
 
-
 class Theme;
 
 class WidgetForm : public WidgetParent
 {
+public:
+    // TODO enum class
+    enum {
+        NONE               = 0x00,
+        COMMENT_DISPLAY    = 0x01,
+        COMMENT_MANDATORY  = 0x02,
+        TICKET_DISPLAY     = 0x04,
+        TICKET_MANDATORY   = 0x08,
+        DURATION_DISPLAY   = 0x10,
+        DURATION_MANDATORY = 0x20,
+    };
+
+    struct Events
+    {
+        WidgetEventNotifier submit;
+        WidgetEventNotifier cancel;
+    };
+
+    WidgetForm(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+               int16_t left, int16_t top, int16_t width, int16_t height,
+               Widget & parent, Events events,
+               Font const & font, Theme const & theme, Language lang,
+               unsigned flags = NONE,
+               std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
+
+    WidgetForm(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+               Widget & parent, Events events,
+               Font const & font, Theme const & theme, Language lang,
+               unsigned flags = NONE,
+               std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
+
+    ~WidgetForm() override;
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
+
+private:
+    template<class T, class... Ts>
+    void set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs);
+
+    void check_confirmation();
+
+    Events events;
     CompositeArray composite_array;
 
     WidgetLabel      warning_msg;
@@ -58,43 +101,4 @@ private:
     std::chrono::minutes duration_max;
 
     char warning_buffer[512];
-
-public:
-    // TODO enum class
-    enum {
-        NONE               = 0x00,
-        COMMENT_DISPLAY    = 0x01,
-        COMMENT_MANDATORY  = 0x02,
-        TICKET_DISPLAY     = 0x04,
-        TICKET_MANDATORY   = 0x08,
-        DURATION_DISPLAY   = 0x10,
-        DURATION_MANDATORY = 0x20,
-    };
-
-    WidgetForm(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-               int16_t left, int16_t top, int16_t width, int16_t height,
-               Widget & parent, NotifyApi* notifier, int group_id,
-               Font const & font, Theme const & theme, Language lang,
-               unsigned flags = NONE,
-               std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
-
-    WidgetForm(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-               Widget & parent, NotifyApi* notifier, int group_id,
-               Font const & font, Theme const & theme, Language lang,
-               unsigned flags = NONE,
-               std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
-
-    ~WidgetForm() override;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
-private:
-    template<class T, class... Ts>
-    void set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs);
-
-    void check_confirmation();
 };

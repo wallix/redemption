@@ -29,12 +29,11 @@
 #include "utils/utf.hpp"
 
 WidgetLabel::WidgetLabel(
-    gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, chars_view text,
-    int group_id, Color fgcolor, Color bgcolor, Font const & font,
+    gdi::GraphicApi & drawable, Widget& parent, chars_view text,
+    Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
-    : Widget(drawable, parent, notifier, group_id)
+    : Widget(drawable, parent)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
@@ -49,13 +48,12 @@ WidgetLabel::WidgetLabel(
 }
 
 WidgetLabel::WidgetLabel(
-    gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, char const* text,
-    int group_id, Color fgcolor, Color bgcolor, Font const & font,
+    gdi::GraphicApi & drawable, Widget& parent, char const* text,
+    Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
-: WidgetLabel(drawable, parent, notifier, {text, text ? strlen(text) : 0u},
-    group_id, fgcolor, bgcolor, font, xtext, ytext)
+: WidgetLabel(drawable, parent, {text, text ? strlen(text) : 0u},
+              fgcolor, bgcolor, font, xtext, ytext)
 {}
 
 void WidgetLabel::set_text(char const* text)
@@ -162,7 +160,7 @@ void WidgetLabel::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
             // TODO: tm.height unused ?
             gdi::TextMetrics tm(this->font, this->buffer);
             if (tm.width > this->cx()) {
-                this->show_tooltip(this, this->buffer, x, y, Rect(0, 0, 0, 0));
+                this->show_tooltip(this->buffer, x, y, Rect(0, 0, 0, 0));
             }
         }
     }

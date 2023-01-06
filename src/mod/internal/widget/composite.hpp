@@ -25,7 +25,6 @@
 #include "mod/internal/widget/widget.hpp"
 
 class SubRegion;
-class NotifyApi;
 
 void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::Color bg_color);
 
@@ -97,8 +96,7 @@ public:
     Widget * current_focus;
 
 public:
-    WidgetParent(gdi::GraphicApi & drawable, Widget & parent,
-                 NotifyApi * notifier, int group_id = 0); /*NOLINT*/
+    WidgetParent(gdi::GraphicApi & drawable, Widget & parent);
 
     ~WidgetParent() override;
 
@@ -154,9 +152,8 @@ class WidgetComposite: public WidgetParent
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(gdi::GraphicApi & drawable, Widget & parent,
-                    NotifyApi * notifier, int group_id = 0) /*NOLINT*/
-    : WidgetParent(drawable, parent, notifier, group_id)
+    WidgetComposite(gdi::GraphicApi & drawable, Widget & parent)
+    : WidgetParent(drawable, parent)
     {
         this->impl = & composite_array;
     }

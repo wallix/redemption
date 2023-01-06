@@ -96,14 +96,16 @@ void WidgetGrid::difftimer::update()
 
 WidgetGrid::WidgetGrid(
     gdi::GraphicApi & drawable, Widget & parent,
-    NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
+    WidgetEventNotifier onsubmit,
+    uint16_t nb_rows, uint16_t nb_columns,
     Color bg_color_1, Color fg_color_1,
     Color bg_color_2, Color fg_color_2,
     Color bg_color_focus, Color fg_color_focus,
     Color bg_color_selection, Color fg_color_selection,
-    uint16_t border, int group_id
+    uint16_t border
 )
-    : Widget(drawable, parent, notifier, group_id)
+    : Widget(drawable, parent)
+    , onsubmit(onsubmit)
     , widgets(nb_rows, nb_columns)
     , bg_color_1(bg_color_1)
     , fg_color_1(fg_color_1)
@@ -302,7 +304,6 @@ void WidgetGrid::focus(int reason)
     (void)reason;
     if (!this->has_focus){
         this->has_focus = true;
-        this->send_notify(NOTIFY_FOCUS_BEGIN);
         this->refresh_selected();
     }
 }
@@ -311,7 +312,6 @@ void WidgetGrid::blur()
 {
     if (this->has_focus){
         this->has_focus = false;
-        this->send_notify(NOTIFY_FOCUS_END);
         this->refresh_selected();
     }
 }
@@ -333,7 +333,7 @@ void WidgetGrid::rdp_input_mouse(uint16_t device_flags, uint16_t mouse_x, uint16
                     this->set_selection(row_index);
                 }
                 else if (this->click_interval.tick() <= MonotonicTimePoint::duration(700ms)) {
-                    this->send_notify(NOTIFY_SUBMIT);
+                    this->onsubmit();
                     return;
                 }
 
@@ -386,7 +386,7 @@ void WidgetGrid::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
 
         case Keymap::KEvent::Enter:
             if (this->widgets.nb_rows) {
-                this->send_notify(NOTIFY_SUBMIT);
+                this->onsubmit();
             }
             break;
 

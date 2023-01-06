@@ -39,17 +39,17 @@ namespace
 
 WidgetScrollBar::WidgetScrollBar(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, bool horizontal,
-    int group_id, Color fg_color, Color bg_color, Color focus_color,
+    WidgetEventNotifier onscroll, bool horizontal,
+    Color fg_color, Color bg_color, Color focus_color,
     Font const & font, bool rail_style, int maxvalue)
-: Widget(drawable, parent, notifier, group_id)
+: Widget(drawable, parent)
+, onscroll(onscroll)
 , horizontal(horizontal)
 , fg_color(fg_color)
 , bg_color(bg_color)
 , focus_color(focus_color)
 , font(font)
 , max_value(maxvalue)
-, event(horizontal ? NOTIFY_HSCROLL : NOTIFY_VSCROLL)
 , button_width_or_height(this->horizontal
     ? get_optimal_button_dim(this->font, this->horizontal).w
     : get_optimal_button_dim(this->font, this->horizontal).h)
@@ -281,7 +281,7 @@ void WidgetScrollBar::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_
             if (old_value != this->current_value) {
                 this->update_cursor_button_rects();
 
-                this->send_notify(this->event);
+                this->onscroll();
             }
         }
         else if (this->cursor_button_rect.contains_pt(x, y)) {
@@ -304,7 +304,7 @@ void WidgetScrollBar::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_
             if (old_value != this->current_value) {
                 this->update_cursor_button_rects();
 
-                this->send_notify(this->event);
+                this->onscroll();
             }
         }
 
@@ -343,7 +343,7 @@ void WidgetScrollBar::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_
             if (old_value != this->current_value) {
                 this->update_cursor_button_rects();
 
-                this->send_notify(this->event);
+                this->onscroll();
             }
 
             this->rdp_input_invalidate(this->get_rect());

@@ -62,8 +62,8 @@ struct ButtonContextTest
         unsigned border_width = 2
     )
     : drawable(w, h)
-    , parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}}
-    , wbutton{drawable, parent, /*notifier=*/nullptr, text, /*group_id=*/0,
+    , parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}}
+    , wbutton{drawable, parent, text, WidgetEventNotifier(),
               /*fg_color=*/RED, /*bg_color=*/YELLOW, /*focus_color=*/WINBLUE,
               border_width, global_font_deja_vu_14(), xtext, ytext}
     {
@@ -124,38 +124,23 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-
-    WidgetButton wbutton(drawable, parent, &notifier, "", 0, WHITE,
+    WidgetButton wbutton(drawable, parent, "", notifier, WHITE,
                          DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
     wbutton.set_xy(x, y);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == &wbutton);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
+    RED_CHECK(notifier.get_and_reset() == 1);
 
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
     using KFlags = Keymap::KbdFlags;
@@ -163,28 +148,15 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 
     keymap.event(KFlags(), Scancode(0x10)); // 'a'
     wbutton.rdp_input_scancode(KFlags(), Scancode(0x10), 0, keymap);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(notifier.get_and_reset() == 0);
 
     keymap.event(KFlags(), Scancode(0x39)); // ' '
     wbutton.rdp_input_scancode(KFlags(), Scancode(0x39), 0, keymap);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == &wbutton);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(notifier.get_and_reset() == 1);
 
     keymap.event(KFlags(), Scancode(0x1c)); // Enter
     wbutton.rdp_input_scancode(KFlags(), Scancode(0x1c), 0, keymap);
-    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
-    RED_CHECK(widget_for_receive_event.last_event == 0);
-    RED_CHECK(notifier.last_widget == &wbutton);
-    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
-    notifier.last_widget = nullptr;
-    notifier.last_event = 0;
+    RED_CHECK(notifier.get_and_reset() == 1);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
@@ -193,51 +165,51 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
 
 
     // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), Theme{});
 
-    NotifyApi * notifier = nullptr;
+    WidgetEventNotifier notifier2;
 
-    WidgetComposite wcomposite(drawable, parent, notifier);
+    WidgetComposite wcomposite(drawable, parent);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetButton wbutton1(drawable, wcomposite, notifier,
-                          "abababab", 0, YELLOW, BLACK, WINBLUE, 2,
+    WidgetButton wbutton1(drawable, wcomposite, "abababab",
+                          notifier2, YELLOW, BLACK, WINBLUE, 2,
                           global_font_deja_vu_14());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
-    WidgetButton wbutton2(drawable, wcomposite, notifier,
-                          "ggghdgh", 0, WHITE, RED, WINBLUE, 2,
+    WidgetButton wbutton2(drawable, wcomposite, "ggghdgh",
+                          notifier2, WHITE, RED, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 100);
 
-    WidgetButton wbutton3(drawable, wcomposite, notifier,
-                          "lldlslql", 0, BLUE, RED, WINBLUE, 2,
+    WidgetButton wbutton3(drawable, wcomposite, "lldlslql",
+                          notifier2, BLUE, RED, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 100);
 
-    WidgetButton wbutton4(drawable, wcomposite, notifier,
-                          "LLLLMLLM", 0, PINK, DARK_GREEN, WINBLUE, 2,
+    WidgetButton wbutton4(drawable, wcomposite, "LLLLMLLM",
+                          notifier2, PINK, DARK_GREEN, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);
     wbutton4.set_xy(300, 300);
 
-    WidgetButton wbutton5(drawable, wcomposite, notifier,
-                          "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, WINBLUE, 2,
+    WidgetButton wbutton5(drawable, wcomposite, "dsdsdjdjs",
+                          notifier2, LIGHT_GREEN, DARK_BLUE, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton5.get_optimal_dim();
     wbutton5.set_wh(dim);
     wbutton5.set_xy(700, -10);
 
-    WidgetButton wbutton6(drawable, wcomposite, notifier,
-                          "xxwwp", 0, ANTHRACITE, PALE_GREEN, WINBLUE, 2,
+    WidgetButton wbutton6(drawable, wcomposite, "xxwwp",
+                          notifier2, ANTHRACITE, PALE_GREEN, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton6.get_optimal_dim();
     wbutton6.set_wh(dim);

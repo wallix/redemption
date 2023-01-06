@@ -45,13 +45,13 @@ struct TestWidgetLabelCtx
     };
 
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), Theme{}};
     WidgetLabel wlabel;
 
     TestWidgetLabelCtx(
         char const* text, Colors colors = Colors{RED, YELLOW}, int xtext = 0, int ytext = 0)
     : wlabel(
-        drawable, parent, /*notifier=*/nullptr, text, 0,
+        drawable, parent, text,
         colors.fg, colors.bg, global_font_lato_light_16(), xtext, ytext)
     {}
 };
@@ -169,41 +169,39 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     TestGraphic drawable(800, 600);
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    NotifyApi * notifier = nullptr;
-
-    WidgetComposite wcomposite(drawable, parent, notifier);
+    WidgetComposite wcomposite(drawable, parent);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetLabel wlabel1(drawable, wcomposite, notifier,
-                        "abababab", 0, YELLOW, BLACK, global_font_lato_light_16());
+    WidgetLabel wlabel1(drawable, wcomposite,
+                        "abababab", YELLOW, BLACK, global_font_lato_light_16());
     wlabel1.set_wh(wlabel1.get_optimal_dim());
     wlabel1.set_xy(0, 0);
 
-    WidgetLabel wlabel2(drawable, wcomposite, notifier,
-                        "ggghdgh", 0, WHITE, BLUE, global_font_lato_light_16());
+    WidgetLabel wlabel2(drawable, wcomposite,
+                        "ggghdgh", WHITE, BLUE, global_font_lato_light_16());
     wlabel2.set_wh(wlabel2.get_optimal_dim());
     wlabel2.set_xy(0, 100);
 
-    WidgetLabel wlabel3(drawable, wcomposite, notifier,
-                        "lldlslql", 0, BLUE, RED, global_font_lato_light_16());
+    WidgetLabel wlabel3(drawable, wcomposite,
+                        "lldlslql", BLUE, RED, global_font_lato_light_16());
     wlabel3.set_wh(wlabel3.get_optimal_dim());
     wlabel3.set_xy(100, 100);
 
-    WidgetLabel wlabel4(drawable, wcomposite, notifier,
-                        "LLLLMLLM", 0, PINK, DARK_GREEN, global_font_lato_light_16());
+    WidgetLabel wlabel4(drawable, wcomposite,
+                        "LLLLMLLM", PINK, DARK_GREEN, global_font_lato_light_16());
     wlabel4.set_wh(wlabel4.get_optimal_dim());
     wlabel4.set_xy(300, 300);
 
-    WidgetLabel wlabel5(drawable, wcomposite, notifier,
-                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, global_font_lato_light_16());
+    WidgetLabel wlabel5(drawable, wcomposite,
+                        "dsdsdjdjs", LIGHT_GREEN, DARK_BLUE, global_font_lato_light_16());
     wlabel5.set_wh(wlabel5.get_optimal_dim());
     wlabel5.set_xy(700, -10);
 
-    WidgetLabel wlabel6(drawable, wcomposite, notifier,
-                        "xxwwp", 0, ANTHRACITE, PALE_GREEN, global_font_lato_light_16());
+    WidgetLabel wlabel6(drawable, wcomposite,
+                        "xxwwp", ANTHRACITE, PALE_GREEN, global_font_lato_light_16());
     wlabel6.set_wh(wlabel6.get_optimal_dim());
     wlabel6.set_xy(-10, 550);
 

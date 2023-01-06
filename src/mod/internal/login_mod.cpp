@@ -71,8 +71,27 @@ LoginMod::LoginMod(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
     , login(
-        drawable, copy_paste, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        this->screen, this, "Redemption " VERSION,
+        drawable, copy_paste,
+        widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        this->screen,
+        {
+            .onsubmit = [this]{
+                std::string auth_user = concat_target_login(
+                    this->login.login_edit.get_text(),
+                    this->login.target_edit.get_text()
+                );
+                this->vars.set_acl<cfg::globals::auth_user>(auth_user);
+                this->vars.ask<cfg::context::selector>();
+                this->vars.ask<cfg::globals::target_user>();
+                this->vars.ask<cfg::globals::target_device>();
+                this->vars.ask<cfg::context::target_protocol>();
+                this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            },
+            .oncancel = [this]{ this->set_mod_signal(BACK_EVENT_STOP); },
+            .onctrl_shift = [this] { this->language_button.next_layout(); },
+        },
+        "Redemption " VERSION,
         nullptr, nullptr, nullptr,
         TR(trkeys::login, login_language(vars)),
         TR(trkeys::password, login_language(vars)),
@@ -129,32 +148,6 @@ void LoginMod::init()
 {
     RailModBase::init();
     this->copy_paste.ready(this->front);
-}
-
-void LoginMod::notify(Widget& sender, notify_event_t event)
-{
-    (void)sender;
-    switch (event) {
-    case NOTIFY_SUBMIT: {
-        std::string auth_user = concat_target_login(
-            this->login.login_edit.get_text(),
-            this->login.target_edit.get_text()
-        );
-        this->vars.set_acl<cfg::globals::auth_user>(auth_user);
-        this->vars.ask<cfg::context::selector>();
-        this->vars.ask<cfg::globals::target_user>();
-        this->vars.ask<cfg::globals::target_device>();
-        this->vars.ask<cfg::context::target_protocol>();
-        this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
-        this->set_mod_signal(BACK_EVENT_NEXT);
-        // throw Error(ERR_BACK_EVENT_NEXT);
-        break;
-    }
-    case NOTIFY_CANCEL:
-        this->set_mod_signal(BACK_EVENT_STOP);
-        break;
-    default:;
-    }
 }
 
 void LoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)

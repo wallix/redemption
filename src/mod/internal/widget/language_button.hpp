@@ -43,9 +43,9 @@ public:
         Theme const & theme
     );
 
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
     void rdp_input_invalidate(Rect clip) override;
+
+    void next_layout();
 
 private:
     unsigned selected_language = 0;

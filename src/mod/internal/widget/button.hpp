@@ -22,6 +22,7 @@
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
+#include "mod/internal/widget/event_notifier.hpp"
 
 
 class Font;
@@ -32,18 +33,6 @@ namespace gdi
 
 class WidgetButton : public Widget
 {
-private:
-    static const size_t buffer_size = 256;
-
-    char buffer[buffer_size];
-
-    bool auto_resize_;
-
-    int x_text;
-    int y_text;
-
-    unsigned border_width;
-
 public:
     enum class State : bool
     {
@@ -51,26 +40,11 @@ public:
         Pressed,
     };
 
-    State state;
-
-public:
-    const Color fg_color;
-    const Color bg_color;
-    const Color focus_color;
-
-private:
-    const bool logo;
-
-    Font const & font;
-
-    Rect label_rect;
-
-public:
     WidgetButton(gdi::GraphicApi & drawable, Widget& parent,
-                     NotifyApi* notifier, const char * text,
-                     int group_id, Color fg_color, Color bg_color, Color focus_color,
-                     unsigned border_width, Font const & font,
-                     int xtext = 0, int ytext = 0, bool logo = false); /*NOLINT*/
+                 const char * text, WidgetEventNotifier onsubmit,
+                 Color fg_color, Color bg_color, Color focus_color,
+                 unsigned border_width, Font const & font,
+                 int xtext = 0, int ytext = 0, bool logo = false); /*NOLINT*/
 
     ~WidgetButton();
 
@@ -98,4 +72,34 @@ public:
     Dimension get_optimal_dim() const override;
 
     static Dimension get_optimal_dim(unsigned border_width, Font const& font, char const* text, int xtext = 0, int ytext = 0);
+
+private:
+    static const size_t buffer_size = 256;
+
+    char buffer[buffer_size];
+
+    bool auto_resize_;
+
+    int x_text;
+    int y_text;
+
+    unsigned border_width;
+
+    WidgetEventNotifier onsubmit;
+
+public:
+    State state;
+
+    const Color fg_color;
+private:
+    const Color bg_color;
+public:
+    const Color focus_color;
+
+private:
+    const bool logo;
+
+    Font const & font;
+
+    Rect label_rect;
 };

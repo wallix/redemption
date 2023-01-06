@@ -29,7 +29,7 @@
 
 
 // Pimpl
-struct WidgetTestMod::WidgetTestModPrivate : NotifyApi
+struct WidgetTestMod::WidgetTestModPrivate
 {
     WidgetTestModPrivate(
         uint16_t width, uint16_t height, gdi::GraphicApi & gd, EventContainer & /*events*/,
@@ -37,11 +37,11 @@ struct WidgetTestMod::WidgetTestModPrivate : NotifyApi
     : gd(gd)
     , front(front)
     // , events_guard(events)
-    , screen(gd, width, height, font, nullptr, theme)
+    , screen(gd, width, height, font, theme)
     , copy_paste(true)
-    , label(gd, this->screen, nullptr, "bla bla", -11, theme.global.fgcolor, theme.global.bgcolor, font)
+    , label(gd, this->screen, "bla bla", theme.global.fgcolor, theme.global.bgcolor, font)
     , delegated_copy(
-        gd, this->label, *this, -12, theme.global.fgcolor, theme.global.bgcolor,
+        gd, this->label, WidgetEventNotifier(), theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
     {
         this->screen.add_widget(&this->label);
@@ -55,12 +55,6 @@ struct WidgetTestMod::WidgetTestModPrivate : NotifyApi
         this->delegated_copy.set_wh(dim2);
 
         this->screen.rdp_input_invalidate(this->screen.get_rect());
-    }
-
-    void notify(Widget& sender, NotifyApi::notify_event_t event) override
-    {
-        (void)sender;
-        (void)event;
     }
 
     gdi::GraphicApi & gd;

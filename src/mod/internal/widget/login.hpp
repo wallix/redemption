@@ -32,6 +32,42 @@ class Theme;
 
 class WidgetLogin : public WidgetParent
 {
+public:
+    struct Events
+    {
+        WidgetEventNotifier onsubmit;
+        WidgetEventNotifier oncancel;
+        WidgetEventNotifier onctrl_shift;
+    };
+
+    WidgetLogin(
+        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+        int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
+        Events events, const char* caption,
+        const char * login, const char * password, const char * target,
+        const char * label_text_login,
+        const char * label_text_password,
+        const char * label_text_target,
+        const char * label_error_message,
+        const char * login_message,
+        WidgetButton * extra_button,
+        bool enable_target_field,
+        Font const & font, Translator tr, Theme const & theme);
+
+    ~WidgetLogin() override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
+
+    [[nodiscard]] Color get_bg_color() const override;
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
+
+private:
+    WidgetEventNotifier oncancel;
+    WidgetEventNotifier onctrl_shift;
+
     CompositeArray composite_array;
 
     WidgetLabel        error_message_label;
@@ -61,31 +97,4 @@ private:
     bool show_target = false;
 
     Color bg_color;
-
-public:
-    WidgetLogin(
-        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-        int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
-        NotifyApi* notifier, const char* caption,
-        const char * login, const char * password, const char * target,
-        const char * label_text_login,
-        const char * label_text_password,
-        const char * label_text_target,
-        const char * label_error_message,
-        const char * login_message,
-        WidgetButton * extra_button,
-        bool enable_target_field,
-        Font const & font, Translator tr, Theme const & theme);
-
-    ~WidgetLogin() override;
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    [[nodiscard]] Color get_bg_color() const override;
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
-
-    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 };

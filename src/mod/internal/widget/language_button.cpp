@@ -114,10 +114,12 @@ LanguageButton::LanguageButton(
     Font const & font,
     Theme const & theme
 )
-: WidgetButton(drawable, *this, this, nullptr, -1,
-               theme.global.fgcolor, theme.global.bgcolor,
-               theme.global.focus_color, language_button_border, font,
-               language_button_padding, language_button_padding)
+: WidgetButton(
+    drawable, *this, nullptr,
+    [this] { return this->next_layout(); },
+    theme.global.fgcolor, theme.global.bgcolor,
+    theme.global.focus_color, language_button_border, font,
+    language_button_padding, language_button_padding)
 , icon_size_in_space(kbd_icon_in_space(get_space_size(font)))
 , space_size(static_cast<uint16_t>(icon_size_in_space * get_space_size(font)))
 , front(front)
@@ -155,25 +157,22 @@ LanguageButton::LanguageButton(
     this->set_wh(dim);
 }
 
-void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
+void LanguageButton::next_layout()
 {
-    (void)widget;
-    if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
-        Rect rect = this->get_rect();
+    Rect rect = this->get_rect();
 
-        this->selected_language = (this->selected_language + 1) % this->locales.size();
-        KeyLayout const& layout = this->locales[this->selected_language];
-        this->set_text(LanguageButtonText(layout.name, icon_size_in_space).text);
+    this->selected_language = (this->selected_language + 1) % this->locales.size();
+    KeyLayout const& layout = this->locales[this->selected_language];
+    this->set_text(LanguageButtonText(layout.name, icon_size_in_space).text);
 
-        Dimension dim = this->get_optimal_dim();
-        this->set_wh(dim);
+    Dimension dim = this->get_optimal_dim();
+    this->set_wh(dim);
 
-        rect.cx = std::max(rect.cx, this->cx());
-        rect.cy = std::max(rect.cy, this->cy());
-        this->parent_redraw.rdp_input_invalidate(rect);
+    rect.cx = std::max(rect.cx, this->cx());
+    rect.cy = std::max(rect.cy, this->cy());
+    this->parent_redraw.rdp_input_invalidate(rect);
 
-        front.set_keylayout(layout);
-    }
+    front.set_keylayout(layout);
 }
 
 void LanguageButton::rdp_input_invalidate(Rect clip)

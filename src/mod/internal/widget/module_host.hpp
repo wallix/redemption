@@ -33,11 +33,10 @@ class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
     WidgetModuleHost(
-        gdi::GraphicApi& drawable, Widget& parent, NotifyApi* notifier,
+        gdi::GraphicApi& drawable, Widget& parent,
         Ref<mod_api> managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
-        Rect widget_rect, uint16_t front_width, uint16_t front_height,
-        int group_id = 0); /*NOLINT*/
+        Rect widget_rect, uint16_t front_width, uint16_t front_height);
 
     void set_mod(Ref<mod_api> managed_mod) noexcept;
 
@@ -98,10 +97,6 @@ public:
     {
         return &this->current_cache_pointer_index;
     }
-
-    // NotifyApi
-
-    void notify(Widget& sender, NotifyApi::notify_event_t event) override;
 
     // RdpInput
 

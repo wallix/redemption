@@ -35,15 +35,15 @@
 struct TestWidgetCloseCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{}};
+    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetWabClose flat_wab_close;
 
     TestWidgetCloseCtx(
         const char * diagnostic_text, const char * username, const char * target,
-        bool showtimer, NotifyApi* notifier = nullptr,
-        Theme theme = Theme())
+        bool showtimer, Theme theme = Theme(),
+        WidgetEventNotifier oncancel = WidgetEventNotifier())
     : flat_wab_close(
-        drawable, 0, 0, 800, 600, parent, notifier,
+        drawable, 0, 0, 800, 600, parent, {oncancel, WidgetEventNotifier()},
         diagnostic_text, username, target,
         showtimer, nullptr, global_font_deja_vu_14(), theme, Language::en, false)
     {}
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TraceWidgetWabCloseClip2)
 RED_AUTO_TEST_CASE(TraceWidgetWabCloseExit)
 {
     NotifyTrace notifier;
-    TestWidgetCloseCtx ctx("abc\ndef", "tartempion", "caufield", true, &notifier);
+    TestWidgetCloseCtx ctx("abc\ndef", "tartempion", "caufield", true, Theme(), notifier);
 
     ctx.flat_wab_close.refresh_timeleft(std::chrono::seconds(183));
 
@@ -139,8 +139,7 @@ RED_AUTO_TEST_CASE(TraceWidgetWabCloseExit)
                                        ctx.flat_wab_close.cancel.x() + 2,
                                        ctx.flat_wab_close.cancel.y() + 2);
 
-    RED_CHECK(notifier.last_widget == &ctx.flat_wab_close);
-    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
+    RED_CHECK(notifier.get_and_reset() == 1);
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_8.png");
 }
@@ -151,7 +150,7 @@ RED_AUTO_TEST_CASE(TraceWidgetWabClose_transparent_png_with_theme_color)
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
-    TestWidgetCloseCtx ctx("abc\ndef", "rec", "rec", false, nullptr, colors);
+    TestWidgetCloseCtx ctx("abc\ndef", "rec", "rec", false, colors);
 
     ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 

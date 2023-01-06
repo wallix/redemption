@@ -40,17 +40,17 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     TestGraphic drawable(800, 600);
     CopyPaste copy_paste(false);
 
-    NotifyTrace notifier;
-
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
     // Widget* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
+    NotifyTrace onsubmit;
+
     WidgetNumberEdit wnumber_edit(
-        drawable, copy_paste, parent, &notifier, "123456", 0,
+        drawable, copy_paste, parent, "123456", onsubmit,
         GREEN, RED, RED, global_font_lato_light_16());
     Dimension dim = wnumber_edit.get_optimal_dim();
     wnumber_edit.set_wh(cx, dim.h);
@@ -67,8 +67,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x10), 0, keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_1.png");
-    RED_CHECK(notifier.last_widget == nullptr);
-    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 
     keymap.event(KFlags(), Scancode(0x2a)); // shift
     wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x2a), 0, keymap);
@@ -76,6 +75,5 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x03), 0, keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_3.png");
-    RED_CHECK(notifier.last_widget == &wnumber_edit);
-    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
+    RED_CHECK(onsubmit.get_and_reset() == 0);
 }

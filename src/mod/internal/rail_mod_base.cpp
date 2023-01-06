@@ -33,7 +33,7 @@ RailModBase::RailModBase(
     : front_width(width)
     , front_height(height)
     , front(front)
-    , screen(gd, front_width, front_height, font, nullptr, theme)
+    , screen(gd, front_width, front_height, font, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , rail_enabled(rail_client_execute.is_rail_enabled())

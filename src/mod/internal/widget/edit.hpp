@@ -23,6 +23,7 @@
 
 #include "mod/internal/widget/widget.hpp"
 #include "mod/internal/widget/label.hpp"
+#include "mod/internal/widget/event_notifier.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
 
@@ -31,32 +32,9 @@ class CopyPaste;
 class WidgetEdit : public Widget
 {
 public:
-    WidgetLabel label;
-    size_t buffer_size;
-    size_t num_chars;
-    size_t edit_buffer_pos;
-    size_t edit_pos;
-private:
-    size_t cursor_px_pos;
-    int w_text;
-    int h_text;
-    Color cursor_color;
-public:
-    Color focus_color;
-private:
-    bool drawall;
-public:
-    bool draw_border_focus;
-private:
-    Font const & font;
-
-protected:
-    CopyPaste & copy_paste;
-
-public:
     WidgetEdit(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-               Widget & parent, NotifyApi* notifier, const char * text,
-               int group_id, Color fgcolor, Color bgcolor, Color focus_color,
+               Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+               Color fgcolor, Color bgcolor, Color focus_color,
                Font const & font, std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
 
     ~WidgetEdit();
@@ -106,4 +84,29 @@ public:
 
 private:
     void insert_unicode_char(uint16_t unicode_char);
+
+    WidgetEventNotifier onsubmit;
+
+protected:
+    WidgetLabel label;
+protected:
+    size_t buffer_size;
+public:
+    size_t num_chars;
+    size_t edit_buffer_pos;
+    size_t edit_pos;
+private:
+    size_t cursor_px_pos;
+    int w_text;
+    int h_text;
+    Color cursor_color;
+protected:
+    Color focus_color;
+private:
+    bool drawall;
+
+    Font const & font;
+
+protected:
+    CopyPaste & copy_paste;
 };

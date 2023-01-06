@@ -138,9 +138,10 @@ RED_AUTO_TEST_CASE(TestPaste)
     CopyPasteFront front(screen_info, copy_paste);
     TestGraphic gd(screen_info.width, screen_info.height);
 
-    WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_lato_light_16(), Theme{});
 
-    WidgetEdit edit(gd, copy_paste, parent, nullptr, "", 0, PINK, ORANGE, RED, global_font_lato_light_16());
+    WidgetEdit edit(gd, copy_paste, parent, "", {WidgetEventNotifier()},
+                    PINK, ORANGE, RED, global_font_lato_light_16());
     Dimension dim = edit.get_optimal_dim();
     edit.set_wh(120, dim.h);
     edit.set_xy(0, 0);
@@ -149,7 +150,7 @@ RED_AUTO_TEST_CASE(TestPaste)
 
     #define edit_paste(s, imgref) do {              \
         copy_paste.paste(edit);                     \
-        RED_CHECK_EQUAL(s ""_av, edit.get_text());   \
+        RED_CHECK_EQUAL(s ""_av, edit.get_text());  \
         edit.rdp_input_invalidate(edit.get_rect()); \
         RED_CHECK_IMG(gd, imgref);                  \
     } while (0)

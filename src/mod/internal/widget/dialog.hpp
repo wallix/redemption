@@ -41,6 +41,35 @@ class CopyPaste;
 
 class WidgetDialog : public WidgetParent
 {
+public:
+    struct Events
+    {
+        WidgetEventNotifier onsubmit;
+        WidgetEventNotifier oncancel;
+        WidgetEventNotifier onctrl_shift;
+    };
+
+    WidgetDialog(
+        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+        Rect const widget_rect,
+        Widget & parent, Events events,
+        const char* caption, const char * text,
+        WidgetButton * extra_button,
+        Theme const & theme, Font const & font, const char * ok_text = "Ok", /*NOLINT*/
+        const char * cancel_text = "Cancel", /*NOLINT*/
+        ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
+
+    ~WidgetDialog() override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
+
+    [[nodiscard]] Color get_bg_color() const override;
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
+
+private:
+    WidgetEventNotifier onctrl_shift;
+
     CompositeArray composite_array;
 
     WidgetLabel        title;
@@ -54,27 +83,7 @@ public:
 private:
     WidgetImage        img;
     WidgetButton * extra_button;
+    WidgetEventNotifier oncancel;
 
     Color bg_color;
-
-public:
-    WidgetDialog(
-        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-        Rect const widget_rect,
-        Widget & parent, NotifyApi* notifier,
-        const char* caption, const char * text,
-        WidgetButton * extra_button,
-        Theme const & theme, Font const & font, const char * ok_text = "Ok", /*NOLINT*/
-        const char * cancel_text = "Cancel", /*NOLINT*/
-        ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
-
-    ~WidgetDialog() override;
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    [[nodiscard]] Color get_bg_color() const override;
-
-    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 };

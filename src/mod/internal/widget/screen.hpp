@@ -29,17 +29,16 @@
 
 class WidgetTooltip;
 class Font;
-class NotifyApi;
 
 class WidgetScreen : public WidgetParent
 {
 public:
     WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
-                 Font const & font, NotifyApi * notifier, Theme theme);
+                 Font const & font, Theme theme);
 
     ~WidgetScreen() override;
 
-    void show_tooltip(Widget * widget, const char * text, int x, int y,
+    void show_tooltip(const char * text, int x, int y,
                       Rect const preferred_display_rect) override;
 
     bool next_focus() override;
@@ -57,6 +56,7 @@ public:
 
 public:
     Theme theme;
+
     std::unique_ptr<WidgetTooltip> tooltip;
 private:
     Widget * current_over;

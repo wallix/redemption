@@ -53,7 +53,7 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::context::banner_message,             vcfg::accessmode::get | vcfg::accessmode::set>
 >;
 
-class SelectorMod : public RailModBase, public NotifyApi
+class SelectorMod : public RailModBase
 {
 public:
     SelectorMod(
@@ -67,8 +67,6 @@ public:
     void init() override;
 
     void acl_update(AclFieldMask const& acl_fields) override;
-
-    void notify(Widget& widget, notify_event_t event) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 

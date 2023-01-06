@@ -37,8 +37,14 @@ WaitMod::WaitMod(
     : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
-    , wait_widget(drawable, copy_paste, widget_rect,
-        this->screen, this, caption, message, 0, &this->language_button,
+    , wait_widget(drawable, copy_paste, widget_rect, this->screen,
+        {
+            .onaccept = [this]{ this->accepted(); },
+            .onrefused = [this]{ this->refused(); },
+            .onconfirm = [this]{ this->confirm(); },
+            .onctrl_shift = [this]{ this->language_button.next_layout(); },
+        },
+        caption, message, &this->language_button,
         font, theme, language(vars), showform, flag, vars.get<cfg::context::duration_max>())
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
@@ -70,17 +76,6 @@ void WaitMod::init()
     RailModBase::init();
     if (this->showform) {
         this->copy_paste.ready(this->front);
-    }
-}
-
-void WaitMod::notify(Widget & sender, notify_event_t event)
-{
-    (void)sender;
-    switch (event) {
-        case NOTIFY_SUBMIT: this->accepted(); break;
-        case NOTIFY_CANCEL: this->refused(); break;
-        case NOTIFY_TEXT_CHANGED: this->confirm(); break;
-        default:;
     }
 }
 

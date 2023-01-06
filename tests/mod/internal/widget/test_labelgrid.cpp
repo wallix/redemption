@@ -38,10 +38,8 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    NotifyApi * notifier = nullptr;
-    int id = 0;
     int16_t x = 10;
     int16_t y = 10;
 
@@ -49,11 +47,11 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
     const uint16_t column_number = 4;
     const uint16_t grid_border   = 2;
 
-    WidgetLabelGrid wgrid(drawable, parent, notifier,
+    WidgetLabelGrid wgrid(drawable, parent, WidgetEventNotifier(),
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
                           WINBLUE, WHITE, MEDIUM_BLUE, WHITE, global_font_lato_light_16(),
-                          grid_border, id);
+                          grid_border);
     wgrid.set_wh(640, 480);
     wgrid.set_xy(x, y);
 
@@ -78,19 +76,13 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
 
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
-                                    0 + wgrid.y(),
-                                    wgrid.cx(),
-                                    wgrid.cy()));
+    wgrid.rdp_input_invalidate(wgrid.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_grid_1.png");
 
     wgrid.has_focus = true;
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
-                                    0 + wgrid.y(),
-                                    wgrid.cx(),
-                                    wgrid.cy()));
+    wgrid.rdp_input_invalidate(wgrid.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_grid_2.png");
 }

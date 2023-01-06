@@ -43,74 +43,87 @@ WidgetSelector::WidgetSelector(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     const char * device_name,
     int16_t left, int16_t top, uint16_t width, uint16_t height,
-    Widget & parent, NotifyApi* notifier,
+    Widget & parent, Events events,
     const char * current_page,
     const char * number_of_page,
     WidgetButton * extra_button,
     WidgetSelectorParams const & selector_params,
     Font const & font, Theme const & theme, Language lang,
     bool has_target_helpicon /* for unit test only */)
-: WidgetParent(drawable, parent, notifier)
+: WidgetParent(drawable, parent)
+, onconnect(events.onconnect)
+, oncancel(events.oncancel)
+, onctrl_shift(events.onctrl_shift)
 , less_than_800(width < 800)
 , nb_columns(std::min(selector_params.nb_columns, WidgetSelectorParams::nb_max_columns))
-, device_label(drawable, *this, nullptr, device_name,
-               -10, theme.global.fgcolor, theme.global.bgcolor, font)
+, device_label(drawable, *this, device_name,
+               theme.global.fgcolor, theme.global.bgcolor, font)
 , header_labels{
     WidgetLabel{
-        drawable, *this, nullptr, selector_params.label[0], -10,
+        drawable, *this, selector_params.label[0],
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     },
     WidgetLabel{
-        drawable, *this, nullptr, selector_params.label[1], -10,
+        drawable, *this, selector_params.label[1],
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     },
     WidgetLabel{
-        drawable, *this, nullptr, selector_params.label[2], -10,
+        drawable, *this, selector_params.label[2],
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     }
 }
 , column_expansion_buttons{
     WidgetButton{
-        drawable, *this, this, "", -100,
+        drawable, *this, "", [this]{
+            this->priority_column_index = 0;
+            this->rearrange();
+            this->rdp_input_invalidate(this->get_rect());
+        },
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 1, font, 6, 2
     },
     WidgetButton{
-        drawable, *this, this, "", -101,
+        drawable, *this, "", [this]{
+            this->priority_column_index = 1;
+            this->rearrange();
+            this->rdp_input_invalidate(this->get_rect());
+        },
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 1, font, 6, 2
     },
     WidgetButton{
-        drawable, *this, this, "", -102,
+        drawable, *this, "", [this]{
+            this->priority_column_index = 2;
+            this->rearrange();
+            this->rdp_input_invalidate(this->get_rect());
+        },
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 1, font, 6, 2
     }
 }
 , edit_filters{
     WidgetEdit{
-        drawable, copy_paste, *this, this,
-        nullptr, -12,
+        drawable, copy_paste, *this, nullptr, {events.onfilter},
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
     WidgetEdit{
-        drawable, copy_paste, *this, this,
-        nullptr, -12,
+        drawable, copy_paste, *this, nullptr, {events.onfilter},
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
     WidgetEdit{
-        drawable, copy_paste, *this, this,
-        nullptr, -12,
+        drawable, copy_paste, *this, nullptr, {events.onfilter},
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     }
 }
 , selector_lines(drawable,
-                 *this, this, 0, this->nb_columns,
+                 *this, [this]{ this->ask_for_connection(); },
+                 0, this->nb_columns,
                  theme.selector_line1.bgcolor,
                  theme.selector_line1.fgcolor,
                  theme.selector_line2.bgcolor,
@@ -119,39 +132,40 @@ WidgetSelector::WidgetSelector(
                  theme.selector_focus.fgcolor,
                  theme.selector_selected.bgcolor,
                  theme.selector_selected.fgcolor,
-                 font, 2, -11)
+                 font, 2)
 //BEGIN WidgetPager
-, first_page(drawable, *this, notifier, "◀◂", -15,
-                theme.global.fgcolor, theme.global.bgcolor,
-                theme.global.focus_color, 2, font, 6, 2, true)
-, prev_page(drawable, *this, notifier, "◀", -15,
+, first_page(drawable, *this, "◀◂", events.onfirst_page,
+             theme.global.fgcolor, theme.global.bgcolor,
+             theme.global.focus_color, 2, font, 6, 2, true)
+, prev_page(drawable, *this, "◀", events.onprev_page,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2, true)
-, current_page(drawable, copy_paste, *this, notifier,
-               current_page ? current_page : "XXXX", -15,
+, current_page(drawable, copy_paste, *this,
+               current_page ? current_page : "XXXX",
+               {events.oncurrent_page},
                theme.edit.fgcolor, theme.edit.bgcolor,
                theme.edit.focus_color, font, std::size_t(-1), 1, 1)
-, number_page(drawable, *this, nullptr,
-                number_of_page ? temporary_number_of_page(number_of_page).buffer
-                : "/XXX", -100, theme.global.fgcolor,
-                theme.global.bgcolor, font)
-, next_page(drawable, *this, notifier, "▶", -15,
+, number_page(drawable, *this,
+              number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX",
+              theme.global.fgcolor, theme.global.bgcolor, font)
+, next_page(drawable, *this, "▶", events.onnext_page,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2, true)
-, last_page(drawable, *this, notifier, "▸▶", -15,
+, last_page(drawable, *this, "▸▶", events.onlast_page,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2, true)
 //END WidgetPager
-, logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
-            theme.global.fgcolor, theme.global.bgcolor,
-            theme.global.focus_color, 2, font, 6, 2)
-, apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
+, logout(drawable, *this, TR(trkeys::logout, lang), events.oncancel,
+         theme.global.fgcolor, theme.global.bgcolor,
+         theme.global.focus_color, 2, font, 6, 2)
+, apply(drawable, *this, TR(trkeys::filter, lang), events.onfilter,
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 2, font, 6, 2)
-, connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
-            theme.global.fgcolor, theme.global.bgcolor,
-            theme.global.focus_color, 2, font, 6, 2)
-, target_helpicon(drawable, *this, nullptr, "?", -19,
+, connect(drawable, *this, TR(trkeys::connect, lang), events.onconnect,
+          theme.global.fgcolor, theme.global.bgcolor,
+          theme.global.focus_color, 2, font, 6, 2)
+// TODO button without notifier
+, target_helpicon(drawable, *this, "?", WidgetEventNotifier(),
                   theme.selector_label.fgcolor, theme.selector_label.bgcolor,
                   theme.global.focus_color, 1, font, 3, 0)
 , tr(lang)
@@ -391,56 +405,9 @@ void WidgetSelector::rearrange()
 
 void WidgetSelector::ask_for_connection()
 {
-    this->send_notify(this->connect, NOTIFY_SUBMIT);
+    this->onconnect();
 }
 
-
-void WidgetSelector::notify(Widget& widget, notify_event_t event)
-{
-    if ((widget.group_id == this->selector_lines.group_id) ||
-        (widget.group_id == this->connect.group_id)) {
-        if (NOTIFY_SUBMIT == event) {
-            this->ask_for_connection();
-        }
-    }
-    else if (widget.group_id == this->apply.group_id) {
-        if (NOTIFY_SUBMIT == event) {
-            this->send_notify(widget, event);
-        }
-    }
-    else if (widget.group_id == this->logout.group_id) {
-        if (NOTIFY_SUBMIT == event) {
-            this->send_notify(widget, NOTIFY_CANCEL);
-        }
-    }
-    else if (widget.group_id == this->column_expansion_buttons[0].group_id) {
-        if (NOTIFY_SUBMIT == event) {
-            this->priority_column_index = 0;
-
-            this->rearrange();
-            this->rdp_input_invalidate(this->get_rect());
-        }
-    }
-    else if (widget.group_id == this->column_expansion_buttons[1].group_id) {
-        if (NOTIFY_SUBMIT == event) {
-            this->priority_column_index = 1;
-
-            this->rearrange();
-            this->rdp_input_invalidate(this->get_rect());
-        }
-    }
-    else if (widget.group_id == this->column_expansion_buttons[2].group_id) {
-        if (NOTIFY_SUBMIT == event) {
-            this->priority_column_index = 2;
-
-            this->rearrange();
-            this->rdp_input_invalidate(this->get_rect());
-        }
-    }
-    else {
-        WidgetParent::notify(widget, event);
-    }
-}
 
 void WidgetSelector::add_device(array_view<chars_view> entries)
 {
@@ -449,19 +416,28 @@ void WidgetSelector::add_device(array_view<chars_view> entries)
 
 void WidgetSelector::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
-    if (pressed_scancode(flags, scancode) == Scancode::Esc) {
-        this->send_notify(NOTIFY_CANCEL);
-    }
-    else {
-        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
-    }
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+    switch (keymap.last_kevent()) {
+        case Keymap::KEvent::Esc:
+            this->oncancel();
+            break;
 
-    if (this->extra_button
-        && keymap.is_shift_pressed()
-        && keymap.is_ctrl_pressed())
-    {
-        this->extra_button->notify(*this, NOTIFY_SUBMIT);
+        case Keymap::KEvent::Ctrl:
+        case Keymap::KEvent::Shift:
+            if (this->extra_button
+                && keymap.is_shift_pressed()
+                && keymap.is_ctrl_pressed())
+            {
+                this->onctrl_shift();
+            }
+            break;
+
+        default:
+            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
@@ -474,8 +450,7 @@ void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
             // exclude title bar when remoteapp
             rect.y += 30;
             rect.cy -= 30;
-            this->show_tooltip(wid,
-                               this->tr(trkeys::target_accurate_filter_help),
+            this->show_tooltip(this->tr(trkeys::target_accurate_filter_help),
                                x,
                                y,
                                rect);
@@ -486,9 +461,9 @@ void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
 }
 
 void WidgetSelector::show_tooltip(
-    Widget * widget, const char * text, int x, int y,
+    const char * text, int x, int y,
     Rect const preferred_display_rect)
 {
-    WidgetParent::show_tooltip(widget, text, x, y,
+    WidgetParent::show_tooltip(text, x, y,
         (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect));
 }

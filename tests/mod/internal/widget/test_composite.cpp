@@ -33,48 +33,40 @@ class WidgetCompositeRect : public WidgetComposite
 {
 public:
     WidgetCompositeRect(TestGraphic & drawable)
-    : WidgetComposite(drawable, *this, nullptr)
+    : WidgetComposite(drawable, *this)
     {}
 };
 
 RED_AUTO_TEST_CASE(TraceWidgetComposite)
 {
     TestGraphic drawable(800, 600);
-    NotifyApi * notifier = nullptr;
-    int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);
     wcomposite.set_wh(drawable.width(),
                       drawable.height());
     wcomposite.set_xy(0, 0);
 
-    WidgetRect wrect1(drawable,
-                      wcomposite, notifier, id++, CYAN);
+    WidgetRect wrect1(drawable, wcomposite, CYAN);
     wrect1.set_wh(100, 100);
     wrect1.set_xy(0, 0);
 
-    WidgetRect wrect2(drawable,
-                      wcomposite, notifier, id++, RED);
+    WidgetRect wrect2(drawable, wcomposite, RED);
     wrect2.set_wh(100, 100);
     wrect2.set_xy(0, 100);
 
-    WidgetRect wrect3(drawable,
-                      wcomposite, notifier, id++, BLUE);
+    WidgetRect wrect3(drawable, wcomposite, BLUE);
     wrect3.set_wh(100, 100);
     wrect3.set_xy(100, 100);
 
-    WidgetRect wrect4(drawable,
-                      wcomposite, notifier, id++, GREEN);
+    WidgetRect wrect4(drawable, wcomposite, GREEN);
     wrect4.set_wh(100, 100);
     wrect4.set_xy(300, 300);
 
-    WidgetRect wrect5(drawable,
-                      wcomposite, notifier, id++, WHITE);
+    WidgetRect wrect5(drawable, wcomposite, WHITE);
     wrect5.set_wh(100, 100);
     wrect5.set_xy(700, -50);
 
-    WidgetRect wrect6(drawable,
-                      wcomposite, notifier, id++, GREY);
+    WidgetRect wrect6(drawable, wcomposite, GREY);
     wrect6.set_wh(100, 100);
     wrect6.set_xy(-50, 550);
 
@@ -86,8 +78,7 @@ RED_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.add_widget(&wrect6);
 
     {
-        WidgetRect wrect7(drawable,
-                          wcomposite, notifier, id++, GREY);
+        WidgetRect wrect7(drawable, wcomposite, GREY);
         wrect7.set_wh(800, 800);
         wrect7.set_xy(0, 0);
 

@@ -34,31 +34,12 @@ namespace gdi
 class WidgetLabel : public Widget
 {
 public:
-    static const size_t buffer_size = 256;
-
-    char buffer[buffer_size];
-
-public:
-    int x_text;
-    int y_text;
-    Color bg_color;
-    Color fg_color;
-    bool tool;
-
-private:
-    int w_border;
-
-    Font const & font;
-
-public:
-    WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
-                NotifyApi* notifier, chars_view text,
-                int group_id, Color fgcolor, Color bgcolor, Font const & font,
+    WidgetLabel(gdi::GraphicApi & drawable, Widget& parent, chars_view text,
+                Color fgcolor, Color bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0); /*NOLINT*/
 
-    WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
-                NotifyApi* notifier, char const* text,
-                int group_id, Color fgcolor, Color bgcolor, Font const & font,
+    WidgetLabel(gdi::GraphicApi & drawable, Widget& parent, char const* text,
+                Color fgcolor, Color bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0); /*NOLINT*/
 
     void set_text(char const* text);
@@ -83,4 +64,20 @@ public:
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void auto_resize();
+
+public:
+    static const size_t buffer_size = 256;
+
+    char buffer[buffer_size];
+
+    int x_text;
+    int y_text;
+    Color bg_color;
+    Color fg_color;
+    bool tool;
+
+private:
+    int w_border;
+
+    Font const & font;
 };

@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "mod/internal/widget/notify_api.hpp"
 #include "utils/rect.hpp"
 #include "utils/colors.hpp"
 #include "utils/sugar/zstring_view.hpp"
@@ -34,20 +33,7 @@ namespace gdi
     class CachePointerIndex;
 } // namespace gdi
 
-enum NotifyEventType
-{
-    NOTIFY_FOCUS_BEGIN,
-    NOTIFY_FOCUS_END,
-    NOTIFY_TEXT_CHANGED,
-    NOTIFY_SUBMIT,
-    NOTIFY_CANCEL,
-    NOTIFY_SELECTION_CHANGED,
-    NOTIFY_DELEGATE,
-    NOTIFY_HSCROLL,
-    NOTIFY_VSCROLL,
-};
-
-class Widget : public RdpInput, public NotifyApi
+class Widget : public RdpInput
 {
 public:
     struct Color
@@ -103,25 +89,20 @@ public:
     Widget & parent;
 protected:
     gdi::GraphicApi & drawable;
-public:
-    NotifyApi * notifier;
 
 private:
     Rect rect;
 
 public:
-    int group_id;
     int tab_flag;
     int focus_flag;
     PointerType pointer_flag;
     bool has_focus;
 
 public:
-    Widget(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0) /*NOLINT*/
+    Widget(gdi::GraphicApi & drawable, Widget & parent) /*NOLINT*/
     : parent(parent)
     , drawable(drawable)
-    , notifier(notifier)
-    , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
     , pointer_flag(PointerType::Normal)
@@ -145,17 +126,17 @@ public:
     }
 
     virtual void show_tooltip(
-        Widget * widget, const char * text, int x, int y,
+        const char * text, int x, int y,
         Rect preferred_display_rect)
     {
         if (!this->is_root()) {
-            this->parent.show_tooltip(widget, text, x, y, preferred_display_rect);
+            this->parent.show_tooltip(text, x, y, preferred_display_rect);
         }
     }
 
     void hide_tooltip()
     {
-        this->show_tooltip(this, nullptr, 0, 0, Rect(0, 0, 0, 0));
+        this->show_tooltip(nullptr, 0, 0, Rect(0, 0, 0, 0));
     }
 
     Widget * last_widget_at_pos(int16_t x, int16_t y)
@@ -203,28 +184,6 @@ public:
         (void)locks;
     }
 
-    void send_notify(NotifyApi::notify_event_t event)
-    {
-        if (this->notifier) {
-            this->notifier->notify(*this, event);
-        }
-    }
-
-    void send_notify(Widget & widget, NotifyApi::notify_event_t event)
-    {
-        if (this->notifier) {
-            this->notifier->notify(widget, event);
-        }
-    }
-
-    void notify(Widget & widget, NotifyApi::notify_event_t event) override
-    {
-        (void)widget;
-        if (this->notifier) {
-            this->notifier->notify(*this, event);
-        }
-    }
-
     virtual Widget * widget_at_pos(int16_t x, int16_t y)
     {
         return (this->rect.contains_pt(x, y)) ? this : nullptr;
@@ -268,7 +227,6 @@ public:
         (void)reason;
         if (!this->has_focus){
             this->has_focus = true;
-            this->send_notify(NOTIFY_FOCUS_BEGIN);
             this->rdp_input_invalidate(this->rect);
         }
     }
@@ -277,7 +235,6 @@ public:
     {
         if (this->has_focus){
             this->has_focus = false;
-            this->send_notify(NOTIFY_FOCUS_END);
             this->rdp_input_invalidate(this->rect);
         }
     }

@@ -28,11 +28,9 @@
 WidgetImage::WidgetImage(gdi::GraphicApi& drawable,
                          const char *filename,
                          Widget& parent,
-                         NotifyApi *notifier,
-                         Color bg_color,
-                         int group_id) :
-    Widget(drawable, parent, notifier, group_id),
-    bmp(bitmap_from_file(filename, bg_color))
+                         Color bg_color)
+: Widget(drawable, parent)
+, bmp(bitmap_from_file(filename, bg_color))
 {
     this->tab_flag   = IGNORE_TAB;
     this->focus_flag = IGNORE_FOCUS;

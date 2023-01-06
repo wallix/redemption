@@ -91,7 +91,75 @@ SelectorMod::SelectorMod(
     , selector(
         drawable, copy_paste, temporary_login(ini).buffer,
         widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        this->screen, this,
+        this->screen, {
+            .onconnect = [this]{
+                char buffer[1024] = {};
+                uint16_t row_index = 0;
+                uint16_t column_index = 0;
+                this->selector.selector_lines.get_selection(row_index, column_index);
+                if (static_cast<uint16_t>(-1u) != row_index)
+                {
+                    const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGET);
+                    const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGETGROUP);
+                    snprintf(buffer, sizeof(buffer), "%s:%s:%s",
+                                target, groups, this->ini.get<cfg::globals::auth_user>().c_str());
+                    this->ini.set_acl<cfg::globals::auth_user>(buffer);
+                    this->ini.ask<cfg::globals::target_user>();
+                    this->ini.ask<cfg::globals::target_device>();
+                    this->ini.ask<cfg::context::target_protocol>();
+
+                    this->set_mod_signal(BACK_EVENT_NEXT);
+                    // throw Error(ERR_BACK_EVENT_NEXT);
+                }
+            },
+
+            .oncancel = [this]{
+                this->ini.ask<cfg::globals::auth_user>();
+                this->ini.ask<cfg::context::password>();
+                this->ini.set<cfg::context::selector>(false);
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            },
+
+            .onfilter = [this]{ this->ask_page(); },
+
+            .onfirst_page = [this]{
+                if (this->current_page > 1) {
+                    this->current_page = 1;
+                    this->ask_page();
+                }
+            },
+
+            .onprev_page = [this]{
+                if (this->current_page > 1) {
+                    --this->current_page;
+                    this->ask_page();
+                }
+            },
+
+            .oncurrent_page = [this]{
+                int page = unchecked_decimal_chars_to_int(this->selector.current_page.get_text());
+                if (page != this->current_page) {
+                    this->current_page = page;
+                    this->ask_page();
+                }
+            },
+
+            .onnext_page = [this]{
+                if (this->current_page < this->number_page) {
+                    ++this->current_page;
+                    this->ask_page();
+                }
+            },
+
+            .onlast_page = [this]{
+                if (this->current_page < this->number_page) {
+                    this->current_page = this->number_page;
+                    this->ask_page();
+                }
+            },
+
+            .onctrl_shift = [this]{ this->language_button.next_layout(); },
+        },
         ini.is_asked<cfg::context::selector_current_page>()
             ? ""
             : int_to_decimal_zchars(ini.get<cfg::context::selector_current_page>()).c_str(),
@@ -188,80 +256,6 @@ void SelectorMod::osd_banner_message()
         this->ini.get<cfg::context::banner_message>(), omu);
 
     this->ini.set<cfg::context::banner_message>("");
-}
-
-void SelectorMod::notify(Widget& widget, notify_event_t event)
-{
-    switch (event) {
-    case NOTIFY_CANCEL: {
-        this->ini.ask<cfg::globals::auth_user>();
-        this->ini.ask<cfg::context::password>();
-        this->ini.set<cfg::context::selector>(false);
-        this->set_mod_signal(BACK_EVENT_NEXT);
-        // throw Error(ERR_BACK_EVENT_NEXT);
-        break;
-    }
-    case NOTIFY_SUBMIT: {
-        if (&widget == &this->selector.connect) {
-            char buffer[1024] = {};
-            uint16_t row_index = 0;
-            uint16_t column_index = 0;
-            this->selector.selector_lines.get_selection(row_index, column_index);
-            if (static_cast<uint16_t>(-1u) != row_index)
-            {
-                const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGET);
-                const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGETGROUP);
-                snprintf(buffer, sizeof(buffer), "%s:%s:%s",
-                            target, groups, this->ini.get<cfg::globals::auth_user>().c_str());
-                this->ini.set_acl<cfg::globals::auth_user>(buffer);
-                this->ini.ask<cfg::globals::target_user>();
-                this->ini.ask<cfg::globals::target_device>();
-                this->ini.ask<cfg::context::target_protocol>();
-
-                this->set_mod_signal(BACK_EVENT_NEXT);
-                // throw Error(ERR_BACK_EVENT_NEXT);
-            }
-        }
-        else if (widget.group_id == this->selector.apply.group_id) {
-            this->ask_page();
-        }
-        else if (&widget == &this->selector.first_page) {
-            if (this->current_page > 1) {
-                this->current_page = 1;
-                this->ask_page();
-            }
-        }
-        else if (&widget == &this->selector.prev_page) {
-            if (this->current_page > 1) {
-                --this->current_page;
-                this->ask_page();
-            }
-        }
-        else if (&widget == &this->selector.current_page) {
-            int page = unchecked_decimal_chars_to_int(this->selector.current_page.get_text());
-            if (page != this->current_page) {
-                this->current_page = page;
-                this->ask_page();
-            }
-        }
-        else if (&widget == &this->selector.next_page) {
-            if (this->current_page < this->number_page) {
-                ++this->current_page;
-                this->ask_page();
-            }
-        }
-        else if (&widget == &this->selector.last_page) {
-            if (this->current_page < this->number_page) {
-                this->current_page = this->number_page;
-                this->ask_page();
-            }
-        }
-
-        break;
-    }
-
-    default:;
-    }
 }
 
 void SelectorMod::refresh_device()

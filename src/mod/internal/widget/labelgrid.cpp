@@ -24,18 +24,19 @@
 
 WidgetLabelGrid::WidgetLabelGrid(
     gdi::GraphicApi & drawable, Widget & parent,
-    NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
+    WidgetEventNotifier onsubmit,
+    uint16_t nb_lines, uint16_t nb_columns,
     Color bg_color_1, Color fg_color_1,
     Color bg_color_2, Color fg_color_2,
     Color bg_color_focus, Color fg_color_focus,
     Color bg_color_selection, Color fg_color_selection,
-    Font const & font, uint16_t border, int group_id
+    Font const & font, uint16_t border
 )
     : WidgetGrid(
-        drawable, parent, notifier, nb_lines, nb_columns,
+        drawable, parent, onsubmit, nb_lines, nb_columns,
         bg_color_1, fg_color_1, bg_color_2, fg_color_2,
         bg_color_focus, fg_color_focus,
-        bg_color_selection, fg_color_selection, border, group_id)
+        bg_color_selection, fg_color_selection, border)
     , font(font)
 {}
 
@@ -52,7 +53,7 @@ void WidgetLabelGrid::add_line(array_view<chars_view> entries)
 
     for (std::size_t i = 0; i < max_column; ++i) {
         auto label = std::make_unique<WidgetLabel>(
-            this->drawable, this->parent, this, entries[i], this->group_id,
+            this->drawable, this->parent, entries[i],
             fg_color, bg_color, this->font, x_padding_label, y_padding_label
         );
 
