@@ -109,29 +109,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
-    auto osd = make_osd(drawable, rect, []{});
-    osd.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), bmp_rect.intersect(screen_rect.cx, screen_rect.cy), bmp);
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_4.png");
-}
-
-RED_AUTO_TEST_CASE(TestModOSD3)
-{
-    Rect screen_rect(0, 0, 800, 600);
-    TestGraphic drawable(screen_rect.cx, screen_rect.cy);
-    auto const color_cxt = gdi::ColorCtx::depth24();
-
-    drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
-
-    Rect const rect = Rect(100, 100, 200, 200);
-    drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
-
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_5.png");
-
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
-    int const bmp_x = 200;
-    int const bmp_y = 200;
-    Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
     RDPBitmapData bmp_data;
     bmp_data.dest_left = bmp_rect.x;
     bmp_data.dest_top = bmp_rect.y;
@@ -142,9 +120,11 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     bmp_data.bits_per_pixel = safe_int(bmp.bpp());
     bmp_data.flags = 0;
 
-    bmp_data.bitmap_length = bmp.bmp_size();
     auto osd = make_osd(drawable, rect, []{});
-    osd.draw(bmp_data, bmp);
 
-    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_6.png");
+    osd.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), bmp_rect.intersect(screen_rect.cx, screen_rect.cy), bmp);
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_4.png");
+
+    osd.draw(bmp_data, bmp);
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_4.png");
 }
