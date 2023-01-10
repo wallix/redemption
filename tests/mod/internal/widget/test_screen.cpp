@@ -180,12 +180,12 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier4.get_and_reset() == 1);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
-    wscreen.show_tooltip("tooltip test", 30, 35, Rect(0, 0, 500, 41));
+    wscreen.show_tooltip("tooltip test", 30, 35, Rect(0, 0, 500, 41), wscreen.get_rect());
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_12.png");
 
-    wscreen.show_tooltip(nullptr, 30, 35, Rect(0, 0, 0, 0));
+    wscreen.show_tooltip(nullptr, 30, 35, Rect(), Rect());
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
     wscreen.clear();

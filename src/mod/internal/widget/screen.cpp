@@ -49,7 +49,8 @@ WidgetScreen::~WidgetScreen() = default;
 
 void WidgetScreen::show_tooltip(
     const char * text, int x, int y,
-    Rect const preferred_display_rect)
+    Rect const preferred_display_rect,
+    Rect const mouse_area)
 {
     if (text == nullptr) {
         if (this->tooltip) {
@@ -64,6 +65,7 @@ void WidgetScreen::show_tooltip(
             display_rect = display_rect.intersect(preferred_display_rect);
         }
 
+        this->tooltip_mouse_area = mouse_area;
         this->tooltip = std::make_unique<WidgetTooltip>(
             this->drawable, *this, "",
             this->theme.tooltip.fgcolor,
@@ -133,7 +135,9 @@ void WidgetScreen::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y
 
     if (this->tooltip) {
         if (device_flags & MOUSE_FLAG_MOVE) {
-            this->hide_tooltip();
+            if (!this->tooltip_mouse_area.contains_pt(x, y)) {
+                this->hide_tooltip();
+            }
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) {
             this->hide_tooltip();

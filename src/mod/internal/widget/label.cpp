@@ -160,7 +160,7 @@ void WidgetLabel::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
             // TODO: tm.height unused ?
             gdi::TextMetrics tm(this->font, this->buffer);
             if (tm.width > this->cx()) {
-                this->show_tooltip(this->buffer, x, y, Rect(0, 0, 0, 0));
+                this->show_tooltip(this->buffer, x, y, Rect(), this->get_rect());
             }
         }
     }

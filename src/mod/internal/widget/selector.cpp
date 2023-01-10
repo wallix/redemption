@@ -453,7 +453,8 @@ void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
             this->show_tooltip(this->tr(trkeys::target_accurate_filter_help),
                                x,
                                y,
-                               rect);
+                               rect,
+                               this->target_helpicon.get_rect());
         }
     }
 
@@ -462,8 +463,12 @@ void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
 
 void WidgetSelector::show_tooltip(
     const char * text, int x, int y,
-    Rect const preferred_display_rect)
+    Rect const preferred_display_rect,
+    Rect const mouse_area)
 {
-    WidgetParent::show_tooltip(text, x, y,
-        (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect));
+    WidgetParent::show_tooltip(
+        text, x, y,
+        (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect),
+        mouse_area
+    );
 }

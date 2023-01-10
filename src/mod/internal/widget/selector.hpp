@@ -94,7 +94,7 @@ public:
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void show_tooltip(const char * text, int x, int y,
-                      Rect const preferred_display_rect) override;
+                      Rect preferred_display_rect, Rect mouse_area) override;
 
 private:
     void rearrange();

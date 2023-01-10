@@ -127,16 +127,17 @@ public:
 
     virtual void show_tooltip(
         const char * text, int x, int y,
-        Rect preferred_display_rect)
+        Rect preferred_display_rect,
+        Rect mouse_area)
     {
         if (!this->is_root()) {
-            this->parent.show_tooltip(text, x, y, preferred_display_rect);
+            this->parent.show_tooltip(text, x, y, preferred_display_rect, mouse_area);
         }
     }
 
     void hide_tooltip()
     {
-        this->show_tooltip(nullptr, 0, 0, Rect(0, 0, 0, 0));
+        this->show_tooltip(nullptr, 0, 0, Rect(), Rect());
     }
 
     Widget * last_widget_at_pos(int16_t x, int16_t y)

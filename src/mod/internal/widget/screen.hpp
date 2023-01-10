@@ -39,7 +39,8 @@ public:
     ~WidgetScreen() override;
 
     void show_tooltip(const char * text, int x, int y,
-                      Rect const preferred_display_rect) override;
+                      Rect preferred_display_rect,
+                      Rect mouse_area) override;
 
     bool next_focus() override;
     bool previous_focus() override;
@@ -59,6 +60,8 @@ public:
 
     std::unique_ptr<WidgetTooltip> tooltip;
 private:
+    Rect tooltip_mouse_area;
+
     Widget * current_over;
 
     CompositeArray composite_array;

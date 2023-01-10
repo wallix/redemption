@@ -389,7 +389,7 @@ void WidgetLogin::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget * wid = this->widget_at_pos(x, y);
         if (wid == &this->helpicon) {
-            this->show_tooltip(this->tr(trkeys::help_message), x, y, this->get_rect());
+            this->show_tooltip(this->tr(trkeys::help_message), x, y, this->get_rect(), this->helpicon.get_rect());
         }
     }
 

@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
         parent.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y);
         Widget * wid = parent.widget_at_pos(x, y);
         RED_CHECK(wid == &label);
-        parent.show_tooltip(text, x, y, Rect(0, 0, 500, 41));
+        parent.show_tooltip(text, x, y, Rect(0, 0, 500, 41), parent.get_rect());
         parent.rdp_input_invalidate(parent.get_rect());
     };
 
@@ -97,6 +97,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     rdp_input_mouse(label, "Test tooltip description");
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_3.png");
+    parent.show_tooltip(nullptr, x, y, Rect(), Rect());
 
     rdp_input_mouse(label2,
                     "Test tooltip\n"
