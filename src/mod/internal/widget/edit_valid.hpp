@@ -28,6 +28,7 @@
 class WidgetEdit;
 class WidgetLabel;
 class CopyPaste;
+class WidgetPassword;
 
 class WidgetEditValid : public Widget
 {
@@ -77,12 +78,17 @@ public:
         return 1;
     }
 
+    bool is_password_widget() noexcept;
+
     void init_focus() override;
 
 private:
-    WidgetButton button;
+    WidgetButton button_next;
+    WidgetPassword * widget_password;
     WidgetEdit * editbox;
     WidgetLabel * label;
+    WidgetButton * button_toggle_visibility;
+    bool is_password_visible = false;
 
     bool use_label_;
 

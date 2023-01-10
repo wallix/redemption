@@ -36,9 +36,10 @@ WidgetPassword::WidgetPassword(
                  fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
     , masked_text(drawable, text, fgcolor, bgcolor, font, xtext, ytext)
 {
-    this->set_masked_text();
+    set_masked_text();
+    this->rdp_input_invalidate(this->get_rect());
 
-    gdi::TextMetrics tm(font, "*");
+    static gdi::TextMetrics tm(font, "*");
     this->w_char = tm.width;
     this->h_char = tm.height;
     this->h_char -= 1;
@@ -56,12 +57,20 @@ Dimension WidgetPassword::get_optimal_dim() const
 
 void WidgetPassword::set_masked_text()
 {
-    char buff[WidgetLabel::buffer_size];
-    for (size_t n = 0; n < this->num_chars; ++n) {
-        buff[n] = '*';
+    if(!is_password_visible) {
+        // Set hidden text
+        char buff[WidgetLabel::buffer_size];
+        for (size_t n = 0; n < this->num_chars; ++n) {
+            buff[n] = '*';
+        }
+        buff[this->num_chars] = 0;
+        this->masked_text.set_text(buff);
     }
-    buff[this->num_chars] = 0;
-    this->masked_text.set_text(buff);
+    else
+    {
+        // Set visible text
+        this->masked_text.set_text(chars_view(WidgetEdit::get_text()));
+    }
 }
 
 void WidgetPassword::set_xy(int16_t x, int16_t y)
@@ -78,8 +87,8 @@ void WidgetPassword::set_wh(uint16_t w, uint16_t h)
 
 void WidgetPassword::set_text(const char * text)
 {
-    WidgetEdit::set_text(text);
-    this->set_masked_text();
+   WidgetEdit::set_text(text);
+   this->set_masked_text();
 }
 
 void WidgetPassword::insert_text(const char* text)
@@ -89,6 +98,29 @@ void WidgetPassword::insert_text(const char* text)
     this->rdp_input_invalidate(this->get_rect());
 }
 
+void WidgetPassword::toggle_password_visibility() {
+    is_password_visible = !is_password_visible;
+    set_masked_text();
+    this->rdp_input_invalidate(this->get_rect());
+}
+
+void WidgetPassword::hide_password_text()
+{
+    if(is_password_visible) {
+        is_password_visible = false;
+        set_masked_text();
+        this->rdp_input_invalidate(this->get_rect());
+    }
+}
+
+void WidgetPassword::show_password_text()
+{
+    if(!is_password_visible) {
+        is_password_visible = true;
+        set_masked_text();
+        this->rdp_input_invalidate(this->get_rect());
+    }
+}
 
 void WidgetPassword::rdp_input_invalidate(Rect clip)
 {
@@ -112,19 +144,28 @@ void WidgetPassword::rdp_input_invalidate(Rect clip)
 
 void WidgetPassword::update_draw_cursor(Rect old_cursor)
 {
-    this->drawable.begin_update();
-    this->masked_text.rdp_input_invalidate(old_cursor);
-    auto cursort_rect = this->get_cursor_rect();
-    auto rect = this->get_rect();
-    if (rect.x + 1 < cursort_rect.x && cursort_rect.x < rect.eright()) {
-        this->draw_cursor(cursort_rect);
+    if(is_password_visible) {
+        WidgetEdit::update_draw_cursor(old_cursor);
     }
-    this->drawable.end_update();
+    else{
+        this->drawable.begin_update();
+        this->masked_text.rdp_input_invalidate(old_cursor);
+        auto cursort_rect = this->get_cursor_rect();
+        auto rect = this->get_rect();
+        if (rect.x + 1 < cursort_rect.x && cursort_rect.x < rect.eright()) {
+            this->draw_cursor(cursort_rect);
+        }
+        this->drawable.end_update();
+    }
 }
 
 
 Rect WidgetPassword::get_cursor_rect() const
 {
+    if(is_password_visible) {
+        return WidgetEdit::get_cursor_rect();
+    }
+
     return Rect(this->masked_text.x_text + this->edit_pos * this->w_char + this->x() + 2,
                 this->masked_text.y_text + this->masked_text.y(),
                 1,
@@ -133,43 +174,46 @@ Rect WidgetPassword::get_cursor_rect() const
 
 void WidgetPassword::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    (void)y;
-
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-        Rect old_cursor_rect = this->get_cursor_rect();
-        size_t e = this->edit_pos;
-        if (x <= this->x() + this->masked_text.x_text + this->w_char/2) {
-            this->edit_pos = 0;
-            this->edit_buffer_pos = 0;
+        if(is_password_visible) {
+            WidgetEdit::rdp_input_mouse(device_flags, x, y);
         }
-        else if (x >= int(this->x() + this->masked_text.x_text + this->w_char * this->num_chars)) {
-            if (this->edit_pos < this->num_chars) {
-                this->edit_pos = this->num_chars;
-                this->edit_buffer_pos = this->buffer_size;
+        else{
+            Rect old_cursor_rect = this->get_cursor_rect();
+            size_t e = this->edit_pos;
+            if (x <= this->x() + this->masked_text.x_text + this->w_char/2) {
+                this->edit_pos = 0;
+                this->edit_buffer_pos = 0;
             }
-        }
-        else {
+            else if (x >= int(this->x() + this->masked_text.x_text + this->w_char * this->num_chars)) {
+                if (this->edit_pos < this->num_chars) {
+                    this->edit_pos = this->num_chars;
+                    this->edit_buffer_pos = this->buffer_size;
+                }
+            }
+            else {
 
-                //      dx
-                // <---------->
-                //           x
-                // <------------------->
-                //     -x_text
-                //     <------>             screen
-                // +-------------------------------------------------------------
-                // |                        editbox
-                // |           +--------------------------------+
-                // |   {.......|.......X................}       |
-                // |           +--------------------------------+
-                // |   <--------------->
-                // |   (x - dx - x_text)
-                // |
+                    //      dx
+                    // <---------->
+                    //           x
+                    // <------------------->
+                    //     -x_text
+                    //     <------>             screen
+                    // +-------------------------------------------------------------
+                    // |                        editbox
+                    // |           +--------------------------------+
+                    // |   {.......|.......X................}       |
+                    // |           +--------------------------------+
+                    // |   <--------------->
+                    // |   (x - dx - x_text)
+                    // |
 
-            this->edit_pos = std::min<size_t>((x - this->x() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
-            this->edit_buffer_pos = UTF8GetPos(byte_ptr_cast(&this->label.buffer[0]), this->edit_pos);
-        }
-        if (e != this->edit_pos) {
-            this->update_draw_cursor(old_cursor_rect);
+                this->edit_pos = std::min<size_t>((x - this->x() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
+                this->edit_buffer_pos = UTF8GetPos(byte_ptr_cast(&this->label.buffer[0]), this->edit_pos);
+            }
+            if (e != this->edit_pos) {
+                this->update_draw_cursor(old_cursor_rect);
+            }
         }
     }
 }

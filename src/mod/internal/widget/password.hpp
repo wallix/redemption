@@ -30,6 +30,7 @@ class WidgetPassword : public WidgetEdit
 
     int w_char;
     int h_char;
+    bool is_password_visible = false;
 
 public:
     WidgetPassword(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
@@ -39,8 +40,6 @@ public:
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
 
     Dimension get_optimal_dim() const override;
-
-    void set_masked_text();
 
     void set_xy(int16_t x, int16_t y) override;
 
@@ -52,15 +51,22 @@ public:
 
     void insert_text(const char* text) override;
 
+    void toggle_password_visibility();
+
+    void hide_password_text();
+    void show_password_text();
+
     void rdp_input_invalidate(Rect clip) override;
     void update_draw_cursor(Rect old_cursor) override;
 
 
     [[nodiscard]] Rect get_cursor_rect() const override;
-
+    
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
+private:
+    void set_masked_text();
 };

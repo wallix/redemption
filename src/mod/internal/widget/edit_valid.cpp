@@ -36,8 +36,8 @@ WidgetEditValid::WidgetEditValid(
     int /*xtext*/, int /*ytext*/, bool pass
 )
     : Widget(drawable, Focusable::Yes)
-    , button(drawable, "\xe2\x9e\x9c", onsubmit,
-             bgcolor, focus_color, focus_color, 1, font, 6, 2)
+    , button_next(drawable, "\xe2\x9e\x9c", onsubmit,
+                  bgcolor, focus_color, focus_color, 1, font, 6, 2)
     , editbox(pass
         ? new WidgetPassword(drawable, copy_paste, text, onsubmit, fgcolor, bgcolor,
                              bgcolor, font, edit_position, 1, 2)
@@ -46,8 +46,13 @@ WidgetEditValid::WidgetEditValid(
     , label(title
         ? new WidgetLabel(drawable, title, MEDIUM_GREY, bgcolor, font, 1, 2)
         : nullptr)
+    , button_toggle_visibility( pass
+        ? new WidgetButton{drawable, "\xE2\x97\x89", WidgetEventNotifier(),
+                           bgcolor, focus_color, focus_color, 1, font, 6, 2}
+        : nullptr)
     , use_label_(use_title)
     , border_none_color(border_none_color)
+
 {
 }
 
@@ -58,7 +63,7 @@ void WidgetEditValid::init_focus()
 
 Dimension WidgetEditValid::get_optimal_dim() const
 {
-    Dimension dim = this->button.get_optimal_dim();
+    Dimension dim = this->button_next.get_optimal_dim();
 
     dim.h += 2 /* border */;
 
@@ -74,6 +79,10 @@ WidgetEditValid::~WidgetEditValid()
     if (this->label) {
         delete this->label;
         this->label = nullptr;
+    }
+    if (this->button_toggle_visibility) {
+        delete this->button_toggle_visibility;
+        this->button_toggle_visibility = nullptr;
     }
 }
 
@@ -96,7 +105,13 @@ void WidgetEditValid::set_xy(int16_t x, int16_t y)
 {
     Widget::set_xy(x, y);
     this->editbox->set_xy(x + 1, y + 1);
-    this->button.set_xy(this->editbox->eright(), y + 1);
+
+    if(is_password_widget()) {
+        this->button_toggle_visibility->set_xy(this->editbox->eright(), y + 1);
+        this->button_next.set_xy(this->button_toggle_visibility->eright(), y + 1);
+    }else{
+        this->button_next.set_xy(this->editbox->eright(), y + 1);
+    }
 
     if (this->label) {
         this->label->set_xy(x + 2, y + 2);
@@ -107,13 +122,21 @@ void WidgetEditValid::set_wh(uint16_t w, uint16_t h)
 {
     Widget::set_wh(w, h);
 
-    Dimension dim = this->button.get_optimal_dim();
-    this->button.set_wh(dim.w, h - 2 /* 2 x border */);
+    Dimension dim = this->button_next.get_optimal_dim();
+    this->button_next.set_wh(dim.w, h - 2 /* 2 x border */);
 
-    this->editbox->set_wh(w - this->button.cx() - 2,
-                            h - 2 /* 2 x border */);
-
-    this->button.set_xy(this->editbox->eright(), this->button.y());
+    if(is_password_widget()) {
+        this->button_toggle_visibility->set_wh(dim.w, h - 2 /* 2 x border */);
+        this->editbox->set_wh(w - this->button_toggle_visibility->cx() - button_next.cx() - 2,
+                                h - 2 /* 2 x border */);
+        this->button_toggle_visibility->set_xy(this->editbox->eright(), this->button_toggle_visibility->y());
+        this->button_next.set_xy(this->button_toggle_visibility->eright(), this->button_next.y());
+    }
+    else
+    {
+        this->editbox->set_wh(w - this->button_next.cx() - 2, h - 2 /* 2 x border */);
+        this->button_next.set_xy(this->editbox->eright(), this->button_next.y());
+    }
 
     if (this->label) {
         this->label->set_wh(this->editbox->cx() - 4,
@@ -136,12 +159,21 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
             }
         }
         if (this->has_focus) {
-            this->button.rdp_input_invalidate(rect_intersect);
-            this->draw_border(rect_intersect, this->button.focus_color);
+            this->button_next.rdp_input_invalidate(rect_intersect);
+            if(is_password_widget()){
+                this->button_toggle_visibility->rdp_input_invalidate(rect_intersect);
+            }
+            this->draw_border(rect_intersect, this->button_next.focus_color);
         }
         else {
+            if(is_password_widget()){
+                this->drawable.draw(
+                    RDPOpaqueRect(rect_intersect.intersect(this->button_toggle_visibility->get_rect()), this->button_toggle_visibility->fg_color),
+                    rect_intersect, gdi::ColorCtx::depth24()
+                );
+            }
             this->drawable.draw(
-                RDPOpaqueRect(rect_intersect.intersect(this->button.get_rect()), this->button.fg_color),
+                RDPOpaqueRect(rect_intersect.intersect(this->button_next.get_rect()), this->button_next.fg_color),
                 rect_intersect, gdi::ColorCtx::depth24()
             );
             this->draw_border(rect_intersect, this->border_none_color);
@@ -185,29 +217,57 @@ void WidgetEditValid::blur()
 
 Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
 {
-    // TODO y is not used: suspicious
-    (void)y;
-    Widget * w = this->editbox;
-    if (x > this->editbox->eright()) {
-        w = &this->button;
+    if( editbox->get_rect().contains_pt(x, y) ) {
+        return editbox;
     }
-    return w;
+    if( is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x, y) ) {
+        return button_toggle_visibility;
+    }
+    if( button_next.get_rect().contains_pt(x, y) ) {
+        return &button_next;
+    }
+
+    return nullptr;
 }
 
 void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    if (x > this->editbox->eright()) {
-        this->button.rdp_input_mouse(device_flags, x, y);
-        this->rdp_input_invalidate(this->button.get_rect());
+    if(button_next.get_rect().contains_pt(x,y))
+    {
+        button_next.rdp_input_mouse(device_flags, x, y);
+        rdp_input_invalidate(button_next.get_rect());
     }
-    else {
-        if ((device_flags == MOUSE_FLAG_BUTTON1)
-          && this->button.state == WidgetButton::State::Pressed
-        ) {
-            this->button.state = WidgetButton::State::Normal;
-            this->rdp_input_invalidate(this->button.get_rect());
+    else if(is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x,y))
+    {
+        button_toggle_visibility->rdp_input_mouse(device_flags, x, y);
+        if ((device_flags == MOUSE_FLAG_BUTTON1) && button_next.state == WidgetButton::State::Normal ) {
+            // Switch the visibility state
+            is_password_visible = !is_password_visible;
+            if(is_password_visible) {
+                button_toggle_visibility->set_text("\xE2\x97\x8E");
+            } else {
+                button_toggle_visibility->set_text("\xE2\x97\x89");
+            }
+            widget_password->toggle_password_visibility();
         }
-        this->editbox->rdp_input_mouse(device_flags, x, y);
+        rdp_input_invalidate(button_toggle_visibility->get_rect());
+
+    }
+    else
+    {
+        if((device_flags == MOUSE_FLAG_BUTTON1))
+        {
+            if( button_next.state == WidgetButton::State::Pressed ) {
+                 button_next.state = WidgetButton::State::Normal;
+                rdp_input_invalidate(button_next.get_rect());
+            }
+            if( button_toggle_visibility != nullptr &&
+                button_toggle_visibility->state == WidgetButton::State::Pressed) {
+                    button_toggle_visibility->state = WidgetButton::State::Normal;
+                    rdp_input_invalidate(button_toggle_visibility->get_rect());
+            }
+        }
+        editbox->rdp_input_mouse(device_flags, x, y);
     }
 }
 
@@ -228,4 +288,8 @@ void WidgetEditValid::rdp_input_scancode(
 void WidgetEditValid::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     this->editbox->rdp_input_unicode(flag, unicode);
+}
+
+bool WidgetEditValid::is_password_widget() noexcept {
+    return button_toggle_visibility != nullptr && widget_password != nullptr;
 }
