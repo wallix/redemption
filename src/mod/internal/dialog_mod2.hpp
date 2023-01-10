@@ -32,7 +32,7 @@ using DialogMod2Variables = vcfg::variables<
 >;
 
 
-class DialogMod2 : public RailModBase
+class DialogMod2 : public RailInternalModBase
 {
 public:
     DialogMod2(
@@ -46,8 +46,6 @@ public:
 
     ~DialogMod2() override;
 
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         this->dialog_widget.move_size_widget(left, top, width, height);
@@ -60,7 +58,6 @@ private:
 
     void refused();
 
-    CopyPaste & copy_paste;
     WidgetDialog2 dialog_widget;
 
     DialogMod2Variables vars;

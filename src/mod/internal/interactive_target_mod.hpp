@@ -41,7 +41,7 @@ using InteractiveTargetModVariables = vcfg::variables<
 >;
 
 
-class InteractiveTargetMod : public RailModBase
+class InteractiveTargetMod : public RailInternalModBase
 {
 public:
     InteractiveTargetMod(
@@ -51,8 +51,6 @@ public:
         ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
         CopyPaste& copy_paste);
 
-    ~InteractiveTargetMod() override;
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         this->challenge.move_size_widget(left, top, width, height);
@@ -61,8 +59,6 @@ public:
     void acl_update(AclFieldMask const&/* acl_fields*/) override {}
 
 private:
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
-
     void accepted();
 
     void refused();
@@ -70,8 +66,6 @@ private:
     bool ask_device;
     bool ask_login;
     bool ask_password;
-
-    CopyPaste& copy_paste;
 
     LanguageButton language_button;
     WidgetInteractiveTarget challenge;

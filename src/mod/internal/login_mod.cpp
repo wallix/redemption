@@ -66,7 +66,7 @@ LoginMod::LoginMod(
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme, CopyPaste& copy_paste
 )
-    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
+    : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , events_guard(events)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
@@ -103,8 +103,6 @@ LoginMod::LoginMod(
         vars.get<cfg::internal_mod::enable_target_field>(),
         font, Translator(login_language(vars)), theme)
     , vars(vars)
-    , front(front)
-    , copy_paste(copy_paste)
 {
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
@@ -141,16 +139,5 @@ LoginMod::LoginMod(
                 e.garbage = true;
                 this->set_mod_signal(BACK_EVENT_STOP);
             });
-    }
-}
-
-LoginMod::~LoginMod() = default;
-
-void LoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
-{
-    RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
-
-    if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-        this->copy_paste.send_to_mod_channel(chunk, flags);
     }
 }

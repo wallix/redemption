@@ -48,7 +48,7 @@ using LoginModVariables = vcfg::variables<
 >;
 
 
-class LoginMod : public RailModBase
+class LoginMod : public RailInternalModBase
 {
 public:
     LoginMod(
@@ -61,16 +61,13 @@ public:
         Theme const& theme, CopyPaste& copy_paste
     );
 
-    ~LoginMod();
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         this->login.move_size_widget(left, top, width, height);
     }
 
-    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+    void acl_update(AclFieldMask const&/* acl_fields*/) override
+    {}
 
 private:
     EventsGuard events_guard;
@@ -79,6 +76,4 @@ private:
     WidgetLogin login;
 
     LoginModVariables vars;
-    FrontAPI & front;
-    CopyPaste & copy_paste;
 };

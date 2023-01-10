@@ -40,7 +40,7 @@ using WaitModVariables = vcfg::variables<
 >;
 
 
-class WaitMod : public RailModBase
+class WaitMod : public RailInternalModBase
 {
 public:
     WaitMod(
@@ -51,10 +51,6 @@ public:
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,
         const char * message, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, CopyPaste& copy_paste, bool showform = false, uint32_t flag = 0);
-
-    ~WaitMod() override;
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
@@ -70,9 +66,6 @@ private:
     WaitModVariables vars;
 
     EventsGuard events_guard;
-    CopyPaste & copy_paste;
-
-    bool showform;
 
     void confirm();
     void accepted();

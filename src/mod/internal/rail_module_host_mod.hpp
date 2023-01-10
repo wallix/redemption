@@ -21,59 +21,15 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "mod/internal/widget/screen.hpp"
+#include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/module_host.hpp"
 #include "core/events.hpp"
 
 
 class ClientExecute;
 
-class RailModuleHostMod : public mod_api
+class RailModuleHostMod : public RailModBase
 {
-public:
-    [[nodiscard]] Font const & font() const
-    {
-        return this->screen.font;
-    }
-
-    [[nodiscard]] Theme const & theme() const
-    {
-        return this->screen.theme;
-    }
-
-    [[nodiscard]] Rect get_screen_rect() const
-    {
-        return this->screen.get_rect();
-    }
-
-    void rdp_input_invalidate(Rect r) override;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
-
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
-    {
-        this->screen.rdp_input_unicode(flag, unicode);
-    }
-
-private:
-    WidgetScreen screen;
-    ClientExecute& rail_client_execute;
-
-    EventRef2 disconnection_reconnection_timer;
-
-    const bool rail_enabled;
-
-    enum class MouseOwner : bool
-    {
-        ClientExecute,
-        WidgetModule,
-    };
-
-    MouseOwner current_mouse_owner;
-
-    uint16_t old_mouse_x = 0;
-    uint16_t old_mouse_y = 0;
-
 public:
     RailModuleHostMod(
         EventContainer& events,
@@ -85,22 +41,18 @@ public:
 
     void set_mod(std::unique_ptr<mod_api>&& managed_mod) noexcept;
 
-    ~RailModuleHostMod();
-
     gdi::GraphicApi& proxy_gd() { return this->module_host; }
 
     // RdpInput
 
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
-    void rdp_gdi_down() override {}
+    void rdp_gdi_down() override
+    {}
 
     void rdp_gdi_up_and_running() override;
 
-    void rdp_input_synchronize(KeyLocks locks) override
-    {
-        (void)locks;
-    }
+    void rdp_input_synchronize(KeyLocks locks) override;
 
     // Callback
 
@@ -123,7 +75,23 @@ public:
 
     void acl_update(AclFieldMask const& acl_fields) override;
 
+    [[nodiscard]] Font const & font() const
+    {
+        return this->screen.font;
+    }
+
+    [[nodiscard]] Theme const & theme() const
+    {
+        return this->screen.theme;
+    }
+
+    [[nodiscard]] Rect get_screen_rect() const
+    {
+        return this->screen.get_rect();
+    }
+
 private:
+    EventRef2 disconnection_reconnection_timer;
     std::unique_ptr<mod_api> managed_mod;
     WidgetModuleHost module_host;
 };

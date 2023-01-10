@@ -40,7 +40,7 @@ using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::context::close_box_extra_message, vcfg::accessmode::get | vcfg::accessmode::set>
 >;
 
-class CloseMod : public RailModBase
+class CloseMod : public RailInternalModBase
 {
     WidgetWabClose close_widget;
     CloseModVariables vars;

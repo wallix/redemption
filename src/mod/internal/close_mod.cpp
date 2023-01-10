@@ -81,7 +81,7 @@ CloseMod::CloseMod(
     uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool back_selector)
-    : RailModBase(gd, width, height, rail_client_execute, font, theme)
+    : RailInternalModBase(gd, width, height, rail_client_execute, font, theme, nullptr)
     , close_widget(build_close_widget(
         gd, widget_rect, this->screen, auth_error_message, vars, font, theme, back_selector,
         {

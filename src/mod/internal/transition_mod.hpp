@@ -27,7 +27,7 @@
 #include "mod/internal/widget/tooltip.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 
-class TransitionMod : public RailModBase
+class TransitionMod : public RailInternalModBase
 {
 public:
     TransitionMod(

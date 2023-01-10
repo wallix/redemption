@@ -35,7 +35,7 @@ DialogMod::DialogMod(
     Font const& font, Theme const& theme, CopyPaste& copy_paste,
     ChallengeOpt has_challenge
 )
-    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
+    : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
@@ -50,7 +50,6 @@ DialogMod::DialogMod(
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)
     , vars(vars)
-    , copy_paste(copy_paste)
 {
     this->screen.add_widget(&this->dialog_widget);
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
@@ -61,8 +60,6 @@ DialogMod::DialogMod(
         this->dialog_widget.set_widget_focus(this->dialog_widget.challenge.get(), Widget::focus_reason_tabkey);
     }
 }
-
-DialogMod::~DialogMod() = default;
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void DialogMod::accepted()
@@ -94,13 +91,4 @@ void DialogMod::refused()
     }
     this->set_mod_signal(BACK_EVENT_NEXT);
     // throw Error(ERR_BACK_EVENT_NEXT);
-}
-
-void DialogMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
-{
-    RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
-
-    if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-        this->copy_paste.send_to_mod_channel(chunk, flags);
-    }
 }

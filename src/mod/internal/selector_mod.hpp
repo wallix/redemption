@@ -53,7 +53,7 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::context::banner_message,             vcfg::accessmode::get | vcfg::accessmode::set>
 >;
 
-class SelectorMod : public RailModBase
+class SelectorMod : public RailInternalModBase
 {
 public:
     SelectorMod(
@@ -69,8 +69,6 @@ public:
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override;
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
 private:
     void refresh_device();

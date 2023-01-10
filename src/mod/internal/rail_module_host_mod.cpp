@@ -28,40 +28,16 @@
 
 using namespace std::chrono_literals;
 
-void RailModuleHostMod::rdp_input_invalidate(Rect r)
-{
-    this->screen.rdp_input_invalidate(r);
-
-    if (this->rail_enabled) {
-        this->rail_client_execute.input_invalidate(r);
-    }
-}
-
-void RailModuleHostMod::rdp_input_scancode(
-    KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
-{
-    this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
-
-    if (this->rail_enabled
-     && keymap.last_kevent() == Keymap::KEvent::F4
-     && keymap.is_alt_pressed()
-    ) {
-        LOG(LOG_INFO, "RailModuleHostMod::rdp_input_scancode: Close by user (Alt+F4)");
-        throw Error(ERR_WIDGET);
-    }
-}
-
 RailModuleHostMod::RailModuleHostMod(
     EventContainer& events,
     gdi::GraphicApi & drawable,
     uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute& rail_client_execute,
     Font const& font, Theme const& theme,
-    const GCC::UserData::CSMonitor& cs_monitor)
-    : screen(drawable, width, height, font, theme)
-    , rail_client_execute(rail_client_execute)
+    const GCC::UserData::CSMonitor& cs_monitor
+)
+    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , disconnection_reconnection_timer(events)
-    , rail_enabled(rail_client_execute.is_rail_enabled())
     , managed_mod(std::make_unique<null_mod>())
     , module_host(drawable, this->screen,
                   *this->managed_mod, font, cs_monitor,
@@ -79,17 +55,15 @@ void RailModuleHostMod::set_mod(std::unique_ptr<mod_api>&& managed_mod) noexcept
     this->module_host.set_mod(*this->managed_mod);
 }
 
-RailModuleHostMod::~RailModuleHostMod()
-{
-    this->rail_client_execute.reset(true);
-    this->screen.clear();
-}
-
-// RdpInput
 void RailModuleHostMod::rdp_gdi_up_and_running()
 {
     mod_api& mod = this->module_host.get_managed_mod();
     mod.rdp_gdi_up_and_running();
+}
+
+void RailModuleHostMod::rdp_input_synchronize(KeyLocks locks)
+{
+    this->managed_mod->rdp_input_synchronize(locks);
 }
 
 void RailModuleHostMod::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
@@ -104,40 +78,7 @@ void RailModuleHostMod::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint1
         mod.rdp_input_mouse(device_flags, x, y);
     }
     else {
-        if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
-            x = this->old_mouse_x;
-            y = this->old_mouse_y;
-        }
-        else {
-            this->old_mouse_x = x;
-            this->old_mouse_y = y;
-        }
-
-        if (!this->rail_enabled) {
-            this->screen.rdp_input_mouse(device_flags, x, y);
-            return;
-        }
-
-        bool mouse_is_captured
-          = this->rail_client_execute.input_mouse(device_flags, x, y);
-
-        if (mouse_is_captured) {
-            this->screen.allow_mouse_pointer_change(false);
-            this->current_mouse_owner = MouseOwner::ClientExecute;
-        }
-        else {
-            if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                this->screen.redo_mouse_pointer_change(x, y);
-            }
-
-            this->current_mouse_owner = MouseOwner::WidgetModule;
-        }
-
-        this->screen.rdp_input_mouse(device_flags, x, y);
-
-        if (mouse_is_captured) {
-            this->screen.allow_mouse_pointer_change(true);
-        }
+        RailModBase::rdp_input_mouse(device_flags, x, y);
     }
 }
 
@@ -147,17 +88,13 @@ void RailModuleHostMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name,
     InStream& chunk, size_t length, uint32_t flags)
 {
-    if (front_channel_name == CHANNELS::channel_names::rail){
-        if (this->rail_enabled
-         && this->rail_client_execute.is_ready()
-        ) {
-            this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
-        }
-        return;
+    if (front_channel_name != CHANNELS::channel_names::rail) {
+        mod_api& mod = this->module_host.get_managed_mod();
+        mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
-
-    mod_api& mod = this->module_host.get_managed_mod();
-    mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
+    else {
+        RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
 }
 
 // mod_api

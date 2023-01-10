@@ -19,6 +19,7 @@ Author(s): Proxy Team
 */
 
 #include "mod/internal/rail_mod_base.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "RAIL/client_execute.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap.hpp"
@@ -29,13 +30,11 @@ RailModBase::RailModBase(
     uint16_t width, uint16_t height,
     ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme)
-    : front_width(width)
-    , front_height(height)
-    , screen(gd, front_width, front_height, font, theme)
+    : screen(gd, width, height, font, theme)
     , rail_client_execute(rail_client_execute)
     , rail_enabled(rail_client_execute.is_rail_enabled())
 {
-    this->screen.set_wh(this->front_width, this->front_height);
+    this->screen.set_wh(width, height);
 
     gd.set_palette(BGRPalette::classic_332());
 }
@@ -100,6 +99,11 @@ void RailModBase::rdp_input_scancode(
     this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
+void RailModBase::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
+{
+    this->screen.rdp_input_unicode(flag, unicode);
+}
+
 void RailModBase::check_alt_f4(Keymap const& keymap) const
 {
     if (this->rail_enabled
@@ -111,11 +115,40 @@ void RailModBase::check_alt_f4(Keymap const& keymap) const
     }
 }
 
-void RailModBase::send_to_mod_channel( CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
+void RailModBase::send_to_mod_channel(
+    CHANNELS::ChannelNameId front_channel_name,
+    InStream& chunk, size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute.is_ready()) {
-        if (front_channel_name == CHANNELS::channel_names::rail) {
+    if (front_channel_name == CHANNELS::channel_names::rail) {
+        if (this->rail_enabled && this->rail_client_execute.is_ready()) {
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        }
+    }
+}
+
+RailInternalModBase::RailInternalModBase(
+    gdi::GraphicApi & gd,
+    uint16_t width, uint16_t height,
+    ClientExecute & rail_client_execute,
+    Font const& font, Theme const& theme,
+    CopyPaste* copy_paste
+)
+    : RailModBase(gd, width, height, rail_client_execute, font, theme)
+    , front_width(width)
+    , front_height(height)
+    , copy_paste(copy_paste)
+{
+    gd.set_palette(BGRPalette::classic_332());
+}
+
+void RailInternalModBase::send_to_mod_channel(
+    CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
+{
+    RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
+
+    if (front_channel_name == CHANNELS::channel_names::cliprdr) {
+        if (this->copy_paste && *this->copy_paste) {
+            this->copy_paste->send_to_mod_channel(chunk, flags);
         }
     }
 }

@@ -68,7 +68,7 @@ SelectorMod::SelectorMod(
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, CopyPaste& copy_paste
 )
-    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
+    : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , ini(ini)
     , osd(osd)
     , front(front)
@@ -346,17 +346,6 @@ void SelectorMod::rdp_input_scancode(
     }
 
     this->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
-}
-
-void SelectorMod::send_to_mod_channel(
-    CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
-    size_t length, uint32_t flags)
-{
-    RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
-
-    if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-        this->copy_paste.send_to_mod_channel(chunk, flags);
-    }
 }
 
 void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)

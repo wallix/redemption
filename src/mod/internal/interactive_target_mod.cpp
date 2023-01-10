@@ -29,11 +29,10 @@ InteractiveTargetMod::InteractiveTargetMod(
     FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
     CopyPaste& copy_paste)
-    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
+    : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-    , copy_paste(copy_paste)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge,
         drawable, front, font, theme)
     , challenge(
@@ -68,8 +67,6 @@ InteractiveTargetMod::InteractiveTargetMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }
 
-InteractiveTargetMod::~InteractiveTargetMod() = default;
-
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void InteractiveTargetMod::accepted()
 {
@@ -94,13 +91,4 @@ void InteractiveTargetMod::refused()
     this->vars.set_acl<cfg::context::display_message>(false);
     this->set_mod_signal(BACK_EVENT_NEXT);
     // throw Error(ERR_BACK_EVENT_NEXT);
-}
-
-void InteractiveTargetMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
-{
-    RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
-
-    if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-        this->copy_paste.send_to_mod_channel(chunk, flags);
-    }
 }
