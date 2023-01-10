@@ -20,10 +20,10 @@ from .challenge import (
     ac_to_challenge,
     ur_to_challenge,
 )
-from collections import namedtuple
+from typing import Dict, Optional, Set, Union, Any
 
 
-class AuthState(object):
+class AuthState:
     KERBEROS = "KERBEROS"
     PASSWORD = "PASSWORD"
     OTP = "OTP"
@@ -32,25 +32,6 @@ class AuthState(object):
     PASSTHROUGH = "PASSTHROUGH"
     URL_REDIRECT = "URL_REDIRECT"
     KBDINT_CHECK = "KBDINT_CHECK"
-
-
-# TODO: to remove
-if (not hasattr(AUTH, "MOBILE_DEVICE")
-    and hasattr(AUTH, "PINGID")):
-    AUTH.MOBILE_DEVICE = AUTH.PINGID
-
-# TODO: to remove
-if not hasattr(AUTH, "URL_REDIRECT"):
-    AUTH.URL_REDIRECT = "URL_REDIRECT"
-
-# TODO: to remove
-if not hasattr(AUTH, "PASSTHROUGH"):
-    AUTH.PASSTHROUGH = "PASSTHROUGH"
-
-
-# TODO: to remove
-if not hasattr(IDENT, "PASSTHROUGH"):
-    IDENT.PASSTHROUGH = "PASSTHROUGH"
 
 
 COMPATIBILITY_PROXY = {
@@ -107,47 +88,39 @@ KBDINT_PENDING_STATUS = {
 BANNABLE_STATES = (AuthState.SSH_KEY, AuthState.KERBEROS)
 
 
-def get_auth_priority(auth_state):
+def get_auth_priority(auth_state: str) -> Optional[str]:
     if auth_state == AuthState.KBDINT_CHECK:
         return None
     expected = EXPECTED_FIRST_COMPAT.get(auth_state)
     return expected[0] if expected else None
 
 
-class Authenticator(object):
+class Authenticator:
     __slots__ = (
         'checker', 'auth_x509', 'challenge',
         'auth_state', 'auth_key', 'auth_ident', 'auth_challenge',
         'removed_auth_state', 'current_login',
     )
 
-    def __init__(self):
-        self.auth_x509 = None
-        self.challenge = None
-        self.auth_state = None
-        self.auth_key = None
-        self.auth_ident = None
-        self.auth_challenge = None
-        self.current_login = None
-        self.removed_auth_state = set()
-        self.checker = None
+    def __init__(self) -> None:
+        self.reset()
 
-    def reset(self):
-        self.auth_x509 = None
-        self.challenge = None
-        self.auth_state = None
-        self.auth_key = None
-        self.auth_ident = None
-        self.auth_challenge = None
-        self.current_login = None
-        self.removed_auth_state = set()
-        self.checker = None
+    def reset(self) -> None:
+        self.auth_x509: Optional[AuthX509] = None
+        self.challenge: Optional[Challenge] = None
+        self.auth_state: Optional[str] = None
+        self.auth_key: Optional[str] = None
+        self.auth_ident: Optional[str] = None
+        self.auth_challenge: Optional[Dict[str, str]] = None
+        self.current_login: Optional[str] = None
+        self.removed_auth_state: Set[str] = set()
+        self.checker: Optional[Checker] = None
 
-    def _init_client(self):
+    def _init_client(self) -> None:
         if self.checker is None:
             self.checker = Checker()
 
-    def _reset_auth(self, remove_auth_state=None, cancel=True):
+    def _reset_auth(self, remove_auth_state: str = None, cancel: bool = True) -> None:
         if remove_auth_state:
             Logger().debug(f">> PA remove state {remove_auth_state}")
             # do not try this auth method again
@@ -163,9 +136,12 @@ class Authenticator(object):
                 pass
         self.auth_key = None
 
-    def _init_identify(self, ip_source, server_ip,
-                       login=None, auth_state=None,
-                       client_name="PROXY"):
+    def _init_identify(self,
+                       ip_source: str,
+                       server_ip: str,
+                       login: Optional[str] = None,
+                       auth_state: Optional[str] = None,
+                       client_name: str = "PROXY") -> bool:
         self._init_client()
 
         # Conditions to continue
@@ -196,7 +172,6 @@ class Authenticator(object):
         Logger().debug(f">> PA init_identify current:{self.auth_key}  asked:{auth_state}")
         self.auth_state = auth_state
         self.auth_ident = IDENT_PROXY[auth_state]
-        data = {}
         if auth_state in (
             AuthState.PASSWORD,
             AuthState.KERBEROS,
@@ -210,12 +185,11 @@ class Authenticator(object):
             data = {
                 'login': login,
             }
-        elif auth_state in (AuthState.OTP,):
+        elif auth_state == AuthState.OTP:
             data = {
                 'token': login,
             }
-
-        if not data:
+        else:
             Logger().debug(f">> PA init_identify unknown state {auth_state}")
             self._reset_auth()
             return False
@@ -287,7 +261,7 @@ class Authenticator(object):
 
         return True
 
-    def _authentify(self, enginei, data, debug_str="None", no_delay=False):
+    def _authentify(self, enginei, data: Dict[str, Any], debug_str: str = "None", no_delay: bool = False) -> bool:
         try:
             Logger().debug(f"Call BEGIN authenticate ({debug_str})")
             enginei.wabengine = self.checker.authenticate(
@@ -324,7 +298,7 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def set_challenge(self, challenge, check_state=False):
+    def set_challenge(self, challenge: Dict[str, Union[int, str]], check_state: bool = False) -> None:
         auth_type = challenge.get("auth_type")
         self.auth_state = CHALLENGE_AUTH_STATE.get(auth_type)
         if self.auth_state is None:
@@ -340,14 +314,18 @@ class Authenticator(object):
             self.challenge = ac_to_challenge(challenge, check_state)
         return
 
-    def get_challenge(self):
+    def get_challenge(self) -> Optional[Challenge]:
         return self.challenge
 
-    def reset_challenge(self):
+    def reset_challenge(self) -> None:
         self.challenge = None
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type, target,
-                          ip_server):
+    def is_x509_connected(self,
+                          wab_login: str,
+                          ip_client: str,
+                          proxy_type: str,
+                          target: str,
+                          ip_server: str) -> bool:
         """
         Ask if we are authentifying using x509
         (and ask user by opening confirmation popup if we are,
@@ -367,7 +345,7 @@ class Authenticator(object):
                           f"((({traceback.format_exc()})))")
         return False
 
-    def is_x509_validated(self):
+    def is_x509_validated(self) -> bool:
         try:
             result = False
             if self.auth_x509 is not None:
@@ -377,7 +355,7 @@ class Authenticator(object):
             Logger().info(f"Engine is_x509_validated failed: ((({traceback.format_exc()})))")
         return result
 
-    def check_kbdint_authenticate(self, enginei, login, ip_client, ip_server):
+    def check_kbdint_authenticate(self, enginei, login: str, ip_client: str, ip_server: str) -> Union[bool, str, None]:
         if self.auth_key and login == self.current_login:
             return KBDINT_PENDING_STATUS.get(self.auth_state)
         if not self._init_identify(ip_client, ip_server, login=login,
@@ -391,7 +369,7 @@ class Authenticator(object):
             )
         return KBDINT_PENDING_STATUS.get(self.auth_state)
 
-    def x509_authenticate(self, enginei, ip_client=None, ip_server=None):
+    def x509_authenticate(self, enginei, ip_client: Optional[str] = None, ip_server: Optional[str] = None) -> bool:
         try:
             enginei.wabengine = self.auth_x509.get_proxy()
             if enginei.wabengine is not None:
@@ -407,7 +385,7 @@ class Authenticator(object):
                           f"((({traceback.format_exc()})))")
         return False
 
-    def otp_authenticate(self, enginei, otp, ip_client, ip_server):
+    def otp_authenticate(self, enginei, otp: str, ip_client: str, ip_server: str) -> bool:
         if not self._init_identify(ip_client, ip_server, login=otp,
                                    auth_state=AuthState.OTP):
             return False
@@ -420,15 +398,14 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def mobile_device_authenticate(self, enginei):
+    def mobile_device_authenticate(self, enginei) -> bool:
         if self.auth_state != AuthState.MOBILE_DEVICE:
             self._reset_auth()
             return False
         try:
-            data = {}
             auth_type = self.auth_challenge.get('auth_type')
             if auth_type == AUTH.MOBILE_DEVICE:
-                return self._authentify(enginei, data, "mobile_device",
+                return self._authentify(enginei, {}, "mobile_device",
                                         no_delay=True)
         except Exception:
             self._reset_auth(cancel=False)
@@ -439,15 +416,14 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def url_redirect_authenticate(self, enginei):
+    def url_redirect_authenticate(self, enginei) -> bool:
         if self.auth_state != AuthState.URL_REDIRECT:
             self._reset_auth()
             return False
         try:
-            data = {}
             auth_type = self.auth_challenge.get('auth_type')
             if auth_type == AUTH.URL_REDIRECT:
-                return self._authentify(enginei, data, "url_redirect",
+                return self._authentify(enginei, {}, "url_redirect",
                                         no_delay=True)
         except Exception:
             self._reset_auth(cancel=False)
@@ -458,8 +434,8 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def password_authenticate(self, enginei, wab_login, ip_client, password,
-                              ip_server):
+    def password_authenticate(self, enginei, wab_login: str, ip_client: str, password: str,
+                              ip_server: str) -> bool:
         if wab_login.startswith('_OTP_'):
             return self.otp_authenticate(enginei, wab_login, ip_client,
                                          ip_server)
@@ -485,8 +461,8 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def passthrough_authenticate(self, enginei, wab_login, ip_client,
-                                 ip_server):
+    def passthrough_authenticate(self, enginei, wab_login: str, ip_client: str,
+                                 ip_server: str) -> bool:
         if not self._init_identify(ip_client, ip_server, login=wab_login,
                                    auth_state=AuthState.PASSTHROUGH):
             return False
@@ -507,7 +483,7 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def gssapi_authenticate(self, enginei, wab_login, ip_client, ip_server):
+    def gssapi_authenticate(self, enginei, wab_login: str, ip_client: str, ip_server: str) -> bool:
         if not self._init_identify(ip_client, ip_server, login=wab_login,
                                    auth_state=AuthState.KERBEROS):
             return False
@@ -528,8 +504,13 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def pubkey_authenticate(self, enginei, wab_login, ip_client, pubkey,
-                            ip_server):
+    def pubkey_authenticate(self,
+                            enginei,
+                            wab_login: str,
+                            ip_client: str,
+                            ip_server: str,
+                            pubkey: str,
+                            ca_pubkey: str) -> bool:
         if not self._init_identify(ip_client, ip_server, login=wab_login,
                                    auth_state=AuthState.SSH_KEY):
             return False
@@ -537,10 +518,23 @@ class Authenticator(object):
             data = {}
             auth_type = self.auth_challenge.get('auth_type')
             if auth_type == AUTH.SSH_KEY:
-                ssh_keys = self.auth_challenge.get('ssh_keys')
+                ssh_ca_keys = self.auth_challenge.get('ssh_ca_keys') or []
+                for stored_ca_key in ssh_ca_keys:
+                    # Logger().debug("stored ca %s" % stored_ca_key)
+                    # Logger().debug("ca pubkey %s" % ca_pubkey)
+                    if compare_pubkeys_str(stored_ca_key, ca_pubkey):
+                        data['result'] = True
+                        break
+                else:
+                    if ca_pubkey:
+                        # no ca stored and ca signed pubkey at authentication
+                        # force check against ca_pubkey
+                        # (fallback to former behavior)
+                        pubkey = ca_pubkey
+                ssh_keys = self.auth_challenge.get('ssh_keys') or []
                 for stored_key in ssh_keys:
-                    # Logger().debug(f"stored key {stored_key}")
-                    # Logger().debug(f"pubkey {pubkey}")
+                    # Logger().debug("stored key %s" % stored_key)
+                    # Logger().debug("pubkey %s" % pubkey)
                     if compare_pubkeys_str(stored_key, pubkey):
                         data['result'] = True
                         break
