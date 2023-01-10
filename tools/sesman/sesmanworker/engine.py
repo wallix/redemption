@@ -650,7 +650,7 @@ class Engine(object):
         self.avatar_id = None
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
-        Logger().debug(f"** CALL Get_proxy_right ** proto={protocols}, {target_device=}")
+        Logger().debug(f"** CALL Get_proxy_right ** proto={protocols}, target_device={target_device}")
         with manage_transaction(self.wabengine):
             urights = self.wabengine.get_proxy_user_rights(protocols,
                                                            target_device,
@@ -1473,7 +1473,7 @@ class Engine(object):
         Logger().debug(f"** CALL Check_target ** ticket={request_ticket}")
         status, infos = self.checkout.check_target(target, request_ticket)
         Logger().debug("** END Check_target ** returns => "
-                       f"{status=}, info fields={infos.keys()}")
+                       f"status={status}, info fields={infos.keys()}")
         self.checktarget_cache = (status, target['target_uid'])
         self.checktarget_infos_cache = infos
         # Logger().info(f"returns => {status=}, {infos=}")
