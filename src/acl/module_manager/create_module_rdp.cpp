@@ -845,8 +845,7 @@ ModPack create_mod_rdp(
                           client_info,
                           rail_client_execute,
                           glyphs,
-                          theme,
-                          true)
+                          theme)
         : nullptr
     };
 
@@ -912,10 +911,10 @@ ModPack create_mod_rdp(
 
     if (!host_mod) {
         auto mod = new_mod.release();
-        return ModPack{mod, mod->get_windowing_api(), socket_transport};
+        return ModPack{mod, mod->get_windowing_api(), socket_transport, true};
     }
 
     host_mod->set_mod(std::move(new_mod));
     auto mod = host_mod.release();
-    return ModPack{mod, &rail_client_execute, socket_transport};
+    return ModPack{mod, &rail_client_execute, socket_transport, true};
 }

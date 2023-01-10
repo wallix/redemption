@@ -119,6 +119,11 @@ void ModFactory::disconnect()
     }
 }
 
+static ModPack mod_pack_from_widget(mod_api* mod)
+{
+    return {mod, nullptr, nullptr, false};
+}
+
 struct ModFactory::D
 {
     static void set_mod(ModFactory& self, ModuleName name, ModPack mod_pack, bool enable_osd)
@@ -136,6 +141,12 @@ struct ModFactory::D
         self.rail_client_execute.enable_remote_program(self.client_info.remote_program);
         self.mod_wrapper.set_mod(*mod_pack.mod, mod_pack.winapi, enable_osd);
 
+        if (self.rail_client_execute.is_rail_enabled() && !self.rail_client_execute.is_ready()) {
+            bool can_resize_hosted_desktop = mod_pack.can_resize_hosted_desktop
+                                          && self.ini.get<cfg::remote_program::allow_resize_hosted_desktop>()
+                                          && !self.ini.get<cfg::globals::is_rec>();
+            self.rail_client_execute.ready(*mod_pack.mod, self.glyphs, can_resize_hosted_desktop);
+        }
         mod_pack.mod->init();
     }
 
@@ -159,7 +170,7 @@ struct ModFactory::D
             self.theme,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr};
+        return mod_pack_from_widget(new_mod);
     }
 
     static ModPack create_dialog(ModFactory& self, const char* button, const char* caption, ChallengeOpt challenge)
@@ -179,10 +190,9 @@ struct ModFactory::D
             self.theme,
             challenge
         );
-        return {new_mod, nullptr, nullptr};
+        return mod_pack_from_widget(new_mod);
     }
 };
-
 
 void ModFactory::create_mod_bouncer()
 {
@@ -191,7 +201,7 @@ void ModFactory::create_mod_bouncer()
         this->events,
         this->client_info.screen_info.width,
         this->client_info.screen_info.height);
-    D::set_mod(*this, ModuleName::bouncer2, {new_mod, nullptr, nullptr}, true);
+    D::set_mod(*this, ModuleName::bouncer2, mod_pack_from_widget(new_mod), true);
 }
 
 void ModFactory::create_mod_replay()
@@ -213,7 +223,7 @@ void ModFactory::create_mod_replay()
         this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
         safe_cast<FileToGraphicVerbose>(this->ini.get<cfg::debug::capture>())
     );
-    D::set_mod(*this, ModuleName::autotest, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::autotest, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_widget_test_mod()
@@ -227,7 +237,7 @@ void ModFactory::create_widget_test_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::widgettest, {new_mod, nullptr, nullptr}, true);
+    D::set_mod(*this, ModuleName::widgettest, mod_pack_from_widget(new_mod), true);
 }
 
 void ModFactory::create_test_card_mod()
@@ -239,7 +249,7 @@ void ModFactory::create_test_card_mod()
         this->glyphs,
         false
     );
-    D::set_mod(*this, ModuleName::card, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::card, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_selector_mod()
@@ -256,7 +266,7 @@ void ModFactory::create_selector_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::selector, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::selector, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_close_mod()
@@ -288,7 +298,7 @@ void ModFactory::create_interactive_target_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::interactive_target, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::interactive_target, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_valid_message_mod()
@@ -335,7 +345,7 @@ void ModFactory::create_display_link_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::link_confirm, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::link_confirm, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_wait_info_mod()
@@ -360,7 +370,7 @@ void ModFactory::create_wait_info_mod()
         showform,
         flag
     );
-    D::set_mod(*this, ModuleName::waitinfo, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_transition_mod()
@@ -375,7 +385,7 @@ void ModFactory::create_transition_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::transitory, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::transitory, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_login_mod()
@@ -419,7 +429,7 @@ void ModFactory::create_login_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::waitinfo, {new_mod, nullptr, nullptr}, false);
+    D::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_rdp_mod(

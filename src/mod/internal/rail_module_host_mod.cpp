@@ -57,7 +57,7 @@ RailModuleHostMod::RailModuleHostMod(
     uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute& rail_client_execute,
     Font const& font, Theme const& theme,
-    const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
+    const GCC::UserData::CSMonitor& cs_monitor)
     : screen(drawable, width, height, font, theme)
     , rail_client_execute(rail_client_execute)
     , disconnection_reconnection_timer(events)
@@ -66,7 +66,6 @@ RailModuleHostMod::RailModuleHostMod(
     , module_host(drawable, this->screen,
                   *this->managed_mod, font, cs_monitor,
                   widget_rect, width, height)
-    , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
     this->screen.set_xy(widget_rect.x, widget_rect.y);
     this->screen.set_wh(width, height);
@@ -84,14 +83,6 @@ RailModuleHostMod::~RailModuleHostMod()
 {
     this->rail_client_execute.reset(true);
     this->screen.clear();
-}
-
-void RailModuleHostMod::init()
-{
-    if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
-        this->rail_client_execute.ready(
-            *this, this->font(), this->can_resize_hosted_desktop);
-    }
 }
 
 // RdpInput

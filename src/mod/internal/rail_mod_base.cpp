@@ -46,13 +46,6 @@ RailModBase::~RailModBase()
     this->rail_client_execute.reset(true);
 }
 
-void RailModBase::init()
-{
-    if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
-        this->rail_client_execute.ready(*this, this->screen.font, false);
-    }
-}
-
 void RailModBase::rdp_input_invalidate(Rect r)
 {
     this->screen.rdp_input_invalidate(r);

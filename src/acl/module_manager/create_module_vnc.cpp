@@ -158,8 +158,7 @@ ModPack create_mod_vnc(
                           client_info,
                           rail_client_execute,
                           glyphs,
-                          theme,
-                          false)
+                          theme)
         : nullptr
     };
 
@@ -197,9 +196,9 @@ ModPack create_mod_vnc(
     auto* socket_transport = &new_mod->get_transport();
 
     if (!client_info.remote_program) {
-        return ModPack{new_mod.release(), nullptr, socket_transport};
+        return ModPack{new_mod.release(), nullptr, socket_transport, false};
     }
 
     host_mod->set_mod(std::move(new_mod));
-    return ModPack{host_mod.release(), nullptr, socket_transport};
+    return ModPack{host_mod.release(), nullptr, socket_transport, false};
 }

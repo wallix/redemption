@@ -33,8 +33,7 @@ RailModuleHostMod* create_mod_rail(
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
     Font const& font,
-    Theme const& theme,
-    bool can_resize_hosted_desktop)
+    Theme const& theme)
 {
     LOG(LOG_INFO, "Creation of internal module 'RailModuleHostMod'");
 
@@ -73,12 +72,8 @@ RailModuleHostMod* create_mod_rail(
         rail_client_execute,
         font,
         theme,
-        client_info.cs_monitor,
-        can_resize_hosted_desktop
-        && ini.get<cfg::remote_program::allow_resize_hosted_desktop>()
-        && !ini.get<cfg::globals::is_rec>()
+        client_info.cs_monitor
     );
-    host_mod->init();
     host_mod->set_ini(ini);
 
     return host_mod;

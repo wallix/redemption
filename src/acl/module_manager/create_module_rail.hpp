@@ -40,5 +40,4 @@ RailModuleHostMod* create_mod_rail(
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
     Font const& font,
-    Theme const& theme,
-    bool can_resize_hosted_desktop);
+    Theme const& theme);

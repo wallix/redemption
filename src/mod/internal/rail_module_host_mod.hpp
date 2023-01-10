@@ -81,15 +81,13 @@ public:
         uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute& rail_client_execute,
         Font const& font, Theme const& theme,
-        const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);
+        const GCC::UserData::CSMonitor& cs_monitor);
 
     void set_mod(std::unique_ptr<mod_api>&& managed_mod) noexcept;
 
     ~RailModuleHostMod();
 
     gdi::GraphicApi& proxy_gd() { return this->module_host; }
-
-    void init() override;
 
     // RdpInput
 
@@ -128,6 +126,4 @@ public:
 private:
     std::unique_ptr<mod_api> managed_mod;
     WidgetModuleHost module_host;
-
-    bool can_resize_hosted_desktop = false;
 };

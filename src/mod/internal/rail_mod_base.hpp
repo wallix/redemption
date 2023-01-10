@@ -43,8 +43,6 @@ public:
 
     bool server_error_encountered() const override { return false; }
 
-    void init() override;
-
     void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
     void rdp_input_invalidate(Rect r) override;

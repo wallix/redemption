@@ -34,4 +34,5 @@ struct ModPack
     not_null_ptr<mod_api> mod;
     windowing_api* winapi;
     SocketTransport* psocket_transport;
+    bool can_resize_hosted_desktop;
 };

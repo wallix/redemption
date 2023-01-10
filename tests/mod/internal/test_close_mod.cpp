@@ -157,6 +157,7 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     CloseMod d("message", ini, events, gd,
         screen_info.width, screen_info.height, widget_rect, client_execute,
         global_font_deja_vu_14(), theme, true);
+    client_execute.ready(d, global_font_deja_vu_14(), false);
     d.init();
 
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
