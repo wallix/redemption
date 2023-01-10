@@ -22,7 +22,6 @@
 #pragma once
 
 #include "configs/config_access.hpp"
-#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/language_button.hpp"
@@ -31,6 +30,8 @@ namespace gdi
 {
     class OsdApi;
 }
+
+class CopyPaste;
 
 using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
@@ -48,7 +49,6 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>,
     vcfg::var<cfg::context::banner_type,                vcfg::accessmode::get>,
     vcfg::var<cfg::context::banner_message,             vcfg::accessmode::get | vcfg::accessmode::set>
 >;
@@ -62,9 +62,7 @@ public:
         gdi::OsdApi& osd,
         FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
-        Font const& font, Theme const& theme);
-
-    void init() override;
+        Font const& font, Theme const& theme, CopyPaste& copy_paste);
 
     void acl_update(AclFieldMask const& acl_fields) override;
 
@@ -83,6 +81,7 @@ private:
 
     gdi::OsdApi& osd;
     FrontAPI& front;
+    CopyPaste& copy_paste;
 
     LanguageButton language_button;
 
@@ -91,8 +90,6 @@ private:
 
     int current_page;
     int number_page;
-
-    CopyPaste copy_paste;
 
     int selector_lines_per_page_saved = 0;
 };

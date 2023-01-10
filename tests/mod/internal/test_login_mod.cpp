@@ -24,6 +24,7 @@
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/login_mod.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap.hpp"
@@ -39,6 +40,7 @@ struct TestLoginModCtx
     WindowListCaps window_list_caps;
     EventManager event_manager;
     ClientExecute client_execute{event_manager.get_time_base(), front.gd(), front, window_list_caps, false};
+    CopyPaste copy_paste{false};
 
     Inifile ini;
     Theme theme;
@@ -54,9 +56,8 @@ struct TestLoginModCtx
             return ini;
         }(), event_manager.get_events(), "user", "pass", front.gd(), front,
         screen_info.width, screen_info.height,
-        Rect(0, 0, 799, 599), client_execute, global_font(), theme)
+        Rect(0, 0, 799, 599), client_execute, global_font(), theme, copy_paste)
     {
-        d.init();
     }
 };
 

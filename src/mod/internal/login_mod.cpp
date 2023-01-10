@@ -21,6 +21,7 @@
 
 #include "configs/config.hpp"
 #include "mod/internal/login_mod.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "main/version.hpp"
 #include "utils/strutils.hpp"
 
@@ -63,7 +64,7 @@ LoginMod::LoginMod(
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
-    Theme const& theme
+    Theme const& theme, CopyPaste& copy_paste
 )
     : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , events_guard(events)
@@ -101,9 +102,9 @@ LoginMod::LoginMod(
         &this->language_button,
         vars.get<cfg::internal_mod::enable_target_field>(),
         font, Translator(login_language(vars)), theme)
-    , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
     , front(front)
+    , copy_paste(copy_paste)
 {
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
@@ -144,12 +145,6 @@ LoginMod::LoginMod(
 }
 
 LoginMod::~LoginMod() = default;
-
-void LoginMod::init()
-{
-    RailModBase::init();
-    this->copy_paste.ready(this->front);
-}
 
 void LoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {

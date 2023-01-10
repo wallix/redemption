@@ -23,7 +23,6 @@
 #pragma once
 
 #include "configs/config_access.hpp"
-#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/wait.hpp"
 #include "mod/internal/widget/language_button.hpp"
@@ -37,8 +36,7 @@ using WaitModVariables = vcfg::variables<
     vcfg::var<cfg::context::ticket,                     vcfg::accessmode::set>,
     vcfg::var<cfg::context::waitinforeturn,             vcfg::accessmode::set>,
     vcfg::var<cfg::context::duration_max,               vcfg::accessmode::get>,
-    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>
 >;
 
 
@@ -52,11 +50,9 @@ public:
         FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,
         const char * message, ClientExecute & rail_client_execute, Font const& font,
-        Theme const& theme, bool showform = false, uint32_t flag = 0);
+        Theme const& theme, CopyPaste& copy_paste, bool showform = false, uint32_t flag = 0);
 
     ~WaitMod() override;
-
-    void init() override;
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
@@ -73,10 +69,8 @@ private:
 
     WaitModVariables vars;
 
-    CopyPaste copy_paste;
-
     EventsGuard events_guard;
-    FrontAPI & front;
+    CopyPaste & copy_paste;
 
     bool showform;
 

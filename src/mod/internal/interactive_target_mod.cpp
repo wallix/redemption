@@ -27,12 +27,13 @@ InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
     gdi::GraphicApi & drawable,
     FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
-    ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
+    ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
+    CopyPaste& copy_paste)
     : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-    , front(front)
+    , copy_paste(copy_paste)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge,
         drawable, front, font, theme)
     , challenge(
@@ -50,7 +51,6 @@ InteractiveTargetMod::InteractiveTargetMod(
         TR(trkeys::login, language(vars)), vars.get<cfg::globals::target_user>().c_str(),
         TR(trkeys::password, language(vars)),
         font, &this->language_button)
-    , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {
     this->screen.add_widget(&this->challenge);
@@ -69,12 +69,6 @@ InteractiveTargetMod::InteractiveTargetMod(
 }
 
 InteractiveTargetMod::~InteractiveTargetMod() = default;
-
-void InteractiveTargetMod::init()
-{
-    RailModBase::init();
-    this->copy_paste.ready(this->front);
-}
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void InteractiveTargetMod::accepted()

@@ -23,12 +23,13 @@
 #pragma once
 
 #include "configs/config_access.hpp"
-#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/login.hpp"
 #include "mod/internal/widget/language_button.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "core/events.hpp"
 
+
+class CopyPaste;
 
 using LoginModVariables = vcfg::variables<
     vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
@@ -43,8 +44,7 @@ using LoginModVariables = vcfg::variables<
     vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
-    vcfg::var<cfg::internal_mod::enable_target_field,   vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+    vcfg::var<cfg::internal_mod::enable_target_field,   vcfg::accessmode::get>
 >;
 
 
@@ -58,12 +58,10 @@ public:
         gdi::GraphicApi & drawable,
         FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
-        Theme const& theme
+        Theme const& theme, CopyPaste& copy_paste
     );
 
     ~LoginMod();
-
-    void init() override;
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
@@ -80,8 +78,7 @@ private:
     LanguageButton language_button;
     WidgetLogin login;
 
-    CopyPaste copy_paste;
-
     LoginModVariables vars;
     FrontAPI & front;
+    CopyPaste & copy_paste;
 };

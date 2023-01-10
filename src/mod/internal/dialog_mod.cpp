@@ -20,6 +20,7 @@
  */
 
 #include "configs/config.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "utils/translation.hpp"
@@ -31,7 +32,8 @@ DialogMod::DialogMod(
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     const char * cancel_text, ClientExecute & rail_client_execute,
-    Font const& font, Theme const& theme, ChallengeOpt has_challenge
+    Font const& font, Theme const& theme, CopyPaste& copy_paste,
+    ChallengeOpt has_challenge
 )
     : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , language_button(
@@ -48,8 +50,7 @@ DialogMod::DialogMod(
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)
     , vars(vars)
-    , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
-    , front(front)
+    , copy_paste(copy_paste)
 {
     this->screen.add_widget(&this->dialog_widget);
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
@@ -62,14 +63,6 @@ DialogMod::DialogMod(
 }
 
 DialogMod::~DialogMod() = default;
-
-void DialogMod::init()
-{
-    RailModBase::init();
-    if (this->dialog_widget.challenge) {
-        this->copy_paste.ready(this->front);
-    }
-}
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void DialogMod::accepted()

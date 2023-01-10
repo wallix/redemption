@@ -44,7 +44,7 @@ public:
 
     ~WidgetTestMod() override;
 
-    void init() override;
+    void init_copy_paste();
 
     void rdp_gdi_up_and_running() override {}
 

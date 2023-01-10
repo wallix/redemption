@@ -1089,33 +1089,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(MUSL_GETTEXT)
 ;
-test-run tests/client_mods/test_rdp_client_test_card :
-  $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_test_card.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/mod/internal/test_card_mod.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/client_mods/test_rdp_client_tls_w2008 :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_tls_w2008.cpp
 :
@@ -5274,7 +5247,6 @@ alias test_wrm_capture : tests/capture/test_wrm_capture ;
 alias test_pattern_searcher : tests/capture/utils/test_pattern_searcher ;
 alias test_pattutils : tests/capture/utils/test_pattutils ;
 alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_pointer ;
-alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
 alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
 alias test_client_cliprdr_channel : tests/client_redemption/client_channels/test_client_cliprdr_channel ;
@@ -5591,7 +5563,6 @@ alias tests/capture/utils.norec :
 ;
 alias tests/client_mods.norec :
   tests/client_mods/test_rdp_client_large_pointer
-  tests/client_mods/test_rdp_client_test_card
   tests/client_mods/test_rdp_client_tls_w2008
   tests/client_mods/test_rdp_client_wab
 ;
@@ -6366,7 +6337,6 @@ explicit
   test_pattern_searcher
   test_pattutils
   test_rdp_client_large_pointer
-  test_rdp_client_test_card
   test_rdp_client_tls_w2008
   test_rdp_client_wab
   test_client_cliprdr_channel

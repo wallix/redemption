@@ -99,7 +99,6 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     Font const& font = global_font_deja_vu_14();
 
     auto mod = std::make_unique<TestRectMod>(w, h, gdi::null_gd());
-    mod->init();
     // mod is moved in railmo
     auto& mod_ref = *mod;
 
@@ -113,7 +112,6 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
         client_execute, font, theme, cs_monitor);
     client_execute.ready(host_mod, font, false);
     host_mod.set_mod(std::move(mod));
-    host_mod.init();
 
     mod_ref.gd = &host_mod.proxy_gd();
 

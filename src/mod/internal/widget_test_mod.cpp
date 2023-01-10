@@ -77,7 +77,7 @@ WidgetTestMod::WidgetTestMod(
     (void)front.server_resize({width, height, BitsPerPixel{8}});
 }
 
-void WidgetTestMod::init()
+void WidgetTestMod::init_copy_paste()
 {
     this->d->copy_paste.ready(this->d->front);
 }

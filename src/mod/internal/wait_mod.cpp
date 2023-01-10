@@ -21,6 +21,7 @@
 
 #include "configs/config.hpp"
 #include "mod/internal/wait_mod.hpp"
+#include "mod/internal/copy_paste.hpp"
 
 
 using namespace std::chrono_literals;
@@ -32,7 +33,7 @@ WaitMod::WaitMod(
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
-    bool showform, uint32_t flag
+    CopyPaste& copy_paste, bool showform, uint32_t flag
 )
     : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
@@ -47,9 +48,8 @@ WaitMod::WaitMod(
         caption, message, &this->language_button,
         font, theme, language(vars), showform, flag, vars.get<cfg::context::duration_max>())
     , vars(vars)
-    , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , events_guard(events)
-    , front(front)
+    , copy_paste(copy_paste)
     , showform(showform)
 {
     this->screen.add_widget(&this->wait_widget);
@@ -71,14 +71,6 @@ WaitMod::WaitMod(
 }
 
 WaitMod::~WaitMod() = default;
-
-void WaitMod::init()
-{
-    RailModBase::init();
-    if (this->showform) {
-        this->copy_paste.ready(this->front);
-    }
-}
 
 void WaitMod::confirm()
 {
@@ -107,7 +99,7 @@ void WaitMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, In
 {
     RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
 
-    if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
+    if (this->showform && this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
         this->copy_paste.send_to_mod_channel(chunk, flags);
     }
 }

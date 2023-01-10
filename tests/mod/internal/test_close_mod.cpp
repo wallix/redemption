@@ -58,7 +58,6 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     {
         CloseMod d("message", ini, events, front.gd(), screen_info.width, screen_info.height, Rect(0, 0, 799, 599),
                    client_execute, global_font_deja_vu_14(), theme, false);
-        d.init();
 
         keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
         d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
@@ -104,7 +103,6 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     CloseMod d("message", ini, events, front.gd(),
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         global_font_deja_vu_14(), theme, true);
-    d.init();
 
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
     d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
@@ -158,7 +156,6 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
         screen_info.width, screen_info.height, widget_rect, client_execute,
         global_font_deja_vu_14(), theme, true);
     client_execute.ready(d, global_font_deja_vu_14(), false);
-    d.init();
 
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
     d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);

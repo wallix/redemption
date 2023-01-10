@@ -147,7 +147,6 @@ struct ModFactory::D
                                           && !self.ini.get<cfg::globals::is_rec>();
             self.rail_client_execute.ready(*mod_pack.mod, self.glyphs, can_resize_hosted_desktop);
         }
-        mod_pack.mod->init();
     }
 
     static ModPack create_close_mod(ModFactory& self, bool back_to_selector)
@@ -173,7 +172,9 @@ struct ModFactory::D
         return mod_pack_from_widget(new_mod);
     }
 
-    static ModPack create_dialog(ModFactory& self, const char* button, const char* caption, ChallengeOpt challenge)
+    static ModPack create_dialog(
+        ModFactory& self, const char* button, const char* caption,
+        ChallengeOpt challenge)
     {
         auto new_mod = new DialogMod(
             self.ini,
@@ -188,9 +189,20 @@ struct ModFactory::D
             self.rail_client_execute,
             self.glyphs,
             self.theme,
+            copy_paste(self),
             challenge
         );
         return mod_pack_from_widget(new_mod);
+    }
+
+    static CopyPaste& copy_paste(ModFactory& self)
+    {
+        if (!self.copy_paste_ptr) {
+            const auto verbosity = self.ini.get<cfg::debug::mod_internal>();
+            self.copy_paste_ptr = std::make_unique<CopyPaste>(verbosity != 0);
+            self.copy_paste_ptr->ready(self.front);
+        }
+        return *self.copy_paste_ptr;
     }
 };
 
@@ -264,7 +276,8 @@ void ModFactory::create_selector_mod()
         this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
         this->rail_client_execute,
         this->glyphs,
-        this->theme
+        this->theme,
+        D::copy_paste(*this)
     );
     D::set_mod(*this, ModuleName::selector, mod_pack_from_widget(new_mod), false);
 }
@@ -296,7 +309,8 @@ void ModFactory::create_interactive_target_mod()
         this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
         this->rail_client_execute,
         this->glyphs,
-        this->theme
+        this->theme,
+        D::copy_paste(*this)
     );
     D::set_mod(*this, ModuleName::interactive_target, mod_pack_from_widget(new_mod), false);
 }
@@ -305,14 +319,16 @@ void ModFactory::create_valid_message_mod()
 {
     const char * button = TR(trkeys::refused, language(this->ini));
     const char * caption = "Information";
-    D::set_mod(*this, ModuleName::valid, D::create_dialog(*this, button, caption, NO_CHALLENGE), false);
+    auto mod_pack = D::create_dialog(*this, button, caption, NO_CHALLENGE);
+    D::set_mod(*this, ModuleName::valid, mod_pack, false);
 }
 
 void ModFactory::create_display_message_mod()
 {
     const char * button = nullptr;
     const char * caption = "Information";
-    D::set_mod(*this, ModuleName::confirm, D::create_dialog(*this, button, caption, NO_CHALLENGE), false);
+    auto mod_pack = D::create_dialog(*this, button, caption, NO_CHALLENGE);
+    D::set_mod(*this, ModuleName::confirm, mod_pack, false);
 }
 
 void ModFactory::create_dialog_challenge_mod()
@@ -322,7 +338,8 @@ void ModFactory::create_dialog_challenge_mod()
     const ChallengeOpt challenge = this->ini.get<cfg::context::authentication_challenge>()
         ? CHALLENGE_ECHO
         : CHALLENGE_HIDE;
-    D::set_mod(*this, ModuleName::challenge, D::create_dialog(*this, button, caption, challenge), false);
+    auto mod_pack = D::create_dialog(*this, button, caption, challenge);
+    D::set_mod(*this, ModuleName::challenge, mod_pack, false);
 }
 
 void ModFactory::create_display_link_mod()
@@ -333,7 +350,6 @@ void ModFactory::create_display_link_mod()
     auto new_mod = new DialogMod2(
         this->ini,
         this->graphics,
-        this->front,
         this->client_info.screen_info.width,
         this->client_info.screen_info.height,
         this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -343,7 +359,8 @@ void ModFactory::create_display_link_mod()
         link_label,
         this->rail_client_execute,
         this->glyphs,
-        this->theme
+        this->theme,
+        D::copy_paste(*this)
     );
     D::set_mod(*this, ModuleName::link_confirm, mod_pack_from_widget(new_mod), false);
 }
@@ -367,6 +384,7 @@ void ModFactory::create_wait_info_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
+        D::copy_paste(*this),
         showform,
         flag
     );
@@ -390,9 +408,9 @@ void ModFactory::create_transition_mod()
 
 void ModFactory::create_login_mod()
 {
+    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
     char username[255]; // should use string
     username[0] = 0;
-    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
     if (!this->ini.is_asked<cfg::globals::auth_user>()){
         if (this->ini.is_asked<cfg::globals::target_user>()
          || this->ini.is_asked<cfg::globals::target_device>()){
@@ -427,7 +445,8 @@ void ModFactory::create_login_mod()
         this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
         this->rail_client_execute,
         this->glyphs,
-        this->theme
+        this->theme,
+        D::copy_paste(*this)
     );
     D::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
 }
@@ -437,6 +456,7 @@ void ModFactory::create_rdp_mod(
     PerformAutomaticReconnection perform_automatic_reconnection
 )
 {
+    this->copy_paste_ptr.reset();
     auto mod_pack = create_mod_rdp(
         this->mod_wrapper.get_graphics(),
         this->mod_wrapper,
@@ -459,6 +479,7 @@ void ModFactory::create_rdp_mod(
 
 void ModFactory::create_vnc_mod(SessionLogApi& session_log)
 {
+    this->copy_paste_ptr.reset();
     auto mod_pack = create_mod_vnc(
         this->mod_wrapper.get_graphics(),
         this->ini,

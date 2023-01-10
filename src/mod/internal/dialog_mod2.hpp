@@ -22,15 +22,13 @@
 #pragma once
 
 #include "configs/config_access.hpp"
-#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/dialog2.hpp"
 
 
 using DialogMod2Variables = vcfg::variables<
     vcfg::var<cfg::context::display_message, vcfg::accessmode::set>,
-    vcfg::var<cfg::translation::language,    vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,      vcfg::accessmode::get>
+    vcfg::var<cfg::translation::language,    vcfg::accessmode::get>
 >;
 
 
@@ -40,15 +38,13 @@ public:
     DialogMod2(
         DialogMod2Variables vars,
         gdi::GraphicApi & drawable,
-        FrontAPI & front, uint16_t width, uint16_t height,
+        uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * link_value, const char * link_label,
         ClientExecute & rail_client_execute,
-        Font const& font, Theme const& theme); /*NOLINT*/
+        Font const& font, Theme const& theme, CopyPaste& copy_paste); /*NOLINT*/
 
     ~DialogMod2() override;
-
-    void init() override;
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
@@ -64,10 +60,8 @@ private:
 
     void refused();
 
-    FrontAPI & front;
+    CopyPaste & copy_paste;
     WidgetDialog2 dialog_widget;
 
     DialogMod2Variables vars;
-
-    CopyPaste copy_paste;
 };

@@ -43,11 +43,7 @@ TestCardMod::TestCardMod(
 , unit_test(unit_test)
 , gd(gd)
 {
-}
-
-void TestCardMod::init()
-{
-    this->draw_event();
+    draw_event();
 }
 
 Rect TestCardMod::get_screen_rect() const

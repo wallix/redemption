@@ -24,6 +24,7 @@
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/dialog_mod.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
@@ -40,6 +41,7 @@ namespace
         WindowListCaps window_list_caps;
         TimeBase time_base;
         ClientExecute client_execute{time_base, front.gd(), front, window_list_caps, false};
+        CopyPaste copy_paste{false};
 
         Inifile ini;
         Theme theme;
@@ -50,9 +52,8 @@ namespace
         DialogModContextTest(char const* button_text, ChallengeOpt has_challenge = NO_CHALLENGE)
         : d(ini, front.gd(), front, screen_info.width, screen_info.height,
             Rect(0, 0, 799, 599), "Title", "Hello, World", button_text,
-            client_execute, global_font(), theme, has_challenge)
+            client_execute, global_font(), theme, copy_paste, has_challenge)
         {
-            d.init();
         }
 
         void keydown(uint8_t scancode)

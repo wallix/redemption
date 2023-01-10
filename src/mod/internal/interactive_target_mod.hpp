@@ -28,6 +28,8 @@
 #include "mod/internal/widget/interactive_target.hpp"
 
 
+class CopyPaste;
+
 using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_user,                vcfg::accessmode::is_asked | vcfg::accessmode::set | vcfg::accessmode::get>,
     vcfg::var<cfg::context::target_password,            vcfg::accessmode::is_asked | vcfg::accessmode::set>,
@@ -35,8 +37,7 @@ using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_device,              vcfg::accessmode::get>,
     vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>
 >;
 
 
@@ -47,11 +48,10 @@ public:
         InteractiveTargetModVariables vars,
         gdi::GraphicApi & drawable,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
-        ClientExecute & rail_client_execute, Font const& font, Theme const& theme);
+        ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
+        CopyPaste& copy_paste);
 
     ~InteractiveTargetMod() override;
-
-    void init() override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
@@ -71,11 +71,10 @@ private:
     bool ask_login;
     bool ask_password;
 
-    FrontAPI & front;
+    CopyPaste& copy_paste;
+
     LanguageButton language_button;
     WidgetInteractiveTarget challenge;
-
-    CopyPaste copy_paste;
 
     InteractiveTargetModVariables vars;
 };

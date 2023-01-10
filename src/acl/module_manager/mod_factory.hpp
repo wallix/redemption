@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 
 class SocketTransport;
+class CopyPaste;
 
 
 class ModFactory
@@ -141,6 +142,7 @@ private:
     Keymap & keymap;
     Random & gen;
     CryptoContext & cctx;
+    std::unique_ptr<CopyPaste> copy_paste_ptr;
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     FileSystemLicenseStore file_system_license_store;
 

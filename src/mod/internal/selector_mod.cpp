@@ -19,6 +19,7 @@
  */
 
 #include "mod/internal/selector_mod.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "configs/config.hpp"
 #include "gdi/text_metrics.hpp"
 #include "gdi/osd_api.hpp"
@@ -65,12 +66,13 @@ SelectorMod::SelectorMod(
     gdi::OsdApi& osd,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
-    Font const& font, Theme const& theme
+    Font const& font, Theme const& theme, CopyPaste& copy_paste
 )
     : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , ini(ini)
     , osd(osd)
     , front(front)
+    , copy_paste(copy_paste)
     , language_button(
         ini.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
@@ -172,7 +174,6 @@ SelectorMod::SelectorMod(
 
     , current_page(unchecked_decimal_chars_to_int(this->selector.current_page.get_text()))
     , number_page(unchecked_decimal_chars_to_int(this->selector.number_page.get_text()+1))
-    , copy_paste(ini.get<cfg::debug::mod_internal>() != 0)
 {
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
@@ -188,12 +189,6 @@ SelectorMod::SelectorMod(
     this->ini.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->selector.rdp_input_invalidate(this->selector.get_rect());
     this->ask_page();
-}
-
-void SelectorMod::init()
-{
-    RailModBase::init();
-    this->copy_paste.ready(this->front);
 }
 
 void SelectorMod::acl_update(AclFieldMask const& /*acl_fields*/)

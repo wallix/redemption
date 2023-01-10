@@ -28,22 +28,21 @@
 DialogMod2::DialogMod2(
     DialogMod2Variables vars,
     gdi::GraphicApi & drawable,
-    FrontAPI & front, uint16_t width, uint16_t height,
+    uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     const char * link_value, const char * link_label,
     ClientExecute & rail_client_execute,
-    Font const& font, Theme const& theme
+    Font const& font, Theme const& theme, CopyPaste& copy_paste
 )
     : RailModBase(drawable, width, height, rail_client_execute, font, theme)
-    , front(front)
+    , copy_paste(copy_paste)
     , dialog_widget(
         drawable, widget_rect, this->screen,
         {.onsubmit = [this]{ this->accepted(); },
          .oncancel = [this]{ this->refused(); }},
         caption, message, link_value, link_label,
-        this->copy_paste, theme, font, TR(trkeys::OK, language(vars)))
+        copy_paste, theme, font, TR(trkeys::OK, language(vars)))
     , vars(vars)
-    , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
     this->screen.add_widget(&this->dialog_widget);
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
@@ -52,12 +51,6 @@ DialogMod2::DialogMod2(
 }
 
 DialogMod2::~DialogMod2() = default;
-
-void DialogMod2::init()
-{
-    RailModBase::init();
-    this->copy_paste.ready(this->front);
-}
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void DialogMod2::accepted()

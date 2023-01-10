@@ -22,19 +22,19 @@
 #pragma once
 
 #include "configs/config_access.hpp"
-#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/language_button.hpp"
 
+
+class CopyPaste;
 
 using DialogModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
     vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
     vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
-    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>
 >;
 
 
@@ -47,11 +47,10 @@ public:
         FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, ClientExecute & rail_client_execute,
-        Font const& font, Theme const& theme, ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
+        Font const& font, Theme const& theme, CopyPaste& copy_paste,
+        ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
 
     ~DialogMod() override;
-
-    void init() override;
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
@@ -72,6 +71,5 @@ private:
 
     DialogModVariables vars;
 
-    CopyPaste copy_paste;
-    FrontAPI & front;
+    CopyPaste & copy_paste;
 };

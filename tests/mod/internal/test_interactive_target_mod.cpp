@@ -24,6 +24,7 @@
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
@@ -38,6 +39,7 @@ struct TestInteractiveTargetModFixture
     WindowListCaps window_list_caps;
     EventContainer events;
     ClientExecute client_execute{events.get_time_base(), front.gd(), front, window_list_caps, false};
+    CopyPaste copy_paste{false};
 
     Inifile ini;
     Theme theme;
@@ -52,13 +54,8 @@ struct TestInteractiveTargetModFixture
             return ini;
         }(),
         front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
-        client_execute, global_font(), theme
+        client_execute, global_font(), theme, copy_paste
     };
-
-    TestInteractiveTargetModFixture()
-    {
-        d.init();
-    }
 };
 
 // TODO "Need more tests, with or without device/login/password asking, "
