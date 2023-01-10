@@ -23,7 +23,6 @@ Author(s): Proxy Team
 class RailModuleHostMod;
 class Inifile;
 class EventContainer;
-class FrontAPI;
 class ClientInfo;
 class ClientExecute;
 class Font;
@@ -38,7 +37,6 @@ RailModuleHostMod* create_mod_rail(
     Inifile& ini,
     EventContainer& events,
     gdi::GraphicApi & drawable,
-    FrontAPI& front,
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
     Font const& font,

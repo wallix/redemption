@@ -64,6 +64,7 @@ private:
 
     void refused();
 
+    FrontAPI & front;
     WidgetDialog2 dialog_widget;
 
     DialogMod2Variables vars;

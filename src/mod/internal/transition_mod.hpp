@@ -33,7 +33,7 @@ public:
     TransitionMod(
         char const * message,
         gdi::GraphicApi & drawable,
-        FrontAPI & front, uint16_t width, uint16_t height,
+        uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme
     );

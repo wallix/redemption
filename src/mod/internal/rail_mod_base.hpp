@@ -21,18 +21,17 @@ Author(s): Proxy Team
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
 
 class ClientExecute;
 class EventContainer;
+class FrontAPI;
 
 class RailModBase : public mod_api
 {
 public:
     RailModBase(
         gdi::GraphicApi & gd,
-        FrontAPI & front,
         uint16_t width, uint16_t height,
         ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);
@@ -72,13 +71,10 @@ protected:
     uint16_t front_width;
     uint16_t front_height;
 
-    FrontAPI & front;
-
     WidgetScreen screen;
 
 private:
     ClientExecute & rail_client_execute;
-    DVCManager dvc_manager;
 
     const bool rail_enabled;
 

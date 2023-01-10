@@ -151,7 +151,6 @@ struct ModFactory::D
             self.ini,
             self.events,
             self.graphics,
-            self.front,
             self.client_info.screen_info.width,
             self.client_info.screen_info.height,
             self.rail_client_execute.adjust_rect(self.client_info.get_widget_rect()),
@@ -369,7 +368,6 @@ void ModFactory::create_transition_mod()
     auto new_mod = new TransitionMod(
         TR(trkeys::wait_msg, language(this->ini)),
         this->graphics,
-        this->front,
         this->client_info.screen_info.width,
         this->client_info.screen_info.height,
         this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),

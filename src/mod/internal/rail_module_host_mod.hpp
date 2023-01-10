@@ -21,7 +21,6 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/module_host.hpp"
 #include "core/events.hpp"
@@ -57,12 +56,8 @@ public:
     }
 
 private:
-    FrontAPI & front;
-
     WidgetScreen screen;
     ClientExecute& rail_client_execute;
-
-    DVCManager dvc_manager;
 
     EventRef2 disconnection_reconnection_timer;
 
@@ -83,7 +78,7 @@ public:
     RailModuleHostMod(
         EventContainer& events,
         gdi::GraphicApi & drawable,
-        FrontAPI& front, uint16_t width, uint16_t height,
+        uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute& rail_client_execute,
         Font const& font, Theme const& theme,
         const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);

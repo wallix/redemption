@@ -78,10 +78,10 @@ CloseMod::CloseMod(
     CloseModVariables vars,
     EventContainer& events,
     gdi::GraphicApi & gd,
-    FrontAPI & front, uint16_t width, uint16_t height,
+    uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool back_selector)
-    : RailModBase(gd, front, width, height, rail_client_execute, font, theme)
+    : RailModBase(gd, width, height, rail_client_execute, font, theme)
     , close_widget(build_close_widget(
         gd, widget_rect, this->screen, auth_error_message, vars, font, theme, back_selector,
         {

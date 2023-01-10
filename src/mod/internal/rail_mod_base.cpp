@@ -26,16 +26,13 @@ Author(s): Proxy Team
 
 RailModBase::RailModBase(
     gdi::GraphicApi & gd,
-    FrontAPI & front,
     uint16_t width, uint16_t height,
     ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme)
     : front_width(width)
     , front_height(height)
-    , front(front)
     , screen(gd, front_width, front_height, font, theme)
     , rail_client_execute(rail_client_execute)
-    , dvc_manager(false)
     , rail_enabled(rail_client_execute.is_rail_enabled())
 {
     this->screen.set_wh(this->front_width, this->front_height);
@@ -53,7 +50,6 @@ void RailModBase::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(*this, this->screen.font, false);
-        this->dvc_manager.ready(this->front);
     }
 }
 
@@ -127,9 +123,6 @@ void RailModBase::send_to_mod_channel( CHANNELS::ChannelNameId front_channel_nam
     if (this->rail_enabled && this->rail_client_execute.is_ready()) {
         if (front_channel_name == CHANNELS::channel_names::rail) {
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
-        }
-        else if (front_channel_name == CHANNELS::channel_names::drdynvc) {
-            this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
         }
     }
 }

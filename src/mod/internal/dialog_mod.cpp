@@ -33,7 +33,7 @@ DialogMod::DialogMod(
     const char * cancel_text, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, ChallengeOpt has_challenge
 )
-    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
@@ -49,6 +49,7 @@ DialogMod::DialogMod(
         cancel_text, has_challenge)
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
+    , front(front)
 {
     this->screen.add_widget(&this->dialog_widget);
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);

@@ -71,6 +71,7 @@ private:
     bool ask_login;
     bool ask_password;
 
+    FrontAPI & front;
     LanguageButton language_button;
     WidgetInteractiveTarget challenge;
 

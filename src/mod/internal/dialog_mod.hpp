@@ -73,4 +73,5 @@ private:
     DialogModVariables vars;
 
     CopyPaste copy_paste;
+    FrontAPI & front;
 };

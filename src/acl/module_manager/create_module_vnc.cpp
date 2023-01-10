@@ -155,7 +155,6 @@ ModPack create_mod_vnc(
         ? create_mod_rail(ini,
                           events,
                           drawable,
-                          front,
                           client_info,
                           rail_client_execute,
                           glyphs,

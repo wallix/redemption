@@ -82,6 +82,7 @@ private:
     SelectorModVariables ini;
 
     gdi::OsdApi& osd;
+    FrontAPI& front;
 
     LanguageButton language_button;
 

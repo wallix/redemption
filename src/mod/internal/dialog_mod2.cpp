@@ -34,7 +34,8 @@ DialogMod2::DialogMod2(
     ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
-    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
+    , front(front)
     , dialog_widget(
         drawable, widget_rect, this->screen,
         {.onsubmit = [this]{ this->accepted(); },

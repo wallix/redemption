@@ -25,6 +25,7 @@
 #include "keyboard/keymap.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/chars_to_int.hpp"
+#include "utils/log.hpp"
 
 
 namespace
@@ -66,9 +67,10 @@ SelectorMod::SelectorMod(
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
-    : RailModBase(drawable, front, width, height, rail_client_execute, font, theme)
+    : RailModBase(drawable, width, height, rail_client_execute, font, theme)
     , ini(ini)
     , osd(osd)
+    , front(front)
     , language_button(
         ini.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)

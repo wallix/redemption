@@ -83,4 +83,5 @@ private:
     CopyPaste copy_paste;
 
     LoginModVariables vars;
+    FrontAPI & front;
 };

@@ -30,7 +30,6 @@ RailModuleHostMod* create_mod_rail(
     Inifile& ini,
     EventContainer& events,
     gdi::GraphicApi & drawable,
-    FrontAPI& front,
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
     Font const& font,
@@ -68,7 +67,6 @@ RailModuleHostMod* create_mod_rail(
     auto* host_mod = new RailMod(
         events,
         drawable,
-        front,
         client_info.screen_info.width,
         client_info.screen_info.height,
         rail_client_execute.adjust_rect(client_info.get_widget_rect()),

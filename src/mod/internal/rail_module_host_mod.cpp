@@ -54,14 +54,12 @@ void RailModuleHostMod::rdp_input_scancode(
 RailModuleHostMod::RailModuleHostMod(
     EventContainer& events,
     gdi::GraphicApi & drawable,
-    FrontAPI& front, uint16_t width, uint16_t height,
+    uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute& rail_client_execute,
     Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
-    : front(front)
-    , screen(drawable, width, height, font, theme)
+    : screen(drawable, width, height, font, theme)
     , rail_client_execute(rail_client_execute)
-    , dvc_manager(false)
     , disconnection_reconnection_timer(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , managed_mod(std::make_unique<null_mod>())
@@ -93,7 +91,6 @@ void RailModuleHostMod::init()
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
             *this, this->font(), this->can_resize_hosted_desktop);
-        this->dvc_manager.ready(this->front);
     }
 }
 
@@ -166,13 +163,6 @@ void RailModuleHostMod::send_to_mod_channel(
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }
         return;
-    }
-
-    if (this->rail_enabled
-     && this->rail_client_execute.is_ready()
-     && front_channel_name == CHANNELS::channel_names::drdynvc
-    ) {
-        this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
     }
 
     mod_api& mod = this->module_host.get_managed_mod();

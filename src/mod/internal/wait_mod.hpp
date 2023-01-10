@@ -76,6 +76,7 @@ private:
     CopyPaste copy_paste;
 
     EventsGuard events_guard;
+    FrontAPI & front;
 
     bool showform;
 
