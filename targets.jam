@@ -2844,39 +2844,6 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/mod/internal/test_widget_test_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_widget_test_mod.cpp
-:
-  <library>crypto
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/delegated_copy.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget_test_mod.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/mod/internal/widget/test_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_button.cpp
 :
@@ -5383,7 +5350,6 @@ alias test_login_mod : tests/mod/internal/test_login_mod ;
 alias test_rail_module_host_mod : tests/mod/internal/test_rail_module_host_mod ;
 alias test_replay_mod : tests/mod/internal/test_replay_mod ;
 alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
-alias test_widget_test_mod : tests/mod/internal/test_widget_test_mod ;
 alias test_button : tests/mod/internal/widget/test_button ;
 alias test_composite : tests/mod/internal/widget/test_composite ;
 alias test_delegated_copy : tests/mod/internal/widget/test_delegated_copy ;
@@ -5745,7 +5711,6 @@ alias tests/mod/internal.norec :
   tests/mod/internal/test_rail_module_host_mod
   tests/mod/internal/test_replay_mod
   tests/mod/internal/test_test_card_mod
-  tests/mod/internal/test_widget_test_mod
 ;
 alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_button
@@ -6473,7 +6438,6 @@ explicit
   test_rail_module_host_mod
   test_replay_mod
   test_test_card_mod
-  test_widget_test_mod
   test_button
   test_composite
   test_delegated_copy

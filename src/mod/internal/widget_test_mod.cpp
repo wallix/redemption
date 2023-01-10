@@ -71,27 +71,24 @@ WidgetTestMod::WidgetTestMod(
     gdi::GraphicApi & gd,
     EventContainer & events,
     FrontAPI & front, uint16_t width, uint16_t height,
-    Font const & font, Theme const & theme)
-: d(std::make_unique<WidgetTestModPrivate>(width, height, gd, events, front, font, theme))
+    ClientExecute & rail_client_execute, Font const & font,
+    Theme const & theme, CopyPaste& copy_paste)
+: RailInternalModBase(gd, width, height, rail_client_execute, font, theme, &copy_paste)
+, d(std::make_unique<WidgetTestModPrivate>(width, height, gd, events, front, font, theme))
 {
     (void)front.server_resize({width, height, BitsPerPixel{8}});
-}
-
-void WidgetTestMod::init_copy_paste()
-{
-    this->d->copy_paste.ready(this->d->front);
 }
 
 WidgetTestMod::~WidgetTestMod() = default;
 
 void WidgetTestMod::rdp_input_invalidate(Rect clip)
 {
-    this->d->screen.rdp_input_invalidate(clip);
+    RailInternalModBase::rdp_input_invalidate(clip);
 }
 
 void WidgetTestMod::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    this->d->screen.rdp_input_mouse(device_flags, x, y);
+    RailInternalModBase::rdp_input_mouse(device_flags, x, y);
 }
 
 void WidgetTestMod::rdp_input_scancode(
@@ -101,26 +98,16 @@ void WidgetTestMod::rdp_input_scancode(
         this->set_mod_signal(BACK_EVENT_STOP);
     }
     else {
-        this->d->screen.rdp_input_scancode(flags, scancode, event_time, keymap);
+        RailInternalModBase::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }
 
 void WidgetTestMod::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
-    (void)flag;
-    (void)unicode;
+    RailInternalModBase::rdp_input_unicode(flag, unicode);
 }
 
 void WidgetTestMod::rdp_input_synchronize(KeyLocks locks)
 {
-    (void)locks;
-}
-
-void WidgetTestMod::send_to_mod_channel(
-    CHANNELS::ChannelNameId front_channel_name,
-    InStream & chunk, std::size_t /*length*/, uint32_t flags)
-{
-    if (this->d->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-        this->d->copy_paste.send_to_mod_channel(chunk, flags);
-    }
+    RailInternalModBase::rdp_input_synchronize(locks);
 }

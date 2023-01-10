@@ -246,8 +246,10 @@ void ModFactory::create_widget_test_mod()
         this->front,
         this->client_info.screen_info.width,
         this->client_info.screen_info.height,
+        this->rail_client_execute,
         this->glyphs,
-        this->theme
+        this->theme,
+        D::copy_paste(*this)
     );
     D::set_mod(*this, ModuleName::widgettest, mod_pack_from_widget(new_mod), true);
 }
