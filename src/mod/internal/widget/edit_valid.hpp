@@ -73,7 +73,7 @@ public:
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
-    [[nodiscard]] static unsigned get_border_height()
+    [[nodiscard]] static unsigned int get_border_height()
     {
         return 1;
     }
