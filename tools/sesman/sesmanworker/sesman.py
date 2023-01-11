@@ -830,6 +830,7 @@ class Sesman():
             Logger().info('Data received')
             if self.shared.get('display_message').lower() != 'true':
                 _status = False
+                self.engine.reset_challenge()
 
         return _status
 
@@ -1108,8 +1109,8 @@ class Sesman():
                         if not (self.interactive_ask_url_redirect()
                                 and self.engine.url_redirect_authenticate()):
                             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                            return False, TR("URL Redirection authentication not "
-                                             "validated by user")
+                            return None, TR("URL Redirection authentication not "
+                                            "validated by user")
                         authenticated = True
                     elif ((check == "password" and not is_empty_password)
                           or check is False):
@@ -1134,6 +1135,7 @@ class Sesman():
                         self.rdplog.log("AUTHENTICATION_TRY", method=method)
                         authenticated = True
                     else:
+                        self.engine.reset_challenge()
                         return None, TR("auth_failed_wab %s") % wab_login
 
             if not authenticated:
