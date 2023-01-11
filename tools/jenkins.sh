@@ -73,12 +73,16 @@ if (( $fast == 0 )); then
 fi
 
 
+rm_nofast() {
+    if (( $fast == 0 )); then
+        rm -r "$@"
+    fi
+}
+
 # jsclient (emscripten)
 pushd projects/jsclient
 source ~/emsdk/emsdk_env.sh
-if (( $fast == 0 )); then
-    rm -rf bin
-fi
+rm_nofast bin
 #version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
 echo "using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 if [[ ! -d system_include/boost ]]; then
@@ -92,7 +96,7 @@ set -o pipefail
 toolset_emscripten=toolset=clang
 bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
-rm -r bin/*
+rm_nofast bin/*
 popd
 
 show_duration jsclient
@@ -190,7 +194,7 @@ if (( $fast == 0 )); then
     show_duration valgrind
 fi
 
-rm -r bin/gcc*
+rm_nofast bin/gcc*
 
 
 # Warn new files created by tests.
@@ -212,7 +216,7 @@ build_all() {
 }
 
 build_all $toolset_clang -sNO_FFMPEG=1 san -s FAST_CHECK=1
-rm -r bin/clang*
+rm_nofast bin/clang*
 
 show_duration $toolset_clang
 
