@@ -24,9 +24,11 @@ ECHO_KEYWORDS = [
 
 
 def has_echo(auth_challenge):
-    echo = auth_challenge.get("echo", False)
+    echo = auth_challenge.get("echo")
+    if echo is not None:
+        return echo
     prompt = auth_challenge.get("prompt", "") or ""
-    return echo or any(
+    return any(
         (keyword in prompt.lower().split()
          for keyword in ECHO_KEYWORDS)
     )
