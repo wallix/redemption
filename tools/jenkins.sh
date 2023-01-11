@@ -80,6 +80,12 @@ else
     rm -rf bin/tmp/
 fi
 
+rm_nofast() {
+    if (( $fast -eq 0 )); then
+        rm -r "$@"
+    fi
+}
+
 mkdir -p bin/tmp
 export TMPDIR_TEST=bin/tmp/
 
@@ -137,7 +143,7 @@ if [[ $fast -eq 0 ]]; then
     show_duration valgrind
 fi
 
-rm -r bin/gcc*
+rm_nofast bin/gcc*
 
 
 # Warn new files created by tests.
@@ -156,7 +162,7 @@ set +o pipefail
 build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
-rm -r bin/clang*
+rm_nofast bin/clang*
 
 show_duration $toolset_clang
 
