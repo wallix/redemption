@@ -17,6 +17,21 @@ class Challenge(object):
         self.recall = recall
 
 
+ECHO_KEYWORDS = [
+    "otp",
+    "code",
+]
+
+
+def has_echo(auth_challenge):
+    echo = auth_challenge.get("echo", False)
+    prompt = auth_challenge.get("prompt", "") or ""
+    return echo or any(
+        (keyword in prompt.lower().split()
+         for keyword in ECHO_KEYWORDS)
+    )
+
+
 def ac_to_challenge(ac, check_state=False):
     """ Convert new Challenge from bastion to internal Challenge
 
@@ -28,10 +43,8 @@ def ac_to_challenge(ac, check_state=False):
     title = "= Challenge ="
     message = ""
     prompt = ac.get("prompt", "")
-    echo = False
+    echo = has_echo(ac)
     recall = False
-    if "OTP" in prompt:
-        echo = True
     first_password = check_state and prompt.startswith("Password")
     return Challenge(
         challenge_type=auth_type,
