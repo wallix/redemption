@@ -81,7 +81,7 @@ else
 fi
 
 rm_nofast() {
-    if (( $fast -eq 0 )); then
+    if (( $fast == 0 )); then
         rm -r "$@"
     fi
 }
