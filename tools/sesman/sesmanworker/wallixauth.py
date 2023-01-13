@@ -11,6 +11,7 @@ from wallixauthentication.api import (
 from wallixconst.authentication import (
     IDENTIFICATION_TYPES as IDENT,
     AUTHENTICATION_TYPES as AUTH,
+    PROXY_CLIENT,
 )
 from wabx509 import AuthX509
 
@@ -141,7 +142,7 @@ class Authenticator:
                        server_ip: str,
                        login: Optional[str] = None,
                        auth_state: Optional[str] = None,
-                       client_name: str = "PROXY") -> bool:
+                       client_name: str = PROXY_CLIENT) -> bool:
         self._init_client()
 
         # Conditions to continue
