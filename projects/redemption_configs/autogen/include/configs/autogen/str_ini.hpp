@@ -842,6 +842,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #clipboard_based_launcher_reset_keyboard_status = 1
 
+# min = 0, max = 2
+#   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+#   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
+#   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+#_hidden
+#process_command_line_retrieve_method = 2
+
 [server_cert]
 
 # Keep known server certificates on WAB

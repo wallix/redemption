@@ -108,6 +108,7 @@ namespace configs
         "session_probe:process_monitoring_rules"_zv,
         "session_probe:extra_system_processes"_zv,
         "session_probe:windows_of_these_applications_as_unidentified_input_field"_zv,
+        "session_probe:process_command_line_retrieve_method"_zv,
         "server_cert:server_cert_store"_zv,
         "server_cert:server_cert_check"_zv,
         "server_cert:server_access_allowed_message"_zv,

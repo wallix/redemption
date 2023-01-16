@@ -276,6 +276,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("Stop", "Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.")
     ;
 
+    e.enumeration_list("SessionProbeProcessCommandLineRetrieveMethod")
+      .value("windows_management_instrumentation", "Get command-line of processes via Windows Management Instrumentation. (Legacy method)")
+      .value("windows_internals", "Calling internal system APIs to get the process command line. (More efficient but less stable)")
+      .value("both", "First use internal system APIs call, if that fails, use Windows Management Instrumentation method.")
+    ;
+
     e.enumeration_list("RdpSaveSessionInfoPDU")
         .value("Supported", "Windows")
         .value("UnsupportedOrUnknown", "Bastion, xrdp or others")

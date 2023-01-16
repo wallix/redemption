@@ -187,6 +187,9 @@ struct SessionProbeVirtualChannelParams
     std::string target_ip;
 
     bool enable_remote_program = false;
+
+     SessionProbeProcessCommandLineRetrieveMethod process_command_line_retrieve_method =
+        SessionProbeProcessCommandLineRetrieveMethod::both;
 };
 
 

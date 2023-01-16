@@ -50,4 +50,6 @@ struct ModRdpSessionProbeParams
     SessionProbeVirtualChannelParams vc_params {};
 
     std::string alternate_directory_environment_variable {};
+
+
 };
