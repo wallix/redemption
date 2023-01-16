@@ -2087,6 +2087,68 @@ parse_error parse_from_cfg(SessionProbeCPUUsageAlarmAction & x, ::configs::spec_
         x, value, "bad value, expected: Restart, Stop");
 }
 
+inline constexpr zstring_view enum_zstr_SessionProbeProcessCommandLineRetrieveMethod[] {
+    "windows_management_instrumentation"_zv,
+    "windows_internals"_zv,
+    "both"_zv,
+};
+
+inline constexpr zstring_view enum_zint_SessionProbeProcessCommandLineRetrieveMethod[] {
+    "0"_zv,
+    "1"_zv,
+    "2"_zv,
+};
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<SessionProbeProcessCommandLineRetrieveMethod> /*type*/,
+    SessionProbeProcessCommandLineRetrieveMethod x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<SessionProbeProcessCommandLineRetrieveMethod>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_SessionProbeProcessCommandLineRetrieveMethod[static_cast<uint8_t>(x)];
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<std::string> /*type*/,
+    SessionProbeProcessCommandLineRetrieveMethod x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<SessionProbeProcessCommandLineRetrieveMethod>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_SessionProbeProcessCommandLineRetrieveMethod[static_cast<uint8_t>(x)];
+}
+
+parse_error parse_from_cfg(SessionProbeProcessCommandLineRetrieveMethod & x, ::configs::spec_type<SessionProbeProcessCommandLineRetrieveMethod> /*type*/, bytes_view value)
+{
+    using ul = uint8_t;
+
+    ul xi = 0;
+    if (parse_error err = parse_integral(
+        xi, value,
+        zero_integral<ul>(),
+        std::integral_constant<ul, 2>()
+    )) {
+        return err;
+    }
+
+    x = static_cast<SessionProbeProcessCommandLineRetrieveMethod>(xi);
+    return no_parse_error;
+}
+
+
+inline constexpr std::pair<chars_view, SessionProbeProcessCommandLineRetrieveMethod> enum_str_value_SessionProbeProcessCommandLineRetrieveMethod[] {
+    {"WINDOWS_MANAGEMENT_INSTRUMENTATION"_av, SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation},
+    {"WINDOWS_INTERNALS"_av, SessionProbeProcessCommandLineRetrieveMethod::windows_internals},
+    {"BOTH"_av, SessionProbeProcessCommandLineRetrieveMethod::both},
+};
+
+parse_error parse_from_cfg(SessionProbeProcessCommandLineRetrieveMethod & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+{
+    return parse_str_value_pairs<enum_str_value_SessionProbeProcessCommandLineRetrieveMethod>(
+        x, value, "bad value, expected: windows_management_instrumentation, windows_internals, both");
+}
+
 inline constexpr zstring_view enum_zstr_RdpSaveSessionInfoPDU[] {
     "Supported"_zv,
     "UnsupportedOrUnknown"_zv,
