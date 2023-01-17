@@ -662,3 +662,18 @@ template<> struct is_valid_enum_value<SessionProbeCPUUsageAlarmAction>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
+enum class SessionProbeProcessCommandLineRetrieveMethod : uint8_t
+{
+    // Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+    windows_management_instrumentation = 0,
+    // Calling internal system APIs to get the process command line. (More efficient but less stable)
+    windows_internals = 1,
+    // First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+    both = 2,
+};
+
+template<> struct is_valid_enum_value<SessionProbeProcessCommandLineRetrieveMethod>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 2; }
+};
+

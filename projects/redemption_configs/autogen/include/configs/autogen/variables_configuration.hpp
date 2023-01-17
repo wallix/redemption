@@ -21,27 +21,27 @@ namespace configs
         // inline constexpr int section3 = 20; /* remote_program */
         inline constexpr int section4 = 20; /* mod_rdp */
         inline constexpr int section5 = 56; /* session_probe */
-        inline constexpr int section6 = 96; /* server_cert */
-        inline constexpr int section7 = 105; /* mod_vnc */
-        inline constexpr int section8 = 113; /* session_log */
-        // inline constexpr int section9 = 114; /* ocr */
-        inline constexpr int section10 = 114; /* capture */
-        inline constexpr int section11 = 118; /* video */
-        inline constexpr int section12 = 121; /* audit */
-        inline constexpr int section13 = 132; /* file_verification */
-        inline constexpr int section14 = 140; /* file_storage */
-        // inline constexpr int section15 = 141; /* icap_server_down */
-        // inline constexpr int section16 = 141; /* icap_server_up */
-        // inline constexpr int section17 = 141; /* metrics */
-        inline constexpr int section18 = 141; /* crypto */
-        // inline constexpr int section19 = 143; /* websocket */
-        // inline constexpr int section20 = 143; /* vnc_over_ssh */
-        inline constexpr int section21 = 143; /* context */
-        // inline constexpr int section22 = 224; /* internal_mod */
-        inline constexpr int section23 = 224; /* mod_replay */
-        inline constexpr int section24 = 226; /* translation */
-        // inline constexpr int section25 = 228; /* theme */
-        // inline constexpr int section26 = 228; /* debug */
+        inline constexpr int section6 = 97; /* server_cert */
+        inline constexpr int section7 = 106; /* mod_vnc */
+        inline constexpr int section8 = 114; /* session_log */
+        // inline constexpr int section9 = 115; /* ocr */
+        inline constexpr int section10 = 115; /* capture */
+        inline constexpr int section11 = 119; /* video */
+        inline constexpr int section12 = 122; /* audit */
+        inline constexpr int section13 = 133; /* file_verification */
+        inline constexpr int section14 = 141; /* file_storage */
+        // inline constexpr int section15 = 142; /* icap_server_down */
+        // inline constexpr int section16 = 142; /* icap_server_up */
+        // inline constexpr int section17 = 142; /* metrics */
+        inline constexpr int section18 = 142; /* crypto */
+        // inline constexpr int section19 = 144; /* websocket */
+        // inline constexpr int section20 = 144; /* vnc_over_ssh */
+        inline constexpr int section21 = 144; /* context */
+        // inline constexpr int section22 = 225; /* internal_mod */
+        inline constexpr int section23 = 225; /* mod_replay */
+        inline constexpr int section24 = 227; /* translation */
+        // inline constexpr int section25 = 229; /* theme */
+        // inline constexpr int section26 = 229; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2566,6 +2566,21 @@ namespace cfg
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value { true };
+    };
+    /// type: SessionProbeProcessCommandLineRetrieveMethod <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:process_command_line_retrieve_method <br/>
+    /// default: SessionProbeProcessCommandLineRetrieveMethod::both <br/>
+    struct session_probe::process_command_line_retrieve_method {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 40};
+        using type = SessionProbeProcessCommandLineRetrieveMethod;
+        using sesman_and_spec_type = SessionProbeProcessCommandLineRetrieveMethod;
+        using mapped_type = sesman_and_spec_type;
+        type value { SessionProbeProcessCommandLineRetrieveMethod::both };
     };
 
     /// Keep known server certificates on WAB <br/>
@@ -5741,6 +5756,7 @@ struct session_probe
 , cfg::session_probe::at_end_of_session_freeze_connection_and_wait
 , cfg::session_probe::enable_cleaner
 , cfg::session_probe::clipboard_based_launcher_reset_keyboard_status
+, cfg::session_probe::process_command_line_retrieve_method
 { static constexpr bool is_section = true; };
 
 struct server_cert
@@ -6146,6 +6162,7 @@ using VariablesAclPack = Pack<
 , cfg::session_probe::process_monitoring_rules
 , cfg::session_probe::extra_system_processes
 , cfg::session_probe::windows_of_these_applications_as_unidentified_input_field
+, cfg::session_probe::process_command_line_retrieve_method
 , cfg::server_cert::server_cert_store
 , cfg::server_cert::server_cert_check
 , cfg::server_cert::server_access_allowed_message
@@ -6284,13 +6301,13 @@ using VariablesAclPack = Pack<
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111011111111111111111111111111111111111111110111111111111
 , 0b1111111111111111111111111111111111111111111111111111111111111111
-, 0b1111111111111111111111111110110111111011111111111001111111111111
-, 0b0000000000000000000000000000111111111111111111110111111111111111
+, 0b1111111111111111111111111101101111110111111111110011111111111111
+, 0b0000000000000000000000000001111111111111111111101111111111111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000001000000000000000000000000000000000000
+, 0b0000000000000000000000000010000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

@@ -210,6 +210,7 @@ namespace cfg
         struct at_end_of_session_freeze_connection_and_wait;
         struct enable_cleaner;
         struct clipboard_based_launcher_reset_keyboard_status;
+        struct process_command_line_retrieve_method;
     };
 
     struct server_cert {

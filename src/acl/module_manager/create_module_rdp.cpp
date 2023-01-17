@@ -396,6 +396,10 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
 
     spp.vc_params.at_end_of_session_freeze_connection_and_wait =
         ini.get<cfg::session_probe::at_end_of_session_freeze_connection_and_wait>();
+
+    spp.vc_params.process_command_line_retrieve_method =
+        ini.get<cfg::session_probe::process_command_line_retrieve_method>();
+
     return spp;
 }
 

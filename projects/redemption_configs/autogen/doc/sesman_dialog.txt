@@ -235,6 +235,10 @@ cfg::session_probe::extra_system_processes ⇐ session_probe:extra_system_proces
     Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
 cfg::session_probe::windows_of_these_applications_as_unidentified_input_field ⇐ session_probe:windows_of_these_applications_as_unidentified_input_field   [std::string]
     Comma-separated processes (Ex.: chrome.exe,ngf.exe)
+cfg::session_probe::process_command_line_retrieve_method ⇐ session_probe:process_command_line_retrieve_method   [SessionProbeProcessCommandLineRetrieveMethod]
+      0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+      1: Calling internal system APIs to get the process command line. (More efficient but less stable)
+      2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 
 cfg::server_cert::server_cert_store ⇐ server_cert:server_cert_store   [bool]
     Keep known server certificates on WAB
