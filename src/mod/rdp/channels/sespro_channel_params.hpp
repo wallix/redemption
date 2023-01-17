@@ -181,6 +181,9 @@ struct SessionProbeVirtualChannelParams
     bool enable_self_cleaner = false;
 
     std::string target_ip;
+
+    SessionProbeProcessCommandLineRetrieveMethod process_command_line_retrieve_method =
+        SessionProbeProcessCommandLineRetrieveMethod::both;
 };
 
 

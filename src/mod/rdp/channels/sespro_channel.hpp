@@ -74,7 +74,9 @@ enum {
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
     OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010,
     OPTION_SUPPORT_MULTIPLE_NETWORK_INTERFACES_IN_SHADOW_SESSION_RESPONSE
-                                                                = 0x00000020
+                                                                = 0x00000020,
+    OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL         = 0x00000080,
+    OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI               = 0x00000100
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -639,6 +641,17 @@ public:
                     options |= this->param_disconnect_session_instead_of_logoff_session
                         ? uint32_t(OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION)
                         : uint32_t();
+
+                    switch (this->sespro_params.process_command_line_retrieve_method)
+                    {
+                        case SessionProbeProcessCommandLineRetrieveMethod::windows_internals:
+                            options |= OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI;
+                            break;
+
+                        case SessionProbeProcessCommandLineRetrieveMethod::both:
+                            options |= OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL;
+                            break;
+                    }
 
                     if (options)
                     {

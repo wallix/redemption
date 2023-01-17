@@ -660,6 +660,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_cleaner"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"clipboard_based_launcher_reset_keyboard_status"}, set(true));
+
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<SessionProbeProcessCommandLineRetrieveMethod>(), names{"process_command_line_retrieve_method"}, set(SessionProbeProcessCommandLineRetrieveMethod::both));
     });
 
     W.section(names{"server_cert"}, [&]
