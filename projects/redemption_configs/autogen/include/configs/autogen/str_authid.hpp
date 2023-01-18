@@ -109,6 +109,7 @@ namespace configs
         "mod_rdp:bogus_monitor_layout_treatment"_zv,
         "effective_krb_armoring_user"_zv,
         "effective_krb_armoring_password"_zv,
+        "mod_rdp:session_probe_process_command_line_retrieve_method"_zv,
         "clipboard_up"_zv,
         "clipboard_down"_zv,
         "vnc_server_clipboard_encoding_type"_zv,

@@ -252,6 +252,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("EN")
       .value("FR")
     ;
+
+    e.enumeration_list("SessionProbeProcessCommandLineRetrieveMethod")
+      .value("windows_management_instrumentation", "Get command-line of processes via Windows Management Instrumentation. (Legacy method)")
+      .value("windows_internals", "Calling internal system APIs to get the process command line. (More efficient but less stable)")
+      .value("both", "First use internal system APIs call, if that fails, use Windows Management Instrumentation method.")
+    ;
 }
 
 }

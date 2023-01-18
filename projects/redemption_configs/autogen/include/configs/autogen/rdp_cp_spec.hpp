@@ -326,6 +326,11 @@ alternate_directory_environment_variable = string(max=3, default='')
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
+#   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+#   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
+#   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+process_command_line_retrieve_method = option(0, 1, 2, default=0)
+
 # Comma-separated rules
 # (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)
 # (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)
