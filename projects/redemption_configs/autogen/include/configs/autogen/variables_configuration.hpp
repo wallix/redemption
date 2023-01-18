@@ -2555,7 +2555,7 @@ namespace cfg
     /// type: SessionProbeProcessCommandLineRetrieveMethod <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:process_command_line_retrieve_method <br/>
-    /// default: SessionProbeProcessCommandLineRetrieveMethod::both <br/>
+    /// default: SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation <br/>
     struct session_probe::process_command_line_retrieve_method {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2565,7 +2565,7 @@ namespace cfg
         using type = SessionProbeProcessCommandLineRetrieveMethod;
         using sesman_and_spec_type = SessionProbeProcessCommandLineRetrieveMethod;
         using mapped_type = sesman_and_spec_type;
-        type value { SessionProbeProcessCommandLineRetrieveMethod::both };
+        type value { SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation };
     };
 
     /// Keep known server certificates on WAB <br/>
