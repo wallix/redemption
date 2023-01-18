@@ -257,6 +257,10 @@ cfg::mod_rdp::effective_krb_armoring_user ⇐ effective_krb_armoring_user   [std
     Effective username to be used for armoring Kerberos tickets.
 cfg::mod_rdp::effective_krb_armoring_password ⇐ effective_krb_armoring_password   [std::string]
     Effective password to be used for armoring Kerberos tickets.
+cfg::mod_rdp::session_probe_process_command_line_retrieve_method ⇐ mod_rdp:session_probe_process_command_line_retrieve_method   [SessionProbeProcessCommandLineRetrieveMethod]
+      0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+      1: Calling internal system APIs to get the process command line. (More efficient but less stable)
+      2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).

@@ -216,6 +216,9 @@ cp_spec = {
         u'mod_rdp:session_probe_public_session': (
             'public_session', False
         ),
+        u'mod_rdp:session_probe_process_command_line_retrieve_method': (
+            'process_command_line_retrieve_method', 0
+        ),
         u'context:session_probe_outbound_connection_monitoring_rules': (
             'outbound_connection_monitoring_rules', u''
         ),

@@ -176,6 +176,9 @@ struct SessionProbeVirtualChannelParams
     bool launch_application_driver_then_terminate = false;
 
     bool enable_self_cleaner = false;
+
+    SessionProbeProcessCommandLineRetrieveMethod process_command_line_retrieve_method =
+        SessionProbeProcessCommandLineRetrieveMethod::both;
 };
 
 

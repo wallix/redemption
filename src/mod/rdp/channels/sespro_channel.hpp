@@ -70,7 +70,10 @@ enum {
     OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
     OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
-    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010
+    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010,
+
+    OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL         = 0x00000080,
+    OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI               = 0x00000100
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -632,6 +635,17 @@ public:
 
                     if (this->param_disconnect_session_instead_of_logoff_session) {
                         options |= OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION;
+                    }
+
+                    switch (this->sespro_params.process_command_line_retrieve_method)
+                    {
+                        case SessionProbeProcessCommandLineRetrieveMethod::windows_internals:
+                            options |= OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI;
+                            break;
+
+                        case SessionProbeProcessCommandLineRetrieveMethod::both:
+                            options |= OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL;
+                            break;
                     }
 
                     if (options)

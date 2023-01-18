@@ -20,24 +20,24 @@ namespace configs
         inline constexpr int section2 = 19; /* client */
         inline constexpr int section3 = 21; /* all_target_mod */
         inline constexpr int section4 = 22; /* mod_rdp */
-        inline constexpr int section5 = 98; /* mod_vnc */
-        // inline constexpr int section6 = 106; /* metrics */
-        inline constexpr int section7 = 106; /* file_verification */
-        inline constexpr int section8 = 114; /* file_storage */
-        // inline constexpr int section9 = 115; /* icap_server_down */
-        // inline constexpr int section10 = 115; /* icap_server_up */
-        inline constexpr int section11 = 115; /* mod_replay */
-        // inline constexpr int section12 = 116; /* ocr */
-        inline constexpr int section13 = 116; /* video */
-        inline constexpr int section14 = 120; /* capture */
-        inline constexpr int section15 = 124; /* crypto */
-        // inline constexpr int section16 = 126; /* websocket */
-        // inline constexpr int section17 = 126; /* debug */
-        // inline constexpr int section18 = 126; /* remote_program */
-        inline constexpr int section19 = 126; /* translation */
-        // inline constexpr int section20 = 128; /* internal_mod */
-        inline constexpr int section21 = 128; /* context */
-        // inline constexpr int section22 = 208; /* theme */
+        inline constexpr int section5 = 99; /* mod_vnc */
+        // inline constexpr int section6 = 107; /* metrics */
+        inline constexpr int section7 = 107; /* file_verification */
+        inline constexpr int section8 = 115; /* file_storage */
+        // inline constexpr int section9 = 116; /* icap_server_down */
+        // inline constexpr int section10 = 116; /* icap_server_up */
+        inline constexpr int section11 = 116; /* mod_replay */
+        // inline constexpr int section12 = 117; /* ocr */
+        inline constexpr int section13 = 117; /* video */
+        inline constexpr int section14 = 121; /* capture */
+        inline constexpr int section15 = 125; /* crypto */
+        // inline constexpr int section16 = 127; /* websocket */
+        // inline constexpr int section17 = 127; /* debug */
+        // inline constexpr int section18 = 127; /* remote_program */
+        inline constexpr int section19 = 127; /* translation */
+        // inline constexpr int section20 = 129; /* internal_mod */
+        inline constexpr int section21 = 129; /* context */
+        // inline constexpr int section22 = 209; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2611,6 +2611,21 @@ namespace cfg
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value {  };
+    };
+    /// type: SessionProbeProcessCommandLineRetrieveMethod <br/>
+    /// connpolicy -> proxy    [name: session_probe::process_command_line_retrieve_method] <br/>
+    /// sesmanName: mod_rdp:session_probe_process_command_line_retrieve_method <br/>
+    /// default: SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation <br/>
+    struct mod_rdp::session_probe_process_command_line_retrieve_method {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 76};
+        using type = SessionProbeProcessCommandLineRetrieveMethod;
+        using sesman_and_spec_type = SessionProbeProcessCommandLineRetrieveMethod;
+        using mapped_type = sesman_and_spec_type;
+        type value { SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation };
     };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
@@ -5461,6 +5476,7 @@ struct mod_rdp
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_rdp::forward_client_build_number
 , cfg::mod_rdp::bogus_monitor_layout_treatment
+, cfg::mod_rdp::session_probe_process_command_line_retrieve_method
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -5835,6 +5851,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::effective_krb_armoring_user
 , cfg::mod_rdp::effective_krb_armoring_password
+, cfg::mod_rdp::session_probe_process_command_line_retrieve_method
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
@@ -5950,14 +5967,14 @@ using VariablesAclPack = Pack<
 
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
-, 0b1100111111111111111111111111110111111111111111111111111111111111
-, 0b0111111111111111111111111111111111111111111011011111011111111111
-, 0b0000000000000000000000000000000000000000000000001111111111111111
+, 0b1001111111111111111111111111110111111111111111111111111111111111
+, 0b1111111111111111111111111111111111111111110110111110111111111111
+, 0b0000000000000000000000000000000000000000000000011111111111111110
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000100000000000000000000
+, 0b0000000000000000000000000000000000000000001000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

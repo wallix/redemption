@@ -213,6 +213,7 @@ namespace cfg
         struct bogus_monitor_layout_treatment;
         struct effective_krb_armoring_user;
         struct effective_krb_armoring_password;
+        struct session_probe_process_command_line_retrieve_method;
     };
 
     struct mod_vnc {

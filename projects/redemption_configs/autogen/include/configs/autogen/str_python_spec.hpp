@@ -763,6 +763,12 @@ forward_client_build_number = boolean(default=True)
 #_hidden
 bogus_monitor_layout_treatment = boolean(default=False)
 
+#   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+#   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
+#   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+#_hidden
+session_probe_process_command_line_retrieve_method = option(0, 1, 2, default=0)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
