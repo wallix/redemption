@@ -28,8 +28,7 @@ class Font;
 class WidgetGroupBox : public WidgetParent
 {
 public:
-    WidgetGroupBox( gdi::GraphicApi & drawable, Widget & parent
-                  , const char * text
+    WidgetGroupBox( gdi::GraphicApi & drawable, const char * text
                   , Color fgcolor, Color bgcolor, Font const & font);
 
     ~WidgetGroupBox() override;

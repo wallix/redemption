@@ -35,26 +35,26 @@ constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 
 WidgetWait::WidgetWait(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
-    Widget & parent, Events events, const char* caption, const char * text,
+    Events events, const char* caption, const char * text,
     WidgetButton * extra_button,
     Font const & font, Theme const & theme, Language lang,
     bool showform, unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable, parent)
+    : WidgetParent(drawable)
     , onaccept(events.onaccept)
     , onrefused(events.onrefused)
     , onctrl_shift(events.onctrl_shift)
-    , groupbox(drawable, *this, caption,
+    , groupbox(drawable, caption,
                theme.global.fgcolor, theme.global.bgcolor, font)
-    , dialog(drawable, this->groupbox, text,
+    , dialog(drawable, text,
              theme.global.fgcolor, theme.global.bgcolor, font,
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , form(drawable, copy_paste, *this, {events.onconfirm, events.onrefused},
+    , form(drawable, copy_paste, {events.onconfirm, events.onrefused},
            font, theme, lang, flags & ~HIDE_BACK_TO_SELECTOR, duration_max)
-    , goselector(drawable, this->groupbox, TR(trkeys::back_selector, lang), events.onaccept,
+    , goselector(drawable, TR(trkeys::back_selector, lang), events.onaccept,
                  theme.global.fgcolor, theme.global.bgcolor,
                  theme.global.focus_color, 2, font, 6, 2)
-    , exit(drawable, this->groupbox, TR(trkeys::exit, lang), events.onrefused,
+    , exit(drawable, TR(trkeys::exit, lang), events.onrefused,
            theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
            6, 2)
     , extra_button(extra_button)

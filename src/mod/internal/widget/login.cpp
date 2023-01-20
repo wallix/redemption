@@ -34,7 +34,8 @@ enum {
 
 WidgetLogin::WidgetLogin(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
+    WidgetTooltipShower & tooltip_shower,
+    int16_t left, int16_t top, uint16_t width, uint16_t height,
     Events events, const char* caption,
     const char * login, const char * password, const char * target,
     const char * label_text_login,
@@ -46,46 +47,46 @@ WidgetLogin::WidgetLogin(
     bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
 )
-    : WidgetParent(drawable, parent)
+    : WidgetParent(drawable)
     , oncancel(events.oncancel)
     , onctrl_shift(events.onctrl_shift)
-    , error_message_label(drawable, *this, label_error_message,
+    , tooltip_shower(tooltip_shower)
+    , error_message_label(drawable, label_error_message,
                     theme.global.error_color, theme.global.bgcolor,
                     font)
-    , login_label(drawable, *this, label_text_login,
+    , login_label(drawable, label_text_login,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , login_edit(drawable, copy_paste, *this, login, events.onsubmit,
+    , login_edit(drawable, copy_paste, login, events.onsubmit,
                  theme.edit.fgcolor, theme.edit.bgcolor,
                  theme.edit.focus_color, theme.global.bgcolor, font,
                  label_text_login, (width <= 640), -1u, 1, 1, false)
-    , password_label(drawable, *this, label_text_password,
+    , password_label(drawable, label_text_password,
                      theme.global.fgcolor, theme.global.bgcolor,
                      font)
-    , password_edit(drawable, copy_paste, *this, password, events.onsubmit,
+    , password_edit(drawable, copy_paste, password, events.onsubmit,
                     theme.edit.fgcolor,
                     theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                     font, label_text_password, (width <= 640),
                     -1u, 1, 1, true)
-    , target_label(drawable, *this, label_text_target,
+    , target_label(drawable, label_text_target,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_edit(drawable, copy_paste, *this, target, events.onsubmit,
+    , target_edit(drawable, copy_paste, target, events.onsubmit,
                   theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font,
                   label_text_target, (width <= 640), -1u, 1, 1, false)
-    , message_label(drawable, *this,
+    , message_label(drawable,
         login_message ? std::string(login_message) : std::string(),
         theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
         font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
-          *this,
           theme.global.bgcolor)
-    , version_label(drawable, *this, caption,
+    , version_label(drawable, caption,
                     theme.global.fgcolor, theme.global.bgcolor,
                     font)
     // TODO button without notifier
-    , helpicon(drawable, *this, "?", WidgetEventNotifier(),
+    , helpicon(drawable, "?", WidgetEventNotifier(),
                theme.global.fgcolor, theme.global.bgcolor,
                theme.global.focus_color, 2, font, 6, 2)
     , extra_button(extra_button)
@@ -371,8 +372,8 @@ void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t
         case Keymap::KEvent::Shift:
             if (this->extra_button
                 && keymap.is_shift_pressed()
-                && keymap.is_ctrl_pressed())
-            {
+                && keymap.is_ctrl_pressed()
+            ) {
                 this->onctrl_shift();
             }
             break;
@@ -386,11 +387,11 @@ void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t
 
 void WidgetLogin::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    if (device_flags == MOUSE_FLAG_MOVE) {
-        Widget * wid = this->widget_at_pos(x, y);
-        if (wid == &this->helpicon) {
-            this->show_tooltip(this->tr(trkeys::help_message), x, y, this->get_rect(), this->helpicon.get_rect());
-        }
+    if (device_flags == MOUSE_FLAG_MOVE && this->helpicon.get_rect().contains_pt(x, y)) {
+        this->tooltip_shower.show_tooltip(
+            this->tr(trkeys::help_message),
+            x, y, this->get_rect(), this->helpicon.get_rect()
+        );
     }
 
     WidgetParent::rdp_input_mouse(device_flags, x, y);

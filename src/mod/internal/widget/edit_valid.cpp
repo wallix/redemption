@@ -29,22 +29,22 @@
 
 WidgetEditValid::WidgetEditValid(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+    const char * text, WidgetEventNotifier onsubmit,
     Color fgcolor, Color bgcolor, Color focus_color, Color border_none_color,
     Font const & font, const char * title, bool use_title, std::size_t edit_position,
     // TODO re-enable
     int /*xtext*/, int /*ytext*/, bool pass
 )
-    : Widget(drawable, parent)
-    , button(drawable, *this, "\xe2\x9e\x9c", onsubmit,
+    : Widget(drawable)
+    , button(drawable, "\xe2\x9e\x9c", onsubmit,
              bgcolor, focus_color, focus_color, 1, font, 6, 2)
     , editbox(pass
-        ? new WidgetPassword(drawable, copy_paste, *this, text, onsubmit, fgcolor, bgcolor,
+        ? new WidgetPassword(drawable, copy_paste, text, onsubmit, fgcolor, bgcolor,
                              bgcolor, font, edit_position, 1, 2)
-        : new WidgetEdit(drawable, copy_paste, *this, text, onsubmit, fgcolor, bgcolor,
+        : new WidgetEdit(drawable, copy_paste, text, onsubmit, fgcolor, bgcolor,
                          bgcolor, font, edit_position, 1, 2))
     , label(title
-        ? new WidgetLabel(drawable, *this, title, MEDIUM_GREY, bgcolor, font, 1, 2)
+        ? new WidgetLabel(drawable, title, MEDIUM_GREY, bgcolor, font, 1, 2)
         : nullptr)
     , use_label_(use_title)
     , border_none_color(border_none_color)

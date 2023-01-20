@@ -23,7 +23,6 @@
 #include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/widget_rect.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
@@ -34,8 +33,7 @@
 struct WidgetRectFixture
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font(), Theme{}};
-    WidgetRect wrect{drawable, parent, BGRColor(0xCCF604)};
+    WidgetRect wrect{drawable, BGRColor(0xCCF604)};
 };
 
 

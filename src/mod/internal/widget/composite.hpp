@@ -96,7 +96,7 @@ public:
     Widget * current_focus;
 
 public:
-    WidgetParent(gdi::GraphicApi & drawable, Widget & parent);
+    WidgetParent(gdi::GraphicApi & drawable);
 
     ~WidgetParent() override;
 
@@ -152,8 +152,8 @@ class WidgetComposite: public WidgetParent
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(gdi::GraphicApi & drawable, Widget & parent)
-    : WidgetParent(drawable, parent)
+    WidgetComposite(gdi::GraphicApi & drawable)
+    : WidgetParent(drawable)
     {
         this->impl = & composite_array;
     }

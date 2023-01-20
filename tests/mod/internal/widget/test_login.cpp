@@ -54,7 +54,7 @@ struct TestWidgetLoginCtx
         Theme theme = Theme(),
         bool enable_target_field = false)
     : flat_login(
-        drawable, copy_paste, 0, 0, parent.cx(), parent.cy(), parent,
+        drawable, copy_paste, parent, 0, 0, parent.cx(), parent.cy(),
         {onsubmit, oncancel, WidgetEventNotifier()},
         caption, login, password, target,
         "Login", "Password", "Target", "",

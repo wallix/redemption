@@ -29,44 +29,36 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/composite/"
 
-class WidgetCompositeRect : public WidgetComposite
-{
-public:
-    WidgetCompositeRect(TestGraphic & drawable)
-    : WidgetComposite(drawable, *this)
-    {}
-};
-
 RED_AUTO_TEST_CASE(TraceWidgetComposite)
 {
     TestGraphic drawable(800, 600);
 
-    WidgetCompositeRect wcomposite(drawable);
+    WidgetComposite wcomposite(drawable);
     wcomposite.set_wh(drawable.width(),
                       drawable.height());
     wcomposite.set_xy(0, 0);
 
-    WidgetRect wrect1(drawable, wcomposite, CYAN);
+    WidgetRect wrect1(drawable, CYAN);
     wrect1.set_wh(100, 100);
     wrect1.set_xy(0, 0);
 
-    WidgetRect wrect2(drawable, wcomposite, RED);
+    WidgetRect wrect2(drawable, RED);
     wrect2.set_wh(100, 100);
     wrect2.set_xy(0, 100);
 
-    WidgetRect wrect3(drawable, wcomposite, BLUE);
+    WidgetRect wrect3(drawable, BLUE);
     wrect3.set_wh(100, 100);
     wrect3.set_xy(100, 100);
 
-    WidgetRect wrect4(drawable, wcomposite, GREEN);
+    WidgetRect wrect4(drawable, GREEN);
     wrect4.set_wh(100, 100);
     wrect4.set_xy(300, 300);
 
-    WidgetRect wrect5(drawable, wcomposite, WHITE);
+    WidgetRect wrect5(drawable, WHITE);
     wrect5.set_wh(100, 100);
     wrect5.set_xy(700, -50);
 
-    WidgetRect wrect6(drawable, wcomposite, GREY);
+    WidgetRect wrect6(drawable, GREY);
     wrect6.set_wh(100, 100);
     wrect6.set_xy(-50, 550);
 
@@ -78,7 +70,7 @@ RED_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.add_widget(&wrect6);
 
     {
-        WidgetRect wrect7(drawable, wcomposite, GREY);
+        WidgetRect wrect7(drawable, GREY);
         wrect7.set_wh(800, 800);
         wrect7.set_xy(0, 0);
 

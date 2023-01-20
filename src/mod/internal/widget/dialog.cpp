@@ -35,34 +35,33 @@ enum {
 
 WidgetDialog::WidgetDialog(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
-    Widget & parent, Events events,
+    Events events,
     const char* caption, const char * text,
     WidgetButton * extra_button,
     Theme const & theme, Font const & font, const char * ok_text,
     const char * cancel_text, ChallengeOpt has_challenge
 )
-    : WidgetParent(drawable, parent)
+    : WidgetParent(drawable)
     , onctrl_shift(events.onctrl_shift)
-    , title(drawable, *this, caption,
+    , title(drawable, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
-    , separator(drawable, *this, theme.global.separator_color)
-    , dialog(drawable, *this, text,
+    , separator(drawable, theme.global.separator_color)
+    , dialog(drawable, text,
              theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
              font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , challenge(nullptr)
-    , ok(drawable, *this, ok_text ? ok_text : "Ok", events.onsubmit,
+    , ok(drawable, ok_text ? ok_text : "Ok", events.onsubmit,
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 2, font, 6, 2)
     , cancel(cancel_text
         ? std::make_unique<WidgetButton>(
-            drawable, *this, cancel_text, events.oncancel,
+            drawable, cancel_text, events.oncancel,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2)
         : std::unique_ptr<WidgetButton>())
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
-          *this,
           theme.global.bgcolor)
     , extra_button(extra_button)
     , oncancel(events.oncancel)
@@ -79,14 +78,14 @@ WidgetDialog::WidgetDialog(
     if (has_challenge) {
         if (CHALLENGE_ECHO == has_challenge) {
             this->challenge = std::make_unique<WidgetEdit>(
-                this->drawable, copy_paste, *this, nullptr, events.onsubmit,
+                this->drawable, copy_paste, nullptr, events.onsubmit,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
         else {
             this->challenge = std::make_unique<WidgetPassword>(
-                this->drawable, copy_paste, *this, nullptr, events.onsubmit,
+                this->drawable, copy_paste, nullptr, events.onsubmit,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );

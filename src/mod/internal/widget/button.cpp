@@ -29,12 +29,12 @@
 
 
 WidgetButton::WidgetButton(
-    gdi::GraphicApi & drawable, Widget& parent,
+    gdi::GraphicApi & drawable,
     const char * text, WidgetEventNotifier onsubmit,
     Color fg_color, Color bg_color, Color focus_color,
     unsigned border_width, Font const & font, int xtext, int ytext,
     bool logo)
-: Widget(drawable, parent)
+: Widget(drawable)
 , auto_resize_(false)
 , x_text(xtext)
 , y_text(ytext)

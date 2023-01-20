@@ -27,9 +27,8 @@
 
 WidgetImage::WidgetImage(gdi::GraphicApi& drawable,
                          const char *filename,
-                         Widget& parent,
                          Color bg_color)
-: Widget(drawable, parent)
+: Widget(drawable)
 , bmp(bitmap_from_file(filename, bg_color))
 {
     this->tab_flag   = IGNORE_TAB;

@@ -177,11 +177,6 @@ struct WidgetModuleHost::Impl
             return ;
         }
 
-        Widget* parentWidget = &wmh.parent;
-        while (&parentWidget->parent != &parentWidget->parent.parent) {
-            parentWidget = &parentWidget->parent;
-        }
-
         Rect visible_vision_rect;
         Rect dest_rect;
         Rect src_rect;
@@ -191,7 +186,7 @@ struct WidgetModuleHost::Impl
 
             wmh.mod_visible_rect.x = wmh.hscroll.get_current_value();
 
-            visible_vision_rect = wmh.vision_rect.intersect(parentWidget->get_rect());
+            visible_vision_rect = wmh.vision_rect.intersect(wmh.screen.get_rect());
             int16_t offset_x = old_mod_visible_rect_x - wmh.mod_visible_rect.x;
 
             dest_rect = visible_vision_rect.offset(offset_x, 0).intersect(visible_vision_rect);
@@ -202,7 +197,7 @@ struct WidgetModuleHost::Impl
 
             wmh.mod_visible_rect.y = wmh.vscroll.get_current_value();
 
-            visible_vision_rect = wmh.vision_rect.intersect(parentWidget->get_rect());
+            visible_vision_rect = wmh.vision_rect.intersect(wmh.screen.get_rect());
             int16_t offset_y = old_mod_visible_rect_y - wmh.mod_visible_rect.y;
 
             dest_rect = visible_vision_rect.offset(0, offset_y).intersect(visible_vision_rect);
@@ -286,16 +281,17 @@ void WidgetModuleHost::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerV
 }
 
 WidgetModuleHost::WidgetModuleHost(
-    gdi::GraphicApi& drawable, Widget& parent,
+    gdi::GraphicApi& drawable, Widget& screen,
     Ref<mod_api> managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
     Rect const widget_rect, uint16_t front_width, uint16_t front_height)
-: WidgetParent(drawable, parent)
+: WidgetParent(drawable)
 , managed_mod(&managed_mod.get())
 , drawable(drawable)
-, hscroll(drawable, *this, [this]{ Impl::scroll(*this, true); }, true,
+, screen(screen)
+, hscroll(drawable, [this]{ Impl::scroll(*this, true); }, true,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
-, vscroll(drawable, *this, [this]{ Impl::scroll(*this, false); }, false,
+, vscroll(drawable, [this]{ Impl::scroll(*this, false); }, false,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
 , monitors(cs_monitor)
 , current_cache_pointer_index(gdi::CachePointerIndex(PredefinedPointer::Normal))

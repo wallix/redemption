@@ -40,7 +40,7 @@ public:
         Pressed,
     };
 
-    WidgetButton(gdi::GraphicApi & drawable, Widget& parent,
+    WidgetButton(gdi::GraphicApi & drawable,
                  const char * text, WidgetEventNotifier onsubmit,
                  Color fg_color, Color bg_color, Color focus_color,
                  unsigned border_width, Font const & font,

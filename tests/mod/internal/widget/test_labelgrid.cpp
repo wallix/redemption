@@ -25,10 +25,10 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/null_tooltip_shower.hpp"
 
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
-#include "mod/internal/widget/screen.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/labelgrid/"
@@ -36,9 +36,7 @@
 RED_AUTO_TEST_CASE(TraceLabelGrid)
 {
     TestGraphic drawable(800, 600);
-
-    // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
+    NullTooltipShower tooltip_shower;
 
     int16_t x = 10;
     int16_t y = 10;
@@ -47,7 +45,7 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
     const uint16_t column_number = 4;
     const uint16_t grid_border   = 2;
 
-    WidgetLabelGrid wgrid(drawable, parent, WidgetEventNotifier(),
+    WidgetLabelGrid wgrid(drawable, tooltip_shower, WidgetEventNotifier(),
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
                           WINBLUE, WHITE, MEDIUM_BLUE, WHITE, global_font_lato_light_16(),

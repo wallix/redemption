@@ -101,14 +101,14 @@ namespace
 
 LanguageButton::LanguageButton(
     zstring_view enable_locales,
-    Widget & parent,
+    Widget & parent_redraw,
     gdi::GraphicApi & drawable,
     FrontAPI & front,
     Font const & font,
     Theme const & theme
 )
 : WidgetButton(
-    drawable, *this, nullptr,
+    drawable, nullptr,
     [this] { return this->next_layout(); },
     theme.global.fgcolor, theme.global.bgcolor,
     theme.global.focus_color, language_button_border, font,
@@ -116,7 +116,7 @@ LanguageButton::LanguageButton(
 , icon_size_in_space(kbd_icon_in_space(get_space_size(font)))
 , space_size(static_cast<uint16_t>(icon_size_in_space * get_space_size(font)))
 , front(front)
-, parent_redraw(parent)
+, parent_redraw(parent_redraw)
 , front_layout(front.get_keylayout())
 {
     using std::begin;

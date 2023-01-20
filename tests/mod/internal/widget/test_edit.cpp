@@ -38,7 +38,6 @@ struct TestWidgetEditCtx
 {
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetEdit wedit;
 
     struct Colors
@@ -53,7 +52,7 @@ struct TestWidgetEditCtx
         WidgetEventNotifier onsubmit = WidgetEventNotifier(),
         size_t edit_pos = -1u, int xtext = 0, int ytext = 0)
     : wedit(
-        drawable, copy_paste, parent, text, onsubmit,
+        drawable, copy_paste, text, onsubmit,
         colors.fg_color, colors.bg_color, colors.bg_color,
         global_font_deja_vu_14(), edit_pos, xtext, ytext)
     {
@@ -270,41 +269,41 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), Theme{});
 
-    WidgetComposite wcomposite(drawable, parent);
+    WidgetComposite wcomposite(drawable);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetEdit wedit1(drawable, copy_paste, wcomposite, "abababab",
+    WidgetEdit wedit1(drawable, copy_paste, "abababab",
                       {WidgetEventNotifier()}, YELLOW, BLACK, BLACK, global_font_deja_vu_14());
     Dimension dim = wedit1.get_optimal_dim();
     wedit1.set_wh(50, dim.h);
     wedit1.set_xy(0, 0);
 
-    WidgetEdit wedit2(drawable, copy_paste, wcomposite, "ggghdgh",
+    WidgetEdit wedit2(drawable, copy_paste, "ggghdgh",
                       {WidgetEventNotifier()}, WHITE, RED, RED, global_font_deja_vu_14());
     dim = wedit2.get_optimal_dim();
     wedit2.set_wh(50, dim.h);
     wedit2.set_xy(0, 100);
 
-    WidgetEdit wedit3(drawable, copy_paste, wcomposite, "lldlslql",
+    WidgetEdit wedit3(drawable, copy_paste, "lldlslql",
                       {WidgetEventNotifier()}, BLUE, RED, RED, global_font_deja_vu_14());
     dim = wedit3.get_optimal_dim();
     wedit3.set_wh(50, dim.h);
     wedit3.set_xy(100, 100);
 
-    WidgetEdit wedit4(drawable, copy_paste, wcomposite, "LLLLMLLM",
+    WidgetEdit wedit4(drawable, copy_paste, "LLLLMLLM",
                       {WidgetEventNotifier()}, PINK, DARK_GREEN, DARK_GREEN, global_font_deja_vu_14());
     dim = wedit4.get_optimal_dim();
     wedit4.set_wh(50, dim.h);
     wedit4.set_xy(300, 300);
 
-    WidgetEdit wedit5(drawable, copy_paste, wcomposite, "dsdsdjdjs",
+    WidgetEdit wedit5(drawable, copy_paste, "dsdsdjdjs",
                       {WidgetEventNotifier()}, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_deja_vu_14());
     dim = wedit5.get_optimal_dim();
     wedit5.set_wh(50, dim.h);
     wedit5.set_xy(700, -10);
 
-    WidgetEdit wedit6(drawable, copy_paste, wcomposite, "xxwwp",
+    WidgetEdit wedit6(drawable, copy_paste, "xxwwp",
                       {WidgetEventNotifier()}, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_deja_vu_14());
     dim = wedit6.get_optimal_dim();
     wedit6.set_wh(50, dim.h);
@@ -333,20 +332,21 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
 {
     TestWidgetEditCtx ctx("abcde", {BLACK, WHITE, WHITE}, 100, {WidgetEventNotifier()}, size_t(-1u), 1, 1);
+    WidgetScreen parent{ctx.drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
 
     ctx.wedit.set_xy(0, 0);
 
     ctx.wedit.focus(Widget::focus_reason_tabkey);
-    ctx.parent.add_widget(&ctx.wedit);
-    ctx.parent.current_focus = &ctx.wedit;
+    parent.add_widget(&ctx.wedit);
+    parent.current_focus = &ctx.wedit;
 
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
     auto keyboard = ctx.keyboard();
 
     keyboard.rdp_input_scancode(0x10); // 'a'
 
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_24.png");
 
     keyboard.rdp_input_scancode(0x11); // 'z'
@@ -355,39 +355,39 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     keyboard.rdp_input_scancode(0x10); // 'a'
     keyboard.rdp_input_scancode(0x10); // 'a'
     keyboard.rdp_input_scancode(0x10); // 'a'
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_25.png");
 
     keyboard.rdp_input_scancode(0x10); // 'a'
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_26.png");
 
     keyboard.rdp_input_scancode(0x10); // 'a'
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_27.png");
 
     keyboard.rdp_input_scancode(0x19); // 'p'
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_28.png");
 
     keyboard.rdp_input_scancode(0x147); // home
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_29.png");
 
     keyboard.rdp_input_scancode(0x14f); // end
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_28.png");
 
     keyboard.rdp_input_scancode(0x0e); // backspace
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_31.png");
 
     for (int i = 0; i < 10; i++) {
         keyboard.rdp_input_scancode(0x14b); // left
     }
-    ctx.parent.rdp_input_invalidate(Rect(0, 0, ctx.parent.cx(), ctx.parent.cy()));
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_32.png");
 
-    ctx.parent.clear();
+    parent.clear();
 }

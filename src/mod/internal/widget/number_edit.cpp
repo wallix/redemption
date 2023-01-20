@@ -23,12 +23,12 @@
 #include "keyboard/keymap.hpp"
 
 WidgetNumberEdit::WidgetNumberEdit(
-    gdi::GraphicApi & drawable, CopyPaste & copy_paste, Widget & parent,
+    gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     const char* text, WidgetEventNotifier onsubmit,
     Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, size_t edit_position,
     int xtext, int ytext)
-: WidgetEdit(drawable, copy_paste, parent, text, onsubmit,
+: WidgetEdit(drawable, copy_paste, text, onsubmit,
              fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
 , initial_x_text(xtext)
 {}

@@ -29,16 +29,15 @@
 #include "utils/utf.hpp"
 
 WidgetLabel::WidgetLabel(
-    gdi::GraphicApi & drawable, Widget& parent, chars_view text,
+    gdi::GraphicApi & drawable, chars_view text,
     Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
-    : Widget(drawable, parent)
+    : Widget(drawable)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
-    , tool(false)
     , w_border(x_text)
     , font(font)
 {
@@ -48,11 +47,11 @@ WidgetLabel::WidgetLabel(
 }
 
 WidgetLabel::WidgetLabel(
-    gdi::GraphicApi & drawable, Widget& parent, char const* text,
+    gdi::GraphicApi & drawable, char const* text,
     Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
-: WidgetLabel(drawable, parent, {text, text ? strlen(text) : 0u},
+: WidgetLabel(drawable, {text, text ? strlen(text) : 0u},
               fgcolor, bgcolor, font, xtext, ytext)
 {}
 
@@ -151,19 +150,6 @@ void WidgetLabel::set_color(Color bg_color, Color fg_color)
 {
     this->bg_color = bg_color;
     this->fg_color = fg_color;
-}
-
-void WidgetLabel::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
-{
-    if (this->tool) {
-        if (device_flags == MOUSE_FLAG_MOVE) {
-            // TODO: tm.height unused ?
-            gdi::TextMetrics tm(this->font, this->buffer);
-            if (tm.width > this->cx()) {
-                this->show_tooltip(this->buffer, x, y, Rect(), this->get_rect());
-            }
-        }
-    }
 }
 
 void WidgetLabel::auto_resize()

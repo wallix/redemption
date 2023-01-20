@@ -28,37 +28,37 @@
 
 WidgetWabClose::WidgetWabClose(
     gdi::GraphicApi & drawable,
-    int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
+    int16_t left, int16_t top, int16_t width, int16_t height,
     Events events, const char * diagnostic_text,
     const char * username, const char * target,
     bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
     Language lang, bool back_selector)
-: WidgetParent(drawable, parent)
+: WidgetParent(drawable)
 , oncancel(events.oncancel)
-, connection_closed_label(drawable, *this, TR(trkeys::connection_closed, lang).to_sv(),
+, connection_closed_label(drawable, TR(trkeys::connection_closed, lang).to_sv(),
                           theme.global.fgcolor, theme.global.bgcolor, font)
-, separator(drawable, *this, theme.global.separator_color)
-, username_label(drawable, *this, "Username:",
+, separator(drawable, theme.global.separator_color)
+, username_label(drawable, "Username:",
                  theme.global.fgcolor, theme.global.bgcolor, font)
-, username_value(drawable, *this, username,
+, username_value(drawable, username,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-, target_label(drawable, *this, "Target:",
+, target_label(drawable, "Target:",
                theme.global.fgcolor, theme.global.bgcolor, font)
-, target_value(drawable, *this, target,
+, target_value(drawable, target,
                theme.global.fgcolor, theme.global.bgcolor, font)
-, diagnostic_label(drawable, *this, "Diagnostic:",
+, diagnostic_label(drawable, "Diagnostic:",
                    theme.global.fgcolor, theme.global.bgcolor, font)
-, diagnostic_value(drawable, *this, diagnostic_text,
+, diagnostic_value(drawable, diagnostic_text,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-, timeleft_label(drawable, *this, "Time left:",
+, timeleft_label(drawable, "Time left:",
                 theme.global.fgcolor, theme.global.bgcolor, font)
-, timeleft_value(drawable, *this, nullptr,
+, timeleft_value(drawable, nullptr,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-, cancel(drawable, *this, TR(trkeys::close, lang),
+, cancel(drawable, TR(trkeys::close, lang),
          events.oncancel,
          theme.global.fgcolor, theme.global.bgcolor,
          theme.global.focus_color, 2, font, 6, 2)
-, back(back_selector ? new WidgetButton(drawable, *this, TR(trkeys::back_selector, lang),
+, back(back_selector ? new WidgetButton(drawable, TR(trkeys::back_selector, lang),
                                         events.onback_to_selector,
                                         theme.global.fgcolor,
                                         theme.global.bgcolor,
@@ -67,7 +67,6 @@ WidgetWabClose::WidgetWabClose(
 , img(drawable,
       theme.global.enable_theme ? theme.global.logo_path.c_str() :
       app_path(AppPath::LoginWabBlue),
-      *this,
       theme.global.bgcolor)
 , bg_color(theme.global.bgcolor)
 , prev_time(0)

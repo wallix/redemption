@@ -38,11 +38,11 @@ namespace
 } // anonymous namespace
 
 WidgetScrollBar::WidgetScrollBar(
-    gdi::GraphicApi & drawable, Widget& parent,
+    gdi::GraphicApi & drawable,
     WidgetEventNotifier onscroll, bool horizontal,
     Color fg_color, Color bg_color, Color focus_color,
     Font const & font, bool rail_style, int maxvalue)
-: Widget(drawable, parent)
+: Widget(drawable)
 , onscroll(onscroll)
 , horizontal(horizontal)
 , fg_color(fg_color)

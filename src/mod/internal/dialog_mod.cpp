@@ -40,7 +40,7 @@ DialogMod::DialogMod(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
     , dialog_widget(
-        drawable, copy_paste, widget_rect, this->screen,
+        drawable, copy_paste, widget_rect,
         {
             .onsubmit = [this]{ this->accepted(); },
             .oncancel = [this]{ this->refused(); },

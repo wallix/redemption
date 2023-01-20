@@ -34,7 +34,7 @@
 class WidgetGrid : public Widget
 {
 public:
-    WidgetGrid(gdi::GraphicApi & drawable, Widget & parent,
+    WidgetGrid(gdi::GraphicApi & drawable,
                WidgetEventNotifier onsubmit,
                uint16_t nb_rows, uint16_t nb_columns,
                Color bg_color_1, Color fg_color_1,

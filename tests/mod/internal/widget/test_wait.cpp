@@ -22,12 +22,12 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/copy_paste.hpp"
-#include "mod/internal/widget/wait.hpp"
-#include "mod/internal/widget/screen.hpp"
-
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget/wait.hpp"
+#include "utils/theme.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wait/"
@@ -36,12 +36,11 @@ struct TestWidgetWaitCtx
 {
     TestGraphic drawable{800, 600};
     CopyPaste copy_paste{false};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetWait flat_dialog;
 
     TestWidgetWaitCtx(bool showform = false, unsigned flags = WidgetForm::NONE)
     : flat_dialog(
-        drawable, copy_paste, {0, 0, 800, 600}, parent,
+        drawable, copy_paste, {0, 0, 800, 600},
         {WidgetEventNotifier(), WidgetEventNotifier(), WidgetEventNotifier(), WidgetEventNotifier()},
         "Invalid Target",
         "Target \"trucmuch@machinbidule:serv\" is not allowed because you either\n"

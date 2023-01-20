@@ -22,14 +22,13 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
+
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "mod/internal/widget/label.hpp"
-#include "mod/internal/widget/screen.hpp"
-
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/core/font.hpp"
-#include "test_only/mod/internal/widget/widget_receive_event.hpp"
+#include "mod/internal/widget/composite.hpp"
 
 #include <string_view>
 
@@ -45,13 +44,12 @@ struct TestWidgetLabelCtx
     };
 
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), Theme{}};
     WidgetLabel wlabel;
 
     TestWidgetLabelCtx(
         char const* text, Colors colors = Colors{RED, YELLOW}, int xtext = 0, int ytext = 0)
     : wlabel(
-        drawable, parent, text,
+        drawable, text,
         colors.fg, colors.bg, global_font_lato_light_16(), xtext, ytext)
     {}
 };
@@ -168,39 +166,36 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 {
     TestGraphic drawable(800, 600);
 
-    //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
-
-    WidgetComposite wcomposite(drawable, parent);
+    WidgetComposite wcomposite(drawable);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetLabel wlabel1(drawable, wcomposite,
+    WidgetLabel wlabel1(drawable,
                         "abababab", YELLOW, BLACK, global_font_lato_light_16());
     wlabel1.set_wh(wlabel1.get_optimal_dim());
     wlabel1.set_xy(0, 0);
 
-    WidgetLabel wlabel2(drawable, wcomposite,
+    WidgetLabel wlabel2(drawable,
                         "ggghdgh", WHITE, BLUE, global_font_lato_light_16());
     wlabel2.set_wh(wlabel2.get_optimal_dim());
     wlabel2.set_xy(0, 100);
 
-    WidgetLabel wlabel3(drawable, wcomposite,
+    WidgetLabel wlabel3(drawable,
                         "lldlslql", BLUE, RED, global_font_lato_light_16());
     wlabel3.set_wh(wlabel3.get_optimal_dim());
     wlabel3.set_xy(100, 100);
 
-    WidgetLabel wlabel4(drawable, wcomposite,
+    WidgetLabel wlabel4(drawable,
                         "LLLLMLLM", PINK, DARK_GREEN, global_font_lato_light_16());
     wlabel4.set_wh(wlabel4.get_optimal_dim());
     wlabel4.set_xy(300, 300);
 
-    WidgetLabel wlabel5(drawable, wcomposite,
+    WidgetLabel wlabel5(drawable,
                         "dsdsdjdjs", LIGHT_GREEN, DARK_BLUE, global_font_lato_light_16());
     wlabel5.set_wh(wlabel5.get_optimal_dim());
     wlabel5.set_xy(700, -10);
 
-    WidgetLabel wlabel6(drawable, wcomposite,
+    WidgetLabel wlabel6(drawable,
                         "xxwwp", ANTHRACITE, PALE_GREEN, global_font_lato_light_16());
     wlabel6.set_wh(wlabel6.get_optimal_dim());
     wlabel6.set_xy(-10, 550);

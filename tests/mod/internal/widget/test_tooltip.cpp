@@ -36,9 +36,6 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
 {
     TestGraphic drawable(800, 600);
 
-    // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
-
     BGRColor fg_color = RED;
     BGRColor bg_color = YELLOW;
     BGRColor border_color = BLACK;
@@ -46,7 +43,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable, parent, tooltiptext, fg_color, bg_color, border_color, global_font_lato_light_16());
+    WidgetTooltip wtooltip(drawable, tooltiptext, fg_color, bg_color, border_color, global_font_lato_light_16());
     Dimension dim = wtooltip.get_optimal_dim();
     wtooltip.set_wh(dim);
     wtooltip.set_xy(x, y);
@@ -66,13 +63,13 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
-    WidgetLabel label(drawable, parent, "TOOLTIPTEST",
+    WidgetLabel label(drawable, "TOOLTIPTEST",
                       BLACK, WHITE, global_font_lato_light_16());
     Dimension dim = label.get_optimal_dim();
     label.set_wh(dim);
     label.set_xy(x, y);
 
-    WidgetLabel label2(drawable, parent, "TOOLTIPTESTMULTI",
+    WidgetLabel label2(drawable, "TOOLTIPTESTMULTI",
                        BLACK, WHITE, global_font_lato_light_16());
     dim = label2.get_optimal_dim();
     label2.set_wh(dim);

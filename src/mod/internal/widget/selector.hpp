@@ -69,9 +69,10 @@ public:
     };
 
     WidgetSelector(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
+                   WidgetTooltipShower & tooltip_shower,
                    const char * device_name,
                    int16_t left, int16_t top, uint16_t width, uint16_t height,
-                   Widget & parent, Events events,
+                   Events events,
                    const char * current_page,
                    const char * number_of_page,
                    WidgetButton * extra_button,
@@ -93,13 +94,27 @@ public:
 
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
-    void show_tooltip(const char * text, int x, int y,
-                      Rect preferred_display_rect, Rect mouse_area) override;
-
 private:
     void rearrange();
 
-private:
+    struct TooltipShower final : WidgetTooltipShower
+    {
+        TooltipShower(WidgetSelector & selector)
+        : selector(selector)
+        {}
+
+        void show_tooltip(
+            const char * text, int x, int y,
+            Rect const preferred_display_rect,
+            Rect const mouse_area) override;
+
+    private:
+        WidgetSelector & selector;
+    };
+
+    TooltipShower tooltip_shower;
+    WidgetTooltipShower & tooltip_shower_parent;
+
     WidgetEventNotifier onconnect;
     WidgetEventNotifier oncancel;
     WidgetEventNotifier onctrl_shift;

@@ -27,7 +27,7 @@ class WidgetNumberEdit : public WidgetEdit
 {
 public:
     WidgetNumberEdit(
-        gdi::GraphicApi & drawable, CopyPaste & copy_paste, Widget & parent,
+        gdi::GraphicApi & drawable, CopyPaste & copy_paste,
         const char* text, WidgetEventNotifier onsubmit,
         Color fgcolor, Color bgcolor, Color focus_color,
         Font const & font, size_t edit_position = -1, /*NOLINT*/

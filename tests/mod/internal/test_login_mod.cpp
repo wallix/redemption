@@ -21,6 +21,9 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "test_only/front/fake_front.hpp"
+#include "test_only/core/font.hpp"
+
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
@@ -29,9 +32,8 @@
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
-#include "test_only/front/fake_front.hpp"
-#include "test_only/core/font.hpp"
 #include "core/events.hpp"
+
 
 struct TestLoginModCtx
 {

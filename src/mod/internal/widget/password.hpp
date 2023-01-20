@@ -33,7 +33,7 @@ class WidgetPassword : public WidgetEdit
 
 public:
     WidgetPassword(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-                   Widget& parent, const char * text, WidgetEventNotifier onsubmit,
+                   const char * text, WidgetEventNotifier onsubmit,
                    Color fgcolor, Color bgcolor, Color focus_color,
                    Font const & font,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/

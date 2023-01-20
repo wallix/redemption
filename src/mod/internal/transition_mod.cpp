@@ -28,7 +28,7 @@ TransitionMod::TransitionMod(
     Theme const& theme
 )
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, nullptr)
-    , ttmessage(drawable, this->screen, message,
+    , ttmessage(drawable, message,
                 theme.tooltip.fgcolor, theme.tooltip.bgcolor,
                 theme.tooltip.border_color, font)
 {

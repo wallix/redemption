@@ -95,7 +95,7 @@ void WidgetGrid::difftimer::update()
 }
 
 WidgetGrid::WidgetGrid(
-    gdi::GraphicApi & drawable, Widget & parent,
+    gdi::GraphicApi & drawable,
     WidgetEventNotifier onsubmit,
     uint16_t nb_rows, uint16_t nb_columns,
     Color bg_color_1, Color fg_color_1,
@@ -104,7 +104,7 @@ WidgetGrid::WidgetGrid(
     Color bg_color_selection, Color fg_color_selection,
     uint16_t border
 )
-    : Widget(drawable, parent)
+    : Widget(drawable)
     , onsubmit(onsubmit)
     , widgets(nb_rows, nb_columns)
     , bg_color_1(bg_color_1)

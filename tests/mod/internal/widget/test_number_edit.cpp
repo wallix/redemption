@@ -24,7 +24,6 @@
 
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/number_edit.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -40,9 +39,6 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     TestGraphic drawable(800, 600);
     CopyPaste copy_paste(false);
 
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
-
-    // Widget* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
@@ -50,7 +46,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     NotifyTrace onsubmit;
 
     WidgetNumberEdit wnumber_edit(
-        drawable, copy_paste, parent, "123456", onsubmit,
+        drawable, copy_paste, "123456", onsubmit,
         GREEN, RED, RED, global_font_lato_light_16());
     Dimension dim = wnumber_edit.get_optimal_dim();
     wnumber_edit.set_wh(cx, dim.h);

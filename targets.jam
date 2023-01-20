@@ -2850,7 +2850,6 @@ test-run tests/mod/internal/widget/test_button :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2862,9 +2861,6 @@ test-run tests/mod/internal/widget/test_button :
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -2946,7 +2942,6 @@ test-run tests/mod/internal/widget/test_dialog :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2961,10 +2956,7 @@ test-run tests/mod/internal/widget/test_dialog :
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
@@ -3064,7 +3056,6 @@ test-run tests/mod/internal/widget/test_form :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3077,9 +3068,6 @@ test-run tests/mod/internal/widget/test_form :
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/form.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3104,7 +3092,6 @@ test-run tests/mod/internal/widget/test_grid :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3114,12 +3101,8 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3141,7 +3124,6 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3155,9 +3137,6 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3179,18 +3158,11 @@ test-run tests/mod/internal/widget/test_image :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3200,7 +3172,6 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
@@ -3212,7 +3183,6 @@ test-run tests/mod/internal/widget/test_interactive_target :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3226,10 +3196,7 @@ test-run tests/mod/internal/widget/test_interactive_target :
   <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/interactive_target.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3252,7 +3219,6 @@ test-run tests/mod/internal/widget/test_label :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3263,9 +3229,6 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3287,7 +3250,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3295,13 +3257,9 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3371,17 +3329,12 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3403,7 +3356,6 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3412,13 +3364,9 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3440,7 +3388,6 @@ test-run tests/mod/internal/widget/test_password :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3452,10 +3399,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -3545,7 +3489,6 @@ test-run tests/mod/internal/widget/test_selector :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3560,11 +3503,8 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/selector.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3656,7 +3596,6 @@ test-run tests/mod/internal/widget/test_wab_close :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3669,8 +3608,6 @@ test-run tests/mod/internal/widget/test_wab_close :
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/wab_close.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -3698,7 +3635,6 @@ test-run tests/mod/internal/widget/test_wait :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3715,8 +3651,6 @@ test-run tests/mod/internal/widget/test_wait :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/wait.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
@@ -3742,17 +3676,10 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3763,7 +3690,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o

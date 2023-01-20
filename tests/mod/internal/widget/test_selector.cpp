@@ -21,12 +21,13 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
+#include "test_only/mod/internal/widget/null_tooltip_shower.hpp"
 
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/selector.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
+#include "utils/theme.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -38,7 +39,7 @@ struct TestWidgetSelectorCtx
 {
     CopyPaste copy_paste{false};
     TestGraphic drawable;
-    WidgetScreen parent;
+    NullTooltipShower tooltip_shower;
 
     WidgetSelector selector;
 
@@ -46,10 +47,8 @@ struct TestWidgetSelectorCtx
         uint16_t width, uint16_t height,
         WidgetSelectorParams params, bool has_target_helpicon = false)
     : drawable{width, height}
-    , parent{drawable, width == 640 ? uint16_t(648) : width, height,
-             global_font_deja_vu_14(), Theme{}}
     , selector(
-        drawable, copy_paste, "x@127.0.0.1", 0, 0, width, height, parent,
+        drawable, copy_paste, tooltip_shower, "x@127.0.0.1", 0, 0, width, height,
         {
             .onconnect = WidgetEventNotifier(),
             .oncancel = WidgetEventNotifier(),

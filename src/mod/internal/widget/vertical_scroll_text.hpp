@@ -30,7 +30,7 @@ class WidgetVerticalScrollText : public Widget
 {
 public:
     WidgetVerticalScrollText(
-        gdi::GraphicApi& drawable, Widget& parent, std::string text,
+        gdi::GraphicApi& drawable, std::string text,
         Color fg_color, Color bg_color, Color focus_color,
         Font const& font, uint16_t xtext = 0, uint16_t ytext = 0); /*NOLINT*/
 

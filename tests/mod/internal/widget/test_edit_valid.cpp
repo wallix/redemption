@@ -56,7 +56,7 @@ struct TestWidgetEditValid
     TestWidgetEditValid(
         Colors colors, const char * text, std::size_t edit_position = -1u,
         const char * title = "", bool pass = false)
-    : wedit(drawable, copy_paste, parent, text, onsubmit,
+    : wedit(drawable, copy_paste, text, onsubmit,
             colors.fg, colors.bg, colors.focus, colors.bg,
             global_font_deja_vu_14(), title, false, edit_position, 0, 0, pass)
     {
@@ -168,7 +168,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
 
-    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, "", WidgetEventNotifier(),
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, "", WidgetEventNotifier(),
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            nullptr, false, 0);
     dim = wedit2.get_optimal_dim();
@@ -211,7 +211,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
 
-    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, "", WidgetEventNotifier(),
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, "", WidgetEventNotifier(),
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            "edition2", true, 0, 0, 0, false);
     dim = wedit2.get_optimal_dim();
@@ -263,7 +263,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
 
-    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, ctx.parent, "", WidgetEventNotifier(),
+    WidgetEditValid wedit2(ctx.drawable, ctx.copy_paste, "", WidgetEventNotifier(),
                            WHITE, DARK_BLUE, RED, DARK_BLUE, global_font_deja_vu_14(),
                            "edition2", true, 0, 0, 0, true);
     dim = wedit2.get_optimal_dim();

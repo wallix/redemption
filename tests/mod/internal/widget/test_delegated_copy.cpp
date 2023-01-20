@@ -25,7 +25,6 @@ Author(s): Proxies Team
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
-#include "test_only/mod/internal/widget/widget_receive_event.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
 
 
@@ -47,7 +46,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     BGRColor focus_color = BLUE;
 
     NotifyTrace notifier;
-    WidgetDelegatedCopy delegated(gd, screen, notifier, fg_color, bg_color, focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Left);
+    WidgetDelegatedCopy delegated(gd, notifier, fg_color, bg_color, focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Left);
 
     delegated.set_wh(delegated.get_optimal_dim());
     delegated.set_xy(5, 5);

@@ -23,7 +23,6 @@
 
 #include "mod/internal/widget/button.hpp"
 #include "mod/internal/widget/group_box.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
@@ -33,14 +32,13 @@
 struct TestWidgetGroupBoxCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), Theme{}};
     WidgetGroupBox wgroupbox;
     WidgetButton wbutton;
 
     TestWidgetGroupBoxCtx(const char * text)
-    : wgroupbox(drawable, parent, text,
+    : wgroupbox(drawable, text,
                 /*fg_color=*/RED, /*bg_color=*/YELLOW, global_font_lato_light_16())
-    , wbutton(drawable, wgroupbox, "Button 1", WidgetEventNotifier(),
+    , wbutton(drawable, "Button 1", WidgetEventNotifier(),
               /*fg_color=*/RED, /*bg_color=*/YELLOW, /*focuscolor*/LIGHT_YELLOW, 2,
               global_font_lato_light_16(), 4, 1)
     {

@@ -115,8 +115,8 @@ void CompositeArray::clear()
 }
 
 
-WidgetParent::WidgetParent(gdi::GraphicApi & drawable, Widget & parent)
-    : Widget(drawable, parent)
+WidgetParent::WidgetParent(gdi::GraphicApi & drawable)
+    : Widget(drawable)
     , pressed(nullptr)
     , bg_color(BLACK)
     , impl(nullptr)

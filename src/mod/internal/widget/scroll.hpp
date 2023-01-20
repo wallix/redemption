@@ -30,7 +30,7 @@ class Font;
 class WidgetScrollBar : public Widget
 {
 public:
-    WidgetScrollBar(gdi::GraphicApi & drawable, Widget& parent,
+    WidgetScrollBar(gdi::GraphicApi & drawable,
                     WidgetEventNotifier onscroll, bool horizontal,
                     Color fg_color, Color bg_color, Color focus_color,
                     Font const & font, bool rail_style, int maxvalue = 100); /*NOLINT*/

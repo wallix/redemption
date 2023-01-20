@@ -37,7 +37,6 @@ InteractiveTargetMod::InteractiveTargetMod(
         drawable, front, font, theme)
     , challenge(
         drawable, copy_paste, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        this->screen,
         {
             .onsubmit = [this]{ this->accepted(); },
             .oncancel = [this]{ this->refused(); },

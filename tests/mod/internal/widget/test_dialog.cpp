@@ -28,9 +28,9 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/edit.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
+#include "utils/theme.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/dialog/"
@@ -39,7 +39,6 @@ struct TestWidgetDialogCtx
 {
     TestGraphic drawable;
     CopyPaste copy_paste{false};
-    WidgetScreen parent;
     NotifyTrace onsubmit;
     NotifyTrace oncancel;
     WidgetDialog flat_dialog;
@@ -50,30 +49,18 @@ struct TestWidgetDialogCtx
         ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : TestWidgetDialogCtx(
-        w, h, w, h, w, h, caption, text, has_challenge, logo_path)
+        w, h, w, h, caption, text, has_challenge, logo_path)
     {}
 
     TestWidgetDialogCtx(
         uint16_t w, uint16_t h,
-        uint16_t dialogW, uint16_t dialogH,
-        const char* caption, const char * text,
-        ChallengeOpt has_challenge = NO_CHALLENGE,
-        char const* logo_path = nullptr)
-    : TestWidgetDialogCtx(
-        w, h, w, h, dialogW, dialogH, caption, text, has_challenge, logo_path)
-    {}
-
-    TestWidgetDialogCtx(
-        uint16_t w, uint16_t h,
-        uint16_t parentW, uint16_t parentH,
         uint16_t dialogW, uint16_t dialogH,
         const char* caption, const char * text,
         ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : drawable{w, h}
-    , parent{drawable, parentW, parentH, global_font_deja_vu_14(), Theme{}}
     , flat_dialog(
-        drawable, copy_paste, {0, 0, dialogW, dialogH}, parent,
+        drawable, copy_paste, {0, 0, dialogW, dialogH},
         {onsubmit, oncancel, WidgetEventNotifier()},
         caption, text, /*extra_button=*/nullptr,
         [logo_path]{
@@ -167,7 +154,7 @@ RED_AUTO_TEST_CASE(TraceWidgetDialog5)
 
 RED_AUTO_TEST_CASE(TraceWidgetDialog6)
 {
-    TestWidgetDialogCtx ctx(352, 500, 300, 600, 350, 500, "test6",
+    TestWidgetDialogCtx ctx(352, 500, 350, 500, "test6",
         "line 1\n"
         "line 2\n"
         "\n"

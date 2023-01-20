@@ -21,13 +21,12 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
-
-
-#include "mod/internal/widget/wab_close.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
+
+#include "mod/internal/widget/wab_close.hpp"
+#include "utils/theme.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wab_close/"
@@ -35,7 +34,6 @@
 struct TestWidgetCloseCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetWabClose flat_wab_close;
 
     TestWidgetCloseCtx(
@@ -43,7 +41,7 @@ struct TestWidgetCloseCtx
         bool showtimer, Theme theme = Theme(),
         WidgetEventNotifier oncancel = WidgetEventNotifier())
     : flat_wab_close(
-        drawable, 0, 0, 800, 600, parent, {oncancel, WidgetEventNotifier()},
+        drawable, 0, 0, 800, 600, {oncancel, WidgetEventNotifier()},
         diagnostic_text, username, target,
         showtimer, nullptr, global_font_deja_vu_14(), theme, Language::en, false)
     {}

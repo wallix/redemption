@@ -50,28 +50,28 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     NotifyTrace notifier4;
 
     WidgetButton wbutton1(
-        drawable, wscreen, "button 1", notifier1,
+        drawable, "button 1", notifier1,
         WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
     WidgetButton wbutton2(
-        drawable, wscreen, "button 2", notifier2,
+        drawable, "button 2", notifier2,
         WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 30);
 
     WidgetButton wbutton3(
-        drawable, wscreen, "button 3", notifier3,
+        drawable, "button 3", notifier3,
         WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 0);
 
     WidgetButton wbutton4(
-        drawable, wscreen, "button 4", notifier4,
+        drawable, "button 4", notifier4,
         WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);

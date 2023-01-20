@@ -26,11 +26,10 @@
 
 
 WidgetMultiLine::WidgetMultiLine(
-    gdi::GraphicApi & drawable, Widget& parent,
-    char const* text,
+    gdi::GraphicApi & drawable, char const* text,
     Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext)
-: Widget(drawable, parent)
+: Widget(drawable)
 , x_text(xtext)
 , y_text(ytext)
 , cy_text(0)

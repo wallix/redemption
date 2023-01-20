@@ -72,9 +72,8 @@ LoginMod::LoginMod(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
     , login(
-        drawable, copy_paste,
+        drawable, copy_paste, this->screen,
         widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        this->screen,
         {
             .onsubmit = [this]{
                 std::string auth_user = concat_target_login(

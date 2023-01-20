@@ -30,7 +30,7 @@
 class WidgetTooltip;
 class Font;
 
-class WidgetScreen : public WidgetParent
+class WidgetScreen : public WidgetParent, public WidgetTooltipShower
 {
 public:
     WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,

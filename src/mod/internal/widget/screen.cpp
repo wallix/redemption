@@ -31,7 +31,7 @@ WidgetScreen::WidgetScreen(
     gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
     Font const & font, Theme theme
 )
-    : WidgetParent(drawable, *this)
+    : WidgetParent(drawable)
     , theme(std::move(theme))
     , tooltip(nullptr)
     , current_over(nullptr)
@@ -67,7 +67,7 @@ void WidgetScreen::show_tooltip(
 
         this->tooltip_mouse_area = mouse_area;
         this->tooltip = std::make_unique<WidgetTooltip>(
-            this->drawable, *this, "",
+            this->drawable, "",
             this->theme.tooltip.fgcolor,
             this->theme.tooltip.bgcolor,
             this->theme.tooltip.border_color,

@@ -33,6 +33,29 @@ namespace gdi
     class CachePointerIndex;
 } // namespace gdi
 
+
+class WidgetTooltipShower
+{
+public:
+    WidgetTooltipShower() = default;
+
+    WidgetTooltipShower(WidgetTooltipShower const&) = delete;
+    WidgetTooltipShower& operator=(WidgetTooltipShower const&) = delete;
+
+    virtual ~WidgetTooltipShower() = default;
+
+    virtual void show_tooltip(
+        const char * text, int x, int y,
+        Rect preferred_display_rect,
+        Rect mouse_area) = 0;
+
+    void hide_tooltip()
+    {
+        this->show_tooltip(nullptr, 0, 0, Rect(), Rect());
+    }
+};
+
+
 class Widget : public RdpInput
 {
 public:
@@ -85,8 +108,6 @@ public:
         Edit,
     };
 
-public:
-    Widget & parent;
 protected:
     gdi::GraphicApi & drawable;
 
@@ -100,9 +121,8 @@ public:
     bool has_focus;
 
 public:
-    Widget(gdi::GraphicApi & drawable, Widget & parent) /*NOLINT*/
-    : parent(parent)
-    , drawable(drawable)
+    Widget(gdi::GraphicApi & drawable)
+    : drawable(drawable)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
     , pointer_flag(PointerType::Normal)
@@ -117,27 +137,6 @@ public:
     virtual bool previous_focus()
     {
         return false;
-    }
-
-    bool is_root()
-    {
-        // The root widget is defined as the parent of itself (screen widget only)
-        return (&this->parent == this);
-    }
-
-    virtual void show_tooltip(
-        const char * text, int x, int y,
-        Rect preferred_display_rect,
-        Rect mouse_area)
-    {
-        if (!this->is_root()) {
-            this->parent.show_tooltip(text, x, y, preferred_display_rect, mouse_area);
-        }
-    }
-
-    void hide_tooltip()
-    {
-        this->show_tooltip(nullptr, 0, 0, Rect(), Rect());
     }
 
     Widget * last_widget_at_pos(int16_t x, int16_t y)

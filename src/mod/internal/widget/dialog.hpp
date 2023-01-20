@@ -51,8 +51,7 @@ public:
 
     WidgetDialog(
         gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-        Rect const widget_rect,
-        Widget & parent, Events events,
+        Rect const widget_rect, Events events,
         const char* caption, const char * text,
         WidgetButton * extra_button,
         Theme const & theme, Font const & font, const char * ok_text = "Ok", /*NOLINT*/

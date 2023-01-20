@@ -52,13 +52,13 @@ public:
 
     WidgetForm(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
                int16_t left, int16_t top, int16_t width, int16_t height,
-               Widget & parent, Events events,
+               Events events,
                Font const & font, Theme const & theme, Language lang,
                unsigned flags = NONE,
                std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
     WidgetForm(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-               Widget & parent, Events events,
+               Events events,
                Font const & font, Theme const & theme, Language lang,
                unsigned flags = NONE,
                std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/

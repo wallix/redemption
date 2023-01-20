@@ -27,8 +27,7 @@
 class WidgetTooltip : public Widget
 {
 public:
-    WidgetTooltip(gdi::GraphicApi & drawable, Widget & parent,
-                  const char * text,
+    WidgetTooltip(gdi::GraphicApi & drawable, const char * text,
                   Color fgcolor, Color bgcolor, Color border_color,
                   Font const & font);
 

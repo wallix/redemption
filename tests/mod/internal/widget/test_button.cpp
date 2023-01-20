@@ -22,14 +22,14 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/widget/button.hpp"
-#include "mod/internal/widget/screen.hpp"
-#include "keyboard/keymap.hpp"
-#include "keyboard/keylayouts.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
-#include "test_only/mod/internal/widget/widget_receive_event.hpp"
+
+#include "mod/internal/widget/button.hpp"
+#include "mod/internal/widget/composite.hpp"
+#include "keyboard/keymap.hpp"
+#include "keyboard/keylayouts.hpp"
 
 
 namespace
@@ -37,7 +37,6 @@ namespace
 struct ButtonContextTest
 {
     TestGraphic drawable;
-    WidgetScreen parent;
     WidgetButton wbutton;
 
     ButtonContextTest(
@@ -62,8 +61,7 @@ struct ButtonContextTest
         unsigned border_width = 2
     )
     : drawable(w, h)
-    , parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}}
-    , wbutton{drawable, parent, text, WidgetEventNotifier(),
+    , wbutton{drawable, text, WidgetEventNotifier(),
               /*fg_color=*/RED, /*bg_color=*/YELLOW, /*focus_color=*/WINBLUE,
               border_width, global_font_deja_vu_14(), xtext, ytext}
     {
@@ -116,15 +114,12 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 {
     TestGraphic drawable(800, 600);
 
-    WidgetReceiveEvent widget_for_receive_event(drawable);
-
     NotifyTrace notifier;
 
-    Widget& parent = widget_for_receive_event;
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetButton wbutton(drawable, parent, "", notifier, WHITE,
+    WidgetButton wbutton(drawable, "", notifier, WHITE,
                          DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     Dimension dim = wbutton.get_optimal_dim();
     wbutton.set_wh(dim);
@@ -163,52 +158,48 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
 {
     TestGraphic drawable(800, 600);
 
-
-    // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), Theme{});
-
     WidgetEventNotifier notifier2;
 
-    WidgetComposite wcomposite(drawable, parent);
+    WidgetComposite wcomposite(drawable);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 
-    WidgetButton wbutton1(drawable, wcomposite, "abababab",
+    WidgetButton wbutton1(drawable, "abababab",
                           notifier2, YELLOW, BLACK, WINBLUE, 2,
                           global_font_deja_vu_14());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
-    WidgetButton wbutton2(drawable, wcomposite, "ggghdgh",
+    WidgetButton wbutton2(drawable, "ggghdgh",
                           notifier2, WHITE, RED, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 100);
 
-    WidgetButton wbutton3(drawable, wcomposite, "lldlslql",
+    WidgetButton wbutton3(drawable, "lldlslql",
                           notifier2, BLUE, RED, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 100);
 
-    WidgetButton wbutton4(drawable, wcomposite, "LLLLMLLM",
+    WidgetButton wbutton4(drawable, "LLLLMLLM",
                           notifier2, PINK, DARK_GREEN, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);
     wbutton4.set_xy(300, 300);
 
-    WidgetButton wbutton5(drawable, wcomposite, "dsdsdjdjs",
+    WidgetButton wbutton5(drawable, "dsdsdjdjs",
                           notifier2, LIGHT_GREEN, DARK_BLUE, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton5.get_optimal_dim();
     wbutton5.set_wh(dim);
     wbutton5.set_xy(700, -10);
 
-    WidgetButton wbutton6(drawable, wcomposite, "xxwwp",
+    WidgetButton wbutton6(drawable, "xxwwp",
                           notifier2, ANTHRACITE, PALE_GREEN, WINBLUE, 2,
                           global_font_deja_vu_14());
     dim = wbutton6.get_optimal_dim();

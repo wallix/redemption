@@ -29,7 +29,8 @@ struct WidgetLabelGrid : public WidgetGrid
     static constexpr unsigned x_padding_label = 3;
     static constexpr unsigned y_padding_label = 1;
 
-    WidgetLabelGrid(gdi::GraphicApi & drawable, Widget & parent,
+    WidgetLabelGrid(gdi::GraphicApi & drawable,
+                    WidgetTooltipShower & tooltip_shower,
                     WidgetEventNotifier onsubmit,
                     uint16_t nb_lines, uint16_t nb_columns,
                     Color bg_color_1, Color fg_color_1,
@@ -46,4 +47,5 @@ struct WidgetLabelGrid : public WidgetGrid
 
 private:
     Font const & font;
+    WidgetTooltipShower & tooltip_shower;
 };

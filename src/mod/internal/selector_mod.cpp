@@ -93,9 +93,9 @@ SelectorMod::SelectorMod(
         return params;
     }())
     , selector(
-        drawable, copy_paste, temporary_login(ini).buffer,
+        drawable, copy_paste, this->screen, temporary_login(ini).buffer,
         widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        this->screen, {
+        {
             .onconnect = [this]{
                 char buffer[1024] = {};
                 uint16_t row_index = 0;

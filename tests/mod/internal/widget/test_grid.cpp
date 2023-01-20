@@ -26,7 +26,6 @@
 
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/grid.hpp"
-#include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/button.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
@@ -37,9 +36,6 @@
 RED_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestGraphic drawable(800, 600);
-
-    // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
 
     BGRColor fg_color = RED;
     BGRColor bg_color = YELLOW;
@@ -54,7 +50,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGrid wgrid(drawable, parent, WidgetEventNotifier(), line_number, column_number,
+    WidgetGrid wgrid(drawable, WidgetEventNotifier(), line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border);
     wgrid.set_wh(640, 480);
@@ -67,13 +63,13 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
             std::unique_ptr<Widget> w;
             if ((line_index == 2) && (column_index == 3)) {
                 w = std::make_unique<WidgetButton>(
-                    drawable, wgrid, text, WidgetEventNotifier(),
+                    drawable, text, WidgetEventNotifier(),
                     WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2,
                     global_font_lato_light_16(), 2, 2);
             }
             else {
                 w = std::make_unique<WidgetLabel>(
-                    drawable, wgrid, text, fg_color, bg_color,
+                    drawable, text, fg_color, bg_color,
                     global_font_lato_light_16());
             }
 
@@ -98,20 +94,14 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_selection(2);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(wgrid.x(),
-                                    wgrid.y(),
-                                    wgrid.cx(),
-                                    wgrid.cy()));
+    wgrid.rdp_input_invalidate(wgrid.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_1.png");
 
     wgrid.set_selection(4);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
-                                    0 + wgrid.y(),
-                                    wgrid.cx(),
-                                    wgrid.cy()));
+    wgrid.rdp_input_invalidate(wgrid.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_2.png");
 
@@ -144,10 +134,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     rdp_input_scancode(Keymap::KeyCode::DownArrow);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
-                                    0 + wgrid.y(),
-                                    wgrid.cx(),
-                                    wgrid.cy()));
+    wgrid.rdp_input_invalidate(wgrid.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_4.png");
 

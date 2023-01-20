@@ -37,8 +37,7 @@ public:
     };
 
     WidgetDelegatedCopy(
-        gdi::GraphicApi & drawable, Widget & parent,
-        WidgetEventNotifier onclick,
+        gdi::GraphicApi & drawable, WidgetEventNotifier onclick,
         Color fgcolor, Color bgcolor, Color activecolor,
         Font const & font, int xicon, int yicon,
         MouseButton copy_buttons);

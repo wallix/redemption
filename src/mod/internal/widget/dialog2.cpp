@@ -35,35 +35,34 @@ enum {
 
 WidgetDialog2::WidgetDialog2(
     gdi::GraphicApi & drawable, Rect const widget_rect,
-    Widget & parent, Events events,
+    Events events,
     const char* caption, const char * text,
     const char * link_value, const char * link_label,
     CopyPaste & copy_paste, Theme const & theme,
     Font const & font, const char * ok_text
 )
-    : WidgetParent(drawable, parent)
+    : WidgetParent(drawable)
     , oncancel(events.oncancel)
-    , title(drawable, *this, caption,
+    , title(drawable, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
-    , separator(drawable, *this, theme.global.separator_color)
-    , dialog(drawable, *this, text,
+    , separator(drawable, theme.global.separator_color)
+    , dialog(drawable, text,
              theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
              font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , ok(drawable, *this, ok_text ? ok_text : "Ok", events.onsubmit,
+    , ok(drawable, ok_text ? ok_text : "Ok", events.onsubmit,
          theme.global.fgcolor, theme.global.bgcolor,
          theme.global.focus_color, 2, font, 6, 2)
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
-          *this,
           theme.global.bgcolor)
-    , link_label(drawable, *this, link_label, theme.global.fgcolor, theme.global.bgcolor, font)
+    , link_label(drawable, link_label, theme.global.fgcolor, theme.global.bgcolor, font)
     , link_value(link_value)
-    , link_show(drawable, *this, link_value,
+    , link_show(drawable, link_value,
                 theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                 font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , link_copy(
-        drawable, *this, [this]{ this->copy_paste.copy(this->link_value); },
+        drawable, [this]{ this->copy_paste.copy(this->link_value); },
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
     , copy_paste(copy_paste)

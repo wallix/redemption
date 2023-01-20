@@ -24,7 +24,7 @@
 
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/form.hpp"
-#include "mod/internal/widget/screen.hpp"
+#include "utils/theme.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -37,9 +37,6 @@ RED_AUTO_TEST_CASE(TestWidgetForm)
     TestGraphic drawable(800, 600);
     CopyPaste copy_paste(false);
 
-    // WidgetWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
-
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
@@ -49,7 +46,7 @@ RED_AUTO_TEST_CASE(TestWidgetForm)
 
     flag += WidgetForm::DURATION_MANDATORY;
 
-    WidgetForm form(drawable, copy_paste, 0, 0, 600, 150, parent,
+    WidgetForm form(drawable, copy_paste, 0, 0, 600, 150,
                     {WidgetEventNotifier(), WidgetEventNotifier()},
                     global_font_lato_light_16(), colors, Language::en, flag);
     // ask to widget to redraw at it's current position

@@ -28,13 +28,13 @@
 
 WidgetPassword::WidgetPassword(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget& parent, const char * text, WidgetEventNotifier onsubmit,
+    const char * text, WidgetEventNotifier onsubmit,
     Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext
 )
-    : WidgetEdit(drawable, copy_paste, parent, text, onsubmit,
+    : WidgetEdit(drawable, copy_paste, text, onsubmit,
                  fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
-    , masked_text(drawable, *this, text, fgcolor, bgcolor, font, xtext, ytext)
+    , masked_text(drawable, text, fgcolor, bgcolor, font, xtext, ytext)
 {
     this->set_masked_text();
 

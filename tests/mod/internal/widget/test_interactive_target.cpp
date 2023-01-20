@@ -23,12 +23,12 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
-#include "mod/internal/copy_paste.hpp"
-#include "mod/internal/widget/interactive_target.hpp"
-#include "mod/internal/widget/screen.hpp"
-
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget/interactive_target.hpp"
+#include "utils/theme.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/interactive_target/"
@@ -36,7 +36,6 @@
 struct TestWidgetInteractivePasswordCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_lato_light_16(), Theme()};
     CopyPaste copy_paste{false};
     WidgetInteractiveTarget interactive;
 
@@ -46,7 +45,7 @@ struct TestWidgetInteractivePasswordCtx
         const char * text_device,
         const char * device_str)
     : interactive(
-        drawable, copy_paste, 0, 0, 800, 600, parent,
+        drawable, copy_paste, 0, 0, 800, 600,
         {WidgetEventNotifier(), WidgetEventNotifier(), WidgetEventNotifier()},
         ask_device, ask_login, ask_password, []{
             Theme colors;

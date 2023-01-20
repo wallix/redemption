@@ -33,7 +33,7 @@ class WidgetEditValid : public Widget
 {
 public:
     WidgetEditValid(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-                    Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+                    const char * text, WidgetEventNotifier onsubmit,
                     Color fgcolor, Color bgcolor, Color focus_color, Color border_none_color,
                     Font const & font, const char * title, bool use_title,
                     std::size_t edit_position = -1, /*NOLINT*/

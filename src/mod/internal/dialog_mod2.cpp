@@ -36,7 +36,7 @@ DialogMod2::DialogMod2(
 )
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , dialog_widget(
-        drawable, widget_rect, this->screen,
+        drawable, widget_rect,
         {.onsubmit = [this]{ this->accepted(); },
          .oncancel = [this]{ this->refused(); }},
         caption, message, link_value, link_label,

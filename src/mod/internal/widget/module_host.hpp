@@ -33,7 +33,7 @@ class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
     WidgetModuleHost(
-        gdi::GraphicApi& drawable, Widget& parent,
+        gdi::GraphicApi& drawable, Widget& screen,
         Ref<mod_api> managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
         Rect widget_rect, uint16_t front_width, uint16_t front_height);
@@ -123,9 +123,8 @@ private:
 
     not_null_ptr<mod_api> managed_mod;
 
-    CompositeArray composite_array;
-
     gdi::GraphicApi& drawable;
+    Widget& screen;
 
     WidgetScrollBar hscroll;
     WidgetScrollBar vscroll;
@@ -148,4 +147,6 @@ private:
 
     uint16_t current_pointer_pos_x = 0;
     uint16_t current_pointer_pos_y = 0;
+
+    CompositeArray composite_array;
 };

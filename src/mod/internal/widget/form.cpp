@@ -29,11 +29,11 @@ using namespace std::chrono_literals;
 WidgetForm::WidgetForm(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     int16_t left, int16_t top, int16_t width, int16_t height,
-    Widget & parent, Events events,
+    Events events,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetForm(drawable, copy_paste, parent, events,
+    : WidgetForm(drawable, copy_paste, events,
                  font, theme, lang, flags, duration_max)
 {
     this->move_size_widget(left, top, width, height);
@@ -41,37 +41,37 @@ WidgetForm::WidgetForm(
 
 WidgetForm::WidgetForm(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget & parent, Events events,
+    Events events,
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable, parent)
+    : WidgetParent(drawable)
     , events(events)
-    , warning_msg(drawable, *this, "",
+    , warning_msg(drawable, "",
                   theme.global.error_color, theme.global.bgcolor, font)
-    , duration_label(drawable, *this, TR(trkeys::duration, lang).to_sv(),
+    , duration_label(drawable, TR(trkeys::duration, lang).to_sv(),
                      theme.global.fgcolor, theme.global.bgcolor, font)
-    , duration_edit(drawable, copy_paste, *this, nullptr,
+    , duration_edit(drawable, copy_paste, nullptr,
                     {[this]{ this->check_confirmation(); }},
                     theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
-    , duration_format(drawable, *this, TR(trkeys::note_duration_format, lang).to_sv(),
+    , duration_format(drawable, TR(trkeys::note_duration_format, lang).to_sv(),
                       theme.global.fgcolor, theme.global.bgcolor, font)
-    , ticket_label(drawable, *this, TR(trkeys::ticket, lang).to_sv(),
+    , ticket_label(drawable, TR(trkeys::ticket, lang).to_sv(),
                    theme.global.fgcolor, theme.global.bgcolor, font)
-    , ticket_edit(drawable, copy_paste, *this, nullptr,
+    , ticket_edit(drawable, copy_paste, nullptr,
                   {[this]{ this->check_confirmation(); }},
                   theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, font, -1, 1, 1)
-    , comment_label(drawable, *this, TR(trkeys::comment, lang).to_sv(),
+    , comment_label(drawable, TR(trkeys::comment, lang).to_sv(),
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , comment_edit(drawable, copy_paste, *this, nullptr,
+    , comment_edit(drawable, copy_paste, nullptr,
                    {[this]{ this->check_confirmation(); }},
                    theme.edit.fgcolor, theme.edit.bgcolor,
                    theme.edit.focus_color, font, -1, 1, 1)
-    , notes(drawable, *this, TR(trkeys::note_required, lang).to_sv(),
+    , notes(drawable, TR(trkeys::note_required, lang).to_sv(),
             theme.global.fgcolor, theme.global.bgcolor, font)
-    , confirm(drawable, *this, TR(trkeys::confirm, lang),
+    , confirm(drawable, TR(trkeys::confirm, lang),
               [this]{ return this->check_confirmation(); },
               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
               2, font, 6, 2)

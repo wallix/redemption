@@ -41,10 +41,10 @@ namespace
 } // anonymous namespace
 
 WidgetVerticalScrollText::WidgetVerticalScrollText(
-    gdi::GraphicApi& drawable, Widget& parent, std::string text,
+    gdi::GraphicApi& drawable, std::string text,
     Color fg_color, Color bg_color, Color focus_color,
     Font const & font, uint16_t xtext, uint16_t ytext)
-: Widget(drawable, parent)
+: Widget(drawable)
 , fg_color(fg_color)
 , bg_color(bg_color)
 , focus_color(focus_color)

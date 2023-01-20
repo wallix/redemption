@@ -42,7 +42,8 @@ public:
 
     WidgetLogin(
         gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-        int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
+        WidgetTooltipShower & tooltip_shower,
+        int16_t left, int16_t top, uint16_t width, uint16_t height,
         Events events, const char* caption,
         const char * login, const char * password, const char * target,
         const char * label_text_login,
@@ -67,8 +68,7 @@ public:
 private:
     WidgetEventNotifier oncancel;
     WidgetEventNotifier onctrl_shift;
-
-    CompositeArray composite_array;
+    WidgetTooltipShower & tooltip_shower;
 
     WidgetLabel        error_message_label;
     WidgetLabel        login_label;
@@ -97,4 +97,5 @@ private:
     bool show_target = false;
 
     Color bg_color;
+    CompositeArray composite_array;
 };

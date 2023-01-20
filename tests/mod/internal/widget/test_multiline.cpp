@@ -23,7 +23,6 @@
 #include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/multiline.hpp"
-#include "mod/internal/widget/screen.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -41,12 +40,11 @@ constexpr char const* short_message_ml =
 struct TestWidgetMultiLineCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font_deja_vu_14(), Theme{}};
     WidgetMultiLine wmultiline;
 
     TestWidgetMultiLineCtx(char const* text, int xtext = 0, int ytext = 0)
     : wmultiline(
-        drawable, parent, text, BLUE, CYAN,
+        drawable, text, BLUE, CYAN,
         global_font_deja_vu_14(), xtext, ytext)
     {
         wmultiline.set_wh(wmultiline.get_optimal_dim());

@@ -20,10 +20,37 @@
 
 #include "mod/internal/widget/labelgrid.hpp"
 #include "mod/internal/widget/label.hpp"
+#include "gdi/text_metrics.hpp"
+
+
+namespace
+{
+    struct WidgetLabelWithTooltip final : WidgetLabel
+    {
+        WidgetLabelWithTooltip(
+            gdi::GraphicApi & drawable, WidgetTooltipShower & tooltip_shower,
+            chars_view text, Color fgcolor, Color bgcolor, Font const & font,
+            int xtext, int ytext)
+        : WidgetLabel(drawable, text, fgcolor, bgcolor, font, xtext, ytext)
+        , tooltip_shower(tooltip_shower)
+        {}
+
+        void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
+        {
+            if (device_flags == MOUSE_FLAG_MOVE && label_width > static_cast<int>(this->cx())) {
+                this->tooltip_shower.show_tooltip(this->buffer, x, y, Rect(), this->get_rect());
+            }
+        }
+
+        WidgetTooltipShower & tooltip_shower;
+        int label_width = -1;
+    };
+} // anonymous namespace
 
 
 WidgetLabelGrid::WidgetLabelGrid(
-    gdi::GraphicApi & drawable, Widget & parent,
+    gdi::GraphicApi & drawable,
+    WidgetTooltipShower & tooltip_shower,
     WidgetEventNotifier onsubmit,
     uint16_t nb_lines, uint16_t nb_columns,
     Color bg_color_1, Color fg_color_1,
@@ -33,11 +60,12 @@ WidgetLabelGrid::WidgetLabelGrid(
     Font const & font, uint16_t border
 )
     : WidgetGrid(
-        drawable, parent, onsubmit, nb_lines, nb_columns,
+        drawable, onsubmit, nb_lines, nb_columns,
         bg_color_1, fg_color_1, bg_color_2, fg_color_2,
         bg_color_focus, fg_color_focus,
         bg_color_selection, fg_color_selection, border)
     , font(font)
+    , tooltip_shower(tooltip_shower)
 {}
 
 WidgetLabelGrid::~WidgetLabelGrid() = default;
@@ -52,15 +80,15 @@ void WidgetLabelGrid::add_line(array_view<chars_view> entries)
     auto const max_column = std::min(std::size_t(this->get_nb_columns()), entries.size());
 
     for (std::size_t i = 0; i < max_column; ++i) {
-        auto label = std::make_unique<WidgetLabel>(
-            this->drawable, this->parent, entries[i],
+        auto label = std::make_unique<WidgetLabelWithTooltip>(
+            this->drawable, tooltip_shower, entries[i],
             fg_color, bg_color, this->font, x_padding_label, y_padding_label
         );
 
         Dimension dim = label->get_optimal_dim();
         label->set_wh(dim);
 
-        label->tool = true;
+        label->label_width = dim.w - x_padding_label * 2;
         line[i] = std::move(label);
     }
 }

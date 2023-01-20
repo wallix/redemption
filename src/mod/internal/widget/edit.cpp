@@ -32,12 +32,12 @@
 
 WidgetEdit::WidgetEdit(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
-    Widget & parent, const char * text, WidgetEventNotifier onsubmit,
+    const char * text, WidgetEventNotifier onsubmit,
     Color fgcolor, Color bgcolor, Color focus_color,
     Font const & font, std::size_t edit_position, int xtext, int ytext)
-: Widget(drawable, parent)
+: Widget(drawable)
 , onsubmit(onsubmit)
-, label(drawable, *this, text, fgcolor, bgcolor, font, xtext, ytext)
+, label(drawable, text, fgcolor, bgcolor, font, xtext, ytext)
 , w_text(0)
 , h_text(0)
 , cursor_color(0x888888)

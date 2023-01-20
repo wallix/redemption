@@ -38,7 +38,7 @@ WaitMod::WaitMod(
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, showform ? &copy_paste : nullptr)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
-    , wait_widget(drawable, copy_paste, widget_rect, this->screen,
+    , wait_widget(drawable, copy_paste, widget_rect,
         {
             .onaccept = [this]{ this->accepted(); },
             .onrefused = [this]{ this->refused(); },

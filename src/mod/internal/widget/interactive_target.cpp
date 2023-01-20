@@ -29,7 +29,7 @@
 WidgetInteractiveTarget::WidgetInteractiveTarget(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     int16_t left, int16_t top, uint16_t width, uint16_t height,
-    Widget & parent, Events events,
+    Events events,
     bool ask_device, bool ask_login, bool ask_password,
     Theme const & theme, const char* caption,
     const char * text_device,
@@ -40,33 +40,33 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
     Font const & font,
     WidgetButton * extra_button
 )
-    : WidgetParent(drawable, parent)
+    : WidgetParent(drawable)
     , oncancel(events.oncancel)
     , onctrl_shift(events.onctrl_shift)
-    , caption_label(drawable, *this, caption,
+    , caption_label(drawable, caption,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , separator(drawable, *this, theme.global.separator_color)
-    , device_label(drawable, *this, text_device,
+    , separator(drawable, theme.global.separator_color)
+    , device_label(drawable, text_device,
                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , device(drawable, *this, device_str,
+    , device(drawable, device_str,
                 theme.global.fgcolor, theme.global.bgcolor, font)
-    , device_edit(drawable, copy_paste, *this, nullptr,
+    , device_edit(drawable, copy_paste, nullptr,
                   (ask_login || ask_password)
                     ? WidgetEventNotifier([this]{ this->next_focus(); })
                     : events.onsubmit,
                   theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
-    , login_label(drawable, *this, text_login,
+    , login_label(drawable, text_login,
                   theme.global.fgcolor, theme.global.bgcolor, font)
-    , login(drawable, *this, login_str,
+    , login(drawable, login_str,
             theme.global.fgcolor, theme.global.bgcolor, font)
-    , login_edit(drawable, copy_paste, *this, nullptr,
+    , login_edit(drawable, copy_paste, nullptr,
                  [this]{ this->next_focus(); },
                  theme.edit.fgcolor, theme.edit.bgcolor,
                  theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
-    , password_label(drawable, *this, text_password,
+    , password_label(drawable, text_password,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-    , password_edit(drawable, copy_paste, *this, nullptr,
+    , password_edit(drawable, copy_paste, nullptr,
                     !(ask_login || ask_password)
                         ? WidgetEventNotifier([this]{ this->next_focus(); })
                         : events.onsubmit,

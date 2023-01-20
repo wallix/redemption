@@ -25,7 +25,6 @@
 #include "test_only/core/font.hpp"
 
 #include "mod/internal/widget/image.hpp"
-#include "mod/internal/widget/screen.hpp"
 
 #include "utils/sugar/array_view.hpp"
 
@@ -35,11 +34,10 @@
 struct TestWidgetimageCtx
 {
     TestGraphic drawable{800, 600};
-    WidgetScreen parent{drawable, 800, 600, global_font(), Theme{}};
     WidgetImage wimage;
 
     TestWidgetimageCtx(const char * filename, BGRColor bg_color = BLACK)
-    : wimage(drawable, filename, parent, bg_color)
+    : wimage(drawable, filename, bg_color)
     {
         wimage.set_wh(wimage.get_optimal_dim());
     }

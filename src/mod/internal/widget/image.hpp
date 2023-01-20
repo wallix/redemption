@@ -31,7 +31,6 @@ class WidgetImage : public Widget
 public:
     WidgetImage(gdi::GraphicApi& drawable,
                 const char *filename,
-                Widget& parent,
                 Color bg_color);
 
     ~WidgetImage();

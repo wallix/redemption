@@ -36,7 +36,7 @@ struct TestScrollCtx
     TestScrollCtx(bool is_horizontal, bool rail_style = false, int16_t x =  0, int16_t y = 0)
     : drawable(1, 1)
     , scroll(
-        this->drawable, this->scroll, [this]{
+        this->drawable, [this]{
             auto new_pos = this->scroll.get_current_value();
             RED_TEST(this->pos != new_pos);
             this->pos = new_pos;

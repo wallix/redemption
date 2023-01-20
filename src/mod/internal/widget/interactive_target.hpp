@@ -46,7 +46,7 @@ public:
     WidgetInteractiveTarget(
         gdi::GraphicApi & drawable, CopyPaste & copy_paste,
         int16_t left, int16_t top, uint16_t width, uint16_t height,
-        Widget & parent, Events events,
+        Events events,
         bool ask_device, bool ask_login, bool ask_password,
         Theme const & theme, const char * caption,
         const char * text_device,

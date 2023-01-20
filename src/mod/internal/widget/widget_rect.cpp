@@ -24,9 +24,8 @@
 #include "gdi/graphic_api.hpp"
 #include "utils/colors.hpp"
 
-WidgetRect::WidgetRect(
-    gdi::GraphicApi & drawable, Widget & parent, Color color)
-: Widget(drawable, parent)
+WidgetRect::WidgetRect(gdi::GraphicApi & drawable, Color color)
+: Widget(drawable)
 , color(color)
 {
     this->tab_flag = IGNORE_TAB;

@@ -43,7 +43,7 @@ public:
 
     WidgetDialog2(gdi::GraphicApi & drawable,
                   Rect const widget_rect,
-                  Widget & parent, Events events,
+                  Events events,
                   const char* caption, const char * text,
                   const char * link_value, const char * link_label,
                   CopyPaste & copy_paste, Theme const & theme,

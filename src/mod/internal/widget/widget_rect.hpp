@@ -33,7 +33,7 @@ class WidgetRect : public Widget
     Color color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, Color color = BLACK); /*NOLINT*/
+    WidgetRect(gdi::GraphicApi & drawable, Color color = BLACK); /*NOLINT*/
 
     void rdp_input_invalidate(Rect clip) override;
 };
