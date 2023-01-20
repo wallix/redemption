@@ -643,8 +643,8 @@ class Engine(object):
     def close_client(self):
         if self.wabengine:
             Logger().debug("Engine close_client()")
-            if self.avatar_id:
-                with manage_transaction(self.wabengine):
+            with manage_transaction(self.wabengine, close=True):
+                if self.avatar_id:
                     self.wabengine.disconnect(self.avatar_id)
             self.wabengine = None
         self.avatar_id = None
