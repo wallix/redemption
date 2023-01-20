@@ -595,9 +595,9 @@ void WidgetEdit::insert_unicode_char(uint16_t unicode_char)
     this->send_notify(NOTIFY_TEXT_CHANGED);
     this->w_text += this->cursor_px_pos - pxtmp;
     this->update_draw_cursor(Rect(
-        this->x() + pxtmp + this->label.x_text + 1,
+        this->x() + pxtmp + this->label.x_text,
         this->y() + this->label.y_text + 1,
-        this->w_text - pxtmp + 1,
+        this->w_text - pxtmp + 2,
         this->h_text
     ));
 }
