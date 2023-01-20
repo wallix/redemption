@@ -644,8 +644,8 @@ class Engine(object):
         if self.wabengine:
             Logger().debug("Engine close_client()")
             if self.avatar_id:
-                self.wabengine.disconnect(self.avatar_id)
-            self.wabengine.close_proxy()
+                with manage_transaction(self.wabengine):
+                    self.wabengine.disconnect(self.avatar_id)
             self.wabengine = None
         self.avatar_id = None
 
