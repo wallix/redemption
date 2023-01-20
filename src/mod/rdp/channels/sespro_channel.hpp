@@ -669,6 +669,9 @@ public:
 
                     switch (this->sespro_params.process_command_line_retrieve_method)
                     {
+                        case SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation:
+                            break;
+
                         case SessionProbeProcessCommandLineRetrieveMethod::windows_internals:
                             options |= OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI;
                             break;
