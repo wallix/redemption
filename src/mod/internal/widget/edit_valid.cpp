@@ -209,7 +209,15 @@ void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_
 void WidgetEditValid::rdp_input_scancode(
     KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
+    bool has_char1 = (0 == this->editbox->num_chars);
     this->editbox->rdp_input_scancode(flags, scancode, event_time, keymap);
+
+    if (this->label && this->use_label_) {
+        bool has_char2 = (0 == this->editbox->num_chars);
+        if (has_char1 != has_char2 && has_char1) {
+            this->editbox->rdp_input_invalidate(this->editbox->get_rect());
+        }
+    }
 }
 
 void WidgetEditValid::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
