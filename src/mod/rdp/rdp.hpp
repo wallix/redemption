@@ -1453,7 +1453,7 @@ public:
     {
         if (bool(this->verbose & RDPVerbose::channels)) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk.size());
-            channel.log(-1u);
+            channel.log(0xffff);
         }
 
         flags |= (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL)
