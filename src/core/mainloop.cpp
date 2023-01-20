@@ -243,11 +243,14 @@ namespace
 
         if (!check_memory_available(minimal_memory_available_kibi)) {
             fd_set wfds;
+            fd_set efds;
             io_fd_zero(wfds);
+            io_fd_zero(efds);
             io_fd_set(sck, wfds);
+            io_fd_set(sck, efds);
             // delay for connection acceptance with watchdog
             timeval delay{1, 0};
-            select(sck + 1, nullptr, &wfds, &wfds, &delay);
+            select(sck + 1, nullptr, &wfds, &efds, &delay);
             close(sck);
 
             Inifile ini;
