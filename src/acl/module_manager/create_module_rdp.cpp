@@ -385,6 +385,15 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
 
     spp.vc_params.at_end_of_session_freeze_connection_and_wait =
         ini.get<cfg::session_probe::at_end_of_session_freeze_connection_and_wait>();
+
+    spp.vc_params.process_command_line_retrieve_method =
+        ini.get<cfg::session_probe::process_command_line_retrieve_method>();
+
+    spp.vc_params.periodic_task_run_interval =
+        ini.get<cfg::session_probe::periodic_task_run_interval>();
+    spp.vc_params.pause_if_session_is_disconnected =
+        ini.get<cfg::session_probe::pause_if_session_is_disconnected>();
+
     return spp;
 }
 
@@ -615,8 +624,6 @@ ModPack create_mod_rdp(
 
     mod_rdp_params.session_probe_params.vc_params.enable_remote_program =
         mod_rdp_params.remote_app_params.enable_remote_program;
-    mod_rdp_params.session_probe_params.vc_params.process_command_line_retrieve_method =
-        ini.get<cfg::session_probe::process_command_line_retrieve_method>();
 
     Rect const adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
 
@@ -836,8 +843,6 @@ ModPack create_mod_rdp(
             mod_rdp_params.client_address = local_ip_address.ip_addr;
             break;
     }
-
-    mod_rdp_params.session_probe_params.vc_params.target_ip = ini.get<cfg::context::ip_target>();
 
     std::unique_ptr<RailModuleHostMod> host_mod {
         host_mod_in_widget

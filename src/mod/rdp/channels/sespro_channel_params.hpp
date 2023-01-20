@@ -188,8 +188,12 @@ struct SessionProbeVirtualChannelParams
 
     bool enable_remote_program = false;
 
-     SessionProbeProcessCommandLineRetrieveMethod process_command_line_retrieve_method =
+    SessionProbeProcessCommandLineRetrieveMethod process_command_line_retrieve_method =
         SessionProbeProcessCommandLineRetrieveMethod::both;
+
+    std::chrono::milliseconds periodic_task_run_interval {};
+
+    bool pause_if_session_is_disconnected = false;
 };
 
 

@@ -1431,6 +1431,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "periodic_task_run_interval"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::periodic_task_run_interval&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 300, 2000>>{},
+                value
+            );
+        }
+        else if (key == "pause_if_session_is_disconnected"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::pause_if_session_is_disconnected&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_WARNING, "unknown parameter %s in section [%s]",

@@ -854,6 +854,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #process_command_line_retrieve_method = 2
 
+# min = 300, max = 2000
+# (in milliseconds)
+#_hidden
+#periodic_task_run_interval = 500
+
+# value: 0 or 1
+#_hidden
+#pause_if_session_is_disconnected = 0
+
 [server_cert]
 
 # Keep known server certificates on WAB

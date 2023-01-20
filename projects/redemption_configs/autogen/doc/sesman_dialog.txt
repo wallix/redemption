@@ -247,6 +247,8 @@ cfg::session_probe::process_command_line_retrieve_method ⇐ session_probe:proce
       0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
       1: Calling internal system APIs to get the process command line. (More efficient but less stable)
       2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+cfg::session_probe::periodic_task_run_interval ⇐ session_probe:periodic_task_run_interval   [std::chrono::milliseconds]
+cfg::session_probe::pause_if_session_is_disconnected ⇐ session_probe:pause_if_session_is_disconnected   [bool]
 
 cfg::server_cert::server_cert_store ⇐ server_cert:server_cert_store   [bool]
     Keep known server certificates on WAB
