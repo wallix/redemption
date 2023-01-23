@@ -50,14 +50,8 @@ WaitMod::WaitMod(
     , vars(vars)
     , events_guard(events)
 {
-    this->screen.add_widget(&this->wait_widget);
-    if (showform) {
-        this->wait_widget.set_widget_focus(&this->wait_widget.form, Widget::focus_reason_tabkey);
-    }
-    else {
-        this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget::focus_reason_tabkey);
-    }
-    this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
+    this->screen.add_widget(&this->wait_widget, WidgetParent::HasFocus::Yes);
+    this->screen.init_focus();
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->events_guard.create_event_timeout("Wait Mod Timeout",

@@ -51,7 +51,7 @@ WidgetSelector::WidgetSelector(
     WidgetSelectorParams const & selector_params,
     Font const & font, Theme const & theme, Language lang,
     bool has_target_helpicon /* for unit test only */)
-: WidgetParent(drawable)
+: WidgetParent(drawable, Focusable::Yes)
 , tooltip_shower(*this)
 , tooltip_shower_parent(tooltip_shower)
 , onconnect(events.onconnect)
@@ -192,7 +192,7 @@ WidgetSelector::WidgetSelector(
     }
 
     this->add_widget(&this->apply);
-    this->add_widget(&this->selector_lines);
+    this->add_widget(&this->selector_lines, HasFocus::Yes);
 
     this->add_widget(&this->first_page);
     this->add_widget(&this->prev_page);
@@ -204,9 +204,8 @@ WidgetSelector::WidgetSelector(
     this->add_widget(&this->connect);
 
     if (has_target_helpicon) {
+        this->target_helpicon.set_unfocusable();
         this->add_widget(&this->target_helpicon);
-        this->target_helpicon.tab_flag = IGNORE_TAB;
-        this->target_helpicon.focus_flag = IGNORE_FOCUS;
     }
 
     if (extra_button) {

@@ -51,14 +51,9 @@ DialogMod::DialogMod(
         cancel_text, has_challenge)
     , vars(vars)
 {
-    this->screen.add_widget(&this->dialog_widget);
-    this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
-    this->screen.set_widget_focus(&this->dialog_widget, Widget::focus_reason_tabkey);
+    this->screen.add_widget(&this->dialog_widget, WidgetParent::HasFocus::Yes);
+    this->screen.init_focus();
     this->screen.rdp_input_invalidate(this->screen.get_rect());
-
-    if (this->dialog_widget.challenge) {
-        this->dialog_widget.set_widget_focus(this->dialog_widget.challenge.get(), Widget::focus_reason_tabkey);
-    }
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod

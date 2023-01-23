@@ -43,7 +43,6 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     WidgetScreen wscreen(drawable, drawable.width(), drawable.height(), global_font_lato_light_16(), Theme{});
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
-    wscreen.tab_flag = Widget::NORMAL_TAB;
     NotifyTrace notifier1;
     NotifyTrace notifier2;
     NotifyTrace notifier3;

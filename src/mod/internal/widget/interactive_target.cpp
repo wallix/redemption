@@ -40,7 +40,7 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
     Font const & font,
     WidgetButton * extra_button
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , oncancel(events.oncancel)
     , onctrl_shift(events.onctrl_shift)
     , caption_label(drawable, caption,
@@ -94,11 +94,25 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
         password_show = &this->password_edit;
     }
 
+    HasFocus device_has_focus = HasFocus::No;
+    HasFocus login_has_focus = HasFocus::No;
+    HasFocus password_has_focus = HasFocus::No;
+
+    if (this->ask_device) {
+        device_has_focus = HasFocus::Yes;
+    }
+    else if (this->ask_login) {
+        login_has_focus = HasFocus::Yes;
+    }
+    else {
+        password_has_focus = HasFocus::Yes;
+    }
+
     this->add_widget(&this->caption_label);
     this->add_widget(&this->separator);
 
     this->add_widget(&this->device_label);
-    this->add_widget(device_show);
+    this->add_widget(device_show, device_has_focus);
     if (ask_device) {
         this->add_widget(&this->device);
         if ((0 == strncmp(device_str, "Error:", 6)) ||
@@ -107,10 +121,10 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
         }
     }
     this->add_widget(&this->login_label);
-    this->add_widget(login_show);
+    this->add_widget(login_show, login_has_focus);
     if (password_show) {
         this->add_widget(&this->password_label);
-        this->add_widget(password_show);
+        this->add_widget(password_show, password_has_focus);
     }
 
     if (extra_button) {
@@ -122,7 +136,7 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
 
 WidgetInteractiveTarget::~WidgetInteractiveTarget()
 {
-        this->clear();
+    this->clear();
 }
 
 void WidgetInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)

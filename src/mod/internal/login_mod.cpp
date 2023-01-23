@@ -107,8 +107,8 @@ LoginMod::LoginMod(
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
     }
-    this->screen.add_widget(&this->login);
-
+    this->screen.add_widget(&this->login, WidgetParent::HasFocus::Yes);
+    this->screen.init_focus();
 
     if (vars.get<cfg::internal_mod::enable_target_field>()) {
         auto [target, login] = rpartition(username, ":+");
@@ -119,13 +119,6 @@ LoginMod::LoginMod(
         this->login.target_edit.set_text(nullptr);
     }
     this->login.password_edit.set_text(password);
-
-    this->screen.set_widget_focus(&this->login, Widget::focus_reason_tabkey);
-
-    this->login.set_widget_focus(&this->login.login_edit, Widget::focus_reason_tabkey);
-    if (username[0] != 0){
-        this->login.set_widget_focus(&this->login.password_edit, Widget::focus_reason_tabkey);
-    }
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 

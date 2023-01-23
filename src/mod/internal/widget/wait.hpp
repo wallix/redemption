@@ -67,11 +67,13 @@ private:
 
     WidgetGroupBox groupbox;
     WidgetMultiLine dialog;
+
 public:
     WidgetForm form;
-    WidgetButton goselector;
 
 private:
+    WidgetButton goselector;
+
     WidgetButton   exit;
     WidgetButton * extra_button;
 

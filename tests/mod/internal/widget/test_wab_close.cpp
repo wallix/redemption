@@ -44,7 +44,9 @@ struct TestWidgetCloseCtx
         drawable, 0, 0, 800, 600, {oncancel, WidgetEventNotifier()},
         diagnostic_text, username, target,
         showtimer, nullptr, global_font_deja_vu_14(), theme, Language::en, false)
-    {}
+    {
+        flat_wab_close.init_focus();
+    }
 };
 
 RED_AUTO_TEST_CASE(TraceWidgetWabClose)

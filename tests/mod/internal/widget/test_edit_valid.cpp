@@ -163,7 +163,6 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestWidgetEditValid ctx({RED, YELLOW, GREEN}, "dLorz", 0);
 
-    ctx.parent.tab_flag = Widget::NORMAL_TAB;
     Dimension dim = ctx.wedit.get_optimal_dim();
     ctx.wedit.set_wh(150, dim.h);
     ctx.wedit.set_xy(54, 105);
@@ -204,8 +203,6 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 {
     TestWidgetEditValid ctx({RED, YELLOW, GREEN}, "dLorz", 0, "edition1");
-
-    ctx.parent.tab_flag = Widget::NORMAL_TAB;
 
     Dimension dim = ctx.wedit.get_optimal_dim();
     ctx.wedit.set_wh(150, dim.h);
@@ -256,8 +253,6 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 {
     TestWidgetEditValid ctx({RED, YELLOW, GREEN}, "dLorz", 0, "edition1", true);
-
-    ctx.parent.tab_flag = Widget::NORMAL_TAB;
 
     Dimension dim = ctx.wedit.get_optimal_dim();
     ctx.wedit.set_wh(150, dim.h);

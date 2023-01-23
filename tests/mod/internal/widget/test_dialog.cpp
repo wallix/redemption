@@ -74,6 +74,7 @@ struct TestWidgetDialogCtx
             return colors;
         }(), global_font_deja_vu_14(), "Ok", "Cancel", has_challenge)
     {
+        flat_dialog.init_focus();
     }
 };
 

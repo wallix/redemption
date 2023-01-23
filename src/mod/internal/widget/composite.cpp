@@ -115,8 +115,8 @@ void CompositeArray::clear()
 }
 
 
-WidgetParent::WidgetParent(gdi::GraphicApi & drawable)
-    : Widget(drawable)
+WidgetParent::WidgetParent(gdi::GraphicApi & drawable, Focusable focusable)
+    : Widget(drawable, focusable)
     , pressed(nullptr)
     , bg_color(BLACK)
     , impl(nullptr)
@@ -179,7 +179,7 @@ Widget * WidgetParent::get_next_focus(Widget * w)
         }
 
         w = this->impl->get(index);
-        if ((w->tab_flag != Widget::IGNORE_TAB) && (w->focus_flag != Widget::IGNORE_FOCUS)) {
+        if (w->focusable == Focusable::Yes) {
             return w;
         }
     }
@@ -191,7 +191,7 @@ Widget * WidgetParent::get_next_focus(Widget * w)
     int future_focus_index;
     while ((future_focus_index = this->impl->get_next(index)) != -1) {
         Widget * future_focus_w = this->impl->get(future_focus_index);
-        if ((future_focus_w->tab_flag != Widget::IGNORE_TAB) && (future_focus_w->focus_flag != Widget::IGNORE_FOCUS)) {
+        if (future_focus_w->focusable == Focusable::Yes) {
             return future_focus_w;
         }
 
@@ -214,7 +214,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
         }
 
         w = this->impl->get(index);
-        if ((w->tab_flag != Widget::IGNORE_TAB) && (w->focus_flag != Widget::IGNORE_FOCUS)) {
+        if (w->focusable == Focusable::Yes) {
             return w;
         }
     }
@@ -226,7 +226,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
     int future_focus_index;
     while ((future_focus_index = this->impl->get_previous(index)) != -1) {
         Widget * future_focus_w = this->impl->get(future_focus_index);
-        if ((future_focus_w->tab_flag != Widget::IGNORE_TAB) && (future_focus_w->focus_flag != Widget::IGNORE_FOCUS)) {
+        if (future_focus_w->focusable == Focusable::Yes) {
             return future_focus_w;
         }
 
@@ -240,12 +240,19 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
     return nullptr;
 }
 
-void WidgetParent::add_widget(Widget * w)
+void WidgetParent::init_focus()
+{
+    this->has_focus = true;
+    if (this->current_focus) {
+        this->current_focus->init_focus();
+    }
+}
+
+void WidgetParent::add_widget(Widget * w, HasFocus has_focus)
 {
     this->impl->add(w);
 
-    if (!this->current_focus &&
-        (w->tab_flag != Widget::IGNORE_TAB) && (w->focus_flag != Widget::IGNORE_FOCUS)) {
+    if (w->focusable == Focusable::Yes && (has_focus == HasFocus::Yes || !this->current_focus)) {
         this->current_focus = w;
     }
 }
@@ -477,7 +484,7 @@ void WidgetParent::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y
         // get focus when mouse clic
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
             this->pressed = w;
-            if (/*(*/w->focus_flag != IGNORE_FOCUS/*) && (w != this->current_focus)*/) {
+            if (w->focusable == Focusable::Yes) {
                 this->set_widget_focus(w, focus_reason_mousebutton1);
             }
         }

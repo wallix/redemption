@@ -41,7 +41,7 @@ WidgetDialog::WidgetDialog(
     Theme const & theme, Font const & font, const char * ok_text,
     const char * cancel_text, ChallengeOpt has_challenge
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , onctrl_shift(events.onctrl_shift)
     , title(drawable, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
@@ -90,13 +90,10 @@ WidgetDialog::WidgetDialog(
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
-        this->add_widget(this->challenge.get());
-
-        this->set_widget_focus(this->challenge.get(), focus_reason_tabkey);
+        this->add_widget(this->challenge.get(), HasFocus::Yes);
     }
 
-
-    this->add_widget(&this->ok);
+    this->add_widget(&this->ok, has_challenge ? HasFocus::No : HasFocus::Yes);
 
     if (this->cancel) {
         this->add_widget(this->cancel.get());
@@ -109,10 +106,6 @@ WidgetDialog::WidgetDialog(
     }
 
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
-
-    if (!has_challenge) {
-        this->set_widget_focus(&this->ok, focus_reason_tabkey);
-    }
 }
 
 WidgetDialog::~WidgetDialog()

@@ -42,7 +42,7 @@ WidgetScrollBar::WidgetScrollBar(
     WidgetEventNotifier onscroll, bool horizontal,
     Color fg_color, Color bg_color, Color focus_color,
     Font const & font, bool rail_style, int maxvalue)
-: Widget(drawable)
+: Widget(drawable, Focusable::No)
 , onscroll(onscroll)
 , horizontal(horizontal)
 , fg_color(fg_color)

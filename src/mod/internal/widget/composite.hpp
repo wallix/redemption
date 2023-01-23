@@ -96,7 +96,13 @@ public:
     Widget * current_focus;
 
 public:
-    WidgetParent(gdi::GraphicApi & drawable);
+    enum class HasFocus : bool
+    {
+        No,
+        Yes,
+    };
+
+    WidgetParent(gdi::GraphicApi & drawable, Focusable focusable);
 
     ~WidgetParent() override;
 
@@ -108,7 +114,7 @@ public:
     Widget * get_next_focus(Widget * w);
     Widget * get_previous_focus(Widget * w);
 
-    virtual void add_widget(Widget * w);
+    virtual void add_widget(Widget * w, HasFocus has_focus = HasFocus::No);
     virtual void remove_widget(Widget * w);
     virtual int  find_widget(Widget * w);
     virtual void clear();
@@ -143,18 +149,18 @@ public:
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
+
+    void init_focus() override;
 };
 
-
-// WidgetComposite is a WidgetParent and use Delegation to an implementation of CompositeInterface
-class WidgetComposite: public WidgetParent
+struct WidgetComposite : WidgetParent
 {
-    CompositeArray composite_array;
-
-public:
-    WidgetComposite(gdi::GraphicApi & drawable)
-    : WidgetParent(drawable)
+    WidgetComposite(gdi::GraphicApi& gd)
+    : WidgetParent(gd, Widget::Focusable::Yes)
     {
-        this->impl = & composite_array;
+        impl = &composite_array;
     }
+
+private:
+    CompositeArray composite_array;
 };

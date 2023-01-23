@@ -44,7 +44,7 @@ WidgetVerticalScrollText::WidgetVerticalScrollText(
     gdi::GraphicApi& drawable, std::string text,
     Color fg_color, Color bg_color, Color focus_color,
     Font const & font, uint16_t xtext, uint16_t ytext)
-: Widget(drawable)
+: Widget(drawable, Focusable::No)
 , fg_color(fg_color)
 , bg_color(bg_color)
 , focus_color(focus_color)
@@ -54,8 +54,6 @@ WidgetVerticalScrollText::WidgetVerticalScrollText(
 , button_dim(get_optimal_button_dim(this->font))
 , text(std::move(text))
 {
-    this->tab_flag = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
 }
 
 void WidgetVerticalScrollText::set_xy(int16_t x, int16_t y)

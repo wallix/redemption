@@ -89,16 +89,10 @@ public:
         RDPColor rdp_color_;
     };
 
-    // TODO using several booleans may be easier to read than flags
-    enum OptionTab {
-        IGNORE_TAB = 0x00,
-        NORMAL_TAB = 0x02
-    };
-
-    enum OptionFocus {
-        IGNORE_FOCUS = 0x00,
-        NORMAL_FOCUS = 0x01
-        // FORCE_FOCUS  = 0x04
+    enum class Focusable : bool
+    {
+        No,
+        Yes,
     };
 
     enum class PointerType : uint8_t
@@ -115,19 +109,22 @@ private:
     Rect rect;
 
 public:
-    int tab_flag;
-    int focus_flag;
+    Focusable focusable;
     PointerType pointer_flag;
     bool has_focus;
 
 public:
-    Widget(gdi::GraphicApi & drawable)
+    Widget(gdi::GraphicApi & drawable, Focusable focusable)
     : drawable(drawable)
-    , tab_flag(NORMAL_TAB)
-    , focus_flag(NORMAL_FOCUS)
+    , focusable(focusable)
     , pointer_flag(PointerType::Normal)
     , has_focus(false)
     {}
+
+    void set_unfocusable()
+    {
+        focusable = Focusable::No;
+    }
 
     virtual bool next_focus()
     {
@@ -215,6 +212,13 @@ public:
     virtual void move_xy(int16_t x, int16_t y)
     {
         this->set_xy(this->rect.x + x, this->rect.y + y);
+    }
+
+    virtual void init_focus()
+    {
+        if (this->focusable == Focusable::Yes) {
+            this->has_focus = true;
+        }
     }
 
     enum {

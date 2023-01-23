@@ -175,9 +175,8 @@ SelectorMod::SelectorMod(
     , current_page(unchecked_decimal_chars_to_int(this->selector.current_page.get_text()))
     , number_page(unchecked_decimal_chars_to_int(this->selector.number_page.get_text()+1))
 {
-    this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
-    this->screen.add_widget(&this->selector);
-    this->screen.set_widget_focus(&this->selector, Widget::focus_reason_tabkey);
+    this->screen.add_widget(&this->selector, WidgetParent::HasFocus::Yes);
+    this->screen.init_focus();
 
     uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
     gdi::TextMetrics tm(font, "Édp");
@@ -288,16 +287,13 @@ void SelectorMod::refresh_device()
     }
 
     if (this->selector.selector_lines.get_nb_rows() == 0) {
-        this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
-        this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
+        this->selector.selector_lines.set_unfocusable();
 
         auto no_result = TR(trkeys::no_results, language(this->ini));
         chars_view const texts[] {{}, no_result, {}};
         this->selector.add_device(texts);
     }
     else {
-        this->selector.selector_lines.tab_flag = Widget::NORMAL_TAB;
-        this->selector.selector_lines.focus_flag = Widget::NORMAL_FOCUS;
         this->selector.selector_lines.set_selection(0);
         this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     }

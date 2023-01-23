@@ -34,7 +34,7 @@ WidgetButton::WidgetButton(
     Color fg_color, Color bg_color, Color focus_color,
     unsigned border_width, Font const & font, int xtext, int ytext,
     bool logo)
-: Widget(drawable)
+: Widget(drawable, Focusable::Yes)
 , auto_resize_(false)
 , x_text(xtext)
 , y_text(ytext)

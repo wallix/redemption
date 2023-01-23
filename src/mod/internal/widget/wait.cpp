@@ -40,7 +40,7 @@ WidgetWait::WidgetWait(
     Font const & font, Theme const & theme, Language lang,
     bool showform, unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , onaccept(events.onaccept)
     , onrefused(events.onrefused)
     , onctrl_shift(events.onctrl_shift)
@@ -67,11 +67,11 @@ WidgetWait::WidgetWait(
     this->groupbox.add_widget(&this->dialog);
 
     if (showform) {
-        this->groupbox.add_widget(&this->form);
+        this->groupbox.add_widget(&this->form, HasFocus::Yes);
     }
 
     if (!this->hide_back_to_selector) {
-        this->groupbox.add_widget(&this->goselector);
+        this->groupbox.add_widget(&this->goselector, showform ? HasFocus::No : HasFocus::Yes);
     }
     this->groupbox.add_widget(&this->exit);
 

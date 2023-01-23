@@ -25,11 +25,9 @@
 #include "utils/colors.hpp"
 
 WidgetRect::WidgetRect(gdi::GraphicApi & drawable, Color color)
-: Widget(drawable)
+: Widget(drawable, Focusable::No)
 , color(color)
 {
-    this->tab_flag = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
 }
 
 void WidgetRect::rdp_input_invalidate(Rect clip)

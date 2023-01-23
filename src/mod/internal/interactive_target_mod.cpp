@@ -51,18 +51,9 @@ InteractiveTargetMod::InteractiveTargetMod(
         font, &this->language_button)
     , vars(vars)
 {
-    this->screen.add_widget(&this->challenge);
+    this->screen.add_widget(&this->challenge, WidgetParent::HasFocus::Yes);
     this->challenge.password_edit.set_text("");
-    this->screen.set_widget_focus(&this->challenge, Widget::focus_reason_tabkey);
-    if (this->ask_device) {
-        this->challenge.set_widget_focus(&this->challenge.device_edit, Widget::focus_reason_tabkey);
-    }
-    else if (this->ask_login) {
-        this->challenge.set_widget_focus(&this->challenge.login_edit, Widget::focus_reason_tabkey);
-    }
-    else {
-        this->challenge.set_widget_focus(&this->challenge.password_edit, Widget::focus_reason_tabkey);
-    }
+    this->screen.init_focus();
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }
 

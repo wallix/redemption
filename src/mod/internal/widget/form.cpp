@@ -45,7 +45,7 @@ WidgetForm::WidgetForm(
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , events(events)
     , warning_msg(drawable, "",
                   theme.global.error_color, theme.global.bgcolor, font)

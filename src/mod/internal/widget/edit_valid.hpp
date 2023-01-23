@@ -77,6 +77,8 @@ public:
         return 1;
     }
 
+    void init_focus() override;
+
 private:
     WidgetButton button;
     WidgetEdit * editbox;

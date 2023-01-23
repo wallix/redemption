@@ -47,7 +47,7 @@ WidgetLogin::WidgetLogin(
     bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , oncancel(events.oncancel)
     , onctrl_shift(events.onctrl_shift)
     , tooltip_shower(tooltip_shower)
@@ -96,14 +96,18 @@ WidgetLogin::WidgetLogin(
 {
     this->impl = &this->composite_array;
 
+    this->helpicon.set_unfocusable();
+
     this->add_widget(&this->img);
     this->add_widget(&this->helpicon);
 
     if (this->show_target) {
         this->add_widget(&this->target_edit);
     }
-    this->add_widget(&this->login_edit);
-    this->add_widget(&this->password_edit);
+
+    bool focus_on_edit = (this->login_edit.get_text()[0] == '\0');
+    this->add_widget(&this->login_edit, focus_on_edit ? HasFocus::Yes : HasFocus::No);
+    this->add_widget(&this->password_edit, focus_on_edit ? HasFocus::No : HasFocus::Yes);
 
     this->add_widget(&this->version_label);
 
@@ -116,9 +120,6 @@ WidgetLogin::WidgetLogin(
     if (extra_button) {
         this->add_widget(extra_button);
     }
-
-    this->helpicon.tab_flag = IGNORE_TAB;
-    this->helpicon.focus_flag = IGNORE_FOCUS;
 
     this->move_size_widget(left, top, width, height);
 }

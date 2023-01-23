@@ -28,14 +28,12 @@ WidgetTooltip::WidgetTooltip(
     Color fgcolor, Color bgcolor, Color border_color,
     Font const & font
 )
-    : Widget(drawable)
+    : Widget(drawable, Focusable::No)
     , w_border(10)
     , h_border(10)
     , desc(drawable, text, fgcolor, bgcolor, font, 0, 0)
     , border_color(border_color)
 {
-    this->tab_flag   = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
 }
 
 WidgetTooltip::~WidgetTooltip() = default;

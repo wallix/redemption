@@ -41,7 +41,7 @@ WidgetDialog2::WidgetDialog2(
     CopyPaste & copy_paste, Theme const & theme,
     Font const & font, const char * ok_text
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , oncancel(events.oncancel)
     , title(drawable, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
@@ -79,11 +79,9 @@ WidgetDialog2::WidgetDialog2(
     this->add_widget(&this->link_copy);
     this->add_widget(&this->link_show);
 
-    this->add_widget(&this->ok);
+    this->add_widget(&this->ok, HasFocus::Yes);
 
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
-
-    this->set_widget_focus(&this->ok, focus_reason_tabkey);
 }
 
 WidgetDialog2::~WidgetDialog2()

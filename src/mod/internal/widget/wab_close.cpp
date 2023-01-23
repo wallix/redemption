@@ -33,7 +33,7 @@ WidgetWabClose::WidgetWabClose(
     const char * username, const char * target,
     bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
     Language lang, bool back_selector)
-: WidgetParent(drawable)
+: WidgetParent(drawable, Focusable::Yes)
 , oncancel(events.oncancel)
 , connection_closed_label(drawable, TR(trkeys::connection_closed, lang).to_sv(),
                           theme.global.fgcolor, theme.global.bgcolor, font)
@@ -107,7 +107,7 @@ WidgetWabClose::WidgetWabClose(
         this->add_widget(&this->timeleft_value);
     }
 
-    this->add_widget(&this->cancel);
+    this->add_widget(&this->cancel, HasFocus::Yes);
 
     if (this->back) {
         this->add_widget(this->back);
@@ -121,8 +121,6 @@ WidgetWabClose::WidgetWabClose(
     }
 
     this->move_size_widget(left, top, width, height);
-
-    this->set_widget_focus(&this->cancel, focus_reason_tabkey);
 }
 
 WidgetWabClose::~WidgetWabClose()

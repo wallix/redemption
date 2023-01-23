@@ -30,7 +30,7 @@ WidgetGroupBox::WidgetGroupBox(
     gdi::GraphicApi & drawable, const char * text,
     Color fgcolor, Color bgcolor, Font const & font
 )
-  : WidgetParent(drawable)
+  : WidgetParent(drawable, Focusable::Yes)
   , bg_color(bgcolor)
   , fg_color(fgcolor)
   , font(font)

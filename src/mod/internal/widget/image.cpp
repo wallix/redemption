@@ -28,11 +28,9 @@
 WidgetImage::WidgetImage(gdi::GraphicApi& drawable,
                          const char *filename,
                          Color bg_color)
-: Widget(drawable)
+: Widget(drawable, Focusable::No)
 , bmp(bitmap_from_file(filename, bg_color))
 {
-    this->tab_flag   = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
 }
 
 WidgetImage::~WidgetImage() = default;

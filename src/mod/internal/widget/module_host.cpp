@@ -285,7 +285,7 @@ WidgetModuleHost::WidgetModuleHost(
     Ref<mod_api> managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
     Rect const widget_rect, uint16_t front_width, uint16_t front_height)
-: WidgetParent(drawable)
+: WidgetParent(drawable, Focusable::Yes)
 , managed_mod(&managed_mod.get())
 , drawable(drawable)
 , screen(screen)
@@ -299,9 +299,6 @@ WidgetModuleHost::WidgetModuleHost(
     this->pointer_flag = PointerType::Custom;
 
     this->impl = &composite_array;
-
-    this->tab_flag   = NORMAL_TAB;
-    this->focus_flag = NORMAL_FOCUS;
 
     Dimension dim = this->hscroll.get_optimal_dim();
     this->hscroll_height = dim.h;

@@ -77,11 +77,15 @@ private:
 
 public:
     std::unique_ptr<WidgetEdit> challenge;
+
     WidgetButton   ok;
+
+public:
     std::unique_ptr<WidgetButton> cancel;
+
 private:
-    WidgetImage        img;
-    WidgetButton * extra_button;
+    WidgetImage         img;
+    WidgetButton*       extra_button;
     WidgetEventNotifier oncancel;
 
     Color bg_color;

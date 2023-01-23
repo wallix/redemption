@@ -79,6 +79,7 @@ private:
 
 public:
     WidgetButton   cancel;
+
 private:
     WidgetButton * back;
 

@@ -45,8 +45,8 @@ RailModuleHostMod::RailModuleHostMod(
 {
     this->screen.set_xy(widget_rect.x, widget_rect.y);
     this->screen.set_wh(width, height);
-    this->screen.add_widget(&this->module_host);
-    this->screen.set_widget_focus(&this->module_host, Widget::focus_reason_tabkey);
+    this->screen.add_widget(&this->module_host, WidgetParent::HasFocus::Yes);
+    this->screen.init_focus();
 }
 
 void RailModuleHostMod::set_mod(std::unique_ptr<mod_api>&& managed_mod) noexcept

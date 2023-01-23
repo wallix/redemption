@@ -33,7 +33,7 @@ WidgetLabel::WidgetLabel(
     Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext
 )
-    : Widget(drawable)
+    : Widget(drawable, Focusable::No)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
@@ -41,8 +41,6 @@ WidgetLabel::WidgetLabel(
     , w_border(x_text)
     , font(font)
 {
-    this->tab_flag = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
     this->set_text(text);
 }
 

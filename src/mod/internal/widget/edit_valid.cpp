@@ -35,7 +35,7 @@ WidgetEditValid::WidgetEditValid(
     // TODO re-enable
     int /*xtext*/, int /*ytext*/, bool pass
 )
-    : Widget(drawable)
+    : Widget(drawable, Focusable::Yes)
     , button(drawable, "\xe2\x9e\x9c", onsubmit,
              bgcolor, focus_color, focus_color, 1, font, 6, 2)
     , editbox(pass
@@ -49,6 +49,11 @@ WidgetEditValid::WidgetEditValid(
     , use_label_(use_title)
     , border_none_color(border_none_color)
 {
+}
+
+void WidgetEditValid::init_focus()
+{
+    this->editbox->init_focus();
 }
 
 Dimension WidgetEditValid::get_optimal_dim() const

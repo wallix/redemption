@@ -31,7 +31,7 @@ WidgetScreen::WidgetScreen(
     gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
     Font const & font, Theme theme
 )
-    : WidgetParent(drawable)
+    : WidgetParent(drawable, Focusable::Yes)
     , theme(std::move(theme))
     , tooltip(nullptr)
     , current_over(nullptr)
@@ -39,8 +39,6 @@ WidgetScreen::WidgetScreen(
 {
     this->set_wh(width, height);
     this->impl = &composite_array;
-
-    this->tab_flag = IGNORE_TAB;
 
     this->set_xy(0, 0);
 }

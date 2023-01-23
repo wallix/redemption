@@ -29,7 +29,7 @@ WidgetMultiLine::WidgetMultiLine(
     gdi::GraphicApi & drawable, char const* text,
     Color fgcolor, Color bgcolor, Font const & font,
     int xtext, int ytext)
-: Widget(drawable)
+: Widget(drawable, Focusable::Yes)
 , x_text(xtext)
 , y_text(ytext)
 , cy_text(0)
@@ -37,9 +37,6 @@ WidgetMultiLine::WidgetMultiLine(
 , fg_color(fgcolor)
 , font(font)
 {
-    this->tab_flag   = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
-
     this->set_text(text, 4048 /* long line*/);
 }
 

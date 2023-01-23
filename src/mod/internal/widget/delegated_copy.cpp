@@ -32,7 +32,7 @@ WidgetDelegatedCopy::WidgetDelegatedCopy(
     Color fgcolor, Color bgcolor, Color activecolor,
     Font const & font, int xicon, int yicon, MouseButton copy_buttons
 )
-    : Widget(drawable)
+    : Widget(drawable, Focusable::No)
     , onclick(onclick)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
@@ -42,8 +42,6 @@ WidgetDelegatedCopy::WidgetDelegatedCopy(
     , y_icon(yicon)
     , copy_buttons(copy_buttons)
 {
-    this->tab_flag = IGNORE_TAB;
-    this->focus_flag = IGNORE_FOCUS;
 }
 
 void WidgetDelegatedCopy::rdp_input_invalidate(Rect clip)

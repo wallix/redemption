@@ -104,7 +104,7 @@ WidgetGrid::WidgetGrid(
     Color bg_color_selection, Color fg_color_selection,
     uint16_t border
 )
-    : Widget(drawable)
+    : Widget(drawable, Focusable::Yes)
     , onsubmit(onsubmit)
     , widgets(nb_rows, nb_columns)
     , bg_color_1(bg_color_1)
@@ -271,7 +271,7 @@ void WidgetGrid::get_selection(uint16_t & row_index, uint16_t & column_index) co
 
 void WidgetGrid::set_selection(uint16_t row_index)
 {
-    if (this->focus_flag == Widget::IGNORE_FOCUS) {
+    if (this->focusable == Focusable::No) {
         return;
     }
 

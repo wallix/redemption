@@ -65,10 +65,7 @@ private:
     WidgetLabel        title;
     WidgetRect         separator;
     WidgetVerticalScrollText dialog;
-
-public:
     WidgetButton ok;
-private:
     WidgetImage img;
     WidgetLabel link_label;
     std::string link_value;
