@@ -25,6 +25,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
+
 void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::Color bg_color)
 {
     for (Rect const & rect : region.rects) {
@@ -33,38 +34,53 @@ void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::C
 }
 
 
-CompositeArray::CompositeArray() = default;
+CompositeArray::CompositeArray()
+: capacity(checked_int(std::size(fixed_table)))
+, p(fixed_table)
+{}
 
-int CompositeArray::add(Widget * w)
+CompositeArray::~CompositeArray()
 {
-    assert(w);
-    assert(this->children_count < MAX_CHILDREN_COUNT);
-    this->child_table[this->children_count] = w;
-    return this->children_count++;
+    if (p != fixed_table) {
+        delete p;
+    }
 }
 
-void CompositeArray::remove(const Widget * w)
+int CompositeArray::add(Widget & w)
 {
-    assert(w);
-    assert(this->children_count);
-    auto last = this->child_table + this->children_count;
-    auto it = std::find(&this->child_table[0], last, w);
-    assert(it != last);
-    if (it != last) {
-        auto new_last = std::copy(it+1, last, it);
-        *new_last = nullptr;
-        this->children_count--;
+    if (REDEMPTION_UNLIKELY(count == capacity)) {
+        auto* new_array = new Widget*[checked_int(capacity * 2)];
+        std::copy(p, p + count, new_array);
+        if (p != fixed_table) {
+            delete p;
+        }
+        p = new_array;
+        capacity *= 2;
+    }
+
+    p[count] = &w;
+    return count++;
+}
+
+void CompositeArray::remove(Widget const & w)
+{
+    for (int i = 0; i < count; ++i) {
+        if (p[i] == &w) {
+            --count;
+            std::copy(p + i, p + i + 1, p + count - i);
+            break;
+        }
     }
 }
 
 Widget * CompositeArray::get(int index) const
 {
-    return this->child_table[index];
+    return this->p[index];
 }
 
 int CompositeArray::get_first()
 {
-    if (!this->children_count) {
+    if (!this->count) {
         return -1;
     }
 
@@ -73,11 +89,11 @@ int CompositeArray::get_first()
 
 int CompositeArray::get_last()
 {
-    if (!this->children_count) {
+    if (!this->count) {
         return -1;
     }
 
-    return this->children_count - 1;
+    return this->count - 1;
 }
 
 int CompositeArray::get_previous(int index)
@@ -98,10 +114,10 @@ int CompositeArray::get_next(int index)
     return index + 1;
 }
 
-int CompositeArray::find(const Widget * w)
+int CompositeArray::find(Widget const & w)
 {
-    for (size_t i = 0; i < this->children_count; i++) {
-        if (this->child_table[i] == w) {
+    for (int i = 0; i < this->count; ++i) {
+        if (this->p[i] == &w) {
             return i;
         }
     }
@@ -111,7 +127,7 @@ int CompositeArray::find(const Widget * w)
 
 void CompositeArray::clear()
 {
-    this->children_count = 0;
+    this->count = 0;
 }
 
 
@@ -183,7 +199,7 @@ Widget * WidgetParent::get_next_focus(Widget * w)
         }
     }
     else {
-        index = this->impl->find(w);
+        index = this->impl->find(*w);
         assert(index != -1);
     }
 
@@ -218,7 +234,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
         }
     }
     else {
-        index = this->impl->find(w);
+        index = this->impl->find(*w);
         assert(index != -1);
     }
 
@@ -249,7 +265,7 @@ void WidgetParent::init_focus()
 
 void WidgetParent::add_widget(Widget & w, HasFocus has_focus)
 {
-    this->impl->add(&w);
+    this->impl->add(w);
 
     if (w.focusable == Focusable::Yes && (has_focus == HasFocus::Yes || !this->current_focus)) {
         this->current_focus = &w;
@@ -266,12 +282,12 @@ void WidgetParent::remove_widget(Widget & w)
         this->current_focus = future_focus_w;
     }
 
-    this->impl->remove(&w);
+    this->impl->remove(w);
 }
 
 int  WidgetParent::find_widget(Widget & w)
 {
-    return this->impl->find(&w);
+    return this->impl->find(w);
 }
 
 void WidgetParent::clear()

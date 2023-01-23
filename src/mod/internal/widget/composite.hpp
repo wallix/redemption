@@ -28,55 +28,33 @@ class SubRegion;
 
 void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, Widget::Color bg_color);
 
-class CompositeContainer
+
+class CompositeArray
 {
-public:
-    virtual ~CompositeContainer() = default;
-
-
-    virtual int add(Widget * w) = 0;
-    virtual void remove(const Widget * w) = 0;
-
-    [[nodiscard]] virtual Widget * get(int index) const = 0;
-
-    virtual int get_first() = 0;
-    virtual int get_last() = 0;
-
-    virtual int get_previous(int index) = 0;
-    virtual int get_next(int index) = 0;
-
-    virtual int find(const Widget * w) = 0;
-
-    virtual void clear() = 0;
-};
-
-
-class CompositeArray : public CompositeContainer
-{
-    enum {
-        MAX_CHILDREN_COUNT = 256
-    };
-
-    Widget * child_table[MAX_CHILDREN_COUNT] {};
-    size_t   children_count = 0;
-
 public:
     CompositeArray();
+    ~CompositeArray();
 
-    int add(Widget * w) override;
-    void remove(const Widget * w) override;
+    int add(Widget & w);
+    void remove(Widget const & w);
 
-    [[nodiscard]] Widget * get(int index) const override;
+    Widget * get(int index) const;
 
-    int get_first() override;
-    int get_last() override;
+    int get_first();
+    int get_last();
 
-    int get_previous(int index) override;
-    int get_next(int index) override;
+    int get_previous(int index);
+    int get_next(int index);
 
-    int find(const Widget * w) override;
+    int find(Widget const & w);
 
-    void clear()  override;
+    void clear();
+
+public:
+    int count = 0;
+    int capacity;
+    Widget ** p;
+    Widget * fixed_table[16];
 };  // class CompositeArray
 
 
@@ -90,7 +68,7 @@ class WidgetParent : public Widget
     uint16_t old_mouse_y = 0;
 
 protected:
-    CompositeContainer * impl;
+    CompositeArray * impl;
 
 public:
     Widget * current_focus;
