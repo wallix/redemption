@@ -185,7 +185,6 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_12.png");
 
     wscreen.show_tooltip(nullptr, 30, 35, Rect(), Rect());
-    wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
     wscreen.clear();
 }

@@ -326,7 +326,7 @@ void WidgetSelector::rearrange()
         uint16_t filters_y = labels_y + this->header_labels[0].cy()
             + FILTER_SEPARATOR;
 
-        for (int i = 0; i < this->nb_columns; i++) {
+        for (std::size_t i = 0; i < this->nb_columns; ++i) {
             this->header_labels[i].set_wh(
                 this->current_columns_width[i] + this->selector_lines.border * 2,
                 this->header_labels[i].cy());
@@ -337,13 +337,14 @@ void WidgetSelector::rearrange()
                 this->edit_filters[i].cy());
             offset += this->header_labels[i].cx();
 
+            bool contains_widget = this->contains_widget(this->column_expansion_buttons[i]);
             if (column_width_is_optimal[i]) {
-                if (-1 != this->find_widget(this->column_expansion_buttons[i])) {
+                if (contains_widget) {
                     this->remove_widget(this->column_expansion_buttons[i]);
                 }
             }
             else {
-                if (-1 == this->find_widget(this->column_expansion_buttons[i])) {
+                if (!contains_widget) {
                     this->add_widget(this->column_expansion_buttons[i]);
                 }
 

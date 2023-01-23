@@ -35,20 +35,15 @@ public:
     CompositeArray();
     ~CompositeArray();
 
-    int add(Widget & w);
+    void add(Widget & w);
     void remove(Widget const & w);
 
-    Widget * get(int index) const;
-
-    int get_first();
-    int get_last();
-
-    int get_previous(int index);
-    int get_next(int index);
-
-    int find(Widget const & w);
+    Widget** find(Widget const & w);
 
     void clear();
+
+    Widget** begin();
+    Widget** end();
 
 public:
     int count = 0;
@@ -91,7 +86,7 @@ public:
 
     virtual void add_widget(Widget & w, HasFocus has_focus = HasFocus::No);
     virtual void remove_widget(Widget & w);
-    virtual int  find_widget(Widget & w);
+    virtual bool contains_widget(Widget & w);
     virtual void clear();
 
     virtual void invalidate_children(Rect clip);

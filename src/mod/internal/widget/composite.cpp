@@ -46,7 +46,17 @@ CompositeArray::~CompositeArray()
     }
 }
 
-int CompositeArray::add(Widget & w)
+Widget** CompositeArray::begin()
+{
+    return p;
+}
+
+Widget** CompositeArray::end()
+{
+    return p + count;
+}
+
+void CompositeArray::add(Widget & w)
 {
     if (REDEMPTION_UNLIKELY(count == capacity)) {
         auto* new_array = new Widget*[checked_int(capacity * 2)];
@@ -59,70 +69,29 @@ int CompositeArray::add(Widget & w)
     }
 
     p[count] = &w;
-    return count++;
+    count++;
 }
 
 void CompositeArray::remove(Widget const & w)
 {
     for (int i = 0; i < count; ++i) {
         if (p[i] == &w) {
+            std::copy(p + i + 1, p + count, p + i);
             --count;
-            std::copy(p + i, p + i + 1, p + count - i);
             break;
         }
     }
 }
 
-Widget * CompositeArray::get(int index) const
-{
-    return this->p[index];
-}
-
-int CompositeArray::get_first()
-{
-    if (!this->count) {
-        return -1;
-    }
-
-    return 0;
-}
-
-int CompositeArray::get_last()
-{
-    if (!this->count) {
-        return -1;
-    }
-
-    return this->count - 1;
-}
-
-int CompositeArray::get_previous(int index)
-{
-    if (index == this->get_first()) {
-        return -1;
-    }
-
-    return index - 1;
-}
-
-int CompositeArray::get_next(int index)
-{
-    if (index == this->get_last()) {
-        return -1;
-    }
-
-    return index + 1;
-}
-
-int CompositeArray::find(Widget const & w)
+Widget** CompositeArray::find(Widget const & w)
 {
     for (int i = 0; i < this->count; ++i) {
-        if (this->p[i] == &w) {
-            return i;
+        if (p[i] == &w) {
+            return p + i;
         }
     }
 
-    return -1;
+    return end();
 }
 
 void CompositeArray::clear()
@@ -187,34 +156,32 @@ void WidgetParent::blur()
 
 Widget * WidgetParent::get_next_focus(Widget * w)
 {
-    int index;
+    Widget** it = this->impl->begin();
+    Widget** last = this->impl->end();
+
     if (!w) {
-        if ((index = this->impl->get_first()) == -1) {
+        if (it == last) {
             return nullptr;
         }
 
-        w = this->impl->get(index);
+        w = *it;
         if (w->focusable == Focusable::Yes) {
             return w;
         }
     }
     else {
-        index = this->impl->find(*w);
-        assert(index != -1);
+        it = this->impl->find(*w);
+
+        if (it == last) {
+            return nullptr;
+        }
     }
 
-    int future_focus_index;
-    while ((future_focus_index = this->impl->get_next(index)) != -1) {
-        Widget * future_focus_w = this->impl->get(future_focus_index);
+    while (++it != last) {
+        Widget* future_focus_w = *it;
         if (future_focus_w->focusable == Focusable::Yes) {
             return future_focus_w;
         }
-
-        if (future_focus_w == w) {
-            break;
-        }
-
-        index = future_focus_index;
     }
 
     return nullptr;
@@ -222,34 +189,38 @@ Widget * WidgetParent::get_next_focus(Widget * w)
 
 Widget * WidgetParent::get_previous_focus(Widget * w)
 {
-    int index;
+    Widget** it = this->impl->begin();
+    Widget** last = this->impl->end();
+
     if (!w) {
-        if ((index = this->impl->get_last()) == -1) {
+        if (it == last) {
             return nullptr;
         }
 
-        w = this->impl->get(index);
+        w = *(last - 1);
         if (w->focusable == Focusable::Yes) {
             return w;
         }
+
+        it = last;
     }
     else {
-        index = this->impl->find(*w);
-        assert(index != -1);
+        it = this->impl->find(*w);
+
+        if (it == last) {
+            return nullptr;
+        }
     }
 
-    int future_focus_index;
-    while ((future_focus_index = this->impl->get_previous(index)) != -1) {
-        Widget * future_focus_w = this->impl->get(future_focus_index);
-        if (future_focus_w->focusable == Focusable::Yes) {
-            return future_focus_w;
-        }
-
-        if (future_focus_w == w) {
-            break;
-        }
-
-        index = future_focus_index;
+    Widget** first = this->impl->begin();
+    if (it != first) {
+        do {
+            --it;
+            Widget* future_focus_w = *it;
+            if (future_focus_w->focusable == Focusable::Yes) {
+                return future_focus_w;
+            }
+        } while (it != first);
     }
 
     return nullptr;
@@ -285,9 +256,9 @@ void WidgetParent::remove_widget(Widget & w)
     this->impl->remove(w);
 }
 
-int  WidgetParent::find_widget(Widget & w)
+bool WidgetParent::contains_widget(Widget & w)
 {
-    return this->impl->find(w);
+    return this->impl->find(w) != this->impl->end();
 }
 
 void WidgetParent::clear()
@@ -299,18 +270,11 @@ void WidgetParent::clear()
 
 void WidgetParent::invalidate_children(Rect clip)
 {
-    int index_w_current = this->impl->get_first();
-    while (index_w_current != -1) {
-        Widget * w = this->impl->get(index_w_current);
-        assert(w);
-
-        Rect newr = clip.intersect(w->get_rect());
-
-        if (!newr.isempty()) {
-            w->rdp_input_invalidate(newr);
+    for (Widget* w : *this->impl) {
+        Rect rect = clip.intersect(w->get_rect());
+        if (!rect.isempty()) {
+            w->rdp_input_invalidate(rect);
         }
-
-        index_w_current = this->impl->get_next(index_w_current);
     }
 }
 
@@ -319,17 +283,11 @@ void WidgetParent::draw_inner_free(Rect clip, Color bg_color)
     SubRegion region;
     region.add_rect(clip.intersect(this->get_rect()));
 
-    int index_w_current = this->impl->get_first();
-    while (index_w_current != -1) {
-        Widget * w = this->impl->get(index_w_current);
-        assert(w);
-
-        Rect rect_widget = clip.intersect(w->get_rect());
-        if (!rect_widget.isempty()) {
-            region.subtract_rect(rect_widget);
+    for (Widget* w : *this->impl) {
+        Rect rect = clip.intersect(w->get_rect());
+        if (!rect.isempty()) {
+            region.subtract_rect(rect);
         }
-
-        index_w_current = this->impl->get_next(index_w_current);
     }
 
     ::fill_region(this->drawable, region, bg_color);
@@ -344,18 +302,8 @@ void WidgetParent::move_xy(int16_t x, int16_t y)
 
 void WidgetParent::move_children_xy(int16_t x, int16_t y)
 {
-    int index_w_first = this->impl->get_first();
-    if (index_w_first != -1) {
-        int index_w_current = index_w_first;
-        do {
-            Widget * w = this->impl->get(index_w_current);
-            assert(w);
-            w->move_xy(x, y);
-
-            index_w_current = this->impl->get_next(index_w_current);
-        }
-        while ((index_w_current != index_w_first) &&
-                (index_w_current != -1));
+    for (Widget* w : *this->impl) {
+        w->move_xy(x, y);
     }
 }
 
@@ -410,21 +358,25 @@ Widget * WidgetParent::widget_at_pos(int16_t x, int16_t y)
     if (!this->get_rect().contains_pt(x, y)) {
         return nullptr;
     }
+
     if (this->current_focus) {
         if (this->current_focus->get_rect().contains_pt(x, y)) {
             return this->current_focus;
         }
     }
-    // Foreground widget is the last in the list.
-    int index_w_current = this->impl->get_last();
-    while (index_w_current != -1) {
-        Widget * w = this->impl->get(index_w_current);
-        assert(w);
-        if (w->get_rect().contains_pt(x, y)) {
-            return w;
-        }
 
-        index_w_current = this->impl->get_previous(index_w_current);
+    Widget** first = this->impl->begin();
+    Widget** last = this->impl->end();
+
+    // Foreground widget is the last in the list.
+    if (first != last) {
+        do {
+            --last;
+            Widget* w = *last;
+            if (w->get_rect().contains_pt(x, y)) {
+                return w;
+            }
+        } while (first != last);
     }
 
     return nullptr;
