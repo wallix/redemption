@@ -44,8 +44,8 @@ struct WidgetTestMod::WidgetTestModPrivate
         gd, WidgetEventNotifier(), theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
     {
-        this->screen.add_widget(&this->label);
-        this->screen.add_widget(&this->delegated_copy);
+        this->screen.add_widget(this->label);
+        this->screen.add_widget(this->delegated_copy);
 
         auto dim1 = this->label.get_optimal_dim();
         auto dim2 = this->delegated_copy.get_optimal_dim();

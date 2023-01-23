@@ -77,7 +77,7 @@ WidgetWabClose::WidgetWabClose(
 {
     this->impl = &composite_array;
 
-    this->add_widget(&this->img);
+    this->add_widget(this->img);
 
     char label[255];
     snprintf(label, sizeof(label), "%s:", TR(trkeys::username, lang).c_str());
@@ -89,28 +89,28 @@ WidgetWabClose::WidgetWabClose(
     snprintf(label, sizeof(label), "%s:", TR(trkeys::timeleft, lang).c_str());
     this->timeleft_label.set_text(label);
 
-    this->add_widget(&this->connection_closed_label);
-    this->add_widget(&this->separator);
+    this->add_widget(this->connection_closed_label);
+    this->add_widget(this->separator);
 
     if (username && *username) {
-        this->add_widget(&this->username_label);
-        this->add_widget(&this->username_value);
-        this->add_widget(&this->target_label);
-        this->add_widget(&this->target_value);
+        this->add_widget(this->username_label);
+        this->add_widget(this->username_value);
+        this->add_widget(this->target_label);
+        this->add_widget(this->target_value);
     }
 
-    this->add_widget(&this->diagnostic_label);
-    this->add_widget(&this->diagnostic_value);
+    this->add_widget(this->diagnostic_label);
+    this->add_widget(this->diagnostic_value);
 
     if (showtimer) {
-        this->add_widget(&this->timeleft_label);
-        this->add_widget(&this->timeleft_value);
+        this->add_widget(this->timeleft_label);
+        this->add_widget(this->timeleft_value);
     }
 
-    this->add_widget(&this->cancel, HasFocus::Yes);
+    this->add_widget(this->cancel, HasFocus::Yes);
 
     if (this->back) {
-        this->add_widget(this->back);
+        this->add_widget(*this->back);
     }
 
     this->fixed_format_diagnostic_text =

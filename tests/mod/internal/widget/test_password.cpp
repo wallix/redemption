@@ -273,12 +273,12 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     wpassword6.set_wh(50, dim.h);
     wpassword6.set_xy(-10, 550);
 
-    wcomposite.add_widget(&wpassword1);
-    wcomposite.add_widget(&wpassword2);
-    wcomposite.add_widget(&wpassword3);
-    wcomposite.add_widget(&wpassword4);
-    wcomposite.add_widget(&wpassword5);
-    wcomposite.add_widget(&wpassword6);
+    wcomposite.add_widget(wpassword1);
+    wcomposite.add_widget(wpassword2);
+    wcomposite.add_widget(wpassword3);
+    wcomposite.add_widget(wpassword4);
+    wcomposite.add_widget(wpassword5);
+    wcomposite.add_widget(wpassword6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));

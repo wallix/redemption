@@ -98,27 +98,27 @@ WidgetLogin::WidgetLogin(
 
     this->helpicon.set_unfocusable();
 
-    this->add_widget(&this->img);
-    this->add_widget(&this->helpicon);
+    this->add_widget(this->img);
+    this->add_widget(this->helpicon);
 
     if (this->show_target) {
-        this->add_widget(&this->target_edit);
+        this->add_widget(this->target_edit);
     }
 
     bool focus_on_edit = (this->login_edit.get_text()[0] == '\0');
-    this->add_widget(&this->login_edit, focus_on_edit ? HasFocus::Yes : HasFocus::No);
-    this->add_widget(&this->password_edit, focus_on_edit ? HasFocus::No : HasFocus::Yes);
+    this->add_widget(this->login_edit, focus_on_edit ? HasFocus::Yes : HasFocus::No);
+    this->add_widget(this->password_edit, focus_on_edit ? HasFocus::No : HasFocus::Yes);
 
-    this->add_widget(&this->version_label);
+    this->add_widget(this->version_label);
 
-    this->add_widget(&this->error_message_label);
+    this->add_widget(this->error_message_label);
 
     if (*login_message) {
-        this->add_widget(&this->message_label);
+        this->add_widget(this->message_label);
     }
 
     if (extra_button) {
-        this->add_widget(extra_button);
+        this->add_widget(*extra_button);
     }
 
     this->move_size_widget(left, top, width, height);
@@ -141,10 +141,10 @@ void WidgetLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
     if (width > 640) {
         if (!this->labels_added) {
             if (this->show_target) {
-                this->add_widget(&this->target_label);
+                this->add_widget(this->target_label);
             }
-            this->add_widget(&this->login_label);
-            this->add_widget(&this->password_label);
+            this->add_widget(this->login_label);
+            this->add_widget(this->password_label);
 
             this->labels_added = true;
         }
@@ -156,10 +156,10 @@ void WidgetLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
     else {
         if (this->labels_added) {
             if (this->show_target) {
-                this->remove_widget(&this->target_label);
+                this->remove_widget(this->target_label);
             }
-            this->remove_widget(&this->login_label);
-            this->remove_widget(&this->password_label);
+            this->remove_widget(this->login_label);
+            this->remove_widget(this->password_label);
 
             this->labels_added = false;
         }

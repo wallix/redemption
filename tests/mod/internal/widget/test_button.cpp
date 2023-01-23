@@ -206,12 +206,12 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     wbutton6.set_wh(dim);
     wbutton6.set_xy(-10, 550);
 
-    wcomposite.add_widget(&wbutton1);
-    wcomposite.add_widget(&wbutton2);
-    wcomposite.add_widget(&wbutton3);
-    wcomposite.add_widget(&wbutton4);
-    wcomposite.add_widget(&wbutton5);
-    wcomposite.add_widget(&wbutton6);
+    wcomposite.add_widget(wbutton1);
+    wcomposite.add_widget(wbutton2);
+    wcomposite.add_widget(wbutton3);
+    wcomposite.add_widget(wbutton4);
+    wcomposite.add_widget(wbutton5);
+    wcomposite.add_widget(wbutton6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));

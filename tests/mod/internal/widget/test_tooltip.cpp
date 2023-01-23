@@ -75,8 +75,8 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     label2.set_wh(dim);
     label2.set_xy(x + 50, y + 90);
 
-    parent.add_widget(&label);
-    parent.add_widget(&label2);
+    parent.add_widget(label);
+    parent.add_widget(label2);
 
     auto rdp_input_mouse = [&](WidgetLabel const& label, const char * text) {
         auto x = label.x() + label.cx() / 2;

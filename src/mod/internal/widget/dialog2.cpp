@@ -70,16 +70,16 @@ WidgetDialog2::WidgetDialog2(
 {
     this->impl = &composite_array;
 
-    this->add_widget(&this->img);
+    this->add_widget(this->img);
 
-    this->add_widget(&this->title);
-    this->add_widget(&this->separator);
-    this->add_widget(&this->dialog);
-    this->add_widget(&this->link_label);
-    this->add_widget(&this->link_copy);
-    this->add_widget(&this->link_show);
+    this->add_widget(this->title);
+    this->add_widget(this->separator);
+    this->add_widget(this->dialog);
+    this->add_widget(this->link_label);
+    this->add_widget(this->link_copy);
+    this->add_widget(this->link_show);
 
-    this->add_widget(&this->ok, HasFocus::Yes);
+    this->add_widget(this->ok, HasFocus::Yes);
 
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 }

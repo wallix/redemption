@@ -200,12 +200,12 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wlabel6.set_wh(wlabel6.get_optimal_dim());
     wlabel6.set_xy(-10, 550);
 
-    wcomposite.add_widget(&wlabel1);
-    wcomposite.add_widget(&wlabel2);
-    wcomposite.add_widget(&wlabel3);
-    wcomposite.add_widget(&wlabel4);
-    wcomposite.add_widget(&wlabel5);
-    wcomposite.add_widget(&wlabel6);
+    wcomposite.add_widget(wlabel1);
+    wcomposite.add_widget(wlabel2);
+    wcomposite.add_widget(wlabel3);
+    wcomposite.add_widget(wlabel4);
+    wcomposite.add_widget(wlabel5);
+    wcomposite.add_widget(wlabel6);
 
     //ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));

@@ -373,19 +373,19 @@ void WidgetModuleHost::update_rects(const Dimension module_dim)
 
     if (old_hscroll_added != this->hscroll_added) {
         if (this->hscroll_added) {
-            this->add_widget(&this->hscroll);
+            this->add_widget(this->hscroll);
         }
         else {
-            this->remove_widget(&this->hscroll);
+            this->remove_widget(this->hscroll);
         }
 
     }
     if (old_vscroll_added != this->vscroll_added) {
         if (this->vscroll_added) {
-            this->add_widget(&this->vscroll);
+            this->add_widget(this->vscroll);
         }
         else {
-            this->remove_widget(&this->vscroll);
+            this->remove_widget(this->vscroll);
         }
 
     }

@@ -175,7 +175,7 @@ SelectorMod::SelectorMod(
     , current_page(unchecked_decimal_chars_to_int(this->selector.current_page.get_text()))
     , number_page(unchecked_decimal_chars_to_int(this->selector.number_page.get_text()+1))
 {
-    this->screen.add_widget(&this->selector, WidgetParent::HasFocus::Yes);
+    this->screen.add_widget(this->selector, WidgetParent::HasFocus::Yes);
     this->screen.init_focus();
 
     uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
@@ -292,7 +292,7 @@ void SelectorMod::refresh_device()
     }
     else {
         this->selector.selector_lines.set_selection(0);
-        this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
+        this->selector.set_widget_focus(this->selector.selector_lines, Widget::focus_reason_tabkey);
     }
 
     this->selector.move_size_widget(

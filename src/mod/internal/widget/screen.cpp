@@ -52,7 +52,7 @@ void WidgetScreen::show_tooltip(
 {
     if (text == nullptr) {
         if (this->tooltip) {
-            this->remove_widget(this->tooltip.get());
+            this->remove_widget(*this->tooltip);
             this->rdp_input_invalidate(this->tooltip->get_rect());
             this->tooltip.reset();
         }
@@ -82,7 +82,7 @@ void WidgetScreen::show_tooltip(
         int posy = (y - h >= display_rect.y) ? (y - h) : (y + h > sh) ? (sh - h) : y;
         this->tooltip->set_xy(posx, posy);
 
-        this->add_widget(this->tooltip.get());
+        this->add_widget(*this->tooltip);
         this->rdp_input_invalidate(this->tooltip->get_rect());
     }
 }
@@ -98,8 +98,10 @@ bool WidgetScreen::next_focus()
         if (!future_focus_w) {
             future_focus_w = this->get_next_focus(nullptr);
         }
-        assert(this->current_focus);
-        this->set_widget_focus(future_focus_w, focus_reason_tabkey);
+
+        if (future_focus_w) {
+            this->set_widget_focus(*future_focus_w, focus_reason_tabkey);
+        }
 
         return true;
     }
@@ -118,8 +120,10 @@ bool WidgetScreen::previous_focus()
         if (!future_focus_w) {
             future_focus_w = this->get_previous_focus(nullptr);
         }
-        assert(this->current_focus);
-        this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
+
+        if (future_focus_w) {
+            this->set_widget_focus(*future_focus_w, focus_reason_backtabkey);
+        }
 
         return true;
     }

@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     ctx.add_devices();
 
-    selector.set_widget_focus(&selector.selector_lines, Widget::focus_reason_tabkey);
+    selector.set_widget_focus(selector.selector_lines, Widget::focus_reason_tabkey);
     selector.selector_lines.set_selection(0);
 
     selector.move_size_widget(selector.x(), selector.y(), selector.cx(), selector.cy());

@@ -100,7 +100,7 @@ CloseMod::CloseMod(
     , vars(vars)
     , events_guard(events)
 {
-    this->screen.add_widget(&this->close_widget, WidgetParent::HasFocus::Yes);
+    this->screen.add_widget(this->close_widget, WidgetParent::HasFocus::Yes);
     this->screen.init_focus();
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());

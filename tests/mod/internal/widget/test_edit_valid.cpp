@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
     ctx.wedit.set_wh(100, dim.h);
     ctx.wedit.set_xy(0, 0);
 
-    ctx.parent.set_widget_focus(&ctx.wedit, Widget::focus_reason_tabkey);
+    ctx.parent.set_widget_focus(ctx.wedit, Widget::focus_reason_tabkey);
 
     ctx.wedit.rdp_input_invalidate(ctx.wedit.get_rect());
 
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     ctx.wedit.set_wh(100, dim.h);
     ctx.wedit.set_xy(50, 100);
 
-    ctx.parent.add_widget(&ctx.wedit);
+    ctx.parent.add_widget(ctx.wedit);
 
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
@@ -174,8 +174,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
 
-    ctx.parent.add_widget(&ctx.wedit);
-    ctx.parent.add_widget(&wedit2);
+    ctx.parent.add_widget(ctx.wedit);
+    ctx.parent.add_widget(wedit2);
     // ask to widget to redraw at it's current position
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
@@ -215,8 +215,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
 
-    ctx.parent.add_widget(&ctx.wedit);
-    ctx.parent.add_widget(&wedit2);
+    ctx.parent.add_widget(ctx.wedit);
+    ctx.parent.add_widget(wedit2);
     // ask to widget to redraw at it's current position
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
@@ -265,8 +265,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     wedit2.set_wh(200, dim.h);
     wedit2.set_xy(400, 354);
 
-    ctx.parent.add_widget(&ctx.wedit);
-    ctx.parent.add_widget(&wedit2);
+    ctx.parent.add_widget(ctx.wedit);
+    ctx.parent.add_widget(wedit2);
     // ask to widget to redraw at it's current position
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
@@ -308,8 +308,8 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     ctx.wedit.set_wh(100, dim.h);
     ctx.wedit.set_xy(0, 0);
 
-    ctx.parent.add_widget(&ctx.wedit);
-    ctx.parent.set_widget_focus(&ctx.wedit, Widget::focus_reason_tabkey);
+    ctx.parent.add_widget(ctx.wedit);
+    ctx.parent.set_widget_focus(ctx.wedit, Widget::focus_reason_tabkey);
 
     ctx.click_down(95, 2);
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());

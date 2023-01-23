@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLogin3)
 {
     TestWidgetLoginCtx ctx("test3", nullptr, nullptr, nullptr, LOGON_MESSAGE);
 
-    ctx.flat_login.set_widget_focus(&ctx.flat_login.password_edit, Widget::focus_reason_tabkey);
+    ctx.flat_login.set_widget_focus(ctx.flat_login.password_edit, Widget::focus_reason_tabkey);
 
     RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);

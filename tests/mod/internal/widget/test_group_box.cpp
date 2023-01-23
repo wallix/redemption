@@ -51,7 +51,7 @@ struct TestWidgetGroupBoxCtx
         wbutton.set_wh(wbutton.get_optimal_dim());
         wbutton.set_xy(x + 10, y + 20);
 
-        wgroupbox.add_widget(&wbutton);
+        wgroupbox.add_widget(wbutton);
 
         wgroupbox.rdp_input_invalidate(wgroupbox.get_rect());
     }

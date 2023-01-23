@@ -45,7 +45,7 @@ RailModuleHostMod::RailModuleHostMod(
 {
     this->screen.set_xy(widget_rect.x, widget_rect.y);
     this->screen.set_wh(width, height);
-    this->screen.add_widget(&this->module_host, WidgetParent::HasFocus::Yes);
+    this->screen.add_widget(this->module_host, WidgetParent::HasFocus::Yes);
     this->screen.init_focus();
 }
 

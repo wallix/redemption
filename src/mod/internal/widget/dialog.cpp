@@ -69,11 +69,11 @@ WidgetDialog::WidgetDialog(
 {
     this->impl = &composite_array;
 
-    this->add_widget(&this->img);
+    this->add_widget(this->img);
 
-    this->add_widget(&this->title);
-    this->add_widget(&this->separator);
-    this->add_widget(&this->dialog);
+    this->add_widget(this->title);
+    this->add_widget(this->separator);
+    this->add_widget(this->dialog);
 
     if (has_challenge) {
         if (CHALLENGE_ECHO == has_challenge) {
@@ -90,18 +90,18 @@ WidgetDialog::WidgetDialog(
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
-        this->add_widget(this->challenge.get(), HasFocus::Yes);
+        this->add_widget(*this->challenge, HasFocus::Yes);
     }
 
-    this->add_widget(&this->ok, has_challenge ? HasFocus::No : HasFocus::Yes);
+    this->add_widget(this->ok, has_challenge ? HasFocus::No : HasFocus::Yes);
 
     if (this->cancel) {
-        this->add_widget(this->cancel.get());
+        this->add_widget(*this->cancel);
     }
 
     if (has_challenge) {
         if (extra_button) {
-            this->add_widget(extra_button);
+            this->add_widget(*extra_button);
         }
     }
 

@@ -108,27 +108,27 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
         password_has_focus = HasFocus::Yes;
     }
 
-    this->add_widget(&this->caption_label);
-    this->add_widget(&this->separator);
+    this->add_widget(this->caption_label);
+    this->add_widget(this->separator);
 
-    this->add_widget(&this->device_label);
-    this->add_widget(device_show, device_has_focus);
+    this->add_widget(this->device_label);
+    this->add_widget(*device_show, device_has_focus);
     if (ask_device) {
-        this->add_widget(&this->device);
+        this->add_widget(this->device);
         if ((0 == strncmp(device_str, "Error:", 6)) ||
             (0 == strncmp(device_str, "Erreur:", 7))) {
             this->device.fg_color = theme.global.error_color;
         }
     }
-    this->add_widget(&this->login_label);
-    this->add_widget(login_show, login_has_focus);
+    this->add_widget(this->login_label);
+    this->add_widget(*login_show, login_has_focus);
     if (password_show) {
-        this->add_widget(&this->password_label);
-        this->add_widget(password_show, password_has_focus);
+        this->add_widget(this->password_label);
+        this->add_widget(*password_show, password_has_focus);
     }
 
     if (extra_button) {
-        this->add_widget(extra_button);
+        this->add_widget(*extra_button);
     }
 
     this->move_size_widget(left, top, width, height);

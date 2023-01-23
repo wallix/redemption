@@ -106,17 +106,14 @@ public:
 
     ~WidgetParent() override;
 
-    void set_widget_focus(Widget * new_focused, int reason);
+    void set_widget_focus(Widget & new_focused, int reason);
 
     void focus(int reason) override;
     void blur() override;
 
-    Widget * get_next_focus(Widget * w);
-    Widget * get_previous_focus(Widget * w);
-
-    virtual void add_widget(Widget * w, HasFocus has_focus = HasFocus::No);
-    virtual void remove_widget(Widget * w);
-    virtual int  find_widget(Widget * w);
+    virtual void add_widget(Widget & w, HasFocus has_focus = HasFocus::No);
+    virtual void remove_widget(Widget & w);
+    virtual int  find_widget(Widget & w);
     virtual void clear();
 
     virtual void invalidate_children(Rect clip);
@@ -151,6 +148,10 @@ public:
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void init_focus() override;
+
+protected:
+    Widget * get_next_focus(Widget * w);
+    Widget * get_previous_focus(Widget * w);
 };
 
 struct WidgetComposite : WidgetParent

@@ -309,12 +309,12 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     wedit6.set_wh(50, dim.h);
     wedit6.set_xy(-10, 550);
 
-    wcomposite.add_widget(&wedit1);
-    wcomposite.add_widget(&wedit2);
-    wcomposite.add_widget(&wedit3);
-    wcomposite.add_widget(&wedit4);
-    wcomposite.add_widget(&wedit5);
-    wcomposite.add_widget(&wedit6);
+    wcomposite.add_widget(wedit1);
+    wcomposite.add_widget(wedit2);
+    wcomposite.add_widget(wedit3);
+    wcomposite.add_widget(wedit4);
+    wcomposite.add_widget(wedit5);
+    wcomposite.add_widget(wedit6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
@@ -337,7 +337,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     ctx.wedit.set_xy(0, 0);
 
     ctx.wedit.focus(Widget::focus_reason_tabkey);
-    parent.add_widget(&ctx.wedit);
+    parent.add_widget(ctx.wedit);
     parent.current_focus = &ctx.wedit;
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));

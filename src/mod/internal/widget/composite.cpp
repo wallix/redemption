@@ -125,14 +125,13 @@ WidgetParent::WidgetParent(gdi::GraphicApi & drawable, Focusable focusable)
 
 WidgetParent::~WidgetParent() = default;
 
-void WidgetParent::set_widget_focus(Widget * new_focused, int reason)
+void WidgetParent::set_widget_focus(Widget & new_focused, int reason)
 {
-    assert(new_focused);
-    if (new_focused != this->current_focus) {
+    if (&new_focused != this->current_focus) {
         if (this->current_focus) {
             this->current_focus->blur();
         }
-        this->current_focus = new_focused;
+        this->current_focus = &new_focused;
     }
 
     this->current_focus->focus(reason);
@@ -248,31 +247,31 @@ void WidgetParent::init_focus()
     }
 }
 
-void WidgetParent::add_widget(Widget * w, HasFocus has_focus)
+void WidgetParent::add_widget(Widget & w, HasFocus has_focus)
 {
-    this->impl->add(w);
+    this->impl->add(&w);
 
-    if (w->focusable == Focusable::Yes && (has_focus == HasFocus::Yes || !this->current_focus)) {
-        this->current_focus = w;
+    if (w.focusable == Focusable::Yes && (has_focus == HasFocus::Yes || !this->current_focus)) {
+        this->current_focus = &w;
     }
 }
 
-void WidgetParent::remove_widget(Widget * w)
+void WidgetParent::remove_widget(Widget & w)
 {
-    if (this->current_focus == w) {
-        Widget * future_focus_w = this->get_next_focus(w);
+    if (this->current_focus == &w) {
+        Widget * future_focus_w = this->get_next_focus(&w);
         if (not future_focus_w) {
-            future_focus_w = this->get_previous_focus(w);
+            future_focus_w = this->get_previous_focus(&w);
         }
         this->current_focus = future_focus_w;
     }
 
-    this->impl->remove(w);
+    this->impl->remove(&w);
 }
 
-int  WidgetParent::find_widget(Widget * w)
+int  WidgetParent::find_widget(Widget & w)
 {
-    return this->impl->find(w);
+    return this->impl->find(&w);
 }
 
 void WidgetParent::clear()
@@ -354,7 +353,7 @@ bool WidgetParent::next_focus()
         Widget * future_focus_w = this->get_next_focus(this->current_focus);
 
         if (future_focus_w) {
-            this->set_widget_focus(future_focus_w, focus_reason_tabkey);
+            this->set_widget_focus(*future_focus_w, focus_reason_tabkey);
 
             return true;
         }
@@ -377,7 +376,7 @@ bool WidgetParent::previous_focus()
         Widget * future_focus_w = this->get_previous_focus(this->current_focus);
 
         if (future_focus_w) {
-            this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
+            this->set_widget_focus(*future_focus_w, focus_reason_backtabkey);
 
             return true;
         }
@@ -485,7 +484,7 @@ void WidgetParent::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
             this->pressed = w;
             if (w->focusable == Focusable::Yes) {
-                this->set_widget_focus(w, focus_reason_mousebutton1);
+                this->set_widget_focus(*w, focus_reason_mousebutton1);
             }
         }
         w->rdp_input_mouse(device_flags, x, y);

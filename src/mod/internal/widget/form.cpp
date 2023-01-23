@@ -84,20 +84,20 @@ WidgetForm::WidgetForm(
 
     this->impl = &composite_array;
 
-    this->add_widget(&this->warning_msg);
+    this->add_widget(this->warning_msg);
 
     if (this->flags & DURATION_DISPLAY) {
-        this->add_widget(&this->duration_label);
-        this->add_widget(&this->duration_edit);
-        this->add_widget(&this->duration_format);
+        this->add_widget(this->duration_label);
+        this->add_widget(this->duration_edit);
+        this->add_widget(this->duration_format);
     }
     if (this->flags & TICKET_DISPLAY) {
-        this->add_widget(&this->ticket_label);
-        this->add_widget(&this->ticket_edit);
+        this->add_widget(this->ticket_label);
+        this->add_widget(this->ticket_edit);
     }
     if (this->flags & COMMENT_DISPLAY) {
-        this->add_widget(&this->comment_label);
-        this->add_widget(&this->comment_edit);
+        this->add_widget(this->comment_label);
+        this->add_widget(this->comment_edit);
     }
     if (this->flags & DURATION_MANDATORY) {
         this->duration_label.set_text(TR(trkeys::duration_r, lang).to_sv());
@@ -110,10 +110,10 @@ WidgetForm::WidgetForm(
     }
 
     if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
-        this->add_widget(&this->notes);
+        this->add_widget(this->notes);
     }
 
-    this->add_widget(&this->confirm);
+    this->add_widget(this->confirm);
 }
 
 WidgetForm::~WidgetForm()
@@ -276,7 +276,7 @@ void WidgetForm::check_confirmation()
         (this->duration_edit.num_chars == 0)
     ) {
         this->set_warning_buffer(trkeys::fmt_field_required, tr(trkeys::duration));
-        this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
+        this->set_widget_focus(this->duration_edit, focus_reason_mousebutton1);
         this->rdp_input_invalidate(this->get_rect());
         return;
     }
@@ -294,7 +294,7 @@ void WidgetForm::check_confirmation()
                 this->set_warning_buffer(trkeys::fmt_toohigh_duration, tr(trkeys::duration),
                     int(this->duration_max.count()));
             }
-            this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
+            this->set_widget_focus(this->duration_edit, focus_reason_mousebutton1);
             this->rdp_input_invalidate(this->get_rect());
             return;
         }
@@ -305,7 +305,7 @@ void WidgetForm::check_confirmation()
         (this->ticket_edit.num_chars == 0)
     ) {
         this->set_warning_buffer(trkeys::fmt_field_required, tr(trkeys::ticket));
-        this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
+        this->set_widget_focus(this->ticket_edit, focus_reason_mousebutton1);
         this->rdp_input_invalidate(this->get_rect());
         return;
     }
@@ -315,7 +315,7 @@ void WidgetForm::check_confirmation()
         (this->comment_edit.num_chars == 0)
     ) {
         this->set_warning_buffer(trkeys::fmt_field_required, tr(trkeys::comment));
-        this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
+        this->set_widget_focus(this->comment_edit, focus_reason_mousebutton1);
         this->rdp_input_invalidate(this->get_rect());
         return;
     }

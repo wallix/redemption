@@ -180,36 +180,36 @@ WidgetSelector::WidgetSelector(
 {
     this->impl = &composite_array;
 
-    this->add_widget(&this->device_label);
+    this->add_widget(this->device_label);
 
     for (int i = 0; i < this->nb_columns; i++) {
         this->weight[i] = selector_params.weight[i];
         this->label[i] = selector_params.label[i];
-        this->add_widget(&this->header_labels[i]);
-        this->add_widget(&this->edit_filters[i]);
+        this->add_widget(this->header_labels[i]);
+        this->add_widget(this->edit_filters[i]);
 
         this->column_expansion_buttons[i].set_wh(8, 8);
     }
 
-    this->add_widget(&this->apply);
-    this->add_widget(&this->selector_lines, HasFocus::Yes);
+    this->add_widget(this->apply);
+    this->add_widget(this->selector_lines, HasFocus::Yes);
 
-    this->add_widget(&this->first_page);
-    this->add_widget(&this->prev_page);
-    this->add_widget(&this->current_page);
-    this->add_widget(&this->number_page);
-    this->add_widget(&this->next_page);
-    this->add_widget(&this->last_page);
-    this->add_widget(&this->logout);
-    this->add_widget(&this->connect);
+    this->add_widget(this->first_page);
+    this->add_widget(this->prev_page);
+    this->add_widget(this->current_page);
+    this->add_widget(this->number_page);
+    this->add_widget(this->next_page);
+    this->add_widget(this->last_page);
+    this->add_widget(this->logout);
+    this->add_widget(this->connect);
 
     if (has_target_helpicon) {
         this->target_helpicon.set_unfocusable();
-        this->add_widget(&this->target_helpicon);
+        this->add_widget(this->target_helpicon);
     }
 
     if (extra_button) {
-        this->add_widget(extra_button);
+        this->add_widget(*extra_button);
     }
 
     this->move_size_widget(left, top, width, height);
@@ -338,13 +338,13 @@ void WidgetSelector::rearrange()
             offset += this->header_labels[i].cx();
 
             if (column_width_is_optimal[i]) {
-                if (-1 != this->find_widget(&this->column_expansion_buttons[i])) {
-                    this->remove_widget(&this->column_expansion_buttons[i]);
+                if (-1 != this->find_widget(this->column_expansion_buttons[i])) {
+                    this->remove_widget(this->column_expansion_buttons[i]);
                 }
             }
             else {
-                if (-1 == this->find_widget(&this->column_expansion_buttons[i])) {
-                    this->add_widget(&this->column_expansion_buttons[i]);
+                if (-1 == this->find_widget(this->column_expansion_buttons[i])) {
+                    this->add_widget(this->column_expansion_buttons[i]);
                 }
 
                 this->column_expansion_buttons[i].set_xy(this->left + offset - 15, labels_y + 5);

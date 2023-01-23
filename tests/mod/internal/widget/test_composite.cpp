@@ -62,20 +62,20 @@ RED_AUTO_TEST_CASE(TraceWidgetComposite)
     wrect6.set_wh(100, 100);
     wrect6.set_xy(-50, 550);
 
-    wcomposite.add_widget(&wrect1);
-    wcomposite.add_widget(&wrect2);
-    wcomposite.add_widget(&wrect3);
-    wcomposite.add_widget(&wrect4);
-    wcomposite.add_widget(&wrect5);
-    wcomposite.add_widget(&wrect6);
+    wcomposite.add_widget(wrect1);
+    wcomposite.add_widget(wrect2);
+    wcomposite.add_widget(wrect3);
+    wcomposite.add_widget(wrect4);
+    wcomposite.add_widget(wrect5);
+    wcomposite.add_widget(wrect6);
 
     {
         WidgetRect wrect7(drawable, GREY);
         wrect7.set_wh(800, 800);
         wrect7.set_xy(0, 0);
 
-        wcomposite.add_widget(&wrect7);
-        wcomposite.remove_widget(&wrect7);
+        wcomposite.add_widget(wrect7);
+        wcomposite.remove_widget(wrect7);
     }
 
     // ask to widget to redraw at position 150,500 and of size 800x600

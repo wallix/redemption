@@ -64,21 +64,21 @@ WidgetWait::WidgetWait(
 {
     this->impl = &composite_array;
 
-    this->groupbox.add_widget(&this->dialog);
+    this->groupbox.add_widget(this->dialog);
 
     if (showform) {
-        this->groupbox.add_widget(&this->form, HasFocus::Yes);
+        this->groupbox.add_widget(this->form, HasFocus::Yes);
     }
 
     if (!this->hide_back_to_selector) {
-        this->groupbox.add_widget(&this->goselector, showform ? HasFocus::No : HasFocus::Yes);
+        this->groupbox.add_widget(this->goselector, showform ? HasFocus::No : HasFocus::Yes);
     }
-    this->groupbox.add_widget(&this->exit);
+    this->groupbox.add_widget(this->exit);
 
-    this->add_widget(&this->groupbox);
+    this->add_widget(this->groupbox);
 
     if (extra_button) {
-        this->add_widget(extra_button);
+        this->add_widget(*extra_button);
     }
 
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
