@@ -205,9 +205,6 @@ void SelectorMod::acl_update(AclFieldMask const& /*acl_fields*/)
 
     this->selector.rdp_input_invalidate(this->selector.get_rect());
 
-    this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
-    this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-
     this->osd_banner_message();
 }
 
