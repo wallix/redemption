@@ -59,13 +59,14 @@ Widget** CompositeArray::end()
 void CompositeArray::add(Widget & w)
 {
     if (REDEMPTION_UNLIKELY(count == capacity)) {
-        auto* new_array = new Widget*[checked_int(capacity * 2)];
+        const std::size_t new_size = std::size_t(capacity) * 4;
+        auto* new_array = new Widget*[new_size];
         std::copy(p, p + count, new_array);
         if (p != fixed_table) {
             delete p;
         }
         p = new_array;
-        capacity *= 2;
+        capacity = new_size;
     }
 
     p[count] = &w;
