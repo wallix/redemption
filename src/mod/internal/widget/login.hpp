@@ -55,8 +55,6 @@ public:
         bool enable_target_field,
         Font const & font, Translator tr, Theme const & theme);
 
-    ~WidgetLogin() override;
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     [[nodiscard]] Color get_bg_color() const override;

@@ -40,11 +40,6 @@ WidgetGroupBox::WidgetGroupBox(
     this->set_text(text);
 }
 
-WidgetGroupBox::~WidgetGroupBox()
-{
-    this->clear();
-}
-
 void WidgetGroupBox::rdp_input_invalidate(Rect clip)
 {
     Rect rect_intersect = clip.intersect(this->get_rect());

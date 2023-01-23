@@ -215,11 +215,6 @@ WidgetSelector::WidgetSelector(
     this->move_size_widget(left, top, width, height);
 }
 
-WidgetSelector::~WidgetSelector()
-{
-    this->clear();
-}
-
 void WidgetSelector::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);

@@ -47,8 +47,6 @@ public:
         bool showform = false, unsigned flags = WidgetForm::NONE,
         std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
-    ~WidgetWait();
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     [[nodiscard]] Color get_bg_color() const override

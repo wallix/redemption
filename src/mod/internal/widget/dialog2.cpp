@@ -84,11 +84,6 @@ WidgetDialog2::WidgetDialog2(
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 }
 
-WidgetDialog2::~WidgetDialog2()
-{
-    this->clear();
-}
-
 void WidgetDialog2::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);

@@ -49,8 +49,6 @@ public:
                   CopyPaste & copy_paste, Theme const & theme,
                   Font const & font, const char * ok_text = "Ok" /*NOLINT*/);
 
-    ~WidgetDialog2() override;
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     [[nodiscard]] Color get_bg_color() const override;

@@ -80,8 +80,6 @@ public:
                    Font const & font, Theme const & theme, Language lang,
                    bool has_target_helpicon = false);
 
-    ~WidgetSelector() override;
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     [[nodiscard]] Color get_bg_color() const override;

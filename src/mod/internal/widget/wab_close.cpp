@@ -126,7 +126,6 @@ WidgetWabClose::WidgetWabClose(
 WidgetWabClose::~WidgetWabClose()
 {
     delete this->back;
-    this->clear();
 }
 
 void WidgetWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)

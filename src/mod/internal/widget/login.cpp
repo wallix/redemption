@@ -124,11 +124,6 @@ WidgetLogin::WidgetLogin(
     this->move_size_widget(left, top, width, height);
 }
 
-WidgetLogin::~WidgetLogin()
-{
-    this->clear();
-}
-
 void WidgetLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);

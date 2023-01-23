@@ -31,8 +31,6 @@ public:
     WidgetGroupBox( gdi::GraphicApi & drawable, const char * text
                   , Color fgcolor, Color bgcolor, Font const & font);
 
-    ~WidgetGroupBox() override;
-
     void rdp_input_invalidate(Rect clip) override;
 
     [[nodiscard]] Color get_bg_color() const override;

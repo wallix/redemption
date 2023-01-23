@@ -108,10 +108,7 @@ WidgetDialog::WidgetDialog(
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 }
 
-WidgetDialog::~WidgetDialog()
-{
-    this->clear();
-}
+WidgetDialog::~WidgetDialog() = default;
 
 void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {

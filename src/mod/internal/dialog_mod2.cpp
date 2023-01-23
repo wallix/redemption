@@ -48,8 +48,6 @@ DialogMod2::DialogMod2(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }
 
-DialogMod2::~DialogMod2() = default;
-
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void DialogMod2::accepted()
 {

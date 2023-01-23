@@ -41,7 +41,6 @@ RailModBase::RailModBase(
 
 RailModBase::~RailModBase()
 {
-    this->screen.clear();
     this->rail_client_execute.reset(true);
 }
 

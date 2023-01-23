@@ -63,8 +63,6 @@ public:
                unsigned flags = NONE,
                std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
-    ~WidgetForm() override;
-
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
