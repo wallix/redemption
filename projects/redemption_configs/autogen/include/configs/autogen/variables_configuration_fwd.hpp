@@ -211,6 +211,8 @@ namespace cfg
         struct enable_cleaner;
         struct clipboard_based_launcher_reset_keyboard_status;
         struct process_command_line_retrieve_method;
+        struct periodic_task_run_interval;
+        struct pause_if_session_is_disconnected;
     };
 
     struct server_cert {

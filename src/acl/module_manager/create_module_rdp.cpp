@@ -400,6 +400,11 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.vc_params.process_command_line_retrieve_method =
         ini.get<cfg::session_probe::process_command_line_retrieve_method>();
 
+    spp.vc_params.periodic_task_run_interval =
+        ini.get<cfg::session_probe::periodic_task_run_interval>();
+    spp.vc_params.pause_if_session_is_disconnected =
+        ini.get<cfg::session_probe::pause_if_session_is_disconnected>();
+
     return spp;
 }
 

@@ -706,6 +706,13 @@ clipboard_based_launcher_reset_keyboard_status = boolean(default=True)
 #_hidden
 process_command_line_retrieve_method = option(0, 1, 2, default=0)
 
+# (in milliseconds)
+#_hidden
+periodic_task_run_interval = integer(min=300, max=2000, default=500)
+
+#_hidden
+pause_if_session_is_disconnected = boolean(default=False)
+
 [server_cert]
 
 # Keep known server certificates on WAB

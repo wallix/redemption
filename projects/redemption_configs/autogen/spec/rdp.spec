@@ -347,6 +347,13 @@ windows_of_these_applications_as_unidentified_input_field = string(default='')
 # &nbsp; &nbsp;   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 process_command_line_retrieve_method = option(0, 1, 2, default=0)
 
+# (in milliseconds)
+#_advanced
+periodic_task_run_interval = integer(min=300, max=2000, default=500)
+
+#_advanced
+pause_if_session_is_disconnected = boolean(default=False)
+
 [server_cert]
 
 # Keep known server certificates on WAB

@@ -76,7 +76,8 @@ enum {
     OPTION_SUPPORT_MULTIPLE_NETWORK_INTERFACES_IN_SHADOW_SESSION_RESPONSE
                                                                 = 0x00000020,
     OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL         = 0x00000080,
-    OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI               = 0x00000100
+    OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI               = 0x00000100,
+    OPTION_PAUSE_IF_SESSION_IS_DISCONNECTED                     = 0x00000200
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -653,6 +654,10 @@ public:
                             break;
                     }
 
+                    options |= this->sespro_params.pause_if_session_is_disconnected
+                        ? uint32_t(OPTION_PAUSE_IF_SESSION_IS_DISCONNECTED)
+                        : uint32_t();
+
                     if (options)
                     {
                         send_client_message([options](OutStream & out_s) {
@@ -784,6 +789,14 @@ public:
                         safe_cast<uint32_t>(this->sespro_params.disabled_features)
                     ));
                 });
+
+                if (this->sespro_params.periodic_task_run_interval.count()) {
+                    send_client_message([this](OutStream & out_s) {
+                        out_s.out_copy_bytes("PeriodicTaskRunInterval="_av);
+                        out_s.out_copy_bytes(int_to_decimal_chars(
+                            ms2ll(this->sespro_params.periodic_task_run_interval)));
+                    });
+                }
 
                 send_client_message([](OutStream & out_s) {
                     out_s.out_copy_bytes("Notify=EndOfSettings"_av);
