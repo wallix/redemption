@@ -215,6 +215,8 @@ namespace cfg
         struct effective_krb_armoring_user;
         struct effective_krb_armoring_password;
         struct session_probe_process_command_line_retrieve_method;
+        struct session_probe_periodic_task_run_interval;
+        struct session_probe_pause_if_session_is_disconnected;
     };
 
     struct mod_vnc {

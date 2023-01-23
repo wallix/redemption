@@ -772,6 +772,13 @@ bogus_monitor_layout_treatment = boolean(default=False)
 #_hidden
 session_probe_process_command_line_retrieve_method = option(0, 1, 2, default=0)
 
+# (in milliseconds)
+#_hidden
+session_probe_periodic_task_run_interval = integer(min=0, default=500)
+
+#_hidden
+session_probe_pause_if_session_is_disconnected = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

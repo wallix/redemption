@@ -20,24 +20,24 @@ namespace configs
         inline constexpr int section2 = 19; /* client */
         inline constexpr int section3 = 21; /* all_target_mod */
         inline constexpr int section4 = 22; /* mod_rdp */
-        inline constexpr int section5 = 100; /* mod_vnc */
-        // inline constexpr int section6 = 108; /* metrics */
-        inline constexpr int section7 = 108; /* file_verification */
-        inline constexpr int section8 = 116; /* file_storage */
-        // inline constexpr int section9 = 117; /* icap_server_down */
-        // inline constexpr int section10 = 117; /* icap_server_up */
-        inline constexpr int section11 = 117; /* mod_replay */
-        // inline constexpr int section12 = 118; /* ocr */
-        inline constexpr int section13 = 118; /* video */
-        inline constexpr int section14 = 122; /* capture */
-        inline constexpr int section15 = 126; /* crypto */
-        // inline constexpr int section16 = 128; /* websocket */
-        // inline constexpr int section17 = 128; /* debug */
-        // inline constexpr int section18 = 128; /* remote_program */
-        inline constexpr int section19 = 128; /* translation */
-        // inline constexpr int section20 = 130; /* internal_mod */
-        inline constexpr int section21 = 130; /* context */
-        // inline constexpr int section22 = 212; /* theme */
+        inline constexpr int section5 = 102; /* mod_vnc */
+        // inline constexpr int section6 = 110; /* metrics */
+        inline constexpr int section7 = 110; /* file_verification */
+        inline constexpr int section8 = 118; /* file_storage */
+        // inline constexpr int section9 = 119; /* icap_server_down */
+        // inline constexpr int section10 = 119; /* icap_server_up */
+        inline constexpr int section11 = 119; /* mod_replay */
+        // inline constexpr int section12 = 120; /* ocr */
+        inline constexpr int section13 = 120; /* video */
+        inline constexpr int section14 = 124; /* capture */
+        inline constexpr int section15 = 128; /* crypto */
+        // inline constexpr int section16 = 130; /* websocket */
+        // inline constexpr int section17 = 130; /* debug */
+        // inline constexpr int section18 = 130; /* remote_program */
+        inline constexpr int section19 = 130; /* translation */
+        // inline constexpr int section20 = 132; /* internal_mod */
+        inline constexpr int section21 = 132; /* context */
+        // inline constexpr int section22 = 214; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2641,6 +2641,36 @@ namespace cfg
         using sesman_and_spec_type = SessionProbeProcessCommandLineRetrieveMethod;
         using mapped_type = sesman_and_spec_type;
         type value { SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation };
+    };
+    /// type: std::chrono::milliseconds <br/>
+    /// connpolicy -> proxy    [name: session_probe::periodic_task_run_interval] <br/>
+    /// sesmanName: mod_rdp:session_probe_periodic_task_run_interval <br/>
+    /// default: 500 <br/>
+    struct mod_rdp::session_probe_periodic_task_run_interval {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 78};
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = std::chrono::milliseconds;
+        using mapped_type = sesman_and_spec_type;
+        type value { 500 };
+    };
+    /// type: bool <br/>
+    /// connpolicy -> proxy    [name: session_probe::pause_if_session_is_disconnected] <br/>
+    /// sesmanName: mod_rdp:session_probe_pause_if_session_is_disconnected <br/>
+    /// default: false <br/>
+    struct mod_rdp::session_probe_pause_if_session_is_disconnected {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 79};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { false };
     };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
@@ -5427,6 +5457,7 @@ struct mod_rdp
 , cfg::mod_rdp::server_cert_response
 , cfg::mod_rdp::effective_krb_armoring_user
 , cfg::mod_rdp::effective_krb_armoring_password
+, cfg::mod_rdp::session_probe_periodic_task_run_interval
 , cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
@@ -5521,6 +5552,7 @@ struct mod_rdp
 , cfg::mod_rdp::forward_client_build_number
 , cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::session_probe_process_command_line_retrieve_method
+, cfg::mod_rdp::session_probe_pause_if_session_is_disconnected
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -5899,6 +5931,8 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::effective_krb_armoring_user
 , cfg::mod_rdp::effective_krb_armoring_password
 , cfg::mod_rdp::session_probe_process_command_line_retrieve_method
+, cfg::mod_rdp::session_probe_periodic_task_run_interval
+, cfg::mod_rdp::session_probe_pause_if_session_is_disconnected
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
@@ -6016,14 +6050,14 @@ using VariablesAclPack = Pack<
 
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
-, 0b0011111111111111111111111111101111111111111111111111111111111111
-, 0b1111111111111111111111111111111111111111101101111101111111111111
-, 0b0000000000000000000000000000000000000000000011111111111111110111
+, 0b1111111111111111111111111111101111111111111111111111111111111111
+, 0b1111111111111111111111111111111111111110110111110111111111111100
+, 0b0000000000000000000000000000000000000000001111111111111111011111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000010000000000000000000000
+, 0b0000000000000000000000000000000000000001000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

@@ -911,6 +911,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_process_command_line_retrieve_method = 0
 
+# (in milliseconds)
+#_hidden
+#session_probe_periodic_task_run_interval = 500
+
+# value: 0 or 1
+#_hidden
+#session_probe_pause_if_session_is_disconnected = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
