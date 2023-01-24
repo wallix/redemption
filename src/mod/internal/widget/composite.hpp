@@ -45,7 +45,9 @@ public:
     Widget** begin();
     Widget** end();
 
-public:
+private:
+    void dealloc_table();
+
     int count = 0;
     int capacity;
     Widget ** p;

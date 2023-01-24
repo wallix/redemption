@@ -41,8 +41,13 @@ CompositeArray::CompositeArray()
 
 CompositeArray::~CompositeArray()
 {
+    dealloc_table();
+}
+
+void CompositeArray::dealloc_table()
+{
     if (p != fixed_table) {
-        delete p;
+        delete[] p;
     }
 }
 
@@ -62,9 +67,7 @@ void CompositeArray::add(Widget & w)
         const std::size_t new_size = std::size_t(capacity) * 4;
         auto* new_array = new Widget*[new_size];
         std::copy(p, p + count, new_array);
-        if (p != fixed_table) {
-            delete p;
-        }
+        dealloc_table();
         p = new_array;
         capacity = new_size;
     }
