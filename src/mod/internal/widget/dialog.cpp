@@ -41,7 +41,7 @@ WidgetDialog::WidgetDialog(
     Theme const & theme, Font const & font, const char * ok_text,
     const char * cancel_text, ChallengeOpt has_challenge
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , onctrl_shift(events.onctrl_shift)
     , title(drawable, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
@@ -67,8 +67,6 @@ WidgetDialog::WidgetDialog(
     , oncancel(events.oncancel)
     , bg_color(theme.global.bgcolor)
 {
-    this->impl = &composite_array;
-
     this->add_widget(this->img);
 
     this->add_widget(this->title);
@@ -221,7 +219,7 @@ void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
             }
             break;
         default:
-            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()

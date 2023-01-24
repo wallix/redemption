@@ -32,7 +32,7 @@
 
 class Theme;
 
-class WidgetDialog2 : public WidgetParent
+class WidgetDialog2 : public WidgetComposite
 {
 public:
     struct Events
@@ -57,8 +57,6 @@ public:
 
 private:
     WidgetEventNotifier oncancel;
-
-    CompositeArray composite_array;
 
     WidgetLabel        title;
     WidgetRect         separator;

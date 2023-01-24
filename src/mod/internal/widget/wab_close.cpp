@@ -33,7 +33,7 @@ WidgetWabClose::WidgetWabClose(
     const char * username, const char * target,
     bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
     Language lang, bool back_selector)
-: WidgetParent(drawable, Focusable::Yes)
+: WidgetComposite(drawable, Focusable::Yes)
 , oncancel(events.oncancel)
 , connection_closed_label(drawable, TR(trkeys::connection_closed, lang).to_sv(),
                           theme.global.fgcolor, theme.global.bgcolor, font)
@@ -75,8 +75,6 @@ WidgetWabClose::WidgetWabClose(
 , font(font)
 , diagnostic_text(diagnostic_text)
 {
-    this->impl = &composite_array;
-
     this->add_widget(this->img);
 
     char label[255];
@@ -317,6 +315,6 @@ void WidgetWabClose::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint3
         oncancel();
     }
     else {
-        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+        WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }

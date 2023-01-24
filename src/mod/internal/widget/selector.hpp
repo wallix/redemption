@@ -42,7 +42,7 @@ struct WidgetSelectorParams
 };
 
 
-class WidgetSelector : public WidgetParent
+class WidgetSelector : public WidgetComposite
 {
 public:
     struct temporary_number_of_page
@@ -116,8 +116,6 @@ private:
     WidgetEventNotifier onconnect;
     WidgetEventNotifier oncancel;
     WidgetEventNotifier onctrl_shift;
-
-    CompositeArray composite_array;
 
     bool less_than_800;
     const uint16_t nb_columns;

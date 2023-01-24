@@ -34,7 +34,7 @@
 
 class Theme;
 
-class WidgetWabClose : public WidgetParent
+class WidgetWabClose : public WidgetComposite
 {
 public:
     struct Events
@@ -62,8 +62,6 @@ public:
 
 private:
     WidgetEventNotifier oncancel;
-
-    CompositeArray composite_array;
 
     WidgetLabel        connection_closed_label;
     WidgetRect         separator;

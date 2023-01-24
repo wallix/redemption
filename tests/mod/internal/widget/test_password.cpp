@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     TestGraphic drawable(800, 600);
     CopyPaste copy_paste(false);
 
-    WidgetComposite wcomposite(drawable);
+    WidgetComposite wcomposite(drawable, Widget::Focusable::No);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 

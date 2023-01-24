@@ -285,7 +285,7 @@ WidgetModuleHost::WidgetModuleHost(
     Ref<mod_api> managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
     Rect const widget_rect, uint16_t front_width, uint16_t front_height)
-: WidgetParent(drawable, Focusable::Yes)
+: WidgetComposite(drawable, Focusable::Yes)
 , managed_mod(&managed_mod.get())
 , drawable(drawable)
 , screen(screen)
@@ -297,8 +297,6 @@ WidgetModuleHost::WidgetModuleHost(
 , current_cache_pointer_index(gdi::CachePointerIndex(PredefinedPointer::Normal))
 {
     this->pointer_flag = PointerType::Custom;
-
-    this->impl = &composite_array;
 
     Dimension dim = this->hscroll.get_optimal_dim();
     this->hscroll_height = dim.h;
@@ -314,8 +312,8 @@ WidgetModuleHost::WidgetModuleHost(
     this->monitor_one.monitorDefArray[0].right  = front_width - 1;
     this->monitor_one.monitorDefArray[0].bottom = front_height - 1;
 
-    WidgetParent::set_xy(widget_rect.x, widget_rect.y);
-    WidgetParent::set_wh(widget_rect.cx, widget_rect.cy);
+    WidgetComposite::set_xy(widget_rect.x, widget_rect.y);
+    WidgetComposite::set_wh(widget_rect.cx, widget_rect.cy);
     this->update_rects(Dimension{0, 0});
 }
 
@@ -467,7 +465,7 @@ void WidgetModuleHost::set_xy(int16_t x, int16_t y)
 {
     Rect old_rect = this->get_rect();
 
-    WidgetParent::set_xy(x, y);
+    WidgetComposite::set_xy(x, y);
 
     this->update_rects(this->managed_mod->get_dim());
 
@@ -493,7 +491,7 @@ void WidgetModuleHost::set_wh(uint16_t w, uint16_t h)
         old_rect.cx -= this->vscroll.cx();
     }
 
-    WidgetParent::set_wh(w, h);
+    WidgetComposite::set_wh(w, h);
 
     this->update_rects(this->managed_mod->get_dim());
 
@@ -593,7 +591,7 @@ void WidgetModuleHost::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16
         this->managed_mod->rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y);
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y);
+    WidgetComposite::rdp_input_mouse(device_flags, x, y);
 }
 
 void WidgetModuleHost::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)

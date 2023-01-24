@@ -39,7 +39,7 @@ class WidgetEdit;
 class Theme;
 class CopyPaste;
 
-class WidgetDialog : public WidgetParent
+class WidgetDialog : public WidgetComposite
 {
 public:
     struct Events
@@ -68,8 +68,6 @@ public:
 
 private:
     WidgetEventNotifier onctrl_shift;
-
-    CompositeArray composite_array;
 
     WidgetLabel        title;
     WidgetRect         separator;

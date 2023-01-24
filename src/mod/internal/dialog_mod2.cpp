@@ -43,7 +43,7 @@ DialogMod2::DialogMod2(
         copy_paste, theme, font, TR(trkeys::OK, language(vars)))
     , vars(vars)
 {
-    this->screen.add_widget(this->dialog_widget, WidgetParent::HasFocus::Yes);
+    this->screen.add_widget(this->dialog_widget, WidgetComposite::HasFocus::Yes);
     this->screen.init_focus();
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }

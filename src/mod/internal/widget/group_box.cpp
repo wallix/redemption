@@ -30,13 +30,11 @@ WidgetGroupBox::WidgetGroupBox(
     gdi::GraphicApi & drawable, const char * text,
     Color fgcolor, Color bgcolor, Font const & font
 )
-  : WidgetParent(drawable, Focusable::Yes)
+  : WidgetComposite(drawable, Focusable::Yes)
   , bg_color(bgcolor)
   , fg_color(fgcolor)
   , font(font)
 {
-    this->impl = &composite_array;
-
     this->set_text(text);
 }
 
@@ -47,7 +45,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
     if (!rect_intersect.isempty()) {
         this->drawable.begin_update();
 
-        WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
+        WidgetComposite::draw_inner_free(rect_intersect, this->bg_color);
 
         // Box.
         const uint16_t border           = 6;
@@ -93,7 +91,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
         this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), rect_intersect, color_ctx);
 
 
-        WidgetParent::invalidate_children(rect_intersect);
+        WidgetComposite::invalidate_children(rect_intersect);
 
         this->drawable.end_update();
     }

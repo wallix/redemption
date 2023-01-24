@@ -29,7 +29,7 @@
 
 class mod_api;
 
-class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
+class WidgetModuleHost : public WidgetComposite, public gdi::GraphicApi
 {
 public:
     WidgetModuleHost(
@@ -91,7 +91,7 @@ public:
 
     void set_wh(uint16_t w, uint16_t h) override;
 
-    using WidgetParent::set_wh;
+    using WidgetComposite::set_wh;
 
     [[nodiscard]] gdi::CachePointerIndex const* get_cache_pointer_index() const override
     {
@@ -147,6 +147,4 @@ private:
 
     uint16_t current_pointer_pos_x = 0;
     uint16_t current_pointer_pos_y = 0;
-
-    CompositeArray composite_array;
 };

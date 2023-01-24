@@ -45,7 +45,7 @@ WidgetForm::WidgetForm(
     Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , events(events)
     , warning_msg(drawable, "",
                   theme.global.error_color, theme.global.bgcolor, font)
@@ -81,8 +81,6 @@ WidgetForm::WidgetForm(
     , warning_buffer()
 {
     this->set_bg_color(theme.global.bgcolor);
-
-    this->impl = &composite_array;
 
     this->add_widget(this->warning_msg);
 
@@ -324,6 +322,6 @@ void WidgetForm::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
         this->events.cancel();
     }
     else {
-        WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+        WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
     }
 }

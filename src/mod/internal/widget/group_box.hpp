@@ -25,7 +25,7 @@
 
 class Font;
 
-class WidgetGroupBox : public WidgetParent
+class WidgetGroupBox : public WidgetComposite
 {
 public:
     WidgetGroupBox( gdi::GraphicApi & drawable, const char * text
@@ -45,8 +45,6 @@ private:
 
     Color bg_color;
     Color fg_color;
-
-    CompositeArray composite_array;
 
     Font const & font;
 };

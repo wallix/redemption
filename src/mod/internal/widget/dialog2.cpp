@@ -41,7 +41,7 @@ WidgetDialog2::WidgetDialog2(
     CopyPaste & copy_paste, Theme const & theme,
     Font const & font, const char * ok_text
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , oncancel(events.oncancel)
     , title(drawable, caption,
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
@@ -68,8 +68,6 @@ WidgetDialog2::WidgetDialog2(
     , copy_paste(copy_paste)
     , bg_color(theme.global.bgcolor)
 {
-    this->impl = &composite_array;
-
     this->add_widget(this->img);
 
     this->add_widget(this->title);
@@ -198,7 +196,7 @@ void WidgetDialog2::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32
             this->dialog.scroll_down();
             break;
         default:
-            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()

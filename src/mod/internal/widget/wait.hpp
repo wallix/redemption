@@ -28,7 +28,7 @@
 #include "mod/internal/widget/form.hpp"
 #include "mod/internal/widget/button.hpp"
 
-class WidgetWait : public WidgetParent
+class WidgetWait : public WidgetComposite
 {
 public:
     struct Events
@@ -60,8 +60,6 @@ private:
     WidgetEventNotifier onaccept;
     WidgetEventNotifier onrefused;
     WidgetEventNotifier onctrl_shift;
-
-    CompositeArray composite_array;
 
     WidgetGroupBox groupbox;
     WidgetMultiLine dialog;

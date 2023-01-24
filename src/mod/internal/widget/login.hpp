@@ -30,7 +30,7 @@
 
 class Theme;
 
-class WidgetLogin : public WidgetParent
+class WidgetLogin : public WidgetComposite
 {
 public:
     struct Events
@@ -95,5 +95,4 @@ private:
     bool show_target = false;
 
     Color bg_color;
-    CompositeArray composite_array;
 };

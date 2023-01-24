@@ -40,7 +40,7 @@ WidgetWait::WidgetWait(
     Font const & font, Theme const & theme, Language lang,
     bool showform, unsigned flags, std::chrono::minutes duration_max
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , onaccept(events.onaccept)
     , onrefused(events.onrefused)
     , onctrl_shift(events.onctrl_shift)
@@ -62,8 +62,6 @@ WidgetWait::WidgetWait(
     , hasform(showform)
     , hide_back_to_selector(flags & HIDE_BACK_TO_SELECTOR)
 {
-    this->impl = &composite_array;
-
     this->groupbox.add_widget(this->dialog);
 
     if (showform) {
@@ -156,7 +154,7 @@ void WidgetWait::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             break;
 
         default:
-            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()

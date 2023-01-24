@@ -51,7 +51,7 @@ WidgetSelector::WidgetSelector(
     WidgetSelectorParams const & selector_params,
     Font const & font, Theme const & theme, Language lang,
     bool has_target_helpicon /* for unit test only */)
-: WidgetParent(drawable, Focusable::Yes)
+: WidgetComposite(drawable, Focusable::Yes)
 , tooltip_shower(*this)
 , tooltip_shower_parent(tooltip_shower)
 , onconnect(events.onconnect)
@@ -178,8 +178,6 @@ WidgetSelector::WidgetSelector(
 , top(top)
 , extra_button(extra_button)
 {
-    this->impl = &composite_array;
-
     this->add_widget(this->device_label);
 
     for (int i = 0; i < this->nb_columns; i++) {
@@ -432,7 +430,7 @@ void WidgetSelector::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint3
             break;
 
         default:
-            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()
@@ -451,7 +449,7 @@ void WidgetSelector::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
         );
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y);
+    WidgetComposite::rdp_input_mouse(device_flags, x, y);
 }
 
 void WidgetSelector::TooltipShower::show_tooltip(

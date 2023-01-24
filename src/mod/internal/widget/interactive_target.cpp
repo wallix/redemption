@@ -40,7 +40,7 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
     Font const & font,
     WidgetButton * extra_button
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , oncancel(events.oncancel)
     , onctrl_shift(events.onctrl_shift)
     , caption_label(drawable, caption,
@@ -79,8 +79,6 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
     , ask_login(ask_login)
     , ask_password(ask_login || ask_password)
 {
-    this->impl = &composite_array;
-
     Widget * device_show = &this->device;
     if (ask_device) {
         device_show = &this->device_edit;
@@ -275,7 +273,7 @@ void WidgetInteractiveTarget::rdp_input_scancode(KbdFlags flags, Scancode scanco
             break;
 
         default:
-            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()

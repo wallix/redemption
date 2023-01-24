@@ -30,7 +30,7 @@
 class Theme;
 class WidgetButton;
 
-class WidgetInteractiveTarget : public WidgetParent
+class WidgetInteractiveTarget : public WidgetComposite
 {
 public:
     // ASK DEVICE YES/NO
@@ -66,8 +66,6 @@ public:
 private:
     WidgetEventNotifier oncancel;
     WidgetEventNotifier onctrl_shift;
-
-    CompositeArray composite_array;
 
     WidgetLabel        caption_label;
     WidgetRect         separator;

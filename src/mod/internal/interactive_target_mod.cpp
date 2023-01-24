@@ -51,7 +51,7 @@ InteractiveTargetMod::InteractiveTargetMod(
         font, &this->language_button)
     , vars(vars)
 {
-    this->screen.add_widget(this->challenge, WidgetParent::HasFocus::Yes);
+    this->screen.add_widget(this->challenge, WidgetComposite::HasFocus::Yes);
     this->challenge.password_edit.set_text("");
     this->screen.init_focus();
     this->screen.rdp_input_invalidate(this->screen.get_rect());

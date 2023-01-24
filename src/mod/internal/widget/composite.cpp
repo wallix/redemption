@@ -101,17 +101,16 @@ void CompositeArray::clear()
 }
 
 
-WidgetParent::WidgetParent(gdi::GraphicApi & drawable, Focusable focusable)
+WidgetComposite::WidgetComposite(gdi::GraphicApi & drawable, Focusable focusable)
     : Widget(drawable, focusable)
     , pressed(nullptr)
     , bg_color(BLACK)
-    , impl(nullptr)
     , current_focus(nullptr)
 {}
 
-WidgetParent::~WidgetParent() = default;
+WidgetComposite::~WidgetComposite() = default;
 
-void WidgetParent::set_widget_focus(Widget & new_focused, int reason)
+void WidgetComposite::set_widget_focus(Widget & new_focused, int reason)
 {
     if (&new_focused != this->current_focus) {
         if (this->current_focus) {
@@ -123,7 +122,7 @@ void WidgetParent::set_widget_focus(Widget & new_focused, int reason)
     this->current_focus->focus(reason);
 }
 
-void WidgetParent::focus(int reason)
+void WidgetComposite::focus(int reason)
 {
     const bool tmp_has_focus = this->has_focus;
     if (!this->has_focus) {
@@ -144,7 +143,7 @@ void WidgetParent::focus(int reason)
     }
 }
 
-void WidgetParent::blur()
+void WidgetComposite::blur()
 {
     if (this->has_focus) {
         this->has_focus = false;
@@ -155,10 +154,10 @@ void WidgetParent::blur()
     this->rdp_input_invalidate(this->get_rect());
 }
 
-Widget * WidgetParent::get_next_focus(Widget * w)
+Widget * WidgetComposite::get_next_focus(Widget * w)
 {
-    Widget** it = this->impl->begin();
-    Widget** last = this->impl->end();
+    Widget** it = this->widgets.begin();
+    Widget** last = this->widgets.end();
 
     if (!w) {
         if (it == last) {
@@ -171,7 +170,7 @@ Widget * WidgetParent::get_next_focus(Widget * w)
         }
     }
     else {
-        it = this->impl->find(*w);
+        it = this->widgets.find(*w);
 
         if (it == last) {
             return nullptr;
@@ -188,10 +187,10 @@ Widget * WidgetParent::get_next_focus(Widget * w)
     return nullptr;
 }
 
-Widget * WidgetParent::get_previous_focus(Widget * w)
+Widget * WidgetComposite::get_previous_focus(Widget * w)
 {
-    Widget** it = this->impl->begin();
-    Widget** last = this->impl->end();
+    Widget** it = this->widgets.begin();
+    Widget** last = this->widgets.end();
 
     if (!w) {
         if (it == last) {
@@ -206,14 +205,14 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
         it = last;
     }
     else {
-        it = this->impl->find(*w);
+        it = this->widgets.find(*w);
 
         if (it == last) {
             return nullptr;
         }
     }
 
-    Widget** first = this->impl->begin();
+    Widget** first = this->widgets.begin();
     if (it != first) {
         do {
             --it;
@@ -227,7 +226,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
     return nullptr;
 }
 
-void WidgetParent::init_focus()
+void WidgetComposite::init_focus()
 {
     this->has_focus = true;
     if (this->current_focus) {
@@ -235,16 +234,16 @@ void WidgetParent::init_focus()
     }
 }
 
-void WidgetParent::add_widget(Widget & w, HasFocus has_focus)
+void WidgetComposite::add_widget(Widget & w, HasFocus has_focus)
 {
-    this->impl->add(w);
+    this->widgets.add(w);
 
     if (w.focusable == Focusable::Yes && (has_focus == HasFocus::Yes || !this->current_focus)) {
         this->current_focus = &w;
     }
 }
 
-void WidgetParent::remove_widget(Widget & w)
+void WidgetComposite::remove_widget(Widget & w)
 {
     if (this->current_focus == &w) {
         Widget * future_focus_w = this->get_next_focus(&w);
@@ -254,24 +253,24 @@ void WidgetParent::remove_widget(Widget & w)
         this->current_focus = future_focus_w;
     }
 
-    this->impl->remove(w);
+    this->widgets.remove(w);
 }
 
-bool WidgetParent::contains_widget(Widget & w)
+bool WidgetComposite::contains_widget(Widget & w)
 {
-    return this->impl->find(w) != this->impl->end();
+    return this->widgets.find(w) != this->widgets.end();
 }
 
-void WidgetParent::clear()
+void WidgetComposite::clear()
 {
-    this->impl->clear();
+    this->widgets.clear();
 
     this->current_focus = nullptr;
 }
 
-void WidgetParent::invalidate_children(Rect clip)
+void WidgetComposite::invalidate_children(Rect clip)
 {
-    for (Widget* w : *this->impl) {
+    for (Widget* w : this->widgets) {
         Rect rect = clip.intersect(w->get_rect());
         if (!rect.isempty()) {
             w->rdp_input_invalidate(rect);
@@ -279,12 +278,12 @@ void WidgetParent::invalidate_children(Rect clip)
     }
 }
 
-void WidgetParent::draw_inner_free(Rect clip, Color bg_color)
+void WidgetComposite::draw_inner_free(Rect clip, Color bg_color)
 {
     SubRegion region;
     region.add_rect(clip.intersect(this->get_rect()));
 
-    for (Widget* w : *this->impl) {
+    for (Widget* w : this->widgets) {
         Rect rect = clip.intersect(w->get_rect());
         if (!rect.isempty()) {
             region.subtract_rect(rect);
@@ -294,21 +293,21 @@ void WidgetParent::draw_inner_free(Rect clip, Color bg_color)
     ::fill_region(this->drawable, region, bg_color);
 }
 
-void WidgetParent::move_xy(int16_t x, int16_t y)
+void WidgetComposite::move_xy(int16_t x, int16_t y)
 {
     this->set_xy(this->x() + x, this->y() + y);
 
     this->move_children_xy(x, y);
 }
 
-void WidgetParent::move_children_xy(int16_t x, int16_t y)
+void WidgetComposite::move_children_xy(int16_t x, int16_t y)
 {
-    for (Widget* w : *this->impl) {
+    for (Widget* w : this->widgets) {
         w->move_xy(x, y);
     }
 }
 
-bool WidgetParent::next_focus()
+bool WidgetComposite::next_focus()
 {
     if (this->current_focus) {
         if (this->current_focus->next_focus()) {
@@ -331,7 +330,7 @@ bool WidgetParent::next_focus()
     return false;
 }
 
-bool WidgetParent::previous_focus()
+bool WidgetComposite::previous_focus()
 {
     if (this->current_focus) {
         if (this->current_focus->previous_focus()) {
@@ -354,7 +353,7 @@ bool WidgetParent::previous_focus()
     return false;
 }
 
-Widget * WidgetParent::widget_at_pos(int16_t x, int16_t y)
+Widget * WidgetComposite::widget_at_pos(int16_t x, int16_t y)
 {
     if (!this->get_rect().contains_pt(x, y)) {
         return nullptr;
@@ -366,8 +365,8 @@ Widget * WidgetParent::widget_at_pos(int16_t x, int16_t y)
         }
     }
 
-    Widget** first = this->impl->begin();
-    Widget** last = this->impl->end();
+    Widget** first = this->widgets.begin();
+    Widget** last = this->widgets.end();
 
     // Foreground widget is the last in the list.
     if (first != last) {
@@ -383,7 +382,7 @@ Widget * WidgetParent::widget_at_pos(int16_t x, int16_t y)
     return nullptr;
 }
 
-void WidgetParent::rdp_input_invalidate(Rect clip)
+void WidgetComposite::rdp_input_invalidate(Rect clip)
 {
     Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -397,7 +396,7 @@ void WidgetParent::rdp_input_invalidate(Rect clip)
     }
 }
 
-void WidgetParent::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
+void WidgetComposite::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
@@ -419,14 +418,14 @@ void WidgetParent::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
     REDEMPTION_DIAGNOSTIC_POP()
 }
 
-void WidgetParent::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
+void WidgetComposite::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
 {
     if (this->current_focus) {
         this->current_focus->rdp_input_unicode(flag, unicode);
     }
 }
 
-void WidgetParent::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
+void WidgetComposite::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;

@@ -30,7 +30,7 @@
 class WidgetTooltip;
 class Font;
 
-class WidgetScreen : public WidgetParent, public WidgetTooltipShower
+class WidgetScreen : public WidgetComposite, public WidgetTooltipShower
 {
 public:
     WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
@@ -63,8 +63,6 @@ private:
     Rect tooltip_mouse_area;
 
     Widget * current_over;
-
-    CompositeArray composite_array;
 
 public:
     Font const & font;

@@ -30,7 +30,7 @@
 
 class Theme;
 
-class WidgetForm : public WidgetParent
+class WidgetForm : public WidgetComposite
 {
 public:
     // TODO enum class
@@ -74,7 +74,6 @@ private:
     void check_confirmation();
 
     Events events;
-    CompositeArray composite_array;
 
     WidgetLabel      warning_msg;
     WidgetLabel      duration_label;

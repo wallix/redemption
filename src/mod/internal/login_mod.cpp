@@ -107,7 +107,7 @@ LoginMod::LoginMod(
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
     }
-    this->screen.add_widget(this->login, WidgetParent::HasFocus::Yes);
+    this->screen.add_widget(this->login, WidgetComposite::HasFocus::Yes);
     this->screen.init_focus();
 
     if (vars.get<cfg::internal_mod::enable_target_field>()) {

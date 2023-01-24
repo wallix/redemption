@@ -269,7 +269,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), Theme{});
 
-    WidgetComposite wcomposite(drawable);
+    WidgetComposite wcomposite(drawable, Widget::Focusable::No);
     wcomposite.set_wh(800, 600);
     wcomposite.set_xy(0, 0);
 

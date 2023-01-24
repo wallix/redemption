@@ -31,15 +31,13 @@ WidgetScreen::WidgetScreen(
     gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
     Font const & font, Theme theme
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , theme(std::move(theme))
     , tooltip(nullptr)
     , current_over(nullptr)
     , font(font)
 {
     this->set_wh(width, height);
-    this->impl = &composite_array;
-
     this->set_xy(0, 0);
 }
 
@@ -146,7 +144,7 @@ void WidgetScreen::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y
         }
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y);
+    WidgetComposite::rdp_input_mouse(device_flags, x, y);
 }
 
 void WidgetScreen::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
@@ -154,7 +152,7 @@ void WidgetScreen::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
     if (this->tooltip) {
         this->hide_tooltip();
     }
-    WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+    WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
 }
 
 void WidgetScreen::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
@@ -162,7 +160,7 @@ void WidgetScreen::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
     if (this->tooltip) {
         this->hide_tooltip();
     }
-    WidgetParent::rdp_input_unicode(flag, unicode);
+    WidgetComposite::rdp_input_unicode(flag, unicode);
 }
 
 void WidgetScreen::allow_mouse_pointer_change(bool allow)

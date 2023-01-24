@@ -53,7 +53,7 @@ public:
 };  // class CompositeArray
 
 
-class WidgetParent : public Widget
+class WidgetComposite : public Widget
 {
     Widget * pressed;
 
@@ -62,8 +62,7 @@ class WidgetParent : public Widget
     uint16_t old_mouse_x = 0;
     uint16_t old_mouse_y = 0;
 
-protected:
-    CompositeArray * impl;
+    CompositeArray widgets;
 
 public:
     Widget * current_focus;
@@ -75,19 +74,19 @@ public:
         Yes,
     };
 
-    WidgetParent(gdi::GraphicApi & drawable, Focusable focusable);
+    WidgetComposite(gdi::GraphicApi & drawable, Focusable focusable);
 
-    ~WidgetParent() override;
+    ~WidgetComposite() override;
 
     void set_widget_focus(Widget & new_focused, int reason);
 
     void focus(int reason) override;
     void blur() override;
 
-    virtual void add_widget(Widget & w, HasFocus has_focus = HasFocus::No);
-    virtual void remove_widget(Widget & w);
-    virtual bool contains_widget(Widget & w);
-    virtual void clear();
+    void add_widget(Widget & w, HasFocus has_focus = HasFocus::No);
+    void remove_widget(Widget & w);
+    bool contains_widget(Widget & w);
+    void clear();
 
     virtual void invalidate_children(Rect clip);
 
@@ -125,16 +124,4 @@ public:
 protected:
     Widget * get_next_focus(Widget * w);
     Widget * get_previous_focus(Widget * w);
-};
-
-struct WidgetComposite : WidgetParent
-{
-    WidgetComposite(gdi::GraphicApi& gd)
-    : WidgetParent(gd, Widget::Focusable::Yes)
-    {
-        impl = &composite_array;
-    }
-
-private:
-    CompositeArray composite_array;
 };

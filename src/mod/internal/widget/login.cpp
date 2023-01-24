@@ -47,7 +47,7 @@ WidgetLogin::WidgetLogin(
     bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
 )
-    : WidgetParent(drawable, Focusable::Yes)
+    : WidgetComposite(drawable, Focusable::Yes)
     , oncancel(events.oncancel)
     , onctrl_shift(events.onctrl_shift)
     , tooltip_shower(tooltip_shower)
@@ -94,8 +94,6 @@ WidgetLogin::WidgetLogin(
     , show_target(enable_target_field)
     , bg_color(theme.global.bgcolor)
 {
-    this->impl = &this->composite_array;
-
     this->helpicon.set_unfocusable();
 
     this->add_widget(this->img);
@@ -375,7 +373,7 @@ void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t
             break;
 
         default:
-            WidgetParent::rdp_input_scancode(flags, scancode, event_time, keymap);
+            WidgetComposite::rdp_input_scancode(flags, scancode, event_time, keymap);
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()
@@ -390,5 +388,5 @@ void WidgetLogin::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
         );
     }
 
-    WidgetParent::rdp_input_mouse(device_flags, x, y);
+    WidgetComposite::rdp_input_mouse(device_flags, x, y);
 }
