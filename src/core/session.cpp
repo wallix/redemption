@@ -531,7 +531,7 @@ private:
 
         if (is_target_module(next_state)) {
             keepalive.start();
-            event_manager.set_time_base(current_time_base());
+            event_manager.set_time_base(TimeBase::now());
             front.target_connection_start_time = event_manager.get_monotonic_time();
         }
         else {
@@ -836,7 +836,7 @@ private:
                 continue;
             }
 
-            event_manager.set_time_base(current_time_base());
+            event_manager.set_time_base(TimeBase::now());
             event_manager.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose & SessionVerbose::Event));
@@ -1040,7 +1040,7 @@ private:
                 // update times and synchronize real time
                 {
                     auto old_time_base = event_manager.get_time_base();
-                    auto new_time_base = current_time_base();
+                    auto new_time_base = TimeBase::now();
 
                     event_manager.set_time_base(new_time_base);
 
@@ -1120,7 +1120,7 @@ private:
                     }
 
                     if (has_field(cfg::context::end_date_cnx())) {
-                        auto time_base = current_time_base();
+                        auto time_base = TimeBase::now();
                         event_manager.set_time_base(time_base);
                         const auto sys_date = time_base.real_time.time_since_epoch();
                         auto const elapsed = ini.get<cfg::context::end_date_cnx>() - sys_date;
@@ -1508,14 +1508,6 @@ private:
              : EndLoopState::ImmediateDisconnection;
     }
 
-    static TimeBase current_time_base()
-    {
-        return TimeBase{
-            MonotonicTimePoint::clock::now(),
-            std::chrono::system_clock::now()
-        };
-    }
-
 public:
     Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font, bool prevent_early_log)
     : ini(ini)
@@ -1526,7 +1518,7 @@ public:
         UdevRandom rnd;
 
         EventManager event_manager;
-        event_manager.set_time_base(current_time_base());
+        event_manager.set_time_base(TimeBase::now());
 
         AclReport acl_report{ini};
         SessionFront front(event_manager.get_events(), acl_report, front_trans, rnd, ini, cctx);

@@ -27,4 +27,12 @@ struct TimeBase
 {
     MonotonicTimePoint monotonic_time;
     RealTimePoint real_time;
+
+    static TimeBase now()
+    {
+        return TimeBase{
+            MonotonicTimePoint::clock::now(),
+            std::chrono::system_clock::now(),
+        };
+    }
 };
