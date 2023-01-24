@@ -175,17 +175,17 @@ Rect WidgetPassword::get_cursor_rect() const
 void WidgetPassword::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-        if(is_password_visible) {
             WidgetEdit::rdp_input_mouse(device_flags, x, y);
-        }
-        else{
+            
+            const WidgetLabel& text_label = is_password_visible? label : masked_text;
+            
             Rect old_cursor_rect = this->get_cursor_rect();
             size_t e = this->edit_pos;
-            if (x <= this->x() + this->masked_text.x_text + this->w_char/2) {
+            if (x <= this->x() + text_label.x_text + this->w_char/2) {
                 this->edit_pos = 0;
                 this->edit_buffer_pos = 0;
             }
-            else if (x >= int(this->x() + this->masked_text.x_text + this->w_char * this->num_chars)) {
+            else if (x >= int(this->x() + text_label.x_text + this->w_char * this->num_chars)) {
                 if (this->edit_pos < this->num_chars) {
                     this->edit_pos = this->num_chars;
                     this->edit_buffer_pos = this->buffer_size;
@@ -208,13 +208,12 @@ void WidgetPassword::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
                     // |   (x - dx - x_text)
                     // |
 
-                this->edit_pos = std::min<size_t>((x - this->x() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
+                this->edit_pos = std::min<size_t>((x - this->x() - text_label.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
                 this->edit_buffer_pos = UTF8GetPos(byte_ptr_cast(&this->label.buffer[0]), this->edit_pos);
             }
             if (e != this->edit_pos) {
                 this->update_draw_cursor(old_cursor_rect);
             }
-        }
     }
 }
 

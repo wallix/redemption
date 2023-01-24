@@ -91,9 +91,7 @@ public:
     State state;
 
     const Color fg_color;
-private:
     const Color bg_color;
-public:
     const Color focus_color;
 
 private:

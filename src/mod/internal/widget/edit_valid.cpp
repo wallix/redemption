@@ -38,9 +38,12 @@ WidgetEditValid::WidgetEditValid(
     : Widget(drawable, Focusable::Yes)
     , button_next(drawable, "\xe2\x9e\x9c", onsubmit,
                   bgcolor, focus_color, focus_color, 1, font, 6, 2)
-    , editbox(pass
+    , widget_password(pass
         ? new WidgetPassword(drawable, copy_paste, text, onsubmit, fgcolor, bgcolor,
                              bgcolor, font, edit_position, 1, 2)
+        : nullptr)
+    , editbox(pass
+        ? widget_password
         : new WidgetEdit(drawable, copy_paste, text, onsubmit, fgcolor, bgcolor,
                          bgcolor, font, edit_position, 1, 2))
     , label(title
@@ -48,7 +51,7 @@ WidgetEditValid::WidgetEditValid(
         : nullptr)
     , button_toggle_visibility( pass
         ? new WidgetButton{drawable, "\xE2\x97\x89", WidgetEventNotifier(),
-                           bgcolor, focus_color, focus_color, 1, font, 6, 2}
+                           MEDIUM_GREY, bgcolor, focus_color, 0, font, 6, 2}
         : nullptr)
     , use_label_(use_title)
     , border_none_color(border_none_color)
@@ -168,7 +171,7 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
         else {
             if(is_password_widget()){
                 this->drawable.draw(
-                    RDPOpaqueRect(rect_intersect.intersect(this->button_toggle_visibility->get_rect()), this->button_toggle_visibility->fg_color),
+                    RDPOpaqueRect(rect_intersect.intersect(this->button_toggle_visibility->get_rect()), this->button_toggle_visibility->bg_color),
                     rect_intersect, gdi::ColorCtx::depth24()
                 );
             }
@@ -251,7 +254,6 @@ void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_
             widget_password->toggle_password_visibility();
         }
         rdp_input_invalidate(button_toggle_visibility->get_rect());
-
     }
     else
     {
