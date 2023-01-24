@@ -45,7 +45,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
     if (!rect_intersect.isempty()) {
         this->drawable.begin_update();
 
-        WidgetComposite::draw_inner_free(rect_intersect, this->get_bg_color());
+        this->draw_inner_free(rect_intersect, this->get_bg_color());
 
         // Box.
         const uint16_t border           = 6;
@@ -91,7 +91,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
         this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), rect_intersect, color_ctx);
 
 
-        WidgetComposite::invalidate_children(rect_intersect);
+        this->invalidate_children(rect_intersect);
 
         this->drawable.end_update();
     }

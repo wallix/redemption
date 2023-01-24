@@ -90,10 +90,6 @@ public:
     void focus(int reason) override;
     void blur() override;
 
-    virtual void invalidate_children(Rect clip);
-
-    virtual void draw_inner_free(Rect clip, Color bg_color);
-
     void move_xy(int16_t x, int16_t y) override;
 
     bool next_focus() override;
@@ -117,6 +113,10 @@ public:
     }
 
 protected:
+    void invalidate_children(Rect clip);
+
+    void draw_inner_free(Rect clip, Color bg_color);
+
     void move_children_xy(int16_t x, int16_t y);
 
     void set_bg_color(Color color)
