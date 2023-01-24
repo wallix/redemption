@@ -69,7 +69,7 @@ void CompositeArray::add(Widget & w)
         std::copy(p, p + count, new_array);
         dealloc_table();
         p = new_array;
-        capacity = new_size;
+        capacity = checked_int(new_size);
     }
 
     p[count] = &w;
