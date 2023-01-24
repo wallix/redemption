@@ -48,11 +48,13 @@ namespace detail
 
 namespace dateformats
 {
+    // "YYYY-mm-dd HH:MM:SS"
+    //            ^ timesep
     struct YYYY_mm_dd_HH_MM_SS
     {
         static constexpr std::size_t output_length = 19;
 
-        static char* to_chars(char* p, struct tm tm) noexcept
+        static char* to_chars(char* p, struct tm tm, char timesep = ' ') noexcept
         {
             p = detail::push_2digits(p, (1900 + tm.tm_year) / 100);
             p = detail::push_2digits(p, (1900 + tm.tm_year) % 100);
@@ -60,7 +62,7 @@ namespace dateformats
             p = detail::push_2digits(p, tm.tm_mon + 1);
             *p++ = '-';
             p = detail::push_2digits(p, tm.tm_mday);
-            *p++ = ' ';
+            *p++ = timesep;
             p = detail::push_2digits(p, tm.tm_hour);
             *p++ = ':';
             p = detail::push_2digits(p, tm.tm_min);
@@ -71,6 +73,7 @@ namespace dateformats
         }
     };
 
+    // "MMM dd YYYY HH:MM:SS"
     struct MMM_dd_YYYY_HH_MM_SS
     {
         static constexpr std::size_t output_length = 20;

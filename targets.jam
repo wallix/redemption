@@ -288,6 +288,113 @@ exe headlessclient :
   $(MUSL_GETTEXT)
   <define>ZLIB_CONST
 ;
+exe headlessclient2 :
+  src/main/headlessclient2.o
+:
+  <library>app_path_exe.o
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/RAIL/client_execute.o
+  <library>src/acl/kv_list_from_strings.o
+  <library>src/acl/module_manager/create_module_rail.o
+  <library>src/acl/module_manager/create_module_rdp.o
+  <library>src/acl/module_manager/create_module_vnc.o
+  <library>src/capture/fdx_capture.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/dwt.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
+  <library>src/gdi/text_metrics.o
+  <library>src/headlessclient/headless_cli_options.o
+  <library>src/headlessclient/headless_command.o
+  <library>src/headlessclient/headless_configuration.o
+  <library>src/headlessclient/headless_front.o
+  <library>src/headlessclient/headless_graphics.o
+  <library>src/headlessclient/headless_repl.o
+  <library>src/headlessclient/headless_session_log.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
+  <library>src/keyboard/keymapsym.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/rail_mod_base.o
+  <library>src/mod/internal/rail_module_host_mod.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/module_host.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/scroll.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
+  <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
+  <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexadecimal_string_to_buffer.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
+  <library>src/utils/png.o
+  <library>src/utils/primitives/primitives.o
+  <library>src/utils/primitives/primitives_sse2.o
+  <library>src/utils/rle.o
+  <library>src/utils/set_exception_handler_pretty_message.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/uninit_buffer.o
+  <library>src/utils/utf.o
+  <library>z
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(EXE_DEPENDENCIES_NO_SYSLOG)
+  $(MUSL_GETTEXT)
+  <define>ZLIB_CONST
+;
 exe rdpinichecker :
   src/main/ini_checker.o
 :
@@ -2326,6 +2433,7 @@ test-run tests/front/test_front :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
+  <library>tests/includes/test_only/mod/accumulate_input_mod.o
   <library>tests/includes/test_only/session_log_test.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -2388,6 +2496,29 @@ test-run tests/gdi/test_text_metrics :
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run tests/headlessclient/test_compute_headless_wrm_path :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_compute_headless_wrm_path.cpp
+:
+  <library>src/utils/strutils.o
+;
+test-run tests/headlessclient/test_headless_command :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_command.cpp
+:
+  <library>src/headlessclient/headless_command.o
+  <library>src/keyboard/keymap.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/mod/accumulate_input_mod.o
+  <library>tests/includes/test_only/session_log_test.o
+;
+test-run tests/headlessclient/test_headless_repl :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_repl.cpp
+:
+  <library>src/headlessclient/headless_repl.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
 ;
 test-run tests/keyboard/test_keymap :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymap.cpp
@@ -4989,6 +5120,13 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
+obj src/headlessclient/headless_cli_options.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_cli_options.cpp ;
+obj src/headlessclient/headless_command.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_command.cpp ;
+obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
+obj src/headlessclient/headless_front.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_front.cpp : <define>ZLIB_CONST ;
+obj src/headlessclient/headless_graphics.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_graphics.cpp ;
+obj src/headlessclient/headless_repl.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_repl.cpp ;
+obj src/headlessclient/headless_session_log.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_session_log.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
@@ -4996,6 +5134,7 @@ obj src/lib/credis.o : $(REDEMPTION_SRC_PATH)/lib/credis.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
+obj src/main/headlessclient2.o : $(REDEMPTION_SRC_PATH)/main/headlessclient2.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp ;
@@ -5112,6 +5251,7 @@ obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/front_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/front_wrapper.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/mod/accumulate_input_mod.o : $(REDEMPTION_TEST_PATH)/includes/test_only/mod/accumulate_input_mod.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/session_log_test.o : $(REDEMPTION_TEST_PATH)/includes/test_only/session_log_test.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/test_framework/check_img.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/check_img.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/test_framework/sig.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/sig.cpp : $(CXXFLAGS_TEST) ;
@@ -5263,6 +5403,9 @@ alias test_front : tests/front/test_front ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
+alias test_compute_headless_wrm_path : tests/headlessclient/test_compute_headless_wrm_path ;
+alias test_headless_command : tests/headlessclient/test_headless_command ;
+alias test_headless_repl : tests/headlessclient/test_headless_repl ;
 alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_credis : tests/lib/test_credis ;
@@ -5619,6 +5762,11 @@ alias tests/gdi.norec :
   tests/gdi/test_protected_graphics
   tests/gdi/test_text_metrics
 ;
+alias tests/headlessclient.norec :
+  tests/headlessclient/test_compute_headless_wrm_path
+  tests/headlessclient/test_headless_command
+  tests/headlessclient/test_headless_repl
+;
 alias tests/keyboard.norec :
   tests/keyboard/test_keymap
   tests/keyboard/test_keymapsym
@@ -5830,6 +5978,7 @@ alias tests :
   tests/core
   tests/front
   tests/gdi
+  tests/headlessclient
   tests/keyboard
   tests/lib
   tests/mod
@@ -5934,6 +6083,9 @@ alias tests/front :
 ;
 alias tests/gdi :
   tests/gdi.norec
+;
+alias tests/headlessclient :
+  tests/headlessclient.norec
 ;
 alias tests/keyboard :
   tests/keyboard.norec
@@ -6075,6 +6227,13 @@ explicit
   src/gdi/protected_graphics.o
   src/gdi/screen_functions.o
   src/gdi/text_metrics.o
+  src/headlessclient/headless_cli_options.o
+  src/headlessclient/headless_command.o
+  src/headlessclient/headless_configuration.o
+  src/headlessclient/headless_front.o
+  src/headlessclient/headless_graphics.o
+  src/headlessclient/headless_repl.o
+  src/headlessclient/headless_session_log.o
   src/keyboard/keylayouts.o
   src/keyboard/keymap.o
   src/keyboard/keymapsym.o
@@ -6082,6 +6241,7 @@ explicit
   src/lib/do_recorder.o
   src/lib/scytale.o
   src/main/headlessclient.o
+  src/main/headlessclient2.o
   src/main/ini_checker.o
   src/main/main.o
   src/main/mwrm3_editor.o
@@ -6198,6 +6358,7 @@ explicit
   tests/includes/test_only/front/fake_front.o
   tests/includes/test_only/front/front_wrapper.o
   tests/includes/test_only/gdi/test_graphic.o
+  tests/includes/test_only/mod/accumulate_input_mod.o
   tests/includes/test_only/session_log_test.o
   tests/includes/test_only/test_framework/check_img.o
   tests/includes/test_only/test_framework/sig.o
@@ -6351,6 +6512,9 @@ explicit
   test_graphic_cmd_color
   test_protected_graphics
   test_text_metrics
+  test_compute_headless_wrm_path
+  test_headless_command
+  test_headless_repl
   test_keymap
   test_keymapsym
   test_credis
@@ -6539,6 +6703,7 @@ explicit
   tests/core.norec
   tests/front.norec
   tests/gdi.norec
+  tests/headlessclient.norec
   tests/keyboard.norec
   tests/lib.norec
   tests/mod/internal.norec
@@ -6591,6 +6756,7 @@ explicit
   tests/core/WMF
   tests/front
   tests/gdi
+  tests/headlessclient
   tests/keyboard
   tests/lib
   tests/mod/internal

@@ -34,7 +34,7 @@
 
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
-#include "gdi/graphic_api.hpp"
+#include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/relayout_api.hpp"
 
@@ -99,8 +99,7 @@ private:
  * starting with chunk_type, chunk_size and order_count
  *  (whatever it means, depending on chunks)
  */
-class GraphicToFile
-: public RDPSerializer
+class GraphicToFile final : public RDPSerializer
 {
     enum {
         GTF_SIZE_KEYBUF_REC = 1024
@@ -592,192 +591,55 @@ public:
 
         this->trans.send(payload.get_produced_bytes());
     }
-};  // struct GraphicToFile
 
+    using RDPSerializer::draw;
 
-
-class WrmCaptureImpl :
-    public gdi::KbdInputApi,
-    public gdi::CaptureApi,
-    public gdi::GraphicApi,
-    public gdi::CaptureProbeApi,
-    public gdi::ExternalCaptureApi, // from gdi/capture_api.hpp
-    public gdi::RelayoutApi
-{
-    struct Serializer final : GraphicToFile
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override
     {
-        using GraphicToFile::GraphicToFile;
+        auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
+            size_t linesPerPacket = (16384 / bmp.line_size());
 
-        using GraphicToFile::draw;
-
-        void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-            auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
-                size_t linesPerPacket = (16384 / bmp.line_size());
-
-                // TODO same to front.hpp ?
-                for (uint16_t yoff = 0; yoff < bitmap_data.height; yoff += linesPerPacket) {
-                    uint16_t currentHeight = linesPerPacket;
-                    if (yoff + linesPerPacket > bitmap_data.height) {
-                        currentHeight = bitmap_data.height - yoff;
-                    }
-                    Rect subRect(0, yoff, bitmap_data.width, currentHeight);
-                    // LOG(LOG_ERR, "subRect: (%d,%d) - %dx%d", subRect.x, subRect.y, subRect.cx, subRect.cy);
-                    StaticOutStream<65535> bmp_stream;
-                    Bitmap subBmp(bmp, subRect);
-
-                    subBmp.compress(this->capture_bpp, bmp_stream);
-
-                    RDPBitmapData target_bitmap_data = bitmap_data;
-                    target_bitmap_data.dest_top = bitmap_data.dest_top + yoff;
-                    target_bitmap_data.dest_bottom = target_bitmap_data.dest_top + currentHeight - 1;
-                    target_bitmap_data.height = currentHeight;
-                    target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
-                    target_bitmap_data.flags          = uint16_t(BITMAP_COMPRESSION)
-                                                      | uint16_t(NO_BITMAP_COMPRESSION_HDR);
-                    target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
-
-                    GraphicToFile::draw(target_bitmap_data, subBmp);
+            // TODO same to front.hpp ?
+            for (uint16_t yoff = 0; yoff < bitmap_data.height; yoff += linesPerPacket) {
+                uint16_t currentHeight = linesPerPacket;
+                if (yoff + linesPerPacket > bitmap_data.height) {
+                    currentHeight = bitmap_data.height - yoff;
                 }
-            };
+                Rect subRect(0, yoff, bitmap_data.width, currentHeight);
+                // LOG(LOG_ERR, "subRect: (%d,%d) - %dx%d", subRect.x, subRect.y, subRect.cx, subRect.cy);
+                StaticOutStream<65535> bmp_stream;
+                Bitmap subBmp(bmp, subRect);
 
-            if (bmp.bpp() > this->capture_bpp) {
-                // reducing the color depth of image.
-                Bitmap capture_bmp(this->capture_bpp, bmp);
-                compress_and_draw_bitmap_update(capture_bmp);
+                subBmp.compress(this->capture_bpp, bmp_stream);
+
+                RDPBitmapData target_bitmap_data = bitmap_data;
+                target_bitmap_data.dest_top = bitmap_data.dest_top + yoff;
+                target_bitmap_data.dest_bottom = target_bitmap_data.dest_top + currentHeight - 1;
+                target_bitmap_data.height = currentHeight;
+                target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
+                target_bitmap_data.flags          = uint16_t(BITMAP_COMPRESSION)
+                                                | uint16_t(NO_BITMAP_COMPRESSION_HDR);
+                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                RDPSerializer::draw(target_bitmap_data, subBmp);
             }
-            else if (!bmp.has_data_compressed()) {
-                compress_and_draw_bitmap_update(bmp);
-            }
-            else {
-                GraphicToFile::draw(bitmap_data, bmp);
-            }
+        };
+
+        if (bmp.bpp() > this->capture_bpp) {
+            // reducing the color depth of image.
+            Bitmap capture_bmp(this->capture_bpp, bmp);
+            compress_and_draw_bitmap_update(capture_bmp);
         }
-    };
+        else if (!bmp.has_data_compressed()) {
+            compress_and_draw_bitmap_update(bmp);
+        }
+        else {
+            RDPSerializer::draw(bitmap_data, bmp);
+        }
+    }
 
-    MonotonicTimePoint next_break;
-    const std::chrono::seconds break_interval;
-    const MonotonicTimeToRealTime original_monotonic_to_real;
-
-    bool kbd_input_mask_enabled;
-
-    BmpCache     bmp_cache;
-    GlyphCache   gly_cache;
-
-    OutMetaSequenceTransport out;
-
-    Serializer graphic_to_file;
-
-    void update_timestamp(MonotonicTimePoint now)
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override
     {
-        this->graphic_to_file.timestamp(now);
-        const auto timer = this->graphic_to_file.current_timer();
-        const auto tp = this->original_monotonic_to_real.to_real_time_point(timer);
-        this->out.timestamp(tp);
-    }
-
-public:
-    // EXTERNAL CAPTURE API
-    void external_breakpoint() override {
-        this->graphic_to_file.breakpoint();
-    }
-
-    void external_monotonic_time_point(MonotonicTimePoint now) override {
-        this->graphic_to_file.sync();
-        this->update_timestamp(now);
-    }
-
-    void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override {
-        this->graphic_to_file.update_times(monotonic_delay, real_time);
-    }
-
-    // CAPTURE PROBE API
-    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
-        this->graphic_to_file.session_update(now, id, kv_list);
-    }
-    void possible_active_window_change() override { this->graphic_to_file.possible_active_window_change(); }
-
-    // GRAPHIC API
-    void draw(RDP::FrameMarker    const & cmd) override { this->graphic_to_file.draw(cmd);}
-    void draw(RDPDstBlt          const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
-    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
-    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPScrBlt           const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
-    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
-        this->graphic_to_file.draw(cmd, bmp);
-    }
-    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
-        this->graphic_to_file.draw(cmd, clip, bmp);
-    }
-    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx, bmp);
-    }
-    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
-        this->graphic_to_file.draw(cmd, clip, color_ctx, gly_cache);
-    }
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(RDPColCache   const & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-    void draw(RDPBrushCache const & cmd) override {
-        this->graphic_to_file.draw(cmd);
-    }
-
-    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
-
-    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override {
         /* no remoteFx support in recording, transcode to bitmapUpdates */
         for (const Rect & rect : content.region.rects) {
             // LOG(LOG_INFO, "draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
@@ -798,45 +660,99 @@ public:
             this->draw(bitmap_data, bitmap);
         }
     }
+};  // struct GraphicToFile
 
-    void cached_pointer(gdi::CachePointerIndex cache_idx) override
+struct WrmCaptureDataImpl
+{
+    MonotonicTimePoint next_break;
+    const std::chrono::seconds break_interval;
+    const MonotonicTimeToRealTime original_monotonic_to_real;
+
+    bool kbd_input_mask_enabled;
+
+    BmpCache     bmp_cache;
+    GlyphCache   gly_cache;
+
+    OutMetaSequenceTransport out;
+};
+
+class WrmCaptureImpl final : WrmCaptureDataImpl,
+    public gdi::KbdInputApi,
+    public gdi::CaptureApi,
+    public gdi::GraphicApiForwarder<GraphicToFile>,
+    public gdi::CaptureProbeApi,
+    public gdi::ExternalCaptureApi, // from gdi/capture_api.hpp
+    public gdi::RelayoutApi
+{
+    void update_timestamp(MonotonicTimePoint now)
     {
-        this->graphic_to_file.cached_pointer(cache_idx);
+        this->sink.timestamp(now);
+        const auto timer = this->sink.current_timer();
+        const auto tp = this->original_monotonic_to_real.to_real_time_point(timer);
+        this->out.timestamp(tp);
     }
 
-    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
+public:
+    // EXTERNAL CAPTURE API
+    void external_breakpoint() override
     {
-        this->graphic_to_file.new_pointer(cache_idx, cursor);
+        this->sink.breakpoint();
+    }
+
+    void external_monotonic_time_point(MonotonicTimePoint now) override
+    {
+        this->sink.sync();
+        this->update_timestamp(now);
+    }
+
+    void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override
+    {
+        this->sink.update_times(monotonic_delay, real_time);
+    }
+
+    // CAPTURE PROBE API
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
+    {
+        this->sink.session_update(now, id, kv_list);
+    }
+
+    void possible_active_window_change() override
+    {
+        this->sink.possible_active_window_change();
     }
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
         CRef<Drawable> drawable_ref, Rect rail_window_rect,
         PointerCache::SourcePointersView ptr_cache)
-    : next_break(capture_params.now + wrm_params.break_interval)
-    , break_interval(wrm_params.break_interval)
-    , original_monotonic_to_real(capture_params.now, capture_params.real_now)
-    , kbd_input_mask_enabled{false}
-    , bmp_cache(
-        BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
-        BmpCache::CacheOption(600, 768, false),
-        BmpCache::CacheOption(300, 3072, false),
-        BmpCache::CacheOption(262, 12288, false),
-        BmpCache::CacheOption(),
-        BmpCache::CacheOption(),
-        BmpCache::Verbose::none)
-    , out(
-        wrm_params.cctx,
-        wrm_params.rnd,
-        capture_params.record_path,
-        wrm_params.hash_path,
-        capture_params.basename,
-        capture_params.real_now,
-        drawable_ref.get().width(),
-        drawable_ref.get().height(),
-        capture_params.session_log,
-        wrm_params.file_permissions)
-    , graphic_to_file(
+    : WrmCaptureDataImpl{
+        .next_break = capture_params.now + wrm_params.break_interval,
+        .break_interval = wrm_params.break_interval,
+        .original_monotonic_to_real = MonotonicTimeToRealTime(capture_params.now, capture_params.real_now),
+        .kbd_input_mask_enabled = false,
+        .bmp_cache = BmpCache(
+            BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
+            BmpCache::CacheOption(600, 768, false),
+            BmpCache::CacheOption(300, 3072, false),
+            BmpCache::CacheOption(262, 12288, false),
+            BmpCache::CacheOption(),
+            BmpCache::CacheOption(),
+            BmpCache::Verbose::none
+        ),
+        .out = OutMetaSequenceTransport(
+            wrm_params.cctx,
+            wrm_params.rnd,
+            capture_params.record_path,
+            wrm_params.hash_path,
+            capture_params.basename,
+            capture_params.real_now,
+            drawable_ref.get().width(),
+            drawable_ref.get().height(),
+            capture_params.session_log,
+            wrm_params.file_permissions
+        )
+    }
+    , gdi::GraphicApiForwarder<GraphicToFile>(
         capture_params.now, capture_params.real_now,
         this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         rail_window_rect, this->bmp_cache, this->gly_cache,
@@ -846,13 +762,13 @@ public:
 
     void visibility_rects_event(Rect rect)
     {
-        this->graphic_to_file.visibility_rects_event(rect);
+        this->sink.visibility_rects_event(rect);
     }
 
-    ~WrmCaptureImpl() override
+    ~WrmCaptureImpl()
     {
         try {
-            this->graphic_to_file.sync();
+            this->sink.sync();
         }
         catch (Error const& error) {
             LOG(LOG_ERR, "WrmCaptureImpl: error on destructor: %s", error.errmsg());
@@ -860,43 +776,50 @@ public:
     }
 
     // shadow text
-    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override {
-        return this->graphic_to_file.kbd_input(this->kbd_input_mask_enabled ? '*' : uchar);
+    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override
+    {
+        return this->sink.kbd_input(this->kbd_input_mask_enabled ? '*' : uchar);
     }
 
-    void enable_kbd_input_mask(bool enable) override {
+    void enable_kbd_input_mask(bool enable) override
+    {
         this->kbd_input_mask_enabled = enable;
 
-        this->graphic_to_file.enable_kbd_input_mask(enable);
+        this->sink.enable_kbd_input_mask(enable);
     }
 
-    void send_timestamp_chunk(MonotonicTimePoint now) {
+    void send_timestamp_chunk(MonotonicTimePoint now)
+    {
         this->update_timestamp(now);
-        this->graphic_to_file.send_timestamp_chunk();
+        this->sink.send_timestamp_chunk();
     }
 
-    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time) {
-        this->graphic_to_file.update_times(monotonic_time, real_time);
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    {
+        this->sink.update_times(monotonic_time, real_time);
     }
 
-    void update_mouse_position(uint16_t x, uint16_t y) {
-        this->graphic_to_file.mouse(x, y);
+    void update_mouse_position(uint16_t x, uint16_t y)
+    {
+        this->sink.mouse(x, y);
     }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now, uint16_t x, uint16_t y
-    ) override {
-        this->graphic_to_file.mouse(x, y);
+    ) override
+    {
+        this->sink.mouse(x, y);
 
         if (now >= this->next_break) {
-            this->graphic_to_file.breakpoint();
+            this->sink.breakpoint();
             this->next_break = now + this->break_interval;
         }
 
         return WaitingTimeBeforeNextSnapshot(this->next_break - now);
     }
 
-    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override {
-        this->graphic_to_file.relayout(monitor_layout_pdu);
+    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override
+    {
+        this->sink.relayout(monitor_layout_pdu);
     }
 };

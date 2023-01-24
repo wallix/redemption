@@ -41,6 +41,7 @@ class LicenseApi;
 class Random;
 class CryptoContext;
 class SessionLogApi;
+class ClientInfo;
 
 namespace gdi
 {
@@ -56,7 +57,7 @@ ModPack create_mod_rdp(
     RedirectionInfo & redir_info,
     Inifile & ini,
     FrontAPI & front,
-    ClientInfo client_info /* /!\ modified */,
+    ClientInfo const& client_info_,
     ClientExecute & rail_client_execute,
     kbdtypes::KeyLocks key_locks,
     Ref<Font const> glyphs,

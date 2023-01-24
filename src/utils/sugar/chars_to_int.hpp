@@ -78,8 +78,28 @@ struct unchecked_hexadecimal_chars_to_int_converter
 };
 
 
-// from decimal chars (without 0x/0X prefix)
+// from decimal chars
 //@{
+constexpr bool is_decimal_char(char c) noexcept
+{
+    return '0' <= c && c <= '9';
+}
+
+constexpr bool is_decimal_char(unsigned char c) noexcept
+{
+    return '0' <= c && c <= '9';
+}
+
+constexpr int unchecked_digit_char_to_int(char c) noexcept
+{
+    return c - '0';
+}
+
+constexpr int unchecked_digit_char_to_int(unsigned char c) noexcept
+{
+    return c - '0';
+}
+
 /// Same as std::from_chars(), but chars_to_int_result::ptr points at the last
 /// character parsed. Which means that unlike std::from_chars(), a
 /// std::errc::result_out_of_range error does not consume the whole pattern.
@@ -161,8 +181,22 @@ auto unchecked_decimal_chars_to_int(View&& av) noexcept;
 //@}
 
 
-// from hexadecimal chars
+// from hexadecimal chars (without 0x/0X prefix)
 //@{
+constexpr bool is_hexadecimal_char(unsigned char c) noexcept;
+
+constexpr bool is_hexadecimal_char(char c) noexcept
+{
+    return is_hexadecimal_char(static_cast<unsigned char>(c));
+}
+
+constexpr unsigned char unchecked_hexadecimal_char_to_int(unsigned char c) noexcept;
+
+constexpr unsigned char unchecked_hexadecimal_char_to_int(char c) noexcept
+{
+    return unchecked_hexadecimal_char_to_int(static_cast<unsigned char>(c));
+}
+
 /// Same as std::from_chars(), but chars_to_int_result::ptr points at the last
 /// character parsed. Which means that unlike std::from_chars(), a
 /// std::errc::result_out_of_range error does not consume the whole pattern.
@@ -332,11 +366,6 @@ struct unchecked_char_iterator
         return std::numeric_limits<std::ptrdiff_t>::max();
     }
 };
-
-constexpr bool is_decimal_char(char c) noexcept
-{
-    return '0' <= c && c <= '9';
-}
 
 template<class Int, class EndIterator>
 chars_to_int_result<Int> decimal_chars_to_int_impl(char const* first, EndIterator last) noexcept
@@ -533,7 +562,6 @@ constexpr bool is_hexadecimal_prefix(char const* s) noexcept
 
 } // namespace detail
 
-
 template<class Int>
 inline chars_to_int_result<Int> decimal_chars_to_int(char const* s) noexcept
 {
@@ -707,6 +735,16 @@ inline unchecked_decimal_chars_to_int_converter<AvOrCharp>::operator Int () cons
     return decimal_chars_to_int<Int>(av_or_charp).val;
 }
 
+
+constexpr bool is_hexadecimal_char(unsigned char c) noexcept
+{
+    return detail::hexadecimal_char_to_int(c) != 255;
+}
+
+constexpr unsigned char unchecked_hexadecimal_char_to_int(unsigned char c) noexcept
+{
+    return detail::hexadecimal_char_to_int(c);
+}
 
 template<class UInt>
 inline chars_to_int_result<UInt> hexadecimal_chars_to_int(char const* s) noexcept

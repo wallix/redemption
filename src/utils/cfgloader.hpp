@@ -33,3 +33,9 @@ struct ConfigurationHolder : private noncopyable
 };
 
 bool configuration_load(ConfigurationHolder & configuration_holder, const char * filename);
+
+// TODO p should be char const*
+/// \p p is a writable null terminated string
+bool configuration_load_from_string(
+    ConfigurationHolder& configuration_holder,
+    char * p, char const * filename = "<input>");

@@ -36,11 +36,23 @@ RED_AUTO_TEST_CASE(TestUpper)
     RED_CHECK((ascii_to_limited_upper<50>("abcdefghijklmnopqrstuvwxyz"_av) == "abcdefghijklmnopqrstuvwxyz"_ascii_upper));
     RED_CHECK(ascii_to_limited_upper<100>("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv()
         == "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"_av);
+
     RED_CHECK(insensitive_eq("abC"_av, "abc"_ascii_upper));
     RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_upper));
     RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_upper));
     RED_CHECK(!insensitive_eq("axc"_av, "abc"_ascii_upper));
     RED_CHECK(!insensitive_eq("ab"_av, "abc"_ascii_upper));
+
+    RED_CHECK(ascii_is_upper('A'));
+    RED_CHECK(ascii_is_upper('Z'));
+    RED_CHECK(!ascii_is_upper('a'));
+    RED_CHECK(!ascii_is_upper('z'));
+    RED_CHECK(!ascii_is_upper('0'));
+    RED_CHECK(!ascii_is_upper('"'));
+
+    RED_CHECK(ascii_contains_upper("AA'Z0"_av));
+    RED_CHECK(ascii_contains_upper("aa'Z0"_av));
+    RED_CHECK(!ascii_contains_upper("aa'z0"_av));
 }
 
 RED_AUTO_TEST_CASE(TestLower)
@@ -56,11 +68,23 @@ RED_AUTO_TEST_CASE(TestLower)
     RED_CHECK((ascii_to_limited_lower<50>("ABCDEFGHIJKLMNOPQRSTUVWXYZ"_av) == "abcdefghijklmnopqrstuvwxyz"_ascii_lower));
     RED_CHECK(ascii_to_limited_lower<100>("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"_av).sv()
         == "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"_av);
+
     RED_CHECK(insensitive_eq("abC"_av, "abc"_ascii_lower));
     RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_lower));
     RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_lower));
     RED_CHECK(!insensitive_eq("axc"_av, "abc"_ascii_lower));
     RED_CHECK(!insensitive_eq("ab"_av, "abc"_ascii_lower));
+
+    RED_CHECK(ascii_is_lower('a'));
+    RED_CHECK(ascii_is_lower('z'));
+    RED_CHECK(!ascii_is_lower('0'));
+    RED_CHECK(!ascii_is_lower('"'));
+    RED_CHECK(!ascii_is_lower('A'));
+    RED_CHECK(!ascii_is_lower('Z'));
+
+    RED_CHECK(ascii_contains_lower("aa'z0"_av));
+    RED_CHECK(ascii_contains_lower("aa'Z0"_av));
+    RED_CHECK(!ascii_contains_lower("AA'Z0"_av));
 }
 
 

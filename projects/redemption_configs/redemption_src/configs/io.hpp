@@ -258,9 +258,9 @@ parse_error parse_integral(
     }
 
     return InList
-        ? parse_error{"bad format, expected list of decimal, hexadecimal"
+        ? parse_error{"bad format, expected list of decimal or hexadecimal number"
             " (ex: \"integral[, integral ...]*\")"}
-        : parse_error{"bad format, expected decimal, hexadecimal"};
+        : parse_error{"bad format, expected decimal or hexadecimal number"};
 }
 
 template<class T>

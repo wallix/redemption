@@ -431,7 +431,7 @@ ModPack create_mod_rdp(
     RedirectionInfo & redir_info,
     Inifile & ini,
     FrontAPI& front,
-    ClientInfo client_info /* /!\ modified */,
+    ClientInfo const& client_info_ /* /!\ modified */,
     ClientExecute& rail_client_execute,
     kbdtypes::KeyLocks key_locks,
     Ref<Font const> glyphs,
@@ -444,6 +444,8 @@ ModPack create_mod_rdp(
     std::array<uint8_t, 28>& server_auto_reconnect_packet,
     PerformAutomaticReconnection perform_automatic_reconnection)
 {
+    ClientInfo client_info = client_info_;
+
     switch (ini.get<cfg::mod_rdp::mode_console>()) {
         case RdpModeConsole::force:
             client_info.console_session = true;

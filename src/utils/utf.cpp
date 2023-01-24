@@ -336,16 +336,6 @@ size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexc
 }
 
 
-constexpr uint32_t utf8_2_bytes_to_ucs(uint8_t a, uint8_t b) noexcept
-{ return ((a & 0x1F) << 6 ) |  (b & 0x3F); }
-
-constexpr uint32_t utf8_3_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c) noexcept
-{ return ((a & 0x0F) << 12) | ((b & 0x3F) << 6) |  (c & 0x3F); }
-
-constexpr uint32_t utf8_4_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c, uint8_t d) noexcept
-{ return ((a & 0x07) << 18) | ((b & 0x3F) << 12) | ((c & 0x3F) << 6) | (d & 0x3F); }
-
-
 UTF8toUnicodeIterator::UTF8toUnicodeIterator(byte_ptr str) noexcept
 : source(str.as_u8p())
 { ++*this; }

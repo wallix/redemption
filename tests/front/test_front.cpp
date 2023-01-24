@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/mod/accumulate_input_mod.hpp"
 #include "test_only/front/front_wrapper.hpp"
 #include "test_only/session_log_test.hpp"
 #include "test_only/lcg_random.hpp"
@@ -106,89 +107,6 @@ ClientInfo make_client_info()
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     utils::strlcpy(info.hostname, "test");
     return info;
-}
-
-char* cpy(char* p, chars_view av)
-{
-    memcpy(p, av.data(), av.size());
-    return p + av.size();
-}
-
-struct AppendBuffer
-{
-    char buffer[128];
-
-    void append(std::string& output, char* end)
-    {
-        if (!output.empty()) {
-            output += ", ";
-        }
-        output.append(buffer, end);
-    }
-};
-
-void append_mouse(std::string& output, uint16_t device_flags, uint16_t x, uint16_t y)
-{
-    AppendBuffer buffer;
-    char* p = buffer.buffer;
-    p = cpy(p, "{flags=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, device_flags);
-    p = cpy(p, ", x="_av);
-    p = cpy(p, int_to_decimal_chars(x));
-    p = cpy(p, ", y="_av);
-    p = cpy(p, int_to_decimal_chars(y));
-    p = cpy(p, "}"_av);
-    buffer.append(output, p);
-}
-
-void append_key_locks(std::string& output, kbdtypes::KeyLocks key_locks)
-{
-    AppendBuffer buffer;
-    char* p = buffer.buffer;
-    p = cpy(p, "{KeyLocks=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, underlying_cast(key_locks));
-    p = cpy(p, "}"_av);
-    buffer.append(output, p);
-}
-
-void append_scancode(std::string& output, kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode)
-{
-    AppendBuffer buffer;
-    char* p = buffer.buffer;
-    p = cpy(p, "{KbdFlags=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, underlying_cast(flags));
-    p = cpy(p, ", Scancode=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, underlying_cast(scancode));
-    p = cpy(p, "}"_av);
-    buffer.append(output, p);
-}
-
-void append_unicode(std::string& output, kbdtypes::KbdFlags flag, uint16_t unicode)
-{
-    AppendBuffer buffer;
-    char* p = buffer.buffer;
-    p = cpy(p, "{KbdFlags=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, underlying_cast(flag));
-    p = cpy(p, ", Unicode=0x"_av);
-    p = int_to_fixed_hexadecimal_upper_chars(p, unicode);
-    p = cpy(p, "}"_av);
-    buffer.append(output, p);
-}
-
-void append_invalidate(std::string& output, Rect rect)
-{
-    AppendBuffer buffer;
-    char* p = buffer.buffer;
-    p = cpy(p, "{Invalidate={"_av);
-    p = cpy(p, int_to_decimal_chars(rect.x));
-    p = cpy(p, ", "_av);
-    p = cpy(p, int_to_decimal_chars(rect.y));
-    p = cpy(p, ", "_av);
-    p = cpy(p, int_to_decimal_chars(rect.cx));
-    p = cpy(p, ", "_av);
-    p = cpy(p, int_to_decimal_chars(rect.cy));
-    p = cpy(p, "}"_av);
-    buffer.append(output, p);
 }
 
 } // anonymous namespace
@@ -341,45 +259,6 @@ namespace TestFrontData
 namespace
 {
 
-struct Mod : null_mod
-{
-    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
-    {
-        append_mouse(session_log.messages, device_flags, x, y);
-    }
-
-    void rdp_input_scancode(
-        KbdFlags flags,
-        Scancode scancode,
-        uint32_t /*time*/,
-        Keymap const& /*keymap*/) override
-    {
-        append_scancode(session_log.messages, flags, scancode);
-    }
-
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
-    {
-        append_unicode(session_log.messages, flag, unicode);
-    }
-
-    void rdp_input_synchronize(KeyLocks locks) override
-    {
-        append_key_locks(session_log.messages, locks);
-    }
-
-    void rdp_input_invalidate(Rect rect) override
-    {
-        append_invalidate(session_log.messages, rect);
-    }
-
-    std::string events()
-    {
-        return session_log.events();
-    }
-
-    SessionLogTest session_log;
-};
-
 struct Gd : gdi::NullGraphic
 {
     bool is_slased_circle_cursor = false;
@@ -397,12 +276,12 @@ struct FrontCtx
     CryptoContext cctx;
     TpduBuffer tpdu_buf;
     FrontTransport trans;
-    Mod& mod;
+    AccumulateInputMod& mod;
     Front front;
 
     FrontCtx(
         EventContainer& events,
-        Mod& mod,
+        AccumulateInputMod& mod,
         Inifile& ini,
         Front::GuestParameters guest_params = {})
     : trans(FrontTransport(cstr_array_view(dump_front::indata)))
@@ -572,7 +451,7 @@ void sharing_test(bool enable_shared_control, F f)
 {
     Inifile ini;
     init_ini(ini);
-    Mod mod;
+    AccumulateInputMod mod;
     SessionLogTest& session_log = mod.session_log;
     EventManager event_manager;
     auto& events = event_manager.get_events();
@@ -615,7 +494,7 @@ RED_AUTO_TEST_CASE(TestViewAndControlSharingFront)
 {
     using namespace TestFrontData;
 
-sharing_test(true, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
+sharing_test(true, [](FrontCtx& user, FrontCtx& guest, AccumulateInputMod& mod, Gd& gd, bool& guest_killed){
     RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION guest=\"guest-1\" mode=\"view-control\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
@@ -799,7 +678,7 @@ RED_AUTO_TEST_CASE(TestViewOnlySharingFront)
 {
     using namespace TestFrontData;
 
-sharing_test(false, [](FrontCtx& user, FrontCtx& guest, Mod& mod, Gd& gd, bool& guest_killed){
+sharing_test(false, [](FrontCtx& user, FrontCtx& guest, AccumulateInputMod& mod, Gd& gd, bool& guest_killed){
     RED_CHECK(mod.session_log.events() == "SESSION_INVITE_GUEST_CONNECTION guest=\"guest-1\" mode=\"view-only\"\n"_av);
 
     RED_TEST_CONTEXT("user control") {
@@ -944,7 +823,7 @@ RED_AUTO_TEST_CASE_WD(TestGuestCtx, wd)
 
     using namespace TestFrontData;
 
-    Mod mod;
+    AccumulateInputMod mod;
     Inifile ini;
     init_ini(ini);
     FrontCtx front_ctx(events, mod, ini);

@@ -2683,7 +2683,6 @@ public:
                     LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer position (Fast)");
 
                     /* xPos(2) + yPos(2) */
-                    // TODO: there was a break instead of a throw here, see why.
                     ::check_throw(stream, 4, "mod_rdp::Fast-Path Pointer Position Update", ERR_RDP_DATA_TRUNCATED);
 
                     uint16_t xPos = stream.in_uint16_le();

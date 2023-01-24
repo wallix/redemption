@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <string>
+#include <cstring>
 
 #include <sys/stat.h>
 

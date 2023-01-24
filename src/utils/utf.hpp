@@ -190,3 +190,19 @@ std::size_t Latin1toUTF16(bytes_view latin1_source,
 std::size_t Latin1toUTF8(
     const uint8_t * latin1_source, std::size_t latin1_len,
     uint8_t * utf8_target, std::size_t utf8_len) noexcept;
+
+
+constexpr uint32_t utf8_2_bytes_to_ucs(uint8_t a, uint8_t b) noexcept
+{
+    return ((a & 0x1Fu) << 6u) |  (b & 0x3Fu);
+}
+
+constexpr uint32_t utf8_3_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c) noexcept
+{
+    return ((a & 0x0Fu) << 12) | ((b & 0x3Fu) << 6) |  (c & 0x3Fu);
+}
+
+constexpr uint32_t utf8_4_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c, uint8_t d) noexcept
+{
+    return ((a & 0x07u) << 18) | ((b & 0x3Fu) << 12) | ((c & 0x3Fu) << 6) | (d & 0x3Fu);
+}

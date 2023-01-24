@@ -95,6 +95,7 @@ target_renames = dict((
 
 target_nosyslog = set((
     'headlessclient',
+    'headlessclient2',
     'proxy_recorder',
     'nla_server',
     'rdpinichecker',

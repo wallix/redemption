@@ -125,6 +125,38 @@ namespace detail
 class UpperTag {};
 class LowerTag {};
 
+/// \return true value only for the lowercase letters (abcdefghijklmnopqrstuvwxyz).
+constexpr bool ascii_is_lower(char c) noexcept
+{
+    return 'a' <= c && c <= 'z';
+}
+
+/// \return true value only for the uppercase letters (ABCDEFGHIJKLMNOPQRSTUVWXYZ).
+constexpr bool ascii_is_upper(char c) noexcept
+{
+    return 'A' <= c && c <= 'Z';
+}
+
+constexpr bool ascii_contains_lower(chars_view str) noexcept
+{
+    for (char c : str) {
+        if (ascii_is_lower(c)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+constexpr bool ascii_contains_upper(chars_view str) noexcept
+{
+    for (char c : str) {
+        if (ascii_is_upper(c)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // fast with long string
 constexpr struct ascii_to_upper_t {
     using tag_type = UpperTag;
@@ -164,9 +196,19 @@ constexpr struct ascii_to_lower_with_table_t {
 template<class String>
 struct TaggedStringTraits
 {
-    constexpr static std::string_view sv(String const& str) noexcept
+    constexpr static chars_view av(String const& str) noexcept
     {
-        return std::string_view(str);
+        return str;
+    }
+};
+
+template<std::size_t N>
+struct TaggedStringTraits<detail::StringAsArray<N>>
+{
+    constexpr static chars_view av(detail::StringAsArray<N> const& str) noexcept
+    {
+        auto& array = detail::StringAsArrayAccess::internal(str);
+        return {array.buffer.data(), array.len};
     }
 };
 
@@ -176,34 +218,35 @@ struct TagOfConverterTraits
     using type = typename T::tag_type;
 };
 
-template<std::size_t N>
-struct TaggedStringTraits<detail::StringAsArray<N>>
-{
-    constexpr static std::string_view sv(detail::StringAsArray<N> const& str) noexcept
-    {
-        auto& array = detail::StringAsArrayAccess::internal(str);
-        return std::string_view(array.buffer.data(), array.len);
-    }
-};
-
-template<std::size_t N>
-struct TaggedStringTraits<static_string<N>>
-{
-    constexpr static std::string_view sv(static_string<N> const& str) noexcept
-    {
-        return chars_view(str).as<std::string_view>();
-    }
-};
-
 
 template<class Tag, class String>
 struct TaggedString
 {
     String str;
 
+    constexpr char const* data() const noexcept
+    {
+        return chars().data();
+    }
+
+    constexpr std::size_t size() const noexcept
+    {
+        return chars().size();
+    }
+
+    constexpr char operator[](std::size_t i) const noexcept
+    {
+        return chars()[i];
+    }
+
+    constexpr chars_view chars() const noexcept
+    {
+        return TaggedStringTraits<String>::av(str);
+    }
+
     constexpr std::string_view sv() const noexcept
     {
-        return TaggedStringTraits<String>::sv(str);
+        return chars().template as<std::string_view>();
     }
 
     constexpr TaggedString<Tag, std::string_view> tagged_sv() const noexcept
@@ -237,6 +280,9 @@ struct TaggedString
 
 template<class Tag>
 using TaggedStringView = TaggedString<Tag, std::string_view>;
+
+using TaggedUpperStringView = TaggedString<UpperTag, std::string_view>;
+using TaggedLowerStringView = TaggedString<UpperTag, std::string_view>;
 
 template<class Tag, std::size_t N>
 struct TaggedStringArray : TaggedString<Tag, detail::StringAsArray<N>>
@@ -293,7 +339,6 @@ namespace detail
         return std::size_t(dest - start);
     }
 } // namespace detail
-
 
 template<std::size_t N, class To,
     class Tag = typename TagOfConverterTraits<std::decay_t<To>>::type>

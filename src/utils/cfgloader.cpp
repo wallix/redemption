@@ -30,216 +30,212 @@
 #include <unistd.h>
 
 
-namespace
+bool configuration_load_from_string(
+    ConfigurationHolder& configuration_holder,
+    char * p, char const * filename)
 {
-    bool configuration_load_from_string(
-        ConfigurationHolder & configuration_holder,
-        char const * filename, char * p)
-    {
-        bool has_error = false;
+    bool has_error = false;
 
-        int line_count = 1;
-        char const * pos_line = p;
+    int line_count = 1;
+    char const * pos_line = p;
 
-        char * key;
-        char * value;
-        char * end_key;
-        char * end_value;
-        char * end_section;
+    char * key;
+    char * value;
+    char * end_key;
+    char * end_value;
+    char * end_section;
 
-        auto next_line = [&]{
-            ++line_count;
-            pos_line = p;
-        };
+    auto next_line = [&]{
+        ++line_count;
+        pos_line = p;
+    };
 
-        auto set_error = [&](char const* mess){
-            LOG(LOG_ERR, "%s:%d:%d: %s", filename, line_count, int(p - pos_line), mess);
-            has_error = true;
-        };
+    auto set_error = [&](char const* mess){
+        LOG(LOG_ERR, "%s:%d:%d: %s", filename, line_count, int(p - pos_line), mess);
+        has_error = true;
+    };
 
-        for (;;) {
-            loop:
-            switch (*p) {
-                case '\0': return !has_error;
-                case '\n': case '\r': ++p; continue;
+    for (;;) {
+        loop:
+        switch (*p) {
+            case '\0': return !has_error;
+            case '\n': case '\r': ++p; continue;
 
-                // comment
-                case '#': ++p; goto consume_line;
+            // comment
+            case '#': ++p; goto consume_line;
 
-                // empty line / left trim
-                case ' ':
-                case '\t':
-                    for (;;) switch (*++p) /* NOLINT */ {
-                        case ' ': case '\t': continue;
-                        case '\n': case '\r': next_line(); ++p; goto loop;
-                        case '\0': return !has_error;
-                        default: goto loop;
-                    }
-
-                // section
-                case '[' :
-                    for (;;) switch (*++p) /* NOLINT */ {
-                        // left trim
-                        case ' ': case '\t': continue;
-                        case '\n':
-                        case '\r':
-                            next_line();
-                            [[fallthrough]];
-                        case ']':
-                            ++p;
-                            [[fallthrough]];
-                        case '\0':
-                            set_error("empty section");
-                            goto loop;
-
-                        default: {
-                            char * section = p;
-
-                        insection:
-                            for (;;) switch (*++p) /* NOLINT */ {
-                                default: continue;
-
-                                case '\0':
-                                case '\n':
-                                case '\r':
-                                    set_error("']' not found, assume new section");
-                                    if (*p == '\0') {
-                                        return !has_error;
-                                    }
-                                    next_line();
-                                    [[fallthrough]];
-                                case ']':
-                                    end_section = p;
-                                    *p = '\0';
-                                    goto assign_section;
-
-                                case ' ':
-                                case '\t':
-                                    // right trim
-                                    end_section = p;
-                                    for (;;) switch (*++p) /* NOLINT */ {
-                                        case ' ': case '\t': continue;
-                                        default: goto insection;
-                                        case ']':
-                                            *end_section = '\0';
-                                            goto assign_section;
-                                    }
-                            }
-
-                        assign_section:
-                            configuration_holder.set_section(
-                                zstring_view::from_null_terminated({section, end_section})
-                            );
-                            *end_section = '\0';
-                            ++p;
-                            goto loop;
-                        }
-                    }
-
-                // value
-                default:
-                    key = p;
-                    for (;;) switch (*++p) /* NOLINT */ {
-                        default: continue;
-                        // right trim key
-                        case ' ': case '\t':
-                            end_key = p;
-                            *p = '\0';
-                            for (;;) switch (*++p) /* NOLINT */ {
-                                case ' ': case '\t': continue;
-                                case '=': goto set_value;
-                                default: goto set_value_error;
-                            }
-
-                        case '=':
-                            end_key = p;
-                            *p = '\0';
-
-                        set_value:
-                            if (not *key) {
-                                set_error("empty key");
-                                goto consume_line;
-                            }
-
-                            for (;;) switch (*++p) /* NOLINT */ {
-                                // left trim
-                                case ' ': case '\t': continue;
-                                case '\n':
-                                case '\r':
-                                    value = p;
-                                    end_value = p;
-                                    *p = '\0';
-                                    goto assign_value_and_next_line;
-                                case '\0':
-                                    value = p;
-                                    end_value = p;
-                                    *p = '\0';
-                                    goto assign_value;
-
-                                default:
-                                    value = p;
-                                invalue:
-                                    for (;;) switch (*++p) /* NOLINT */ {
-                                        default: continue;
-                                        case '\n':
-                                        case '\r':
-                                            end_value = p;
-                                            *p = '\0';
-                                            goto assign_value_and_next_line;
-                                        case '\0':
-                                            end_value = p;
-                                            *p = '\0';
-                                            goto assign_value;
-
-                                        case ' ':
-                                        case '\t':
-                                            // right trim
-                                            end_value = p;
-                                            for (;;) switch (*++p) /* NOLINT */ {
-                                                case ' ': case '\t': continue;
-                                                default: goto invalue;
-                                                case '\n':
-                                                case '\r':
-                                                    *end_value = '\0';
-                                                    goto assign_value_and_next_line;
-                                                case '\0':
-                                                    *end_value = '\0';
-                                                    goto assign_value;
-                                            }
-                                    }
-
-                                assign_value_and_next_line:
-                                    next_line();
-                                    ++p;
-                                assign_value:
-                                    configuration_holder.set_value(
-                                        zstring_view::from_null_terminated({key, end_key}),
-                                        zstring_view::from_null_terminated({value, end_value})
-                                    );
-                                    goto loop;
-                            }
-
-                        case '\n':
-                        case '\r':
-                        case '\0':
-                        set_value_error:
-                            set_error("invalid syntax, expected '=' ; this line is ignored");
-                            goto consume_line;
-                    }
-            }
-
-            consume_line:
-                for (;;) switch (*p) /*NOLINT*/ {
-                    default: ++p; continue;
+            // empty line / left trim
+            case ' ':
+            case '\t':
+                for (;;) switch (*++p) /* NOLINT */ {
+                    case ' ': case '\t': continue;
                     case '\n': case '\r': next_line(); ++p; goto loop;
                     case '\0': return !has_error;
+                    default: goto loop;
+                }
+
+            // section
+            case '[' :
+                for (;;) switch (*++p) /* NOLINT */ {
+                    // left trim
+                    case ' ': case '\t': continue;
+                    case '\n':
+                    case '\r':
+                        next_line();
+                        [[fallthrough]];
+                    case ']':
+                        ++p;
+                        [[fallthrough]];
+                    case '\0':
+                        set_error("empty section");
+                        goto loop;
+
+                    default: {
+                        char * section = p;
+
+                    insection:
+                        for (;;) switch (*++p) /* NOLINT */ {
+                            default: continue;
+
+                            case '\0':
+                            case '\n':
+                            case '\r':
+                                set_error("']' not found, assume new section");
+                                if (*p == '\0') {
+                                    return !has_error;
+                                }
+                                next_line();
+                                [[fallthrough]];
+                            case ']':
+                                end_section = p;
+                                *p = '\0';
+                                goto assign_section;
+
+                            case ' ':
+                            case '\t':
+                                // right trim
+                                end_section = p;
+                                for (;;) switch (*++p) /* NOLINT */ {
+                                    case ' ': case '\t': continue;
+                                    default: goto insection;
+                                    case ']':
+                                        *end_section = '\0';
+                                        goto assign_section;
+                                }
+                        }
+
+                    assign_section:
+                        configuration_holder.set_section(
+                            zstring_view::from_null_terminated({section, end_section})
+                        );
+                        *end_section = '\0';
+                        ++p;
+                        goto loop;
+                    }
+                }
+
+            // value
+            default:
+                key = p;
+                for (;;) switch (*++p) /* NOLINT */ {
+                    default: continue;
+                    // right trim key
+                    case ' ': case '\t':
+                        end_key = p;
+                        *p = '\0';
+                        for (;;) switch (*++p) /* NOLINT */ {
+                            case ' ': case '\t': continue;
+                            case '=': goto set_value;
+                            default: goto set_value_error;
+                        }
+
+                    case '=':
+                        end_key = p;
+                        *p = '\0';
+
+                    set_value:
+                        if (not *key) {
+                            set_error("empty key");
+                            goto consume_line;
+                        }
+
+                        for (;;) switch (*++p) /* NOLINT */ {
+                            // left trim
+                            case ' ': case '\t': continue;
+                            case '\n':
+                            case '\r':
+                                value = p;
+                                end_value = p;
+                                *p = '\0';
+                                goto assign_value_and_next_line;
+                            case '\0':
+                                value = p;
+                                end_value = p;
+                                *p = '\0';
+                                goto assign_value;
+
+                            default:
+                                value = p;
+                            invalue:
+                                for (;;) switch (*++p) /* NOLINT */ {
+                                    default: continue;
+                                    case '\n':
+                                    case '\r':
+                                        end_value = p;
+                                        *p = '\0';
+                                        goto assign_value_and_next_line;
+                                    case '\0':
+                                        end_value = p;
+                                        *p = '\0';
+                                        goto assign_value;
+
+                                    case ' ':
+                                    case '\t':
+                                        // right trim
+                                        end_value = p;
+                                        for (;;) switch (*++p) /* NOLINT */ {
+                                            case ' ': case '\t': continue;
+                                            default: goto invalue;
+                                            case '\n':
+                                            case '\r':
+                                                *end_value = '\0';
+                                                goto assign_value_and_next_line;
+                                            case '\0':
+                                                *end_value = '\0';
+                                                goto assign_value;
+                                        }
+                                }
+
+                            assign_value_and_next_line:
+                                next_line();
+                                ++p;
+                            assign_value:
+                                configuration_holder.set_value(
+                                    zstring_view::from_null_terminated({key, end_key}),
+                                    zstring_view::from_null_terminated({value, end_value})
+                                );
+                                goto loop;
+                        }
+
+                    case '\n':
+                    case '\r':
+                    case '\0':
+                    set_value_error:
+                        set_error("invalid syntax, expected '=' ; this line is ignored");
+                        goto consume_line;
                 }
         }
-    }
-} // anonymous namespace
 
-bool configuration_load(
-    ConfigurationHolder & configuration_holder, char const* filename)
+        consume_line:
+            for (;;) switch (*p) /*NOLINT*/ {
+                default: ++p; continue;
+                case '\n': case '\r': next_line(); ++p; goto loop;
+                case '\0': return !has_error;
+            }
+    }
+}
+
+bool configuration_load(ConfigurationHolder& configuration_holder, char const* filename)
 {
     struct stat st;
     if (-1 == stat(filename, &st)){
@@ -282,5 +278,5 @@ bool configuration_load(
         *p = '\0';
     }
 
-    return configuration_load_from_string(configuration_holder, filename, buf.get());
+    return configuration_load_from_string(configuration_holder, buf.get(), filename);
 }

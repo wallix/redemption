@@ -58,8 +58,8 @@ public:
     // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
     UdevRandom() = default;
 
-    void random(void * dest, size_t size) override {
-
+    void random(void * dest, size_t size) override
+    {
         int fd = open("/dev/urandom", O_RDONLY);
         if (fd == -1){
             LOG(LOG_INFO, "access to /dev/urandom failed: %s", strerror(errno));
@@ -114,5 +114,4 @@ public:
             memset(dest, 0x44, size);
         }
     }
-
 };

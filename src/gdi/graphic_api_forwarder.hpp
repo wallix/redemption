@@ -120,6 +120,12 @@ public:
             override {this->sink.begin_update();}
     void end_update()
             override {this->sink.end_update();}
+
+    void cached_pointer(gdi::CachePointerIndex cache_idx)
+            override { this->sink.cached_pointer(cache_idx); }
+
+    void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor)
+            override { this->sink.new_pointer(cache_idx, cursor); }
 };
 
 }  // namespace gdi
