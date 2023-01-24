@@ -27,6 +27,9 @@ Author(s): Jonathan Poelen
 #include <type_traits>
 #include "utils/sugar/chars_to_int.hpp"
 
+#ifndef NDEBUG
+#include <cstdio>
+#endif
 
 namespace cli
 {
@@ -230,17 +233,22 @@ namespace detail
         {
             (..., init(opts));
 
-            for (int short_name : short_names) {
+            bool result = true;
+            for (int& short_name : short_names) {
                 if (short_name > 1) {
-                    return false;
+                    std::fprintf(
+                        stderr, "duplicate short name %d times: %c\n",
+                        short_name, char(&short_name - short_names));
+                    std::fflush(stderr);
+                    result = false;
                 }
             }
 
-            return true;
+            return result;
         }
 
     private:
-        int short_names[257]{};
+        int short_names[256]{};
 
         static void init(Helper /*opt*/)
         {}
@@ -291,8 +299,8 @@ namespace detail
 template<class... Opts>
 auto options(Opts&&... opts)
 {
-    assert(detail::ShortNameChecker().check(opts...));
-    assert(detail::LongNameChecker().check(opts...));
+    assert(detail::ShortNameChecker().check(opts...) && "duplicate short name");
+    assert(detail::LongNameChecker().check(opts...) && "duplicate long name");
     return Options<std::decay_t<Opts>...>{{
         {{static_cast<Opts&&>(opts)}}...
     }};
