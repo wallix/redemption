@@ -31,10 +31,10 @@ WidgetGroupBox::WidgetGroupBox(
     Color fgcolor, Color bgcolor, Font const & font
 )
   : WidgetComposite(drawable, Focusable::Yes)
-  , bg_color(bgcolor)
   , fg_color(fgcolor)
   , font(font)
 {
+    this->set_bg_color(bgcolor);
     this->set_text(text);
 }
 
@@ -45,7 +45,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
     if (!rect_intersect.isempty()) {
         this->drawable.begin_update();
 
-        WidgetComposite::draw_inner_free(rect_intersect, this->bg_color);
+        WidgetComposite::draw_inner_free(rect_intersect, this->get_bg_color());
 
         // Box.
         const uint16_t border           = 6;
@@ -72,7 +72,7 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
                             , this->y()
                             , this->buffer
                             , this->fg_color
-                            , this->bg_color
+                            , this->get_bg_color()
                             , color_ctx
                             , rect_intersect
                             );
@@ -95,11 +95,6 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
 
         this->drawable.end_update();
     }
-}
-
-Widget::Color WidgetGroupBox::get_bg_color() const
-{
-    return this->bg_color;
 }
 
 const char * WidgetGroupBox::get_text() const

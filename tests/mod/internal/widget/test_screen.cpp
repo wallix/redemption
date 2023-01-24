@@ -186,5 +186,4 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.show_tooltip(nullptr, 30, 35, Rect(), Rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
-    wscreen.clear();
 }

@@ -101,6 +101,4 @@ RED_AUTO_TEST_CASE(TraceWidgetComposite)
                                          wcomposite.cy()));
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "composite_3.png");
-
-    wcomposite.clear();
 }

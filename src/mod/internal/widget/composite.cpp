@@ -261,7 +261,7 @@ bool WidgetComposite::contains_widget(Widget & w)
     return this->widgets.find(w) != this->widgets.end();
 }
 
-void WidgetComposite::clear()
+void WidgetComposite::clear_widget()
 {
     this->widgets.clear();
 

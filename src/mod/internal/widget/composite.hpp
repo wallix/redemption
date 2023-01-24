@@ -78,33 +78,21 @@ public:
 
     ~WidgetComposite() override;
 
+    void add_widget(Widget & w, HasFocus has_focus = HasFocus::No);
+    void remove_widget(Widget & w);
+    bool contains_widget(Widget & w);
+    void clear_widget();
+
     void set_widget_focus(Widget & new_focused, int reason);
 
     void focus(int reason) override;
     void blur() override;
 
-    void add_widget(Widget & w, HasFocus has_focus = HasFocus::No);
-    void remove_widget(Widget & w);
-    bool contains_widget(Widget & w);
-    void clear();
-
     virtual void invalidate_children(Rect clip);
 
     virtual void draw_inner_free(Rect clip, Color bg_color);
 
-    [[nodiscard]] virtual Color get_bg_color() const
-    {
-        return this->bg_color;
-    }
-
-    virtual void set_bg_color(Color color)
-    {
-        this->bg_color = color;
-    }
-
     void move_xy(int16_t x, int16_t y) override;
-
-    void move_children_xy(int16_t x, int16_t y);
 
     bool next_focus() override;
     bool previous_focus() override;
@@ -121,7 +109,19 @@ public:
 
     void init_focus() override;
 
+    Color get_bg_color() const
+    {
+        return this->bg_color;
+    }
+
 protected:
+    void move_children_xy(int16_t x, int16_t y);
+
+    void set_bg_color(Color color)
+    {
+        this->bg_color = color;
+    }
+
     Widget * get_next_focus(Widget * w);
     Widget * get_previous_focus(Widget * w);
 };

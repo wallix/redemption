@@ -325,8 +325,6 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_23.png");
-
-    wcomposite.clear();
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
@@ -388,6 +386,4 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_32.png");
-
-    parent.clear();
 }

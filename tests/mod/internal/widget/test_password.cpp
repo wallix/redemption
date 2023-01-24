@@ -291,7 +291,6 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     // drawable.save_to_png("password-compo2.png");
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_22.png");
-    wcomposite.clear();
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword)

@@ -216,8 +216,6 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_10.png");
-
-    wcomposite.clear();
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelMax)

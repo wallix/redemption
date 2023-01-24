@@ -82,8 +82,6 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    [[nodiscard]] Color get_bg_color() const override;
-
     void ask_for_connection();
 
     void add_device(array_view<chars_view> entries);
@@ -151,8 +149,6 @@ private:
     WidgetButton target_helpicon;
 
     Translator tr;
-
-    Color bg_color;
 
     Font const & font;
 

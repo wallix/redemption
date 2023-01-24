@@ -66,8 +66,8 @@ WidgetDialog2::WidgetDialog2(
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
     , copy_paste(copy_paste)
-    , bg_color(theme.global.bgcolor)
 {
+    this->set_bg_color(theme.global.bgcolor);
     this->add_widget(this->img);
 
     this->add_widget(this->title);
@@ -169,11 +169,6 @@ void WidgetDialog2::move_size_widget(int16_t left, int16_t top, uint16_t width, 
         this->img.set_xy(this->img.x(), top);
     }
 
-}
-
-Widget::Color WidgetDialog2::get_bg_color() const
-{
-    return this->bg_color;
 }
 
 void WidgetDialog2::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)

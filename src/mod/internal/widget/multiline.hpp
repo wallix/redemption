@@ -39,7 +39,7 @@ public:
 
     Dimension get_optimal_dim() const override;
 
-    [[nodiscard]] Color get_bg_color() const noexcept
+    Color get_bg_color() const noexcept
     {
         return this->bg_color;
     }

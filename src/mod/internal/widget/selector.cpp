@@ -172,12 +172,12 @@ WidgetSelector::WidgetSelector(
                   theme.selector_label.fgcolor, theme.selector_label.bgcolor,
                   theme.global.focus_color, 1, font, 3, 0)
 , tr(lang)
-, bg_color(theme.global.bgcolor)
 , font(font)
 , left(left)
 , top(top)
 , extra_button(extra_button)
 {
+    this->set_bg_color(theme.global.bgcolor);
     this->add_widget(this->device_label);
 
     for (int i = 0; i < this->nb_columns; i++) {
@@ -278,11 +278,6 @@ void WidgetSelector::move_size_widget(int16_t left, int16_t top, uint16_t width,
     }
 
     this->rearrange();
-}
-
-Widget::Color WidgetSelector::get_bg_color() const
-{
-    return this->bg_color;
 }
 
 constexpr uint16_t COLUMN_EXPANSION_BUTTON_PLACE_HOLDER = 18;

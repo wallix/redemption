@@ -58,10 +58,10 @@ WidgetWait::WidgetWait(
            theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
            6, 2)
     , extra_button(extra_button)
-    , bg_color(theme.global.bgcolor)
     , hasform(showform)
     , hide_back_to_selector(flags & HIDE_BACK_TO_SELECTOR)
 {
+    this->set_bg_color(theme.global.bgcolor);
     this->groupbox.add_widget(this->dialog);
 
     if (showform) {

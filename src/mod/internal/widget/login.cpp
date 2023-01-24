@@ -92,8 +92,8 @@ WidgetLogin::WidgetLogin(
     , extra_button(extra_button)
     , tr(tr)
     , show_target(enable_target_field)
-    , bg_color(theme.global.bgcolor)
 {
+    this->set_bg_color(theme.global.bgcolor);
     this->helpicon.set_unfocusable();
 
     this->add_widget(this->img);
@@ -338,11 +338,6 @@ void WidgetLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
             top + height - button_space_h - this->extra_button->cy()
         );
     }
-}
-
-Widget::Color WidgetLogin::get_bg_color() const
-{
-    return this->bg_color;
 }
 
 void WidgetLogin::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)

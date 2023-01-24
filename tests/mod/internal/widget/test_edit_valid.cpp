@@ -155,8 +155,6 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_5.png");
-
-    ctx.parent.clear();
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit3)

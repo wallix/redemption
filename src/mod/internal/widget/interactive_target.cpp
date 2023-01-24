@@ -74,11 +74,12 @@ WidgetInteractiveTarget::WidgetInteractiveTarget(
                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
     , extra_button(extra_button)
     , fgcolor(theme.global.fgcolor)
-    , bgcolor(theme.global.bgcolor)
     , ask_device(ask_device)
     , ask_login(ask_login)
     , ask_password(ask_login || ask_password)
 {
+    this->set_bg_color(theme.global.bgcolor);
+
     Widget * device_show = &this->device;
     if (ask_device) {
         device_show = &this->device_edit;
@@ -246,11 +247,6 @@ void WidgetInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16
     if (this->extra_button) {
         this->extra_button->set_xy(left + 60, top + height - 60);
     }
-}
-
-Widget::Color WidgetInteractiveTarget::get_bg_color() const
-{
-    return this->bgcolor;
 }
 
 void WidgetInteractiveTarget::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)

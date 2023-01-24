@@ -33,8 +33,6 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    [[nodiscard]] Color get_bg_color() const override;
-
     [[nodiscard]] const char * get_text() const;
     void set_text(const char * text);
 
@@ -43,7 +41,6 @@ private:
 
     char buffer[buffer_size];
 
-    Color bg_color;
     Color fg_color;
 
     Font const & font;

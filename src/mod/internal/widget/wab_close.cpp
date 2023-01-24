@@ -68,13 +68,13 @@ WidgetWabClose::WidgetWabClose(
       theme.global.enable_theme ? theme.global.logo_path.c_str() :
       app_path(AppPath::LoginWabBlue),
       theme.global.bgcolor)
-, bg_color(theme.global.bgcolor)
 , prev_time(0)
 , lang(lang)
 , showtimer(showtimer)
 , font(font)
 , diagnostic_text(diagnostic_text)
 {
+    this->set_bg_color(theme.global.bgcolor);
     this->add_widget(this->img);
 
     char label[255];
@@ -264,11 +264,6 @@ void WidgetWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width,
     if (this->img.y() + this->img.cy() > top + height) {
         this->img.set_xy(this->img.x(), top);
     }
-}
-
-Widget::Color WidgetWabClose::get_bg_color() const
-{
-    return this->bg_color;
 }
 
 std::chrono::seconds WidgetWabClose::refresh_timeleft(std::chrono::seconds remaining)

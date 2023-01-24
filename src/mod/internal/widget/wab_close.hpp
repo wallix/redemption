@@ -44,17 +44,15 @@ public:
     };
 
     WidgetWabClose(gdi::GraphicApi & drawable,
-                 int16_t left, int16_t top, int16_t width, int16_t height,
-                 Events events, const char * diagnostic_text,
-                 const char * username, const char * target,
-                 bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
-                 Language lang, bool back_selector = false); /*NOLINT*/
+                   int16_t left, int16_t top, int16_t width, int16_t height,
+                   Events events, const char * diagnostic_text,
+                   const char * username, const char * target,
+                   bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
+                   Language lang, bool back_selector = false); /*NOLINT*/
 
     ~WidgetWabClose();
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
-
-    [[nodiscard]] Color get_bg_color() const override;
 
     std::chrono::seconds refresh_timeleft(std::chrono::seconds remaining);
 
@@ -81,9 +79,7 @@ public:
 private:
     WidgetButton * back;
 
-    WidgetImage        img;
-
-    Color bg_color;
+    WidgetImage    img;
 
     long prev_time;
 

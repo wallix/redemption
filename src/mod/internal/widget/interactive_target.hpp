@@ -59,8 +59,6 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    [[nodiscard]] Color get_bg_color() const override;
-
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
 private:
@@ -86,7 +84,6 @@ private:
     WidgetButton * extra_button;
 
     Color fgcolor;
-    Color bgcolor;
 
     bool ask_device;
     bool ask_login;

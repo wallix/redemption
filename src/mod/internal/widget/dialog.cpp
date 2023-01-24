@@ -65,8 +65,8 @@ WidgetDialog::WidgetDialog(
           theme.global.bgcolor)
     , extra_button(extra_button)
     , oncancel(events.oncancel)
-    , bg_color(theme.global.bgcolor)
 {
+    this->set_bg_color(theme.global.bgcolor);
     this->add_widget(this->img);
 
     this->add_widget(this->title);
@@ -184,11 +184,6 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     if (this->challenge && this->extra_button) {
         extra_button->set_xy(left + 60, top + height - 60);
     }
-}
-
-Widget::Color WidgetDialog::get_bg_color() const
-{
-    return this->bg_color;
 }
 
 void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
