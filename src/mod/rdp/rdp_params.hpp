@@ -67,7 +67,6 @@ struct ModRDPParams
     bool enable_nla = true;
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
-    bool use_native_pointer = true;
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
@@ -279,7 +278,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_nla);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_fastpath);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             use_native_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
