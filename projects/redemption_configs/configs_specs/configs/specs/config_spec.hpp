@@ -572,7 +572,7 @@ void config_spec_definition(Writer && W)
             }
         );
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeProcessCommandLineRetrieveMethod>(),
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeProcessCommandLineRetrieveMethod>(),
                  names{.cpp="session_probe_process_command_line_retrieve_method", .connpolicy="process_command_line_retrieve_method"},
                  set(SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation));
     });
