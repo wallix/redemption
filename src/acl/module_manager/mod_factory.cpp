@@ -141,7 +141,9 @@ struct ModFactory::D
         self.rail_client_execute.enable_remote_program(self.client_info.remote_program);
         self.mod_wrapper.set_mod(*mod_pack.mod, mod_pack.winapi, enable_osd);
 
-        if (self.rail_client_execute.is_rail_enabled() && !self.rail_client_execute.is_ready()) {
+        if (ModuleName::RDP != name
+         && self.rail_client_execute.is_rail_enabled() && !self.rail_client_execute.is_ready()
+        ) {
             bool can_resize_hosted_desktop = mod_pack.can_resize_hosted_desktop
                                           && self.ini.get<cfg::remote_program::allow_resize_hosted_desktop>()
                                           && !self.ini.get<cfg::globals::is_rec>();
