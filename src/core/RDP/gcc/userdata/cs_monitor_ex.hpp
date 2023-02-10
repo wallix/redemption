@@ -120,10 +120,10 @@ struct CSMonitorEx {
     };
 
    struct {
-        uint32_t  physicalWidth;
-        uint32_t  physicalHeight;
-        uint32_t  orientation;
-        uint32_t  desktopScaleFactor;
+        uint32_t physicalWidth;
+        uint32_t physicalHeight;
+        uint32_t orientation;
+        uint32_t desktopScaleFactor;
         uint32_t deviceScaleFactor;
     } monitorAttributesArray[MAX_MONITOR_COUNT];
 

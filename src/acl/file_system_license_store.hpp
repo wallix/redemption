@@ -33,7 +33,9 @@
 class FileSystemLicenseStore : public LicenseApi
 {
 public:
-    FileSystemLicenseStore(std::string license_path_) : license_path(std::move(license_path_)) {}
+    FileSystemLicenseStore(std::string license_path_)
+    : license_path(std::move(license_path_))
+    {}
 
     // The functions shall return empty bytes_view to indicate the error.
     bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
