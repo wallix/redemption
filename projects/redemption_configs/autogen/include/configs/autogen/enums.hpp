@@ -306,7 +306,7 @@ enum class ServerNotification : uint8_t
     syslog = 1,
     // User notified (through proxy interface)
     user = 2,
-    // admin notified (wab notification)
+    // admin notified (Bastion notification)
     admin = 4,
 };
 
@@ -359,7 +359,7 @@ template<> struct is_valid_enum_value<ServerCertCheck>
 };
 
 // Session record options.
-// When session records are encrypted, they can be read only by the WAB where they have been generated.
+// When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
 enum class TraceType : uint8_t
 {
     // No encryption (faster).

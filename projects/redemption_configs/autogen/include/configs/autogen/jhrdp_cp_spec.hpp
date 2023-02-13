@@ -103,7 +103,7 @@ forward_client_build_number = boolean(default=True)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -113,7 +113,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -123,7 +123,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -133,7 +133,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex

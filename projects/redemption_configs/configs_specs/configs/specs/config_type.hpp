@@ -113,7 +113,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("nobody")
       .value("syslog", "message sent to syslog")
       .value("user", "User notified (through proxy interface)")
-      .value("admin", "admin notified (wab notification)")
+      .value("admin", "admin notified (Bastion notification)")
     ;
 
     e.enumeration_list("ServerCertCheck", "Behavior of certificates check.", "System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.")
@@ -123,7 +123,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("always_succeed", "always succeed.")
     ;
 
-    e.enumeration_list("TraceType", "Session record options.", "When session records are encrypted, they can be read only by the WAB where they have been generated.")
+    e.enumeration_list("TraceType", "Session record options.", "When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.")
       .value("localfile", "No encryption (faster).")
       .value("localfile_hashed", "No encryption, with checksum.")
       .value("cryptofile", "Encryption enabled.")

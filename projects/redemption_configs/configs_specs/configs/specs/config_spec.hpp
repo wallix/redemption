@@ -456,7 +456,7 @@ void config_spec_definition(Writer && W)
             "Force to split target domain and username with '@' separator."
         }, set(false));
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"wabam_uses_translated_remoteapp"}, set(false));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{.all="wabam_uses_translated_remoteapp", .display="Enable translated RemoteAPP with AM"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_shadowing_support"}, desc{"Enables Session Shadowing Support."}, set(true));
 
@@ -607,7 +607,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<std::chrono::milliseconds>(), names{"smart_launcher_short_delay"}, set(50));
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"smart_launcher_enable_wabam_affinity"}, set(true));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{.all="smart_launcher_enable_wabam_affinity", .display="Enable Smart launcher with AM affinity"}, set(true));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launcher_abort_delay"}, set(2000));
 
@@ -681,7 +681,7 @@ void config_spec_definition(Writer && W)
     W.section(names{"server_cert"}, [&]
     {
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"server_cert_store"},
-            desc{"Keep known server certificates on WAB"},
+            desc{"Keep known server certificates on Bastion"},
             jh_without_rdp_connpolicy.always(false),
             set(true));
 

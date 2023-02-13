@@ -103,6 +103,7 @@ use_native_remoteapp_capability = boolean(default=True)
 #_advanced
 enable_rdpdr_data_analysis = boolean(default=True)
 
+#_display_name=Enable translated RemoteAPP with AM
 wabam_uses_translated_remoteapp = boolean(default=False)
 
 # Enables support of the remoteFX codec.
@@ -270,6 +271,7 @@ smart_launcher_long_delay = integer(min=0, default=500)
 smart_launcher_short_delay = integer(min=0, default=50)
 
 #_advanced
+#_display_name=Enable Smart launcher with AM affinity
 smart_launcher_enable_wabam_affinity = boolean(default=True)
 
 # (in milliseconds)
@@ -372,7 +374,7 @@ pause_if_session_is_disconnected = boolean(default=False)
 
 [server_cert]
 
-# Keep known server certificates on WAB
+# Keep known server certificates on Bastion
 server_cert_store = boolean(default=True)
 
 # Behavior of certificates check.
@@ -387,7 +389,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -397,7 +399,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -407,7 +409,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -417,7 +419,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex

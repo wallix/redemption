@@ -56,7 +56,7 @@ close_timeout = integer(min=0, default=600)
 # &nbsp; &nbsp;   0: No encryption (faster).
 # &nbsp; &nbsp;   1: No encryption, with checksum.
 # &nbsp; &nbsp;   2: Encryption enabled.
-# When session records are encrypted, they can be read only by the WAB where they have been generated.
+# When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
 #_advanced
 trace_type = option(0, 1, 2, default=1)
 
@@ -465,6 +465,7 @@ experimental_fix_too_long_cookie = boolean(default=True)
 split_domain = boolean(default=False)
 
 #_hidden
+#_display_name=Enable translated RemoteAPP with AM
 wabam_uses_translated_remoteapp = boolean(default=False)
 
 # Enables Session Shadowing Support.
@@ -630,6 +631,7 @@ smart_launcher_long_delay = integer(min=0, default=500)
 smart_launcher_short_delay = integer(min=0, default=50)
 
 #_hidden
+#_display_name=Enable Smart launcher with AM affinity
 smart_launcher_enable_wabam_affinity = boolean(default=True)
 
 # (in milliseconds)
@@ -731,7 +733,7 @@ pause_if_session_is_disconnected = boolean(default=False)
 
 [server_cert]
 
-# Keep known server certificates on WAB
+# Keep known server certificates on Bastion
 #_hidden
 server_cert_store = boolean(default=True)
 
@@ -748,7 +750,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -758,7 +760,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -768,7 +770,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -778,7 +780,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -788,7 +790,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (wab notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex

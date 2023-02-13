@@ -26,7 +26,7 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
       0: No encryption (faster).
       1: No encryption, with checksum.
       2: Encryption enabled.
-    When session records are encrypted, they can be read only by the WAB where they have been generated.
+    When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
 cfg::globals::is_rec ⇐ is_rec   [bool]
 cfg::globals::enable_osd_display_remote_target ⇐ enable_osd_display_remote_target   [bool]
     Show target address with F12.
@@ -251,7 +251,7 @@ cfg::session_probe::periodic_task_run_interval ⇐ session_probe:periodic_task_r
 cfg::session_probe::pause_if_session_is_disconnected ⇐ session_probe:pause_if_session_is_disconnected   [bool]
 
 cfg::server_cert::server_cert_store ⇐ server_cert:server_cert_store   [bool]
-    Keep known server certificates on WAB
+    Keep known server certificates on Bastion
 cfg::server_cert::server_cert_check ⇐ server_cert:server_cert_check   [ServerCertCheck]
     Behavior of certificates check.
       0: fails if certificates doesn't match or miss.
@@ -264,28 +264,28 @@ cfg::server_cert::server_access_allowed_message ⇐ server_cert:server_access_al
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
+      0x4: admin notified (Bastion notification)
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::server_cert_create_message ⇐ server_cert:server_cert_create_message   [ServerNotification]
     Warn that new server certificate file was created.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
+      0x4: admin notified (Bastion notification)
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::server_cert_success_message ⇐ server_cert:server_cert_success_message   [ServerNotification]
     Warn that server certificate file was successfully checked.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
+      0x4: admin notified (Bastion notification)
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::server_cert_failure_message ⇐ server_cert:server_cert_failure_message   [ServerNotification]
     Warn that server certificate file checking failed.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
-      0x4: admin notified (wab notification)
+      0x4: admin notified (Bastion notification)
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::enable_external_validation ⇐ enable_external_validation   [bool]
 cfg::server_cert::external_cert ⇒ external_cert   [std::string]

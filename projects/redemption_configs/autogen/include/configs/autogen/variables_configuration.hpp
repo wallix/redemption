@@ -1625,6 +1625,7 @@ namespace cfg
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:wabam_uses_translated_remoteapp <br/>
+    /// displayName: Enable translated RemoteAPP with AM <br/>
     /// default: false <br/>
     struct mod_rdp::wabam_uses_translated_remoteapp {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2236,6 +2237,7 @@ namespace cfg
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_enable_wabam_affinity <br/>
+    /// displayName: Enable Smart launcher with AM affinity <br/>
     /// default: true <br/>
     struct session_probe::smart_launcher_enable_wabam_affinity {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2645,7 +2647,7 @@ namespace cfg
         type value { false };
     };
 
-    /// Keep known server certificates on WAB <br/>
+    /// Keep known server certificates on Bastion <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: server_cert:server_cert_store <br/>

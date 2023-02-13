@@ -60,7 +60,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0: No encryption (faster).
 #   1: No encryption, with checksum.
 #   2: Encryption enabled.
-# When session records are encrypted, they can be read only by the WAB where they have been generated.
+# When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
 #_advanced
 #trace_type = 1
 
@@ -542,6 +542,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
+#_display_name=Enable translated RemoteAPP with AM
 #wabam_uses_translated_remoteapp = 0
 
 # Enables Session Shadowing Support.
@@ -738,6 +739,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
+#_display_name=Enable Smart launcher with AM affinity
 #smart_launcher_enable_wabam_affinity = 1
 
 # min = 0, max = 300000
@@ -865,7 +867,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [server_cert]
 
-# Keep known server certificates on WAB
+# Keep known server certificates on Bastion
 # value: 0 or 1
 #_hidden
 #server_cert_store = 1
@@ -885,7 +887,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+#   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -896,7 +898,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+#   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -907,7 +909,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+#   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -918,7 +920,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+#   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -929,7 +931,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
-#   0x4: admin notified (wab notification)
+#   0x4: admin notified (Bastion notification)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
