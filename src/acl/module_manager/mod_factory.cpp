@@ -124,7 +124,7 @@ static ModPack mod_pack_from_widget(mod_api* mod)
     return {mod, nullptr, nullptr, false};
 }
 
-struct ModFactory::D
+struct ModFactory::Impl
 {
     static void set_mod(ModFactory& self, ModuleName name, ModPack mod_pack, bool enable_osd)
     {
@@ -215,7 +215,7 @@ void ModFactory::create_mod_bouncer()
         this->events,
         this->client_info.screen_info.width,
         this->client_info.screen_info.height);
-    D::set_mod(*this, ModuleName::bouncer2, mod_pack_from_widget(new_mod), true);
+    Impl::set_mod(*this, ModuleName::bouncer2, mod_pack_from_widget(new_mod), true);
 }
 
 void ModFactory::create_mod_replay()
@@ -237,7 +237,7 @@ void ModFactory::create_mod_replay()
         this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
         safe_cast<FileToGraphicVerbose>(this->ini.get<cfg::debug::capture>())
     );
-    D::set_mod(*this, ModuleName::autotest, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::autotest, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_widget_test_mod()
@@ -251,9 +251,9 @@ void ModFactory::create_widget_test_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
-        D::copy_paste(*this)
+        Impl::copy_paste(*this)
     );
-    D::set_mod(*this, ModuleName::widgettest, mod_pack_from_widget(new_mod), true);
+    Impl::set_mod(*this, ModuleName::widgettest, mod_pack_from_widget(new_mod), true);
 }
 
 void ModFactory::create_test_card_mod()
@@ -265,7 +265,7 @@ void ModFactory::create_test_card_mod()
         this->glyphs,
         false
     );
-    D::set_mod(*this, ModuleName::card, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::card, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_selector_mod()
@@ -281,9 +281,9 @@ void ModFactory::create_selector_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
-        D::copy_paste(*this)
+        Impl::copy_paste(*this)
     );
-    D::set_mod(*this, ModuleName::selector, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::selector, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_close_mod()
@@ -291,7 +291,7 @@ void ModFactory::create_close_mod()
     LOG(LOG_INFO, "----------------------- create_close_mod() -----------------");
 
     bool back_to_selector = false;
-    D::set_mod(*this, ModuleName::close, D::create_close_mod(*this, back_to_selector), false);
+    Impl::set_mod(*this, ModuleName::close, Impl::create_close_mod(*this, back_to_selector), false);
 }
 
 void ModFactory::create_close_mod_back_to_selector()
@@ -299,7 +299,7 @@ void ModFactory::create_close_mod_back_to_selector()
     LOG(LOG_INFO, "----------------------- create_close_mod_back_to_selector() -----------------");
 
     bool back_to_selector = true;
-    D::set_mod(*this, ModuleName::close_back, D::create_close_mod(*this, back_to_selector), false);
+    Impl::set_mod(*this, ModuleName::close_back, Impl::create_close_mod(*this, back_to_selector), false);
 }
 
 void ModFactory::create_interactive_target_mod()
@@ -314,25 +314,25 @@ void ModFactory::create_interactive_target_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
-        D::copy_paste(*this)
+        Impl::copy_paste(*this)
     );
-    D::set_mod(*this, ModuleName::interactive_target, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::interactive_target, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_valid_message_mod()
 {
     const char * button = TR(trkeys::refused, language(this->ini));
     const char * caption = "Information";
-    auto mod_pack = D::create_dialog(*this, button, caption, NO_CHALLENGE);
-    D::set_mod(*this, ModuleName::valid, mod_pack, false);
+    auto mod_pack = Impl::create_dialog(*this, button, caption, NO_CHALLENGE);
+    Impl::set_mod(*this, ModuleName::valid, mod_pack, false);
 }
 
 void ModFactory::create_display_message_mod()
 {
     const char * button = nullptr;
     const char * caption = "Information";
-    auto mod_pack = D::create_dialog(*this, button, caption, NO_CHALLENGE);
-    D::set_mod(*this, ModuleName::confirm, mod_pack, false);
+    auto mod_pack = Impl::create_dialog(*this, button, caption, NO_CHALLENGE);
+    Impl::set_mod(*this, ModuleName::confirm, mod_pack, false);
 }
 
 void ModFactory::create_dialog_challenge_mod()
@@ -342,15 +342,15 @@ void ModFactory::create_dialog_challenge_mod()
     const ChallengeOpt challenge = this->ini.get<cfg::context::authentication_challenge>()
         ? CHALLENGE_ECHO
         : CHALLENGE_HIDE;
-    auto mod_pack = D::create_dialog(*this, button, caption, challenge);
-    D::set_mod(*this, ModuleName::challenge, mod_pack, false);
+    auto mod_pack = Impl::create_dialog(*this, button, caption, challenge);
+    Impl::set_mod(*this, ModuleName::challenge, mod_pack, false);
 }
 
 void ModFactory::create_display_link_mod()
 {
     const char * caption = "URL Redirection";
     const char * link_label = "Copy to clipboard: ";
-    // return D::create_dialog(*this, button, caption, NO_CHALLENGE);
+    // return Impl::create_dialog(*this, button, caption, NO_CHALLENGE);
     auto new_mod = new DialogMod2(
         this->ini,
         this->graphics,
@@ -364,9 +364,9 @@ void ModFactory::create_display_link_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
-        D::copy_paste(*this)
+        Impl::copy_paste(*this)
     );
-    D::set_mod(*this, ModuleName::link_confirm, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::link_confirm, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_wait_info_mod()
@@ -388,11 +388,11 @@ void ModFactory::create_wait_info_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
-        D::copy_paste(*this),
+        Impl::copy_paste(*this),
         showform,
         flag
     );
-    D::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_transition_mod()
@@ -407,7 +407,7 @@ void ModFactory::create_transition_mod()
         this->glyphs,
         this->theme
     );
-    D::set_mod(*this, ModuleName::transitory, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::transitory, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_login_mod()
@@ -450,9 +450,9 @@ void ModFactory::create_login_mod()
         this->rail_client_execute,
         this->glyphs,
         this->theme,
-        D::copy_paste(*this)
+        Impl::copy_paste(*this)
     );
-    D::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
+    Impl::set_mod(*this, ModuleName::waitinfo, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_rdp_mod(
@@ -478,7 +478,7 @@ void ModFactory::create_rdp_mod(
         this->cctx,
         this->server_auto_reconnect_packet,
         perform_automatic_reconnection);
-    D::set_mod(*this, ModuleName::RDP, mod_pack, true);
+    Impl::set_mod(*this, ModuleName::RDP, mod_pack, true);
 }
 
 void ModFactory::create_vnc_mod(SessionLogApi& session_log)
@@ -494,5 +494,5 @@ void ModFactory::create_vnc_mod(SessionLogApi& session_log)
         this->glyphs, this->theme,
         this->events,
         session_log);
-    D::set_mod(*this, ModuleName::VNC, mod_pack, true);
+    Impl::set_mod(*this, ModuleName::VNC, mod_pack, true);
 }

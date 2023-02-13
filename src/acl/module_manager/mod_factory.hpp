@@ -127,8 +127,8 @@ public:
     void create_vnc_mod(SessionLogApi& session_log);
 
 private:
-    class D;
-    friend class D;
+    class Impl;
+    friend class Impl;
 
     SocketTransport * psocket_transport = nullptr;
     ModuleName current_mod = ModuleName::UNKNOWN;
