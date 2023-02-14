@@ -21,6 +21,7 @@
 
 #include "configs/config.hpp"
 #include "configs/autogen/cfg_ini_pack.hpp"
+#include "configs/autogen/sesman_and_spec_type.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/cfgloader.hpp"
 #include "utils/cli.hpp"
@@ -123,7 +124,7 @@ namespace
                 configs::cfg_ini_infos::ini_names[i],
                 assign_zbuf_from_cfg(
                     make_writable_array_view(zbuffer),
-                    cfg_s_type<typename Cfg::sesman_and_spec_type>(),
+                    cfg_s_type<typename configs::sesman_and_spec_type<Cfg>::type>(),
                     value
                 ),
                 hexadecimal_format

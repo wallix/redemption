@@ -27,6 +27,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include "configs/autogen/str_authid.hpp"
+#include "configs/autogen/sesman_and_spec_type.hpp"
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
@@ -61,17 +62,17 @@ namespace
         return err;
     }
 
-    template<class T>
+    template<class Cfg>
     struct ConfigFieldVTable
     {
         static bool parse(configs::VariablesConfiguration & variables, bytes_view value)
         {
             return !log_acl_parse_err(
                 parse_from_cfg(
-                    static_cast<T&>(variables).value,
-                    configs::spec_type<typename T::sesman_and_spec_type>{},
+                    static_cast<Cfg&>(variables).value,
+                    configs::spec_type<typename configs::sesman_and_spec_type<Cfg>::type>{},
                     value),
-                configs::authstr[unsigned(T::index)],
+                configs::authstr[unsigned(Cfg::index)],
                 value);
         }
 
@@ -81,8 +82,8 @@ namespace
         {
             return assign_zbuf_from_cfg(
                 buffer,
-                cfg_s_type<typename T::sesman_and_spec_type>{},
-                static_cast<T const&>(variables).value
+                cfg_s_type<typename configs::sesman_and_spec_type<Cfg>::type>{},
+                static_cast<Cfg const&>(variables).value
             );
         }
     };
@@ -90,22 +91,22 @@ namespace
     template<class>
     struct ConfigFieldVTableMaker;
 
-    template<class T, class... Ts>
-    struct ConfigFieldVTableMaker<configs::Pack<T, Ts...>>
+    template<class Cfg, class... Cfgs>
+    struct ConfigFieldVTableMaker<configs::Pack<Cfg, Cfgs...>>
     {
         static constexpr auto make_parsers()
         {
-            return std::array<decltype(&ConfigFieldVTable<T>::parse), sizeof...(Ts)+1>{
-                &ConfigFieldVTable<T>::parse,
-                &ConfigFieldVTable<Ts>::parse...
+            return std::array<decltype(&ConfigFieldVTable<Cfg>::parse), sizeof...(Cfgs)+1>{
+                &ConfigFieldVTable<Cfg>::parse,
+                &ConfigFieldVTable<Cfgs>::parse...
             };
         }
 
         static constexpr auto make_to_zstring_view()
         {
-            return std::array<decltype(&ConfigFieldVTable<T>::to_zstring_view), sizeof...(Ts)+1>{
-                &ConfigFieldVTable<T>::to_zstring_view,
-                &ConfigFieldVTable<Ts>::to_zstring_view...
+            return std::array<decltype(&ConfigFieldVTable<Cfg>::to_zstring_view), sizeof...(Cfgs)+1>{
+                &ConfigFieldVTable<Cfg>::to_zstring_view,
+                &ConfigFieldVTable<Cfgs>::to_zstring_view...
             };
         }
     };

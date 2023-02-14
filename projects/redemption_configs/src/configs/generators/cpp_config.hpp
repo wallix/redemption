@@ -147,7 +147,7 @@ struct HtmlEntitifier
     }
 
 private:
-    std::stringstream out_string;
+    std::ostringstream out_string;
 };
 
 inline void write_type(std::ostream& out, type_<types::u16>) { out << "uint16_t"; }
@@ -307,6 +307,7 @@ StrBufferSize write_type_spec(std::ostream& out, type_<T>)
 
 struct CppConfigWriterBase;
 
+void write_sesman_and_spec_type(std::ostream & out, CppConfigWriterBase& writer);
 void write_max_str_buffer_size_hpp(std::ostream & out, CppConfigWriterBase& writer);
 void write_ini_values(std::ostream & out, CppConfigWriterBase& writer);
 void write_config_set_value(std::ostream & out_set_value, CppConfigWriterBase& writer);
@@ -382,6 +383,7 @@ struct CppConfigWriterBase
     std::string cfg_values;
     std::string cfg_str_values;
     std::size_t max_str_buffer_size = 0;
+    std::ostringstream out_sesman_and_spec_types;
 
     struct Filenames
     {
@@ -391,6 +393,7 @@ struct CppConfigWriterBase
         std::string variable_configuration_hpp;
         std::string config_set_value;
         std::string ini_values_hpp;
+        std::string sesman_and_spec_type;
         std::string max_str_buffer_size_hpp;
     };
     Filenames filenames;
@@ -444,10 +447,11 @@ struct CppConfigWriterBase
           .then(filenames.variable_configuration_hpp, &write_variables_configuration)
           .then(filenames.config_set_value, &write_config_set_value)
           .then(filenames.ini_values_hpp, &write_ini_values)
+          .then(filenames.sesman_and_spec_type, &write_sesman_and_spec_type)
           .then(filenames.max_str_buffer_size_hpp, &write_max_str_buffer_size_hpp)
         ;
         if (sw.err) {
-            std::cerr << "CppConfigWriterBase: " << sw.filename << ": " << strerror(errno) << "\n";
+            std::cerr << "CppConfigWriterBase: " << sw.filename << ": " << strerror(sw.errnum) << "\n";
             return sw.errnum;
         }
         return 0;
@@ -580,8 +584,10 @@ struct CppConfigWriterBase
             }
             this->out_member_ << " <br/>\n";
             this->out_member_ << "    struct " << varname_with_section << " {\n";
-            this->out_member_ << "        static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";
-            this->out_member_ << "        static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman_io::proxy_to_sesman) ? "true" : "false") << ";\n";
+            this->out_member_ << "        static constexpr unsigned sesman_proxy_communication_flags = 0b";
+            this->out_member_ << (bool(properties & sesman_io::sesman_to_proxy) ? "1" : "0");
+            this->out_member_ << (bool(properties & sesman_io::proxy_to_sesman) ? "1" : "0");
+            this->out_member_ << ";\n";
 
             if constexpr (has_sesman) {
                 this->out_member_ << "        // for old cppcheck\n";
@@ -596,21 +602,27 @@ struct CppConfigWriterBase
             write_type(this->out_member_, type);
             this->out_member_ << ";\n";
 
+
             // write type
             if constexpr (has_sesman || is_convertible_v<Pack, spec_attr_t>) {
                 auto type_sesman = get_type<spec::type_>(infos);
-                this->out_member_ << "        using sesman_and_spec_type = ";
+                this->out_member_ << "        using mapped_type = ";
                 auto buf_size = write_type_spec(this->out_member_, type_sesman);
                 if (bool(/*PropertyFieldFlags::read & */properties)) {
-                    this->max_str_buffer_size
-                        = std::max(this->max_str_buffer_size, std::size_t(buf_size));
+                    this->max_str_buffer_size = std::max(this->max_str_buffer_size, std::size_t(buf_size));
                 }
                 this->out_member_ << ";\n";
-                this->out_member_ << "        using mapped_type = sesman_and_spec_type;\n";
+
+                this->out_sesman_and_spec_types <<
+                    "template<> struct sesman_and_spec_type<cfg::" << varname_with_section << "> { using type = "
+                ;
+                write_type_spec(this->out_sesman_and_spec_types, type_sesman);
+                this->out_sesman_and_spec_types << "; };\n";
             }
             else {
                 this->out_member_ << "        using mapped_type = type;\n";
             }
+
 
             // write value
             this->out_member_ << "        type value { ";
@@ -958,6 +970,22 @@ inline void write_ini_values(std::ostream& out, CppConfigWriterBase& writer)
         << writer.cfg_str_values <<
         "};\n"
         "} // namespace configs::cfg_ini_infos\n"
+    ;
+}
+
+inline void write_sesman_and_spec_type(std::ostream & out, CppConfigWriterBase& writer)
+{
+    out << cpp_comment(do_not_edit, 0) <<
+        "\n"
+        "#pragma once\n"
+        "\n"
+        "#include \"configs/autogen/variables_configuration_fwd.hpp\"\n"
+        "\n"
+        "namespace configs {\n"
+        "template<class Cfg> struct sesman_and_spec_type {};\n"
+        "\n"
+        << writer.out_sesman_and_spec_types.str()
+        << "\n}\n"
     ;
 }
 

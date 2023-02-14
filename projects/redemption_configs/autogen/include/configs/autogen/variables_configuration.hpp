@@ -52,14 +52,12 @@ namespace cfg
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct globals::front_connection_time {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 0};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value {  };
     };
     /// from Module rdp creation to "up_and_running" state <br/>
@@ -67,14 +65,12 @@ namespace cfg
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct globals::target_connection_time {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 1};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value {  };
     };
     /// type: std::string <br/>
@@ -82,14 +78,12 @@ namespace cfg
     /// sesman::name: login <br/>
     /// default: {} <br/>
     struct globals::auth_user {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 2};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
@@ -97,14 +91,12 @@ namespace cfg
     /// sesman::name: ip_client <br/>
     /// default: {} <br/>
     struct globals::host {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 3};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
@@ -112,56 +104,48 @@ namespace cfg
     /// sesman::name: ip_target <br/>
     /// default: {} <br/>
     struct globals::target {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 4};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct globals::target_device {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 5};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct globals::device_id {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 6};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct globals::primary_user_id {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 7};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
@@ -169,66 +153,56 @@ namespace cfg
     /// sesman::name: target_login <br/>
     /// default: {} <br/>
     struct globals::target_user {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 8};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct globals::target_application {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 9};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct globals::target_application_account {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 10};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct globals::target_application_password {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 11};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct globals::glyph_cache {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Warning: Service will be automatically restarted and active sessions will be disconnected <br/>
@@ -236,42 +210,34 @@ namespace cfg
     /// type: unsigned <br/>
     /// default: 3389 <br/>
     struct globals::port {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 3389 };
     };
     /// type: Level <br/>
     /// default: Level::low <br/>
     struct globals::encryptionLevel {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = Level;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { Level::low };
     };
     /// type: std::string <br/>
     /// default: REDEMPTION_CONFIG_AUTHFILE <br/>
     struct globals::authfile {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { REDEMPTION_CONFIG_AUTHFILE };
     };
     /// Time out during RDP handshake stage. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 10 <br/>
     struct globals::handshake_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 10 };
     };
     /// No automatic disconnection due to inactivity, timer is set on primary authentication. <br/>
@@ -280,11 +246,9 @@ namespace cfg
     /// type: std::chrono::seconds <br/>
     /// default: 900 <br/>
     struct globals::base_inactivity_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 900 };
     };
     /// No automatic disconnection due to inactivity, timer is set on target session. <br/>
@@ -295,139 +259,115 @@ namespace cfg
     /// sesmanName: globals:inactivity_timeout <br/>
     /// default: 0 <br/>
     struct globals::inactivity_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 12};
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 0 };
     };
     /// Internal keepalive between sesman and rdp proxy <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 30 <br/>
     struct globals::keepalive_grace_delay {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 30 };
     };
     /// Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate). <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 120 <br/>
     struct globals::authentication_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 120 };
     };
     /// Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate). <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 600 <br/>
     struct globals::close_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 600 };
     };
     /// type: TraceType <br/>
     /// sesman ⇒ proxy <br/>
     /// default: TraceType::localfile_hashed <br/>
     struct globals::trace_type {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 13};
         using type = TraceType;
-        using sesman_and_spec_type = TraceType;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = TraceType;
         type value { TraceType::localfile_hashed };
     };
     /// type: std::string <br/>
     /// default: "0.0.0.0" <br/>
     struct globals::listen_address {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::ip;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::ip;
         type value { "0.0.0.0" };
     };
     /// Allow Transparent mode. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct globals::enable_transparent_mode {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Proxy certificate password. <br/>
     /// type: char[255] <br/>
     /// default: "inquisition" <br/>
     struct globals::certificate_password {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[255];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { "inquisition" };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct globals::is_rec {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 14};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Support of Bitmap Update. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_bitmap_update {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Show close screen. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_close_box {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_osd {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Show target address with F12. <br/>
@@ -435,129 +375,105 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: true <br/>
     struct globals::enable_osd_display_remote_target {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 15};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION <br/>
     struct globals::enable_wab_integration {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::allow_using_multiple_monitors {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct globals::allow_scale_factor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Needed to refresh screen of Windows Server 2012. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::bogus_refresh_rect {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::large_pointer_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::new_pointer_update_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::unicode_keyboard_event_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: std::chrono::milliseconds <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 1000 <br/>
     struct globals::mod_recv_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 16};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
         type value { 1000 };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct globals::experimental_enable_serializer_data_block_size_limit {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::experimental_support_resize_session_during_recording {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::support_connection_redirection_during_recording {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client. <br/>
@@ -566,11 +482,9 @@ namespace cfg
     /// type: std::chrono::milliseconds <br/>
     /// default: 0 <br/>
     struct globals::rdp_keepalive_connection_interval {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
     /// Enable primary connection on ipv6. <br/>
@@ -578,22 +492,18 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_ipv6 {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// In megabytes. 0 for disabled. <br/>
     /// type: uint64_t <br/>
     /// default: 100 <br/>
     struct globals::minimal_memory_available_before_connection_silently_closed {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint64_t;
-        using sesman_and_spec_type = uint64_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint64_t;
         type value { 100 };
     };
 
@@ -601,47 +511,39 @@ namespace cfg
     /// sesman ⇐ proxy <br/>
     /// default: 0 <br/>
     struct client::keyboard_layout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section1 + 0};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 0 };
     };
     /// bg-BG, bg-BG.latin, bs-Cy, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy <br/>
     /// type: std::string <br/>
     /// default: "en-US, fr-FR, de-DE, ru-RU" <br/>
     struct client::keyboard_layout_proposals {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<std::string>;
         type value { "en-US, fr-FR, de-DE, ru-RU" };
     };
     /// If true, ignore password provided by RDP client, user need do login manually. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::ignore_logon_password {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Enable font smoothing (0x80). <br/>
     /// type: uint32_t <br/>
     /// default: 128 <br/>
     struct client::performance_flags_default {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 128 };
     };
     /// Disable wallpaper (0x1). <br/>
@@ -655,120 +557,98 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 40 <br/>
     struct client::performance_flags_force_present {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 40 };
     };
     /// See the comment of "Performance flags force present" above for available values. <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct client::performance_flags_force_not_present {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 0 };
     };
     /// If enabled, avoid automatically font smoothing in recorded session. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::auto_adjust_performance_flags {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Fallback to RDP Legacy Encryption if client does not support TLS. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::tls_fallback_legacy {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct client::tls_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
     /// type: uint32_t <br/>
     /// default: 2 <br/>
     struct client::tls_min_level {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 2 };
     };
     /// Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct client::tls_max_level {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 0 };
     };
     /// Show common cipher list supported by client and server <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::show_common_cipher_list {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Needed for primary NTLM or Kerberos connections over NLA. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::enable_nla {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::bogus_neg_request {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::bogus_user_id {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
@@ -776,99 +656,81 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct client::disable_tsk_switch_shortcuts {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section1 + 1};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
     struct client::rdp_compression {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = RdpCompression;
-        using sesman_and_spec_type = RdpCompression;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = RdpCompression;
         type value { RdpCompression::rdp6_1 };
     };
     /// type: ColorDepth <br/>
     /// default: ColorDepth::depth24 <br/>
     struct client::max_color_depth {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ColorDepth;
-        using sesman_and_spec_type = ColorDepth;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ColorDepth;
         type value { ColorDepth::depth24 };
     };
     /// Persistent Disk Bitmap Cache on the front side. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::persistent_disk_bitmap_cache {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::cache_waiting_list {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// If enabled, the contents of Persistent Bitmap Caches are stored on disk. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::persist_bitmap_cache_on_disk {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Support of Bitmap Compression. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::bitmap_compression {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Enables support of Client Fast-Path Input Event PDUs. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::fast_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct client::enable_suppress_output {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
@@ -876,83 +738,67 @@ namespace cfg
     /// type: std::string <br/>
     /// default: "HIGH:!ADH:!3DES:!SHA" <br/>
     struct client::ssl_cipher_list {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { "HIGH:!ADH:!3DES:!SHA" };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct client::show_target_user_in_f12_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct client::bogus_ios_glyph_support_level {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct client::transform_glyph_to_bitmap {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: BogusNumberOfFastpathInputEvent <br/>
     /// default: BogusNumberOfFastpathInputEvent::pause_key_only <br/>
     struct client::bogus_number_of_fastpath_input_event {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = BogusNumberOfFastpathInputEvent;
-        using sesman_and_spec_type = BogusNumberOfFastpathInputEvent;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = BogusNumberOfFastpathInputEvent;
         type value { BogusNumberOfFastpathInputEvent::pause_key_only };
     };
     /// type: std::chrono::milliseconds <br/>
     /// default: 1000 <br/>
     struct client::recv_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
         type value { 1000 };
     };
     /// Enables display of message informing user that his/her session is being audited. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::enable_osd_4_eyes {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Enable front remoteFx <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::enable_remotefx {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Disables supported drawing orders: <br/>
@@ -972,11 +818,9 @@ namespace cfg
     /// type: std::string <br/>
     /// default: "25" <br/>
     struct client::disabled_orders {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<unsigned>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<unsigned>;
         type value { "25" };
     };
 
@@ -984,11 +828,9 @@ namespace cfg
     /// type: std::chrono::milliseconds <br/>
     /// default: 3000 <br/>
     struct all_target_mod::connection_establishment_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>;
         type value { 3000 };
     };
     /// This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default. <br/>
@@ -997,56 +839,46 @@ namespace cfg
     /// sesmanName: all_target_mod:tcp_user_timeout <br/>
     /// default: 0 <br/>
     struct all_target_mod::tcp_user_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section2 + 0};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 3600000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 3600000>;
         type value { 0 };
     };
 
     /// type: bool <br/>
     /// default: true <br/>
     struct remote_program::allow_resize_hosted_desktop {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
 
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
     struct mod_rdp::rdp_compression {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = RdpCompression;
-        using sesman_and_spec_type = RdpCompression;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = RdpCompression;
         type value { RdpCompression::rdp6_1 };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::disconnect_on_logon_user_change {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::chrono::seconds <br/>
     /// default: 0 <br/>
     struct mod_rdp::open_session_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 0 };
     };
     /// Disables supported drawing orders: <br/>
@@ -1068,14 +900,12 @@ namespace cfg
     /// sesmanName: mod_rdp:disabled_orders <br/>
     /// default: {} <br/>
     struct mod_rdp::disabled_orders {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 0};
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<unsigned>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<unsigned>;
         type value {  };
     };
     /// NLA authentication in secondary target. <br/>
@@ -1084,14 +914,12 @@ namespace cfg
     /// sesmanName: mod_rdp:enable_nla <br/>
     /// default: true <br/>
     struct mod_rdp::enable_nla {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 1};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// If enabled, NLA authentication will try Kerberos before NTLM. <br/>
@@ -1101,14 +929,12 @@ namespace cfg
     /// sesmanName: mod_rdp:enable_kerberos <br/>
     /// default: false <br/>
     struct mod_rdp::enable_kerberos {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 2};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
@@ -1117,14 +943,12 @@ namespace cfg
     /// sesmanName: mod_rdp:tls_min_level <br/>
     /// default: 0 <br/>
     struct mod_rdp::tls_min_level {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 3};
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 0 };
     };
     /// Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
@@ -1133,14 +957,12 @@ namespace cfg
     /// sesmanName: mod_rdp:tls_max_level <br/>
     /// default: 0 <br/>
     struct mod_rdp::tls_max_level {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 4};
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 0 };
     };
     /// TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers. <br/>
@@ -1149,14 +971,12 @@ namespace cfg
     /// sesmanName: mod_rdp:cipher_string <br/>
     /// default: "ALL" <br/>
     struct mod_rdp::cipher_string {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 5};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { "ALL" };
     };
     /// Show common cipher list supported by client and server <br/>
@@ -1165,47 +985,39 @@ namespace cfg
     /// sesmanName: mod_rdp:show_common_cipher_list <br/>
     /// default: false <br/>
     struct mod_rdp::show_common_cipher_list {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 6};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Persistent Disk Bitmap Cache on the mod side. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::persistent_disk_bitmap_cache {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::cache_waiting_list {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// If enabled, the contents of Persistent Bitmap Caches are stored on disk. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::persist_bitmap_cache_on_disk {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority. <br/>
@@ -1213,14 +1025,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: "*" <br/>
     struct mod_rdp::allow_channels {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 7};
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<std::string>;
         type value { "*" };
     };
     /// List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority. <br/>
@@ -1228,14 +1038,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::deny_channels {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 8};
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<std::string>;
         type value {  };
     };
     /// List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all. <br/>
@@ -1244,14 +1052,12 @@ namespace cfg
     /// sesmanName: mod_rdp:allowed_dynamic_channels <br/>
     /// default: "*" <br/>
     struct mod_rdp::allowed_dynamic_channels {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 9};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { "*" };
     };
     /// List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all. <br/>
@@ -1260,14 +1066,12 @@ namespace cfg
     /// sesmanName: mod_rdp:denied_dynamic_channels <br/>
     /// default: {} <br/>
     struct mod_rdp::denied_dynamic_channels {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 10};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Enables support of Client/Server Fast-Path Input/Update PDUs. <br/>
@@ -1275,11 +1079,9 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::fast_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Enables Server Redirection Support. <br/>
@@ -1288,25 +1090,21 @@ namespace cfg
     /// sesmanName: mod_rdp:server_redirection_support <br/>
     /// default: false <br/>
     struct mod_rdp::server_redirection_support {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 11};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Client Address to send to target (in InfoPacket) <br/>
     /// type: ClientAddressSent <br/>
     /// default: ClientAddressSent::no_address <br/>
     struct mod_rdp::client_address_sent {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ClientAddressSent;
-        using sesman_and_spec_type = ClientAddressSent;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ClientAddressSent;
         type value { ClientAddressSent::no_address };
     };
     /// Load balancing information <br/>
@@ -1315,14 +1113,12 @@ namespace cfg
     /// sesmanName: mod_rdp:load_balance_info <br/>
     /// default: {} <br/>
     struct mod_rdp::load_balance_info {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 12};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block. <br/>
@@ -1331,106 +1127,90 @@ namespace cfg
     /// sesman::name: rdp_bogus_sc_net_size <br/>
     /// default: true <br/>
     struct mod_rdp::bogus_sc_net_size {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 13};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::proxy_managed_drives {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 14};
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<std::string>;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct mod_rdp::ignore_auth_channel {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 15};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel. <br/>
     /// type: char[8] <br/>
     /// default: "*" <br/>
     struct mod_rdp::auth_channel {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[8];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { "*" };
     };
     /// Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel. <br/>
     /// type: char[8] <br/>
     /// default: {} <br/>
     struct mod_rdp::checkout_channel {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[8];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::alternate_shell {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 16};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::shell_arguments {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 17};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::shell_working_directory {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 18};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// As far as possible, use client-provided initial program (Alternate Shell) <br/>
@@ -1439,14 +1219,12 @@ namespace cfg
     /// sesmanName: mod_rdp:use_client_provided_alternate_shell <br/>
     /// default: false <br/>
     struct mod_rdp::use_client_provided_alternate_shell {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 19};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// As far as possible, use client-provided remote program (RemoteApp) <br/>
@@ -1455,14 +1233,12 @@ namespace cfg
     /// sesmanName: mod_rdp:use_client_provided_remoteapp <br/>
     /// default: false <br/>
     struct mod_rdp::use_client_provided_remoteapp {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 20};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// As far as possible, use native RemoteApp capability <br/>
@@ -1471,85 +1247,69 @@ namespace cfg
     /// sesmanName: mod_rdp:use_native_remoteapp_capability <br/>
     /// default: true <br/>
     struct mod_rdp::use_native_remoteapp_capability {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 21};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: char[257] <br/>
     /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE <br/>
     struct mod_rdp::application_driver_exe_or_file {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[257];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE };
     };
     /// type: char[257] <br/>
     /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT <br/>
     struct mod_rdp::application_driver_script_argument {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[257];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT };
     };
     /// type: char[257] <br/>
     /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT <br/>
     struct mod_rdp::application_driver_chrome_dt_script {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[257];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT };
     };
     /// type: char[257] <br/>
     /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT <br/>
     struct mod_rdp::application_driver_chrome_uia_script {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[257];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT };
     };
     /// type: char[257] <br/>
     /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT <br/>
     struct mod_rdp::application_driver_ie_script {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[257];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT };
     };
     /// Do not transmit client machine name or RDP server. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::hide_client_name {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::bogus_ios_rdpdr_virtual_channel {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
@@ -1557,14 +1317,12 @@ namespace cfg
     /// sesmanName: mod_rdp:enable_rdpdr_data_analysis <br/>
     /// default: true <br/>
     struct mod_rdp::enable_rdpdr_data_analysis {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 22};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
@@ -1572,11 +1330,9 @@ namespace cfg
     /// type: std::chrono::milliseconds <br/>
     /// default: 0 <br/>
     struct mod_rdp::remoteapp_bypass_legal_notice_delay {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
     /// Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
@@ -1584,42 +1340,34 @@ namespace cfg
     /// type: std::chrono::milliseconds <br/>
     /// default: 20000 <br/>
     struct mod_rdp::remoteapp_bypass_legal_notice_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 20000 };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::log_only_relevant_clipboard_activities {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::experimental_fix_too_long_cookie {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Force to split target domain and username with '@' separator. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::split_domain {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
@@ -1628,36 +1376,30 @@ namespace cfg
     /// displayName: Enable translated RemoteAPP with AM <br/>
     /// default: false <br/>
     struct mod_rdp::wabam_uses_translated_remoteapp {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 23};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Enables Session Shadowing Support. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::session_shadowing_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Stores CALs issued by the terminal servers. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::use_license_store {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Enables support of the remoteFX codec. <br/>
@@ -1666,24 +1408,20 @@ namespace cfg
     /// sesmanName: mod_rdp:enable_remotefx <br/>
     /// default: false <br/>
     struct mod_rdp::enable_remotefx {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 24};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::accept_monitor_layout_change_if_capture_is_not_started {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Connect to the server in Restricted Admin mode. <br/>
@@ -1694,14 +1432,12 @@ namespace cfg
     /// sesmanName: mod_rdp:enable_restricted_admin_mode <br/>
     /// default: false <br/>
     struct mod_rdp::enable_restricted_admin_mode {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 25};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// NLA will be disabled. <br/>
@@ -1713,14 +1449,12 @@ namespace cfg
     /// sesmanName: mod_rdp:force_smartcard_authentication <br/>
     /// default: false <br/>
     struct mod_rdp::force_smartcard_authentication {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 26};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Enable target connection on ipv6 <br/>
@@ -1729,14 +1463,12 @@ namespace cfg
     /// sesmanName: mod_rdp:enable_ipv6 <br/>
     /// default: true <br/>
     struct mod_rdp::enable_ipv6 {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 27};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option) <br/>
@@ -1746,14 +1478,12 @@ namespace cfg
     /// displayName: Console mode <br/>
     /// default: RdpModeConsole::allow <br/>
     struct mod_rdp::mode_console {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 28};
         using type = RdpModeConsole;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { RdpModeConsole::allow };
     };
     /// type: bool <br/>
@@ -1761,14 +1491,12 @@ namespace cfg
     /// sesmanName: mod_rdp:auto_reconnection_on_losing_target_link <br/>
     /// default: false <br/>
     struct mod_rdp::auto_reconnection_on_losing_target_link {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 29};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
@@ -1776,14 +1504,12 @@ namespace cfg
     /// sesmanName: mod_rdp:allow_session_reconnection_by_shortcut <br/>
     /// default: false <br/>
     struct mod_rdp::allow_session_reconnection_by_shortcut {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 30};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -1791,14 +1517,12 @@ namespace cfg
     /// sesmanName: mod_rdp:session_reconnection_delay <br/>
     /// default: 0 <br/>
     struct mod_rdp::session_reconnection_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 31};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         type value { 0 };
     };
     /// Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server. <br/>
@@ -1807,14 +1531,12 @@ namespace cfg
     /// sesmanName: mod_rdp:forward_client_build_number <br/>
     /// default: true <br/>
     struct mod_rdp::forward_client_build_number {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 32};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// To resolve the session freeze issue with Windows 7/Windows Server 2008 target. <br/>
@@ -1823,14 +1545,12 @@ namespace cfg
     /// sesmanName: mod_rdp:bogus_monitor_layout_treatment <br/>
     /// default: false <br/>
     struct mod_rdp::bogus_monitor_layout_treatment {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 33};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Effective username to be used for armoring Kerberos tickets. <br/>
@@ -1838,14 +1558,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::effective_krb_armoring_user {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 34};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Effective password to be used for armoring Kerberos tickets. <br/>
@@ -1853,14 +1571,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct mod_rdp::effective_krb_armoring_password {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 35};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Delay before showing disconnect message after the last RemoteApp window is closed. <br/>
@@ -1869,14 +1585,12 @@ namespace cfg
     /// sesmanName: mod_rdp:remote_programs_disconnect_message_delay <br/>
     /// default: 3000 <br/>
     struct mod_rdp::remote_programs_disconnect_message_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 36};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 3000, 120000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 3000, 120000>;
         type value { 3000 };
     };
     /// Use Session Probe to launch Remote Program as much as possible. <br/>
@@ -1885,14 +1599,12 @@ namespace cfg
     /// sesmanName: mod_rdp:use_session_probe_to_launch_remote_program <br/>
     /// default: true <br/>
     struct mod_rdp::use_session_probe_to_launch_remote_program {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 37};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
 
@@ -1901,14 +1613,12 @@ namespace cfg
     /// sesmanName: protocol:save_session_info_pdu <br/>
     /// default: RdpSaveSessionInfoPDU::UnsupportedOrUnknown <br/>
     struct protocol::save_session_info_pdu {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 0};
         using type = RdpSaveSessionInfoPDU;
-        using sesman_and_spec_type = RdpSaveSessionInfoPDU;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = RdpSaveSessionInfoPDU;
         type value { RdpSaveSessionInfoPDU::UnsupportedOrUnknown };
     };
 
@@ -1917,34 +1627,28 @@ namespace cfg
     /// sesmanName: session_probe:enable_session_probe <br/>
     /// default: false <br/>
     struct session_probe::enable_session_probe {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 0};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: char[512] <br/>
     /// default: "||CMD" <br/>
     struct session_probe::exe_or_file {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[512];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { "||CMD" };
     };
     /// type: char[512] <br/>
     /// default: REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS <br/>
     struct session_probe::arguments {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = char[512];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS };
     };
     /// Minimum supported server : Windows Server 2008. <br/>
@@ -1954,14 +1658,12 @@ namespace cfg
     /// sesmanName: session_probe:use_smart_launcher <br/>
     /// default: true <br/>
     struct session_probe::use_smart_launcher {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 1};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
@@ -1969,14 +1671,12 @@ namespace cfg
     /// sesmanName: session_probe:enable_launch_mask <br/>
     /// default: true <br/>
     struct session_probe::enable_launch_mask {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 2};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: SessionProbeOnLaunchFailure <br/>
@@ -1984,14 +1684,12 @@ namespace cfg
     /// sesmanName: session_probe:on_launch_failure <br/>
     /// default: SessionProbeOnLaunchFailure::disconnect_user <br/>
     struct session_probe::on_launch_failure {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 3};
         using type = SessionProbeOnLaunchFailure;
-        using sesman_and_spec_type = SessionProbeOnLaunchFailure;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeOnLaunchFailure;
         type value { SessionProbeOnLaunchFailure::disconnect_user };
     };
     /// This parameter is used if on_launch_failure is 1 (disconnect user). <br/>
@@ -2001,14 +1699,12 @@ namespace cfg
     /// sesmanName: session_probe:launch_timeout <br/>
     /// default: 40000 <br/>
     struct session_probe::launch_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 4};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 40000 };
     };
     /// This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
@@ -2018,14 +1714,12 @@ namespace cfg
     /// sesmanName: session_probe:launch_fallback_timeout <br/>
     /// default: 40000 <br/>
     struct session_probe::launch_fallback_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 5};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 40000 };
     };
     /// Minimum supported server : Windows Server 2008. <br/>
@@ -2034,14 +1728,12 @@ namespace cfg
     /// sesmanName: session_probe:start_launch_timeout_timer_only_after_logon <br/>
     /// default: true <br/>
     struct session_probe::start_launch_timeout_timer_only_after_logon {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 6};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2049,14 +1741,12 @@ namespace cfg
     /// sesmanName: session_probe:keepalive_timeout <br/>
     /// default: 5000 <br/>
     struct session_probe::keepalive_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 7};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         type value { 5000 };
     };
     /// type: SessionProbeOnKeepaliveTimeout <br/>
@@ -2064,14 +1754,12 @@ namespace cfg
     /// sesmanName: session_probe:on_keepalive_timeout <br/>
     /// default: SessionProbeOnKeepaliveTimeout::disconnect_user <br/>
     struct session_probe::on_keepalive_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 8};
         using type = SessionProbeOnKeepaliveTimeout;
-        using sesman_and_spec_type = SessionProbeOnKeepaliveTimeout;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeOnKeepaliveTimeout;
         type value { SessionProbeOnKeepaliveTimeout::disconnect_user };
     };
     /// End automatically a disconnected session. <br/>
@@ -2082,14 +1770,12 @@ namespace cfg
     /// sesmanName: session_probe:end_disconnected_session <br/>
     /// default: false <br/>
     struct session_probe::end_disconnected_session {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 9};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// End automatically a disconnected auto-deployed Application Driver session. <br/>
@@ -2098,14 +1784,12 @@ namespace cfg
     /// sesmanName: session_probe:enable_autodeployed_appdriver_affinity <br/>
     /// default: true <br/>
     struct session_probe::enable_autodeployed_appdriver_affinity {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 10};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
@@ -2113,14 +1797,12 @@ namespace cfg
     /// sesmanName: session_probe:enable_log <br/>
     /// default: false <br/>
     struct session_probe::enable_log {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 11};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
@@ -2128,14 +1810,12 @@ namespace cfg
     /// sesmanName: session_probe:enable_log_rotation <br/>
     /// default: false <br/>
     struct session_probe::enable_log_rotation {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 12};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: SessionProbeLogLevel <br/>
@@ -2143,14 +1823,12 @@ namespace cfg
     /// sesmanName: session_probe:log_level <br/>
     /// default: SessionProbeLogLevel::Debug <br/>
     struct session_probe::log_level {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 13};
         using type = SessionProbeLogLevel;
-        using sesman_and_spec_type = SessionProbeLogLevel;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeLogLevel;
         type value { SessionProbeLogLevel::Debug };
     };
     /// (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
@@ -2160,14 +1838,12 @@ namespace cfg
     /// sesmanName: session_probe:disconnected_application_limit <br/>
     /// default: 0 <br/>
     struct session_probe::disconnected_application_limit {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 14};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
     /// This policy setting allows you to configure a time limit for disconnected Terminal Services sessions. <br/>
@@ -2177,14 +1853,12 @@ namespace cfg
     /// sesmanName: session_probe:disconnected_session_limit <br/>
     /// default: 0 <br/>
     struct session_probe::disconnected_session_limit {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 15};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
     /// This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
@@ -2194,14 +1868,12 @@ namespace cfg
     /// sesmanName: session_probe:idle_session_limit <br/>
     /// default: 0 <br/>
     struct session_probe::idle_session_limit {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 16};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2209,14 +1881,12 @@ namespace cfg
     /// sesmanName: session_probe:smart_launcher_clipboard_initialization_delay <br/>
     /// default: 2000 <br/>
     struct session_probe::smart_launcher_clipboard_initialization_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 17};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 2000 };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2224,14 +1894,12 @@ namespace cfg
     /// sesmanName: session_probe:smart_launcher_start_delay <br/>
     /// default: 0 <br/>
     struct session_probe::smart_launcher_start_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 18};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2239,14 +1907,12 @@ namespace cfg
     /// sesmanName: session_probe:smart_launcher_long_delay <br/>
     /// default: 500 <br/>
     struct session_probe::smart_launcher_long_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 19};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 500 };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2254,14 +1920,12 @@ namespace cfg
     /// sesmanName: session_probe:smart_launcher_short_delay <br/>
     /// default: 50 <br/>
     struct session_probe::smart_launcher_short_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 20};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 50 };
     };
     /// type: bool <br/>
@@ -2270,14 +1934,12 @@ namespace cfg
     /// displayName: Enable Smart launcher with AM affinity <br/>
     /// default: true <br/>
     struct session_probe::smart_launcher_enable_wabam_affinity {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 21};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2285,14 +1947,12 @@ namespace cfg
     /// sesmanName: session_probe:launcher_abort_delay <br/>
     /// default: 2000 <br/>
     struct session_probe::launcher_abort_delay {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 22};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 2000 };
     };
     /// type: bool <br/>
@@ -2300,14 +1960,12 @@ namespace cfg
     /// sesmanName: session_probe:enable_crash_dump <br/>
     /// default: false <br/>
     struct session_probe::enable_crash_dump {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 23};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: uint32_t <br/>
@@ -2315,14 +1973,12 @@ namespace cfg
     /// sesmanName: session_probe:handle_usage_limit <br/>
     /// default: 0 <br/>
     struct session_probe::handle_usage_limit {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 24};
         using type = uint32_t;
-        using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 1000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<uint32_t, 0, 1000>;
         type value { 0 };
     };
     /// type: uint32_t <br/>
@@ -2330,14 +1986,12 @@ namespace cfg
     /// sesmanName: session_probe:memory_usage_limit <br/>
     /// default: 0 <br/>
     struct session_probe::memory_usage_limit {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 25};
         using type = uint32_t;
-        using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 200000000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<uint32_t, 0, 200000000>;
         type value { 0 };
     };
     /// As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program. <br/>
@@ -2347,14 +2001,12 @@ namespace cfg
     /// sesmanName: session_probe:cpu_usage_alarm_threshold <br/>
     /// default: 0 <br/>
     struct session_probe::cpu_usage_alarm_threshold {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 26};
         using type = uint32_t;
-        using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 10000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<uint32_t, 0, 10000>;
         type value { 0 };
     };
     /// type: SessionProbeCPUUsageAlarmAction <br/>
@@ -2362,14 +2014,12 @@ namespace cfg
     /// sesmanName: session_probe:cpu_usage_alarm_action <br/>
     /// default: SessionProbeCPUUsageAlarmAction::Restart <br/>
     struct session_probe::cpu_usage_alarm_action {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 27};
         using type = SessionProbeCPUUsageAlarmAction;
-        using sesman_and_spec_type = SessionProbeCPUUsageAlarmAction;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeCPUUsageAlarmAction;
         type value { SessionProbeCPUUsageAlarmAction::Restart };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2377,14 +2027,12 @@ namespace cfg
     /// sesmanName: session_probe:end_of_session_check_delay_time <br/>
     /// default: 0 <br/>
     struct session_probe::end_of_session_check_delay_time {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 28};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         type value { 0 };
     };
     /// type: bool <br/>
@@ -2392,14 +2040,12 @@ namespace cfg
     /// sesmanName: session_probe:ignore_ui_less_processes_during_end_of_session_check <br/>
     /// default: true <br/>
     struct session_probe::ignore_ui_less_processes_during_end_of_session_check {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 29};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
@@ -2407,14 +2053,12 @@ namespace cfg
     /// sesmanName: session_probe:childless_window_as_unidentified_input_field <br/>
     /// default: true <br/>
     struct session_probe::childless_window_as_unidentified_input_field {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 30};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
@@ -2422,14 +2066,12 @@ namespace cfg
     /// sesmanName: session_probe:update_disabled_features <br/>
     /// default: true <br/>
     struct session_probe::update_disabled_features {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 31};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: SessionProbeDisabledFeature <br/>
@@ -2437,14 +2079,12 @@ namespace cfg
     /// sesmanName: session_probe:disabled_features <br/>
     /// default: SessionProbeDisabledFeature{352} <br/>
     struct session_probe::disabled_features {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 32};
         using type = SessionProbeDisabledFeature;
-        using sesman_and_spec_type = SessionProbeDisabledFeature;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeDisabledFeature;
         type value { SessionProbeDisabledFeature{352} };
     };
     /// type: bool <br/>
@@ -2452,14 +2092,12 @@ namespace cfg
     /// sesmanName: session_probe:enable_bestsafe_interaction <br/>
     /// default: false <br/>
     struct session_probe::enable_bestsafe_interaction {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 33};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: SessionProbeOnAccountManipulation <br/>
@@ -2467,14 +2105,12 @@ namespace cfg
     /// sesmanName: session_probe:on_account_manipulation <br/>
     /// default: SessionProbeOnAccountManipulation::allow <br/>
     struct session_probe::on_account_manipulation {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 34};
         using type = SessionProbeOnAccountManipulation;
-        using sesman_and_spec_type = SessionProbeOnAccountManipulation;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeOnAccountManipulation;
         type value { SessionProbeOnAccountManipulation::allow };
     };
     /// The name of the environment variable pointing to the alternative directory to launch Session Probe. <br/>
@@ -2484,14 +2120,12 @@ namespace cfg
     /// sesmanName: session_probe:alternate_directory_environment_variable <br/>
     /// default: {} <br/>
     struct session_probe::alternate_directory_environment_variable {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 35};
         using type = char[4];
-        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_string;
         type value {  };
     };
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
@@ -2500,14 +2134,12 @@ namespace cfg
     /// sesmanName: session_probe:public_session <br/>
     /// default: false <br/>
     struct session_probe::public_session {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 36};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Comma-separated rules <br/>
@@ -2521,14 +2153,12 @@ namespace cfg
     /// sesmanName: session_probe:outbound_connection_monitoring_rules <br/>
     /// default: {} <br/>
     struct session_probe::outbound_connection_monitoring_rules {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 37};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Comma-separated rules (Ex.: $deny:Taskmgr) <br/>
@@ -2539,14 +2169,12 @@ namespace cfg
     /// sesmanName: session_probe:process_monitoring_rules <br/>
     /// default: {} <br/>
     struct session_probe::process_monitoring_rules {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 38};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe) <br/>
@@ -2555,14 +2183,12 @@ namespace cfg
     /// sesmanName: session_probe:extra_system_processes <br/>
     /// default: {} <br/>
     struct session_probe::extra_system_processes {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 39};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Comma-separated processes (Ex.: chrome.exe,ngf.exe) <br/>
@@ -2571,64 +2197,52 @@ namespace cfg
     /// sesmanName: session_probe:windows_of_these_applications_as_unidentified_input_field <br/>
     /// default: {} <br/>
     struct session_probe::windows_of_these_applications_as_unidentified_input_field {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 40};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct session_probe::customize_executable_name {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct session_probe::allow_multiple_handshake {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct session_probe::at_end_of_session_freeze_connection_and_wait {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct session_probe::enable_cleaner {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct session_probe::clipboard_based_launcher_reset_keyboard_status {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: SessionProbeProcessCommandLineRetrieveMethod <br/>
@@ -2636,14 +2250,12 @@ namespace cfg
     /// sesmanName: session_probe:process_command_line_retrieve_method <br/>
     /// default: SessionProbeProcessCommandLineRetrieveMethod::both <br/>
     struct session_probe::process_command_line_retrieve_method {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 41};
         using type = SessionProbeProcessCommandLineRetrieveMethod;
-        using sesman_and_spec_type = SessionProbeProcessCommandLineRetrieveMethod;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SessionProbeProcessCommandLineRetrieveMethod;
         type value { SessionProbeProcessCommandLineRetrieveMethod::both };
     };
     /// type: std::chrono::milliseconds <br/>
@@ -2651,14 +2263,12 @@ namespace cfg
     /// sesmanName: session_probe:periodic_task_run_interval <br/>
     /// default: 500 <br/>
     struct session_probe::periodic_task_run_interval {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 42};
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 300, 2000>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 300, 2000>;
         type value { 500 };
     };
     /// type: bool <br/>
@@ -2666,14 +2276,12 @@ namespace cfg
     /// sesmanName: session_probe:pause_if_session_is_disconnected <br/>
     /// default: false <br/>
     struct session_probe::pause_if_session_is_disconnected {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 43};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
 
@@ -2683,14 +2291,12 @@ namespace cfg
     /// sesmanName: server_cert:server_cert_store <br/>
     /// default: true <br/>
     struct server_cert::server_cert_store {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 0};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: ServerCertCheck <br/>
@@ -2698,14 +2304,12 @@ namespace cfg
     /// sesmanName: server_cert:server_cert_check <br/>
     /// default: ServerCertCheck::fails_if_no_match_and_succeed_if_no_know <br/>
     struct server_cert::server_cert_check {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 1};
         using type = ServerCertCheck;
-        using sesman_and_spec_type = ServerCertCheck;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ServerCertCheck;
         type value { ServerCertCheck::fails_if_no_match_and_succeed_if_no_know };
     };
     /// Warn if check allow connexion to server. <br/>
@@ -2714,14 +2318,12 @@ namespace cfg
     /// sesmanName: server_cert:server_access_allowed_message <br/>
     /// default: ServerNotification::syslog <br/>
     struct server_cert::server_access_allowed_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 2};
         using type = ServerNotification;
-        using sesman_and_spec_type = ServerNotification;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ServerNotification;
         type value { ServerNotification::syslog };
     };
     /// Warn that new server certificate file was created. <br/>
@@ -2730,14 +2332,12 @@ namespace cfg
     /// sesmanName: server_cert:server_cert_create_message <br/>
     /// default: ServerNotification::syslog <br/>
     struct server_cert::server_cert_create_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 3};
         using type = ServerNotification;
-        using sesman_and_spec_type = ServerNotification;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ServerNotification;
         type value { ServerNotification::syslog };
     };
     /// Warn that server certificate file was successfully checked. <br/>
@@ -2746,14 +2346,12 @@ namespace cfg
     /// sesmanName: server_cert:server_cert_success_message <br/>
     /// default: ServerNotification::syslog <br/>
     struct server_cert::server_cert_success_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 4};
         using type = ServerNotification;
-        using sesman_and_spec_type = ServerNotification;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ServerNotification;
         type value { ServerNotification::syslog };
     };
     /// Warn that server certificate file checking failed. <br/>
@@ -2762,53 +2360,45 @@ namespace cfg
     /// sesmanName: server_cert:server_cert_failure_message <br/>
     /// default: ServerNotification::syslog <br/>
     struct server_cert::server_cert_failure_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 5};
         using type = ServerNotification;
-        using sesman_and_spec_type = ServerNotification;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ServerNotification;
         type value { ServerNotification::syslog };
     };
     /// Warn that server certificate check raised some internal error. <br/>
     /// type: ServerNotification <br/>
     /// default: ServerNotification::syslog <br/>
     struct server_cert::error_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ServerNotification;
-        using sesman_and_spec_type = ServerNotification;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ServerNotification;
         type value { ServerNotification::syslog };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct server_cert::enable_external_validation {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 6};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct server_cert::external_cert {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 7};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// empty string for wait, 'Ok' or error message <br/>
@@ -2816,14 +2406,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct server_cert::external_response {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 8};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
 
@@ -2832,14 +2420,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct mod_vnc::clipboard_up {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 0};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// Enable or disable the clipboard from server (server to client). <br/>
@@ -2847,14 +2433,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct mod_vnc::clipboard_down {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 1};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// Sets the encoding types in which pixel data can be sent by the VNC server: <br/>
@@ -2866,11 +2450,9 @@ namespace cfg
     /// type: std::string <br/>
     /// default: {} <br/>
     struct mod_vnc::encodings {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<int>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<int>;
         type value {  };
     };
     /// VNC server clipboard data encoding type. <br/>
@@ -2879,14 +2461,12 @@ namespace cfg
     /// sesman::name: vnc_server_clipboard_encoding_type <br/>
     /// default: ClipboardEncodingType::latin1 <br/>
     struct mod_vnc::server_clipboard_encoding_type {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 2};
         using type = ClipboardEncodingType;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { ClipboardEncodingType::latin1 };
     };
     /// type: VncBogusClipboardInfiniteLoop <br/>
@@ -2894,14 +2474,12 @@ namespace cfg
     /// sesman::name: vnc_bogus_clipboard_infinite_loop <br/>
     /// default: VncBogusClipboardInfiniteLoop::delayed <br/>
     struct mod_vnc::bogus_clipboard_infinite_loop {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 3};
         using type = VncBogusClipboardInfiniteLoop;
-        using sesman_and_spec_type = VncBogusClipboardInfiniteLoop;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = VncBogusClipboardInfiniteLoop;
         type value { VncBogusClipboardInfiniteLoop::delayed };
     };
     /// type: bool <br/>
@@ -2909,14 +2487,12 @@ namespace cfg
     /// sesmanName: mod_vnc:server_is_macos <br/>
     /// default: false <br/>
     struct mod_vnc::server_is_macos {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 4};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
@@ -2924,14 +2500,12 @@ namespace cfg
     /// sesmanName: mod_vnc:server_unix_alt <br/>
     /// default: false <br/>
     struct mod_vnc::server_unix_alt {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 5};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
@@ -2939,14 +2513,12 @@ namespace cfg
     /// sesmanName: mod_vnc:support_cursor_pseudo_encoding <br/>
     /// default: true <br/>
     struct mod_vnc::support_cursor_pseudo_encoding {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 6};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Enable target connection on ipv6 <br/>
@@ -2955,35 +2527,29 @@ namespace cfg
     /// sesmanName: mod_vnc:enable_ipv6 <br/>
     /// default: true <br/>
     struct mod_vnc::enable_ipv6 {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 7};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
 
     /// type: bool <br/>
     /// default: true <br/>
     struct session_log::enable_session_log {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct session_log::enable_arcsight_log {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Keyboard Input Masking Level: <br/>
@@ -2992,65 +2558,53 @@ namespace cfg
     /// sesmanName: session_log:keyboard_input_masking_level <br/>
     /// default: KeyboardInputMaskingLevel::password_and_unidentified <br/>
     struct session_log::keyboard_input_masking_level {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 0};
         using type = KeyboardInputMaskingLevel;
-        using sesman_and_spec_type = KeyboardInputMaskingLevel;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = KeyboardInputMaskingLevel;
         type value { KeyboardInputMaskingLevel::password_and_unidentified };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct session_log::hide_non_printable_kbd_input {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
 
     /// type: OcrVersion <br/>
     /// default: OcrVersion::v2 <br/>
     struct ocr::version {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = OcrVersion;
-        using sesman_and_spec_type = OcrVersion;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = OcrVersion;
         type value { OcrVersion::v2 };
     };
     /// type: OcrLocale <br/>
     /// default: OcrLocale::latin <br/>
     struct ocr::locale {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = OcrLocale;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { OcrLocale::latin };
     };
     /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 100>> <br/>
     /// default: 100 <br/>
     struct ocr::interval {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
-        using sesman_and_spec_type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
         type value { 100 };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct ocr::on_title_bar_only {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// Expressed in percentage, <br/>
@@ -3059,11 +2613,9 @@ namespace cfg
     /// type: unsigned <br/>
     /// default: 40 <br/>
     struct ocr::max_unrecog_char_rate {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = unsigned;
-        using sesman_and_spec_type = ::configs::spec_types::range<unsigned, 0, 100>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<unsigned, 0, 100>;
         type value { 40 };
     };
 
@@ -3072,14 +2624,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct capture::record_filebase {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section11 + 0};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// subdirectory of record_path (video section) <br/>
@@ -3087,28 +2637,24 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct capture::record_subdirectory {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section11 + 1};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct capture::fdx_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section11 + 2};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// Disable keyboard log: <br/>
@@ -3118,100 +2664,84 @@ namespace cfg
     /// sesmanName: capture:disable_keyboard_log <br/>
     /// default: KeyboardLogFlagsCP::syslog <br/>
     struct capture::disable_keyboard_log {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section11 + 3};
         using type = KeyboardLogFlagsCP;
-        using sesman_and_spec_type = KeyboardLogFlagsCP;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = KeyboardLogFlagsCP;
         type value { KeyboardLogFlagsCP::syslog };
     };
 
     /// type: CaptureFlags <br/>
     /// default: CaptureFlags{11} <br/>
     struct video::capture_flags {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = CaptureFlags;
-        using sesman_and_spec_type = CaptureFlags;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = CaptureFlags;
         type value { CaptureFlags{11} };
     };
     /// Frame interval. <br/>
     /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 10>> <br/>
     /// default: 10 <br/>
     struct video::png_interval {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
-        using sesman_and_spec_type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
         type value { 10 };
     };
     /// Time between 2 wrm movies. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 600 <br/>
     struct video::break_interval {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 600 };
     };
     /// Number of png captures to keep. <br/>
     /// type: unsigned <br/>
     /// default: 5 <br/>
     struct video::png_limit {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 5 };
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// sesman ⇒ proxy <br/>
     /// default: app_path(AppPath::Hash) <br/>
     struct video::hash_path {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section12 + 0};
         using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::directory_path;
         type value { app_path(AppPath::Hash) };
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// sesman ⇒ proxy <br/>
     /// default: app_path(AppPath::RecordTmp) <br/>
     struct video::record_tmp_path {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section12 + 1};
         using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::directory_path;
         type value { app_path(AppPath::RecordTmp) };
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// sesman ⇒ proxy <br/>
     /// default: app_path(AppPath::Record) <br/>
     struct video::record_path {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section12 + 2};
         using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::directory_path;
         type value { app_path(AppPath::Record) };
     };
     /// Disable keyboard log: <br/>
@@ -3219,53 +2749,43 @@ namespace cfg
     /// type: KeyboardLogFlags <br/>
     /// default: KeyboardLogFlags::syslog <br/>
     struct video::disable_keyboard_log {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = KeyboardLogFlags;
-        using sesman_and_spec_type = KeyboardLogFlags;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = KeyboardLogFlags;
         type value { KeyboardLogFlags::syslog };
     };
     /// Disable clipboard log: <br/>
     /// type: ClipboardLogFlags <br/>
     /// default: ClipboardLogFlags::syslog <br/>
     struct video::disable_clipboard_log {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ClipboardLogFlags;
-        using sesman_and_spec_type = ClipboardLogFlags;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ClipboardLogFlags;
         type value { ClipboardLogFlags::syslog };
     };
     /// Disable (redirected) file system log: <br/>
     /// type: FileSystemLogFlags <br/>
     /// default: FileSystemLogFlags::syslog <br/>
     struct video::disable_file_system_log {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = FileSystemLogFlags;
-        using sesman_and_spec_type = FileSystemLogFlags;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = FileSystemLogFlags;
         type value { FileSystemLogFlags::syslog };
     };
     /// type: ColorDepthSelectionStrategy <br/>
     /// default: ColorDepthSelectionStrategy::depth16 <br/>
     struct video::wrm_color_depth_selection_strategy {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ColorDepthSelectionStrategy;
-        using sesman_and_spec_type = ColorDepthSelectionStrategy;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ColorDepthSelectionStrategy;
         type value { ColorDepthSelectionStrategy::depth16 };
     };
     /// type: WrmCompressionAlgorithm <br/>
     /// default: WrmCompressionAlgorithm::gzip <br/>
     struct video::wrm_compression_algorithm {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = WrmCompressionAlgorithm;
-        using sesman_and_spec_type = WrmCompressionAlgorithm;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = WrmCompressionAlgorithm;
         type value { WrmCompressionAlgorithm::gzip };
     };
     /// Needed to play a video with old ffplay or VLC v1. <br/>
@@ -3274,32 +2794,26 @@ namespace cfg
     /// displayName: Bogus VLC frame rate <br/>
     /// default: true <br/>
     struct video::bogus_vlc_frame_rate {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: std::string <br/>
     /// default: "mp4" <br/>
     struct video::codec_id {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { "mp4" };
     };
     /// type: unsigned <br/>
     /// displayName: Frame rate <br/>
     /// default: 5 <br/>
     struct video::framerate {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = unsigned;
-        using sesman_and_spec_type = ::configs::spec_types::range<unsigned, 1, 120>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::range<unsigned, 1, 120>;
         type value { 5 };
     };
     /// FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264 <br/>
@@ -3307,64 +2821,52 @@ namespace cfg
     /// type: std::string <br/>
     /// default: "crf=35 preset=superfast" <br/>
     struct video::ffmpeg_options {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { "crf=35 preset=superfast" };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct video::notimestamp {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: SmartVideoCropping <br/>
     /// default: SmartVideoCropping::v2 <br/>
     struct video::smart_video_cropping {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = SmartVideoCropping;
-        using sesman_and_spec_type = SmartVideoCropping;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = SmartVideoCropping;
         type value { SmartVideoCropping::v2 };
     };
     /// Needed to play a video with corrupted Bitmap Update. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::play_video_with_corrupted_bitmap {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Allow real-time view (4 eyes) without session recording enabled in the authorization <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::allow_rt_without_recording {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Allow to control permissions on recorded files with octal number <br/>
     /// type: FilePermissions <br/>
     /// default: 0440 <br/>
     struct video::file_permissions {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = FilePermissions;
-        using sesman_and_spec_type = ::FilePermissions;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::FilePermissions;
         type value { 0440 };
     };
 
@@ -3372,157 +2874,133 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct audit::rt_display {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 0};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// default: true <br/>
     struct audit::use_redis {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// type: std::chrono::milliseconds <br/>
     /// default: 500 <br/>
     struct audit::redis_timeout {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::milliseconds;
         type value { 500 };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct audit::redis_address {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 1};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct audit::redis_port {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 2};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct audit::redis_password {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 3};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct audit::redis_db {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 4};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct audit::redis_use_tls {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 5};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct audit::redis_tls_cacert {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 6};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct audit::redis_tls_cert {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 7};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct audit::redis_tls_key {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section13 + 8};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
 
     /// type: std::string <br/>
     /// default: REDEMPTION_CONFIG_VALIDATOR_PATH <br/>
     struct file_verification::socket_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { REDEMPTION_CONFIG_VALIDATOR_PATH };
     };
     /// Enable use of ICAP service for file verification on upload. <br/>
@@ -3531,14 +3009,12 @@ namespace cfg
     /// sesmanName: file_verification:enable_up <br/>
     /// default: false <br/>
     struct file_verification::enable_up {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 0};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// Enable use of ICAP service for file verification on download. <br/>
@@ -3547,14 +3023,12 @@ namespace cfg
     /// sesmanName: file_verification:enable_down <br/>
     /// default: false <br/>
     struct file_verification::enable_down {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 1};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// Verify text data via clipboard from client to server. <br/>
@@ -3564,14 +3038,12 @@ namespace cfg
     /// sesmanName: file_verification:clipboard_text_up <br/>
     /// default: false <br/>
     struct file_verification::clipboard_text_up {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 2};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// Verify text data via clipboard from server to client <br/>
@@ -3581,14 +3053,12 @@ namespace cfg
     /// sesmanName: file_verification:clipboard_text_down <br/>
     /// default: false <br/>
     struct file_verification::clipboard_text_down {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 3};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// Block file transfer from client to server on invalid file verification. <br/>
@@ -3598,14 +3068,12 @@ namespace cfg
     /// sesmanName: file_verification:block_invalid_file_up <br/>
     /// default: false <br/>
     struct file_verification::block_invalid_file_up {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 4};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Block file transfer from server to client on invalid file verification. <br/>
@@ -3615,14 +3083,12 @@ namespace cfg
     /// sesmanName: file_verification:block_invalid_file_down <br/>
     /// default: false <br/>
     struct file_verification::block_invalid_file_down {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 5};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Block text transfer from client to server on invalid text verification. <br/>
@@ -3630,11 +3096,9 @@ namespace cfg
     /// type: bool <br/>
     /// default: false <br/>
     struct file_verification::block_invalid_clipboard_text_up {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Block text transfer from server to client on invalid text verification. <br/>
@@ -3642,11 +3106,9 @@ namespace cfg
     /// type: bool <br/>
     /// default: false <br/>
     struct file_verification::block_invalid_clipboard_text_down {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
@@ -3654,14 +3116,12 @@ namespace cfg
     /// sesmanName: file_verification:log_if_accepted <br/>
     /// default: true <br/>
     struct file_verification::log_if_accepted {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 6};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes). <br/>
@@ -3671,25 +3131,21 @@ namespace cfg
     /// sesmanName: file_verification:max_file_size_rejected <br/>
     /// default: 256 <br/>
     struct file_verification::max_file_size_rejected {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section14 + 7};
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value { 256 };
     };
     /// Temporary path used when files take up too much memory. <br/>
     /// type: ::configs::spec_types::directory_path <br/>
     /// default: "/tmp/" <br/>
     struct file_verification::tmpdir {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::directory_path;
         type value { "/tmp/" };
     };
 
@@ -3699,14 +3155,12 @@ namespace cfg
     /// sesmanName: file_storage:store_file <br/>
     /// default: RdpStoreFile::never <br/>
     struct file_storage::store_file {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section15 + 0};
         using type = RdpStoreFile;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { RdpStoreFile::never };
     };
 
@@ -3716,28 +3170,24 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } <br/>
     struct crypto::encryption_key {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section18 + 0};
         using type = std::array<unsigned char, 32>;
-        using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_binary;
         type value { {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } };
     };
     /// type: std::array&lt;unsigned char, 32> <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } <br/>
     struct crypto::sign_key {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section18 + 1};
         using type = std::array<unsigned char, 32>;
-        using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::fixed_binary;
         type value { {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } };
     };
 
@@ -3745,33 +3195,27 @@ namespace cfg
     /// type: bool <br/>
     /// default: false <br/>
     struct websocket::enable_websocket {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Use TLS with websocket (wss) <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct websocket::use_tls {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
     /// ${addr}:${port} or ${port} or ${unix_socket_path} <br/>
     /// type: std::string <br/>
     /// default: ":3390" <br/>
     struct websocket::listen_address {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { ":3390" };
     };
 
@@ -3781,14 +3225,12 @@ namespace cfg
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::psid {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 0};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: ColorDepth <br/>
@@ -3796,14 +3238,12 @@ namespace cfg
     /// sesman::name: bpp <br/>
     /// default: ColorDepth::depth24 <br/>
     struct context::opt_bpp {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 1};
         using type = ColorDepth;
-        using sesman_and_spec_type = ColorDepth;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ColorDepth;
         type value { ColorDepth::depth24 };
     };
     /// type: uint16_t <br/>
@@ -3811,14 +3251,12 @@ namespace cfg
     /// sesman::name: height <br/>
     /// default: 600 <br/>
     struct context::opt_height {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 2};
         using type = uint16_t;
-        using sesman_and_spec_type = uint16_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint16_t;
         type value { 600 };
     };
     /// type: uint16_t <br/>
@@ -3826,21 +3264,18 @@ namespace cfg
     /// sesman::name: width <br/>
     /// default: 800 <br/>
     struct context::opt_width {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 3};
         using type = uint16_t;
-        using sesman_and_spec_type = uint16_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint16_t;
         type value { 800 };
     };
     /// type: std::string <br/>
     /// default: {} <br/>
     struct context::auth_error_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
         using mapped_type = type;
         type value {  };
@@ -3849,182 +3284,156 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::selector {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 4};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: unsigned <br/>
     /// sesman ⇔ proxy <br/>
     /// default: 1 <br/>
     struct context::selector_current_page {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 5};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 1 };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::selector_device_filter {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 6};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::selector_group_filter {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 7};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::selector_proto_filter {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 8};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: unsigned <br/>
     /// sesman ⇔ proxy <br/>
     /// default: 0 <br/>
     struct context::selector_lines_per_page {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 9};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 0 };
     };
     /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 1 <br/>
     struct context::selector_number_of_pages {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 10};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 1 };
     };
     /// type: std::string <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {} <br/>
     struct context::target_password {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 11};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {} <br/>
     struct context::target_host {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 12};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::tunneling_target_host {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 13};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::target_str {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 14};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::target_service {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 15};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 3389 <br/>
     struct context::target_port {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 16};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 3389 };
     };
     /// type: std::string <br/>
@@ -4032,182 +3441,156 @@ namespace cfg
     /// sesman::name: proto_dest <br/>
     /// default: "RDP" <br/>
     struct context::target_protocol {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 17};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { "RDP" };
     };
     /// type: std::string <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {} <br/>
     struct context::password {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 18};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::reporting {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 19};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_channel_answer {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 20};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::auth_channel_target {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 21};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 22};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::display_link {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 23};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::chrono::seconds <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct context::mod_timeout {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 24};
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 0 };
     };
     /// type: bool <br/>
     /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::accept_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 25};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::display_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 26};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::rejected {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 27};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::keepalive {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 28};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::session_id {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 29};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::chrono::seconds <br/>
@@ -4215,287 +3598,246 @@ namespace cfg
     /// sesman::name: timeclose <br/>
     /// default: 0 <br/>
     struct context::end_date_cnx {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 30};
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 0 };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::real_target_device {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 31};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::authentication_challenge {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 32};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::ticket {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 33};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::comment {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 34};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::duration {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 35};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::chrono::minutes <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct context::duration_max {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 36};
         using type = std::chrono::minutes;
-        using sesman_and_spec_type = std::chrono::minutes;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::minutes;
         type value { 0 };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::waitinforeturn {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 37};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::showform {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 38};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct context::formflag {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 39};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value { 0 };
     };
     /// type: ModuleName <br/>
     /// sesman ⇔ proxy <br/>
     /// default: ModuleName::login <br/>
     struct context::module {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 40};
         using type = ModuleName;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { ModuleName::login };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::try_alternate_target {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 41};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::has_more_target {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 42};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::proxy_opt {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 43};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::pattern_kill {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 44};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::pattern_notify {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 45};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::opt_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 46};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::login_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 47};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::disconnect_reason {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 48};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::disconnect_reason_ack {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 49};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::string <br/>
     /// default: {} <br/>
     struct context::ip_target {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
         using mapped_type = type;
         type value {  };
@@ -4504,231 +3846,198 @@ namespace cfg
     /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::recording_started {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 50};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// sesman ⇔ proxy <br/>
     /// default: false <br/>
     struct context::rt_ready {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 51};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: bool <br/>
     /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::sharing_ready {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 52};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 53};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::auth_notify {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 54};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: unsigned <br/>
     /// sesman ⇐ proxy <br/>
     /// default: 0 <br/>
     struct context::auth_notify_rail_exec_flags {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 55};
         using type = unsigned;
-        using sesman_and_spec_type = unsigned;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = unsigned;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::auth_notify_rail_exec_exe_or_file {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 56};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: uint16_t <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct context::auth_command_rail_exec_exec_result {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 57};
         using type = uint16_t;
-        using sesman_and_spec_type = uint16_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint16_t;
         type value {  };
     };
     /// type: uint16_t <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 0 <br/>
     struct context::auth_command_rail_exec_flags {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 58};
         using type = uint16_t;
-        using sesman_and_spec_type = uint16_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint16_t;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_original_exe_or_file {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 59};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_exe_or_file {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 60};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_working_dir {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 61};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_arguments {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 62};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_account {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 63};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_password {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 64};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::session_probe_launch_error_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 65};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// default: {} <br/>
     struct context::close_box_extra_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
         using mapped_type = type;
         type value {  };
@@ -4737,301 +4046,258 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::is_wabam {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 66};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::pm_response {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 67};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::pm_request {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 68};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: uint32_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: 0 <br/>
     struct context::native_session_id {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 69};
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇐ proxy <br/>
     /// default: false <br/>
     struct context::rd_shadow_available {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 70};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::string <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_userdata {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 71};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_type {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 72};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: uint32_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: 0 <br/>
     struct context::rd_shadow_invitation_error_code {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 73};
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_invitation_error_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 74};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_invitation_id {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 75};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_invitation_addr {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 76};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: uint16_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: 0 <br/>
     struct context::rd_shadow_invitation_port {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 77};
         using type = uint16_t;
-        using sesman_and_spec_type = uint16_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint16_t;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {} <br/>
     struct context::session_sharing_userdata {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b11;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 78};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct context::session_sharing_enable_control {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 79};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// type: std::chrono::seconds <br/>
     /// sesman ⇒ proxy <br/>
     /// default: 600 <br/>
     struct context::session_sharing_ttl {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 80};
         using type = std::chrono::seconds;
-        using sesman_and_spec_type = std::chrono::seconds;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::chrono::seconds;
         type value { 600 };
     };
     /// type: uint32_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: 0 <br/>
     struct context::session_sharing_invitation_error_code {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 81};
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::session_sharing_invitation_error_message {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 82};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::session_sharing_invitation_id {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 83};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::session_sharing_invitation_addr {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 84};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::session_sharing_target_ip {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 85};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::session_sharing_target_login {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 86};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: bool <br/>
     /// default: false <br/>
     struct context::rail_module_host_mod_is_active {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = type;
         type value { false };
@@ -5040,49 +4306,42 @@ namespace cfg
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::smartcard_login {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 87};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::banner_message {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 88};
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// type: BannerType <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::banner_type {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section21 + 89};
         using type = BannerType;
-        using sesman_and_spec_type = BannerType;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = BannerType;
         type value {  };
     };
     /// type: std::vector&lt;uint8_t> <br/>
     /// default: {} <br/>
     struct context::redirection_password_or_cookie {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::vector<uint8_t>;
         using mapped_type = type;
         type value {  };
@@ -5092,11 +4351,9 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct internal_mod::enable_target_field {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { true };
     };
 
@@ -5104,25 +4361,21 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: "/tmp/" <br/>
     struct mod_replay::replay_path {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section23 + 0};
         using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::directory_path;
         type value { "/tmp/" };
     };
     /// 0 - Wait for Escape, 1 - End session <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_replay::on_end_of_data {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// 0 - replay once, 1 - loop replay <br/>
@@ -5130,14 +4383,12 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: false <br/>
     struct mod_replay::replay_on_loop {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section23 + 1};
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
 
@@ -5145,28 +4396,24 @@ namespace cfg
     /// sesman ⇒ proxy <br/>
     /// default: Language::en <br/>
     struct translation::language {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section24 + 0};
         using type = Language;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { Language::en };
     };
     /// type: LoginLanguage <br/>
     /// sesman ⇐ proxy <br/>
     /// default: LoginLanguage::Auto <br/>
     struct translation::login_language {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b01;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section24 + 1};
         using type = LoginLanguage;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { LoginLanguage::Auto };
     };
 
@@ -5174,243 +4421,195 @@ namespace cfg
     /// type: bool <br/>
     /// default: false <br/>
     struct theme::enable_theme {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { false };
     };
     /// Logo displayed when theme is enabled <br/>
     /// type: std::string <br/>
     /// default: REDEMPTION_CONFIG_THEME_LOGO <br/>
     struct theme::logo_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value { REDEMPTION_CONFIG_THEME_LOGO };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 532320 <br/>
     struct theme::bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 532320 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 13620715 <br/>
     struct theme::separator_color {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 13620715 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 19868 <br/>
     struct theme::focus_color {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 19868 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16776960 <br/>
     struct theme::error_color {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16776960 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::edit_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::edit_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 19868 <br/>
     struct theme::edit_focus_color {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 19868 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::tooltip_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777119 <br/>
     struct theme::tooltip_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16777119 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::tooltip_border_color {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 15330550 <br/>
     struct theme::selector_line1_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 15330550 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::selector_line1_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 13620715 <br/>
     struct theme::selector_line2_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 13620715 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::selector_line2_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 4485828 <br/>
     struct theme::selector_selected_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 4485828 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::selector_selected_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 19868 <br/>
     struct theme::selector_focus_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 19868 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::selector_focus_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 4485828 <br/>
     struct theme::selector_label_bgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 4485828 };
     };
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::selector_label_fgcolor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ::configs::spec_types::rgb;
-        using sesman_and_spec_type = ::configs::spec_types::rgb;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
 
     /// type: std::string <br/>
     /// default: {} <br/>
     struct debug::fake_target_ip {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = std::string;
         type value {  };
     };
     /// - kbd / ocr when != 0 <br/>
@@ -5427,11 +4626,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::capture {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - variable = 0x0002 <br/>
@@ -5440,11 +4637,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::auth {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - Log   = 0x01 <br/>
@@ -5454,11 +4649,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::session {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - basic_trace     = 0x00000001 <br/>
@@ -5486,11 +4679,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::front {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - basic_trace         = 0x00000001 <br/>
@@ -5528,11 +4719,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::mod_rdp {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - basic_trace     = 0x00000001 <br/>
@@ -5557,11 +4746,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::mod_vnc {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - copy_paste != 0 <br/>
@@ -5569,11 +4756,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::mod_internal {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - basic    = 0x0001 <br/>
@@ -5582,11 +4767,9 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::sck_mod {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - basic    = 0x0001 <br/>
@@ -5595,32 +4778,26 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::sck_front {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::password {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - when != 0 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::compression {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - life       = 0x0001 <br/>
@@ -5628,64 +4805,52 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::cache {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// - when != 0 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::ocr {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// avlog level <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::ffmpeg {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = uint32_t;
         type value {  };
     };
     /// type: unsigned <br/>
     /// default: 2 <br/>
     struct debug::config {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = unsigned;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = bool;
         type value { 2 };
     };
     /// type: ModRdpUseFailureSimulationSocketTransport <br/>
     /// default: ModRdpUseFailureSimulationSocketTransport::Off <br/>
     struct debug::mod_rdp_use_failure_simulation_socket_transport {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = ModRdpUseFailureSimulationSocketTransport;
-        using sesman_and_spec_type = ModRdpUseFailureSimulationSocketTransport;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ModRdpUseFailureSimulationSocketTransport;
         type value { ModRdpUseFailureSimulationSocketTransport::Off };
     };
     /// List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs <br/>
     /// type: std::string <br/>
     /// default: {} <br/>
     struct debug::probe_client_addresses {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
-        using mapped_type = sesman_and_spec_type;
+        using mapped_type = ::configs::spec_types::list<std::string>;
         type value {  };
     };
 
