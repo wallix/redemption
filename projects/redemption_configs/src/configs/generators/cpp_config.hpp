@@ -370,7 +370,13 @@ struct CppConfigWriterBase
         std::vector<Member> members;
     };
 
-    std::vector<std::pair<std::string, std::string>> sections_parser;
+    struct SectionString
+    {
+        std::string section_name;
+        std::string body;
+    };
+
+    std::vector<SectionString> sections_parser;
     std::vector<std::string> authstrs;
     std::vector<std::string> sesman_and_connpolicy_strs;
     std::vector<Section> sections;
@@ -478,7 +484,7 @@ struct CppConfigWriterBase
             if (this->sections.back().members.empty()) {
                 str.clear();
             }
-            this->sections_parser.emplace_back(section_names.all, str);
+            this->sections_parser.emplace_back(SectionString{section_names.all, str});
             this->out_body_parser_.str("");
         }
         this->start_indexes.emplace_back(this->authid_policies.size());
@@ -897,9 +903,9 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
         "    if (0) {}\n"
     ;
     int id = 1;
-    for (auto & body : writer.sections_parser) {
+    for (auto & section : writer.sections_parser) {
         out_set_value <<
-            "    else if (section == \"" << body.first << "\"_zv) {\n"
+            "    else if (section == \"" << section.section_name << "\"_zv) {\n"
             "        this->section_id = " << id << ";\n"
             "    }\n"
         ;
@@ -918,14 +924,14 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
         "    if (0) {}\n"
     ;
     id = 1;
-    for (auto & body : writer.sections_parser) {
+    for (auto & section : writer.sections_parser) {
         // all members are attr::external
         out_set_value <<
             "    else if (this->section_id == " << id << ") {\n"
         ;
-        if (!body.second.empty()) {
+        if (!section.body.empty()) {
             out_set_value <<
-                "        if (0) {}\n" << body.second << "\n"
+                "        if (0) {}\n" << section.body << "\n"
                 "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
                 "            LOG(LOG_WARNING, \"unknown parameter %s in section [%s]\",\n"
                 "                key, this->section_name);\n"
