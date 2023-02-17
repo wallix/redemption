@@ -75,6 +75,12 @@ RED_AUTO_TEST_CASE(TestParseServerMessage)
 
     RED_CHECK(!parse_server_message.parse(
         "Request=0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
+        "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
+        "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
+        "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
+        "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
+        "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
+        "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"
         "0\x01""1\x01""2\x01""3\x01""4\x01""5\x01""6\x01""7\x01""8"_zv));
 
     RED_CHECK(parse_server_message.parse("GetWabSessionParameters"_zv));
