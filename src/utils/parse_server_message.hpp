@@ -30,8 +30,8 @@
 
 struct ParseServerMessage
 {
-    static const std::size_t max_arity = 16;
-    static const std::size_t max_order_len = 32;
+    static const std::size_t max_arity = 64;
+//    static const std::size_t max_order_len = 32;
 
     TaggedStringArray<UpperTag, 126> upper_order() const noexcept
     {
