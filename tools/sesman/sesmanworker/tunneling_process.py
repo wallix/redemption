@@ -20,8 +20,15 @@ from logger import Logger
 from subprocess import Popen, PIPE
 from wallixconst.misc import VOLATILE_FOLDER
 
-from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
+try:
+    import Cryptodome
+except ImportError:
+    import sys
+    import Crypto
+    sys.modules["Cryptodome"] = Crypto
+
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Random import get_random_bytes
 
 from typing import AnyStr, Tuple, Optional, Dict, Union, Any
 
