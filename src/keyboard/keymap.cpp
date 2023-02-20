@@ -97,6 +97,7 @@ namespace
 
             no_mod[int(KeyCode::Esc)] = KEvent::Esc;
             no_mod[int(KeyCode::F4)] = KEvent::F4;
+            no_mod[int(KeyCode::F12)] = KEvent::F12;
             no_mod[int(KeyCode::Tab)] = special;
             no_mod[int(KeyCode::Enter)] = KEvent::Enter;
             no_mod[int(KeyCode::Delete)] = KEvent::Delete;
@@ -138,6 +139,7 @@ namespace
             no_mod[int(KeyCode::Key_V)] = special;
 
             numpad_mod[int(KeyCode::Esc)] = KEvent::Esc;
+            numpad_mod[int(KeyCode::F12)] = KEvent::F12;
             numpad_mod[int(KeyCode::Tab)] = KEvent::Tab;
             numpad_mod[int(KeyCode::Enter)] = KEvent::Enter;
             numpad_mod[int(KeyCode::Delete)] = KEvent::Delete;
@@ -331,6 +333,19 @@ bool Keymap::is_app_switching_shortcut() const noexcept
     // alt+tab, ctrl+tab, ctrl+alt+tab
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
     return alt_01u(_key_mods) || ctrl_01u(_key_mods, rctrl_is_ctrl);
+}
+
+bool Keymap::is_session_scuttling_shortcut_pressed() const noexcept
+{
+    auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
+    auto ctrl = ctrl_01u(_key_mods, rctrl_is_ctrl);
+
+    if (!ctrl) {
+        return false;
+    }
+
+    // ctrl+f12
+    return _decoded_key.keycode == KeyCode::F12;
 }
 
 bool Keymap::is_session_sharing_take_control() const noexcept

@@ -732,6 +732,13 @@ private:
 
         mod_factory.disconnect();
 
+        size_t const session_reconnection_delay_ms = this->ini.get<cfg::mod_rdp::session_reconnection_delay>().count();
+        if (session_reconnection_delay_ms)
+        {
+            LOG(LOG_INFO, "Waiting for %lu ms before retrying RDP", session_reconnection_delay_ms);
+            ::usleep(session_reconnection_delay_ms * 1000);
+        }
+
         SessionLogApi& session_log = secondary_session.get_secondary_session_log();
         try {
             front.target_connection_start_time = MonotonicTimePoint::clock::now();
@@ -1333,6 +1340,17 @@ private:
                                     ? "ERR_TRANSPORT_WRITE_FAILED"
                                     : "ERR_TRANSPORT_NO_MORE_DATA"
                             );
+
+                            run_session = this->retry_rdp(
+                                secondary_session, mod_factory,
+                                front, PerformAutomaticReconnection::Yes);
+                        }
+                    }
+                    else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+                        if (ini.get<cfg::mod_rdp::allow_session_reconnection_by_shortcut>()
+                         && mod_factory.mod().is_auto_reconnectable())
+                        {
+                            LOG(LOG_INFO, "Session::Session: Automatic reconnection required. ERR_AUTOMATIC_RECONNECTION_REQUIRED");
 
                             run_session = this->retry_rdp(
                                 secondary_session, mod_factory,
