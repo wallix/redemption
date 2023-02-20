@@ -53,8 +53,10 @@
 
 struct ClientInfo
 {
+    // TODO duplicate bitmap_caps
     ScreenInfo screen_info;
 
+    // TODO duplicate bmp_cache_caps / bmp_cache_2_caps
     // TODO CacheInfo { entrie, is_persistent, size }; or Cache5Info { entries[5], ... };
     /* bitmap cache info */
     uint8_t number_of_cache = 0;
@@ -94,9 +96,12 @@ struct ClientInfo
     std::string nla_ntlm_domain;
     std::string md4_nla_ntlm_password;
 
+    // TODO duplicate rdp_compression_type
     int rdp_compression = 0;
     int rdp_compression_type = 0;
+    // TODO unused
     int rdp_autologin = 0;
+    // TODO unused
     int encryptionLevel = 3; /* 1, 2, 3 = low, medium, high */
     bool has_sound_code = false; /* 1 = leave sound at server */
     bool has_sound_capture_code = false;
@@ -126,6 +131,7 @@ struct ClientInfo
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t  autoReconnectCookie[28] = { 0 };
 
+    // TODO duplicate glyph_cache_caps.GlyphCache[i].CacheEntries
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES

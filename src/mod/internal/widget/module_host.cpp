@@ -434,6 +434,7 @@ void WidgetModuleHost::screen_copy(Rect old_rect, Rect new_rect)
     this->drawable.draw(cmd, new_rect);
 
     GCC::UserData::CSMonitor& cs_monitor = this->monitors;
+    // TODO move the code in ctor then remove monitor_one
     if (!cs_monitor.monitorCount) {
         cs_monitor = this->monitor_one;
     }
