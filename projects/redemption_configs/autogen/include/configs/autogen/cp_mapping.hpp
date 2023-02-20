@@ -38,6 +38,8 @@ cp_spec = {
         ('mod_rdp:enable_ipv6', 'enable_ipv6', True),
         ('mod_rdp:mode_console', 'mode_console', 'allow'),
         ('mod_rdp:auto_reconnection_on_losing_target_link', 'auto_reconnection_on_losing_target_link', False),
+        ('mod_rdp:allow_session_reconnection_by_shortcut', 'allow_session_reconnection_by_shortcut', False),
+        ('mod_rdp:session_reconnection_delay', 'session_reconnection_delay', 0),
         ('mod_rdp:forward_client_build_number', 'forward_client_build_number', True),
         ('mod_rdp:bogus_monitor_layout_treatment', 'bogus_monitor_layout_treatment', False),
         ('mod_rdp:remote_programs_disconnect_message_delay', 'remote_programs_disconnect_message_delay', 3000),

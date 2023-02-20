@@ -45,6 +45,7 @@ struct Keymap
         None,
         KeyDown,
         F4,
+        F12,
         Tab,
         BackTab,
         Enter,
@@ -107,6 +108,8 @@ struct Keymap
     bool is_alt_pressed() const noexcept;
     bool is_ctrl_pressed() const noexcept;
     bool is_shift_pressed() const noexcept;
+
+    bool is_session_scuttling_shortcut_pressed() const noexcept;
 
     void reset_mods(KeyLocks locks) noexcept;
 

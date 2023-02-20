@@ -582,6 +582,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #auto_reconnection_on_losing_target_link = 0
 
+# value: 0 or 1
+#_hidden
+#allow_session_reconnection_by_shortcut = 0
+
+# min = 0, max = 60000
+# (in milliseconds)
+#_hidden
+#session_reconnection_delay = 0
+
 # Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
 # value: 0 or 1
 #_hidden

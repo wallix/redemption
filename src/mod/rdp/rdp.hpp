@@ -91,6 +91,7 @@
 #include "core/front_api.hpp"
 #include "gdi/screen_functions.hpp"
 #include "gdi/osd_api.hpp"
+#include "keyboard/keymap.hpp"
 
 #ifndef __EMSCRIPTEN__
 // TODO: annoying as it introduces a dependency on openssl in rdp mod
@@ -1962,6 +1963,8 @@ class mod_rdp : public mod_api, public rdp_api
 
     bool const accept_monitor_layout_change_if_capture_is_not_started;
 
+    bool const allow_session_reconnection_by_shortcut;
+
 #ifndef __EMSCRIPTEN__
     bool const session_probe_start_launch_timeout_timer_only_after_logon;
 
@@ -2095,6 +2098,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
         , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
+        , allow_session_reconnection_by_shortcut(mod_rdp_params.allow_session_reconnection_by_shortcut)
         #ifndef __EMSCRIPTEN__
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
         , metrics(metrics)
@@ -2477,7 +2481,18 @@ public:
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
-        (void)keymap;
+        if (keymap.is_session_scuttling_shortcut_pressed()
+         && this->allow_session_reconnection_by_shortcut)
+        {
+            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode(): Session scuttling shortcut is pressed!");
+            if (this->is_server_auto_reconnec_packet_received) {
+                LOG(LOG_INFO, "mod_rdp::rdp_input_scancode(): Automatic reconnection required.");
+                throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+            } else {
+                LOG(LOG_INFO, "mod_rdp::rdp_input_scancode(): The Auto-Reconnect Packet is missing! The session scuttling request was ignored.");
+            }
+        }
+
         this->input_scancode(flags, scancode, event_time);
     }
 

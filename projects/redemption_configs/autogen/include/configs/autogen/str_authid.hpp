@@ -60,6 +60,8 @@ namespace configs
         "mod_rdp:enable_ipv6"_zv,
         "mod_rdp:mode_console"_zv,
         "mod_rdp:auto_reconnection_on_losing_target_link"_zv,
+        "mod_rdp:allow_session_reconnection_by_shortcut"_zv,
+        "mod_rdp:session_reconnection_delay"_zv,
         "mod_rdp:forward_client_build_number"_zv,
         "mod_rdp:bogus_monitor_layout_treatment"_zv,
         "effective_krb_armoring_user"_zv,

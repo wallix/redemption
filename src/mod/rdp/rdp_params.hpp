@@ -204,6 +204,8 @@ struct ModRDPParams
 
     DynamicChannelsParams dynamic_channels_params;
 
+    bool allow_session_reconnection_by_shortcut = false;
+
     struct ServerInfo
     {
         uint16_t input_flags = 0;
@@ -455,6 +457,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             allow_session_reconnection_by_shortcut);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

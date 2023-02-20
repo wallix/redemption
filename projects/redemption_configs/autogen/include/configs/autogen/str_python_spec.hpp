@@ -498,6 +498,13 @@ enable_ipv6 = boolean(default=True)
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
+#_hidden
+allow_session_reconnection_by_shortcut = boolean(default=False)
+
+# (in milliseconds)
+#_hidden
+session_reconnection_delay = integer(min=0, max=60000, default=0)
+
 # Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
 #_hidden
 forward_client_build_number = boolean(default=True)
