@@ -2362,8 +2362,9 @@ public:
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
-        if (keymap.is_session_scuttling_shortcut_pressed()
-         && this->allow_session_reconnection_by_shortcut)
+#ifndef __EMSCRIPTEN__
+        if (this->allow_session_reconnection_by_shortcut
+         && keymap.is_session_scuttling_shortcut_pressed())
         {
             LOG(LOG_INFO, "mod_rdp::rdp_input_scancode(): Session scuttling shortcut is pressed!");
             if (this->is_server_auto_reconnec_packet_received) {
@@ -2373,6 +2374,9 @@ public:
                 LOG(LOG_INFO, "mod_rdp::rdp_input_scancode(): The Auto-Reconnect Packet is missing! The session scuttling request was ignored.");
             }
         }
+#else
+        (void)keymap;
+#endif
 
         this->input_scancode(flags, scancode, event_time);
     }
