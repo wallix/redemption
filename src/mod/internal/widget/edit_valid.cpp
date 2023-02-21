@@ -109,10 +109,11 @@ void WidgetEditValid::set_xy(int16_t x, int16_t y)
     Widget::set_xy(x, y);
     this->editbox->set_xy(x + 1, y + 1);
 
-    if(is_password_widget()) {
+    if (is_password_widget()) {
         this->button_toggle_visibility->set_xy(this->editbox->eright(), y + 1);
         this->button_next.set_xy(this->button_toggle_visibility->eright(), y + 1);
-    }else{
+    }
+    else {
         this->button_next.set_xy(this->editbox->eright(), y + 1);
     }
 
@@ -128,15 +129,14 @@ void WidgetEditValid::set_wh(uint16_t w, uint16_t h)
     Dimension dim = this->button_next.get_optimal_dim();
     this->button_next.set_wh(dim.w, h - 2 /* 2 x border */);
 
-    if(is_password_widget()) {
+    if (is_password_widget()) {
         this->button_toggle_visibility->set_wh(dim.w, h - 2 /* 2 x border */);
         this->editbox->set_wh(w - this->button_toggle_visibility->cx() - button_next.cx() - 2,
                                 h - 2 /* 2 x border */);
         this->button_toggle_visibility->set_xy(this->editbox->eright(), this->button_toggle_visibility->y());
         this->button_next.set_xy(this->button_toggle_visibility->eright(), this->button_next.y());
     }
-    else
-    {
+    else {
         this->editbox->set_wh(w - this->button_next.cx() - 2, h - 2 /* 2 x border */);
         this->button_next.set_xy(this->editbox->eright(), this->button_next.y());
     }
@@ -163,13 +163,13 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
         }
         if (this->has_focus) {
             this->button_next.rdp_input_invalidate(rect_intersect);
-            if(is_password_widget()){
+            if (is_password_widget()) {
                 this->button_toggle_visibility->rdp_input_invalidate(rect_intersect);
             }
             this->draw_border(rect_intersect, this->button_next.focus_color);
         }
         else {
-            if(is_password_widget()){
+            if (is_password_widget()) {
                 this->drawable.draw(
                     RDPOpaqueRect(rect_intersect.intersect(this->button_toggle_visibility->get_rect()), this->button_toggle_visibility->bg_color),
                     rect_intersect, gdi::ColorCtx::depth24()
@@ -220,13 +220,13 @@ void WidgetEditValid::blur()
 
 Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
 {
-    if( editbox->get_rect().contains_pt(x, y) ) {
+    if (editbox->get_rect().contains_pt(x, y)) {
         return editbox;
     }
-    if( is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x, y) ) {
+    if (is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x, y)) {
         return button_toggle_visibility;
     }
-    if( button_next.get_rect().contains_pt(x, y) ) {
+    if (button_next.get_rect().contains_pt(x, y)) {
         return &button_next;
     }
 
@@ -235,13 +235,11 @@ Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
 
 void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    if(button_next.get_rect().contains_pt(x,y))
-    {
+    if (button_next.get_rect().contains_pt(x,y)) {
         button_next.rdp_input_mouse(device_flags, x, y);
         rdp_input_invalidate(button_next.get_rect());
     }
-    else if(is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x,y))
-    {
+    else if (is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x,y)) {
         button_toggle_visibility->rdp_input_mouse(device_flags, x, y);
         if ((device_flags == MOUSE_FLAG_BUTTON1) && button_next.state == WidgetButton::State::Normal ) {
             // Switch the visibility state
@@ -255,9 +253,8 @@ void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_
         }
         rdp_input_invalidate(button_toggle_visibility->get_rect());
     }
-    else
-    {
-        if((device_flags == MOUSE_FLAG_BUTTON1))
+    else {
+        if (device_flags == MOUSE_FLAG_BUTTON1)
         {
             if( button_next.state == WidgetButton::State::Pressed ) {
                  button_next.state = WidgetButton::State::Normal;
@@ -292,6 +289,7 @@ void WidgetEditValid::rdp_input_unicode(KbdFlags flag, uint16_t unicode)
     this->editbox->rdp_input_unicode(flag, unicode);
 }
 
-bool WidgetEditValid::is_password_widget() noexcept {
-    return button_toggle_visibility != nullptr && widget_password != nullptr;
+bool WidgetEditValid::is_password_widget() noexcept
+{
+    return button_toggle_visibility && widget_password;
 }
