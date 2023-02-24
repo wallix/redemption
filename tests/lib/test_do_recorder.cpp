@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/force_paris_timezone.hpp"
 
 #include "lib/do_recorder.hpp"
 #include "utils/fileutils.hpp"
@@ -70,6 +71,7 @@ int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme
 } // anonymous namespace
 
 #define TEST_DO_MAIN(argv, res_result, hmac_key, trace_fn, output, output_error) do { \
+    force_paris_timezone();                                                           \
     int argc = sizeof(argv)/sizeof(char*);                                            \
     ut::ostream_buffered cout_buf;                                                    \
     ut::ostream_buffered cerr_buf(std::cerr);                                         \

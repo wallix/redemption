@@ -25,6 +25,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/check_img.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/force_paris_timezone.hpp"
 
 #include "capture/video_capture.hpp"
 
@@ -50,6 +51,8 @@ namespace
         DrawablePointer & drawable_pointer,
         gdi::CaptureApi & capture, gdi::GraphicApi & video_drawable, bool mouse
     ) {
+        force_paris_timezone();
+
         Rect screen(0, 0, drawable.width(), drawable.height());
         auto const color_cxt = gdi::ColorCtx::depth24();
         drawable.draw(RDPOpaqueRect(screen, encode_color24()(BLUE)), screen, color_cxt);

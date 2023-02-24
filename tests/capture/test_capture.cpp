@@ -24,6 +24,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/check_img.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/force_paris_timezone.hpp"
 #include "test_only/session_log_test.hpp"
 #include "test_only/lcg_random.hpp"
 
@@ -242,6 +243,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
+
+    force_paris_timezone();
 
     test_capture_context("test_capture", CaptureFlags::wrm | CaptureFlags::png,
         800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
