@@ -29,6 +29,12 @@ JAM_INCLUDE_PATH ?= jam ;
 #
 # Binaries are located by default in `/usr/local/bin`.
 #
+# # Install only resources without executable and library
+#
+#   bjam install-resources
+#
+# With this, executables created by bjam (bin folder) can be run without installation.
+#
 # ## Tests
 #
 #   bjam tests
@@ -138,6 +144,7 @@ explicit
     instexe
     install-bin
     install-lib
+    install-resources
     install-share
     install-etc
     install-etc-ppocr
@@ -148,13 +155,13 @@ explicit
 ;
 
 alias instexe : install-bin ;
-alias install :
-    install-bin install-lib
+alias install-resources : 
     install-etc
     install-etc-ppocr
     install-share
     install-gettext
 ;
+alias install : install-bin install-lib install-resources ;
 alias exe     : rdpproxy rdpclient rdpinichecker ;
 alias libs    : libredrec ;
 
