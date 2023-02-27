@@ -245,11 +245,12 @@ class ACLPassthrough():
         login = self.shared.get(u'login', MAGICASK) or MAGICASK
         host = self.shared.get(u'real_target_device', MAGICASK) or MAGICASK
         password = self.shared.get(u'password', MAGICASK) or MAGICASK
-        splitted = login.split('@')
-        if len(splitted) > 1:
+        splitted = login.split('@', 1)
+        if len(splitted) == 2:
             login = splitted[0]
-            host = ''.join(splitted[1:])
+            host = splitted[1]
             device = host
+            password = ''
 
         interactive_data = {
             u'target_password': password,
@@ -285,7 +286,7 @@ class ACLPassthrough():
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"
         kv[u'session_id'] = str(datetime.now())
-        kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else 'INTERNAL'
+        kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else host
         kv[u'target_password'] = self.shared.get(u'target_password')
         kv[u'target_login'] = self.shared.get(u'target_login')
         kv[u'target_host'] = self.shared.get(u'target_host')
