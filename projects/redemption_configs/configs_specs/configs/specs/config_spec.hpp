@@ -32,7 +32,6 @@
 #include "utils/colors.hpp"
 #include "utils/file_permissions.hpp"
 
-#include <algorithm>
 #include <chrono>
 #include <vector>
 #include <string>
@@ -254,31 +253,9 @@ void config_spec_definition(Writer && W)
 
     W.section("client", [&]
     {
-        struct Layout
-        {
-            zstring_view name;
-            std::string comparable_layout;
-        };
-
-        std::vector<Layout> layouts;
-        layouts.reserve(keylayouts().size());
-        for (KeyLayout const& layout : keylayouts()) {
-            layouts.emplace_back(Layout{layout.name, layout.name.to_string()});
-            for (char& c : layouts.back().comparable_layout) {
-                if ('a' <= c && c <= 'z') {
-                    c = static_cast<char>(c - 'a' + 'A');
-                }
-            }
-        }
-
-        // insensitive case sort
-        std::sort(layouts.begin(), layouts.end(), [](auto const& layout1, auto const& layout2){
-            return layout1.comparable_layout < layout2.comparable_layout;
-        });
-
         // to_string()
         std::string keyboard_layout_proposals_desc;
-        for (Layout const& layout : layouts) {
+        for (KeyLayout const& layout : keylayouts_sorted_by_name()) {
             keyboard_layout_proposals_desc += layout.name;
             keyboard_layout_proposals_desc += ", ";
         }

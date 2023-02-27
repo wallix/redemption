@@ -235,6 +235,7 @@ for deadmap,idx in dktables.items():
 unique_layout_keymap = {}
 unique_layout_dkeymap = {}
 strings2 = ['static constexpr KeyLayout layouts[] {\n']
+keymap_by_names = []
 for layout in layouts2:
     mods_array = [0]*64
     dmods_array = [0]*64
@@ -249,6 +250,12 @@ for layout in layouts2:
     k2 = unique_layout_dkeymap.setdefault(k2, len(unique_layout_dkeymap))
     layout = layout.layout
     strings2.append(f'    KeyLayout{{KbdId(0x{layout.klid}), KeyLayout::RCtrlIsCtrl({layout.has_right_ctrl_like_oem8 and "false" or "true "}), "{layout.proxy_name or layout.locale_name}"_zv/*, "{layout.display_name}"_zv, "{layout.locale_name}"_zv*/, keymap_mod_{k1}, dkeymap_mod_{k2}}},\n')
+    keymap_by_names.append(((layout.proxy_name or layout.locale_name).upper(), f'    layouts[{len(keymap_by_names)}],\n'))
+strings2.append('};\n')
+
+keymap_by_names.sort(key=lambda p: p[0])
+strings2.append('\nstatic constexpr KeyLayout layouts_sorted_by_name[] {\n')
+strings2.append(''.join(p[1] for p in keymap_by_names))
 strings2.append('};\n')
 
 # print layout
@@ -267,6 +274,8 @@ for unique_layout,prefix,atype in (
 # print layout
 strings2.append('\narray_view<KeyLayout> keylayouts() noexcept\n')
 strings2.append('{\n    return layouts;\n}\n\n')
+strings2.append('\narray_view<KeyLayout> keylayouts_sorted_by_name() noexcept\n')
+strings2.append('{\n    return layouts_sorted_by_name;\n}\n\n')
 strings2.append('KeyLayout const* find_layout_by_id(KeyLayout::KbdId id) noexcept\n')
 strings2.append('{\n    switch (id)\n    {\n')
 for i,layout in enumerate(layouts):
