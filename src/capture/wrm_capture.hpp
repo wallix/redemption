@@ -739,6 +739,7 @@ public:
             BmpCache::CacheOption(),
             BmpCache::Verbose::none
         ),
+        .gly_cache = GlyphCache(),
         .out = OutMetaSequenceTransport(
             wrm_params.cctx,
             wrm_params.rnd,
