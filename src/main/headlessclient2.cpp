@@ -152,7 +152,7 @@ int main(int argc, char const** argv)
 
     std::string delayed_cmd;
 
-    while (!repl.is_eof()) {
+    while (!repl.is_eof() || (options.persist && start_connection)) {
         front.must_be_stop_capture();
 
         /*
@@ -228,7 +228,7 @@ int main(int argc, char const** argv)
             sck_trans = mod_pack.psocket_transport;
 
             auto is_actif = [&]{
-                return !repl.is_eof() && mod->get_mod_signal() == BACK_EVENT_NONE;
+                return (!repl.is_eof() || options.persist) && mod->get_mod_signal() == BACK_EVENT_NONE;
             };
 
             /*
@@ -238,6 +238,10 @@ int main(int argc, char const** argv)
                 if (!wait_and_draw_event(*sck_trans, event_manager)) {
                     continue;
                 }
+            }
+
+            if (!is_actif()) {
+                continue;
             }
 
             LOG(LOG_INFO, "Mod is up and running");
@@ -319,6 +323,7 @@ int main(int argc, char const** argv)
             }
 
             if (ERR_RDP_SERVER_REDIR != e.id) {
+                options.persist = false;
                 continue;
             }
 
@@ -331,7 +336,10 @@ int main(int argc, char const** argv)
             }
             LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
             ini.set_acl<cfg::context::target_host>(host);
+            start_connection = true;
         }
+
+        options.persist = false;
     }
 
     front.must_be_stop_capture();

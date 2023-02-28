@@ -66,6 +66,9 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
         cli::option("license-store").argname("<directory>")
             .parser(cli::arg_location(license_store_path)),
 
+        cli::option("persist").help("Keep connection open even when stdin is closed")
+            .parser(cli::on_off_location(persist)),
+
 
         cli::helper("========= RDP ========="),
 
