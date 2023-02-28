@@ -55,18 +55,15 @@
 template<std::size_t SZ>
 class OutChunkedBufferingTransport : public Transport
 {
-    Transport & trans;
-    size_t max;
-    uint8_t buf[SZ];
-    OutStream stream;
-
     static_assert(SZ >= 8);
+    static size_t const max = SZ - 8;
+
+    Transport & trans;
+    StaticOutStream<SZ> stream;
 
 public:
     explicit OutChunkedBufferingTransport(Transport & trans)
     : trans(trans)
-    , max(SZ-8)
-    , stream(buf)
     {
     }
 
@@ -74,7 +71,7 @@ public:
         if (this->stream.get_offset() > 0) {
             send_wrm_chunk(this->trans, WrmChunkType::LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
             this->trans.send(this->stream.get_produced_bytes());
-            this->stream = OutStream(buf);
+            this->stream.rewind();
         }
     }
 
@@ -87,7 +84,7 @@ private:
             size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
-            this->stream = OutStream(buf);
+            this->stream.rewind();
         }
         this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
     }

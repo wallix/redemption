@@ -252,7 +252,7 @@ public:
     Verbose verbose;
 
     FileToChunk(Transport * trans, Verbose verbose)
-        : stream(this->stream_buf)
+        : stream(make_array_view(this->stream_buf))
         , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(trans)
         , trans(trans)

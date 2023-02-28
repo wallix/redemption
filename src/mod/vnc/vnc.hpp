@@ -1478,7 +1478,7 @@ private:
           , clipboard_down_is_really_enabled(false)
           , data_length(0)
           , remaining_data_length(0)
-          , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
+          , to_rdp_clipboard_data(make_array_view(this->to_rdp_clipboard_data_buffer))
           , to_rdp_clipboard_data_is_utf8_encoded(false)
         {}
 

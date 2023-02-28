@@ -61,7 +61,7 @@ FileToGraphic::FileToGraphic(
     bool play_video_with_corrupted_bitmap,
     Verbose verbose
 )
-    : stream(stream_buf)
+    : stream(make_array_view(stream_buf))
     , compression_builder(trans, WrmCompressionAlgorithm::no_compression)
     , trans_source(&trans)
     , trans(&trans)

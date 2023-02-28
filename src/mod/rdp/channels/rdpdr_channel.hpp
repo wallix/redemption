@@ -220,12 +220,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         bool waiting_for_server_device_announce_response = false;
 
-        uint8_t         remaining_device_announce_request_header_data[
-                20  // DeviceType(4) + DeviceId(4) +
-                    //     PreferredDosName(8) +
-                    //     DeviceDataLength(4)
-            ];
-        OutStream remaining_device_announce_request_header_stream;
+        // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
+        StaticOutStream<20> remaining_device_announce_request_header_stream;
 
         bool session_probe_drive_should_be_disable = false;
 
@@ -260,8 +256,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         , param_print_authorized(print_authorized)
         , param_serial_port_authorized(serial_port_authorized)
         , param_smart_card_authorized(smart_card_authorized)
-        , remaining_device_announce_request_header_stream(
-              this->remaining_device_announce_request_header_data)
         , file_system_virtual_channel(file_system_virtual_channel)
         , smartcard_passthrough(smartcard_passthrough)
         , verbose(verbose) {

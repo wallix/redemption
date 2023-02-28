@@ -412,7 +412,7 @@ class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 
 public:
     explicit SyslogKbd(MonotonicTimePoint now)
-    : kbd_buffer(this->buffer)
+    : kbd_buffer(make_writable_array_view(this->buffer))
     , last_snapshot(now)
     {}
 
@@ -466,7 +466,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
 
 public:
     explicit SessionLogKbd(SessionLogApi& session_log)
-    : kbd_buffer(this->buffer)
+    : kbd_buffer(make_writable_array_view(this->buffer))
     , session_log(session_log)
     {}
 
