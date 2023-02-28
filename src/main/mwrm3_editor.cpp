@@ -261,8 +261,8 @@ int mwrm3_text_viewer(InCryptoTransport& crypto_transport)
     int nb_packet = 0;
 
     std::array<uint8_t, 1024*16> buffer;
-    bytes_view remaining_data = make_array_view(buffer)
-        .first(crypto_transport.partial_read(buffer));
+    auto const consumed = crypto_transport.partial_read(buffer);
+    bytes_view remaining_data = make_array_view(buffer).first(consumed);
 
     auto print_values = [&](auto type, bytes_view next_data, auto... xs){
         ++nb_packet;
