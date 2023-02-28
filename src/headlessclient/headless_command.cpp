@@ -1397,15 +1397,16 @@ N(reconnect)
 alias: reco
 
 
-N(wrm) P(boolean) [P(path)]
+N(wrm) <P(boolean) [P(path)] | P(path)>
 
     Enable or disable wrm capture.
+    When boolean is not specified, only the wrm path is modified.
 
 
-N(png) [P(path)]
+N(png) [P(boolean)] [P(path)]
 alias: p
 
-    Save screen to png file.
+    Set png filename and save screen to png file (when boolean is on).
 
 
 N(filename) [P(filename)]
@@ -1882,24 +1883,36 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
 
     else if (cmd_name == "wrm") {
         if (++first == last) {
-            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected boolean"_av);
+            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected boolean or path"_av);
         }
 
-        if (!parse_boolean(OutParam{enable_wrm}, first->as<std::string_view>())) {
-            return set_param_error(*this, ErrorType::InvalidFormat, index_param + 1, *first);
+        if (parse_boolean(OutParam{enable_wrm}, first->as<std::string_view>())) {
+            if (++first != last) {
+                wrm_path = {first->begin(), cmd.end()};
+            }
+            return Result::Ok;
         }
 
-        if (++first != last) {
-            wrm_path = {first->begin(), cmd.end()};
-        }
-
+        enable_wrm = true;
+        wrm_path = {first->begin(), cmd.end()};
         return Result::Ok;
     }
 
     else if (cmd_name == "p" || cmd_name == "png") {
-        if (cmd.size() > cmd_name.size()) {
-            png_path = {cmd.begin() + cmd_name.size() + 1, cmd.end()};
+        if (++first == last) {
+            enable_png = true;
+            return Result::PrintScreen;
         }
+
+        if (parse_boolean(OutParam{enable_png}, first->as<std::string_view>())) {
+            if (++first != last) {
+                png_path = {first->begin(), cmd.end()};
+            }
+            return enable_png ? Result::PrintScreen : Result::Ok;
+        }
+
+        enable_png = true;
+        png_path = {first->begin(), cmd.end()};
         return Result::PrintScreen;
     }
 

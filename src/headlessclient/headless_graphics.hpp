@@ -18,6 +18,9 @@ struct HeadlessGraphics final : gdi::GraphicApiForwarder<RDPDrawable>, gdi::Resi
     static constexpr std::size_t pointer_cache_entries = gdi::CachePointerIndex::MAX_POINTER_COUNT;
 
     HeadlessGraphics();
+
+    HeadlessGraphics(uint16_t width, uint16_t height);
+
     ~HeadlessGraphics();
 
     Drawable& drawable()

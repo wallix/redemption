@@ -25,6 +25,7 @@ struct HeadlessCliOptions
     bool is_vnc = false;
     bool use_fixed_random = false;
     bool enable_wrm_capture = false;
+    bool enable_png_capture = false;
     bool print_client_info_section = false;
 
     ScreenInfo screen_info {800, 600, BitsPerPixel::BitsPP16};

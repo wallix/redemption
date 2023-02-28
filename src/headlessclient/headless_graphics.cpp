@@ -10,7 +10,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 
 HeadlessGraphics::HeadlessGraphics()
-: gdi::GraphicApiForwarder<RDPDrawable>(uint16_t(1), uint16_t(1))
+: HeadlessGraphics(0, 0)
+{
+    pointers[0].set_cursor(normal_pointer());
+}
+
+HeadlessGraphics::HeadlessGraphics(uint16_t width, uint16_t height)
+: gdi::GraphicApiForwarder<RDPDrawable>(std::min(uint16_t(1), width), std::min(uint16_t(1), height))
 , pointers(new DrawablePointer[pointer_cache_entries + 1u])
 {
     pointers[0].set_cursor(normal_pointer());

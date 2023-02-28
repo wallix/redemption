@@ -43,7 +43,8 @@ struct HeadlessCommand
 
     bool is_kbdmap_en = true;
     bool is_rdp = true;
-    bool enable_wrm = true;
+    bool enable_wrm = false;
+    bool enable_png = false;
     unsigned port = 3389;
 
     ErrorType error_type;

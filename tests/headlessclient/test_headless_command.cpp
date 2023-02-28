@@ -432,18 +432,29 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     check_cmd_ex("wrm on dsadjsdsa.mwrm", "", "", CmdResult::Ok);
     RED_CHECK(cmd_ctx.enable_wrm);
     RED_CHECK(cmd_ctx.wrm_path == "dsadjsdsa.mwrm"_av);
-    check_cmd("wrm", "index_param=1 param='expected boolean' type=MissingArgument", "");
-    check_cmd("wrm x", "index_param=1 param='x' type=InvalidFormat", "");
+    check_cmd_ex("wrm newfile.mwrm", "", "", CmdResult::Ok);
+    RED_CHECK(cmd_ctx.enable_wrm);
+    RED_CHECK(cmd_ctx.wrm_path == "newfile.mwrm"_av);
+    check_cmd("wrm", "index_param=1 param='expected boolean or path' type=MissingArgument", "");
     //@}
 
 
     // png
     //@{
     cmd_ctx.png_path = "default";
+    cmd_ctx.enable_png = false;
     check_cmd_ex("png", "", "", CmdResult::PrintScreen);
+    RED_CHECK(cmd_ctx.enable_png);
     RED_CHECK(cmd_ctx.png_path == "default"_av);
     check_cmd_ex("png abcde fg.png", "", "", CmdResult::PrintScreen);
+    RED_CHECK(cmd_ctx.enable_png);
     RED_CHECK(cmd_ctx.png_path == "abcde fg.png"_av);
+    check_cmd_ex("png 0", "", "", CmdResult::Ok);
+    RED_CHECK(!cmd_ctx.enable_png);
+    RED_CHECK(cmd_ctx.png_path == "abcde fg.png"_av);
+    check_cmd_ex("png 0 abc.png", "", "", CmdResult::Ok);
+    RED_CHECK(!cmd_ctx.enable_png);
+    RED_CHECK(cmd_ctx.png_path == "abc.png"_av);
     //@}
 
 

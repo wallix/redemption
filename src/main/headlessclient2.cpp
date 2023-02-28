@@ -18,7 +18,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_front.hpp"
 #include "headlessclient/headless_repl.hpp"
 #include "headlessclient/headless_session_log.hpp"
-#include "headlessclient/headless_wrm_capture.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "mod/null/null.hpp"
 #include "RAIL/client_execute.hpp"
@@ -133,15 +132,13 @@ int main(int argc, char const** argv)
     CryptoContext cctx;
 
     HeadlessFront front(event_manager.get_writable_time_base(), ini, client_info);
-    if (options.enable_wrm_capture) {
-        front.enable_wrm_capture();
-    }
 
     ScopedSslInit scoped_ssl;
 
     HeadlessCommand& cmd_ctx = front.command();
     cmd_ctx.is_kbdmap_en = options.is_cmd_kbdmap_en;
     cmd_ctx.enable_wrm = options.enable_wrm_capture;
+    cmd_ctx.enable_png = options.enable_png_capture;
     cmd_ctx.png_path = options.output_png_path;
     cmd_ctx.wrm_path = options.output_wrm_path;
     cmd_ctx.ip_address = options.ip_address;
@@ -151,7 +148,6 @@ int main(int argc, char const** argv)
     std::string ip_address = options.ip_address;
     bool start_connection = *options.ip_address;
 
-    std::unique_ptr<HeadlessWrmCapture> wrm_gd;
     gdi::GraphicDispatcher gds;
 
     std::string delayed_cmd;
@@ -189,8 +185,10 @@ int main(int argc, char const** argv)
 
         start_connection = false;
 
+        auto& gd = front.gd();
+
         ClientExecute rail_client_execute(
-            event_manager.get_time_base(), front.gd(), front,
+            event_manager.get_time_base(), gd, front,
             client_info.window_list_caps,
             ini.get<cfg::debug::mod_internal>() & 1);
 
@@ -215,13 +213,13 @@ int main(int argc, char const** argv)
              */
             ModPack mod_pack = cmd_ctx.is_rdp
                 ? create_mod_rdp(
-                    front.gd(), osd, redir_info, ini, front, client_info, rail_client_execute,
+                    gd, osd, redir_info, ini, front, client_info, rail_client_execute,
                     kbdtypes::KeyLocks(), glyph, theme, event_container, session_log,
                     file_system_license_store, random, cctx, server_auto_reconnect_packet,
                     std::exchange(perform_automatic_reconnection, PerformAutomaticReconnection::No)
                 )
                 : create_mod_vnc(
-                    front.gd(), ini, front, client_info, rail_client_execute,
+                    gd, ini, front, client_info, rail_client_execute,
                     get_layout(client_info.keylayout), kbdtypes::KeyLocks(),
                     glyph, theme, event_container, session_log
                 );

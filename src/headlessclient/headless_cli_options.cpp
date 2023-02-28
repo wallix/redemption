@@ -54,6 +54,8 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
 
         cli::option('t', "target").help("IP address of target").argname("<address>")
             .parser(cli::arg_location(ip_address)),
+        cli::option("ip").help("alias of --target").argname("<address>")
+            .parser(cli::arg_location(ip_address)),
 
         cli::option('P', "port").help("Port of target")
             .parser(cli::arg_location(port)),
@@ -156,6 +158,9 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
 
         cli::option("enable-wrm-capture")
             .parser(cli::on_off_location(enable_wrm_capture)),
+
+        cli::option("enable-png-capture")
+            .parser(cli::on_off_location(enable_png_capture)),
 
 
         cli::helper("")

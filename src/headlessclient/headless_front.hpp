@@ -12,32 +12,30 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "core/channel_list.hpp"
 #include "gdi/graphic_dispatcher.hpp"
 #include "headlessclient/headless_command.hpp"
-#include "headlessclient/headless_graphics.hpp"
 #include "utils/out_param.hpp"
 
 
 class Inifile;
 class TimeBase;
 class ClientInfo;
+class HeadlessGraphics;
 class HeadlessWrmCapture;
 
 struct HeadlessFront final : FrontAPI
 {
-    HeadlessFront(TimeBase& time_base, Inifile& ini, ClientInfo& client_info)
-    : time_base(time_base)
-    , ini(ini)
-    , client_info(client_info)
+    struct Recording
     {
-    }
+        bool png = false;
+        bool wrm = false;
+    };
+
+    HeadlessFront(TimeBase& time_base, Inifile& ini, ClientInfo& client_info);
+
+    ~HeadlessFront();
 
     HeadlessCommand& command()
     {
         return cmd_ctx;
-    }
-
-    void enable_wrm_capture()
-    {
-        enable_wrm = true;
     }
 
     template<class MkDelayedCmd>
@@ -56,9 +54,6 @@ struct HeadlessFront final : FrontAPI
                 break;
 
             case HeadlessCommand::Result::Connect:
-                enable_wrm = cmd_ctx.enable_wrm;
-                [[fallthrough]];
-
             case HeadlessCommand::Result::Reconnect:
                 connectable.out_value = true;
                 return false;
@@ -151,11 +146,12 @@ private:
     CHANNELS::ChannelDefArray cl;
     // capture variable members
     // -----------------
-    bool enable_wrm = false;
+    uint16_t width = 0;
+    uint16_t height = 0;
     TimeBase& time_base;
     Inifile& ini;
     ClientInfo& client_info;
-    HeadlessGraphics headless_gd;
     gdi::GraphicDispatcher gds;
+    std::unique_ptr<HeadlessGraphics> drawable;
     std::unique_ptr<HeadlessWrmCapture> wrm_gd;
 };
