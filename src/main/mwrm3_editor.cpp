@@ -103,7 +103,7 @@ class enum_names
         {
             if (name.empty())
             {
-                return &name - names;
+                return static_cast<std::size_t>(&name - names);
             }
         }
         return 0;
