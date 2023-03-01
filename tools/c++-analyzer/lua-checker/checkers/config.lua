@@ -13,8 +13,7 @@ do
 
     patternVar = Ct(After(Ct(
         'struct ' * C(Ident)
-      * ' {\n        static constexpr bool is_sesman_to_proxy = ' * C(peg.word)
-      * ';\n        static constexpr bool is_proxy_to_sesman = ' * C(peg.word)
+      * ' {\n        static constexpr unsigned sesman_proxy_communication_flags = ' * C(peg.Until(';'))
     ))^0)
 
     patternVarSearch = Ct(After( Ct(C(P'get_mutable_ref' + 'get' + 'set_acl' + 'set' + 'ask' + 'send')
@@ -56,8 +55,8 @@ function init(args)
     for _,v in ipairs(patternVar:match(utils.readall(variables_configuration_path))) do
         values[v[1]] = {
             used=false,
-            is_sesman_to_proxy = (v[2] == 'true'),
-            is_proxy_to_sesman = (v[3] == 'true'),
+            is_sesman_to_proxy = v[2]:byte(3) == 49 --[[ '1' ]],
+            is_proxy_to_sesman = v[2]:byte(2) == 49 --[[ '1' ]],
         }
     end
 end
