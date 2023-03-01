@@ -37,9 +37,8 @@ WidgetPassword::WidgetPassword(
     , masked_text(drawable, text, fgcolor, bgcolor, font, xtext, ytext)
 {
     set_masked_text();
-    this->rdp_input_invalidate(this->get_rect());
 
-    static gdi::TextMetrics tm(font, "*");
+    gdi::TextMetrics tm(font, "*");
     this->w_char = tm.width;
     this->h_char = tm.height;
     this->h_char -= 1;
@@ -176,9 +175,9 @@ void WidgetPassword::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t
 {
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
         WidgetEdit::rdp_input_mouse(device_flags, x, y);
-        
+
         const WidgetLabel& text_label = is_password_visible? label : masked_text;
-        
+
         Rect old_cursor_rect = this->get_cursor_rect();
         size_t e = this->edit_pos;
         if (x <= this->x() + text_label.x_text + this->w_char/2) {
