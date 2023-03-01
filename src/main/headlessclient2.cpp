@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "capture/cryptofile.hpp"
 #include "configs/config.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 #include "core/client_info.hpp"
 #include "core/events.hpp"
 #include "gdi/osd_api.hpp"
