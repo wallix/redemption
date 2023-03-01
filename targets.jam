@@ -199,108 +199,6 @@ exe headlessclient :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/kv_list_from_strings.o
-  <library>src/capture/agent_data_extractor.o
-  <library>src/capture/fdx_capture.o
-  <library>src/capture/file_to_graphic.o
-  <library>src/client_redemption/client_channels/client_cliprdr_channel.o
-  <library>src/client_redemption/client_channels/client_rdpdr_channel.o
-  <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
-  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
-  <library>src/client_redemption/client_config/client_redemption_config.o
-  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
-  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/RDP/rlgr.o
-  <library>src/core/channels_authorizations.o
-  <library>src/core/dynamic_channels_authorizations.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/gdi/text_metrics.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/keyboard/keymapsym.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/rdp/channels/cliprdr_channel.o
-  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
-  <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/mod/vnc/dsm.o
-  <library>src/mod/vnc/encoder/copyrect.o
-  <library>src/mod/vnc/encoder/cursor.o
-  <library>src/mod/vnc/encoder/hextile.o
-  <library>src/mod/vnc/encoder/raw.o
-  <library>src/mod/vnc/encoder/rre.o
-  <library>src/mod/vnc/encoder/zrle.o
-  <library>src/mod/vnc/new_mod_vnc.o
-  <library>src/mod/vnc/vnc.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_multi_crypto_transport.o
-  <library>src/transport/mwrm_file_data.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_meta_sequence_transport.o
-  <library>src/transport/recorder_transport.o
-  <library>src/transport/replay_transport.o
-  <library>src/transport/snappy_compression_transport.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/d3des.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
-  <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
-  <library>src/utils/primitives/primitives_sse2.o
-  <library>src/utils/rle.o
-  <library>src/utils/set_exception_handler_pretty_message.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  <library>z
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  $(EXE_DEPENDENCIES_NO_SYSLOG)
-  $(MUSL_GETTEXT)
-  <define>ZLIB_CONST
-;
-exe headlessclient2 :
-  src/main/headlessclient2.o
-:
-  <library>app_path_exe.o
-  <library>crypto
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/kv_list_from_strings.o
   <library>src/acl/module_manager/create_module_rail.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
@@ -5132,8 +5030,7 @@ obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/credis.o : $(REDEMPTION_SRC_PATH)/lib/credis.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
-obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
-obj src/main/headlessclient2.o : $(REDEMPTION_SRC_PATH)/main/headlessclient2.cpp ;
+obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp ;
@@ -6240,7 +6137,6 @@ explicit
   src/lib/do_recorder.o
   src/lib/scytale.o
   src/main/headlessclient.o
-  src/main/headlessclient2.o
   src/main/ini_checker.o
   src/main/main.o
   src/main/mwrm3_editor.o

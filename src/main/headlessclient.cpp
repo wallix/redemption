@@ -1,204 +1,445 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2017-2018
-   Author(s): Clément Moroldo
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-
-#include <csignal>
-
-#include "client_redemption/client_redemption.hpp"
+#include "acl/file_system_license_store.hpp"
+#include "acl/module_manager/create_module_rdp.hpp"
+#include "acl/module_manager/create_module_vnc.hpp"
+#include "capture/cryptofile.hpp"
+#include "configs/config.hpp"
+#include "core/client_info.hpp"
 #include "core/events.hpp"
+#include "gdi/osd_api.hpp"
+#include "headlessclient/headless_cli_options.hpp"
+#include "headlessclient/headless_configuration.hpp"
+#include "headlessclient/headless_front.hpp"
+#include "headlessclient/headless_repl.hpp"
+#include "headlessclient/headless_session_log.hpp"
+#include "keyboard/keylayouts.hpp"
+#include "mod/null/null.hpp"
+#include "RAIL/client_execute.hpp"
 #include "system/scoped_ssl_init.hpp"
-#include "utils/log.hpp"
-#include "utils/monotonic_clock.hpp"
+#include "transport/socket_transport.hpp"
+#include "utils/fixed_random.hpp"
+#include "utils/netutils.hpp"
+#include "utils/redirection_info.hpp"
+#include "utils/select.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
-#include "utils/timebase.hpp"
+#include "utils/theme.hpp"
 #include "utils/to_timeval.hpp"
+#include "utils/out_param.hpp"
 
-#pragma GCC diagnostic pop
 
-#include <chrono>
-#include <iostream>
-
-using namespace std::chrono_literals;
-
-class ClientRedemptionHeadless : public ClientRedemption
+static void show_prompt()
 {
-public:
-    ClientRedemptionHeadless(EventManager& event_manager,
-                             ClientRedemptionConfig & config)
-        : ClientRedemption(event_manager, config)
-    {
-        this->cmd_launch_conn();
-    }
+    write(1, ">>> ", 4);
+}
 
-    ~ClientRedemptionHeadless() = default;
+static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_manager)
+{
+    const auto now = MonotonicTimePoint::clock::now();
+    event_manager.get_writable_time_base().monotonic_time = now;
 
-    void session_update(MonotonicTimePoint /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
-    void possible_active_window_change() override {}
+    int max = 0;
+    fd_set rfds;
+    io_fd_zero(rfds);
 
-    void close() override {}
+    event_manager.for_each_fd([&](int fd){
+        io_fd_set(fd, rfds);
+        max = std::max(max, fd);
+    });
 
-    void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override
-    {
-        ClientRedemption::connect(ip, name, pwd, port);
+    const bool nodelay = trans.has_tls_pending_data();
 
-        if (this->config.connected) {
-            mod_api* mod = this->_callback.get_mod();
-
-            while (!mod->is_up_and_running()) {
-                if (int err = this->wait_and_draw_event(3s)) {
-                    std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
-                }
-            }
-
-            this->start_wab_session_time = MonotonicTimePoint::clock::now();
+    const auto next_timeout = event_manager.next_timeout();
+    timeval timeout = {};
+    timeval* timeout_ptr = &timeout;
+    if (!nodelay) {
+        if (now < next_timeout) {
+            timeout = to_timeval(next_timeout - now);
+        }
+        else {
+            timeout_ptr = nullptr;
         }
     }
 
-    int wait_and_draw_event(MonotonicTimePoint::duration timeout)
+    const int num = select(max + 1, &rfds, nullptr, nullptr, timeout_ptr);
+
+    if (num < 0) {
+        LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
+        return false;
+    }
+
+    if (nodelay) {
+        io_fd_set(trans.get_fd(), rfds);
+    }
+
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
+    event_manager.execute_events([&rfds](int fd){
+        return io_fd_isset(fd, rfds);
+    }, false);
+
+    return true;
+}
+
+static KeyLayout const& get_layout(KeyLayout::KbdId keylayout)
+{
+    KeyLayout const* playout = find_layout_by_id(keylayout);
+    return playout ? *playout : KeyLayout::null_layout();
+}
+
+namespace
+{
+
+struct Repl
+{
+    bool quit = false;
+    bool start_connection = false;
+    bool disconnection = false;
+    bool has_delay_cmd = false;
+
+    std::string delayed_cmd;
+    HeadlessRepl repl;
+
+    bool is_eof() const
     {
-        auto now = MonotonicTimePoint::clock::now();
-        int max = 0;
+        return repl.is_eof();
+    }
+
+    bool wait_connect(HeadlessFront& front)
+    {
+        null_mod mod;
+
+        int fd = 0;
         fd_set rfds;
         io_fd_zero(rfds);
+        io_fd_set(fd, rfds);
 
-        this->event_manager.for_each_fd([&rfds,&max](int fd){
-            io_fd_set(fd, rfds);
-            max = std::max(max, fd);
-        });
+        do {
+            show_prompt();
 
-        auto next_timeout = this->event_manager.next_timeout();
-        timeval ultimatum = (next_timeout == MonotonicTimePoint{})
-            ? to_timeval(timeout)
-            : (now < next_timeout)
-            ? to_timeval(next_timeout - now)
-            : timeval{};
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &ultimatum);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                // ExecuteEventsResult::Continue;
-                return 0;
+            const int num = select(fd + 1, &rfds, nullptr, nullptr, nullptr);
+            // end of file
+            if (num < 0) {
+                LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
+                quit = true;
+                return false;
             }
-            // ExecuteEventsResult::Error
-            LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
-            return 9;
+
+            if (!execute_command(front, mod)) {
+                return false;
+            }
+        } while (!repl.is_eof());
+
+        return true;
+    }
+
+    bool execute_command(HeadlessFront& front, mod_api& mod)
+    {
+        HeadlessCommand& cmd_ctx = front.command();
+
+        switch (cmd_ctx.execute_command(repl.read_command(), mod)) {
+            case HeadlessCommand::Result::Ok:
+                break;
+
+            case HeadlessCommand::Result::OutputResult:
+                front.print_output_resut();
+                break;
+
+            case HeadlessCommand::Result::Fail:
+                front.print_fail_result();
+                break;
+
+            case HeadlessCommand::Result::Connect:
+            case HeadlessCommand::Result::Reconnect:
+                disconnection = true;
+                start_connection = true;
+                return false;
+
+            case HeadlessCommand::Result::Disconnect:
+                disconnection = true;
+                return false;
+
+            case HeadlessCommand::Result::ConfigStr:
+                front.read_config_str();
+                break;
+
+            case HeadlessCommand::Result::ConfigFile:
+                front.read_config_file();
+                break;
+
+            case HeadlessCommand::Result::PrintScreen:
+                try {
+                    front.dump_png(cmd_ctx.png_path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
+                }
+                catch (...) {
+                    // ignore error
+                }
+                break;
+
+            case HeadlessCommand::Result::Delay:
+                delayed_cmd = front.command().output_message.as<std::string_view>();
+                has_delay_cmd = true;
+                break;
+
+            case HeadlessCommand::Result::Quit:
+                disconnection = true;
+                quit = true;
+                return false;
         }
 
-        this->event_manager.get_writable_time_base().monotonic_time
-            = MonotonicTimePoint::clock::now();
-        this->event_manager.execute_events([&rfds](int fd){
-            return io_fd_isset(fd, rfds);
-        }, false);
-
-        return 0;
+        return true;
     }
 };
 
-static int run_mod(
-    ClientRedemptionHeadless& front,
-    ClientRedemptionConfig & config,
-    ClientCallback & callback,
-    MonotonicTimePoint start_win_session_time)
-{
-    const auto time_stop = MonotonicTimePoint::clock::now() + config.time_out_disconnection;
-    const auto time_mark = MonotonicTimePoint::duration(50ms);
-
-    if (callback.get_mod()) {
-        auto & mod = *callback.get_mod();
-
-        bool logged = false;
-
-        while (true)
-        {
-            if (!logged && mod.is_up_and_running()) {
-                logged = true;
-
-                std::cout << "RDP Session Log On.\n";
-                if (config.quick_connection_test) {
-
-                    std::cout << "quick_connection_test\n";
-                    front.disconnect("", false);
-                    return 0;
-                }
-            }
-
-            if (time_stop < MonotonicTimePoint::clock::now() && !config.persist) {
-                std::cerr << " Exit timeout (timeout = " << config.time_out_disconnection.count() << " ms)" << std::endl;
-                front.disconnect("", false);
-                return 8;
-            }
-
-            if (int err = front.wait_and_draw_event(time_mark)) {
-                return err;
-            }
-
-            // send key to keep alive
-            if (config.keep_alive_freq) {
-                auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                    MonotonicTimePoint::clock::now() - start_win_session_time);
-
-                if (duration.count() % config.keep_alive_freq == 0) {
-                    auto scancode = kbdtypes::Scancode(0x1e);
-                    callback.send_rdp_scanCode(kbdtypes::KbdFlags::Release, scancode);
-                    callback.send_rdp_scanCode(kbdtypes::KbdFlags::NoFlags, scancode);
-                }
-            }
-        }
-    }
-
-    return 0;
 }
+
 
 int main(int argc, char const** argv)
 {
     set_exception_handler_pretty_message();
-    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
-    {
-        struct sigaction sa;
-        sa.sa_flags = 0;
-        sigaddset(&sa.sa_mask, SIGPIPE);
-        sa.sa_handler = [](int sig){
-            std::cout << "got SIGPIPE(" << sig << ") : ignoring\n";
-        };
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
-        #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
-            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
-        #endif
-        sigaction(SIGPIPE, &sa, nullptr);
-        REDEMPTION_DIAGNOSTIC_POP()
+    HeadlessCliOptions options;
+    switch (options.parse(argc, argv)) {
+        case HeadlessCliOptions::Result::Error: return 1;
+        case HeadlessCliOptions::Result::Exit: return 0;
+        case HeadlessCliOptions::Result::Ok: break;
     }
 
-    ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
-    ClientConfig::set_config(argc, argv, config);
+    ClientInfo client_info;
+    headless_init_client_info(client_info);
+    client_info.screen_info = options.screen_info;
+    client_info.keylayout = options.keylayout;
+
+    if (options.print_client_info_section) {
+        printf("%s", headless_client_info_config_as_string(client_info).c_str());
+        return 0;
+    }
+
+    Inifile ini;
+    headless_init_ini(ini);
+    printf("Config filename: '%s'\n", options.config_filename);
+    load_headless_config_from_file(ini, client_info, options.config_filename);
+
+    Repl repl;
+    FixedRandom fixed_random;
+    UdevRandom udev_random;
+    auto& random = options.use_fixed_random ? static_cast<Random&>(udev_random) : fixed_random;
+    RedirectionInfo redir_info;
+    std::array<unsigned char, 28> server_auto_reconnect_packet {};
+    auto perform_automatic_reconnection = PerformAutomaticReconnection::No;
+    Theme theme;
+    Font glyph;
+    gdi::NullOsd osd;
     EventManager event_manager;
-    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
+    HeadlessSessionLog session_log;
+    FileSystemLicenseStore file_system_license_store {options.license_store_path};
+    CryptoContext cctx;
+
+    HeadlessFront front(event_manager.get_writable_time_base(), ini, client_info);
+
     ScopedSslInit scoped_ssl;
 
-    ClientRedemptionHeadless client(event_manager, config);
+    HeadlessCommand& cmd_ctx = front.command();
+    cmd_ctx.is_kbdmap_en = options.is_cmd_kbdmap_en;
+    cmd_ctx.enable_wrm = options.enable_wrm_capture;
+    cmd_ctx.enable_png = options.enable_png_capture;
+    cmd_ctx.png_path = options.output_png_path;
+    cmd_ctx.wrm_path = options.output_wrm_path;
+    cmd_ctx.ip_address = options.ip_address;
+    cmd_ctx.username = options.username;
+    cmd_ctx.password = options.password;
 
-    return run_mod(client, client.config, client._callback, client.start_win_session_time);
+    std::string ip_address = options.ip_address;
+    repl.start_connection = *options.ip_address;
+    bool interactive = !repl.start_connection || options.interactive;
+
+    gdi::GraphicDispatcher gds;
+
+    while (!repl.quit && (!repl.is_eof() || (repl.start_connection && options.persist))) {
+        front.must_be_stop_capture();
+
+        /*
+         * Wait connect command / ready to connect event
+         */
+        if (!repl.start_connection && perform_automatic_reconnection == PerformAutomaticReconnection::No) {
+            if (!interactive) {
+                break;
+            }
+
+            repl.wait_connect(front);
+            continue;
+        }
+
+        repl.start_connection = false;
+
+        auto& gd = front.prepare_gd();
+
+        ClientExecute rail_client_execute(
+            event_manager.get_time_base(), gd, front,
+            client_info.window_list_caps,
+            ini.get<cfg::debug::mod_internal>() & 1);
+
+        std::unique_ptr<mod_api> mod;
+        SocketTransport* sck_trans = nullptr;
+
+        if (perform_automatic_reconnection == PerformAutomaticReconnection::No) {
+            // disable encryption
+            ini.set<cfg::globals::trace_type>(TraceType::localfile);
+
+            ini.set<cfg::context::target_port>(cmd_ctx.port);
+            ini.set_acl<cfg::context::target_host>(cmd_ctx.ip_address);
+            ini.set_acl<cfg::context::target_password>(cmd_ctx.password);
+            ini.set_acl<cfg::globals::target_user>(cmd_ctx.username);
+        }
+
+        auto& event_container = event_manager.get_events();
+
+        try {
+            /*
+             * Open module
+             */
+            ModPack mod_pack = cmd_ctx.is_rdp
+                ? create_mod_rdp(
+                    gd, osd, redir_info, ini, front, client_info, rail_client_execute,
+                    kbdtypes::KeyLocks(), glyph, theme, event_container, session_log,
+                    file_system_license_store, random, cctx, server_auto_reconnect_packet,
+                    std::exchange(perform_automatic_reconnection, PerformAutomaticReconnection::No)
+                )
+                : create_mod_vnc(
+                    gd, ini, front, client_info, rail_client_execute,
+                    get_layout(client_info.keylayout), kbdtypes::KeyLocks(),
+                    glyph, theme, event_container, session_log
+                );
+
+            mod.reset(mod_pack.mod);
+            sck_trans = mod_pack.psocket_transport;
+
+            repl.disconnection = false;
+
+            auto is_actif = [&]{
+                return (!repl.is_eof() || options.persist)
+                    && !repl.disconnection
+                    && mod->get_mod_signal() == BACK_EVENT_NONE;
+            };
+
+            /*
+             * Wait up and running
+             */
+            while (is_actif() && !mod->is_up_and_running()) {
+                if (!wait_and_draw_event(*sck_trans, event_manager)) {
+                    continue;
+                }
+            }
+
+            if (!is_actif()) {
+                continue;
+            }
+
+            LOG(LOG_INFO, "Mod is up and running");
+
+            /*
+             * Mod is ready
+             */
+
+            EventRef delayed_cmd_ref;
+            auto mk_delayed_cmd_when_available = [&]{
+                if (!repl.has_delay_cmd) {
+                    return;
+                }
+
+                repl.has_delay_cmd = false;
+                if (!repl.delayed_cmd.empty() && cmd_ctx.delay.count() >= 0) {
+                    auto delay = std::chrono::duration_cast<MonotonicTimePoint::duration>(cmd_ctx.delay);
+                    auto repeat = (cmd_ctx.repeat_delay < 0)
+                        ? ~uint64_t(0) // infinite loop
+                        : static_cast<uint64_t>(cmd_ctx.repeat_delay);
+
+                    auto fn = [delay, repeat, &repl, &front, &mod](Event& ev) mutable {
+                        if (--repeat == 0) {
+                            ev.garbage = true;
+                            return;
+                        }
+
+                        ev.alarm.reset_timeout(delay);
+                        repl.execute_command(front, *mod);
+                        if (repl.has_delay_cmd) {
+                            repl.has_delay_cmd = false;
+                            ev.garbage = true;
+                        }
+                    };
+
+                    delayed_cmd_ref = event_container.event_creator()
+                        .create_event_timeout("delayed_cmd", nullptr, delay, fn);
+                }
+                else {
+                    delayed_cmd_ref.garbage();
+                }
+            };
+
+            mk_delayed_cmd_when_available();
+
+            show_prompt();
+
+            auto read_input = [&](Event&){
+                if (repl.execute_command(front, *mod)) {
+                    mk_delayed_cmd_when_available();
+                    show_prompt();
+                }
+            };
+
+            EventRef input_ev = event_container.event_creator()
+                .create_event_fd_without_timeout("stdin", nullptr, 0, read_input);
+
+            while (is_actif() && wait_and_draw_event(*sck_trans, event_manager)) {
+            }
+
+            if (repl.disconnection) {
+                mod->disconnect();
+            }
+        }
+        catch (Error const& e) {
+            LOG(LOG_ERR, "Headless Client: Exception raised = %s !", e.errmsg());
+
+            if (ERR_AUTOMATIC_RECONNECTION_REQUIRED == e.id) {
+                perform_automatic_reconnection = PerformAutomaticReconnection::Yes;
+                continue;
+            }
+
+            if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
+             && sck_trans && mod
+             && static_cast<uintptr_t>(sck_trans->get_fd()) == e.data
+             && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
+             && mod->is_auto_reconnectable()
+             && !mod->server_error_encountered()
+            ) {
+                perform_automatic_reconnection = PerformAutomaticReconnection::Yes;
+                continue;
+            }
+
+            if (ERR_RDP_SERVER_REDIR != e.id) {
+                options.persist = false;
+                continue;
+            }
+
+            // SET new target in ini
+            const char * host = char_ptr_cast(redir_info.host);
+            const char * username = char_ptr_cast(redir_info.username);
+            if (redir_info.dont_store_username && username[0] != 0) {
+                LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                ini.set_acl<cfg::globals::target_user>(username);
+            }
+            LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+            ini.set_acl<cfg::context::target_host>(host);
+            repl.start_connection = true;
+        }
+
+        options.persist = false;
+    }
+
+    front.must_be_stop_capture();
+
+    return 0;
 }
