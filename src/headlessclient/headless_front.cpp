@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_configuration.hpp"
 #include "configs/config.hpp"
 #include "utils/timebase.hpp"
-#include "mod/mod_api.hpp"
 #include "utils/static_string.hpp"
 
 
@@ -24,9 +23,13 @@ HeadlessFront::HeadlessFront(TimeBase& time_base, Inifile& ini, ClientInfo& clie
 
 HeadlessFront::~HeadlessFront() = default;
 
-gdi::GraphicApi& HeadlessFront::gd()
+gdi::GraphicApi& HeadlessFront::prepare_gd()
 {
     if (cmd_ctx.enable_wrm || cmd_ctx.enable_png) {
+        if (!drawable) {
+            drawable = std::make_unique<HeadlessGraphics>(cmd_ctx.screen_width, cmd_ctx.screen_height);
+            gds.add_graphic(*drawable);
+        }
         return gds;
     }
 
@@ -35,6 +38,7 @@ gdi::GraphicApi& HeadlessFront::gd()
 
 void HeadlessFront::dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y)
 {
+    LOG(LOG_DEBUG, "start cap %s %d %d %d", filename, mouse_x, mouse_y, bool(drawable));
     if (drawable) {
         drawable->dump_png(filename, mouse_x, mouse_y);
     }
@@ -44,12 +48,7 @@ bool HeadlessFront::can_be_start_capture(SessionLogApi& session_log)
 {
     (void)session_log;
 
-    if (cmd_ctx.enable_wrm || cmd_ctx.enable_png) {
-        drawable = std::make_unique<HeadlessGraphics>(width, height);
-        gds.add_graphic(*drawable);
-    }
-
-    if (cmd_ctx.enable_wrm) {
+    if (cmd_ctx.enable_wrm && drawable) {
         time_base = TimeBase::now();
 
         auto filename = compute_headless_wrm_path(cmd_ctx.wrm_path, cmd_ctx.session_id, time_base.real_time);
@@ -94,9 +93,6 @@ bool HeadlessFront::must_be_stop_capture()
         drawable.reset();
     }
 
-    width = 0;
-    height = 0;
-
     return true;
 }
 
@@ -105,10 +101,6 @@ HeadlessFront::ResizeResult HeadlessFront::server_resize(ScreenInfo screen_serve
     if (drawable) {
         drawable->resize(screen_server.width, screen_server.height);
     }
-    width = screen_server.width;
-    height = screen_server.height;
-    cmd_ctx.screen_width = screen_server.width;
-    cmd_ctx.screen_height = screen_server.height;
     return ResizeResult::instant_done;
 }
 
@@ -139,9 +131,4 @@ void HeadlessFront::read_config_file()
         ini, client_info,
         static_string<1024>(truncated_bounded_array_view(cmd_ctx.output_message)).c_str()
     );
-}
-
-void HeadlessFront::disconnect_command(mod_api& mod)
-{
-    mod.disconnect();
 }

@@ -28,6 +28,7 @@ struct HeadlessCliOptions
     bool enable_png_capture = false;
     bool print_client_info_section = false;
     bool persist = false;
+    bool interactive = false;
 
     ScreenInfo screen_info {800, 600, BitsPerPixel::BitsPP16};
     KeyLayout::KbdId keylayout = KeyLayout::KbdId(0x040C);

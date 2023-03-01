@@ -77,6 +77,7 @@ struct HeadlessCommand
         ConfigFile,
         ConfigStr,
         Delay,
+        Quit,
     };
 
     // format:
@@ -99,6 +100,7 @@ struct HeadlessCommand
     //      | ('configfile' | 'conff' | 'f') ws filename
     //      | ('configstr' | 'conf') ws str
     //      | 'delay' ws decimal decimal? cmd
+    //      | ('quit' | 'q')
     //      | '#' .*
     // ws := ' '
     // mod := 'R'? 'S' 'hift'?

@@ -43,6 +43,9 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
         cli::option("config-print-new-section")
             .parser(cli::on_off_location(print_client_info_section)),
 
+        cli::option('i', "interactive").help("Enter interactive mode after connection to target.")
+            .parser(cli::on_off_location(interactive)),
+
 
         cli::helper("========= Connection ========="),
 

@@ -29,6 +29,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/theme.hpp"
 #include "utils/to_timeval.hpp"
+#include "utils/out_param.hpp"
 
 
 static void show_prompt()
@@ -89,6 +90,113 @@ static KeyLayout const& get_layout(KeyLayout::KbdId keylayout)
     return playout ? *playout : KeyLayout::null_layout();
 }
 
+namespace
+{
+
+struct Repl
+{
+    bool quit = false;
+    bool start_connection = false;
+    bool disconnection = false;
+    bool has_delay_cmd = false;
+
+    std::string delayed_cmd;
+    HeadlessRepl repl;
+
+    bool is_eof() const
+    {
+        return repl.is_eof();
+    }
+
+    bool wait_connect(HeadlessFront& front)
+    {
+        null_mod mod;
+
+        int fd = 0;
+        fd_set rfds;
+        io_fd_zero(rfds);
+        io_fd_set(fd, rfds);
+
+        do {
+            show_prompt();
+
+            const int num = select(fd + 1, &rfds, nullptr, nullptr, nullptr);
+            // end of file
+            if (num < 0) {
+                LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
+                quit = true;
+                return false;
+            }
+
+            if (!execute_command(front, mod)) {
+                return false;
+            }
+        } while (!repl.is_eof());
+
+        return true;
+    }
+
+    bool execute_command(HeadlessFront& front, mod_api& mod)
+    {
+        HeadlessCommand& cmd_ctx = front.command();
+
+        switch (cmd_ctx.execute_command(repl.read_command(), mod)) {
+            case HeadlessCommand::Result::Ok:
+                break;
+
+            case HeadlessCommand::Result::OutputResult:
+                front.print_output_resut();
+                break;
+
+            case HeadlessCommand::Result::Fail:
+                front.print_fail_result();
+                break;
+
+            case HeadlessCommand::Result::Connect:
+            case HeadlessCommand::Result::Reconnect:
+                disconnection = true;
+                start_connection = true;
+                return false;
+
+            case HeadlessCommand::Result::Disconnect:
+                disconnection = true;
+                return false;
+
+            case HeadlessCommand::Result::ConfigStr:
+                front.read_config_str();
+                break;
+
+            case HeadlessCommand::Result::ConfigFile:
+                front.read_config_file();
+                break;
+
+            case HeadlessCommand::Result::PrintScreen:
+                try {
+                    front.dump_png(cmd_ctx.png_path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
+                }
+                catch (...) {
+                    // ignore error
+                }
+                break;
+
+            case HeadlessCommand::Result::Delay:
+                delayed_cmd = front.command().output_message.as<std::string_view>();
+                has_delay_cmd = true;
+                break;
+
+            case HeadlessCommand::Result::Quit:
+                disconnection = true;
+                quit = true;
+                return false;
+        }
+
+        return true;
+    }
+};
+
+}
+
+
 int main(int argc, char const** argv)
 {
     set_exception_handler_pretty_message();
@@ -115,7 +223,7 @@ int main(int argc, char const** argv)
     printf("Config filename: '%s'\n", options.config_filename);
     load_headless_config_from_file(ini, client_info, options.config_filename);
 
-    HeadlessRepl repl;
+    Repl repl;
     FixedRandom fixed_random;
     UdevRandom udev_random;
     auto& random = options.use_fixed_random ? static_cast<Random&>(udev_random) : fixed_random;
@@ -145,46 +253,29 @@ int main(int argc, char const** argv)
     cmd_ctx.password = options.password;
 
     std::string ip_address = options.ip_address;
-    bool start_connection = *options.ip_address;
+    repl.start_connection = *options.ip_address;
+    bool interactive = !repl.start_connection || options.interactive;
 
     gdi::GraphicDispatcher gds;
 
-    std::string delayed_cmd;
-
-    while (!repl.is_eof() || (options.persist && start_connection)) {
+    while (!repl.quit && (!repl.is_eof() || (repl.start_connection && options.persist))) {
         front.must_be_stop_capture();
 
         /*
          * Wait connect command / ready to connect event
          */
-        if (!start_connection && perform_automatic_reconnection == PerformAutomaticReconnection::No) {
-            null_mod mod;
+        if (!repl.start_connection && perform_automatic_reconnection == PerformAutomaticReconnection::No) {
+            if (!interactive) {
+                break;
+            }
 
-            int fd = 0;
-            fd_set rfds;
-            io_fd_zero(rfds);
-            io_fd_set(fd, rfds);
-
-            do {
-                show_prompt();
-
-                const int num = select(fd + 1, &rfds, nullptr, nullptr, nullptr);
-                // end of file
-                if (num < 0) {
-                    LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
-                    return 8;
-                }
-
-                auto mk_delayed_cmd = [&](std::string_view delayed_cmd_sv){ delayed_cmd = delayed_cmd_sv; };
-                front.execute_command(OutParam{start_connection}, mod, repl.read_command(), mk_delayed_cmd);
-            } while (!start_connection && !repl.is_eof());
-
+            repl.wait_connect(front);
             continue;
         }
 
-        start_connection = false;
+        repl.start_connection = false;
 
-        auto& gd = front.gd();
+        auto& gd = front.prepare_gd();
 
         ClientExecute rail_client_execute(
             event_manager.get_time_base(), gd, front,
@@ -226,8 +317,12 @@ int main(int argc, char const** argv)
             mod.reset(mod_pack.mod);
             sck_trans = mod_pack.psocket_transport;
 
+            repl.disconnection = false;
+
             auto is_actif = [&]{
-                return (!repl.is_eof() || options.persist) && mod->get_mod_signal() == BACK_EVENT_NONE;
+                return (!repl.is_eof() || options.persist)
+                    && !repl.disconnection
+                    && mod->get_mod_signal() == BACK_EVENT_NONE;
             };
 
             /*
@@ -248,33 +343,39 @@ int main(int argc, char const** argv)
             /*
              * Mod is ready
              */
-            bool closed = false;
 
             EventRef delayed_cmd_ref;
             auto mk_delayed_cmd_when_available = [&]{
-                if (!delayed_cmd.empty() && cmd_ctx.delay.count() >= 0) {
+                if (!repl.has_delay_cmd) {
+                    return;
+                }
+
+                repl.has_delay_cmd = false;
+                if (!repl.delayed_cmd.empty() && cmd_ctx.delay.count() >= 0) {
                     auto delay = std::chrono::duration_cast<MonotonicTimePoint::duration>(cmd_ctx.delay);
                     auto repeat = (cmd_ctx.repeat_delay < 0)
                         ? ~uint64_t(0) // infinite loop
                         : static_cast<uint64_t>(cmd_ctx.repeat_delay);
 
-                    auto fn = [
-                        delay, repeat, &closed, &front, &start_connection, &delayed_cmd, &mod
-                    ](Event& ev) mutable {
+                    auto fn = [delay, repeat, &repl, &front, &mod](Event& ev) mutable {
                         if (--repeat == 0) {
                             ev.garbage = true;
                             return;
                         }
 
                         ev.alarm.reset_timeout(delay);
-                        auto mk_delayed_cmd = [&](auto&&){ ev.garbage = true; };
-                        if (!front.execute_command(OutParam{start_connection}, *mod, delayed_cmd, mk_delayed_cmd)) {
-                            closed = true;
+                        repl.execute_command(front, *mod);
+                        if (repl.has_delay_cmd) {
+                            repl.has_delay_cmd = false;
+                            ev.garbage = true;
                         }
                     };
 
                     delayed_cmd_ref = event_container.event_creator()
                         .create_event_timeout("delayed_cmd", nullptr, delay, fn);
+                }
+                else {
+                    delayed_cmd_ref.garbage();
                 }
             };
 
@@ -283,23 +384,20 @@ int main(int argc, char const** argv)
             show_prompt();
 
             auto read_input = [&](Event&){
-                auto mk_delayed_cmd = [&](std::string_view delayed_cmd_sv){
-                    delayed_cmd = delayed_cmd_sv;
+                if (repl.execute_command(front, *mod)) {
                     mk_delayed_cmd_when_available();
-                };
-
-                if (front.execute_command(OutParam{start_connection}, *mod, repl.read_command(), mk_delayed_cmd)) {
                     show_prompt();
-                }
-                else {
-                    closed = true;
                 }
             };
 
             EventRef input_ev = event_container.event_creator()
                 .create_event_fd_without_timeout("stdin", nullptr, 0, read_input);
 
-            while (!closed && is_actif() && wait_and_draw_event(*sck_trans, event_manager)) {
+            while (is_actif() && wait_and_draw_event(*sck_trans, event_manager)) {
+            }
+
+            if (repl.disconnection) {
+                mod->disconnect();
             }
         }
         catch (Error const& e) {
@@ -335,7 +433,7 @@ int main(int argc, char const** argv)
             }
             LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
             ini.set_acl<cfg::context::target_host>(host);
-            start_connection = true;
+            repl.start_connection = true;
         }
 
         options.persist = false;

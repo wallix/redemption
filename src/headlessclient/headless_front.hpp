@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "core/channel_list.hpp"
 #include "gdi/graphic_dispatcher.hpp"
 #include "headlessclient/headless_command.hpp"
-#include "utils/out_param.hpp"
 
 
 class Inifile;
@@ -38,56 +37,7 @@ struct HeadlessFront final : FrontAPI
         return cmd_ctx;
     }
 
-    template<class MkDelayedCmd>
-    bool execute_command(OutParam<bool> connectable, mod_api& mod, chars_view cmd_line, MkDelayedCmd mk_delayed_cmd)
-    {
-        switch (cmd_ctx.execute_command(cmd_line, mod)) {
-            case HeadlessCommand::Result::Ok:
-                break;
-
-            case HeadlessCommand::Result::OutputResult:
-                print_output_resut();
-                break;
-
-            case HeadlessCommand::Result::Fail:
-                print_fail_result();
-                break;
-
-            case HeadlessCommand::Result::Connect:
-            case HeadlessCommand::Result::Reconnect:
-                connectable.out_value = true;
-                return false;
-
-            case HeadlessCommand::Result::Disconnect:
-                disconnect_command(mod);
-                return false;
-
-            case HeadlessCommand::Result::PrintScreen:
-                try {
-                    dump_png(cmd_ctx.png_path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
-                }
-                catch (...) {
-                    // ignore error
-                }
-                break;
-
-            case HeadlessCommand::Result::ConfigStr:
-                read_config_str();
-                break;
-
-            case HeadlessCommand::Result::ConfigFile:
-                read_config_file();
-                break;
-
-            case HeadlessCommand::Result::Delay:
-                mk_delayed_cmd(cmd_ctx.output_message.as<std::string_view>());
-                break;
-        }
-
-        return true;
-    }
-
-    gdi::GraphicApi& gd();
+    gdi::GraphicApi& prepare_gd();
 
     void dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y);
 
@@ -135,19 +85,16 @@ struct HeadlessFront final : FrontAPI
     void possible_active_window_change() override
     {}
 
-private:
     void print_output_resut();
     void print_fail_result();
     void read_config_str();
     void read_config_file();
-    void disconnect_command(mod_api& mod);
 
+private:
     HeadlessCommand cmd_ctx;
     CHANNELS::ChannelDefArray cl;
     // capture variable members
     // -----------------
-    uint16_t width = 0;
-    uint16_t height = 0;
     TimeBase& time_base;
     Inifile& ini;
     ClientInfo& client_info;

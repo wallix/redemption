@@ -1440,6 +1440,12 @@ N(delay) P(milliseconds) [P(repeat)] P(cmd)
     Infinite loop when repeat is negative.
 
 
+N(quit)
+alias: q
+
+    Exit.
+
+
 N(#)
 
     A comment, is ignored.
@@ -1973,6 +1979,10 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
         auto* begin = (first != last) ? first->begin() : cmd.end();
         output_message = {begin, cmd.end()};
         return Result::Delay;
+    }
+
+    else if (cmd_name == "q" || cmd_name == "quit") {
+        return Result::Quit;
     }
 
     else {

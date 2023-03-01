@@ -514,6 +514,13 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     //@}
 
 
+    // quit
+    //@{
+    check_cmd_ex("q", "", "", CmdResult::Quit);
+    check_cmd_ex("quit", "", "", CmdResult::Quit);
+    //@}
+
+
     // comment
     //@{
     check_cmd("# bla bla", "", "");
