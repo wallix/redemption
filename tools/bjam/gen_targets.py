@@ -88,7 +88,6 @@ target_renames = dict((
     ('main', 'rdpproxy'),
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
-    ('rdp_client', 'rdpclient'),
     ('proxy_recorder_cli', 'proxy_recorder'),
     ('nla_server_cli', 'nla_server'),
 ))

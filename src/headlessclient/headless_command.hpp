@@ -45,6 +45,7 @@ struct HeadlessCommand
     bool is_rdp = true;
     bool enable_wrm = false;
     bool enable_png = false;
+    bool enable_record_transport = false;
     unsigned port = 3389;
 
     ErrorType error_type;
@@ -57,6 +58,7 @@ struct HeadlessCommand
     std::string session_id;
     std::string png_path;
     std::string wrm_path;
+    std::string record_transport_path;
     std::string ip_address;
     std::string username;
     std::string password;
@@ -94,7 +96,7 @@ struct HeadlessCommand
     //      | ('help'|'h'|'?') (ws name (ws name)?)?
     //      | ('connect'|'co'|'rdp'|'vnc') (ws addr port?)?
     //      | ('disconnect'|'disco' | 'reconnect'|'reco')
-    //      | 'wrm' ws bool (ws filename)?
+    //      | ('wrm' | 'record-transport') ws bool (ws filename)?
     //      | ('png' | 'p') (ws filename)?
     //      | ('basename' | 'sid') (ws filename)?
     //      | ('configfile' | 'conff' | 'f') ws filename

@@ -162,11 +162,17 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
         cli::option("wrm-path").argname("<filepath>")
             .parser(cli::arg_location(output_wrm_path)),
 
-        cli::option("enable-wrm-capture")
-            .parser(cli::on_off_location(enable_wrm_capture)),
+        cli::option("record-transport-path").argname("<filepath>")
+            .parser(cli::arg_location(output_record_transport_path)),
 
         cli::option("enable-png-capture")
             .parser(cli::on_off_location(enable_png_capture)),
+
+        cli::option("enable-wrm-capture")
+            .parser(cli::on_off_location(enable_wrm_capture)),
+
+        cli::option("enable-record-transport")
+            .parser(cli::on_off_location(enable_record_transport_capture)),
 
 
         cli::helper("")

@@ -160,7 +160,7 @@ public:
             auto tcp_user_timeout = ini.get<cfg::all_target_mod::tcp_user_timeout>();
 
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
-                return new FinalSocketTransport( /*NOLINT*/
+                return new SocketTransport( /*NOLINT*/
                     name,
                     std::move(sck),
                     ip_address,
@@ -223,11 +223,6 @@ private:
 
     std::unique_ptr<FileValidator> file_validator;
 
-    struct FinalSocketTransport final : SocketTransport
-    {
-        using SocketTransport::SocketTransport;
-    };
-
     std::unique_ptr<SocketTransport> socket_transport_ptr;
     ModRdpFactory rdp_factory;
 };
@@ -287,9 +282,10 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
+      , TransportWrapperFnView& transport_wrapper_fn
     )
     : RdpData(events, ini, name, std::move(sck), verbose, error_message, use_failure_simulation_socket_transport)
-    , mod_rdp(this->get_transport(), gd
+    , mod_rdp(transport_wrapper_fn(this->get_transport()), gd
         , osd, events, session_log, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
@@ -442,7 +438,8 @@ ModPack create_mod_rdp(
     Random & gen,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet,
-    PerformAutomaticReconnection perform_automatic_reconnection)
+    PerformAutomaticReconnection perform_automatic_reconnection,
+    TransportWrapperFnView transport_wrapper_fn)
 {
     ClientInfo client_info = client_info_;
 
@@ -892,7 +889,8 @@ ModPack create_mod_rdp(
         file_system_license_store,
         ini,
         enable_validator ? &file_validator->service : nullptr,
-        ini.get<cfg::debug::mod_rdp_use_failure_simulation_socket_transport>()
+        ini.get<cfg::debug::mod_rdp_use_failure_simulation_socket_transport>(),
+        transport_wrapper_fn
     );
 
     if (enable_validator) {

@@ -162,7 +162,7 @@ alias install-resources :
     install-gettext
 ;
 alias install : install-bin install-lib install-resources ;
-alias exe     : rdpproxy rdpclient rdpinichecker ;
+alias exe     : rdpproxy headlessclient rdpinichecker ;
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;

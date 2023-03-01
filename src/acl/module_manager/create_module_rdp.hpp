@@ -29,6 +29,7 @@
 #include "utils/ref.hpp"
 
 #include <array>
+#include <type_traits>
 
 class RedirectionInfo;
 class Inifile;
@@ -42,6 +43,7 @@ class Random;
 class CryptoContext;
 class SessionLogApi;
 class ClientInfo;
+class Transport;
 
 namespace gdi
 {
@@ -49,7 +51,45 @@ namespace gdi
     class OsdApi;
 }
 
+
 enum class PerformAutomaticReconnection : bool { No, Yes, };
+
+
+struct TransportWrapperFnView
+{
+    TransportWrapperFnView() noexcept
+    {}
+
+    TransportWrapperFnView(TransportWrapperFnView&&) noexcept = default;
+    TransportWrapperFnView(TransportWrapperFnView const&) noexcept = default;
+
+    template<class F>
+    TransportWrapperFnView(F&& f) noexcept
+    {
+        using DF = std::decay_t<F>;
+
+        if constexpr (std::is_pointer_v<DF>) {
+            if (!f) {
+                return;
+            }
+        }
+
+        data = &f;
+        fn = [](void* d, Transport& trans) -> Transport& {
+            return static_cast<F&&>(*static_cast<DF*>(d))(trans);
+        };
+    }
+
+    Transport& operator()(Transport& trans)
+    {
+        return !data ? trans : fn(data, trans);
+    }
+
+private:
+    Transport&(*fn)(void*, Transport&) = nullptr;
+    void* data;
+};
+
 
 ModPack create_mod_rdp(
     gdi::GraphicApi & drawable,
@@ -68,5 +108,6 @@ ModPack create_mod_rdp(
     Random & gen,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet,
-    PerformAutomaticReconnection perform_automatic_reconnection
+    PerformAutomaticReconnection perform_automatic_reconnection,
+    TransportWrapperFnView transport_wrapper_fn = {} /* NOLINT */
 );

@@ -1403,6 +1403,11 @@ N(wrm) <P(boolean) [P(path)] | P(path)>
     When boolean is not specified, only the wrm path is modified.
 
 
+N(record-transport) <P(boolean) [P(path)] | P(path)>
+
+    Enable or disable transport recording.
+
+
 N(png) [P(boolean)] [P(path)]
 alias: p
 
@@ -1711,6 +1716,23 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
         return result;
     };
 
+    auto extract_bool_optional_str = [&](OutParam<bool> enable, OutParam<std::string> path){
+        if (++first == last) {
+            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected boolean or path"_av);
+        }
+
+        if (parse_boolean(OutParam{enable.out_value}, first->as<std::string_view>())) {
+            if (++first != last) {
+                path.out_value = {first->begin(), cmd.end()};
+            }
+            return Result::Ok;
+        }
+
+        enable.out_value = true;
+        path.out_value = {first->begin(), cmd.end()};
+        return Result::Ok;
+    };
+
     auto cmd_name = first->as<std::string_view>();
 
     if (cmd_name == "sc" || cmd_name == "scancode") {
@@ -1888,20 +1910,11 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
     }
 
     else if (cmd_name == "wrm") {
-        if (++first == last) {
-            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected boolean or path"_av);
-        }
+        return extract_bool_optional_str(OutParam{enable_wrm}, OutParam{wrm_path});
+    }
 
-        if (parse_boolean(OutParam{enable_wrm}, first->as<std::string_view>())) {
-            if (++first != last) {
-                wrm_path = {first->begin(), cmd.end()};
-            }
-            return Result::Ok;
-        }
-
-        enable_wrm = true;
-        wrm_path = {first->begin(), cmd.end()};
-        return Result::Ok;
+    else if (cmd_name == "record-transport") {
+        return extract_bool_optional_str(OutParam{enable_record_transport}, OutParam{record_transport_path});
     }
 
     else if (cmd_name == "p" || cmd_name == "png") {

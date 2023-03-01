@@ -26,6 +26,7 @@ struct HeadlessCliOptions
     bool use_fixed_random = false;
     bool enable_wrm_capture = false;
     bool enable_png_capture = false;
+    bool enable_record_transport_capture = false;
     bool print_client_info_section = false;
     bool persist = false;
     bool interactive = false;
@@ -44,6 +45,7 @@ struct HeadlessCliOptions
     char const* license_store_path = app_path(AppPath::License);
     char const* output_png_path = "output.png";
     char const* output_wrm_path = "output.wrm";
+    char const* output_record_transport_path = "output.trans";
 
     char const* load_balance_info = "";
 

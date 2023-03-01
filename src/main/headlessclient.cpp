@@ -21,6 +21,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "mod/null/null.hpp"
 #include "RAIL/client_execute.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/netutils.hpp"
@@ -246,8 +247,10 @@ int main(int argc, char const** argv)
     cmd_ctx.is_kbdmap_en = options.is_cmd_kbdmap_en;
     cmd_ctx.enable_wrm = options.enable_wrm_capture;
     cmd_ctx.enable_png = options.enable_png_capture;
+    cmd_ctx.enable_record_transport = options.enable_record_transport_capture;
     cmd_ctx.png_path = options.output_png_path;
     cmd_ctx.wrm_path = options.output_wrm_path;
+    cmd_ctx.record_transport_path = options.output_record_transport_path;
     cmd_ctx.ip_address = options.ip_address;
     cmd_ctx.username = options.username;
     cmd_ctx.password = options.password;
@@ -297,6 +300,18 @@ int main(int argc, char const** argv)
 
         auto& event_container = event_manager.get_events();
 
+        std::unique_ptr<RecorderTransport> recorder_transport;
+        auto maybe_make_transport_record = [&](Transport& trans) -> Transport& {
+            if (!cmd_ctx.enable_record_transport) {
+                return trans;
+            }
+
+            recorder_transport = std::make_unique<RecorderTransport>(
+                trans, event_manager.get_time_base(), cmd_ctx.record_transport_path.c_str()
+            );
+            return *recorder_transport;
+        };
+
         try {
             /*
              * Open module
@@ -306,7 +321,8 @@ int main(int argc, char const** argv)
                     gd, osd, redir_info, ini, front, client_info, rail_client_execute,
                     kbdtypes::KeyLocks(), glyph, theme, event_container, session_log,
                     file_system_license_store, random, cctx, server_auto_reconnect_packet,
-                    std::exchange(perform_automatic_reconnection, PerformAutomaticReconnection::No)
+                    std::exchange(perform_automatic_reconnection, PerformAutomaticReconnection::No),
+                    maybe_make_transport_record
                 )
                 : create_mod_vnc(
                     gd, ini, front, client_info, rail_client_execute,

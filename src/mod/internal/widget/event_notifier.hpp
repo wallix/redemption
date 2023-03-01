@@ -28,7 +28,6 @@ Author(s): Proxies Team
 struct WidgetEventNotifier
 {
     explicit WidgetEventNotifier() noexcept = default;
-    {}
 
     explicit WidgetEventNotifier(decltype(nullptr)) noexcept
     {}
