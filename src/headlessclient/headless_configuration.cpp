@@ -440,7 +440,7 @@ struct HeadlessConfigurationHolder : ConfigurationHolder
             return true;
         })) {
             LOG_IF(ini.get<cfg::debug::config>(), LOG_WARNING,
-                "Unknown parameter %s in section [%s]", key, section_name_of_client_info.c_str());
+                "Unknown key %s in section [%s]", key, section_name_of_client_info.c_str());
         }
         else if (err_msg) {
             LOG_IF(ini.get<cfg::debug::config>(), LOG_WARNING,
@@ -506,6 +506,7 @@ namespace
 
 } // anonymous namespace
 
+
 std::string headless_client_info_config_as_string(ClientInfo const& client_info)
 {
     std::string s;
@@ -538,7 +539,7 @@ std::string headless_client_info_config_as_string(ClientInfo const& client_info)
         s += '\n';
 
         s += name.to_sv();
-        s += '=';
+        s += " = ";
 
         // write value
         if constexpr (std::is_array_v<Mem>) {

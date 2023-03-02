@@ -2326,6 +2326,22 @@ test-run tests/headlessclient/test_headless_command :
   <library>tests/includes/test_only/mod/accumulate_input_mod.o
   <library>tests/includes/test_only/session_log_test.o
 ;
+test-run tests/headlessclient/test_headless_configuration :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_configuration.cpp
+:
+  <library>app_path_test.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/headlessclient/headless_configuration.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/hexadecimal_string_to_buffer.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/headlessclient/test_headless_repl :
   $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_repl.cpp
 :
@@ -5226,6 +5242,7 @@ alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
 alias test_compute_headless_wrm_path : tests/headlessclient/test_compute_headless_wrm_path ;
 alias test_headless_command : tests/headlessclient/test_headless_command ;
+alias test_headless_configuration : tests/headlessclient/test_headless_configuration ;
 alias test_headless_repl : tests/headlessclient/test_headless_repl ;
 alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
@@ -5587,6 +5604,7 @@ alias tests/gdi.norec :
 alias tests/headlessclient.norec :
   tests/headlessclient/test_compute_headless_wrm_path
   tests/headlessclient/test_headless_command
+  tests/headlessclient/test_headless_configuration
   tests/headlessclient/test_headless_repl
 ;
 alias tests/keyboard.norec :
@@ -6335,6 +6353,7 @@ explicit
   test_text_metrics
   test_compute_headless_wrm_path
   test_headless_command
+  test_headless_configuration
   test_headless_repl
   test_keymap
   test_keymapsym
