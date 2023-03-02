@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "keyboard/keylayouts.hpp"
 #include "utils/cli.hpp"
 #include "utils/cli_chrono.hpp"
+#include "utils/cli_screen_info.hpp"
 #include "utils/redemption_info_version.hpp"
 
 #include <iostream>
@@ -73,7 +74,7 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
             .parser(cli::on_off_location(persist)),
 
 
-        cli::helper("========= RDP ========="),
+        cli::helper("========= Client ========="),
 
         cli::option('W', "width").help("Screen width")
             .parser(cli::arg_location(screen_info.width)),
@@ -81,38 +82,12 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
         cli::option('H', "height").help("Screen height")
             .parser(cli::arg_location(screen_info.height)),
 
-        cli::option('s', "size").help("Screen size").argname("{width}x{height}")
-            .parser(cli::arg([&](char const* str) {
-                auto rw = decimal_chars_to_int<uint16_t>(str);
-                if (rw.ec == std::errc() && *rw.ptr == 'x') {
-                    auto rh = decimal_chars_to_int<uint16_t>(rw.ptr+1);
-                    if (rh.ec == std::errc() && !*rh.ptr) {
-                        screen_info.width = rw.val;
-                        screen_info.height = rh.val;
-                        return cli::Res::Ok;
-                    }
-                }
-                return cli::Res::BadOption;
-            })),
-
-        cli::option("bpp").help("Bit per pixel (8, 15, 16, 24, 32)")
+        cli::option("bpp").help("Bit per pixel")
             .argname("bitPerPixel")
-            .parser(cli::arg([&](int x) {
-                switch (x) {
-                    case 8:
-                    case 15:
-                    case 16:
-                    case 24:
-                        screen_info.bpp = checked_int(x);
-                        break;
-                    case 32:
-                        screen_info.bpp = BitsPerPixel::BitsPP24;
-                        break;
-                    default:
-                        return cli::Res::BadOption;
-                }
-                return cli::Res::Ok;
-            })),
+            .parser(cli::arg_location(screen_info.bpp)),
+
+        cli::option('s', "size").help("Screen size")
+            .parser(cli::arg_location(screen_info)),
 
         cli::option('k', "keylayout").help("Keyboard layout id (see --list-keylayout)")
             .argname("kbdId")
