@@ -82,7 +82,7 @@ struct TransportWrapperFnView
 
     Transport& operator()(Transport& trans)
     {
-        return !data ? trans : fn(data, trans);
+        return !fn ? trans : fn(data, trans);
     }
 
 private:
