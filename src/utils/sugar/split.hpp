@@ -329,7 +329,7 @@ auto split_with(Chars&& chars, Sep&& sep)
     }
 }
 
-template<class Chars, class Sep>
+template<class Chars, class Sep = char>
 auto get_lines(Chars&& chars, Sep&& sep = '\n') /*NOLINT*/
 {
     return split_with(static_cast<Chars&&>(chars), static_cast<Sep&&>(sep));
