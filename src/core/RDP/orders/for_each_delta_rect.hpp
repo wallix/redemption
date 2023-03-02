@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/rect.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 template<class RDPMulti, class FRect>
 inline void for_each_delta_rect(const RDPMulti & cmd, FRect f)
@@ -30,10 +31,10 @@ inline void for_each_delta_rect(const RDPMulti & cmd, FRect f)
     // u8 to int for inhibit overflow and infinite loop
     const int n = cmd.nDeltaEntries;
     for (int i = 0; i < n; i++) {
-        cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
-        cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-        cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
-        cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+        cmd_rect.x += cmd.deltaEncodedRectangles[i].leftDelta;
+        cmd_rect.y += cmd.deltaEncodedRectangles[i].topDelta;
+        cmd_rect.cx = checked_int(cmd.deltaEncodedRectangles[i].width);
+        cmd_rect.cy = checked_int(cmd.deltaEncodedRectangles[i].height);
         f(Rect(cmd_rect));
     }
 }
