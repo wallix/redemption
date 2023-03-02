@@ -405,7 +405,7 @@ FileContentsError append_file_contents(const char * filename, std::string& buffe
     return FileContentsError::Open;
 }
 
-FileContentsError append_file_contents(std::string const& filename, std::string& buffer)
+FileContentsError append_file_contents(std::string const& filename, std::string& buffer, off_t max_size)
 {
-    return append_file_contents(filename.c_str(), buffer);
+    return append_file_contents(filename.c_str(), buffer, max_size);
 }

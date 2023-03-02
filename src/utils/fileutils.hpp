@@ -85,4 +85,4 @@ enum class [[nodiscard]] FileContentsError
 };
 
 FileContentsError append_file_contents(const char * filename, std::string& buffer, off_t max_size = std::numeric_limits<off_t>::max());
-FileContentsError append_file_contents(std::string const& filename, std::string& buffer);
+FileContentsError append_file_contents(std::string const& filename, std::string& buffer, off_t max_size = std::numeric_limits<off_t>::max());
