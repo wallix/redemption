@@ -89,12 +89,6 @@ include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
 actions gen_targets
 {
     ./tools/bjam/gen_targets.py > targets.jam
-    ./tools/bjam/gen_targets.py src/main/headlessclient.cpp |
-        sed 's#^obj #add_obj #;t
-             /^\s*</!d
-             s/^\s*</requirement_list += </
-             s/$/ ;/' \
-        | sort > projects/qtclient/redemption_deps.jam
 }
 
 explicit targets.jam ;
