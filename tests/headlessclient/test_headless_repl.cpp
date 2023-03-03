@@ -84,5 +84,6 @@ RED_AUTO_TEST_CASE_WF(TestHeadlessCommandBuffer, wf)
 
 #undef check_line
 
+    close(fd);
     wf.set_removed();
 }
