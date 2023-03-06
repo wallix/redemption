@@ -50,7 +50,7 @@ Author(s): Jonathan Poelen
 #include "gdi/clip_from_cmd.hpp"
 #include "utils/line_equation.hpp"
 
-#include "client_redemption/pointer_to_rgba8888.hpp"
+#include "client/common/rdp_pointer_to_rgba8888.hpp"
 
 // include "utils/log.hpp"
 
@@ -671,7 +671,7 @@ namespace
         gdi::CachePointerIndex cache_idx,
         const RdpPointerView & cursor)
     {
-        const redclient::RGBA8888Image image = redclient::pointer_to_rgba8888(cursor);
+        const redclient::RGBA8888Image image = redclient::rdp_pointer_to_rgba8888(cursor);
         const auto hotspot = cursor.hotspot();
 
         emval_call(callbacks, jsnames::new_pointer,

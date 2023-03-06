@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2020
 Author(s): Jonathan Poelen
 */
 
-#include "client_redemption/pointer_to_rgba8888.hpp"
+#include "client/common/rdp_pointer_to_rgba8888.hpp"
 
 #include "core/RDP/rdp_pointer.hpp"
 #include "utils/colors.hpp"
@@ -247,7 +247,7 @@ namespace
     }
 } // anonymous namespace
 
-redclient::RGBA8888Image redclient::pointer_to_rgba8888(RdpPointerView const& pointer)
+redclient::RGBA8888Image redclient::rdp_pointer_to_rgba8888(RdpPointerView const& pointer)
 {
     auto const dimensions = pointer.dimensions();
     auto const width = dimensions.width;

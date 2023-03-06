@@ -36,5 +36,5 @@ namespace redclient
         uint8_t* data() const { return this->buffer.get(); }
     };
 
-    RGBA8888Image pointer_to_rgba8888(RdpPointerView const& pointer);
+    RGBA8888Image rdp_pointer_to_rgba8888(RdpPointerView const& pointer);
 } // namespace redclient

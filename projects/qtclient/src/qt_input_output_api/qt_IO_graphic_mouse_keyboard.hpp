@@ -35,7 +35,7 @@
 #include <QtGui/QImage>
 #include <QtGui/QPainter>
 
-#include "client_redemption/pointer_to_rgba8888.hpp"
+#include "common_client/rdp_pointer_to_rgba8888.hpp"
 
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
@@ -95,7 +95,7 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
                 : pointer_cache[cache_idx.cache_index()];
 
             auto hotspot = pointer.get_hotspot();
-            auto rgba_cursor = redclient::pointer_to_rgba8888(pointer);
+            auto rgba_cursor = redclient::rdp_pointer_to_rgba8888(pointer);
             QImage cursor_image(
                 rgba_cursor.data(),
                 int(rgba_cursor.width),

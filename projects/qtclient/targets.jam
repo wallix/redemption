@@ -288,6 +288,11 @@ test-run tests/qtclient/profile/test_profile :
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
 ;
+test-run tests/qtclient/profile/test_widget_profile :
+  tests/qtclient/profile/test_widget_profile.cpp
+:
+  <library>src/qtclient/profile/widget_profile.o
+;
 
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : src/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : src/client_redemption/client_channels/client_rdpdr_channel.cpp ;
@@ -301,6 +306,7 @@ obj src/qt_input_output_api/qt_input_output_clipboard.o : src/qt_input_output_ap
 obj src/qtclient.o : src/qtclient.cpp : <define>ZLIB_CONST ;
 obj src/qtclient/profile/cli_parse_profile.o : src/qtclient/profile/cli_parse_profile.cpp ;
 obj src/qtclient/profile/persistent_profiles.o : src/qtclient/profile/persistent_profiles.cpp ;
+obj src/qtclient/profile/widget_profile.o : src/qtclient/profile/widget_profile.cpp ;
 obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/kv_list_from_strings.o : $(REDEMPTION_SRC_PATH)/acl/kv_list_from_strings.cpp ;
@@ -387,6 +393,7 @@ alias test_client_rdpdr_channel : tests/client_redemption/client_channels/test_c
 alias test_client_rdpsnd_channel : tests/client_redemption/client_channels/test_client_rdpsnd_channel ;
 alias test_client_remoteapp_channel : tests/client_redemption/client_channels/test_client_remoteapp_channel ;
 alias test_profile : tests/qtclient/profile/test_profile ;
+alias test_widget_profile : tests/qtclient/profile/test_widget_profile ;
 alias tests/client_redemption/client_channels.norec :
   tests/client_redemption/client_channels/test_client_cliprdr_channel
   tests/client_redemption/client_channels/test_client_rdpdr_channel
@@ -395,6 +402,7 @@ alias tests/client_redemption/client_channels.norec :
 ;
 alias tests/qtclient/profile.norec :
   tests/qtclient/profile/test_profile
+  tests/qtclient/profile/test_widget_profile
 ;
 alias tests/client_redemption/client_channels :
   tests/client_redemption/client_channels.norec
@@ -422,6 +430,7 @@ explicit
   src/qtclient.o
   src/qtclient/profile/cli_parse_profile.o
   src/qtclient/profile/persistent_profiles.o
+  src/qtclient/profile/widget_profile.o
   projects/redemption_configs/redemption_src/configs/config.o
   src/RAIL/client_execute.o
   src/acl/kv_list_from_strings.o
@@ -510,6 +519,7 @@ explicit
   test_client_rdpsnd_channel
   test_client_remoteapp_channel
   test_profile
+  test_widget_profile
 ;
 
 explicit

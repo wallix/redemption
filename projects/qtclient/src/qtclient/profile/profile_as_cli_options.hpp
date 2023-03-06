@@ -41,19 +41,21 @@ struct cli::arg_parsers::arg_parse_traits<::qtclient::ProtocolMod>
     }
 };
 
+// TODO add cli::arg_parsers::arg_parse_traits<::KeyLayout::KbdId>
+
 namespace qtclient
 {
 
 template<class T>
-struct serializable_option : std::true_type
+struct is_serializable_option : std::true_type
 {};
 
 template<>
-struct serializable_option<cli::Helper> : std::false_type
+struct is_serializable_option<cli::Helper> : std::false_type
 {};
 
 template<class Short, class Long, class Act, class Name>
-struct serializable_option<cli::Option<Short, Long, cli::parsers::trigger<Act>, Name>> : std::false_type
+struct is_serializable_option<cli::Option<Short, Long, cli::parsers::trigger<Act>, Name>> : std::false_type
 {};
 
 constexpr auto to_cli_options = [](auto&&... options) {
@@ -66,7 +68,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
     return fn(
         cli::helper("========= Protocol ========="),
 
-        cli::option('m', "protocol").help("Set connection to VNC or RDP").argname("<vnc|rdp>")
+        cli::option('m', "protocol").help("Select protocol for connection").argname("<vnc|rdp>")
         .parser(cli::arg_location(config.protocol)),
 
         cli::option("rdp").help("Alias for --protocol=rdp")
@@ -78,17 +80,17 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
 
         cli::helper("========= Connection ========="),
 
-        cli::option('u', "username").help("Set target session user name")
+        cli::option('u', "username").help("Target session user name")
         .parser(cli::arg_location(config.user_name)),
 
-        cli::option('p', "password").help("Set target session user password")
+        cli::option('p', "password").help("Target session user password")
         .argname("password")
         .parser(cli::arg_location(config.user_password)),
 
-        cli::option('t', "target").help("Set target IP address")
+        cli::option('t', "target").help("Target address")
         .parser(cli::arg_location(config.target_address)),
 
-        cli::option('P', "port").help("Set port to use on target")
+        cli::option('P', "port").help("Port to use on target")
         .parser(cli::arg_location(config.target_port)),
 
 
@@ -109,7 +111,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::option("tls-max-level").help("Maximal TLS protocol level allowed")
         .parser(cli::arg_location(config.tls_max_level)),
 
-        cli::option("cipher").help("Set TLS Cipher allowed for TLS <= 1.2")
+        cli::option("cipher").help("TLS Cipher allowed for TLS <= 1.2")
         .parser(cli::arg_location(config.cipher_string)),
 
         cli::option("enable-recording").help("Enable session recording as .wrm movie")
@@ -132,7 +134,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::option("enable-tls").help("Enable TLS protocol")
         .parser(cli::arg_location(config.enable_tls)),
 
-        cli::option("layout").help("Set windows keylayout")
+        cli::option("layout").help("Windows keylayout")
         .parser(cli::arg_location(config.key_layout)),
 
         cli::option("rdp-verbose")
@@ -144,7 +146,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::option("enable-remote-app").help("Connection as remote application")
         .parser(cli::arg_location(config.enable_remote_app)),
 
-        cli::option("remote-cmd").help("Set the command line of remote application")
+        cli::option("remote-cmd").help("Command line of remote application")
         .argname("command")
         .parser(cli::arg_location(config.remote_app_cmd)),
 
@@ -158,7 +160,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::option("enable-drive").help("Enable shared local disk")
         .parser(cli::arg_location(config.enable_drive)),
 
-        cli::option("drive-dir").help("Set directory path on local disk to share with your session")
+        cli::option("drive-dir").help("Directory path on local disk to share with your session")
         .argname("directory")
         .parser(cli::arg_location(config.drive_path)),
 

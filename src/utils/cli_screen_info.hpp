@@ -26,13 +26,13 @@ Author(s): Jonathan Poelen
 namespace cli::parsers
 {
     template<>
-    struct argname_value_traits<BitsPerPixel>
+    struct argname_value_traits<::BitsPerPixel>
     {
         static constexpr std::string_view default_argname = "<8|15|16|24|32>";
     };
 
     template<>
-    struct argname_value_traits<ScreenInfo>
+    struct argname_value_traits<::ScreenInfo>
     {
         static constexpr std::string_view default_argname = "<{width}x{height} | {width}x{height}x{bpp}>";
     };
@@ -41,9 +41,9 @@ namespace cli::parsers
 namespace cli::arg_parsers
 {
     template<>
-    struct arg_parse_traits<BitsPerPixel>
+    struct arg_parse_traits<::BitsPerPixel>
     {
-        using value_type = BitsPerPixel;
+        using value_type = ::BitsPerPixel;
 
         static Res parse(value_type& out, char const* str)
         {

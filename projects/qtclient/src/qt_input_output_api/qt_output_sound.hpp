@@ -29,15 +29,8 @@
 
 #include <QtWidgets/QWidget>
 
-#if REDEMPTION_QT_VERSION == 4
-#include <phonon/AudioOutput>
-#include <phonon/MediaObject>
-#else
 #include <Phonon/AudioOutput>
 #include <Phonon/MediaObject>
-#endif
-
-
 
 
 class QtOutputSound : public QObject, public ClientOutputSoundAPI

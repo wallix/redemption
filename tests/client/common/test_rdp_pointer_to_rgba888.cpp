@@ -20,10 +20,13 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "client_redemption/pointer_to_rgba8888.hpp"
+#include "client/common/rdp_pointer_to_rgba8888.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
+
+#include <vector>
+
 
 struct ReadableCursor
 {
@@ -47,7 +50,7 @@ struct ReadableCursor
 
 RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
 {
-    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(normal_pointer());
+    redclient::RGBA8888Image img = redclient::rdp_pointer_to_rgba8888(normal_pointer());
 
     RED_REQUIRE(32u == img.width);
     RED_REQUIRE(32u == img.height);
@@ -313,7 +316,7 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(RdpPointerView(
+    redclient::RGBA8888Image img = redclient::rdp_pointer_to_rgba8888(RdpPointerView(
         CursorSize{32, 32},
         Hotspot{0, 0},
         BitsPerPixel(24),

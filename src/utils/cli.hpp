@@ -202,6 +202,12 @@ namespace detail
     : indexed_option<Ints, Opts>...
     {
         template<class F>
+        auto operator()(F&& f)
+        {
+            return f(static_cast<indexed_option<Ints, Opts>&>(*this).option...);
+        }
+
+        template<class F>
         auto operator()(F&& f) const
         {
             return f(static_cast<indexed_option<Ints, Opts> const&>(*this).option...);
@@ -785,6 +791,19 @@ namespace parsers
         Act act {};
     };
 
+    struct on_off_location
+    {
+        using value_property = optional_value;
+
+        Res operator()(ParseResult& pr) const
+        {
+            auto act = [&](bool state){ *value = state; };
+            return on_off<decltype(act)>{act}(pr);
+        }
+
+        bool* value;
+    };
+
     template<Res R, class Act = detail::NoAction>
     struct set_res
     {
@@ -862,6 +881,16 @@ template<class T>
 auto on_off_location(T& x)
 {
     return on_off([&](bool state){ x = state; });
+}
+
+inline auto on_off_location(bool& x)
+{
+    return parsers::on_off_location{&x};
+}
+
+inline auto arg_location(bool& x)
+{
+    return parsers::on_off_location{&x};
 }
 
 template<auto X, class T>

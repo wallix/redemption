@@ -43,10 +43,10 @@
 #include "gdi/osd_api.hpp"
 
 #include "mod/internal/replay_mod.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
-#include "mod/vnc/new_mod_vnc.hpp"
+#include "client/common/new_mod_rdp.hpp"
+#include "client/common/new_mod_vnc.hpp"
 
 #include "transport/replay_transport.hpp"
 #include "transport/socket_transport.hpp"

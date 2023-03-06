@@ -81,6 +81,9 @@ project qtclient
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
     $(BOOST_STACKTRACE_CXXFLAGS)
 
+    # extract name / bit on enum
+    <include>$(REDEMPTION_CONFIG_PATH)/autogen/src/include
+
     # <cxxflags>-fPIC
     <define>QT_NO_KEYWORDS
 

@@ -1,21 +1,7 @@
 /*
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2010-2020
-Author(s): Jonathan Poelen
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #include "qt_input_output_api/graphics.hpp"
@@ -25,10 +11,8 @@ Author(s): Jonathan Poelen
 
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/rdp_draw_glyphs.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -40,18 +24,10 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
 #include "core/RDP/orders/for_each_delta_rect.hpp"
 #include "gdi/clip_from_cmd.hpp"
-
-#include <QtGui/QPainter>
-#include <QtGui/QPixmap>
 
 
 namespace
@@ -131,7 +107,8 @@ namespace
                     painter.setBrush(Qt::SolidPattern);
                     break;
 
-                default: LOG(LOG_WARNING, "RDPPatBlt brush_style = 0x03 rop = %x", rop);
+                default:
+                    LOG(LOG_WARNING, "RDPPatBlt brush_style = 0x03 rop = %x", rop);
                     break;
             }
         }
@@ -142,11 +119,14 @@ namespace
                 painter.setCompositionMode(Rop::Reset);
             };
 
+            auto drawRect = [&](const QBrush& brush){
+                painter.setBrush(brush);
+                painter.drawRects(rects, count_rect);
+            };
+
             switch (rop) {
-                case 0x00: // blackness
-                    painter.setBrush(Qt::black);
-                    painter.drawRects(rects, count_rect);
-                    break;
+                // blackness
+                case 0x00: drawRect(Qt::black); break;
 
                 case 0x05: drawMode(Rop::DPon); break;
                 case 0x0F: drawMode(Rop::Pn); break;
@@ -163,18 +143,12 @@ namespace
                 // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
                 // |      | RPN: P                        |
                 // +------+-------------------------------+
-                case 0xF0:
-                    painter.setBrush(backColor);
-                    painter.drawRects(rects, count_rect);
-                    break;
-
+                case 0xF0: drawRect(backColor); break;
                 case 0xF5: drawMode(Rop::PDno); break;
                 case 0xFA: drawMode(Rop::DPo); break;
 
-                case 0xFF: // whiteness
-                    painter.setBrush(Qt::white);
-                    painter.drawRects(rects, count_rect);
-                    break;
+                // whiteness
+                case 0xFF: drawRect(Qt::white); break;
 
                 default: LOG(LOG_WARNING, "RDPPatBlt rop = %x", rop);
                     break;
@@ -232,8 +206,15 @@ namespace
             srcy = sy + rect.y - drect.y;
         }
 
-        QRect qrect() const noexcept { return QRect(x, y, w, h); }
-        bool isEmpty() const noexcept { return w <= 0 || h <= 0; }
+        QRect qrect() const noexcept
+        {
+            return QRect(x, y, w, h);
+        }
+
+        bool isEmpty() const noexcept
+        {
+            return w <= 0 || h <= 0;
+        }
 
         int x;
         int y;
@@ -242,34 +223,33 @@ namespace
 
         int srcx;
         int srcy;
-
     };
 
-    void drawImage(QPainter& painter, ImagePos const& p, Bitmap const& bmp)
+    void drawImage(QPainter& painter, ImagePos const& p, Bitmap const& bmp, QImage::Format format)
     {
-        QImage::Format format/* = QImage::Format_Invalid*/;
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (bmp.bpp()) {
-            case BitsPerPixel{15}: format = QImage::Format_RGB555; break;
-            case BitsPerPixel{16}: format = QImage::Format_RGB16;  break;
-            case BitsPerPixel{24}: format = QImage::Format_RGB888; break;
-            case BitsPerPixel{32}: format = QImage::Format_RGB32;  break;
-            default: assert(!"unknown bpp"); return;
-        }
-        REDEMPTION_DIAGNOSTIC_POP()
-
         QImage qbitmap(bmp.data() + bmp.line_size() * p.srcy + p.srcx, p.w, p.h, bmp.line_size(), format);
-
-        if (format == QImage::Format_RGB888) {
-            // inplace transformation
-            std::move(qbitmap).rgbSwapped();
-        }
 
         // inplace transformation
         std::move(qbitmap).mirrored(false, true);
 
         painter.drawImage(p.qrect(), qbitmap);
+    }
+
+    void drawImage(QPainter& painter, ImagePos const& p, Bitmap const& bmp)
+    {
+        switch (safe_cast<uint8_t>(bmp.bpp())) {
+            case 15: drawImage(painter, p, bmp, QImage::Format_RGB555); break;
+            case 16: drawImage(painter, p, bmp, QImage::Format_RGB16);  break;
+            case 24: drawImage(painter, p, bmp, QImage::Format_BGR888); break;
+            case 32: drawImage(painter, p, bmp, QImage::Format_RGB32);  break;
+            case 8:
+                // Drawing into a QImage with QImage::Format_Indexed8 is not supported.
+                drawImage(painter, p, Bitmap(BitsPerPixel(16), bmp), QImage::Format_RGB16);
+                break;
+
+            default:
+                REDEMPTION_UNREACHABLE();
+        }
     }
 
     void drawImage(QPainter& painter, Bitmap const& bmp, Rect drect, Rect clip, int sx, int sy)
@@ -293,7 +273,7 @@ namespace
                 const auto rect = clip.intersect(drect);
                 *prect = QRect(rect.x, rect.y, rect.cx, rect.cy);
             });
-            length = prect - std::begin(rects);
+            length = checked_int(prect - std::begin(rects));
         }
 
         QRect rects[256];
@@ -423,29 +403,29 @@ void Graphics::draw(const RDPMemBlt & cmd, Rect clip, Bitmap const& bmp)
         return;
     }
 
-    auto drawWithMode = [&](QPainter::CompositionMode mode){
-        this->painter.setCompositionMode(mode);
-        drawImage(this->painter, p, bmp);
-        this->painter.setCompositionMode(Rop::Reset);
-    };
+    QPainter::CompositionMode mode;
 
     switch (cmd.rop) {
-        case 0x00: this->painter.fillRect(p.qrect(), Qt::black); break;
-        case 0x22: drawWithMode(Rop::DSna); break;
-        case 0x33: drawWithMode(Rop::Sn); break;
-        case 0x55: drawWithMode(Rop::Dn); break;
-        case 0x66: drawWithMode(Rop::DSx); break;
-        case 0x88: drawWithMode(Rop::DSa); break;
-        case 0x99: drawWithMode(Rop::DSxn); break;
-        case 0xAA: break;
-        case 0xBB: drawWithMode(Rop::DSno); break;
-        case 0xCC: drawImage(this->painter, p, bmp); break;
-        case 0xEE: drawWithMode(Rop::DSo); break;
-        case 0xFF: this->painter.fillRect(p.qrect(), Qt::white); break;
+        case 0x00: this->painter.fillRect(p.qrect(), Qt::black); return;
+        case 0x22: mode = Rop::DSna; break;
+        case 0x33: mode = Rop::Sn; break;
+        case 0x55: mode = Rop::Dn; break;
+        case 0x66: mode = Rop::DSx; break;
+        case 0x88: mode = Rop::DSa; break;
+        case 0x99: mode = Rop::DSxn; break;
+        case 0xAA: return;
+        case 0xBB: mode = Rop::DSno; break;
+        case 0xCC: drawImage(this->painter, p, bmp); return;
+        case 0xEE: mode = Rop::DSo; break;
+        case 0xFF: this->painter.fillRect(p.qrect(), Qt::white); return;
 
         default: LOG(LOG_WARNING, "DEFAULT: RDPMemBlt rop = %x", cmd.rop);
-            break;
+            return;
     }
+
+    this->painter.setCompositionMode(mode);
+    drawImage(this->painter, p, bmp);
+    this->painter.setCompositionMode(Rop::Reset);
 }
 
 void Graphics::draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const& bmp)
@@ -520,8 +500,8 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
         return ;
     }
 
-    const int deltax = cmd.nXSrc - cmd.rect.x;
-    const int deltay = cmd.nYSrc - cmd.rect.y;
+    const int16_t deltax = cmd.nXSrc - cmd.rect.x;
+    const int16_t deltay = cmd.nYSrc - cmd.rect.y;
 
     auto compute_rects = [&](auto f){
         for_each_delta_rect(cmd, [&](Rect const& cmd_rect) {
@@ -546,8 +526,7 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
         QRect rects[256];
         auto* prect = rects;
         compute_rects([&](Rect const& rect, auto...){
-            *prect = qrect(rect);
-            ++prect;
+            *prect++ = qrect(rect);
         });
         this->painter.setBrush(color);
         this->painter.drawRects(rects, prect - std::begin(rects));
@@ -567,12 +546,12 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 
 void Graphics::draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
 {
-    Rect screen_rect = clip.intersect(this->cache.width(), this->cache.height());
-    if (screen_rect.isempty()){
+    const Rect viewport = intersect(clip, this->cache);
+    if (viewport.isempty()){
         return ;
     }
 
-    Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(screen_rect);
+    Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(viewport);
     if (clipped_glyph_fragment_rect.isempty()) {
         return;
     }
@@ -582,7 +561,7 @@ void Graphics::draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ct
         Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
         if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
             ajusted.cy--;
-            ajusted = ajusted.intersect(screen_rect);
+            ajusted = ajusted.intersect(viewport);
             this->painter.fillRect(ajusted.x, ajusted.y, ajusted.cx, ajusted.cy, qcolor(cmd.fore_color, color_ctx));
         }
     }
@@ -679,7 +658,6 @@ void Graphics::draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx
 
 void Graphics::draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-
     (void)cmd;
     (void)clip;
     (void)color_ctx;
@@ -705,16 +683,10 @@ void Graphics::draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx
 
 void Graphics::draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-
     (void)cmd;
     (void)clip;
     (void)color_ctx;
     LOG(LOG_WARNING, "DEFAULT: RDPEllipseCB");
-}
-
-void Graphics::draw(const RDP::FrameMarker & order)
-{
-    (void)order;
 }
 
 void Graphics::draw(RDPSetSurfaceCommand const & cmd)
@@ -730,9 +702,3 @@ void Graphics::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & 
     QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBX8888);
     this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
 }
-
-// void Graphics::drawLine(int x1, int y1, int x2, int y2, RDPColor rdpColor, gdi::ColorCtx color_ctx)
-// {
-//     this->painter.setPen(qcolor(rdpColor, color_ctx));
-//     this->painter.drawLine(x1, y1, x2, y2);
-// }

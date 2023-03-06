@@ -86,9 +86,9 @@ void concat_options(std::string& str, chars_view profile_name, std::index_sequen
     {};
 
     concat_tuple_option(str, profile_name, std::make_index_sequence<sizeof...(Ints) * 4>(), Tuple{
-        {{qtclient::serializable_option<Options>::value ? "\n"_av : ""_av}}...,
+        {{qtclient::is_serializable_option<Options>::value ? "\n"_av : ""_av}}...,
         {{extract_long_name(options)}}...,
-        {{qtclient::serializable_option<Options>::value ? " "_av : ""_av}}...,
+        {{qtclient::is_serializable_option<Options>::value ? " "_av : ""_av}}...,
         {{extract_option_as_string(options)}}...
     });
 }
@@ -112,7 +112,7 @@ bool save_profiles(char const* filename, Profiles const& profiles)
     str_append(str, "current-profile ", profiles.current_profile().profile_name, '\n');
 
     for (auto const& profile : profiles) {
-        profile_as_cli_options(const_cast<Profile&>(profile))([&](auto&&... options) {
+        profile_as_cli_options(const_cast<Profile&>(profile) /* NOLINT */)([&](auto&&... options) {
             concat_options(str, profile.profile_name, std::make_index_sequence<sizeof...(options)>(), options...);
         });
     }

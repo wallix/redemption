@@ -98,7 +98,6 @@ target_nosyslog = set((
     'nla_server',
     'rdpinichecker',
     'rdpclient',
-    #'main_client_redemption',
 ))
 
 sys_lib_assoc = dict((
@@ -269,7 +268,7 @@ try:
         '--src-system': set_arg('system'),
         '--disable-src': add_disable_src,
         '--deps-src': add_deps_src,
-        '--include': includes.add,
+        '--include': lambda path: path.endswith('/') and path or includes.add(f'{path}/'),
         '--implicit': no_explicit_set.add,
     }
     while True:
@@ -383,7 +382,7 @@ libs = sorted(libs, key=kpath)
 tests = sorted(tests, key=kpath)
 
 def tuple_files(l):
-    return [(f.path, f) for f in l]
+    return ((f.path, f) for f in l)
 
 all_files = OrderedDict(tuple_files(tests))
 all_files.update(tuple_files(sources))
@@ -739,7 +738,7 @@ if not filter_targets and not has_set_arg:
             includes.add(f.path)
 
     def append_with_filter(f, a):
-        if not f.path.startswith('src/client_redemption/') \
+        if not f.path.startswith('src/common_client/') \
         and not f.path.startswith('src/utils/crypto/') \
         and not f.path.startswith('src/system/'):
             a.append(f.path)
