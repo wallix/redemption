@@ -4,6 +4,8 @@ SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 
+#pragma once
+
 #include "qtclient/profile/profile.hpp"
 
 #include "utils/cli.hpp"
@@ -42,12 +44,24 @@ struct cli::arg_parsers::arg_parse_traits<::qtclient::ProtocolMod>
 namespace qtclient
 {
 
+template<class T>
+struct serializable_option : std::true_type
+{};
+
+template<>
+struct serializable_option<cli::Helper> : std::false_type
+{};
+
+template<class Short, class Long, class Act, class Name>
+struct serializable_option<cli::Option<Short, Long, cli::parsers::trigger<Act>, Name>> : std::false_type
+{};
+
 constexpr auto to_cli_options = [](auto&&... options) {
     return cli::options(static_cast<decltype(options)&&>(options)...);
 };
 
 template<class Fn = decltype(to_cli_options) const&>
-auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
+auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
 {
     return fn(
         cli::helper("========= Protocol ========="),
@@ -68,6 +82,7 @@ auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         .parser(cli::arg_location(config.user_name)),
 
         cli::option('p', "password").help("Set target session user password")
+        .argname("password")
         .parser(cli::arg_location(config.user_password)),
 
         cli::option('t', "target").help("Set target IP address")
@@ -83,10 +98,10 @@ auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         .parser(cli::arg_location(config.screen_info)),
 
         cli::option("span").help("Span the screen size on local screen")
-        .parser(cli::on_off_location(config.is_spanning)),
+        .parser(cli::arg_location(config.is_spanning)),
 
         cli::option("enable-clipboard").help("Enable clipboard")
-        .parser(cli::on_off_location(config.enable_clipboard)),
+        .parser(cli::arg_location(config.enable_clipboard)),
 
         cli::option("tls-min-level").help("Minimal TLS protocol level")
         .parser(cli::arg_location(config.tls_min_level)),
@@ -98,13 +113,13 @@ auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         .parser(cli::arg_location(config.cipher_string)),
 
         cli::option("enable-recording").help("Enable session recording as .wrm movie")
-        .parser(cli::on_off_location(config.enable_recording)),
+        .parser(cli::arg_location(config.enable_recording)),
 
 
         cli::helper("========= RDP ========="),
 
         cli::option("enable-sound").help("Enable sound")
-        .parser(cli::on_off_location(config.enable_sound)),
+        .parser(cli::arg_location(config.enable_sound)),
 
         cli::option("rdp-performance-flags").help(
             "Set RDP performanceflags "
@@ -112,10 +127,10 @@ auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         .parser(cli::arg_location(config.rdp5_performance_flags)),
 
         cli::option("enable-nla").help("Enable NLA protocol")
-        .parser(cli::on_off_location(config.enable_nla)),
+        .parser(cli::arg_location(config.enable_nla)),
 
         cli::option("enable-tls").help("Enable TLS protocol")
-        .parser(cli::on_off_location(config.enable_tls)),
+        .parser(cli::arg_location(config.enable_tls)),
 
         cli::option("layout").help("Set windows keylayout")
         .parser(cli::arg_location(config.key_layout)),
@@ -126,14 +141,14 @@ auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
 
         cli::helper("========= Remote App ========="),
 
-        cli::option("remote-app").help("Connection as remote application.")
-        .parser(cli::on_off_location(config.enable_remote_app)),
+        cli::option("enable-remote-app").help("Connection as remote application")
+        .parser(cli::arg_location(config.enable_remote_app)),
 
-        cli::option("remote-cmd").help("Set the command line of remote application.")
+        cli::option("remote-cmd").help("Set the command line of remote application")
         .argname("command")
         .parser(cli::arg_location(config.remote_app_cmd)),
 
-        cli::option("remote-dir").help("Remote working directory")
+        cli::option("remote-working-dir").help("Remote working directory")
         .argname("directory")
         .parser(cli::arg_location(config.remote_app_working_directory)),
 
@@ -141,14 +156,14 @@ auto profile_as_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::helper("========= Shared directory ========="),
 
         cli::option("enable-drive").help("Enable shared local disk")
-        .parser(cli::on_off_location(config.enable_drive)),
+        .parser(cli::arg_location(config.enable_drive)),
 
-        cli::option("drive-dir").help("Set directory path on local disk to share with your session.")
+        cli::option("drive-dir").help("Set directory path on local disk to share with your session")
         .argname("directory")
         .parser(cli::arg_location(config.drive_path)),
 
-        cli::option("home-drive").help("Use $HOME as shared drive.")
-        .parser(cli::on_off_location(config.use_home_drive))
+        cli::option("home-drive").help("Use $HOME as shared drive")
+        .parser(cli::arg_location(config.use_home_drive))
 
         // TODO VNC
     );

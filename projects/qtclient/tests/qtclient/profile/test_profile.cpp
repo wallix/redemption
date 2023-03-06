@@ -88,8 +88,9 @@ RED_AUTO_TEST_CASE_WF(TestLoadSaveProfiles, wf)
     RED_REQUIRE(FileContentsError::None == append_file_contents(wf.c_str(), p2));
 
     RED_CHECK(chars_view(p2) == str_concat(
-        p1, "\nprofile-name test\nrdp 1\nport -1\nsize 1234x600x16"_av,
-        chars_view(p1).drop_front(75)
+        p1,
+        "\nprofile-name test\nprotocol 0\nusername \npassword \ntarget \nport -1\nsize 1234x600x16"_av,
+        chars_view(p1).drop_front(108)
     ));
     //@}
 
@@ -120,8 +121,8 @@ RED_AUTO_TEST_CASE_WF(TestLoadSaveProfiles, wf)
     RED_CHECK(*get_lines(p2).begin() == "current-profile test"_av);
     RED_CHECK(chars_view(p2) == str_concat(
         "current-profile test\n"_av, chars_view(p1).drop_front(24),
-        "\nprofile-name test\nrdp 1\nport -1\nsize 1234x600x16"_av,
-        chars_view(p1).drop_front(75)
+        "\nprofile-name test\nprotocol 0\nusername \npassword \ntarget \nport -1\nsize 1234x600x16"_av,
+        chars_view(p1).drop_front(108)
     ));
     //@}
 

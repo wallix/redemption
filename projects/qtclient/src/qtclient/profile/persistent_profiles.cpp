@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #include "qtclient/profile/persistent_profiles.hpp"
-#include "qtclient/profile/profile_as_options.hpp"
+#include "qtclient/profile/profile_as_cli_options.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/split.hpp"
@@ -17,6 +17,83 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <iostream>
 
+namespace
+{
+
+static_string<15> screen_info_to_chars(ScreenInfo screen_info)
+{
+    static_string<15> str;
+    str.delayed_build([&](auto& array){
+        auto* p = array.data();
+        auto cpy = [&](chars_view str){
+            memcpy(p, str.data(), str.size());
+            return p + str.size();
+        };
+        p = cpy(int_to_decimal_chars(screen_info.width));
+        *p++ = 'x';
+        p = cpy(int_to_decimal_chars(screen_info.height));
+        *p++ = 'x';
+        p = cpy(int_to_decimal_chars(underlying_cast(screen_info.bpp)));
+        return checked_int(p - array.data());
+    });
+    return str;
+}
+
+template<std::size_t Int, class T>
+T const& option_value(cli::detail::indexed_option<Int, T> const& value)
+{
+    return value.option;
+}
+
+template<std::size_t... Ints, class Tuple>
+void concat_tuple_option(std::string& str, chars_view profile_name, std::index_sequence<Ints...>, Tuple const& t)
+{
+    str_append(str, "\nprofile-name "_av, profile_name, option_value<Ints>(t)..., '\n');
+}
+
+template<class T>
+std::string_view extract_long_name(T const& option)
+{
+    if constexpr (qtclient::serializable_option<T>::value) return option._long_name;
+    else return {};
+}
+
+template<class T>
+decltype(auto) extract_option_as_string(T const& option)
+{
+    if constexpr (qtclient::serializable_option<T>::value) {
+        auto& value = *option._parser.value;
+        using U = std::decay_t<decltype(value)>;
+        /**/ if constexpr (std::is_same_v<bool, U>) return value ? "1"_av : "0"_av;
+        else if constexpr (std::is_integral_v<U>) return int_to_decimal_chars(value);
+        else if constexpr (std::is_enum_v<U>) return int_to_decimal_chars(underlying_cast(value));
+        else if constexpr (std::is_same_v<ScreenInfo, U>) return screen_info_to_chars(value);
+        else return value;
+    }
+    else {
+        return chars_view();
+    }
+}
+
+template<std::size_t... Ints, class... Options>
+void concat_options(std::string& str, chars_view profile_name, std::index_sequence<Ints...>, Options const&... options)
+{
+    struct Tuple
+    : cli::detail::indexed_option<Ints*4, chars_view>...
+    , cli::detail::indexed_option<Ints*4+1, std::string_view>...
+    , cli::detail::indexed_option<Ints*4+2, chars_view>...
+    , cli::detail::indexed_option<Ints*4+3, chars_view>...
+    {};
+
+    concat_tuple_option(str, profile_name, std::make_index_sequence<sizeof...(Ints) * 4>(), Tuple{
+        {{qtclient::serializable_option<Options>::value ? "\n"_av : ""_av}}...,
+        {{extract_long_name(options)}}...,
+        {{qtclient::serializable_option<Options>::value ? " "_av : ""_av}}...,
+        {{extract_option_as_string(options)}}...
+    });
+}
+
+}
 
 namespace qtclient
 {
@@ -34,42 +111,10 @@ bool save_profiles(char const* filename, Profiles const& profiles)
 
     str_append(str, "current-profile ", profiles.current_profile().profile_name, '\n');
 
-    auto to_str = [](auto const& value) {
-        using T = std::decay_t<decltype(value)>;
-        /**/ if constexpr (std::is_same_v<bool, T>) return value ? '1' : '0';
-        else if constexpr (std::is_integral_v<T>) return int_to_decimal_chars(value);
-        else if constexpr (std::is_enum_v<T>) return int_to_decimal_chars(underlying_cast(value));
-        else return value;
-    };
-
     for (auto const& profile : profiles) {
-        str_append(
-            str, "\n"
-            "profile-name ", profile.profile_name, "\n"
-            "rdp ", to_str(profile.protocol == ProtocolMod::RDP), "\n"
-            "port ", to_str(profile.target_port), "\n"
-            "size ",
-                to_str(profile.screen_info.width), 'x',
-                to_str(profile.screen_info.height), 'x',
-                to_str(profile.screen_info.bpp), "\n"
-            "span ", to_str(profile.is_spanning), "\n"
-            "enable-clipboard ", to_str(profile.enable_clipboard), "\n"
-            "tls-min-level ", to_str(profile.tls_min_level), "\n"
-            "tls-max-level ", to_str(profile.tls_max_level), "\n"
-            "cipher ", profile.cipher_string, "\n"
-            "enable-sound ", to_str(profile.enable_sound),"\n"
-            "rdp-performance-flags ", to_str(profile.rdp5_performance_flags), "\n"
-            "enable-nla ", to_str(profile.enable_nla), "\n"
-            "enable-tls ", to_str(profile.enable_tls), "\n"
-            "rdp-verbose ", to_str(profile.rdp_verbose), "\n"
-            "remote-app ", to_str(profile.enable_remote_app), "\n"
-            "remote-cmd ", profile.remote_app_cmd, "\n"
-            "remote-dir ", profile.remote_app_working_directory, "\n"
-            "enable-drive ", to_str(profile.enable_drive), "\n"
-            "drive-dir ", profile.drive_path, "\n"
-            "layout ", to_str(profile.key_layout), "\n"
-            "enable-recording ", to_str(profile.enable_recording), "\n"
-        );
+        profile_as_cli_options(const_cast<Profile&>(profile))([&](auto&&... options) {
+            concat_options(str, profile.profile_name, std::make_index_sequence<sizeof...(options)>(), options...);
+        });
     }
 
     chars_view data = str;
@@ -101,10 +146,10 @@ Profiles load_profiles(char const* filename)
 
             struct RebuildableOptions
             {
-                using CliOptions = decltype(profile_as_options(std::declval<Profile&>()));
+                using CliOptions = decltype(profile_as_cli_options(std::declval<Profile&>()));
 
                 RebuildableOptions(Profile& profile)
-                : u{.options = profile_as_options(profile)}
+                : u{.options = profile_as_cli_options(profile)}
                 {}
 
                 ~RebuildableOptions()
@@ -118,7 +163,7 @@ Profiles load_profiles(char const* filename)
                 {
                     u.options.~CliOptions();
                     is_initialized = false;
-                    new (&u.options) CliOptions(profile_as_options(profile));
+                    new (&u.options) CliOptions(profile_as_cli_options(profile));
                     is_initialized = true;
                 }
 

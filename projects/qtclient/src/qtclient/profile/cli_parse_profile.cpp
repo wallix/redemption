@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #include "qtclient/profile/cli_parse_profile.hpp"
-#include "qtclient/profile/profile_as_options.hpp"
+#include "qtclient/profile/profile_as_cli_options.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/split.hpp"
@@ -20,7 +20,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 static auto make_options(qtclient::Profile& config)
 {
-    return qtclient::profile_as_options(config, [](auto&&... options){
+    return qtclient::profile_as_cli_options(config, [](auto&&... options){
         return cli::options(
             cli::helper("Client ReDemPtion."),
 
@@ -29,6 +29,8 @@ static auto make_options(qtclient::Profile& config)
 
             cli::option('v', "version").help("Show version")
             .parser(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
+
+            // TODO add profile=name
 
             static_cast<decltype(options)&&>(options)...
         );
