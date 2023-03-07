@@ -559,7 +559,16 @@ namespace detail
     template<class T>
     Res arg_parse_int(T& result, char const * s)
     {
-        auto r = decimal_chars_to_int<T>(s);
+        chars_to_int_result<T> r;
+        if constexpr (std::is_unsigned_v<T>) {
+            r = (*s == '0' && REDEMPTION_UNLIKELY(*s == 'x' || *s == 'X'))
+                ? hexadecimal_chars_to_int<T>(s)
+                : decimal_chars_to_int<T>(s);
+        }
+        else {
+            r = decimal_chars_to_int<T>(s);
+        }
+
         if (r.ec == std::errc() && !*r.ptr) {
             result = r.val;
             return Res::Ok;
