@@ -86,6 +86,7 @@ project qtclient
 
     # <cxxflags>-fPIC
     <define>QT_NO_KEYWORDS
+    <define>QT_DISABLE_DEPRECATED_BEFORE=0x051500
 
     # TODO remove
     <cxxflags>-isystem$(QT_INCLUDE)
@@ -99,6 +100,26 @@ project qtclient
 ;
 
 include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
+
+using qt$(qtversion)
+    : $(QT_TOOLS_PATH)
+    : $(qtversion).0
+    :
+    :
+    :
+    :
+    : $(QT_INCLUDE)
+    : $(QT_LIB_PATH)
+    ;
+
+alias libqtclient :
+    /qt$(qtversion)//QtGui
+    /qt$(qtversion)//QtNetwork
+    /qt$(qtversion)//QtWidgets
+    /qt$(qtversion)//QtCore
+;
+
+lib libphonon : : <name>phonon4qt$(qtversion) <link>shared ;
 
 include targets.jam ;
 
@@ -144,27 +165,6 @@ obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 # add_src utils/log_as_logprint.cpp ;
 
 # add_obj graphics.o : src/qt_input_output_api/graphics.cpp ;
-
-
-using qt$(qtversion)
-    : $(QT_TOOLS_PATH)
-    : $(qtversion).0
-    :
-    :
-    :
-    :
-    : $(QT_INCLUDE)
-    : $(QT_LIB_PATH)
-    ;
-
-alias libqtclient :
-    /qt$(qtversion)//QtGui
-    /qt$(qtversion)//QtNetwork
-    /qt$(qtversion)//QtWidgets
-    /qt$(qtversion)//QtCore
-;
-
-lib libphonon : : <name>phonon4qt$(qtversion) <link>shared ;
 
 
 # obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :

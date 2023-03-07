@@ -292,6 +292,12 @@ test-run tests/qtclient/profile/test_widget_profile :
   tests/qtclient/profile/test_widget_profile.cpp
 :
   <library>src/qtclient/profile/widget_profile.o
+  <library>src/keyboard/keylayouts.o
+  <library>libqtclient
+;
+test-run tests/utils/test_config_enum_description_to_array :
+  tests/utils/test_config_enum_description_to_array.cpp
+:
 ;
 
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : src/client_redemption/client_channels/client_cliprdr_channel.cpp ;
@@ -394,6 +400,7 @@ alias test_client_rdpsnd_channel : tests/client_redemption/client_channels/test_
 alias test_client_remoteapp_channel : tests/client_redemption/client_channels/test_client_remoteapp_channel ;
 alias test_profile : tests/qtclient/profile/test_profile ;
 alias test_widget_profile : tests/qtclient/profile/test_widget_profile ;
+alias test_config_enum_description_to_array : tests/utils/test_config_enum_description_to_array ;
 alias tests/client_redemption/client_channels.norec :
   tests/client_redemption/client_channels/test_client_cliprdr_channel
   tests/client_redemption/client_channels/test_client_rdpdr_channel
@@ -403,6 +410,9 @@ alias tests/client_redemption/client_channels.norec :
 alias tests/qtclient/profile.norec :
   tests/qtclient/profile/test_profile
   tests/qtclient/profile/test_widget_profile
+;
+alias tests/utils.norec :
+  tests/utils/test_config_enum_description_to_array
 ;
 alias tests/client_redemption/client_channels :
   tests/client_redemption/client_channels.norec
@@ -415,6 +425,12 @@ alias tests/qtclient/profile :
 ;
 alias tests/qtclient :
   tests/qtclient/profile
+;
+alias tests/utils :
+  tests/utils.norec
+;
+alias tests :
+  tests/utils
 ;
 
 explicit
@@ -520,11 +536,13 @@ explicit
   test_client_remoteapp_channel
   test_profile
   test_widget_profile
+  test_config_enum_description_to_array
 ;
 
 explicit
   tests/client_redemption/client_channels.norec
   tests/qtclient/profile.norec
+  tests/utils.norec
 ;
 
 explicit
@@ -532,4 +550,6 @@ explicit
   tests/client_redemption
   tests/qtclient/profile
   tests/qtclient
+  tests/utils
+  tests
 ;

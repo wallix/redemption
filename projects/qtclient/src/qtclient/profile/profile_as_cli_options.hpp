@@ -20,6 +20,12 @@ struct cli::parsers::argname_value_traits<::qtclient::ProtocolMod>
 };
 
 template<>
+struct cli::parsers::argname_value_traits<::qtclient::DirectoryStringPath>
+{
+    static constexpr std::string_view default_argname = "<directory>";
+};
+
+template<>
 struct cli::arg_parsers::arg_parse_traits<::qtclient::ProtocolMod>
 {
     using value_type = ::qtclient::ProtocolMod;
@@ -27,12 +33,12 @@ struct cli::arg_parsers::arg_parse_traits<::qtclient::ProtocolMod>
     static Res parse(value_type& out, std::string_view str)
     {
         auto protocol = ascii_to_limited_upper<4>(str);
-        if (protocol == "RDP"_ascii_upper) {
+        if (protocol == "RDP"_ascii_upper || protocol == "0"_ascii_upper) {
             out = value_type::RDP;
             return cli::Res::Ok;
         }
 
-        if (protocol == "VNC"_ascii_upper) {
+        if (protocol == "VNC"_ascii_upper || protocol == "1"_ascii_upper) {
             out = value_type::VNC;
             return cli::Res::Ok;
         }
@@ -41,7 +47,7 @@ struct cli::arg_parsers::arg_parse_traits<::qtclient::ProtocolMod>
     }
 };
 
-// TODO add cli::arg_parsers::arg_parse_traits<::KeyLayout::KbdId>
+// TODO add cli::arg_parsers::arg_parse_traits<::KeyLayout::KbdId> -> find by name / id
 
 namespace qtclient
 {
@@ -161,7 +167,6 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         .parser(cli::arg_location(config.enable_drive)),
 
         cli::option("drive-dir").help("Directory path on local disk to share with your session")
-        .argname("directory")
         .parser(cli::arg_location(config.drive_path)),
 
         cli::option("home-drive").help("Use $HOME as shared drive")

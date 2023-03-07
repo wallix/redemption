@@ -21,6 +21,11 @@ enum class ProtocolMod : uint8_t
     VNC,
 };
 
+struct DirectoryStringPath : std::string
+{
+    using std::string::string;
+};
+
 struct Profile
 {
     std::string profile_name;
@@ -47,7 +52,7 @@ struct Profile
 
     bool enable_drive = true;
     bool use_home_drive = false;
-    std::string drive_path;
+    DirectoryStringPath drive_path;
 
     uint32_t tls_min_level = 0;
     uint32_t tls_max_level = 0;

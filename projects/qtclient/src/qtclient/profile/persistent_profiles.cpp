@@ -54,14 +54,14 @@ void concat_tuple_option(std::string& str, chars_view profile_name, std::index_s
 template<class T>
 std::string_view extract_long_name(T const& option)
 {
-    if constexpr (qtclient::serializable_option<T>::value) return option._long_name;
+    if constexpr (qtclient::is_serializable_option<T>::value) return option._long_name;
     else return {};
 }
 
 template<class T>
 decltype(auto) extract_option_as_string(T const& option)
 {
-    if constexpr (qtclient::serializable_option<T>::value) {
+    if constexpr (qtclient::is_serializable_option<T>::value) {
         auto& value = *option._parser.value;
         using U = std::decay_t<decltype(value)>;
         /**/ if constexpr (std::is_same_v<bool, U>) return value ? "1"_av : "0"_av;

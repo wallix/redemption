@@ -9,8 +9,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
-#include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QFormLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollArea>
 #include <QtGui/QIntValidator>
 
 #include "qtclient/profile/widget_profile.hpp"
@@ -18,86 +21,17 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/ascii.hpp"
 #include "utils/sugar/chars_to_int.hpp"
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/config_enum_description_to_array.hpp"
+#include "utils/static_string.hpp"
+#include "keyboard/keylayouts.hpp"
 #include "debug_verbose_description.hpp"
 
 namespace
 {
 
-constexpr std::size_t config_description_count_values(char const* s)
-{
-    std::size_t len = 0;
-    for (; *s; ++s) {
-        if (*s == '=') {
-            ++len;
-        }
-    }
-    return len;
-}
-
-template<std::size_t N>
-struct ConfigNamePos
-{
-    static const std::size_t size = N;
-
-    std::array<std::string_view, N> names;
-    std::array<uint8_t, N> bit_positions;
-};
-
-template<class Box>
-constexpr auto config_enum_description_to_array()
-{
-    // format:
-    // - name    = value\n
-    // ...
-    // - name    = value
-    ConfigNamePos<config_description_count_values(Box::string)> result {};
-    std::string_view* name_ptr = result.names.data();
-    uint8_t* bit_pos_ptr = result.bit_positions.data();
-    for (char const* s = Box::string;;) {
-        // skip "- "
-        s += 2;
-
-        auto end = s + 1;
-        while (*end != ' ') {
-            ++end;
-        }
-        *name_ptr++ = {s, end};
-
-        s = end + 1;
-        while (*s != '=') {
-            ++s;
-        }
-        // skip "= 0x"
-        s += 4;
-
-        auto r = hexadecimal_chars_to_int<uint64_t>(s);
-        s = r.ptr;
-
-        uint8_t bitpos = 0;
-        while (r.val >>= 1) {
-            ++bitpos;
-        }
-        *bit_pos_ptr++ = bitpos;
-
-        if (!*s) {
-            break;
-        }
-    }
-
-    return result;
-}
-
 QString to_qstring(chars_view str)
 {
     return QString::fromUtf8(str.data(), checked_int(str.size()));
-}
-
-QString printableStr(chars_view str)
-{
-    auto s = to_qstring(str);
-    s.replace(QLatin1Char('-'), QLatin1Char(' '));
-    s.data()[0] = QLatin1Char(ascii_to_upper(str[0]));
-    return s;
 }
 
 struct CheckBox
@@ -167,9 +101,6 @@ private:
 
 struct StringEdit
 {
-    StringEdit()
-    {}
-
     void reset()
     {
         *value = original_value;
@@ -190,9 +121,38 @@ struct StringEdit
 
     QLineEdit widget;
 
-private:
+protected:
     std::string* value = nullptr;
     std::string original_value {};
+};
+
+struct DirectoryWidget : StringEdit
+{
+    DirectoryWidget()
+    : choose("Choose...")
+    {
+        widget.addWidget(&choose);
+        widget.addWidget(&this->StringEdit::widget);
+
+        choose.connect(&choose, &QPushButton::released, [this]{
+            auto dirname = QFileDialog::getExistingDirectory(
+                &choose, QString(), to_qstring(*value),
+                QFileDialog::ReadOnly |
+                QFileDialog::ShowDirsOnly |
+                QFileDialog::DontResolveSymlinks |
+                QFileDialog::DontUseCustomDirectoryIcons
+            );
+            if (!dirname.isEmpty()) {
+                StringEdit::widget.setText(dirname);
+                *value = dirname.toStdString();
+            }
+        });
+    }
+
+    QHBoxLayout widget;
+
+private:
+    QPushButton choose;
 };
 
 struct ProtocolWidget
@@ -221,39 +181,157 @@ struct ProtocolWidget
         *value = checked_int(widget.currentIndex());
     }
 
+    QComboBox widget;
+
+private:
     qtclient::ProtocolMod* value = nullptr;
     qtclient::ProtocolMod original_value {};
-    QComboBox widget;
 };
 
-template<class T>
 struct KbdWidget
 {
     KbdWidget()
-    {}
+    {
+        widget.addWidget(&select);
+        widget.addWidget(&edit);
+
+        select.addItem(QStringLiteral("Unknown"), QVariant(uint32_t(0)));
+        for (auto&& layout : keylayouts()) {
+            auto text = static_str_concat<128>(
+                truncated_bounded_array_view<64>(layout.name),
+                " (0x"_sized_av, to_hex(layout.kbdid), ')');
+            select.addItem(to_qstring(text), QVariant(safe_cast<uint32_t>(layout.kbdid)));
+        }
+
+        select.connect(&select, &QComboBox::currentIndexChanged, [this](int idx){
+            if (!updatable) {
+                return ;
+            }
+            if (idx > 0) {
+                last_value = keylayouts()[checked_int(idx - 1)].kbdid;
+                setText(last_value);
+            }
+            else {
+                last_value = KeyLayout::KbdId();
+                edit.setText(QStringLiteral("0x0"));
+            }
+        });
+
+        edit.connect(&edit, &QLineEdit::textChanged, [this](QStringView text){
+            auto cpy = [](QStringView text, char* out) -> chars_view {
+                return {out, std::transform(text.begin(), text.end(), out,
+                    [](QChar c){ return static_cast<char>(c.unicode()); }
+                )};
+            };
+
+            updatable = false;
+
+            using Int = std::underlying_type_t<KeyLayout::KbdId>;
+            if (text.size() > 2 && text[0] == '0') {
+                constexpr qsizetype max_string_len = 16;
+                if (text.size() <= max_string_len && (text[1] == 'x' || text[1] == 'X')) {
+                    char buf[max_string_len];
+                    auto av = cpy(text.mid(2), buf);
+                    auto r = hexadecimal_chars_to_int<Int>(av);
+                    if (r.ec == std::errc() && r.ptr == av.end()) {
+                        last_value = KeyLayout::KbdId(r.val);
+                        select.setCurrentIndex(find_layout(last_value).idx);
+                    }
+                }
+            }
+            else {
+                constexpr qsizetype max_string_len = 32;
+                if (text.size() <= max_string_len) {
+                    char buf[max_string_len];
+                    auto [layout, idx] = find_layout(cpy(text, buf).as<std::string_view>());
+                    select.setCurrentIndex(idx);
+                    if (layout) {
+                        last_value = layout->kbdid;
+                    }
+                }
+            }
+
+            updatable = true;
+        });
+    }
 
     void reset()
     {
         *value = original_value;
-        // widget.setText(to_qstring(int_to_decimal_chars(original_value)));
+        update_widgets();
     }
 
     void attach(KeyLayout::KbdId* value_ref)
     {
         value = value_ref;
         original_value = *value_ref;
-        // widget.setText(to_qstring(int_to_decimal_chars(original_value)));
+        update_widgets();
     }
 
     void synchronize()
     {
+        *value = last_value;
     }
 
-    QLineEdit widget;
+    void update_widgets()
+    {
+        auto [layout, idx] = find_layout(original_value);
+        select.setCurrentIndex(idx);
+        last_value = original_value;
+        setText(original_value);
+    }
+
+    QHBoxLayout widget;
 
 private:
+    static array_view<KeyLayout> keylayouts()
+    {
+        return keylayouts_sorted_by_name();
+    }
+
+    static int_to_chars_result to_hex(KeyLayout::KbdId kbdid)
+    {
+        return int_to_hexadecimal_upper_chars(underlying_cast(kbdid));
+    }
+
+    struct FindLayoutResult
+    {
+        KeyLayout const* layout;
+        int idx;
+    };
+
+    static FindLayoutResult find_layout(KeyLayout::KbdId kbdid)
+    {
+        for (auto&& layout : keylayouts()) {
+            if (layout.kbdid == kbdid) {
+                return {&layout, checked_int(&layout - keylayouts().begin() + 1)};
+            }
+        }
+        return {};
+    }
+
+    static FindLayoutResult find_layout(std::string_view name)
+    {
+        for (auto&& layout : keylayouts()) {
+            if (layout.name.to_sv() == name) {
+                return {&layout, checked_int(&layout - keylayouts().begin() + 1)};
+            }
+        }
+        return {};
+    }
+
+    void setText(KeyLayout::KbdId kbdid)
+    {
+        auto text = static_str_concat<64>("0x"_sized_av, to_hex(kbdid));
+        edit.setText(to_qstring(text));
+    }
+
     KeyLayout::KbdId* value = nullptr;
     KeyLayout::KbdId original_value {};
+    KeyLayout::KbdId last_value;
+    bool updatable = true;
+    QComboBox select;
+    QLineEdit edit;
 };
 
 #ifdef IN_IDE_PARSER
@@ -280,13 +358,25 @@ struct ScreenInfoWidget
         bpp.addItem("24 bits");
         // bpp_widget.addItem("32 bits", int(32));
 
-        layout.addWidget(&width);
-        layout.addWidget(&label1);
-        layout.addWidget(&height);
-        layout.addWidget(&label2);
-        layout.addWidget(&bpp);
+        widget.addWidget(&width);
+        widget.addWidget(&label1);
+        widget.addWidget(&height);
+        widget.addWidget(&label2);
+        widget.addWidget(&bpp);
 
-        widget.setLayout(&layout);
+        int nbChar = 5;
+
+        width.setMaxLength(nbChar);
+        height.setMaxLength(nbChar);
+
+        width.setPlaceholderText("Width");
+        height.setPlaceholderText("Height");
+
+        widget.addStretch();
+
+        int fontCharWidth = QFontMetrics(width.font()).horizontalAdvance(QChar('0')) * (nbChar + 2);
+        width.setFixedWidth(fontCharWidth);
+        height.setFixedWidth(fontCharWidth);
     }
 
     void reset()
@@ -326,7 +416,7 @@ struct ScreenInfoWidget
         }
     }
 
-    QWidget widget;
+    QHBoxLayout widget;
 
 private:
     ScreenInfo* value = nullptr;
@@ -336,7 +426,6 @@ private:
     QComboBox bpp;
     QLabel label1;
     QLabel label2;
-    QHBoxLayout layout;
 };
 
 struct RDPVerboseWidget
@@ -347,13 +436,11 @@ struct RDPVerboseWidget
 
     template<std::size_t... Ints>
     RDPVerboseWidget(std::index_sequence<Ints...>)
-    : layout()
-    , widgets{QCheckBox(to_qstring(rdp_verbose_name_positions.names[Ints]))...}
+    : widgets{QCheckBox(to_qstring(rdp_verbose_name_positions.names[Ints]))...}
     {
         for (auto& w : widgets) {
-            layout.addWidget(&w);
+            widget.addWidget(&w);
         }
-        widget.setLayout(&layout);
     }
 
     void reset()
@@ -387,12 +474,11 @@ struct RDPVerboseWidget
         }
     }
 
-    QWidget widget;
+    QVBoxLayout widget;
 
 private:
     RDPVerbose* value = nullptr;
     RDPVerbose original_value {};
-    QVBoxLayout layout;
     QCheckBox widgets[rdp_verbose_name_positions.size];
 };
 
@@ -446,7 +532,13 @@ struct cli_parser_to_widget<cli::parsers::arg_location<ScreenInfo>>
 template<>
 struct cli_parser_to_widget<cli::parsers::arg_location<KeyLayout::KbdId>>
 {
-    using Widget = KbdWidget<KeyLayout::KbdId>;
+    using Widget = KbdWidget;
+};
+
+template<>
+struct cli_parser_to_widget<cli::parsers::arg_location<qtclient::DirectoryStringPath>>
+{
+    using Widget = DirectoryWidget;
 };
 
 
@@ -472,73 +564,79 @@ struct cli_option_to_widget<cli::Option<Short, Long, Parser, Name>>
     using Widget = typename cli_parser_to_widget<Parser>::Widget;
 };
 
-template<std::size_t NHelper, std::size_t NSerializableOption, class... Widgets>
-struct ProfileWidget : QWidget
+template<std::size_t NHelper, class... Widgets>
+struct ProfileWidget : QScrollArea
 {
     ProfileWidget(QWidget* parent)
-    : QWidget(parent)
+    : QScrollArea(parent)
     {
-        setLayout(&layout);
+        setWidgetResizable(true);
+        setWidget(&inner);
+        inner.setLayout(&layout);
     }
 
-    QFormLayout form_layouts[NHelper];
-    QLabel helpers[NHelper];
-    QLabel label[NSerializableOption];
+    QWidget inner;
     QVBoxLayout layout;
+    QGroupBox groups[NHelper];
+    QFormLayout forms[NHelper];
     cli::Options<Widgets...> widgets;
 };
 
 
-template<bool cond, class F>
-void if_call(F f)
+QString qstring_label(chars_view str)
 {
-    if constexpr (cond) {
-        f([](auto& x) -> decltype(x) { return x; });
+    auto s = to_qstring(str);
+    s.replace(QLatin1Char('-'), QLatin1Char(' '));
+    s.data()[0] = QLatin1Char(ascii_to_upper(str[0]));
+    // dir -> directory
+    if (str.as<std::string_view>().ends_with(std::string_view("-dir"))) {
+        s += QStringLiteral("ectory");
     }
+    return s;
+}
+
+QString qstring_helper(std::string_view str)
+{
+    // skip '=' in "==== label ===="
+    auto* first = std::find(str.begin(), str.end(), ' ');
+    auto* last = std::find(first, str.end(), '=');
+    assert(first != str.end());
+    assert(last != str.end());
+    return to_qstring({first+1, last-1});
 }
 
 }
 
 QWidget* qtclient::create_widget_profile(Profile& profile, QWidget* parent)
 {
-    // bool
-    // string
-    // TODO dirname
-    // number
-    // select (kbdid / bpp)
-
-    // name = name.replace('-', ' ').replace(' dir$', 'directory').upperFirstLetter()
-
-    auto* w = profile_as_cli_options(profile)([&](auto&... options){
+    return profile_as_cli_options(profile)([&](auto&... options){
         auto* w = new ProfileWidget<
-            (0 + ... + std::is_same_v<std::decay_t<decltype(options)>, cli::Helper>),
-            (0 + ... + is_serializable_option<std::decay_t<decltype(options)>>::value),
+            (std::is_same_v<std::decay_t<decltype(options)>, cli::Helper> + ...),
             typename cli_option_to_widget<std::decay_t<decltype(options)>>::Widget...
         >(parent);
 
-        int ihelper = -1;
-        QFormLayout* form_layout;
-        QLabel* label;
+        std::ptrdiff_t ihelper = 0;
+        QGroupBox* group;
+        QFormLayout* form;
         w->widgets([&](auto&... widgets){
-            // cli::Option -> Widget.attach(value)
-            (..., if_call<is_serializable_option<std::decay_t<decltype(options)>>::value>([&](auto get){
-                get(widgets).attach(get(options)._parser.value);
-                form_layout->addWidget(&get(widgets).widget);
-            }));
-
-            // cli::Helper -> QFormLayout
-            (..., if_call<std::is_same_v<cli::Helper, std::decay_t<decltype(options)>>>([&](auto get){
-                ++ihelper;
-                auto& label = w->helpers[ihelper];
-                label.setText(to_qstring(get(options).s));
-                form_layout = &w->form_layouts[ihelper];
-                w->layout.addWidget(&label);
-                w->layout.addLayout(form_layout);
-            }));
+            ([&]{
+                // cli::Option -> Widget.attach(value)
+                if constexpr (is_serializable_option<std::decay_t<decltype(options)>>::value) {
+                    widgets.attach(options._parser.value);
+                    form->addRow(qstring_label(options._long_name), &widgets.widget);
+                }
+                // cli::Helper -> QFormLayout
+                else if constexpr (std::is_same_v<cli::Helper, std::decay_t<decltype(options)>>) {
+                    group = &w->groups[ihelper];
+                    form = &w->forms[ihelper];
+                    group->setTitle(qstring_helper(options.s));
+                    group->setLayout(form);
+                    w->layout.addWidget(group);
+                    ++ihelper;
+                }
+            }(), ...);
         });
 
         return w;
     });
-
-    return w;
 }
