@@ -1561,6 +1561,7 @@ namespace detail
     };
 } // namespace detail
 
+// TODO rename to truncatable_bounded_array_view
 template<class Cont, class S = detail::truncated_bounded_array_view_selector<Cont>>
 constexpr auto truncated_bounded_array_view(Cont const& cont)
     noexcept(noexcept(typename S::av_type{cont}))
@@ -1571,6 +1572,11 @@ constexpr auto truncated_bounded_array_view(Cont const& cont)
 {
     return {{typename S::policy_type{}}, typename S::av_type{cont}};
 }
+
+template<std::size_t AtMost, class Cont>
+constexpr auto truncated_bounded_array_view(Cont const& cont)
+    REDEMPTION_DECLTYPE_AUTO_RETURN_NOEXCEPT(
+        make_bounded_array_view<0, AtMost>(truncated_bounded_array_view(cont)))
 
 
 namespace detail
