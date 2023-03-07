@@ -28,6 +28,7 @@ Author(s): Proxies Team
 array_view<KeyLayout> keylayouts() noexcept;
 array_view<KeyLayout> keylayouts_sorted_by_name() noexcept;
 KeyLayout const* find_layout_by_id(KeyLayout::KbdId id) noexcept;
+KeyLayout const* find_layout_by_name(chars_view name) noexcept;
 
 inline KeyLayout const& default_layout() noexcept
 {

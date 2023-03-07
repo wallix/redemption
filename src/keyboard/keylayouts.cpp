@@ -29108,3 +29108,14 @@ KeyLayout const* find_layout_by_id(KeyLayout::KbdId id) noexcept
     return nullptr;
 }
 
+KeyLayout const* find_layout_by_name(chars_view name) noexcept
+{
+    auto sv_name = name.as<std::string_view>();
+    for (auto&& layout : layouts) {
+        if (layout.name.to_sv() == sv_name) {
+            return &layout;
+        }
+    }
+    return nullptr;
+}
+

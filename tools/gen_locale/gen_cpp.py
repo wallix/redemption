@@ -281,7 +281,18 @@ strings2.append('{\n    switch (id)\n    {\n')
 for i,layout in enumerate(layouts):
     strings2.append(f'    case KbdId{{0x{layout.klid}}}: return &layouts[{i}];\n')
 strings2.append('    }\n    return nullptr;\n}\n')
-
+strings2.append("""
+KeyLayout const* find_layout_by_name(chars_view name) noexcept
+{
+    auto sv_name = name.as<std::string_view>();
+    for (auto&& layout : layouts) {
+        if (layout.name.to_sv() == sv_name) {
+            return &layout;
+        }
+    }
+    return nullptr;
+}
+""")
 output = f"{''.join(strings)}\n{''.join(strings2)}"
 output = re.sub(' +\n', '\n', output)
 print(output)

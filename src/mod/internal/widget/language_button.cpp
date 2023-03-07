@@ -126,16 +126,11 @@ LanguageButton::LanguageButton(
         ? Ref(this->front_layout)
         : Ref(default_layout()));
 
-    auto const layouts = keylayouts();
-
     for (auto locale : split_with(enable_locales, ',')) {
         auto const name = trim(locale).as<std::string_view>();
-        auto const it = std::find_if(begin(layouts), end(layouts), [&](KeyLayout const& k){
-            return k.name.to_sv() == name;
-        });
-        if (it != end(layouts)) {
-            if (it->kbdid != front_layout.kbdid) {
-                this->locales.emplace_back(*it);
+        if (auto const* layout = find_layout_by_name(name)) {
+            if (layout->kbdid != front_layout.kbdid) {
+                this->locales.emplace_back(*layout);
             }
         }
         else {
