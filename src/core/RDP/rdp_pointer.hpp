@@ -310,8 +310,7 @@ enum class PredefinedPointer : uint8_t
     NWSE,
     WE,
     SlashedCircle,
-
-    COUNT,
 };
+constexpr inline uint8_t predefined_pointer_count = int(PredefinedPointer::SlashedCircle) + 1;
 
 RdpPointer const& predefined_pointer_to_pointer(PredefinedPointer pointer) noexcept;

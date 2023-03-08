@@ -858,7 +858,6 @@ RdpPointer const& predefined_pointer_to_pointer(PredefinedPointer pointer) noexc
         case PredefinedPointer::WE:   return size_WE_pointer();
 
         case PredefinedPointer::Normal:
-        case PredefinedPointer::COUNT:
             break;
     }
 

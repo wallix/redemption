@@ -28,8 +28,8 @@ namespace redclient
 {
     struct RGBA8888Image
     {
-        unsigned width = 0;
-        unsigned height = 0;
+        uint16_t width = 0;
+        uint16_t height = 0;
         std::unique_ptr<uint8_t[]> buffer;
 
         unsigned bytes_per_line() const { return this->width * 4u; }

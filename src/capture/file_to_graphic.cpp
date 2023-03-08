@@ -793,7 +793,7 @@ void FileToGraphic::interpret_order()
         this->mouse_y  = this->stream.in_uint16_le();
         auto cache_idx = this->stream.in_uint8();
 
-        if (cache_idx < safe_cast<uint8_t>(PredefinedPointer::COUNT)) {
+        if (cache_idx < predefined_pointer_count) {
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->cached_pointer(PredefinedPointer(cache_idx));
             }

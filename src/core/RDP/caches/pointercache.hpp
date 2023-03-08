@@ -25,6 +25,7 @@
 #include "utils/cache_index_mapping.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
+#include "core/RDP/rdp_pointer.hpp" // predefined_pointer_count
 #include "cxx/cxx.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/rdp_pointer.hpp"
@@ -56,7 +57,7 @@ public:
     };
 
 private:
-    static constexpr std::size_t RESERVED_POINTER_COUNT = std::size_t(PredefinedPointer::COUNT);
+    static constexpr std::size_t RESERVED_POINTER_COUNT = predefined_pointer_count;
 
 public:
     using Mapping = CacheIndexMapping<MAX_POINTER_COUNT + RESERVED_POINTER_COUNT, uint16_t>;
