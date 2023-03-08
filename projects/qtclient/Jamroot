@@ -112,12 +112,10 @@ using qt$(qtversion)
     : $(QT_LIB_PATH)
     ;
 
-alias libqtclient :
-    /qt$(qtversion)//QtGui
-    /qt$(qtversion)//QtNetwork
-    /qt$(qtversion)//QtWidgets
-    /qt$(qtversion)//QtCore
-;
+alias libQtCore : /qt$(qtversion)//QtCore ;
+alias libQtGui : /qt$(qtversion)//QtGui libQtCore ;
+alias libQtNetwork : /qt$(qtversion)//QtNetwork libQtCore ;
+alias libQtWidgets : /qt$(qtversion)//QtWidgets libQtGui ;
 
 lib libphonon : : <name>phonon4qt$(qtversion) <link>shared ;
 

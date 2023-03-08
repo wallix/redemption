@@ -11,6 +11,10 @@ dirbase=projects/qtclient
     --test $dirbase/tests \
     --include $dirbase/src \
     --lib '' \
+    --sys-lib-prefix-flags 'QtCore/:;<library>libQtCore' \
+    --sys-lib-prefix-flags 'QtGui/:;<library>libQtGui' \
+    --sys-lib-prefix-flags 'QtWidgets/:;<library>libQtWidgets' \
+    --sys-lib-prefix-flags 'QtNetwork/:;<library>libQtNetwork' \
     $(find $dirbase/src -mindepth 1 -type d | sed 's/^/--src /') \
 | sed -E '
     s#'"$dirbase"'/?##g;t

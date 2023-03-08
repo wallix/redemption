@@ -260,6 +260,21 @@ try:
         if base == '.hpp':
             disable_srcs.add(arg[:-3] + 'cpp')
 
+    # flag format:
+    # flags ::= name ':' cxxflags ';' linkflags
+    # cxxflags ::= flag (',')*
+    # linkflags ::= flag (',')*
+    def parse_flags(flags):
+        name, flags = flags.split(':', 1)
+        cxxflags, linkflags = flags.split(';', 1)
+        return name, Dep(
+            cxxflags=cxxflags and cxxflags.split(','),
+            linkflags=linkflags and linkflags.split(',')
+        )
+
+    sys_lib_prefix = [*user_lib_prefix]
+    user_lib_prefix = [*user_lib_prefix]
+
     options = {
         '--src': lambda arg: get_files(sources, arg),
         '--main': set_arg('main'),
@@ -270,6 +285,10 @@ try:
         '--deps-src': add_deps_src,
         '--include': lambda path: path.endswith('/') and path or includes.add(f'{path}/'),
         '--implicit': no_explicit_set.add,
+        '--sys-lib-flags': lambda arg: sys_lib_assoc.__set_item__(*parse_flags(arg)),
+        '--user-lib-flags': lambda arg: user_lib_assoc.__set_item__(*parse_flags(arg)),
+        '--sys-lib-prefix-flags': lambda arg: sys_lib_prefix.append(parse_flags(arg)),
+        '--user-lib-prefix-flags': lambda arg: user_lib_prefix.append(parse_flags(arg)),
     }
     while True:
         arg = next(argv_gen)
