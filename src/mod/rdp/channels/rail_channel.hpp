@@ -642,13 +642,13 @@ public:
             break;
 
             default:
-                assert(false);
-
-                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                LOG(LOG_WARNING,
                     "RemoteProgramsVirtualChannel::process_client_message: "
                         "Delivering unprocessed messages %s(%u) to server.",
                     get_RAIL_orderType_name(this->client_order_type),
                     static_cast<unsigned>(this->client_order_type));
+
+//                assert(false);
             break;
         }   // switch (this->client_order_type)
 

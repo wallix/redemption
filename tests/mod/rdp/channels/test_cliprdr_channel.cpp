@@ -104,6 +104,34 @@ namespace
     gdi::NullOsd osd;
 } // anonymous namespace
 
+class CliprdrVCFilter : public VirtualChannelFilter<CliprdrVirtualChannelProcessor>
+{
+public:
+    CliprdrVCFilter(
+        VirtualChannelDataSender* to_client_sender_ptr_,
+        VirtualChannelDataSender* to_server_sender_ptr_) :
+            VirtualChannelFilter<CliprdrVirtualChannelProcessor>(*this, *this),
+            to_client_sender_ptr(to_client_sender_ptr_),
+            to_server_sender_ptr(to_server_sender_ptr_) {}
+
+public:
+    void process_client_message(uint32_t total_length, uint32_t flags, bytes_view chunk_data, RDPECLIP::CliprdrHeader const* header) override
+    {
+        (void)header;
+        (*this->to_server_sender_ptr)(total_length, flags, chunk_data);
+    }
+
+    void process_server_message(uint32_t total_length, uint32_t flags, bytes_view chunk_data, RDPECLIP::CliprdrHeader const* header) override
+    {
+        (void)header;
+        (*this->to_client_sender_ptr)(total_length, flags, chunk_data);
+    }
+
+    private:
+        VirtualChannelDataSender* to_client_sender_ptr;
+        VirtualChannelDataSender* to_server_sender_ptr;
+};
+
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 {
     FileValidatorService * ipca_service = nullptr;
@@ -136,17 +164,20 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToClientSender to_client_sender(t);
         TestToServerSender to_server_sender(t);
 
+        CliprdrVCFilter cliprdr_vc_filter(&to_client_sender, &to_server_sender);
+
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, events, osd,
+            events, osd,
             d.cb_params, ipca_service, {nullptr, false, std::string()},
             session_log, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+
+        cliprdr_vc_filter.insert_after(clipboard_virtual_channel);
 
         RED_CHECK_EXCEPTION_ERROR_ID(
             CHECK_CHANNEL(t, clipboard_virtual_channel),
             ERR_TRANSPORT_NO_MORE_DATA);
     }
 }
-
 
 class NullSender : public VirtualChannelDataSender
 {
@@ -167,11 +198,15 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
+    CliprdrVCFilter cliprdr_vc_filter(&to_client_sender, &to_server_sender);
+
     EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
+        events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
         session_log, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+
+    cliprdr_vc_filter.insert_after(clipboard_virtual_channel);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -201,10 +236,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
+    CliprdrVCFilter cliprdr_vc_filter(&to_client_sender, &to_server_sender);
+
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, events, osd,
+        events, osd,
         clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
         session_log, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+
+    cliprdr_vc_filter.insert_after(clipboard_virtual_channel);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
 // Recv done on channel (28) n bytes
@@ -823,6 +862,8 @@ namespace
             FrontSenderTest to_client_sender;
             ModSenderTest to_server_sender;
 
+            CliprdrVCFilter cliprdr_vc_filter;
+
             EventContainer events;
 
             ClipboardVirtualChannel clipboard_virtual_channel;
@@ -838,8 +879,8 @@ namespace
             , file_validator_service(validator_transport)
             , to_client_sender(msg_comparator)
             , to_server_sender(msg_comparator)
+            , cliprdr_vc_filter(&to_client_sender, &to_server_sender)
             , clipboard_virtual_channel(
-                &to_client_sender, &to_server_sender,
                 events, osd,
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
@@ -851,7 +892,9 @@ namespace
                 report_message,
                 verbose
             )
-            {}
+            {
+                this->cliprdr_vc_filter.insert_after(this->clipboard_virtual_channel);
+            }
 
             bool dlp_message_accept(FileValidatorId id)
             {

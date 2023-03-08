@@ -20,31 +20,32 @@
 
 #pragma once
 
-#include "mod/rdp/channels/base_channel.hpp"
-#include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
-#include "mod/rdp/rdp_verbose.hpp"
-#include "mod/file_validator_service.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
 #include "core/events.hpp"
+#include "mod/file_validator_service.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
+#include "mod/rdp/channels/virtual_channel_filter.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include <vector>
 #include <memory>
 #include <string>
-
+#include <vector>
 
 namespace gdi
 {
     class OsdApi;
 }
+
 class FdxCapture;
 class CliprdFileInfo;
-class SessionProbeLauncher;
 class AuthApi;
 class SessionLogApi;
 
-class ClipboardVirtualChannel final : public BaseVirtualChannel
+class ClipboardVirtualChannel final : public BaseVirtualChannel,
+    public RemovableVirtualChannelFilter<CliprdrVirtualChannelProcessor>
 {
 public:
     struct FileStorage
@@ -54,9 +55,43 @@ public:
         std::string tmp_dir;
     };
 
+private:
+    class ToClientDataSender : public VirtualChannelDataSender
+    {
+    public:
+        ToClientDataSender(ClipboardVirtualChannel& channel_ref) :
+            channel_ref(channel_ref) {}
+
+        void operator()(uint32_t total_length, uint32_t flags,
+            bytes_view chunk_data) override
+        {
+            this->channel_ref.get_previous_filter_ptr()->process_server_message(
+                total_length, flags, chunk_data, nullptr);
+        }
+
+    private:
+        ClipboardVirtualChannel& channel_ref;
+    } filter_to_client_sender;
+
+    class ToServerDataSender : public VirtualChannelDataSender
+    {
+    public:
+        ToServerDataSender(ClipboardVirtualChannel& channel_ref) :
+            channel_ref(channel_ref) {}
+
+        void operator()(uint32_t total_length, uint32_t flags,
+            bytes_view chunk_data) override
+        {
+            this->channel_ref.get_next_filter_ptr()->process_client_message(
+                total_length, flags, chunk_data, nullptr);
+        }
+
+    private:
+        ClipboardVirtualChannel& channel_ref;
+    } filter_to_server_sender;
+
+public:
     ClipboardVirtualChannel(
-        VirtualChannelDataSender* to_client_sender_,
-        VirtualChannelDataSender* to_server_sender_,
         EventContainer& events,
         gdi::OsdApi& osd_api,
         const ClipboardVirtualChannelParams& params,
@@ -67,17 +102,19 @@ public:
 
     ~ClipboardVirtualChannel();
 
-    void empty_client_clipboard();
-
-    [[nodiscard]] bool use_long_format_names() const;
-
     void process_client_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data) override;
+
+    void process_client_message(uint32_t total_length,
+        uint32_t flags, bytes_view chunk_data,
+        RDPECLIP::CliprdrHeader const* header) override;
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data) override;
 
-    void set_session_probe_launcher(SessionProbeLauncher* launcher);
+    void process_server_message(uint32_t total_length,
+        uint32_t flags, bytes_view chunk_data,
+        RDPECLIP::CliprdrHeader const* header) override;
 
     void DLP_antivirus_check_channels_files();
 
@@ -87,13 +124,6 @@ private:
     Cliprdr::FormatNameInventory format_name_inventory;
 
     const ClipboardVirtualChannelParams params;
-
-    SessionProbeLauncher* clipboard_monitor_ready_notifier = nullptr;
-    SessionProbeLauncher* clipboard_initialize_notifier    = nullptr;
-    SessionProbeLauncher* format_list_notifier             = nullptr;
-    SessionProbeLauncher* format_list_response_notifier    = nullptr;
-    SessionProbeLauncher* format_data_request_notifier     = nullptr;
-    SessionProbeLauncher* format_list_rejection_notifier   = nullptr;
 
     FileValidatorService * file_validator;
 
@@ -106,28 +136,6 @@ private:
 
     const bool always_file_storage;
     bool can_lock = false;
-
-    unsigned int format_list_rejection_retry_count = 0;
-    static unsigned int const FORMAT_LIST_REJECTION_RETRY_MAX = 3;
-
-public:
-    enum class InitializationState : uint8_t
-    {
-        WaitingServerMonitorReadyPDU = 1,
-        WaitingClientClipboardCapabilitiesPDU = 2,
-        WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU = 4,
-        WaitingClientFormatListPDUOrLockPDU = 8,
-        WaitingServerFormatListResponsePDUOrLockPDU = 16,
-        Ready = 32,
-    };
-
-private:
-    InitializationState initialization_state = InitializationState::WaitingServerMonitorReadyPDU;
-
-public:
-    InitializationState get_initialization_state() const {
-        return this->initialization_state;
-    }
 
 private:
     enum class LockId : uint32_t;

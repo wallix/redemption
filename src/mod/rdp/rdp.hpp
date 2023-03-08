@@ -109,7 +109,10 @@ struct FileValidatorService;
 # include "mod/rdp/channels/sespro_channel.hpp"
 # include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 # include "mod/rdp/channels/cliprdr_channel.hpp"
+# include "mod/rdp/channels/cliprdr_client_simulator.hpp"
+# include "mod/rdp/channels/cliprdr_unexpected_pdu_filter.hpp"
 # include "mod/rdp/channels/validator_params.hpp"
+# include "mod/rdp/channels/virtual_channel_filter.hpp"
 # include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 # include "mod/rdp/channels/drdynvc_channel.hpp"
 # include "mod/rdp/channels/rdpdr_channel.hpp"
@@ -238,6 +241,36 @@ public:
         friend class mod_rdp_channels;
     } remote_app;
 
+    class CliprdrVCFilter : public VirtualChannelFilter<CliprdrVirtualChannelProcessor>
+    {
+    public:
+        CliprdrVCFilter(
+            std::unique_ptr<VirtualChannelDataSender>& to_client_sender_ptr_,
+            std::unique_ptr<VirtualChannelDataSender>& to_server_sender_ptr_) :
+                VirtualChannelFilter<CliprdrVirtualChannelProcessor>(*this, *this),
+                to_client_sender_ptr(to_client_sender_ptr_),
+                to_server_sender_ptr(to_server_sender_ptr_) {}
+
+    public:
+        void process_client_message(uint32_t total_length, uint32_t flags, bytes_view chunk_data, RDPECLIP::CliprdrHeader const* decoded_header) override
+        {
+            (void)decoded_header;
+
+            (*this->to_server_sender_ptr)(total_length, flags, chunk_data);
+        }
+
+        void process_server_message(uint32_t total_length, uint32_t flags, bytes_view chunk_data, RDPECLIP::CliprdrHeader const* decoded_header) override
+        {
+            (void)decoded_header;
+
+            (*this->to_client_sender_ptr)(total_length, flags, chunk_data);
+        }
+
+        private:
+            std::unique_ptr<VirtualChannelDataSender>& to_client_sender_ptr;
+            std::unique_ptr<VirtualChannelDataSender>& to_server_sender_ptr;
+    };
+
 private:
     ModRDPParams::ClipboardParams clipboard;
 
@@ -299,6 +332,11 @@ private:
 
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
+
+    CliprdrVCFilter cliprdr_vc_filter;
+
+    std::unique_ptr<CliprdrClientSimulator>       cliprdr_client_simulator;
+    std::unique_ptr<CliprdrUnexpectedPDUFilter>   cliprdr_unexpected_pdu_filter;
 
     std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
 
@@ -362,6 +400,7 @@ public:
     , asynchronous_tasks(events)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, asynchronous_tasks, verbose)
     , mod_rdp_factory(mod_rdp_factory)
+    , cliprdr_vc_filter(clipboard_to_client_sender, clipboard_to_server_sender)
     , verbose(verbose)
     , osd(osd)
     , events(events)
@@ -521,29 +560,53 @@ private:
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-        ClipboardVirtualChannelParams cvc_params;
-        cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
-        cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
-        cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
-        cvc_params.dont_log_data_into_syslog = this->clipboard.disable_log_syslog;
-        cvc_params.log_only_relevant_clipboard_activities = this->clipboard.log_only_relevant_activities;
-        cvc_params.validator_params = this->validator_params;
+        RemovableVirtualChannelFilter<CliprdrVirtualChannelProcessor>* filter_ptr = nullptr;
 
-        this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
-            this->clipboard_to_client_sender.get(),
-            this->clipboard_to_server_sender.get(),
-            this->events,
-            this->osd,
-            std::move(cvc_params),
-            file_validator_service,
-            ClipboardVirtualChannel::FileStorage{
-                this->mod_rdp_factory.get_fdx_capture(),
-                this->mod_rdp_factory.always_file_storage,
-                this->mod_rdp_factory.tmp_dir,
-            },
-            this->session_log,
-            this->verbose
-        );
+        if (this->clipboard_to_client_sender)
+        {
+            this->cliprdr_unexpected_pdu_filter = std::make_unique<CliprdrUnexpectedPDUFilter>(
+                    bool(this->verbose & RDPVerbose::cliprdr)
+                );
+
+            filter_ptr = this->cliprdr_unexpected_pdu_filter.get();
+        }
+        else
+        {
+            this->cliprdr_client_simulator = std::make_unique<CliprdrClientSimulator>(
+                    bool(this->verbose & RDPVerbose::cliprdr)
+                );
+
+            filter_ptr = this->cliprdr_client_simulator.get();
+        }
+
+        this->cliprdr_vc_filter.insert_after(*filter_ptr);
+
+        if (this->clipboard_to_client_sender)
+        {
+            ClipboardVirtualChannelParams cvc_params;
+            cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
+            cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
+            cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
+            cvc_params.dont_log_data_into_syslog = this->clipboard.disable_log_syslog;
+            cvc_params.log_only_relevant_clipboard_activities = this->clipboard.log_only_relevant_activities;
+            cvc_params.validator_params = this->validator_params;
+
+            this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
+                this->events,
+                this->osd,
+                std::move(cvc_params),
+                file_validator_service,
+                ClipboardVirtualChannel::FileStorage{
+                    this->mod_rdp_factory.get_fdx_capture(),
+                    this->mod_rdp_factory.always_file_storage,
+                    this->mod_rdp_factory.tmp_dir,
+                },
+                this->session_log,
+                this->verbose
+            );
+
+            filter_ptr->insert_after(*this->clipboard_virtual_channel);
+        }
     }
 
     class ToServerSender : public VirtualChannelDataSender
@@ -839,19 +902,12 @@ public:
         ServerTransportContext & stc,
         FileValidatorService * file_validator_service)
     {
-        if (!this->clipboard_virtual_channel) {
+        if (!this->cliprdr_client_simulator && !this->cliprdr_unexpected_pdu_filter) {
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
         }
 
-        ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
-
-        if (this->session_probe.session_probe_launcher) {
-            if (!this->session_probe.session_probe_launcher->process_server_cliprdr_message(stream, length, flags, this->clipboard_to_client_sender == nullptr)) {
-                return;
-            }
-        }
-
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
+        this->cliprdr_vc_filter.get_previous_filter_ptr()->process_server_message(
+            length, flags, {stream.get_current(), chunk_size}, nullptr);
     }   // process_cliprdr_event
 
 
@@ -1058,20 +1114,12 @@ public:
     void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
                             FrontAPI& front,
                             ServerTransportContext & stc) {
-
-        if (!this->clipboard_virtual_channel) {
+        if (!this->cliprdr_client_simulator && !this->cliprdr_unexpected_pdu_filter) {
             this->create_clipboard_virtual_channel(front, stc, this->file_validator_service);
         }
 
-        ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
-
-        if (this->session_probe.session_probe_launcher) {
-            if (!this->session_probe.session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
-                return;
-            }
-        }
-
-        channel.process_client_message(length, flags, chunk.remaining_bytes());
+        this->cliprdr_vc_filter.get_next_filter_ptr()->process_client_message(
+            length, flags, chunk.remaining_bytes(), nullptr);
     }
 
     void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
@@ -1357,12 +1405,16 @@ public:
             this->session_probe.channel_params.real_working_dir     = info.working_dir;
         }
         else if (used_clipboard_based_launcher) {
-            this->session_probe.session_probe_launcher =
+            std::unique_ptr<SessionProbeClipboardBasedLauncher> launcher_ptr =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     this->events,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
+
+            this->cliprdr_vc_filter.insert_before(*launcher_ptr);
+
+            this->session_probe.session_probe_launcher = std::move(launcher_ptr);
 
             return ;
         }
@@ -1555,12 +1607,6 @@ public:
     {
         assert(this->session_probe.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
-            if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc, file_validator_service);
-            }
-            ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
-            cvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
-
             if (!this->file_system_virtual_channel) {
                 this->create_file_system_virtual_channel(front, stc, client_general_caps, client_name);
             }
@@ -1580,7 +1626,6 @@ public:
             if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
                 this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
-            this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
             if (this->remote_app.enable_remote_program) {

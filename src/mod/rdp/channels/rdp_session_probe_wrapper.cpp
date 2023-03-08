@@ -27,16 +27,6 @@ RdpSessionProbeWrapper::RdpSessionProbeWrapper(mod_rdp& rdp)
 : rdp(rdp)
 {}
 
-void RdpSessionProbeWrapper::send_cliprdr_message(bytes_view message)
-{
-    InStream in_stream(message);
-    this->rdp.send_to_mod_channel(channel_names::cliprdr,
-                                  in_stream, message.size(),
-                                  CHANNELS::CHANNEL_FLAG_FIRST
-                                | CHANNELS::CHANNEL_FLAG_LAST
-                                | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-}
-
 void RdpSessionProbeWrapper::send_scancode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode)
 {
     rdp.send_input_scancode(0, flags, scancode);

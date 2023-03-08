@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
 #include "mod/rdp/channels/rail_channel.hpp"
@@ -27,7 +26,7 @@
 
 class SessionProbeAlternateShellBasedLauncher final : public SessionProbeLauncher {
 private:
-    RemoteProgramsVirtualChannel* rail_channel = nullptr;
+    RemoteProgramsVirtualChannel* rail_channel   = nullptr;
     SessionProbeVirtualChannel*   sespro_channel = nullptr;
 
     bool drive_redirection_initialized = false;
@@ -42,12 +41,6 @@ public:
     explicit SessionProbeAlternateShellBasedLauncher(RDPVerbose verbose)
     : verbose(verbose)
     {}
-
-    bool on_client_format_list_rejected() override { return false; }
-
-    bool on_clipboard_initialize() override { return false; }
-
-    bool on_clipboard_monitor_ready() override { return false; }
 
     bool on_drive_access() override {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
@@ -115,31 +108,6 @@ public:
         return false;
     }
 
-    bool on_server_format_data_request() override { return false; }
-
-    bool on_server_format_list() override { return false; }
-
-    bool on_server_format_list_response() override { return false; }
-
-    // Returns false to prevent message to be sent to server.
-    bool process_client_cliprdr_message(InStream & chunk,uint32_t length, uint32_t flags) override {
-        (void)chunk;
-        (void)length;
-        (void)flags;
-        return true;
-    }
-
-    // Returns false to prevent message to be sent to client.
-    bool process_server_cliprdr_message(InStream & chunk,uint32_t length, uint32_t flags, bool proxy_managed_channel) override {
-        (void)chunk;
-        (void)length;
-        (void)flags;
-        (void)proxy_managed_channel;
-        return true;
-    }
-
-    void set_clipboard_virtual_channel(class ClipboardVirtualChannel* /*channel*/) override {}
-
     void set_remote_programs_virtual_channel(RemoteProgramsVirtualChannel* channel) override {
         this->rail_channel = channel;
     }
@@ -194,9 +162,5 @@ public:
 
     [[nodiscard]] bool is_stopped() const override {
         return this->stopped;
-    }
-
-    [[nodiscard]] bool no_clipboard_needed() const override {
-        return true;
     }
 };

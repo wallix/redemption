@@ -2634,8 +2634,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
 
 ClipboardVirtualChannel::ClipboardVirtualChannel(
-    VirtualChannelDataSender* to_client_sender_,
-    VirtualChannelDataSender* to_server_sender_,
     EventContainer& events,
     gdi::OsdApi& osd_api,
     const ClipboardVirtualChannelParams & params,
@@ -2643,7 +2641,9 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     FileStorage file_storage,
     SessionLogApi& session_log,
     RDPVerbose verbose)
-: BaseVirtualChannel(to_client_sender_, to_server_sender_)
+: BaseVirtualChannel(&filter_to_client_sender, &filter_to_server_sender)
+, filter_to_client_sender(*this)
+, filter_to_server_sender(*this)
 // TODO decompose (extract validatorparam)
 , params([&]{
     auto p = params;
@@ -2789,6 +2789,13 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 }
 
 void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
+    uint32_t flags, bytes_view chunk_data, RDPECLIP::CliprdrHeader const* decoded_header)
+{
+    (void)decoded_header;
+    this->process_server_message(total_length, flags, chunk_data);
+}
+
+void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
     uint32_t flags, bytes_view chunk_data)
 {
     if (flags && !(flags & ~(CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
@@ -2813,17 +2820,6 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         }
         break;
 
-        case RDPECLIP::CB_MONITOR_READY: {
-            if (this->clipboard_monitor_ready_notifier) {
-                if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
-                    this->clipboard_monitor_ready_notifier = nullptr;
-                }
-            }
-
-            this->initialization_state = InitializationState::WaitingClientClipboardCapabilitiesPDU;
-        }
-        break;
-
         case RDPECLIP::CB_FORMAT_LIST: {
             send_message_to_client = ClipCtx::D::format_list(
                 *this, flags, header,
@@ -2832,70 +2828,17 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
                 this->params.clipboard_down_authorized || this->params.clipboard_up_authorized,
                 this->server_ctx,
                 chunk.remaining_bytes());
-
-            if (this->format_list_notifier) {
-                if (!this->format_list_notifier->on_server_format_list()) {
-                    this->format_list_notifier = nullptr;
-                }
-            }
         }
         break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            if (this->clipboard_initialize_notifier) {
-                if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
-                    this->clipboard_initialize_notifier = nullptr;
-                }
-            }
-            if (this->format_list_response_notifier) {
-                if (!this->format_list_response_notifier->on_server_format_list_response()) {
-                    this->format_list_response_notifier = nullptr;
-                }
-            }
             ClipCtx::D::format_list_response(header, flags, this->client_ctx);
-
-            if (this->format_list_rejection_notifier &&
-                this->format_list_rejection_notifier->is_stopped()) {
-                if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL and
-                    this->format_list_rejection_retry_count < ClipboardVirtualChannel::FORMAT_LIST_REJECTION_RETRY_MAX) {
-                    LOG(LOG_INFO, "ClipboardVirtualChannel::process_server_format_list_response_pdu: "
-                        "Resend rejected Format List PDU");
-
-                    if (!this->format_list_rejection_notifier->on_client_format_list_rejected()) {
-                        this->format_list_rejection_notifier = nullptr;
-                    }
-                    else {
-                        send_message_to_client = false;
-                    }
-
-                    this->format_list_rejection_retry_count++;
-                }
-                else {
-                    this->format_list_rejection_notifier = nullptr;
-                }
-            }
-
-            if (REDEMPTION_UNLIKELY(
-                InitializationState::WaitingServerFormatListResponsePDUOrLockPDU
-             == this->initialization_state
-            )) {
-                this->initialization_state = InitializationState::Ready;
-            }
          break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
             ClipCtx::D::format_data_request(this->client_ctx, chunk.remaining_bytes(), this->verbose);
 
-            if (this->format_data_request_notifier
-             && this->client_ctx.requested_format_id == RDPECLIP::CF_TEXT
-            ) {
-                if (!this->format_data_request_notifier->on_server_format_data_request()) {
-                    this->format_data_request_notifier = nullptr;
-                }
-
-                send_message_to_client = false;
-            }
-            else if (!this->params.clipboard_up_authorized) {
+            if (!this->params.clipboard_up_authorized) {
                 LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                     "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
                         "Client to server Clipboard operation is not allowed.");
@@ -2955,6 +2898,14 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
 }
 
 void ClipboardVirtualChannel::process_client_message(
+    uint32_t total_length, uint32_t flags, bytes_view chunk_data,
+    RDPECLIP::CliprdrHeader const* decoded_header)
+{
+    (void)decoded_header;
+    this->process_client_message(total_length, flags, chunk_data);
+}
+
+void ClipboardVirtualChannel::process_client_message(
     uint32_t total_length, uint32_t flags, bytes_view chunk_data)
 {
     InStream chunk(chunk_data);
@@ -2965,29 +2916,9 @@ void ClipboardVirtualChannel::process_client_message(
         this->client_ctx.message_type, total_length, flags, chunk, header,
         Direction::FileFromClient, *this);
 
-    // break process when states is incorrect
-    #define IGNORE_OUT_OF_SEQUENCE(accepted_states) do {                   \
-        if (REDEMPTION_UNLIKELY(!(                                         \
-            checked_cast<unsigned>(accepted_states)                        \
-          & unsigned(this->initialization_state)                           \
-        ))) {                                                              \
-            LOG(LOG_WARNING,                                               \
-                "ClipboardVirtualChannel::process_client_message: "        \
-                    "Unexpected Client %s PDU! (%d)",                      \
-                RDPECLIP::get_msgType_name(this->client_ctx.message_type), \
-                int(this->initialization_state));                          \
-            return;                                                        \
-        }                                                                  \
-    } while (0)
-
     switch (this->client_ctx.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::WaitingClientClipboardCapabilitiesPDU);
-
-            this->initialization_state
-                = InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU;
-
             send_message_to_server = ClipCtx::D::clip_caps(
                 *this, this->client_ctx, chunk.remaining_bytes(),
                 "client", this->to_server_sender_ptr());
@@ -2997,37 +2928,22 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_LIST: {
-            IGNORE_OUT_OF_SEQUENCE(
-                unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
-              | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
-              | unsigned(InitializationState::Ready));
-
-            if (REDEMPTION_UNLIKELY(InitializationState::Ready != this->initialization_state))
-            {
-                this->initialization_state = InitializationState::WaitingServerFormatListResponsePDUOrLockPDU;
-            }
-
             send_message_to_server = ClipCtx::D::format_list(
                 *this, flags, header,
                 this->to_client_sender_ptr(),
                 this->to_server_sender_ptr(),
                 this->params.clipboard_down_authorized
-                || this->params.clipboard_up_authorized
-                || this->format_list_response_notifier,
+                || this->params.clipboard_up_authorized,
                 this->client_ctx,
                 chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
-
             ClipCtx::D::format_list_response(header, flags, this->server_ctx);
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
-
             ClipCtx::D::format_data_request(this->server_ctx, chunk.remaining_bytes(), this->verbose);
             send_message_to_server = this->params.clipboard_down_authorized;
             if (!this->params.clipboard_down_authorized) {
@@ -3041,8 +2957,6 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
-
             auto* receiver = this->to_server_sender_ptr();
             if (receiver) {
                 send_message_to_server = ClipCtx::D::format_data_response(
@@ -3053,8 +2967,6 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
-
             auto* sender = this->to_client_sender_ptr();
             auto* receiver = this->to_server_sender_ptr();
             if (sender && receiver) {
@@ -3066,8 +2978,6 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::Ready);
-
             auto* sender = this->to_client_sender_ptr();
             auto* receiver = this->to_server_sender_ptr();
             if (sender && receiver) {
@@ -3079,31 +2989,12 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_LOCK_CLIPDATA: {
-            IGNORE_OUT_OF_SEQUENCE(
-                unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
-              | unsigned(InitializationState::WaitingServerFormatListResponsePDUOrLockPDU)
-              | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
-              | unsigned(InitializationState::Ready));
-
             ClipCtx::D::lock(*this, this->server_ctx, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-            IGNORE_OUT_OF_SEQUENCE(
-                unsigned(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU)
-              | unsigned(InitializationState::WaitingServerFormatListResponsePDUOrLockPDU)
-              | unsigned(InitializationState::WaitingClientFormatListPDUOrLockPDU)
-              | unsigned(InitializationState::Ready));
-
             ClipCtx::D::unlock(*this, this->server_ctx, chunk.remaining_bytes());
-        }
-        break;
-
-        case RDPECLIP::CB_TEMP_DIRECTORY: {
-            IGNORE_OUT_OF_SEQUENCE(InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU);
-
-            this->initialization_state = InitializationState::WaitingClientFormatListPDUOrLockPDU;
         }
         break;
      }   // switch (this->client_message_type)
@@ -3329,41 +3220,4 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
             }
         }
     }
-}
-
-bool ClipboardVirtualChannel::use_long_format_names() const
-{
-    return this->client_ctx.use_long_format_names
-        && this->server_ctx.use_long_format_names;
-}
-
-void ClipboardVirtualChannel::empty_client_clipboard()
-{
-    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-        "ClipboardVirtualChannel::empty_client_clipboard");
-
-    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-        RDPECLIP::CB_RESPONSE_NONE, 0);
-
-    StaticOutStream<256> out_s;
-
-    clipboard_header.emit(out_s);
-
-    this->send_message_to_server(
-        out_s.get_offset(),
-        send_first_last_flags,
-        out_s.get_produced_bytes());
-}
-
-void ClipboardVirtualChannel::set_session_probe_launcher(SessionProbeLauncher* launcher) {
-    if (launcher->no_clipboard_needed()) {
-        return;
-    }
-
-    this->clipboard_monitor_ready_notifier = launcher;
-    this->clipboard_initialize_notifier    = launcher;
-    this->format_list_notifier             = launcher;
-    this->format_list_response_notifier    = launcher;
-    this->format_data_request_notifier     = launcher;
-    this->format_list_rejection_notifier   = launcher;
 }

@@ -29,7 +29,6 @@ struct RdpSessionProbeWrapper
 {
     RdpSessionProbeWrapper(mod_rdp& rdp);
 
-    void send_cliprdr_message(bytes_view message);
     void send_scancode(kbdtypes::KbdFlags flags, kbdtypes::Scancode scancode);
     void reset_keyboard_status();
 

@@ -3715,6 +3715,15 @@ test-run tests/mod/rdp/channels/test_sespro_channel_params :
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/utils/strutils.o
 ;
+test-run tests/mod/rdp/channels/test_virtual_channel_filter :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_virtual_channel_filter.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/mod/rdp/test_rdp :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp.cpp
 :
@@ -5262,6 +5271,7 @@ alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_m
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
 alias test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel ;
 alias test_sespro_channel_params : tests/mod/rdp/channels/test_sespro_channel_params ;
+alias test_virtual_channel_filter : tests/mod/rdp/channels/test_virtual_channel_filter ;
 alias test_rdp : tests/mod/rdp/test_rdp ;
 alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
 alias test_file_validator_service : tests/mod/test_file_validator_service ;
@@ -5632,6 +5642,7 @@ alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_rdpdr_asynchronous_task
   tests/mod/rdp/channels/test_rdpdr_channel
   tests/mod/rdp/channels/test_sespro_channel_params
+  tests/mod/rdp/channels/test_virtual_channel_filter
 ;
 alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp
@@ -6369,6 +6380,7 @@ explicit
   test_rdpdr_asynchronous_task
   test_rdpdr_channel
   test_sespro_channel_params
+  test_virtual_channel_filter
   test_rdp
   test_rdp_negociation
   test_file_validator_service

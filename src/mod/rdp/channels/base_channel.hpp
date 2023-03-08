@@ -22,10 +22,8 @@
 
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
-
 class BaseVirtualChannel
 {
-private:
     VirtualChannelDataSender* to_client_sender;
     VirtualChannelDataSender* to_server_sender;
 
@@ -50,10 +48,6 @@ protected:
 
 public:
     virtual ~BaseVirtualChannel() = default;
-
-    void disable_to_client_sender() {
-        this->to_client_sender = nullptr;
-    }
 
 protected:
     [[nodiscard]] inline bool has_valid_to_client_sender() const
@@ -93,4 +87,3 @@ public:
         }
     }
 };  // class BaseVirtualChannel
-
