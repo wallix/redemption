@@ -833,7 +833,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>;
         type value { 3000 };
     };
-    /// This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default. <br/>
+    /// This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: all_target_mod:tcp_user_timeout <br/>
@@ -1325,7 +1325,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
+    /// Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
     /// Set to 0 to disable this feature. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// default: 0 <br/>
@@ -1335,7 +1335,7 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
-    /// Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
+    /// Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
     /// Set to 0 to disable this feature. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// default: 20000 <br/>
@@ -1499,6 +1499,10 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// The use of this feature is not recommended! <br/>
+    /// If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12. <br/>
+    /// This feature should not be used together with the End disconnected session option (section session_probe). <br/>
+    /// The keyboard shortcut is fixed and cannot be changed. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:allow_session_reconnection_by_shortcut <br/>
@@ -1512,6 +1516,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// The delay in milliseconds between a session disconnection and the automatic reconnection that follows. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:session_reconnection_delay <br/>
@@ -1579,7 +1584,7 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
-    /// Delay before showing disconnect message after the last RemoteApp window is closed. <br/>
+    /// Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:remote_programs_disconnect_message_delay <br/>
@@ -1692,7 +1697,7 @@ namespace cfg
         using mapped_type = SessionProbeOnLaunchFailure;
         type value { SessionProbeOnLaunchFailure::disconnect_user };
     };
-    /// This parameter is used if on_launch_failure is 1 (disconnect user). <br/>
+    /// This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user). <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1707,7 +1712,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 40000 };
     };
-    /// This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
+    /// This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1831,7 +1836,7 @@ namespace cfg
         using mapped_type = SessionProbeLogLevel;
         type value { SessionProbeLogLevel::Debug };
     };
-    /// (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
+    /// (Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1846,7 +1851,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
-    /// This policy setting allows you to configure a time limit for disconnected Terminal Services sessions. <br/>
+    /// This policy setting allows you to configure a time limit in milliseconds for disconnected Terminal Services sessions. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1861,7 +1866,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
-    /// This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
+    /// This parameter allows you to specify the maximum amount of time in milliseconds that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>

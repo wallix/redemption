@@ -339,7 +339,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #connection_establishment_timeout = 3000
 
-# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
 # min = 0, max = 3600000
 # (in milliseconds)
 #_hidden
@@ -515,13 +515,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_rdpdr_data_analysis = 1
 
-# Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
 #remoteapp_bypass_legal_notice_delay = 0
 
-# Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
@@ -588,10 +588,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #auto_reconnection_on_losing_target_link = 0
 
+# The use of this feature is not recommended!
+# If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
+# This feature should not be used together with the End disconnected session option (section session_probe).
+# The keyboard shortcut is fixed and cannot be changed.
 # value: 0 or 1
 #_hidden
 #allow_session_reconnection_by_shortcut = 0
 
+# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
 # min = 0, max = 60000
 # (in milliseconds)
 #_hidden
@@ -647,14 +652,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #on_launch_failure = 1
 
-# This parameter is used if on_launch_failure is 1 (disconnect user).
+# This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user).
 # 0 to disable timeout.
 # min = 0, max = 300000
 # (in milliseconds)
 #_hidden
 #launch_timeout = 40000
 
-# This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+# This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
 # 0 to disable timeout.
 # min = 0, max = 300000
 # (in milliseconds)
@@ -709,21 +714,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #log_level = 5
 
-# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
+# (Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)
 #_hidden
 #disconnected_application_limit = 0
 
-# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
+# This policy setting allows you to configure a time limit in milliseconds for disconnected Terminal Services sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)
 #_hidden
 #disconnected_session_limit = 0
 
-# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
+# This parameter allows you to specify the maximum amount of time in milliseconds that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)

@@ -33,7 +33,7 @@ inactivity_timeout = integer(min=0, default=0)
 
 [all_target_mod]
 
-# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
 # (in milliseconds)
 #_advanced
 tcp_user_timeout = integer(min=0, max=3600000, default=0)

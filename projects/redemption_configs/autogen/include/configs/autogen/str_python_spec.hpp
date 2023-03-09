@@ -289,7 +289,7 @@ disabled_orders = string(default='25')
 #_advanced
 connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
 
-# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
 # (in milliseconds)
 #_hidden
 tcp_user_timeout = integer(min=0, max=3600000, default=0)
@@ -442,13 +442,13 @@ bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 #_hidden
 enable_rdpdr_data_analysis = boolean(default=True)
 
-# Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
 remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)
 
-# Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
@@ -503,9 +503,14 @@ enable_ipv6 = boolean(default=True)
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
+# The use of this feature is not recommended!
+# If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
+# This feature should not be used together with the End disconnected session option (section session_probe).
+# The keyboard shortcut is fixed and cannot be changed.
 #_hidden
 allow_session_reconnection_by_shortcut = boolean(default=False)
 
+# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
 # (in milliseconds)
 #_hidden
 session_reconnection_delay = integer(min=0, max=60000, default=0)
@@ -551,13 +556,13 @@ enable_launch_mask = boolean(default=True)
 #_hidden
 on_launch_failure = option(0, 1, 2, default=1)
 
-# This parameter is used if on_launch_failure is 1 (disconnect user).
+# This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user).
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden
 launch_timeout = integer(min=0, max=300000, default=40000)
 
-# This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+# This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden
@@ -603,19 +608,19 @@ enable_log_rotation = boolean(default=False)
 #_hidden
 log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
-# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
+# (Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions.
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden
 disconnected_application_limit = integer(min=0, max=172800000, default=0)
 
-# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
+# This policy setting allows you to configure a time limit in milliseconds for disconnected Terminal Services sessions.
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden
 disconnected_session_limit = integer(min=0, max=172800000, default=0)
 
-# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
+# This parameter allows you to specify the maximum amount of time in milliseconds that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden

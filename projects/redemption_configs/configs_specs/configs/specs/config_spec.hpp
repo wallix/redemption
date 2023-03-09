@@ -342,7 +342,7 @@ void config_spec_definition(Writer && W)
         }, set(3000));
 
         W.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 3'600'000>>{}, names{"tcp_user_timeout"}, desc{
-            "This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default."
+            "This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default."
         }, set(0));
     });
 
@@ -417,11 +417,11 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_rdpdr_data_analysis"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::milliseconds>(), names{"remoteapp_bypass_legal_notice_delay"}, desc{
-            "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+            "Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
             "Set to 0 to disable this feature."
         }, set(0));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::milliseconds>(), names{"remoteapp_bypass_legal_notice_timeout"}, desc{
-            "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+            "Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
             "Set to 0 to disable this feature."
         }, set(20000));
 
@@ -465,9 +465,18 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"auto_reconnection_on_losing_target_link"}, set(false));
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"allow_session_reconnection_by_shortcut"}, set(false));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(),
+                 names{"allow_session_reconnection_by_shortcut"},
+                 desc{"The use of this feature is not recommended!\n"
+                      "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
+                      "This feature should not be used together with the End disconnected session option (section session_probe).\n"
+                      "The keyboard shortcut is fixed and cannot be changed."},
+                 set(false));
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{"session_reconnection_delay"}, set(0));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(),
+                 names{"session_reconnection_delay"},
+                 desc{"The delay in milliseconds between a session disconnection and the automatic reconnection that follows."},
+                 set(0));
 
         W.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"forward_client_build_number"},
             desc{
@@ -517,7 +526,9 @@ void config_spec_definition(Writer && W)
             }
         );
 
-        W.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(), names{"remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
+        W.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(),
+                 names{"remote_programs_disconnect_message_delay"},
+                 desc{"Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
 
         W.member(no_ini_no_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
     });
@@ -543,11 +554,11 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_launch_mask"}, set(true));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<SessionProbeOnLaunchFailure>(), names{"on_launch_failure"}, set(SessionProbeOnLaunchFailure::disconnect_user));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launch_timeout"}, desc{
-            "This parameter is used if on_launch_failure is 1 (disconnect user).\n"
+            "This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user).\n"
             "0 to disable timeout."
         }, set(40000));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launch_fallback_timeout"}, desc{
-            "This parameter is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
+            "This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "0 to disable timeout."
         }, set(40000));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"start_launch_timeout_timer_only_after_logon"}, desc{
@@ -571,15 +582,15 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeLogLevel>(), names{"log_level"}, set(SessionProbeLogLevel::Debug));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"disconnected_application_limit"}, desc{
-            "(Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.\n"
+            "(Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions.\n"
             "0 to disable timeout."
         }, set(0));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"disconnected_session_limit"}, desc{
-            "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
+            "This policy setting allows you to configure a time limit in milliseconds for disconnected Terminal Services sessions.\n"
             "0 to disable timeout."
         }, set(0));
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"idle_session_limit"}, desc{
-            "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
+            "This parameter allows you to specify the maximum amount of time in milliseconds that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
             "0 to disable timeout."
         }, set(0));
 
