@@ -498,9 +498,14 @@ enable_ipv6 = boolean(default=True)
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
+# The use of this feature is not recommended!
+# If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
+# This feature should not be used together with the End disconnected session option (section session_probe).
+# The keyboard shortcut is fixed and cannot be changed.
 #_hidden
 allow_session_reconnection_by_shortcut = boolean(default=False)
 
+# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
 # (in milliseconds)
 #_hidden
 session_reconnection_delay = integer(min=0, max=60000, default=0)

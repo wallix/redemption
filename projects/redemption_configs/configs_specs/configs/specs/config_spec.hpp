@@ -489,9 +489,19 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"auto_reconnection_on_losing_target_link"}, set(false));
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"allow_session_reconnection_by_shortcut"}, set(false));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(),
+                 names{"allow_session_reconnection_by_shortcut"},
+                 desc{"The use of this feature is not recommended!\n"
+                      "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
+                      "This feature should not be used together with the End disconnected session option (section session_probe).\n"
+                      "The keyboard shortcut is fixed and cannot be changed."},
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{"session_reconnection_delay"}, set(0));
+                 set(false));
+
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(),
+                 names{"session_reconnection_delay"},
+                 desc{"The delay in milliseconds between a session disconnection and the automatic reconnection that follows."},
+                 set(0));
 
         W.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"forward_client_build_number"},
             desc{

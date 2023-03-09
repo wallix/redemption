@@ -1770,6 +1770,10 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
+    /// The use of this feature is not recommended! <br/>
+    /// If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12. <br/>
+    /// This feature should not be used together with the End disconnected session option (section session_probe). <br/>
+    /// The keyboard shortcut is fixed and cannot be changed. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:allow_session_reconnection_by_shortcut <br/>
@@ -1785,6 +1789,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
+    /// The delay in milliseconds between a session disconnection and the automatic reconnection that follows. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:session_reconnection_delay <br/>

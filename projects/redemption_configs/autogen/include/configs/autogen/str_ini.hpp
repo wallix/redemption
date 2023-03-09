@@ -582,10 +582,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #auto_reconnection_on_losing_target_link = 0
 
+# The use of this feature is not recommended!
+# If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
+# This feature should not be used together with the End disconnected session option (section session_probe).
+# The keyboard shortcut is fixed and cannot be changed.
 # value: 0 or 1
 #_hidden
 #allow_session_reconnection_by_shortcut = 0
 
+# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
 # min = 0, max = 60000
 # (in milliseconds)
 #_hidden
