@@ -561,8 +561,8 @@ namespace detail
     {
         chars_to_int_result<T> r;
         if constexpr (std::is_unsigned_v<T>) {
-            r = (*s == '0' && REDEMPTION_UNLIKELY(*s == 'x' || *s == 'X'))
-                ? hexadecimal_chars_to_int<T>(s)
+            r = (*s == '0' && REDEMPTION_UNLIKELY(s[1] == 'x' || s[1] == 'X'))
+                ? hexadecimal_chars_to_int<T>(s + 2)
                 : decimal_chars_to_int<T>(s);
         }
         else {
@@ -651,7 +651,12 @@ namespace arg_parsers
     {
         static Res parse(T& result, char const* s)
         {
-            return detail::arg_parse_int(result, s);
+            std::underlying_type_t<T> tmp;
+            auto r = detail::arg_parse_int(tmp, s);
+            if (r == Res::Ok) {
+                result = static_cast<T>(tmp);
+            }
+            return r;
         }
     };
 } // namespace arg_parsers
