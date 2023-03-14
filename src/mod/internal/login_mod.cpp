@@ -71,36 +71,48 @@ LoginMod::LoginMod(
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
-    , login(
-        drawable, copy_paste, this->screen,
-        widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        {
-            .onsubmit = [this]{
-                std::string auth_user = concat_target_login(
-                    this->login.login_edit.get_text(),
-                    this->login.target_edit.get_text()
-                );
-                this->vars.set_acl<cfg::globals::auth_user>(auth_user);
-                this->vars.ask<cfg::context::selector>();
-                this->vars.ask<cfg::globals::target_user>();
-                this->vars.ask<cfg::globals::target_device>();
-                this->vars.ask<cfg::context::target_protocol>();
-                this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
-                this->set_mod_signal(BACK_EVENT_NEXT);
+    , login([&]{
+        std::string target;
+        std::string login;
+        if (vars.get<cfg::internal_mod::enable_target_field>()) {
+            auto pair = rpartition(username, ":+");
+            target = std::move(pair.first);
+            login = std::move(pair.second);
+        } else {
+            login = username;
+        }
+
+        return WidgetLogin(
+            drawable, copy_paste, this->screen,
+            widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+            {
+                .onsubmit = [this]{
+                    this->vars.set_acl<cfg::globals::auth_user>(concat_target_login(
+                        this->login.login_edit.get_text(),
+                        this->login.target_edit.get_text()
+                    ));
+                    this->vars.ask<cfg::context::selector>();
+                    this->vars.ask<cfg::globals::target_user>();
+                    this->vars.ask<cfg::globals::target_device>();
+                    this->vars.ask<cfg::context::target_protocol>();
+                    this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
+                    this->set_mod_signal(BACK_EVENT_NEXT);
+                },
+                .oncancel = [this]{ this->set_mod_signal(BACK_EVENT_STOP); },
+                .onctrl_shift = [this] { this->language_button.next_layout(); },
             },
-            .oncancel = [this]{ this->set_mod_signal(BACK_EVENT_STOP); },
-            .onctrl_shift = [this] { this->language_button.next_layout(); },
-        },
-        "Redemption " VERSION,
-        nullptr, nullptr, nullptr,
-        TR(trkeys::login, login_language(vars)),
-        TR(trkeys::password, login_language(vars)),
-        TR(trkeys::optional_target, login_language(vars)),
-        vars.get<cfg::context::opt_message>().c_str(),
-        vars.get<cfg::context::login_message>().c_str(),
-        &this->language_button,
-        vars.get<cfg::internal_mod::enable_target_field>(),
-        font, Translator(login_language(vars)), theme)
+            "Redemption " VERSION,
+            login.c_str(), password, target.c_str(),
+            TR(trkeys::login, login_language(vars)),
+            TR(trkeys::password, login_language(vars)),
+            TR(trkeys::optional_target, login_language(vars)),
+            vars.get<cfg::context::opt_message>().c_str(),
+            vars.get<cfg::context::login_message>().c_str(),
+            &this->language_button,
+            vars.get<cfg::internal_mod::enable_target_field>(),
+            font, Translator(login_language(vars)), theme
+        );
+    }())
     , vars(vars)
 {
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
@@ -109,16 +121,6 @@ LoginMod::LoginMod(
     }
     this->screen.add_widget(this->login, WidgetComposite::HasFocus::Yes);
     this->screen.init_focus();
-
-    if (vars.get<cfg::internal_mod::enable_target_field>()) {
-        auto [target, login] = rpartition(username, ":+");
-        this->login.login_edit.set_text(login.c_str());
-        this->login.target_edit.set_text(target.c_str());
-    } else {
-        this->login.login_edit.set_text(username);
-        this->login.target_edit.set_text(nullptr);
-    }
-    this->login.password_edit.set_text(password);
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
