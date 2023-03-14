@@ -37,19 +37,19 @@ static auto make_options(qtclient::Profile& config)
     });
 }
 
-bool qtclient::cli_parse_profile(char const* const argv[], int argc, Profile& profile)
+qtclient::CliResult qtclient::cli_parse_profile(int argc, char const* const argv[], Profile& profile)
 {
     auto options = make_options(profile);
 
     auto cli_result = cli::parse(options, argc, argv);
     switch (cli_result.res) {
         case cli::Res::Ok:
-            return true;
+            return CliResult::Ok;
         case cli::Res::Exit:
-            return false;
+            return CliResult::Exit;
         case cli::Res::Help:
             cli::print_help(options, std::cout);
-            return false;
+            return CliResult::Exit;
         case cli::Res::BadFormat:
         case cli::Res::BadOption:
         case cli::Res::NotOption:
@@ -60,5 +60,5 @@ bool qtclient::cli_parse_profile(char const* const argv[], int argc, Profile& pr
             }
             std::cerr << "\n";
     }
-    return false;
+    return CliResult::Error;
 }

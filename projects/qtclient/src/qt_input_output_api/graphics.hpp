@@ -69,10 +69,20 @@ public:
         (void)cache_idx;
     }
 
+    Rect get_and_reset_updated_rect()
+    {
+        auto tmp = updated_rect;
+        updated_rect = Rect();
+        return tmp;
+    }
+
     QPixmap& get_pixmap() noexcept { return this->cache; }
     QPainter& get_painter() noexcept { return this->painter; }
 
 private:
+    uint16_t width = 0;
+    uint16_t height = 0;
+    Rect updated_rect;
     QPixmap cache;
     QPainter painter;
 };

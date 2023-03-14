@@ -8,14 +8,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "keyboard/kbdtypes.hpp"
 
-class mod_api;
+class RdpInput;
 class Keymap;
 
 namespace qtclient
 {
 
-void x11_send_scancode(mod_api& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode);
+void x11_send_scancode(RdpInput& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode);
 
-void win_send_scancode(mod_api& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode);
+void win_send_scancode(RdpInput& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode);
 
 }

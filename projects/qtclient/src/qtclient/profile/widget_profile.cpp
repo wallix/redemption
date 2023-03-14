@@ -634,6 +634,7 @@ QWidget* qtclient::create_widget_profile(Profile& profile, QWidget* parent)
                     w->layout.addWidget(group);
                     ++ihelper;
                 }
+                // cli::trigger is ignored
             }(), ...);
         });
 

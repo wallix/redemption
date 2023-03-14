@@ -2119,7 +2119,12 @@ public:
 
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
+        this->start_event();
+    }   // mod_rdp
 
+private:
+    void start_event()
+    {
         this->events_guard.create_event_fd_timeout(
             "RDP Negociation",
             this->trans.get_fd(),
@@ -2207,10 +2212,11 @@ public:
                     event.garbage = true;
                     this->throw_error(error);
                 }
-            });
-    }   // mod_rdp
+            }
+        );
+    }
 
-
+public:
     ~mod_rdp() override {
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
@@ -5233,7 +5239,7 @@ public:
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->events_guard.create_event_timeout(
                             "Bypass Legal Notice Timer",
                             this->channels.remote_app.bypass_legal_notice_delay,
-                            [this, failed = false](Event&event) mutable
+                            [this, failed = false](Event& event) mutable
                             {
                                 if (!failed) {
                                     LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");

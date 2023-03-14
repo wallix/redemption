@@ -5,9 +5,6 @@ import os
 import sys
 from collections import OrderedDict
 
-#project_root = '../..'
-project_root = '.'
-
 includes = set((
     'src/',
     'projects/redemption_configs/redemption_src/',
@@ -16,9 +13,6 @@ includes = set((
 ))
 
 disable_tests = set((
-    # 'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
-    # 'tests/test_meta_protocol2.cpp',
-    'tests/utils/test_divers.cpp',
 ))
 
 disable_srcs = set((
@@ -124,14 +118,14 @@ sys_lib_assoc = dict((
     ('hs/hs.h', Dep(
         linkflags=['<library>hyperscan'])),
 ))
-sys_lib_prefix = (
+
+sys_lib_prefix = [
     ('libavformat/', Dep(
         linkflags=['<library>ffmpeg'],
         cxxflags=['$(FFMPEG_CXXFLAGS)'])),
     ('openssl/', Dep(
         linkflags=['<library>crypto'])),
-)
-
+]
 
 user_lib_assoc = dict((
     ('src/capture/video_capture.hpp', Dep(
@@ -140,10 +134,10 @@ user_lib_assoc = dict((
         linkflags=['<library>src/utils/hexadecimal_string_to_buffer.o'])),
 ))
 
-user_lib_prefix = (
+user_lib_prefix = [
     ('ppocr/', Dep(
         linkflags=['<library>ppocr'])),
-)
+]
 
 def get_lib(inc, lib_assoc, lib_prefix):
     if inc in lib_assoc:
@@ -223,7 +217,7 @@ def get_type(name):
         return 'C'
 
 def get_files(a, dirpath):
-    for root, dirs, files in os.walk(project_root + '/' + dirpath):
+    for root, dirs, files in os.walk(dirpath):
         for name in files:
             type = get_type(name)
             if type:
@@ -272,9 +266,6 @@ try:
             linkflags=linkflags and linkflags.split(',')
         )
 
-    sys_lib_prefix = [*user_lib_prefix]
-    user_lib_prefix = [*user_lib_prefix]
-
     options = {
         '--src': lambda arg: get_files(sources, arg),
         '--main': set_arg('main'),
@@ -285,8 +276,8 @@ try:
         '--deps-src': add_deps_src,
         '--include': lambda path: path.endswith('/') and path or includes.add(f'{path}/'),
         '--implicit': no_explicit_set.add,
-        '--sys-lib-flags': lambda arg: sys_lib_assoc.__set_item__(*parse_flags(arg)),
-        '--user-lib-flags': lambda arg: user_lib_assoc.__set_item__(*parse_flags(arg)),
+        '--sys-lib-flags': lambda arg: sys_lib_assoc.__setitem__(*parse_flags(arg)),
+        '--user-lib-flags': lambda arg: user_lib_assoc.__setitem__(*parse_flags(arg)),
         '--sys-lib-prefix-flags': lambda arg: sys_lib_prefix.append(parse_flags(arg)),
         '--user-lib-prefix-flags': lambda arg: user_lib_prefix.append(parse_flags(arg)),
     }

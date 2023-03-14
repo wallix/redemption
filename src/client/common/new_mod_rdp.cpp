@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "mod/rdp/new_mod_rdp.hpp"
+#include "client/common/new_mod_rdp.hpp"
 #include "mod/rdp/rdp.hpp"
 
 

@@ -119,27 +119,6 @@ alias libQtWidgets : /qt$(qtversion)//QtWidgets libQtGui ;
 
 lib libphonon : : <name>phonon4qt$(qtversion) <link>shared ;
 
-include targets.jam ;
-
-actions gen_targets
-{
-    ./tools/gen_targets.sh > targets.jam
-}
-
-explicit targets.jam ;
-make targets.jam : : @gen_targets ;
-
-explicit install instexe install-bin ;
-
-alias instexe : install-bin ;
-alias install : install-bin ;
-
-install install-bin
-    : qtclient
-    : <install-type>EXE <install-dependencies>on
-    : <location>$(INSTALLDIR)/usr/local/bin
-    ;
-
 # TODO remove
 # local obj_list = ;
 #
@@ -159,6 +138,21 @@ obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
 ;
+
+obj log_as_logprint.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
+alias log.o : log_as_logprint.o ;
+
+
+include targets.jam ;
+
+actions gen_targets
+{
+    ./tools/gen_targets.sh > targets.jam
+}
+
+explicit targets.jam ;
+make targets.jam : : @gen_targets ;
+
 # add_src client_redemption/pointer_to_rgba8888.cpp ;
 # add_src utils/log_as_logprint.cpp ;
 
@@ -192,3 +186,15 @@ obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 #     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 #     <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
 # ;
+
+
+explicit install instexe install-bin ;
+
+alias instexe : install-bin ;
+alias install : install-bin ;
+
+install install-bin
+    : qtclient
+    : <install-type>EXE <install-dependencies>on
+    : <location>$(INSTALLDIR)/usr/local/bin
+    ;

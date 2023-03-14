@@ -43,11 +43,6 @@ namespace
         return QRect(rect.x, rect.y, rect.cx, rect.cy);
     }
 
-    inline Rect intersect(Rect const& clip, QPixmap const& cache)
-    {
-        return clip.intersect(cache.width(), cache.height());
-    }
-
     using CompositionMode = QPainter::CompositionMode;
 
     namespace Rop
@@ -200,10 +195,10 @@ namespace
 
             x = drect.x;
             y = drect.y;
-            w = std::min(bmp_cx - srcx, int(rect.cx));
-            h = std::min(bmp_cy - srcy, int(rect.cy));
             srcx = sx + rect.x - drect.x;
             srcy = sy + rect.y - drect.y;
+            w = std::min(bmp_cx - srcx, int(rect.cx));
+            h = std::min(bmp_cy - srcy, int(rect.cy));
         }
 
         QRect qrect() const noexcept
@@ -304,6 +299,8 @@ void Graphics::resize(int width, int height)
         this->painter.end();
     }
 
+    this->width = checked_int(width);
+    this->height = checked_int(height);
     this->cache = QPixmap(width, height);
 
     if (!this->cache.isNull()) {
@@ -315,27 +312,27 @@ void Graphics::resize(int width, int height)
 
 void Graphics::draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    const auto rect = qrect(intersect(clip, this->cache).intersect(cmd.rect));
+    auto rect = qrect(clip.intersect(width, height).intersect(cmd.rect));
     drawPatBlt(this->painter,
         &rect, 1, cmd.brush, cmd.rop, cmd.back_color, cmd.fore_color, color_ctx);
 }
 
 void Graphics::draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    Rect rect(cmd.rect.intersect(clip));
-    this->painter.fillRect(qrect(rect), qcolor(cmd.color, color_ctx));
+    auto rect = qrect(clip.intersect(width, height).intersect(cmd.rect));
+    this->painter.fillRect(rect, qcolor(cmd.color, color_ctx));
 }
 
 void Graphics::draw(const RDPBitmapData & cmd, Bitmap const& bmp)
 {
-    Rect rectBmp(
-        cmd.dest_left,
-        cmd.dest_top,
-        (cmd.dest_right - cmd.dest_left + 1),
-        (cmd.dest_bottom - cmd.dest_top + 1));
-    Rect clip(0, 0, this->cache.width(), this->cache.height());
+    Rect rect_bmp(
+        checked_int(cmd.dest_left),
+        checked_int(cmd.dest_top),
+        checked_int(cmd.dest_right - cmd.dest_left + 1),
+        checked_int(cmd.dest_bottom - cmd.dest_top + 1));
 
-    drawImage(this->painter, bmp, rectBmp, clip, 0, 0);
+    auto clip = Rect(0, 0, width, height);
+    drawImage(this->painter, bmp, rect_bmp, clip, 0, 0);
 }
 
 void Graphics::draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -357,7 +354,7 @@ void Graphics::draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx)
 
 void Graphics::draw(const RDPScrBlt & cmd, Rect clip)
 {
-    const Rect drect = clip.intersect(this->cache.width(), this->cache.height()).intersect(cmd.rect);
+    const Rect drect = clip.intersect(width, height).intersect(cmd.rect);
     if (drect.isempty()) {
         return;
     }
@@ -463,20 +460,20 @@ void Graphics::draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, 
 
 void Graphics::draw(const RDPDstBlt & cmd, Rect clip)
 {
-    const auto rect = qrect(intersect(clip, this->cache).intersect(cmd.rect));
+    auto rect = qrect(clip.intersect(width, height).intersect(cmd.rect));
     drawDstBlt(this->painter, &rect, 1, cmd.rop);
 }
 
 void Graphics::draw(const RDPMultiDstBlt & cmd, Rect clip)
 {
-    drawMulti(cmd, intersect(clip, this->cache), [&](QRect const* rects, int count_rect){
+    drawMulti(cmd, clip.intersect(width, height), [&](QRect const* rects, int count_rect){
         drawDstBlt(this->painter, rects, count_rect, cmd.bRop);
     });
 }
 
 void Graphics::draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    drawMulti(cmd, intersect(clip, this->cache), [&](QRect const* rects, int count_rect){
+    drawMulti(cmd, clip.intersect(width, height), [&](QRect const* rects, int count_rect){
         this->painter.setBrush(qcolor(cmd.color, color_ctx));
         this->painter.drawRects(rects, count_rect);
     });
@@ -484,7 +481,7 @@ void Graphics::draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx col
 
 void Graphics::draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    drawMulti(cmd, intersect(clip, this->cache), [&](QRect const* rects, int count_rect){
+    drawMulti(cmd, clip.intersect(width, height), [&](QRect const* rects, int count_rect){
         drawPatBlt(this->painter,
             rects, count_rect, cmd.brush, cmd.bRop,
             cmd.BackColor, cmd.ForeColor, color_ctx
@@ -494,7 +491,7 @@ void Graphics::draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx co
 
 void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 {
-    const Rect viewport = intersect(clip, this->cache).intersect(clip_from_cmd(cmd));
+    const Rect viewport = clip.intersect(width, height).intersect(clip_from_cmd(cmd));
 
     if (viewport.isempty()) {
         return ;
@@ -506,7 +503,7 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     auto compute_rects = [&](auto f){
         for_each_delta_rect(cmd, [&](Rect const& cmd_rect) {
             Rect drect = clip.intersect(cmd_rect);
-            Rect src = intersect(cmd_rect.offset(deltax, deltay), this->cache);
+            Rect src = cmd_rect.offset(deltax, deltay).intersect(width, height);
             Rect trect(drect.x, drect.y, std::min(drect.cx, src.cx), std::min(drect.cy, src.cy));
             f(trect, src.x, src.y);
         });
@@ -529,7 +526,7 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
             *prect++ = qrect(rect);
         });
         this->painter.setBrush(color);
-        this->painter.drawRects(rects, prect - std::begin(rects));
+        this->painter.drawRects(rects, checked_int(prect - std::begin(rects)));
     };
 
     switch (cmd.bRop) {
@@ -546,7 +543,7 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 
 void Graphics::draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
 {
-    const Rect viewport = intersect(clip, this->cache);
+    const Rect viewport = clip.intersect(width, height);
     if (viewport.isempty()){
         return ;
     }
@@ -606,10 +603,10 @@ void Graphics::draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ct
 
             if (fc)
             {
-                const int16_t x = draw_pos + cmd.bk.x + offset_x;
-                const int16_t y = offset_y + cmd.bk.y;
-                if (Rect(0,0,0,0) != clip.intersect(Rect(x, y, fc.incby, fc.height))){
-
+                const int16_t x = checked_int(draw_pos + cmd.bk.x + offset_x);
+                const int16_t y = checked_int(offset_y + cmd.bk.y);
+                if (Rect(0,0,0,0) != clip.intersect(Rect(x, y, fc.incby, fc.height)))
+                {
                     const uint8_t * fc_data            = fc.data.get();
                     for (int yy = 0 ; yy < fc.height; yy++)
                     {
@@ -674,7 +671,6 @@ void Graphics::draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx)
 
 void Graphics::draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-
     (void)cmd;
     (void)clip;
     (void)color_ctx;

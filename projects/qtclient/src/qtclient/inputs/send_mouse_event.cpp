@@ -4,13 +4,12 @@ SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#pragma once
-
 #include "qtclient/inputs/send_mouse_event.hpp"
-#include "mod/mod_api.hpp"
+#include "core/callback.hpp"
 #include "cxx/cxx.hpp"
 
-void qtclient::send_mouse_button(mod_api& mod, uint16_t flags, Qt::MouseButton button, uint16_t x, uint16_t y)
+
+void qtclient::send_mouse_button(RdpInput& mod, uint16_t flags, Qt::MouseButton button, int x, int y)
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
@@ -24,5 +23,13 @@ void qtclient::send_mouse_button(mod_api& mod, uint16_t flags, Qt::MouseButton b
     }
     REDEMPTION_DIAGNOSTIC_POP()
 
-    mod.rdp_input_mouse(flags, x, y);
+    mod.rdp_input_mouse(flags, checked_int(x), checked_int(y));
+}
+
+void qtclient::send_mouse_wheel(RdpInput& mod, uint16_t whell_flag, int delta)
+{
+    if (delta) {
+        whell_flag |= delta < 0 ? MOUSE_FLAG_WHEEL_NEGATIVE : uint16_t();
+        mod.rdp_input_mouse(whell_flag, 0, 0);
+    }
 }

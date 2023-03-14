@@ -39,6 +39,7 @@ struct Profile
     RDPVerbose rdp_verbose = RDPVerbose();
 
     bool is_spanning = false;
+    bool enable_headless_script_assistance = false;
     bool enable_recording = false;
     bool enable_clipboard = true;
 
@@ -56,7 +57,7 @@ struct Profile
 
     uint32_t tls_min_level = 0;
     uint32_t tls_max_level = 0;
-    std::string cipher_string;
+    std::string cipher_string = "HIGH:!ADH:!3DES:!SHA";
 
     uint32_t rdp5_performance_flags = 0x00000040;
 

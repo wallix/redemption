@@ -4,8 +4,8 @@ SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#include "qtclient/inputs/mouse_keyboard.hpp"
-#include "mod/mod_api.hpp"
+#include "qtclient/inputs/send_scancode.hpp"
+#include "core/callback.hpp"
 
 namespace
 {
@@ -73,22 +73,26 @@ static const uint16_t x11_scancodes_map[] {
 /* ec - ef */      0          ,      0          ,      0          ,      0          ,
 /* f0 - f3 */      0          ,      0          ,      0          ,      0          ,
 /* f4 - f7 */      0          ,      0          ,      0          ,      0          ,
-/* f8 - ff */ 0x0143   /*F21*/,      0          ,      0          ,      0          ,
-/* fc - ff */      0          ,      0          ,      0          ,      0          ,
+/* f8 - ff */ 0x0143   /*F21*/,
 };
 
 }
 
-void x11_send_scancode(mod_api& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode)
+namespace qtclient
 {
-    if (native_scancode < 0xff) {
-        if (REDEMPTION_LIKELY(native_scancode != 0x6f)) {
+
+void x11_send_scancode(RdpInput& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode)
+{
+    if (native_scancode < std::size(x11_scancodes_map)) {
+        if (REDEMPTION_LIKELY(native_scancode != 0x6b)) {
             auto scancode_and_extende_flag = x11_scancodes_map[native_scancode];
-            mod.rdp_input_scancode(
-                flag | kbdtypes::KbdFlags(scancode_and_extende_flag & 0xff00u),
-                kbdtypes::Scancode(scancode_and_extende_flag),
-                0, keymap
-            );
+            if (scancode_and_extende_flag) {
+                mod.rdp_input_scancode(
+                    flag | kbdtypes::KbdFlags(scancode_and_extende_flag & 0xff00u),
+                    kbdtypes::Scancode(scancode_and_extende_flag),
+                    0, keymap
+                );
+            }
         }
         // send PrintScreen
         else {
@@ -98,7 +102,7 @@ void x11_send_scancode(mod_api& mod, kbdtypes::KbdFlags flag, Keymap const& keym
     }
 }
 
-void win_send_scancode(mod_api& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode)
+void win_send_scancode(RdpInput& mod, kbdtypes::KbdFlags flag, Keymap const& keymap, uint32_t native_scancode)
 {
     mod.rdp_input_scancode(
         flag | kbdtypes::KbdFlags(native_scancode & 0xff00u),
@@ -106,3 +110,5 @@ void win_send_scancode(mod_api& mod, kbdtypes::KbdFlags flag, Keymap const& keym
         0, keymap
     );
 }
+
+} // qtclient

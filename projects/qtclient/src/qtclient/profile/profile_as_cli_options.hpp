@@ -102,7 +102,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
 
         cli::helper("========= Client ========="),
 
-        cli::option("size").help("Screen size")
+        cli::option('s', "size").help("Screen size")
         .parser(cli::arg_location(config.screen_info)),
 
         cli::option("span").help("Span the screen size on local screen")
@@ -120,8 +120,11 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::option("cipher").help("TLS Cipher allowed for TLS <= 1.2")
         .parser(cli::arg_location(config.cipher_string)),
 
-        cli::option("enable-recording").help("Enable session recording as .wrm movie")
+        cli::option('r', "enable-recording").help("Enable session recording as .wrm movie")
         .parser(cli::arg_location(config.enable_recording)),
+
+        cli::option('a', "enable-headless-script-assistance").help("Enable script assistance for headlessclient")
+        .parser(cli::arg_location(config.enable_headless_script_assistance)),
 
 
         cli::helper("========= RDP ========="),
@@ -169,7 +172,7 @@ auto profile_as_cli_options(qtclient::Profile& config, Fn&& fn = to_cli_options)
         cli::option("drive-dir").help("Directory path on local disk to share with your session")
         .parser(cli::arg_location(config.drive_path)),
 
-        cli::option("home-drive").help("Use $HOME as shared drive")
+        cli::option('d', "home-drive").help("Use $HOME as shared drive")
         .parser(cli::arg_location(config.use_home_drive))
 
         // TODO VNC

@@ -11,6 +11,13 @@ namespace qtclient
 
 class Profile;
 
-bool cli_parse_profile(char const* const argv[], int argc, Profile& profile);
+enum class CliResult : char
+{
+    Ok,
+    Exit,
+    Error,
+};
+
+CliResult cli_parse_profile(int argc, char const* const argv[], Profile& profile);
 
 } // namespace qtclient
