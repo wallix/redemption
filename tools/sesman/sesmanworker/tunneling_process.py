@@ -195,7 +195,7 @@ class TunnelingProcessSSH(TunnelingProcessInterface):
         self.ssh_port = ssh_port
         self.ssh_login = ssh_login
         self.ssh_password = ssh_password
-        self.sock_path_dir = sock_path_dir or "/tmp/"
+        self.sock_path_dir = sock_path_dir
         self._use_pexpect = False
 
         self.ssh_key_passphrase = ""
