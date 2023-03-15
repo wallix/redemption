@@ -111,7 +111,7 @@ public:
             },
             [this](Event& event){
                 LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-                event.alarm.reset_timeout(1s);
+                event.add_timeout_delay(1s);
             }
         );
     }
@@ -200,7 +200,8 @@ public:
     , data(std::make_unique<uint8_t[]>(data_length))
     , data_length(data_length)
     , remaining_number_of_bytes_to_send(data_length)
-    , to_server_sender(to_server_sender.SynchronousSender()) {
+    , to_server_sender(to_server_sender.SynchronousSender())
+    {
         (void)verbose;
         ::memcpy(this->data.get(), data, data_length);
     }
@@ -211,10 +212,10 @@ public:
         async_event_container.create_event_timeout(
             "RdpdrSendDriveIOResponseTask",
             now + 1ms,
-            [this](Event&event) {
+            [this](Event& event) {
                 event.garbage = true; // true when terminate or throw exception
-                if (this->run()){
-                    event.alarm.reset_timeout(1ms);
+                if (this->run()) {
+                    event.add_timeout_delay(1ms);
                     event.garbage = false;
                 }
             }
@@ -257,7 +258,8 @@ public:
     }
 };
 
-class RdpdrSendClientMessageTask final : public AsynchronousTask {
+class RdpdrSendClientMessageTask final : public AsynchronousTask
+{
     const size_t total_length;
     const uint32_t flags;
     std::unique_ptr<uint8_t[]> chunked_data;
@@ -288,7 +290,7 @@ public:
     {
         async_event_container.create_event_timeout(
             "RdpdrSendClientMessageTask",
-            now+std::chrono::milliseconds{1},
+            now + std::chrono::milliseconds{1},
             [this](Event& event){
                 event.garbage = true;
                 this->run();

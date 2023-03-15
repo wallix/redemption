@@ -124,9 +124,10 @@ CloseMod::CloseMod(
             start_time,
             [this, start_time](Event& event)
             {
-                auto elapsed = event.alarm.now - start_time;
+                auto now = this->events_guard.get_monotonic_time();
+                auto elapsed = now - start_time;
                 auto remaining = this->vars.get<cfg::globals::close_timeout>() - elapsed;
-                event.alarm.reset_timeout(this->close_widget.refresh_timeleft(
+                event.set_timeout(now + this->close_widget.refresh_timeleft(
                     std::chrono::duration_cast<std::chrono::seconds>(remaining)));
             });
     }

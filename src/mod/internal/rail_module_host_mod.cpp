@@ -125,7 +125,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()
     ) {
-        this->disconnection_reconnection_timer.reset_timeout_or_create_event(
+        this->disconnection_reconnection_timer.set_timeout_or_create_event(
             1s, "RAIL Module Host Disconnection Reconnection Timeout",
             [this](Event&)
             {

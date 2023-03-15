@@ -148,11 +148,11 @@ ReplayMod::ReplayMod(
     [this](Event& ev){
         if (this->next_timestamp()) {
             const auto duration = this->internal_reader->current_duration();
-            ev.alarm.reset_timeout(this->start_time + duration);
+            ev.set_timeout(this->start_time + duration);
         }
         else if (this->replay_on_loop) {
             this->init_reader();
-            ev.alarm.reset_timeout(this->start_time);
+            ev.set_timeout(this->start_time);
         }
         else if (!this->wait_for_escape) {
             ev.garbage = true;
@@ -178,7 +178,7 @@ bool ReplayMod::next_timestamp()
             reader.interpret_order();
             if (this->internal_reader->wait_resize_response) {
                 this->internal_reader->wait_resize_response = false;
-                this->timer_event.get_optional_event()-> alarm.pause();
+                this->timer_event.get_optional_event()->active_timer = false;
                 this->gdi_down_time = this->time_base_ref.monotonic_time;
                 break;
             }
@@ -223,7 +223,7 @@ void ReplayMod::rdp_gdi_up_and_running()
         this->start_time += no_gdi_delay;
 
         const auto duration = this->internal_reader->current_duration();
-        timer->alarm.reset_timeout(this->start_time + duration);
+        timer->set_timeout(this->start_time + duration);
     }
 }
 
@@ -231,8 +231,8 @@ void ReplayMod::rdp_gdi_down()
 {
     if (auto* timer = this->timer_event.get_optional_event()) {
         LOG(LOG_DEBUG, "ReplayMod::rdp_gdi_down()");
-        if (timer->alarm.is_active()) {
-            timer->alarm.pause();
+        if (timer->active_timer) {
+            timer->active_timer = false;
             this->gdi_down_time = this->time_base_ref.monotonic_time;
         }
     }

@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     }) {
         RED_REQUIRE(!ev.garbage);
         ev.actions.exec_timeout(ev);
-        RED_CHECK(ev.alarm.trigger_time == t);
+        RED_CHECK(ev.trigger_time == t);
     }
 
     RED_CHECK(replay_mod.get_mod_signal() == BackEvent_t::BACK_EVENT_STOP);

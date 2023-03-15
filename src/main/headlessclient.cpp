@@ -379,7 +379,7 @@ int main(int argc, char const** argv)
                             return;
                         }
 
-                        ev.alarm.reset_timeout(delay);
+                        ev.add_timeout_delay(delay);
                         repl.execute_command(front, *mod);
                         if (repl.has_delay_cmd) {
                             repl.has_delay_cmd = false;

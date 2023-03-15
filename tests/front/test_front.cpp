@@ -242,7 +242,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     int count = 0;
     int n = 38;
-    detail::ProtectedEventContainer::get_events(events)[0]->alarm.fd = 0;
+    detail::ProtectedEventContainer::get_events(events)[0]->fd = 0;
     event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     for (; count < n && !event_manager.is_empty(); ++count) {
         event_manager.execute_events([](int){return true;}, false);

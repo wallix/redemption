@@ -2132,7 +2132,7 @@ public:
                     // RdpNego::recv_next_data may reconnect and change fd if tls
                     int const fd = this->trans.get_fd();
                     if (fd >= 0) {
-                        event.alarm.set_fd(fd, event.alarm.grace_delay);
+                        event.fd = fd;
                     }
 
                     if (negotiation_finished) {
@@ -2144,11 +2144,9 @@ public:
 
                         event.garbage = true;
 
-                        this->events_guard.create_event_fd_timeout(
-                            "First Incoming RDP PDU Event",
-                            event.alarm.fd, event.alarm.grace_delay,
-                            event.alarm.trigger_time + std::chrono::seconds{3600},
-                            [this](Event&event)
+                        this->events_guard.create_event_fd_without_timeout(
+                            "First Incoming RDP PDU Event", event.fd,
+                            [this](Event& event)
                             {
                                 if (this->buf.remaining()){
                                     this->draw_event();
@@ -2164,10 +2162,8 @@ public:
 
                                 event.garbage = true;
 
-                                this->events_guard.create_event_fd_timeout(
-                                    "Incoming RDP PDU Event",
-                                    event.alarm.fd, event.alarm.grace_delay,
-                                    event.alarm.trigger_time,
+                                this->events_guard.create_event_fd_without_timeout(
+                                    "Incoming RDP PDU Event", event.fd,
                                     [this](Event& /*event*/)
                                     {
                                         #ifndef __EMSCRIPTEN__
@@ -2177,11 +2173,9 @@ public:
                                         #endif
                                         this->buf.load_data(this->trans);
                                         this->draw_event();
-                                    },
-                                    [](Event& /*event*/){}
+                                    }
                                 );
-                            },
-                            [](Event& /*event*/){}
+                            }
                         );
                     }
                 }
@@ -5247,7 +5241,7 @@ public:
                                     this->send_input_scancode(0, KbdFlags::Release, Scancode::Enter);
 
                                     if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
-                                        event.alarm.reset_timeout(
+                                        event.set_timeout(
                                             this->events_guard.get_monotonic_time()
                                             + this->channels.remote_app.bypass_legal_notice_timeout);
                                         failed = true;

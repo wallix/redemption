@@ -165,7 +165,7 @@ struct ClipboardVirtualChannel::OSD::D
 
         if (self.osd.enable_osd) {
             self.osd.msg_type = OSD::MsgType::WaitValidator;
-            self.osd.event_ref.reset_timeout_or_create_event(
+            self.osd.event_ref.set_timeout_or_create_event(
                 self.osd.delay, self.osd.events_container, "FileVerifOSD", &self.osd,
                 [&self, &filename](Event& event){
                     self.osd.osd_api.display_osd_message(str_concat(

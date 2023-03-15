@@ -443,7 +443,7 @@ public:
         this->set_current_time(time);
 
         event_loop([time](Event& event){
-            if (event.alarm.trigger(time)) {
+            if (detail::trigger_event_timer(event, time)) {
                 event.actions.exec_timeout(event);
             }
         });
@@ -455,10 +455,8 @@ public:
 
         auto time = this->event_manager.get_monotonic_time();
         event_loop([time](Event& event){
-            /*if (event.alarm.fd != -1)*/ {
-                event.alarm.reset_timeout(time + event.alarm.grace_delay);
-                event.actions.exec_action(event);
-            }
+            event.trigger_time = time + event.grace_delay;
+            event.actions.exec_action(event);
         });
 
         this->event_manager.garbage_collector();

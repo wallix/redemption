@@ -1024,7 +1024,7 @@ public:
                 "Front Flow Control Timer",
                 0ms, [this](Event& event)
                 {
-                    event.alarm.reset_timeout(this->rdp_keepalive_connection_interval);
+                    event.add_timeout_delay(this->rdp_keepalive_connection_interval);
                     if (this->state == FRONT_UP_AND_RUNNING) {
                         this->send_data_indication_ex_impl(
                             GCC::MCS_GLOBAL_CHANNEL,
@@ -1316,12 +1316,10 @@ public:
             "Front Capture Timer",
             0ms, [this](Event& event)
             {
-                auto const capture_ms = this->capture->periodic_snapshot(
-                    event.alarm.now,
-                    this->mouse_x, this->mouse_y
-                ).duration();
+                auto const now = event.trigger_time;
+                auto const capture_ms = this->capture->periodic_snapshot(now, this->mouse_x, this->mouse_y).duration();
                 if (capture_ms != capture_ms.max()){
-                    event.alarm.reset_timeout(capture_ms);
+                    event.set_timeout(now + capture_ms);
                 }
                 else {
                     event.garbage = true;

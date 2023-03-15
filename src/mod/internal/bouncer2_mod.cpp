@@ -47,7 +47,7 @@ Bouncer2Mod::Bouncer2Mod(
         "Bouncer Periodic Timer",
         delay, [this](Event&event)
         {
-            event.alarm.reset_timeout(delay);
+            event.add_timeout_delay(delay);
             this->draw_event(this->gd);
         });
 }

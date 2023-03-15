@@ -353,7 +353,7 @@ void SessionProbeClipboardBasedLauncher::make_delay_sequencer()
 
         auto next_state = [&](KbdFlags flags, Scancode scancode, MonotonicTimePoint timeout){
             this->rdp.send_scancode(flags, scancode);
-            event.alarm.reset_timeout(timeout);
+            event.set_timeout(timeout);
             set_state(SeqEnum(i+1));
         };
 
@@ -438,7 +438,7 @@ void SessionProbeClipboardBasedLauncher::make_delay_sequencer()
                         nullptr
                     );
 
-                event.alarm.reset_timeout(this->get_long_delay_timeout());
+                event.set_timeout(this->get_long_delay_timeout());
                 set_state(Wait_format_list_response);
                 event.garbage = true;
                 return ;
@@ -492,7 +492,7 @@ void SessionProbeClipboardBasedLauncher::make_run_sequencer()
 
         auto next_state = [&](KbdFlags flags, Scancode scancode, MonotonicTimePoint timeout){
             this->rdp.send_scancode(flags, scancode);
-            event.alarm.reset_timeout(timeout);
+            event.set_timeout(timeout);
             set_state(SeqEnum(i+1));
         };
 

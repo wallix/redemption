@@ -29,20 +29,20 @@ void KeepAlive::keep_alive()
 {
     if (auto* event = this->timer_event.get_optional_event()) {
         this->wait_answer = false;
-        event->alarm.reset_timeout(this->timeout());
+        event->set_timeout(this->timeout());
     }
 }
 
 void KeepAlive::start()
 {
     this->wait_answer = false;
-    this->timer_event.reset_timeout_or_create_event(
+    this->timer_event.set_timeout_or_create_event(
         this->timeout(), "Keepalive",
         [this](Event& e) {
             if (!this->wait_answer) {
                 this->ini.ask<cfg::context::keepalive>();
                 this->wait_answer = true;
-                e.alarm.reset_timeout(this->timeout());
+                e.set_timeout(this->timeout());
             }
             else {
                 e.garbage = true;
@@ -71,7 +71,7 @@ namespace
 
 void Inactivity::activity()
 {
-    this->timer_event.reset_timeout(this->grace_delay);
+    this->timer_event.set_timeout(this->grace_delay);
 }
 
 void Inactivity::start(std::chrono::seconds delay)
@@ -92,7 +92,7 @@ void Inactivity::start(std::chrono::seconds delay)
     LOG(LOG_INFO, "User session inactivity : set to %ld seconds", delay.count());
 
     this->grace_delay = delay;
-    this->timer_event.reset_timeout_or_create_event(
+    this->timer_event.set_timeout_or_create_event(
         this->grace_delay, "Inactivity",
         [](Event& e) {
             e.garbage = true;
@@ -135,17 +135,17 @@ void EndSessionWarning::set_time(MonotonicTimePoint end_date)
         now = this->timer_close - end_session_timers.back();
     }
 
-    this->timer_event.reset_timeout_or_create_event(
+    this->timer_event.set_timeout_or_create_event(
         now, "EndSessionWarning",
         [this](Event& event) {
-            if (event.alarm.now >= this->timer_close) {
+            auto now = event.trigger_time;
+            if (now >= this->timer_close) {
                 event.garbage = true;
                 throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
             }
 
             // now+1 for next timer
-            auto now = event.alarm.now + 1s;
-            event.alarm.reset_timeout(this->next_timeout(now));
+            event.set_timeout(this->next_timeout(now + 1s));
         }
     );
 }

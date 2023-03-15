@@ -55,20 +55,20 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     Event& e = *get_events(events)[0];
 
     // before time: nothing happens
-    RED_CHECK(!e.alarm.trigger(origin));
+    RED_CHECK(!detail::trigger_event_timer(e, origin));
     // when it's time of above alarm is triggered
-    RED_CHECK(e.alarm.trigger(wakeup+1s));
+    RED_CHECK(detail::trigger_event_timer(e, wakeup+1s));
     RED_CHECK(counter == 0);
     RED_REQUIRE(get_events(events).size() == 1u);
     // but only once
-    RED_CHECK(!e.alarm.trigger(wakeup+2s));
+    RED_CHECK(!detail::trigger_event_timer(e, wakeup+2s));
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 1);
     RED_REQUIRE(get_events(events).size() == 1u);
 
     // If I set an alarm in the past it will be triggered immediately
-    e.alarm.reset_timeout(origin);
-    RED_CHECK(e.alarm.trigger(wakeup+3s));
+    e.set_timeout(origin);
+    RED_CHECK(detail::trigger_event_timer(e, wakeup+3s));
     RED_CHECK(counter == 1);
     RED_REQUIRE(get_events(events).size() == 1u);
 }
@@ -83,20 +83,20 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     EventContainer events;
     (void)events.event_creator().create_event_timeout(
         "test", nullptr, wakeup, [&counter](Event& event){
-            event.alarm.reset_timeout(event.alarm.now + 1s);
+            event.add_timeout_delay(1s);
             ++counter;
         });
     Event& e = *get_events(events)[0];
 
     // before time: nothing happens
-    RED_CHECK(!e.alarm.trigger(origin));
+    RED_CHECK(!detail::trigger_event_timer(e, origin));
     RED_CHECK(counter == 0);
     // when it's time of above alarm is triggered
-    RED_CHECK(e.alarm.trigger(wakeup+1s));
+    RED_CHECK(detail::trigger_event_timer(e, wakeup+1s));
     RED_CHECK(counter == 0);
     e.actions.exec_timeout(e);
     // and again after period, because event reset alarm
-    RED_CHECK(e.alarm.trigger(wakeup+2s));
+    RED_CHECK(detail::trigger_event_timer(e, wakeup+2s));
     RED_CHECK(counter == 1);
 }
 
@@ -105,14 +105,14 @@ RED_AUTO_TEST_CASE(TestEventGuard)
     EventManager event_manager;
     {
         EventsGuard events_guard(event_manager.get_events());
-        events_guard.create_event_timeout("Init Event", MonotonicTimePoint{}, [](Event&/*event*/) {});
+        events_guard.create_event_timeout("Init Event", MonotonicTimePoint{}, [](Event& /*event*/) {});
         RED_CHECK(get_events(event_manager).size() == 1);
         RED_CHECK(!get_events(event_manager)[0]->garbage);
     }
     RED_CHECK(get_events(event_manager).size() == 1);
     RED_CHECK(get_events(event_manager)[0]->garbage);
 
-    event_manager.garbage_collector();
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(get_events(event_manager).size() == 0);
 }
 
@@ -123,31 +123,31 @@ RED_AUTO_TEST_CASE(TestEventRef)
 
     {
         EventRef ref = events.event_creator().create_event_timeout(
-            "Init Event", nullptr, MonotonicTimePoint{}, [](Event&/*event*/) {});
+            "Init Event", nullptr, MonotonicTimePoint{}, [](Event& /*event*/) {});
         RED_CHECK(get_events(events).size() == 1);
         RED_CHECK(!get_events(events)[0]->garbage);
     }
     RED_CHECK(get_events(events).size() == 1);
     RED_CHECK(get_events(events)[0]->garbage);
 
-    event_manager.garbage_collector();
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(get_events(events).size() == 0);
 
     {
         EventRef ref1 = events.event_creator().create_event_timeout(
-            "Init Event", nullptr, MonotonicTimePoint{}, [](Event&/*event*/) {});
+            "Init Event", nullptr, MonotonicTimePoint{}, [](Event& /*event*/) {});
         RED_CHECK(ref1.has_event());
         RED_CHECK(get_events(events).size() == 1);
         RED_CHECK(!get_events(events)[0]->garbage);
 
         ref1 = events.event_creator().create_event_timeout(
-            "Init Event", nullptr, MonotonicTimePoint{}, [](Event&/*event*/) {});
+            "Init Event", nullptr, MonotonicTimePoint{}, [](Event& /*event*/) {});
         RED_CHECK(get_events(events).size() == 2);
         RED_CHECK(get_events(events)[0]->garbage);
         RED_CHECK(!get_events(events)[1]->garbage);
 
         EventRef ref2 = events.event_creator().create_event_timeout(
-            "Init Event", nullptr, MonotonicTimePoint{}, [](Event&/*event*/) {});
+            "Init Event", nullptr, MonotonicTimePoint{}, [](Event& /*event*/) {});
         RED_CHECK(get_events(events).size() == 3);
         RED_CHECK(get_events(events)[0]->garbage);
         RED_CHECK(!get_events(events)[1]->garbage);
@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestEventRef)
         RED_CHECK(get_events(events)[2]->garbage);
 
         EventRef ref3 = events.event_creator().create_event_timeout(
-            "Init Event", nullptr, MonotonicTimePoint{}, [](Event&/*event*/) {});
+            "Init Event", nullptr, MonotonicTimePoint{}, [](Event& /*event*/) {});
         RED_CHECK(ref3.has_event());
         RED_CHECK(!get_events(events)[3]->garbage);
         ref3.garbage();
@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(TestEventRef)
     RED_CHECK(get_events(events)[2]->garbage);
     RED_CHECK(get_events(events)[3]->garbage);
 
-    event_manager.garbage_collector();
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(get_events(events).size() == 0);
 
     {
@@ -193,8 +193,8 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
 {
     struct Context {
         EventsGuard events_guard;
-        int counter1 = 0;
-        int counter2 = 0;
+        int action_counter = 0;
+        int timeout_counter = 0;
 
         Context(EventContainer & events)
             : events_guard(events)
@@ -202,14 +202,14 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
             this->events_guard.create_event_timeout(
                 "Init Event",
                 this->events_guard.get_monotonic_time(),
-                [this](Event&/*event*/)
+                [this](Event& /*event*/)
                 {
                     this->events_guard.create_event_fd_timeout(
                         "Fd Event",
                         1, 300s,
                         this->events_guard.get_monotonic_time(),
-                        [this](Event&/*event*/){ ++this->counter1; },
-                        [this](Event&/*event*/){ ++this->counter2; }
+                        [this](Event& /*event*/){ ++this->action_counter; },
+                        [this](Event& /*event*/){ ++this->timeout_counter; }
                     );
                 }
             );
@@ -221,22 +221,26 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
 
     Context context(events);
     event_manager.execute_events(nofd_fn, false);
-    RED_CHECK(context.counter1 == 0);
-    RED_CHECK(context.counter2 == 0);
+    RED_CHECK(context.action_counter == 0);
+    RED_CHECK(context.timeout_counter == 0);
     event_manager.execute_events(nofd_fn, false);
-    RED_CHECK(context.counter1 == 0);
-    RED_CHECK(context.counter2 == 1);
+    RED_CHECK(context.action_counter == 0);
+    RED_CHECK(context.timeout_counter == 1);
     event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{3s};
     event_manager.execute_events(nofd_fn, false);
-    RED_CHECK(context.counter1 == 0);
-    RED_CHECK(context.counter2 == 1);
+    RED_CHECK(context.action_counter == 0);
+    RED_CHECK(context.timeout_counter == 1);
     event_manager.execute_events([](int /*fd*/){ return true; }, false);
-    RED_CHECK(context.counter1 == 1);
-    RED_CHECK(context.counter2 == 1);
+    RED_CHECK(context.action_counter == 1);
+    RED_CHECK(context.timeout_counter == 1);
     event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{303s};
     event_manager.execute_events(nofd_fn, false);
-    RED_CHECK(context.counter1 == 1);
-    RED_CHECK(context.counter2 == 2);
+    RED_CHECK(context.action_counter == 1);
+    RED_CHECK(context.timeout_counter == 1);
+    detail::ProtectedEventContainer::get_events(events)[1]->set_timeout(MonotonicTimePoint{303s});
+    event_manager.execute_events(nofd_fn, false);
+    RED_CHECK(context.action_counter == 1);
+    RED_CHECK(context.timeout_counter == 2);
 }
 
 RED_AUTO_TEST_CASE(TestNontrivialEvent)
@@ -260,10 +264,10 @@ RED_AUTO_TEST_CASE(TestNontrivialEvent)
                 "Fd Event",
                 1, std::chrono::seconds{300},
                 MonotonicTimePoint{},
-                [this, r = std::make_unique<Ref>(counter1)](Event&/*event*/){
+                [this, r = std::make_unique<Ref>(counter1)](Event& /*event*/){
                     ++this->counter1;
                 },
-                [this, r = std::make_unique<Ref>(counter2)](Event&/*event*/){
+                [this, r = std::make_unique<Ref>(counter2)](Event& /*event*/){
                     ++this->counter2;
                 }
             );
@@ -279,7 +283,7 @@ RED_AUTO_TEST_CASE(TestNontrivialEvent)
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     context.events_guard.end_of_lifespan();
-    event_manager.garbage_collector();
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0x10);
     RED_CHECK(context.counter2 == 0x11);
 }
