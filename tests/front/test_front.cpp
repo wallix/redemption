@@ -43,7 +43,7 @@
 #include "utils/sugar/int_to_chars.hpp"
 
 #include "mod/null/null.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
+#include "client/common/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "core/events.hpp"

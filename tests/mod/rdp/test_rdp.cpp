@@ -26,7 +26,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 #include "core/client_info.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
+#include "client/common/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"

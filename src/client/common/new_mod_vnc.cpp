@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "mod/vnc/new_mod_vnc.hpp"
+#include "client/common/new_mod_vnc.hpp"
 #include "mod/vnc/vnc.hpp"
 
 
