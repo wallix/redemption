@@ -359,26 +359,13 @@ public:
             return event;
         }
 
-        static void delete_event(Event* e)
+        static void delete_event(Event* e) noexcept
         {
             if (e->actions.custom_destructor) {
                 e->actions.custom_destructor(*e);
             }
             e->~Event();
             ::operator delete(e);
-        }
-
-        void garbage_collector()
-        {
-            for (size_t i = 0; i < this->queue.size(); i++) {
-                if (REDEMPTION_UNLIKELY(this->queue[i]->garbage)) {
-                    do {
-                        this->delete_event(this->queue[i]);
-                        this->queue[i] = this->queue.back();
-                        this->queue.pop_back();
-                    } while (i < this->queue.size() && this->queue[i]->garbage);
-                }
-            }
         }
 
         ~Creator()
@@ -400,12 +387,12 @@ namespace detail
 {
     struct ProtectedEventContainer
     {
-        static void garbage_collector(EventContainer& event_container) noexcept
+        static std::vector<Event*> const& get_events(EventContainer const& event_container) noexcept
         {
-            event_container.creator.garbage_collector();
+            return event_container.creator.queue;
         }
 
-        static std::vector<Event*> const& get_events(EventContainer const& event_container) noexcept
+        static std::vector<Event*>& get_writable_events(EventContainer& event_container) noexcept
         {
             return event_container.creator.queue;
         }
@@ -413,6 +400,11 @@ namespace detail
         static TimeBase& get_writable_time_base(EventContainer& event_container) noexcept
         {
             return event_container.creator.time_base;
+        }
+
+        static void delete_event(Event* e) noexcept
+        {
+            EventContainer::Creator::delete_event(e);
         }
     };
 } // namespace detail
@@ -425,11 +417,6 @@ public:
     [[nodiscard]] EventContainer& get_events() noexcept
     {
         return event_container;
-    }
-
-    void garbage_collector()
-    {
-        detail::ProtectedEventContainer::garbage_collector(this->event_container);
     }
 
     void set_time_base(TimeBase const& time_base) noexcept
@@ -470,51 +457,80 @@ public:
     template<class Fn>
     void execute_events(Fn&& fn, bool verbose)
     {
-        auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
-        auto const tv = this->get_monotonic_time();
-        size_t iend = events.size();
+        auto& events = detail::ProtectedEventContainer::get_writable_events(this->event_container);
+        auto const now = this->get_monotonic_time();
+        // loop on index because exec_action/exec_timeout can create a new event and invalided iterator
         // ignore events created in the loop
+        size_t iend = events.size();
+        bool has_garbage = false;
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
             assert(iend <= events.size());
             auto & event = *events[i];
 
-            auto log = [&](char const* cat){
-                if (REDEMPTION_UNLIKELY(verbose)) {
-                    this->log_event(event, cat);
-                }
-            };
+            if (REDEMPTION_UNLIKELY(verbose)) {
+                this->log_event(fn, event, now);
+            }
 
             if (REDEMPTION_LIKELY(!event.garbage)) {
                 if (event.alarm.fd != INVALID_SOCKET && fn(event.alarm.fd)) {
-                    log("FD EVENT TRIGGER");
-                    event.alarm.reset_timeout(tv+event.alarm.grace_delay);
+                    event.alarm.reset_timeout(now + event.alarm.grace_delay);
                     event.actions.exec_action(event);
                 }
-                else if (event.alarm.trigger(tv)){
-                    log("TIMEOUT EVENT TRIGGER");
+                else if (event.alarm.trigger(now)){
                     event.actions.exec_timeout(event);
                 }
             }
             else {
-                log("GARBAGE EVENT");
+                has_garbage = true;
             }
         }
 
-        this->garbage_collector();
+        if (!has_garbage) {
+            return;
+        }
+
+        // garbage collect
+        for (size_t i = 0; i < events.size(); i++) {
+            if (REDEMPTION_UNLIKELY(events[i]->garbage)) {
+                do {
+                    detail::ProtectedEventContainer::delete_event(events[i]);
+                    events[i] = events.back();
+                    events.pop_back();
+                } while (i < events.size() && events[i]->garbage);
+            }
+        }
     }
 
 private:
-    static void __attribute__((noinline)) log_event(Event const& event, char const* cat) noexcept
+    template<class Fn>
+    static void REDEMPTION_NOINLINE log_event(Fn&& fn, Event const& event, MonotonicTimePoint now)
     {
+        char const* cat;
+
+        if (REDEMPTION_LIKELY(!event.garbage)) {
+            if (event.alarm.fd != INVALID_SOCKET && fn(event.alarm.fd)) {
+                cat = "FD EVENT TRIGGER";
+            }
+            else if (event.alarm.is_active() && now >= event.alarm.trigger_time) {
+                cat = "TIMEOUT EVENT TRIGGER";
+            }
+            else {
+                return;
+            }
+        }
+        else {
+            cat = "GARBAGE EVENT";
+        }
+
         using std::chrono::duration_cast;
         const auto duration = event.alarm.trigger_time.time_since_epoch();
         const auto milliseconds = duration_cast<std::chrono::milliseconds>(duration);
         const auto seconds = duration_cast<std::chrono::seconds>(milliseconds);
         const long long i_seconds = seconds.count();
         const long long i_milliseconds = (milliseconds - seconds).count();
-        LOG(LOG_INFO, "%s '%s' (%p) timeout=%lld now=%lld",
+        LOG(LOG_INFO, "%s '%s' (%p) timeout=%lld  now=%lld  fd=%d",
             cat, event.name, static_cast<void const*>(&event),
-            i_seconds, i_milliseconds);
+            i_seconds, i_milliseconds, event.alarm.fd);
     }
 
 public:
