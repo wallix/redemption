@@ -137,15 +137,13 @@ mod_vnc::mod_vnc( Transport & t
             event.garbage = true;
 
             // Following fd timeouts
-            this->events_guard.create_event_fd_timeout(
+            this->events_guard.create_event_fd_without_timeout(
                 "VNC Fd Event",
                 this->t.get_fd(),
-                300s,
                 [this](Event& /*event*/)
                 {
                     this->draw_event();
-                },
-                [](Event& /*event*/){}
+                }
             );
         });
 }
