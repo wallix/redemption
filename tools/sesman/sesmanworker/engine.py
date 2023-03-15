@@ -1193,7 +1193,7 @@ class Engine(object):
                 #     f"diag='{self.session_diag}', title='{title}'"
                 # )
                 with manage_transaction(self.wabengine):
-                    self.wabengine.stop_session(
+                    ret = self.wabengine.stop_session(
                         self.session_id,
                         result=self.session_result,
                         diag=self.session_diag,
@@ -1202,7 +1202,7 @@ class Engine(object):
                     )
                     self.trace_hash = None
 
-                    if is_cloud_configuration():
+                    if ret and is_cloud_configuration():
                         from wallixcloudbastion.utils import (
                             move_trace_immediately_as_process
                         )
@@ -1461,10 +1461,9 @@ class Engine(object):
             _status, _error = False, "Exception"
         return _status, _error
 
-    def read_session_parameters(self, key=None):
+    def read_session_parameters(self):
         with manage_transaction(self.wabengine):
-            return self.wabengine.read_session_parameters(self.session_id,
-                                                          key=key)
+            return self.wabengine.read_session_parameters(self.session_id)
 
     def check_target(self, target, request_ticket=None):
         if self.checktarget_cache == (APPROVAL_ACCEPTED, target['target_uid']):
