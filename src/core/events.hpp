@@ -473,7 +473,7 @@ public:
 
             if (REDEMPTION_LIKELY(!event.garbage)) {
                 if (event.alarm.fd != INVALID_SOCKET && fn(event.alarm.fd)) {
-                    event.alarm.reset_timeout(now + event.alarm.grace_delay);
+                    event.alarm.trigger_time = now + event.alarm.grace_delay;
                     event.actions.exec_action(event);
                 }
                 else if (event.alarm.trigger(now)){
