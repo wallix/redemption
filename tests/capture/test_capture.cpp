@@ -1073,6 +1073,7 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
 
 RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
