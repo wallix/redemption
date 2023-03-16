@@ -131,6 +131,7 @@ exe qtclient2 :
   <library>src/qt_input_output_api/graphics.o
   <library>src/qtclient/event_manager.o
   <library>src/qtclient/graphics/cursor_cache.o
+  <library>src/qtclient/headless_command_generator.o
   <library>src/qtclient/inputs/send_mouse_event.o
   <library>src/qtclient/inputs/send_scancode.o
   <library>src/qtclient/profile/cli_parse_profile.o
@@ -439,6 +440,7 @@ obj src/qtclient.o : src/qtclient.cpp : <define>ZLIB_CONST ;
 obj src/qtclient/event_manager.o : src/qtclient/event_manager.cpp ;
 obj src/qtclient/graphics/cursor_cache.o : src/qtclient/graphics/cursor_cache.cpp ;
 obj src/qtclient/graphics/rdp_painter.o : src/qtclient/graphics/rdp_painter.cpp ;
+obj src/qtclient/headless_command_generator.o : src/qtclient/headless_command_generator.cpp ;
 obj src/qtclient/inputs/send_mouse_event.o : src/qtclient/inputs/send_mouse_event.cpp ;
 obj src/qtclient/inputs/send_scancode.o : src/qtclient/inputs/send_scancode.cpp ;
 obj src/qtclient/profile/cli_parse_profile.o : src/qtclient/profile/cli_parse_profile.cpp ;
@@ -593,6 +595,7 @@ explicit
   src/qtclient/event_manager.o
   src/qtclient/graphics/cursor_cache.o
   src/qtclient/graphics/rdp_painter.o
+  src/qtclient/headless_command_generator.o
   src/qtclient/inputs/send_mouse_event.o
   src/qtclient/inputs/send_scancode.o
   src/qtclient/profile/cli_parse_profile.o

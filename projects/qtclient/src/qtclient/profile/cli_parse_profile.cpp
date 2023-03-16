@@ -30,7 +30,9 @@ static auto make_options(qtclient::Profile& config)
             cli::option('v', "version").help("Show version")
             .parser(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
 
-            // TODO add profile=name
+            // TODO add --profile=name
+
+            // TODO add --config=filename
 
             static_cast<decltype(options)&&>(options)...
         );

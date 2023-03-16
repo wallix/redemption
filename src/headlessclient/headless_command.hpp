@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <chrono>
 
 
-class mod_api;
+class RdpInput;
 
 struct HeadlessCommand
 {
@@ -119,7 +119,7 @@ struct HeadlessCommand
     // value_and_flag = value (',' up_down_flag?)?
     // up_down_flag := '0'|'up' | '1'|'down' | '2'|'downup'
     // bool := '0'|'off' | '1'|'on'
-    Result execute_command(chars_view cmd, mod_api& mod);
+    Result execute_command(chars_view cmd, RdpInput& mod);
 
     chars_view help_all() const;
     chars_view help(chars_view cmd) const;

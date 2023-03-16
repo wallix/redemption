@@ -46,6 +46,11 @@ struct null_mod : public mod_api
         [[maybe_unused]] Keymap const& keymap) override
     {}
 
+    void rdp_input_unicode(
+        [[maybe_unused]] KbdFlags flag,
+        [[maybe_unused]] uint16_t unicode) override
+    {}
+
     void rdp_input_synchronize([[maybe_unused]] KeyLocks locks) override {}
     void rdp_input_invalidate([[maybe_unused]] const Rect rect) override {}
     bool is_up_and_running() const override { return true; }

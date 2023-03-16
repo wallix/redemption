@@ -28,6 +28,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "qtclient/profile/profile.hpp"
 #include "qtclient/profile/cli_parse_profile.hpp"
 #include "qtclient/widget/screen_widget.hpp"
+#include "qtclient/headless_command_generator.hpp"
 #include "headlessclient/headless_configuration.hpp"
 
 #include <QtWidgets/QApplication>
@@ -99,6 +100,53 @@ struct QtFront final : FrontAPI
 private:
     CHANNELS::ChannelDefArray cl;
     qtclient::ScreenWidget& screen;
+};
+
+struct HeadlessCommandGeneratorWrapper : RdpInput
+{
+    HeadlessCommandGeneratorWrapper(RdpInput& rdp_input, HeadlessCommandGenerator::Notifier notifier)
+    : command_generator(notifier)
+    , rdp_input(rdp_input)
+    {}
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
+    {
+        rdp_input.rdp_input_scancode(flags, scancode, event_time, keymap);
+        command_generator.scancode(flags, scancode);
+    }
+
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
+    {
+        rdp_input.rdp_input_unicode(flag, unicode);
+        command_generator.unicode(flag, unicode);
+    }
+
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        rdp_input.rdp_input_mouse(device_flags, x, y);
+        command_generator.mouse(device_flags, x, y);
+    }
+
+    void rdp_input_synchronize(KeyLocks locks) override
+    {
+        (void)locks;
+    }
+
+    void rdp_input_invalidate(Rect r) override
+    {
+        (void)r;
+    }
+
+    void rdp_gdi_up_and_running() override
+    {}
+
+    void rdp_gdi_down() override
+    {}
+
+    HeadlessCommandGenerator command_generator;
+
+private:
+    RdpInput& rdp_input;
 };
 
 
@@ -191,7 +239,17 @@ int main(int argc, char** argv)
         license_store, ini, nullptr, mod_rdp_factory
     );
 
-    screen->set_rdp_input(*mod);
+    RdpInput* input_mod = mod.get();
+
+    std::unique_ptr<HeadlessCommandGeneratorWrapper> script_generator;
+    if (profile.enable_headless_script_assistance) {
+        script_generator = std::make_unique<HeadlessCommandGeneratorWrapper>(*mod, [](HeadlessCommandGenerator::Status status, chars_view line) {
+            printf("%d %.*s\n", status, int(line.size()), line.data());
+        });
+        input_mod = script_generator.get();
+    }
+
+    screen->set_rdp_input(*input_mod);
     screen->show();
 
     event_manager.exception_notifier = [&](Error& err) {

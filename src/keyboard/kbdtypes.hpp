@@ -162,6 +162,11 @@ namespace kbdtypes
         return KbdFlags(underlying_cast(a) & underlying_cast(b));
     }
 
+    constexpr KbdFlags operator ^ (KbdFlags a, KbdFlags b) noexcept
+    {
+        return KbdFlags(underlying_cast(a) ^ underlying_cast(b));
+    }
+
     constexpr KbdFlags& operator |= (KbdFlags& a, KbdFlags b) noexcept
     {
         a = KbdFlags(underlying_cast(a) | underlying_cast(b));
@@ -172,6 +177,17 @@ namespace kbdtypes
     {
         a = KbdFlags(underlying_cast(a) & underlying_cast(b));
         return a;
+    }
+
+    constexpr KbdFlags& operator ^= (KbdFlags& a, KbdFlags b) noexcept
+    {
+        a = KbdFlags(underlying_cast(a) ^ underlying_cast(b));
+        return a;
+    }
+
+    constexpr KbdFlags operator ~ (KbdFlags a) noexcept
+    {
+        return KbdFlags(~underlying_cast(a));
     }
 
 

@@ -30,7 +30,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/theme.hpp"
 #include "utils/to_timeval.hpp"
-#include "utils/out_param.hpp"
 
 
 static void show_prompt()
@@ -137,7 +136,7 @@ struct Repl
         return true;
     }
 
-    bool execute_command(HeadlessFront& front, mod_api& mod)
+    bool execute_command(HeadlessFront& front, RdpInput& mod)
     {
         HeadlessCommand& cmd_ctx = front.command();
 

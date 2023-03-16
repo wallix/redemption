@@ -67,11 +67,12 @@ struct RdpInput : private noncopyable
 
     virtual ~RdpInput() = default;
     virtual void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) = 0;
-    virtual void rdp_input_unicode(KbdFlags flag, uint16_t unicode) { (void)unicode; (void)flag; }
+    virtual void rdp_input_unicode(KbdFlags flag, uint16_t unicode) = 0;
     virtual void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) = 0;
     virtual void rdp_input_synchronize(KeyLocks locks) = 0;
     virtual void rdp_input_invalidate(Rect r) = 0;
-    virtual void rdp_input_invalidate2(array_view<Rect> vr) {
+    virtual void rdp_input_invalidate2(array_view<Rect> vr)
+    {
         for (Rect const & rect : vr) {
             if (!rect.isempty()) {
                 this->rdp_input_invalidate(rect);
@@ -85,9 +86,16 @@ struct RdpInput : private noncopyable
     // Client Notify module that gdi is not up and running any more
     virtual void rdp_gdi_down() = 0;
 
-    virtual void rdp_allow_display_updates(uint16_t /*left*/, uint16_t /*top*/, uint16_t /*right*/, uint16_t /*bottom*/)
+    virtual void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
+    {
+        (void)left;
+        (void)top;
+        (void)right;
+        (void)bottom;
+    }
+
+    virtual void rdp_suppress_display_updates()
     {}
-    virtual void rdp_suppress_display_updates() {}
 };
 
 struct Callback : RdpInput
@@ -103,6 +111,12 @@ struct NullCallback : Callback
         (void)scancode;
         (void)event_time;
         (void)keymap;
+    }
+
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
+    {
+        (void)flag;
+        (void)unicode;
     }
 
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override

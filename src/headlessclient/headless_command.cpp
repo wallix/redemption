@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#include "mod/mod_api.hpp"
+#include "core/callback.hpp"
 #include "utils/out_param.hpp"
 #include "utils/sugar/split.hpp"
 #include "utils/sugar/chars_to_int.hpp"
@@ -36,9 +36,11 @@ bool parameter_name_compare(std::string_view a, std::string_view b)
 template<class Pair>
 struct ParameterList
 {
+    // tp_uppercase + sort
     explicit ParameterList(array_view<Pair> seq)
     : len(seq.size())
     {
+        // create a unique buffer for all chars
         std::size_t char_count = 0;
         for (auto const& elem : seq) {
             char_count += elem.name.size();
@@ -46,6 +48,8 @@ struct ParameterList
         chars.reset(new char[char_count]);
         values.reset(new Pair[len]);
 
+
+        // uppercase + copy
         char* charp = chars.get();
         auto* it = values.get();
         for (auto const& elem : seq) {
@@ -976,14 +980,14 @@ using kbdtypes::Scancode;
 
 inline Keymap null_keymap(KeyLayout::null_layout());
 
-void send_scancode(mod_api& mod, uint16_t sc_and_flags)
+void send_scancode(RdpInput& mod, uint16_t sc_and_flags)
 {
     auto const sc = Scancode(sc_and_flags & 0xFF);
     auto const flags = KbdFlags(sc_and_flags & 0xFF00);
     mod.rdp_input_scancode(flags, sc, 0, null_keymap);
 }
 
-void send_pause(mod_api& mod, KeyFlags flags)
+void send_pause(RdpInput& mod, KeyFlags flags)
 {
     bool const has_acquire = has_acquire_flag(flags);
     bool const has_release = has_release_flag(flags);
@@ -1004,14 +1008,14 @@ void send_pause(mod_api& mod, KeyFlags flags)
     }
 }
 
-void send_acquire(mod_api& mod, array_view<uint16_t> scs_and_flags)
+void send_acquire(RdpInput& mod, array_view<uint16_t> scs_and_flags)
 {
     for (uint16_t sc_and_flags : scs_and_flags) {
         send_scancode(mod, sc_and_flags);
     }
 }
 
-void send_release(mod_api& mod, array_view<uint16_t> scs_and_flags)
+void send_release(RdpInput& mod, array_view<uint16_t> scs_and_flags)
 {
     if (!scs_and_flags.empty()) {
         auto it = scs_and_flags.begin();
@@ -1023,7 +1027,7 @@ void send_release(mod_api& mod, array_view<uint16_t> scs_and_flags)
     }
 }
 
-void send_scancode(mod_api& mod, ScancodeParser const& scs_and_flags)
+void send_scancode(RdpInput& mod, ScancodeParser const& scs_and_flags)
 {
     bool const has_acquire = has_acquire_flag(scs_and_flags.flags);
     bool const has_release = has_release_flag(scs_and_flags.flags);
@@ -1043,7 +1047,7 @@ void send_scancode(mod_api& mod, ScancodeParser const& scs_and_flags)
     }
 }
 
-void send_scancode(mod_api& mod, KeyParser const& scs_and_flags)
+void send_scancode(RdpInput& mod, KeyParser const& scs_and_flags)
 {
     bool const has_acquire = has_acquire_flag(scs_and_flags.flags);
     bool const has_release = has_release_flag(scs_and_flags.flags);
@@ -1071,7 +1075,7 @@ void send_scancode(mod_api& mod, KeyParser const& scs_and_flags)
     }
 }
 
-void send_unicode(mod_api& mod, UnicodeParser unicode)
+void send_unicode(RdpInput& mod, UnicodeParser unicode)
 {
     using kbdtypes::KbdFlags;
 
@@ -1091,7 +1095,7 @@ void send_unicode(mod_api& mod, UnicodeParser unicode)
     }
 }
 
-void send_text(mod_api& mod, chars_view text)
+void send_text(RdpInput& mod, chars_view text)
 {
     uint8_t const* first = byte_ptr_cast(text.begin());
     uint8_t const* last = byte_ptr_cast(text.end());
@@ -1648,7 +1652,7 @@ chars_view HeadlessCommand::help(chars_view cmd) const
     return cmd_help(cmd.as<std::string_view>(), is_kbdmap_en);
 }
 
-HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api& mod)
+HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInput& mod)
 {
     using namespace std::string_view_literals;
 
@@ -1662,12 +1666,6 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
     auto splitter = split_with(cmd, ' ');
     auto first = splitter.begin();
     auto last = splitter.end();
-
-    // auto skip_spaces = [&]{
-    //     while (first != last && first->empty()) {
-    //         ++first;
-    //     }
-    // };
 
     unsigned index_param = 0;
 
@@ -1923,6 +1921,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
             return Result::PrintScreen;
         }
 
+        // parse on/off
         if (parse_boolean(OutParam{enable_png}, first->as<std::string_view>())) {
             if (++first != last) {
                 png_path = {first->begin(), cmd.end()};
@@ -1930,6 +1929,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
             return enable_png ? Result::PrintScreen : Result::Ok;
         }
 
+        // parse filename
         enable_png = true;
         png_path = {first->begin(), cmd.end()};
         return Result::PrintScreen;
@@ -1970,18 +1970,21 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
             return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected delay number"_av);
         }
 
+        // parse delay
         std::chrono::milliseconds::rep ms_delay;
         if (!parse_decimal(OutParam{ms_delay}, first->as<std::string_view>())) {
             return set_param_error(*this, ErrorType::InvalidFormat, index_param + 1, *first);
         }
         delay = std::chrono::milliseconds(ms_delay);
 
+        // parse cmd when no repetition parameter
         if (++first == last) {
             repeat_delay = -1;
             output_message = {cmd.end(), cmd.end()};
             return Result::Delay;
         }
 
+        // parse repetition
         if (parse_decimal(OutParam{repeat_delay}, first->as<std::string_view>())) {
             ++first;
         }
@@ -1989,6 +1992,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, mod_api
             repeat_delay = -1;
         }
 
+        // parse cmd
         auto* begin = (first != last) ? first->begin() : cmd.end();
         output_message = {begin, cmd.end()};
         return Result::Delay;

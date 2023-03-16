@@ -41,7 +41,7 @@ namespace
     template<class F>
     auto make_osd(gdi::GraphicApi & drawable, Rect const rect, F f)
     {
-        struct OSD : gdi::ProtectedGraphics, RdpInput
+        struct OSD : gdi::ProtectedGraphics, NullCallback
         {
             OSD(GraphicApi & drawable, Rect const rect, F f)
             : gdi::ProtectedGraphics(drawable, *this, rect)
@@ -52,16 +52,6 @@ namespace
             {
                 f();
             }
-
-            void rdp_input_scancode(KbdFlags /*flags*/, Scancode /*scancode*/, uint32_t /*event_time*/, Keymap const& /*keymap*/) override {}
-            void rdp_input_mouse(uint16_t /*device_flags*/, uint16_t /*x*/, uint16_t /*y*/) override {}
-            void rdp_input_synchronize(KeyLocks /*locks*/) override {}
-
-            // Client Notify module that gdi is up and running
-            void rdp_gdi_up_and_running() override {}
-
-            // Client Notify module that gdi is not up and running any more
-            void rdp_gdi_down() override {}
 
             F f;
         };
