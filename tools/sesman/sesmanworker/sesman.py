@@ -32,7 +32,7 @@ from ipaddress import ip_network
 from typing import Iterable, Any, Tuple, Generator, Optional
 
 from .addrutils import check_hostname_in_subnet, is_device_in_subnet
-from .sesmanconf import TR, SESMANCONF
+from .sesmanconf import TR, SESMANCONF, Sesmsg
 from . import engine
 from .sesmanconnpolicyspec import cp_spec
 from .sesmanbacktoselector import (
@@ -770,7 +770,7 @@ class Sesman():
         """
         _status = False
         data_to_send = ({
-            'message': TR('valid_authorisation'),
+            'message': TR(Sesmsg.VALID_AUTHORISATION),
             'password': 'x509',
             'module': 'confirm',
             'display_message': MAGICASK,
@@ -845,7 +845,7 @@ class Sesman():
         _status, _error = self.receive_data()
 
         if self.shared.get('display_message') != 'True':
-            _status, _error = False, TR('not_display_message')
+            _status, _error = False, TR(Sesmsg.NOT_DISPLAY_MESSAGE)
 
         return _status, _error
 
@@ -855,7 +855,7 @@ class Sesman():
 
         _status, _error = self.receive_data()
         if self.shared.get('accept_message') != 'True':
-            _status, _error = False, TR('not_accept_message')
+            _status, _error = False, TR(Sesmsg.NOT_ACCEPT_MESSAGE)
 
         return _status, _error
 
@@ -882,7 +882,7 @@ class Sesman():
             ).timetuple()
             timeclose = int(mktime(tt))
             _status, _error = self.interactive_display_message(
-                {'message': TR('session_closed_at %s') % deconnection_time}
+                {'message': TR(Sesmsg.SESSION_CLOSED_S) % deconnection_time}
             )
         return timeclose, _status, _error
 
@@ -891,7 +891,7 @@ class Sesman():
         self.send_data(data_to_send)
         _status, _error = self.receive_data()
         if self.shared.get('display_message') != 'True':
-            _status, _error = False, TR('Connection closed by client')
+            _status, _error = False, TR(Sesmsg.CONNECTION_CLOSED_BY_CLIENT)
         return _status, _error
 
     def complete_target_info(self, kv, allow_interactive_password,
@@ -923,9 +923,9 @@ class Sesman():
                 target_subnet = extkv.get('target_host')
                 interactive_data['target_host'] = MAGICASK
                 if _error:
-                    host_note = TR("error %s") % _error
+                    host_note = TR(Sesmsg.ERROR_S) % _error
                 else:
-                    host_note = TR("in_subnet %s") % target_subnet
+                    host_note = TR(Sesmsg.IN_SUBNET_S) % target_subnet
                 interactive_data['target_device'] = host_note
             if interactive_data:
                 Logger().info("Interactive Target Info asking")
@@ -961,7 +961,7 @@ class Sesman():
                         else:
                             extkv['target_host'] = target_subnet
                             _status = None
-                            _error = TR("no_match_subnet %s %s") % (
+                            _error = TR(Sesmsg.NO_MATCH_SUBNET_S_S) % (
                                 truncat_string(
                                     self.shared.get('target_host')
                                 ),
@@ -1004,7 +1004,7 @@ class Sesman():
 
         login = self.shared.get('login')
         if login == MAGICASK:
-            return None, TR("Empty user, try again")
+            return None, TR(Sesmsg.EMPTY_USER)
 
         (_status, _error,
          wab_login, target_login, target_device,
@@ -1016,7 +1016,7 @@ class Sesman():
             self.target_service_name,
             self.target_group)
         if not _status:
-            return None, TR("Invalid user, try again")
+            return None, TR(Sesmsg.INVALID_USER)
 
         self.rdplog.update_context(self.shared.get('psid'), wab_login)
         Logger().info(f"Continue with authentication ({login}) -> {wab_login}")
@@ -1066,8 +1066,7 @@ class Sesman():
                             self.shared.get('ip_target'))):
                     self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
 
-                    return False, TR("x509 browser authentication not "
-                                     "validated by user")
+                    return False, TR(Sesmsg.X509_AUTH_REFUSED_BY_USER)
                 authenticated = True
             elif self.passthrough_mode:
                 # Passthrough Authentification
@@ -1078,7 +1077,7 @@ class Sesman():
                         self.shared.get('ip_client'),
                         self.shared.get('ip_target')):
                     self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                    emsg = TR("passthrough_auth_failed_wab %s") % wab_login
+                    emsg = TR(Sesmsg.PASSTHROUGH_AUTH_FAILED_S) % wab_login
                     return False, emsg
                 authenticated = True
             elif not authenticated:
@@ -1092,7 +1091,7 @@ class Sesman():
                             "",
                             self.shared.get('ip_target')):
                         self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                        return None, TR("auth_failed_wab %s") % wab_login
+                        return None, TR(Sesmsg.AUTH_FAILED_WAB_S) % wab_login
                     authenticated = True
                 else:
                     # check available authentication
@@ -1109,8 +1108,7 @@ class Sesman():
                         if not (self.interactive_ask_url_redirect()
                                 and self.engine.url_redirect_authenticate()):
                             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                            return None, TR("URL Redirection authentication not "
-                                            "validated by user")
+                            return None, TR(Sesmsg.URL_AUTH_REFUSED_BY_USER)
                         authenticated = True
                     elif ((check == "password" and not is_empty_password)
                           or check is False):
@@ -1127,7 +1125,7 @@ class Sesman():
                             if is_magic_password:
                                 self.engine.reset_challenge()
                             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                            return None, TR("auth_failed_wab %s") % wab_login
+                            return None, TR(Sesmsg.AUTH_FAILED_WAB_S) % wab_login
                         authenticated = True
                     elif (check is True
                           and self.engine.authenticated):
@@ -1136,10 +1134,10 @@ class Sesman():
                         authenticated = True
                     else:
                         self.engine.reset_challenge()
-                        return None, TR("auth_failed_wab %s") % wab_login
+                        return None, TR(Sesmsg.AUTH_FAILED_WAB_S) % wab_login
 
             if not authenticated:
-                return None, TR("auth_failed_wab %s") % wab_login
+                return None, TR(Sesmsg.AUTH_FAILED_WAB_S) % wab_login
 
             # At this point, User is authentified.
             if wab_login.startswith('_OTP_'):
@@ -1170,7 +1168,7 @@ class Sesman():
             if DEBUG:
                 import traceback
                 Logger().info(f"<<<{traceback.format_exc()}>>>")
-            _status, _error = None, TR('auth_failed_wab %s') % wab_login
+            _status, _error = None, TR(Sesmsg.AUTH_FAILED_WAB_S) % wab_login
             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
 
         return _status, _error
@@ -1194,8 +1192,8 @@ class Sesman():
 
         if not _status:
             Logger().info(f"Invalid user {self.shared.get('login')}, try again")
-            return None, TR("Invalid user, try again")
-        _status, _error = None, TR("No error")
+            return None, TR(Sesmsg.INVALID_USER)
+        _status, _error = None, TR(Sesmsg.NO_ERROR)
 
         (target_device,
          self.target_context) = self.engine.resolve_target_host(
@@ -1343,7 +1341,7 @@ class Sesman():
                              self.target_group)
                         if not _status:
                             Logger().info(f"Invalid user {self.shared.get('login')}, try again")
-                            return None, TR("Invalid user, try again")
+                            return None, TR(Sesmsg.INVALID_USER)
 
                         _status = None  # One more loop
                     except Exception:
@@ -1388,7 +1386,7 @@ class Sesman():
                     # Logger().info(f"Only one target : service name {self.target_service_name}")
                     _status = True
                 else:
-                    _status, _error = False, TR("Target unreachable")
+                    _status, _error = False, TR(Sesmsg.TARGET_UNREACHABLE)
 
             else:
                 self.send_data({
@@ -1407,11 +1405,9 @@ class Sesman():
             notify, days = self.engine.password_expiration_date()
             if notify:
                 if days == 0:
-                    message = TR('Your Bastion password will expire soon. '
-                                 'Please change it.')
+                    message = TR(Sesmsg.PASSWORD_EXPIRE_SOON)
                 else:
-                    message = TR('Your Bastion password will expire in '
-                                 '%s days. Please change it.') % days
+                    message = TR(Sesmsg.PASSWORD_EXPIRE_IN_S_DAYS) % days
                 _status, _error = self.interactive_display_message({
                     'message': message
                 })
@@ -1429,8 +1425,8 @@ class Sesman():
                 os.mkdir(rec_path)
             except Exception:
                 Logger().info(f"Failed creating recording path ({rec_path})")
-                self.send_data({'rejected': TR('error_getting_record_path')})
-                return False, TR('error_getting_record_path %s') % rec_path
+                self.send_data({'rejected': TR(Sesmsg.ERROR_RECORD_PATH)})
+                return False, TR(Sesmsg.ERROR_RECORD_PATH_S) % rec_path
         return True, ''
 
     def generate_record_filebase(self, session_id, user, account, start_time):
@@ -1468,7 +1464,7 @@ class Sesman():
             if DEBUG:
                 import traceback
                 Logger().debug(traceback.format_exc())
-            _status, _error = False, TR("Connection closed by client")
+            _status, _error = False, TR(Sesmsg.CONNECTION_CLOSED_BY_CLIENT)
         target_login = self.shared.get('target_login')
         target_device = self.shared.get('target_device')
         Logger().info(f"Recording agreement of {user} to {target_login}@{target_device}"
@@ -1548,7 +1544,7 @@ class Sesman():
                                                           self.target_context)
         if not selected_target:
             _target = f"{target_login}@{target_device}:{target_service} ({target_group})"
-            _error_log = TR("Target %s not found in user rights") % _target
+            _error_log = TR(Sesmsg.TARGET_S_NOT_FOUND) % _target
             _status, _error = False, _error_log
             self.rdplog.log("TARGET_ERROR",
                             target=target_login,
@@ -1689,7 +1685,7 @@ class Sesman():
         show_message = infos.get('message') or ''
         target = infos.get('target')
         if target:
-            show_message = f"{TR('selected_target')}: {target}\n{show_message}"
+            show_message = f"{TR(Sesmsg.SELECTED_TARGET)}: {target}\n{show_message}"
         tosend = {
             'module': 'waitinfo',
             'message': show_message,
@@ -1783,7 +1779,7 @@ class Sesman():
                     'login_message': self.login_message,
                     'language': SESMANCONF.language,
                     'opt_message': (
-                        TR('authentication_failed')
+                        TR(Sesmsg.AUTHENTICATION_FAILED)
                         if self.shared.get('password') != MAGICASK
                         else ''
                     )
@@ -1904,7 +1900,7 @@ class Sesman():
             )
             if session_id is None:
                 _status, _error = False, \
-                    TR("start_session_failed") + " (" + error_msg + ")"
+                    TR(Sesmsg.START_SESSION_FAILED) + " (" + error_msg + ")"
 
         if _status:
             record_warning = SESMANCONF['sesman'].get('record_warning', True)
@@ -1953,7 +1949,7 @@ class Sesman():
             except Exception:
                 import traceback
                 Logger().debug(traceback.format_exc())
-                _status, _error = False, TR("Connection closed by client")
+                _status, _error = False, TR(Sesmsg.CONNECTION_CLOSED_BY_CLIENT)
 
         if not _status:
             self.send_data({'rejected': _error})
@@ -2413,7 +2409,7 @@ class Sesman():
             release_reason = 'Kill pattern detected'
             self.engine.set_session_status(
                 result=False, diag=release_reason)
-            self.send_data({'disconnect_reason': TR("pattern_kill")})
+            self.send_data({'disconnect_reason': TR(Sesmsg.PATTERN_KILL)})
         elif _reporting_reason == 'SERVER_REDIRECTION':
             (redir_login, _, redir_host) = \
                 _reporting_message.rpartition('@')
@@ -2454,7 +2450,7 @@ class Sesman():
                 self.shared['session_probe_launch_error_message'] = ''
             else:
                 self.send_data({
-                    'disconnect_reason': TR("session_probe_launch_failed")
+                    'disconnect_reason': TR(Sesmsg.SESPROBE_LAUNCH_FAILED)
                 })
         elif _reporting_reason == 'SESSION_PROBE_KEEPALIVE_MISSED':
             Logger().info(
@@ -2465,7 +2461,7 @@ class Sesman():
             self.engine.set_session_status(
                 result=False, diag=release_reason)
             self.send_data({
-                'disconnect_reason': TR("session_probe_keepalive_missed")
+                'disconnect_reason': TR(Sesmsg.SESPROBE_KEEPALIVE_MISSED)
             })
         elif (_reporting_reason
               == 'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
@@ -2480,7 +2476,7 @@ class Sesman():
                 result=False, diag=release_reason)
             self.send_data({
                 'disconnect_reason':
-                TR("session_probe_outbound_connection_blocking_failed")
+                TR(Sesmsg.SESPROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED)
             })
         elif _reporting_reason == 'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
             Logger().info(
@@ -2495,7 +2491,7 @@ class Sesman():
             )
             self.send_data({
                 'disconnect_reason':
-                TR("session_probe_process_blocking_failed")
+                TR(Sesmsg.SESPROBE_PROCESS_BLOCKING_FAILED)
             })
         elif (_reporting_reason
               == 'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
@@ -2511,7 +2507,7 @@ class Sesman():
             )
             self.send_data({
                 'disconnect_reason':
-                TR("session_probe_failed_to_run_startup_application")
+                TR(Sesmsg.SESPROBE_FAILED_TO_RUN_STARTUP_APPLICATION)
             })
         elif _reporting_reason == 'SESSION_PROBE_RECONNECTION':
             Logger().info(
@@ -2525,7 +2521,7 @@ class Sesman():
                 result=False, diag=release_reason
             )
             self.send_data({
-                'disconnect_reason': TR("session_probe_reconnection")
+                'disconnect_reason': TR(Sesmsg.SESPROBE_RECONNECTION)
             })
         elif _reporting_reason == 'SESSION_EVENT':
             (event_level, event_id, event_details) = \
@@ -2548,7 +2544,7 @@ class Sesman():
                     result=False, diag=release_reason
                 )
                 self.send_data({
-                    'disconnect_reason': TR("application_fatal_error")
+                    'disconnect_reason': TR(Sesmsg.APPLICATION_FATAL_ERROR)
                 })
         elif (_reporting_reason == 'OPEN_SESSION_SUCCESSFUL'
               or _reporting_reason == 'CONNECT_DEVICE_SUCCESSFUL'):
@@ -2774,9 +2770,9 @@ class Sesman():
         Logger().info("Call write trace")
         _status, _error = self.engine.write_trace(self.full_path)
         if not _status:
-            _error = TR("Trace writer failed for %s") % self.full_path
+            _error = TR(Sesmsg.TRACE_WRITER_FAILED_S) % self.full_path
             Logger().info(f"Failed accessing recording path ({self.full_path})")
-            self.send_data({'rejected': TR('error_getting_record_path')})
+            self.send_data({'rejected': TR(Sesmsg.ERROR_RECORD_PATH)})
         return _status, _error
 
     def update_session_data(self, changed_keys):
