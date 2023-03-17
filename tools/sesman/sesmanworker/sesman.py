@@ -1978,7 +1978,6 @@ class Sesman():
             if self.internal_target:
                 module = 'INTERNAL'
             kv['module'] = module
-            # proto = 'RDP' if  kv.get('proto_dest') != 'VNC' else 'VNC'
 
         self.shared['recording_started'] = 'False'
 
@@ -2068,7 +2067,6 @@ class Sesman():
                         selected_target, app_params
                     )
 
-                    # kv['target_application'] = selected_target.service_login
                     if not self.engine.is_sharing_session(selected_target):
                         kv['disable_tsk_switch_shortcuts'] = 'yes'
 

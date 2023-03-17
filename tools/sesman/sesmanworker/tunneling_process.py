@@ -128,7 +128,6 @@ def popen_sshpass_ssh(command: str, ssh_password: str, ssh_private_key_passphras
 
 def pexpect_prompt_ssh(command: str, ssh_password: str, ssh_private_key_passphrase: str):
     px = pexpect.spawn(command)
-    # px = pexpect.popen_spawn.PopenSpawn(command)
     if ssh_private_key_passphrase:
         px.expect("passphrase")
     else:
@@ -174,7 +173,7 @@ class TunnelingProcessInterface:
         return True
 
     def stop(self) -> None:
-        pass
+        return
 
 
 class TunnelingProcessSSH(TunnelingProcessInterface):

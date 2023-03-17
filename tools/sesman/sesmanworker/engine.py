@@ -545,16 +545,16 @@ class Engine(object):
         for target_info in self.displaytargets:
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
-            if not target_info.protocol == "APP":
-                if (target_info.target_name == 'autotest'
-                    or target_info.target_name == 'bouncer2'
-                    or target_info.target_name == 'widget2_message'
-                    or target_info.target_name == 'widgettest'
-                    or target_info.target_name == 'card'):
-                    temp_service_login = target_info.service_login.replace(
-                        ':RDP',
-                        ':INTERNAL', 1)
-                    temp_resource_service_protocol_cn = 'INTERNAL'
+            if (not target_info.protocol == "APP"
+                and (target_info.target_name == 'autotest'
+                     or target_info.target_name == 'bouncer2'
+                     or target_info.target_name == 'widget2_message'
+                     or target_info.target_name == 'widgettest'
+                     or target_info.target_name == 'card')):
+                temp_service_login = target_info.service_login.replace(
+                    ':RDP',
+                    ':INTERNAL', 1)
+                temp_resource_service_protocol_cn = 'INTERNAL'
 
             if (not fc(group_filter) in fc(target_info.group)
                 or not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):

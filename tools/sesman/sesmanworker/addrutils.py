@@ -98,9 +98,6 @@ def resolve_reverse_dns(ip: str) -> Optional[str]:
 
 
 def check_hostname_in_subnet(host: str, subnet: str) -> Tuple[bool, Optional[str]]:
-    """
-    return (family, type, proto, canonname, sockaddr)
-    """
     try:
         family = (socket.AF_INET6
                   if ipaddress.ip_network(subnet, strict=False).version == 6

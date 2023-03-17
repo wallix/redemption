@@ -521,8 +521,6 @@ class Authenticator:
             if auth_type == AUTH.SSH_KEY:
                 ssh_ca_keys = self.auth_challenge.get('ssh_ca_keys') or []
                 for stored_ca_key in ssh_ca_keys:
-                    # Logger().debug("stored ca %s" % stored_ca_key)
-                    # Logger().debug("ca pubkey %s" % ca_pubkey)
                     if compare_pubkeys_str(stored_ca_key, ca_pubkey):
                         data['result'] = True
                         break
@@ -534,8 +532,6 @@ class Authenticator:
                         pubkey = ca_pubkey
                 ssh_keys = self.auth_challenge.get('ssh_keys') or []
                 for stored_key in ssh_keys:
-                    # Logger().debug("stored key %s" % stored_key)
-                    # Logger().debug("pubkey %s" % pubkey)
                     if compare_pubkeys_str(stored_key, pubkey):
                         data['result'] = True
                         break

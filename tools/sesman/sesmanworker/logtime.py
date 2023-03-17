@@ -45,7 +45,7 @@ if DEBUG:
         print(msg)
 else:
     def print_debug(msg):
-        pass
+        pass  # disable debug
 
 
 class Logtime:

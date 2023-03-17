@@ -364,7 +364,7 @@ class CheckoutEngine:
                     self.scenario_rights = rights
                 elif account_type == 'pm':
                     self.pm_rights = rights
-            except Exception as e:
+            except Exception:
                 pass
         return table_rights
 
@@ -417,7 +417,7 @@ class CheckoutEngine:
                     )
                 if status in STATUS_SUCCESS and CRED_INDEX in infos:
                     return right, infos[CRED_INDEX]
-            except Exception as e:
+            except Exception:
                 continue
         return None, {}
 
