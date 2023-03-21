@@ -94,9 +94,9 @@ void x11_send_scancode(RdpInput& mod, kbdtypes::KbdFlags flag, Keymap const& key
                 );
             }
         }
-        // send PrintScreen
+        // send Pause
         else {
-            mod.rdp_input_scancode(flag, kbdtypes::Scancode(0x1D), 0, keymap);
+            mod.rdp_input_scancode(flag | kbdtypes::KbdFlags::Extended1, kbdtypes::Scancode(0x1D), 0, keymap);
             mod.rdp_input_scancode(flag, kbdtypes::Scancode(0x45), 0, keymap);
         }
     }

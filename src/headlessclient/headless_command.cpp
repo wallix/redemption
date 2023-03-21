@@ -665,7 +665,7 @@ void send_pause(RdpInput& mod, KeyFlags flags)
 
     auto const sc1 = Scancode(0x1D);
     auto const sc2 = Scancode(0x45);
-    auto const flag1 = KbdFlags(0x200);
+    auto const flag1 = KbdFlags::Extended1;
     auto const flag2 = KbdFlags::NoFlags;
 
     if (has_acquire) {

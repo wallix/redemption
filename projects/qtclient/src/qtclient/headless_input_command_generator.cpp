@@ -196,14 +196,14 @@ void HeadlessInputCommandGenerator::start(MonotonicTimePoint now)
 void HeadlessInputCommandGenerator::set_kbd_fr(bool enable)
 {
     is_en_kbd = !enable;
-    notifier(Status::NewLine, enable ? "kbd fr"_av : "kbd en"_av);
+    notifier(Status::NewLine, enable ? "kbd fr"_av : "kbd en"_av, 0);
     cmd_type = CmdType::Default;
     cmd.clear();
 }
 
 void HeadlessInputCommandGenerator::set_key_delay(DelayConfig key_delay)
 {
-    notifier(Status::NewLine, make_cmd_delay("keydelay "_sized_av, key_delay.delay));
+    notifier(Status::NewLine, make_cmd_delay("keydelay "_sized_av, key_delay.delay), 0);
     max_keydelay = std::chrono::duration_cast<MonotonicTimePoint::duration>(key_delay.delay + key_delay.threshold);
     cmd_type = CmdType::Default;
     cmd.clear();
@@ -214,7 +214,7 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
     auto oldtype = std::exchange(cmd_type, CmdType::Scancode);
 
     if (oldtype != CmdType::Scancode || now > previous_time + max_keydelay) {
-        notifier(Status::NewLine, make_cmd_delay("sleep "_sized_av, now - previous_time));
+        notifier(Status::NewLine, make_cmd_delay("sleep "_sized_av, now - previous_time), 0);
         oldtype = CmdType::Sleep;
     }
 
@@ -228,7 +228,6 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
     previous_time = now;
 
     // TODO Print Scancode
-    // TODO lshift+down sc lshift+up => SC
 
     auto const mask = KbdFlags::Extended | KbdFlags::Release;
     auto uint_sc = underlying_cast(scancode);
@@ -273,9 +272,8 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
                 }
             }
             else {
-                str_append(cmd,
-                    is_extended ? "{0x1"_av : "{0x"_av,
-                    int_to_fixed_hexadecimal_upper_chars(uint_sc), '}'
+                str_append(cmd, "{0x"_av,
+                    int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))), '}'
                 );
             }
         }
@@ -290,8 +288,8 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
             }
             else {
                 str_append(cmd,
-                    is_extended ? "{0x1"_av : "{0x"_av,
-                    int_to_fixed_hexadecimal_upper_chars(uint_sc), ' ',
+                    "{0x"_av,
+                    int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))), ' ',
                     rep, '}'
                 );
             }
@@ -312,8 +310,9 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
         }
         else {
             str_append(cmd,
-                is_extended ? "{0x1"_av : "{0x"_av,
-                int_to_fixed_hexadecimal_upper_chars(uint_sc), " down "_av,
+                "{0x"_av,
+                int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))),
+                " down "_av,
                 rep, '}'
             );
         }
@@ -364,8 +363,8 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
             }
             else {
                 str_append(cmd,
-                    is_extended ? "{0x1"_av : "{0x"_av,
-                    int_to_fixed_hexadecimal_upper_chars(uint_sc),
+                    "{0x"_av,
+                    int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))),
                     av_flag
                 );
             }
@@ -376,7 +375,7 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
 
     previous_values.scancode.flags = flags;
     previous_values.scancode.scancode = scancode;
-    notifier(status, cmd);
+    notifier(status, cmd, status == Status::UpdateLastLine ? previous_values.scancode.previous_len : 0);
 }
 
 void HeadlessInputCommandGenerator::unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t unicode)

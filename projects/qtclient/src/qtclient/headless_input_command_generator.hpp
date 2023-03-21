@@ -28,7 +28,7 @@ struct HeadlessInputCommandGenerator
     using KbdFlags = kbdtypes::KbdFlags;
     using KeyLocks = kbdtypes::KeyLocks;
 
-    using Notifier = BasicNotifierFunction<Status, chars_view>;
+    using Notifier = BasicNotifierFunction<Status, chars_view, std::size_t /*updated_column*/>;
 
     struct DelayConfig
     {
