@@ -227,8 +227,6 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
 
     previous_time = now;
 
-    // TODO Print Scancode
-
     auto const mask = KbdFlags::Extended | KbdFlags::Release;
     auto uint_sc = underlying_cast(scancode);
     auto is_extended = bool(flags & KbdFlags::Extended);
@@ -249,50 +247,68 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
       && previous_values.scancode.scancode == scancode
       && previous_values.scancode.flags == (flags & ~KbdFlags::Release);
 
+    int_to_chars_result rep_buffer;
+    int_to_chars_result sc_buffer;
+
+    auto sc_and_flag_to_hex = [&]{
+        auto n = checked_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release));
+        int_to_hexadecimal_upper_chars(sc_buffer, n);
+        return chars_view(sc_buffer);
+    };
+
+    struct Format
+    {
+        chars_view open;
+        chars_view sc;
+        chars_view flag;
+        chars_view rep;
+        chars_view close;
+    };
+    Format format {};
+
+    auto set_format = [&](chars_view open, chars_view flag, chars_view rep, chars_view close){
+        if (has_named_sc()) {
+            format = Format{
+                .open = open,
+                .sc = names[uint_sc],
+                .flag = flag,
+                .rep = rep,
+                .close = close,
+            };
+        }
+        else {
+            format = Format{
+                .open = "{0x"_av,
+                .sc = sc_and_flag_to_hex(),
+                .flag = flag,
+                .rep = rep,
+                .close = "}"_av,
+            };
+        }
+    };
+
     if (same_key && released) {
         // {sc down} + {sc up} => sc
         if (previous_values.scancode.repetition == 1) {
             cmd.resize(previous_values.scancode.previous_len);
 
-            if (has_named_sc()) {
-                auto name = names[uint_sc];
-                if (name.size() == 1) {
-                    char c = name[0];
-                    // escape special key mod
-                    if (REDEMPTION_UNLIKELY(c == '!' || c == '+' || c == '^' || c == '#' || c == '~' || c == '{')) {
-                        char buf[3] {'{', c, '}'};
-                        cmd += std::string_view(buf, 3);
-                    }
-                    else {
-                        cmd += name[0];
-                    }
-                }
-                else {
-                    str_append(cmd, '{', name, '}');
-                }
+            bool escaped = true;
+            if (has_named_sc() && names[uint_sc].size() == 1) {
+                char c = names[uint_sc][0];
+                // escape special key mod
+                escaped = (c == '!' || c == '+' || c == '^' || c == '#' || c == '~' || c == '{');
             }
-            else {
-                str_append(cmd, "{0x"_av,
-                    int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))), '}'
-                );
-            }
+            auto open = escaped ? "{"_av : ""_av;
+            auto close = escaped ? "}"_av : ""_av;
+            set_format(open, ""_av, ""_av, close);
         }
         // {sc down repetition} + {sc up} => {sc repetition}
         else {
             mods = 0;
             cmd.resize(previous_values.scancode.previous_len);
 
-            auto rep = int_to_decimal_chars(previous_values.scancode.repetition);
-            if (has_named_sc()) {
-                str_append(cmd, '{', names[uint_sc], ' ', rep, '}');
-            }
-            else {
-                str_append(cmd,
-                    "{0x"_av,
-                    int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))), ' ',
-                    rep, '}'
-                );
-            }
+            int_to_decimal_chars(rep_buffer, previous_values.scancode.repetition);
+            set_format("{"_av, " "_av, rep_buffer, "}"_av);
         }
 
         previous_values.scancode.repetition = 0;
@@ -304,18 +320,8 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
 
         cmd.resize(previous_values.scancode.previous_len);
 
-        auto rep = int_to_decimal_chars(previous_values.scancode.repetition);
-        if (has_named_sc()) {
-            str_append(cmd, '{', names[uint_sc], " down "_av, rep, '}');
-        }
-        else {
-            str_append(cmd,
-                "{0x"_av,
-                int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))),
-                " down "_av,
-                rep, '}'
-            );
-        }
+        int_to_decimal_chars(rep_buffer, previous_values.scancode.repetition);
+        set_format("{"_av, " down "_av, rep_buffer, "}"_av);
     }
     // {sc flag}
     else {
@@ -323,7 +329,10 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
 
         // previous mod equal released current mod
         // {mod down} sc {mod up} => mod+sc
-        if (modmask && released && (mods & 0b11111'00000) == (modmask << 5) && previous_values.scancode.repetition == 0) {
+        if (modmask && released
+         && (mods & 0b11111'00000) == (modmask << 5)
+         && previous_values.scancode.repetition == 0
+        ) {
             auto previous_len = previous_values.scancode.previous_len;
             auto mod_len = key_len_table_for_mod_mask[modmask];
             auto p = cmd.begin() + checked_int(previous_len);
@@ -356,22 +365,14 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
             }
 
             mods |= modmask;
-
-            auto av_flag = released ? " up}"_av : " down}"_av;
-            if (has_named_sc()) {
-                str_append(cmd, '{', names[uint_sc], av_flag);
-            }
-            else {
-                str_append(cmd,
-                    "{0x"_av,
-                    int_to_hexadecimal_upper_chars(static_cast<uint16_t>(uint_sc | underlying_cast(flags & ~KbdFlags::Release))),
-                    av_flag
-                );
-            }
-
             previous_values.scancode.repetition = 1;
+
+            auto av_flag = released ? " up"_av : " down"_av;
+            set_format("{"_av, av_flag, ""_av, "}"_av);
         }
     }
+
+    str_append(cmd, format.open, format.sc, format.flag, format.rep, format.close);
 
     previous_values.scancode.flags = flags;
     previous_values.scancode.scancode = scancode;
