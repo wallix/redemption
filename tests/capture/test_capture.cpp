@@ -1044,6 +1044,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
 RED_AUTO_TEST_CASE(TestSessionSessionLog)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
