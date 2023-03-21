@@ -37,6 +37,7 @@ class InStream;
 struct Keymap;
 class ScreenInfo;
 
+// TODO move that + enum class
 enum : uint16_t {
     RDP_INPUT_SYNCHRONIZE          = 0,
     // RDP_INPUT_CODEPOINT            = 1,
@@ -46,6 +47,7 @@ enum : uint16_t {
     RDP_INPUT_MOUSE                = 0x8001
 };
 
+// TODO move that + enum class
 enum : uint16_t {
     MOUSE_FLAG_MOVE                = 0x0800,
     MOUSE_FLAG_BUTTON1             = 0x1000,

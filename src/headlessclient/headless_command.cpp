@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "keyboard/kbdtypes.hpp"
 #include "keyboard/keymap.hpp"
 #include "headlessclient/headless_command.hpp"
+#include "headlessclient/headless_command_values.hpp"
 
 #include <vector>
 #include <memory>
@@ -83,349 +84,16 @@ private:
     std::size_t len = 0;
 };
 
-
-struct ScancodePair
-{
-    std::string_view name;
-    // sc_and_extended_flag
-    uint16_t value;
-};
-
-constexpr std::array names_scancodes_en = {
-    ScancodePair{"Esc", 0x01},
-    ScancodePair{"F1", 0x3B},
-    ScancodePair{"F2", 0x3C},
-    ScancodePair{"F3", 0x3D},
-    ScancodePair{"F4", 0x3E},
-    ScancodePair{"F5", 0x3F},
-    ScancodePair{"F6", 0x40},
-    ScancodePair{"F7", 0x41},
-    ScancodePair{"F8", 0x42},
-    ScancodePair{"F9", 0x43},
-    ScancodePair{"F10", 0x44},
-    ScancodePair{"F11", 0x57},
-    ScancodePair{"F12", 0x58},
-    ScancodePair{"Screen", 0x137},
-    ScancodePair{"Scroll", 0x46},
-    ScancodePair{"ScrollLock", 0x46},
-    ScancodePair{"Pause", 0 /* special */},
-
-    ScancodePair{"`", 0x29},
-    ScancodePair{"1", 0x02},
-    ScancodePair{"2", 0x03},
-    ScancodePair{"3", 0x04},
-    ScancodePair{"4", 0x05},
-    ScancodePair{"5", 0x06},
-    ScancodePair{"6", 0x07},
-    ScancodePair{"7", 0x08},
-    ScancodePair{"8", 0x09},
-    ScancodePair{"9", 0x0A},
-    ScancodePair{"0", 0x0B},
-    ScancodePair{"-", 0x0C},
-    ScancodePair{"=", 0x0D},
-    ScancodePair{"\\b", 0x0E},
-    ScancodePair{"Backspace", 0x0E},
-
-    ScancodePair{"Tab", 0x0F},
-    ScancodePair{"\\t", 0x0F},
-    ScancodePair{"q", 0x10},
-    ScancodePair{"w", 0x11},
-    ScancodePair{"e", 0x12},
-    ScancodePair{"r", 0x13},
-    ScancodePair{"t", 0x14},
-    ScancodePair{"y", 0x15},
-    ScancodePair{"u", 0x16},
-    ScancodePair{"i", 0x17},
-    ScancodePair{"o", 0x18},
-    ScancodePair{"p", 0x19},
-    ScancodePair{"[", 0x1A},
-    ScancodePair{"]", 0x1B},
-
-    ScancodePair{"Enter", 0x1C},
-    ScancodePair{"\\n", 0x1C},
-
-    ScancodePair{"Caps", 0x3A},
-    ScancodePair{"CapsLock", 0x3A},
-    ScancodePair{"a", 0x1E},
-    ScancodePair{"s", 0x1F},
-    ScancodePair{"d", 0x20},
-    ScancodePair{"f", 0x21},
-    ScancodePair{"g", 0x22},
-    ScancodePair{"h", 0x23},
-    ScancodePair{"j", 0x24},
-    ScancodePair{"k", 0x25},
-    ScancodePair{"l", 0x26},
-    ScancodePair{";", 0x27},
-    ScancodePair{"'", 0x28},
-    ScancodePair{"\\", 0x2B},
-
-    ScancodePair{"SHift", 0x2A},
-    ScancodePair{"LShift", 0x2A},
-    ScancodePair{"|", 0x56},
-    ScancodePair{"z", 0x2C},
-    ScancodePair{"x", 0x2D},
-    ScancodePair{"c", 0x2E},
-    ScancodePair{"v", 0x2F},
-    ScancodePair{"b", 0x30},
-    ScancodePair{"n", 0x31},
-    ScancodePair{"m", 0x32},
-    ScancodePair{",", 0x33},
-    ScancodePair{".", 0x34},
-    ScancodePair{"/", 0x35},
-    ScancodePair{"RShift", 0x36},
-
-    ScancodePair{"Ctrl", 0x1D},
-    ScancodePair{"LCtrl", 0x1D},
-    ScancodePair{"Win", 0x15B},
-    ScancodePair{"LWin", 0x15B},
-    ScancodePair{"Meta", 0x15B},
-    ScancodePair{"LMeta", 0x15B},
-    ScancodePair{"Alt", 0x38},
-    ScancodePair{"LAlt", 0x38},
-    ScancodePair{"Space", 0x39},
-    ScancodePair{"AltGr", 0x138},
-    ScancodePair{"RWin", 0x15C},
-    ScancodePair{"RMeta", 0x15C},
-    ScancodePair{"Menu", 0x15D},
-    ScancodePair{"RCtrl", 0x11D},
-
-    ScancodePair{"Ins", 0x152},
-    ScancodePair{"Insert", 0x152},
-    ScancodePair{"Home", 0x147},
-    ScancodePair{"PgUp", 0x149},
-    ScancodePair{"Del", 0x153},
-    ScancodePair{"Delete", 0x153},
-    ScancodePair{"End", 0x14F},
-    ScancodePair{"PgDown", 0x151},
-
-    ScancodePair{"Up", 0x148},
-    ScancodePair{"Right", 0x14D},
-    ScancodePair{"Down", 0x150},
-    ScancodePair{"Left", 0x14B},
-
-    ScancodePair{"NumLock", 0x45},
-    ScancodePair{"NumpadDiv", 0x135},
-    ScancodePair{"n/", 0x135},
-    ScancodePair{"NumpadMult", 0x37},
-    ScancodePair{"n*", 0x37},
-    ScancodePair{"NumpadSub", 0x4A},
-    ScancodePair{"n-", 0x4A},
-    ScancodePair{"NumpadAdd", 0x4E},
-    ScancodePair{"n+", 0x4E},
-    ScancodePair{"NumpadEnter", 0x11C},
-    ScancodePair{"NEnter", 0x11C},
-    ScancodePair{"Numpad7", 0x47},
-    ScancodePair{"n7", 0x47},
-    ScancodePair{"Numpad8", 0x48},
-    ScancodePair{"n8", 0x48},
-    ScancodePair{"Numpad9", 0x49},
-    ScancodePair{"n9", 0x49},
-    ScancodePair{"Numpad4", 0x4B},
-    ScancodePair{"n4", 0x4B},
-    ScancodePair{"Numpad5", 0x4C},
-    ScancodePair{"n5", 0x4C},
-    ScancodePair{"Numpad6", 0x4D},
-    ScancodePair{"n6", 0x4D},
-    ScancodePair{"Numpad1", 0x4F},
-    ScancodePair{"n1", 0x4F},
-    ScancodePair{"Numpad2", 0x50},
-    ScancodePair{"n2", 0x50},
-    ScancodePair{"Numpad3", 0x51},
-    ScancodePair{"n3", 0x51},
-    ScancodePair{"Numpad0", 0x52},
-    ScancodePair{"n0", 0x52},
-    ScancodePair{"NumpadDot", 0x53},
-    ScancodePair{"n.", 0x53},
-};
-
-constexpr std::array names_scancodes_fr = {
-    ScancodePair{"Esc", 0x01},
-    ScancodePair{"F1", 0x3B},
-    ScancodePair{"F2", 0x3C},
-    ScancodePair{"F3", 0x3D},
-    ScancodePair{"F4", 0x3E},
-    ScancodePair{"F5", 0x3F},
-    ScancodePair{"F6", 0x40},
-    ScancodePair{"F7", 0x41},
-    ScancodePair{"F8", 0x42},
-    ScancodePair{"F9", 0x43},
-    ScancodePair{"F10", 0x44},
-    ScancodePair{"F11", 0x57},
-    ScancodePair{"F12", 0x58},
-    ScancodePair{"Screen", 0x137},
-    ScancodePair{"Scroll", 0x46},
-    ScancodePair{"ScrollLock", 0x46},
-    ScancodePair{"Pause", 0 /* special */},
-
-    ScancodePair{"`", 0x29},
-    ScancodePair{"&", 0x02},
-    ScancodePair{"é", 0x03},
-    ScancodePair{"\"", 0x04},
-    ScancodePair{"'", 0x05},
-    ScancodePair{"(", 0x06},
-    ScancodePair{"-", 0x07},
-    ScancodePair{"è", 0x08},
-    ScancodePair{"_", 0x09},
-    ScancodePair{"ç", 0x0A},
-    ScancodePair{"à", 0x0B},
-    ScancodePair{")", 0x0C},
-    ScancodePair{"=", 0x0D},
-    ScancodePair{"Backspace", 0x0E},
-
-    ScancodePair{"Tab", 0x0F},
-    ScancodePair{"\\t", 0x0F},
-    ScancodePair{"a", 0x10},
-    ScancodePair{"z", 0x11},
-    ScancodePair{"e", 0x12},
-    ScancodePair{"r", 0x13},
-    ScancodePair{"t", 0x14},
-    ScancodePair{"y", 0x15},
-    ScancodePair{"u", 0x16},
-    ScancodePair{"i", 0x17},
-    ScancodePair{"o", 0x18},
-    ScancodePair{"p", 0x19},
-    ScancodePair{"^", 0x1A},
-    ScancodePair{"$", 0x1B},
-
-    ScancodePair{"Enter", 0x1C},
-    ScancodePair{"\\n", 0x1C},
-
-    ScancodePair{"Caps", 0x3A},
-    ScancodePair{"CapsLock", 0x3A},
-    ScancodePair{"q", 0x1E},
-    ScancodePair{"s", 0x1F},
-    ScancodePair{"d", 0x20},
-    ScancodePair{"f", 0x21},
-    ScancodePair{"g", 0x22},
-    ScancodePair{"h", 0x23},
-    ScancodePair{"j", 0x24},
-    ScancodePair{"k", 0x25},
-    ScancodePair{"l", 0x26},
-    ScancodePair{"m", 0x27},
-    ScancodePair{"ù", 0x28},
-    ScancodePair{"*", 0x2B},
-
-    ScancodePair{"Shift", 0x2A},
-    ScancodePair{"LShift", 0x2A},
-    ScancodePair{">", 0x56},
-    ScancodePair{"w", 0x2C},
-    ScancodePair{"x", 0x2D},
-    ScancodePair{"c", 0x2E},
-    ScancodePair{"v", 0x2F},
-    ScancodePair{"b", 0x30},
-    ScancodePair{"n", 0x31},
-    ScancodePair{",", 0x32},
-    ScancodePair{";", 0x33},
-    ScancodePair{":", 0x34},
-    ScancodePair{"!", 0x35},
-    ScancodePair{"RShift", 0x36},
-
-    ScancodePair{"Ctrl", 0x1D},
-    ScancodePair{"LCtrl", 0x1D},
-    ScancodePair{"Win", 0x15B},
-    ScancodePair{"LWin", 0x15B},
-    ScancodePair{"Alt", 0x38},
-    ScancodePair{"LAlt", 0x38},
-    ScancodePair{"Space", 0x39},
-    ScancodePair{"AltGr", 0x138},
-    ScancodePair{"RWin", 0x15C},
-    ScancodePair{"Menu", 0x15D},
-    ScancodePair{"RCtrl", 0x11D},
-
-    ScancodePair{"Ins", 0x152},
-    ScancodePair{"Insert", 0x152},
-    ScancodePair{"Home", 0x147},
-    ScancodePair{"PgUp", 0x149},
-    ScancodePair{"Del", 0x153},
-    ScancodePair{"Delete", 0x153},
-    ScancodePair{"End", 0x14F},
-    ScancodePair{"PgDown", 0x151},
-
-    ScancodePair{"Up", 0x148},
-    ScancodePair{"Right", 0x14D},
-    ScancodePair{"Down", 0x150},
-    ScancodePair{"Left", 0x14B},
-
-    ScancodePair{"NumLock", 0x45},
-    ScancodePair{"NumpadDiv", 0x135},
-    ScancodePair{"n/", 0x135},
-    ScancodePair{"NumpadMult", 0x37},
-    ScancodePair{"n*", 0x37},
-    ScancodePair{"NumpadSub", 0x4A},
-    ScancodePair{"n-", 0x4A},
-    ScancodePair{"NumpadAdd", 0x4E},
-    ScancodePair{"n+", 0x4E},
-    ScancodePair{"NumpadEnter", 0x11C},
-    ScancodePair{"NEnter", 0x11C},
-    ScancodePair{"Numpad7", 0x47},
-    ScancodePair{"n7", 0x47},
-    ScancodePair{"Numpad8", 0x48},
-    ScancodePair{"n8", 0x48},
-    ScancodePair{"Numpad9", 0x49},
-    ScancodePair{"n9", 0x49},
-    ScancodePair{"Numpad4", 0x4B},
-    ScancodePair{"n4", 0x4B},
-    ScancodePair{"Numpad5", 0x4C},
-    ScancodePair{"n5", 0x4C},
-    ScancodePair{"Numpad6", 0x4D},
-    ScancodePair{"n6", 0x4D},
-    ScancodePair{"Numpad1", 0x4F},
-    ScancodePair{"n1", 0x4F},
-    ScancodePair{"Numpad2", 0x50},
-    ScancodePair{"n2", 0x50},
-    ScancodePair{"Numpad3", 0x51},
-    ScancodePair{"n3", 0x51},
-    ScancodePair{"Numpad0", 0x52},
-    ScancodePair{"n0", 0x52},
-    ScancodePair{"NumpadDot", 0x53},
-    ScancodePair{"n.", 0x53},
-};
-
-struct KeyLockFlagPair
-{
-    std::string_view name;
-    uint8_t value;
-};
-
-constexpr std::array names_lock_flags = {
-    KeyLockFlagPair{"None", safe_int(kbdtypes::KeyLocks::NoLocks)},
-    KeyLockFlagPair{"Scroll", safe_int(kbdtypes::KeyLocks::ScrollLock)},
-    KeyLockFlagPair{"Num", safe_int(kbdtypes::KeyLocks::NumLock)},
-    KeyLockFlagPair{"Caps", safe_int(kbdtypes::KeyLocks::CapsLock)},
-    KeyLockFlagPair{"Kana", safe_int(kbdtypes::KeyLocks::KanaLock)},
-    KeyLockFlagPair{"ScrollLock", safe_int(kbdtypes::KeyLocks::ScrollLock)},
-    KeyLockFlagPair{"NumLock", safe_int(kbdtypes::KeyLocks::NumLock)},
-    KeyLockFlagPair{"CapsLock", safe_int(kbdtypes::KeyLocks::CapsLock)},
-    KeyLockFlagPair{"KanaLock", safe_int(kbdtypes::KeyLocks::KanaLock)},
-};
-
-struct MouseFlagPair
-{
-    std::string_view name;
-    uint16_t value;
-};
-
-constexpr std::array names_mouse_flags = {
-    MouseFlagPair{"Left", MOUSE_FLAG_BUTTON1},
-    MouseFlagPair{"Right", MOUSE_FLAG_BUTTON2},
-    MouseFlagPair{"Middle", MOUSE_FLAG_BUTTON3},
-    MouseFlagPair{"b1", MOUSE_FLAG_BUTTON1},
-    MouseFlagPair{"b2", MOUSE_FLAG_BUTTON2},
-    MouseFlagPair{"b3", MOUSE_FLAG_BUTTON3},
-    MouseFlagPair{"b4", MOUSE_FLAG_BUTTON4},
-    MouseFlagPair{"b5", MOUSE_FLAG_BUTTON5},
-    MouseFlagPair{"HWheel", MOUSE_FLAG_HWHEEL | MOUSE_FLAG_WHEEL_NEGATIVE},
-    MouseFlagPair{"Wheel", MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE},
-    MouseFlagPair{"-HWheel", MOUSE_FLAG_HWHEEL | 0xFF},
-    MouseFlagPair{"-Wheel", MOUSE_FLAG_WHEEL | 0xFF},
-};
+using headlessclient::ScancodePair;
+using headlessclient::KeyLockFlagPair;
+using headlessclient::MouseFlagPair;
 
 namespace paramlists
 {
-    ParameterList<ScancodePair> scancodes_en {names_scancodes_en};
-    ParameterList<ScancodePair> scancodes_fr {names_scancodes_fr};
-    ParameterList<KeyLockFlagPair> mods {names_lock_flags};
-    ParameterList<MouseFlagPair> mouses {names_mouse_flags};
+    ParameterList<ScancodePair> scancodes_en {headlessclient::names_scancodes_en};
+    ParameterList<ScancodePair> scancodes_fr {headlessclient::names_scancodes_fr};
+    ParameterList<KeyLockFlagPair> mods {headlessclient::names_lock_flags};
+    ParameterList<MouseFlagPair> mouses {headlessclient::names_mouse_flags};
 }
 
 template<class T>
@@ -747,6 +415,7 @@ struct KeyParser
         auto first = str.begin();
         auto last = str.end();
 
+        // extract mod keys
         uint16_t modflags = 0;
         for (; first != last; ++first) {
             auto mflag = consume_mod(*first);
@@ -773,6 +442,7 @@ struct KeyParser
             return false;
         }
 
+        // long format { ... }
         if (REDEMPTION_UNLIKELY(*first == '{')) {
             char const* p = memchr({first + 1, str.end()}, '}');
             if (!p) {
@@ -813,6 +483,7 @@ struct KeyParser
 
         endp = first + 1;
 
+        // simple scancode
         auto upper_value = ascii_to_upper(*first);
         if (auto* elem = scancode_list->find(TaggedUpperStringView{{&upper_value, 1}})) {
             maybe_add_shift(*first);
