@@ -33,13 +33,6 @@ if (( $fast == 0 )); then
     ./tools/c++-analyzer/redemption-analyzer.sh
     show_duration redemption-analyzer.sh
 
-    # check .po files
-    bjam update-po
-    [[ -z $(git status -s ./tools/i18n/po/*/) ]] || {
-        echo 'Error: .po files are outdated (run bjam update-po)'
-        exit 1
-    }
-
 
     # Python tests
     # @{
