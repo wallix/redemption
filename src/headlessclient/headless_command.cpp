@@ -1239,15 +1239,23 @@ chars_view cmd_help(std::string_view name, bool is_kbdmap_en)
 {
     if (name == "scancode" || name == "sc") {
         if (is_kbdmap_en) {
-            return cmd_help_sc(help_sc_param_en, named_physical_layout_en, array_view{names_scancodes_en});
+            return cmd_help_sc(
+                help_sc_param_en,
+                named_physical_layout_en,
+                array_view{headlessclient::names_scancodes_en}
+            );
         }
         else {
-            return cmd_help_sc(help_sc_param_fr, named_physical_layout_fr, array_view{names_scancodes_fr});
+            return cmd_help_sc(
+                help_sc_param_fr,
+                named_physical_layout_fr,
+                array_view{headlessclient::names_scancodes_fr}
+            );
         }
     }
 
     if (name == "mevent" || name == "event") {
-        return populate_cache(help_mevent_param, names_mouse_flags);
+        return populate_cache(help_mevent_param, headlessclient::names_mouse_flags);
     }
 
     if (name == "flag") {
@@ -1285,7 +1293,7 @@ chars_view cmd_help(std::string_view name, bool is_kbdmap_en)
     }
 
     if (name == "lock") {
-        return populate_cache(help_lock_param, names_lock_flags);
+        return populate_cache(help_lock_param, headlessclient::names_lock_flags);
     }
 
     if (name == "bool" || name == "boolean") {
@@ -1359,12 +1367,18 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     };
 
     auto scroll_sequence = [&](uint16_t flag){
-        return parse_sequence(ScrollParser(), [&](ScrollParser scroll) {
+        int nseq = 0;
+        auto res = parse_sequence(ScrollParser(), [&](ScrollParser scroll) {
+            ++nseq;
             uint16_t flags = flag | scroll.flag;
             for (uint8_t i = 0; i < scroll.step; ++i) {
                 mod.rdp_input_mouse(flags, mouse_x, mouse_y);
             }
         });
+        if (res == Result::Ok && nseq == 0) {
+            mod.rdp_input_mouse(flag | ScrollParser().flag, mouse_x, mouse_y);
+        }
+        return res;
     };
 
     auto too_many_argument_or = [&](Result result){

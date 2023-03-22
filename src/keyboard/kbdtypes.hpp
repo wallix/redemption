@@ -67,6 +67,7 @@ namespace kbdtypes
         F10 = 0x44,
         F11 = 0x57,
         F12 = 0x58,
+        Space = 0x39,
 
         A = 0x1E,
         B = 0x30,

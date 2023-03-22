@@ -9,9 +9,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "qtclient/headless_input_command_generator.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"
-#include <vector>
 
-RED_AUTO_TEST_CASE(TestCursor)
+using namespace std::chrono_literals;
+
+struct HeadlessInputCommandGeneratorTextCtx
 {
     using Status = HeadlessInputCommandGenerator::Status;
     using Scancode = kbdtypes::Scancode;
@@ -19,15 +20,26 @@ RED_AUTO_TEST_CASE(TestCursor)
     // using KeyLocks = kbdtypes::KeyLocks;
 
     std::string input;
-    HeadlessInputCommandGenerator cmd([&input](Status status, chars_view str, std::size_t updated_column){
-        auto st = (status == Status::NewLine) ? "NewLine " : "UpdateLastLine ";
-        str_append(input, st, int_to_decimal_chars(updated_column), ' ', str, '\n');
-    });
+    HeadlessInputCommandGenerator cmd;
 
     MonotonicTimePoint now{};
-    using namespace std::chrono_literals;
 
     std::string ctx;
+
+    HeadlessInputCommandGeneratorTextCtx()
+    : cmd([this](Status status, chars_view str, std::size_t updated_column){
+        auto st = (status == Status::NewLine) ? "NewLine " : "UpdateLastLine ";
+        str_append(input, st, int_to_decimal_chars(updated_column), ' ', str, '\n');
+    })
+    {}
+
+    MonotonicTimePoint next_time(std::chrono::milliseconds delay = 1ms)
+    {
+        now += delay;
+        return now;
+    }
+};
+
 #define CHECK_INPUT(cmd, s) do {            \
     ctx += &"\n    " #cmd[ctx.empty() * 5]; \
     RED_TEST_CONTEXT(ctx) {                 \
@@ -36,11 +48,8 @@ RED_AUTO_TEST_CASE(TestCursor)
     }                                       \
 } while(0)
 
-    auto next_time = [&now](std::chrono::milliseconds delay = 1ms) {
-        now += delay;
-        return now;
-    };
-
+RED_FIXTURE_TEST_CASE(TestGenerateInputScancodeEvent, HeadlessInputCommandGeneratorTextCtx)
+{
     // normal sequence
     CHECK_INPUT(cmd.start(now), ""_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode::A),
@@ -48,22 +57,22 @@ RED_AUTO_TEST_CASE(TestCursor)
         "NewLine 0 key {a down}\n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode::A),
         "UpdateLastLine 4 key a\n"_av);
-    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode::B),
-        "UpdateLastLine 5 key a{b down}\n"_av);
-    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode::B),
-        "UpdateLastLine 5 key ab\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode::Space),
+        "UpdateLastLine 5 key a{Space down}\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode::Space),
+        "UpdateLastLine 5 key a \n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode::F1),
-        "UpdateLastLine 6 key ab{F1 down}\n"_av);
+        "UpdateLastLine 6 key a {F1 down}\n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode::F1),
-        "UpdateLastLine 6 key ab{F1}\n"_av);
+        "UpdateLastLine 6 key a {F1}\n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode(0xFF)),
-        "UpdateLastLine 10 key ab{F1}{0xFF down}\n"_av);
+        "UpdateLastLine 10 key a {F1}{0xFF down}\n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode(0xFF)),
-        "UpdateLastLine 10 key ab{F1}{0xFF}\n"_av);
+        "UpdateLastLine 10 key a {F1}{0xFF}\n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Extended, Scancode(0xFF)),
-        "UpdateLastLine 16 key ab{F1}{0xFF}{0x1FF down}\n"_av);
+        "UpdateLastLine 16 key a {F1}{0xFF}{0x1FF down}\n"_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release | KbdFlags::Extended, Scancode(0xFF)),
-        "UpdateLastLine 16 key ab{F1}{0xFF}{0x1FF}\n"_av);
+        "UpdateLastLine 16 key a {F1}{0xFF}{0x1FF}\n"_av);
 
     ctx.clear();
     // repetition sequence
@@ -202,6 +211,8 @@ RED_AUTO_TEST_CASE(TestCursor)
 
     ctx.clear();
     // Long delay
+    CHECK_INPUT(cmd.set_key_delay({80ms, 250ms}),
+        "NewLine 0 keydelay 80ms\n"_av);
     CHECK_INPUT(cmd.start(now), ""_av);
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode::A),
         "NewLine 0 sleep 1ms\n"
@@ -223,5 +234,48 @@ RED_AUTO_TEST_CASE(TestCursor)
         "NewLine 0 sleep 1s 200ms\n"
         "NewLine 0 key {a up}\n"_av);
 
-#undef CHECK_INPUT
 }
+
+
+RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessInputCommandGeneratorTextCtx)
+{
+    // click sequence
+    CHECK_INPUT(cmd.start(now), ""_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 3, 6), ""_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 4, 5), ""_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON1, 3, 6),
+        "NewLine 0 sleep 3ms\n"
+        "NewLine 0 move 4 5\n"
+        "NewLine 0 mouse Left\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON4, 3, 6),
+        "UpdateLastLine 10 mouse Left b4\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2, 3, 6),
+        "UpdateLastLine 13 mouse Left b4 Right\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 4, 1), ""_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2, 4, 1),
+        "NewLine 0 move 4 1\n"
+        "NewLine 0 mouse Right\n"_av);
+
+    ctx.clear();
+    // scroll
+    CHECK_INPUT(cmd.start(now), ""_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_WHEEL, 3, 6),
+        "NewLine 0 sleep 1ms\n"
+        "NewLine 0 scroll 1\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_WHEEL, 3, 6),
+        "UpdateLastLine 7 scroll 2\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE, 3, 6),
+        "UpdateLastLine 7 scroll 2 -1\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE, 3, 6),
+        "UpdateLastLine 9 scroll 2 -2\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_WHEEL, 3, 6),
+        "UpdateLastLine 9 scroll 2 -2 1\n"_av);
+
+    ctx.clear();
+    // hscroll
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_HWHEEL, 3, 6),
+        "NewLine 0 sleep 1ms\n"
+        "NewLine 0 hscroll 1\n"_av);
+}
+
+#undef CHECK_INPUT

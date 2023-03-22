@@ -340,6 +340,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     check_cmd("scroll -", "index_param=1 param='-' type=InvalidFormat", "");
     check_cmd("scroll 0x", "index_param=1 param='0x' type=InvalidFormat", "");
     check_cmd("scroll a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("scroll", "",   "{flags=0x0300, x=100, y=200}");
     check_cmd("scroll 1", "", "{flags=0x0300, x=100, y=200}");
     check_cmd("scroll -1", "", "{flags=0x02FF, x=100, y=200}");
     check_cmd("scroll 3", "",
@@ -358,6 +359,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     check_cmd("hscroll -", "index_param=1 param='-' type=InvalidFormat", "");
     check_cmd("hscroll 0x", "index_param=1 param='0x' type=InvalidFormat", "");
     check_cmd("hscroll a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("hscroll",   "", "{flags=0x0500, x=100, y=200}");
     check_cmd("hscroll 1", "", "{flags=0x0500, x=100, y=200}");
     check_cmd("hscroll -1", "", "{flags=0x04FF, x=100, y=200}");
     check_cmd("hscroll 3", "",
