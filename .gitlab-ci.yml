@@ -1,11 +1,26 @@
 variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
+  IMAGE_REDEMPTION_ANALYZE: redemption-analyze
   TESTDIR: test_tmpdir
 
 stages:
+  - build-docker-images
   - build
   - analysis
+
+build-analyze-image:
+  stage: build-docker-images
+  image: docker.io/docker:19.03
+  variables:
+    BUILD_ANALYZE_PATH: builder/analyze/
+  script:
+    # DOCKER_AUTH_CONFIG only works when pulling images from private repo for jobs...
+    - echo "${WAB_PROXIES_NEXUS_TOKEN}" | docker login -u "${WAB_PROXIES_NEXUS_USER}" "${NEXUS_WAB_PROXIES_URL}" --password-stdin
+    - docker build -t ${IMAGE_REDEMPTION_ANALYZE} -f ${BUILD_ANALYZE_PATH}/Dockerfile ${BUILD_ANALYZE_PATH}
+    - docker tag ${IMAGE_REDEMPTION_ANALYZE} ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
+    - docker push ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
+  when: manual
 
 build-project:
   stage: build
@@ -29,6 +44,18 @@ build-project:
       - bin/gcc-*/release/libunit_test.so
     expire_in: 1 day
 
+
+build-analyze:
+  stage: build
+  needs: []
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
+  script:
+    - ./tools/gitlab-analyze.sh ${FULL} | tee report.txt
+  artifacts:
+    name: "$CI_JOB_NAME"
+    - report.txt
 
 sonarqube-check:
   stage: analysis

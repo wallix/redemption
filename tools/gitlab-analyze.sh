@@ -5,13 +5,13 @@ cd $(realpath -m "$0/../..")
 
 set -ex
 
-typeset -i fast=0
+typeset -i fast=1
 typeset -i update=0
 for act in "$@" ; do
     case "$act" in
-        fast) fast=1 ;;
+        full) fast=0 ;;
         update) update=1 ;;
-        *)  set +x ; echo "$0 [fast] [update]
+        *)  set +x ; echo "$0 [full] [update]
 
 fast: enable fast compilation
 update: update targets.jam and others generated files";
