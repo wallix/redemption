@@ -54,7 +54,6 @@ build-analyze:
   script:
     - ./tools/gitlab-analyze.sh ${FULL} | tee report.txt
   artifacts:
-    name: "$CI_JOB_NAME"
     - report.txt
 
 sonarqube-check:
