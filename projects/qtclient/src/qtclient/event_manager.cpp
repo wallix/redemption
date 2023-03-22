@@ -20,16 +20,16 @@ namespace qtclient
     {
         constexpr static int INITIALIZED_EVENT_FD = -2;
         static_assert(INVALID_SOCKET != INITIALIZED_EVENT_FD);
-
-        TimeBase& update_times(EventContainer& event_container)
-        {
-            auto& time_base = detail::ProtectedEventContainer::get_writable_time_base(event_container);
-            time_base = TimeBase::now();
-            return time_base;
-        }
     } // anonymous namespace
 } // namespace qtclient
 
+
+TimeBase const& qtclient::EventManager::update_times()
+{
+    auto& time_base = detail::ProtectedEventContainer::get_writable_time_base(event_container);
+    time_base = TimeBase::now();
+    return time_base;
+}
 
 REDEMPTION_NOINLINE
 void qtclient::EventManager::add_fdevent(Event* const& event)
@@ -58,7 +58,7 @@ void qtclient::EventManager::remove_fdevent(Event* const& event)
 
 void qtclient::EventManager::execute_fd(FdEvent& fdevent)
 {
-    auto now = update_times(event_container).monotonic_time;
+    auto now = update_times().monotonic_time;
     // restore fd
     fdevent.event.fd = checked_int(fdevent.notifier.socket());
     fdevent.event.trigger_time = now + fdevent.event.grace_delay;
@@ -81,7 +81,7 @@ void qtclient::EventManager::execute_fd(FdEvent& fdevent)
 
 void qtclient::EventManager::execute_timer()
 {
-    auto now = update_times(event_container).monotonic_time;
+    auto now = update_times().monotonic_time;
     try {
         for (auto* event : detail::ProtectedEventContainer::get_events(event_container)) {
             if (!event->garbage && detail::trigger_event_timer(*event, now)) {
@@ -128,7 +128,7 @@ void qtclient::EventManager::update()
     events.resize(len);
 
     if (has_timer) {
-        auto delay = trigger_time - update_times(event_container).monotonic_time;
+        auto delay = trigger_time - update_times().monotonic_time;
         using Duration = std::chrono::milliseconds;
         timer.start(std::max(Duration(), std::chrono::duration_cast<Duration>(delay)));
     }

@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/basic_notifier_function.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/ref.hpp"
 #include "core/callback.hpp"
 
 #include <string>
@@ -84,7 +83,7 @@ private:
     using Ms = std::chrono::milliseconds;
 
     MonotonicTimePoint previous_time;
-    MonotonicTimePoint::duration max_keydelay{std::chrono::milliseconds(250)};
+    MonotonicTimePoint::duration max_keydelay{std::chrono::milliseconds(1000)};
     Notifier notifier;
     std::string cmd;
     // uint16_t mouse_x = 0;
@@ -99,49 +98,52 @@ private:
 
 struct DispatchRdpInputCommandGenerator : RdpInput
 {
-    DispatchRdpInputCommandGenerator(CRef<MonotonicTimePoint> monotonic_time, RdpInput& rdp_input, HeadlessInputCommandGenerator::Notifier notifier)
+    DispatchRdpInputCommandGenerator(RdpInput& rdp_input, HeadlessInputCommandGenerator::Notifier notifier)
     : command_generator(notifier)
-    , monotonic_time(monotonic_time)
     , rdp_input(rdp_input)
     {}
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
     {
         rdp_input.rdp_input_scancode(flags, scancode, event_time, keymap);
-        command_generator.scancode(monotonic_time, flags, scancode);
+        command_generator.scancode(MonotonicTimePoint::clock::now(), flags, scancode);
     }
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
     {
         rdp_input.rdp_input_unicode(flag, unicode);
-        command_generator.unicode(monotonic_time, flag, unicode);
+        command_generator.unicode(MonotonicTimePoint::clock::now(), flag, unicode);
     }
 
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
     {
         rdp_input.rdp_input_mouse(device_flags, x, y);
-        command_generator.mouse(monotonic_time, device_flags, x, y);
+        command_generator.mouse(MonotonicTimePoint::clock::now(), device_flags, x, y);
     }
 
     void rdp_input_synchronize(KeyLocks locks) override
     {
-        (void)locks;
+        rdp_input.rdp_input_synchronize(locks);
+        command_generator.synchronize(MonotonicTimePoint::clock::now(), locks);
     }
 
     void rdp_input_invalidate(Rect r) override
     {
-        (void)r;
+        rdp_input.rdp_input_invalidate(r);
     }
 
     void rdp_gdi_up_and_running() override
-    {}
+    {
+        rdp_input.rdp_gdi_up_and_running();
+    }
 
     void rdp_gdi_down() override
-    {}
+    {
+        rdp_input.rdp_gdi_down();
+    }
 
     HeadlessInputCommandGenerator command_generator;
 
 private:
-    MonotonicTimePoint const& monotonic_time;
     RdpInput& rdp_input;
 };

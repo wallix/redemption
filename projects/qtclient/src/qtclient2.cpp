@@ -194,14 +194,52 @@ int main(int argc, char** argv)
 
     RdpInput* input_mod = mod.get();
 
+    struct NotifierData
+    {
+        MonotonicTimePoint const& monotonic_time;
+        std::size_t old_len {};
+        std::string buf {};
+    };
+    NotifierData d{event_manager.monotonic_time()};
     std::unique_ptr<DispatchRdpInputCommandGenerator> script_generator;
     if (profile.enable_headless_script_assistance) {
         script_generator = std::make_unique<DispatchRdpInputCommandGenerator>(
-            event_manager.monotonic_time(), *mod,
-            [](HeadlessInputCommandGenerator::Status status, chars_view line) {
-                printf("%d %.*s\n", status, int(line.size()), line.data());
+            *mod, [&](HeadlessInputCommandGenerator::Status status, chars_view line, std::size_t updated_column) {
+                // printf("%ld %d %zu %.*s\n",
+                //     std::chrono::duration_cast<std::chrono::milliseconds>(d.monotonic_time.time_since_epoch()).count(),
+                //     int(status), updated_column, int(line.size()), line.data());
+                // return;
+
+                if (status == HeadlessInputCommandGenerator::Status::UpdateLastLine) {
+                    auto removed = d.old_len - updated_column;
+                    auto inserted = line.size() - updated_column;
+                    d.buf.clear();
+                    d.buf.resize(removed, '\b');
+                    printf("%.*s%.*s",
+                        int(d.buf.size()), d.buf.data(),
+                        int(inserted), line.data() + updated_column
+                    );
+
+                    if (inserted < removed) {
+                        d.buf.clear();
+                        d.buf.resize(removed - inserted, ' ');
+                        printf("%.*s", int(d.buf.size()), d.buf.data());
+                        d.buf.clear();
+                        d.buf.resize(removed - inserted, '\b');
+                        printf("%.*s", int(d.buf.size()), d.buf.data());
+                    }
+
+                    d.old_len = line.size();
+                }
+                else {
+                    printf("\n%.*s", int(line.size()), line.data());
+                    d.old_len = line.size();
+                }
+
+                fflush(stdout);
             }
         );
+        script_generator->command_generator.start(event_manager.update_times().monotonic_time);
         input_mod = script_generator.get();
     }
 
@@ -212,6 +250,7 @@ int main(int argc, char** argv)
         LOG(LOG_ERR, "%s", err.errmsg());
         app.quit();
     };
+    event_manager.update_times();
     event_manager.start();
 
     return app.exec();

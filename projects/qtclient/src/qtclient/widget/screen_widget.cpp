@@ -85,7 +85,9 @@ void ScreenWidget::keyPressEvent(QKeyEvent* event)
 void ScreenWidget::keyReleaseEvent(QKeyEvent* event)
 {
     assert(_rdp_input);
-    x11_send_scancode(*_rdp_input, kbdtypes::KbdFlags::Release, keymap, event->nativeScanCode());
+    if (!event->isAutoRepeat()) {
+        x11_send_scancode(*_rdp_input, kbdtypes::KbdFlags::Release, keymap, event->nativeScanCode());
+    }
 }
 
 void ScreenWidget::mousePressEvent(QMouseEvent* event)

@@ -24,7 +24,7 @@ auto make_cmd_delay_impl(
     std::chrono::seconds sec,
     std::chrono::milliseconds milli)
 {
-    using AV = bounded_chars_view<0, 3>;
+    using AV = bounded_chars_view<0, 4>;
     AV empty_suffix = ""_sized_av;
     AV minute_suffix = empty_suffix;
     AV second_suffix = empty_suffix;
@@ -40,27 +40,23 @@ auto make_cmd_delay_impl(
 
     if (has_minute) {
         int_to_decimal_chars(minutes_chars, min.count());
-        minute_suffix = "min"_sized_av;
+        minute_suffix = (has_second || has_milli) ? AV("min"_sized_av) : AV("min "_sized_av);
     }
 
     if (has_second) {
         int_to_decimal_chars(seconds_chars, sec.count());
-        if (!has_minute) {
-            second_suffix = "s"_sized_av;
-        }
+        second_suffix = has_milli ? AV("s "_sized_av) : AV("s"_sized_av);
     }
 
     if (has_milli) {
         int_to_decimal_chars(milliseconds_chars, milli.count());
-        if (!has_second) {
-            milli_suffix = "ms"_sized_av;
-        }
+        milli_suffix = "ms"_sized_av;
     }
 
     return static_str_concat<128>(
         cmd,
         minutes_chars, minute_suffix,
-        seconds_chars, seconds_chars,
+        seconds_chars, second_suffix,
         milliseconds_chars, milli_suffix
     );
 }
@@ -211,13 +207,12 @@ void HeadlessInputCommandGenerator::set_key_delay(DelayConfig key_delay)
 
 void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags flags, Scancode scancode)
 {
-    auto oldtype = std::exchange(cmd_type, CmdType::Scancode);
-
-    if (oldtype != CmdType::Scancode || now > previous_time + max_keydelay) {
+    if (cmd_type != CmdType::Scancode || now > previous_time + max_keydelay) {
         notifier(Status::NewLine, make_cmd_delay("sleep "_sized_av, now - previous_time), 0);
-        oldtype = CmdType::Sleep;
+        cmd_type = CmdType::Sleep;
     }
 
+    auto oldtype = std::exchange(cmd_type, CmdType::Scancode);
     auto status = Status::UpdateLastLine;
     if (oldtype != CmdType::Scancode) {
         cmd = "key ";

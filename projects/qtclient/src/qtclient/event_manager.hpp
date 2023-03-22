@@ -33,6 +33,8 @@ struct EventManager
         return event_container.get_time_base().monotonic_time;
     }
 
+    TimeBase const& update_times();
+
     EventContainer event_container;
     BasicNotifierFunction<Error&> exception_notifier;
 

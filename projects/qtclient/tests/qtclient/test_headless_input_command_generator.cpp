@@ -200,5 +200,28 @@ RED_AUTO_TEST_CASE(TestCursor)
     CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode(0x45)),
         "UpdateLastLine 40 key {0x21D down}{NumLock down}{0x21D up}{NumLock up}\n"_av);
 
+    ctx.clear();
+    // Long delay
+    CHECK_INPUT(cmd.start(now), ""_av);
+    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::NoFlags, Scancode::A),
+        "NewLine 0 sleep 1ms\n"
+        "NewLine 0 key {a down}\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode::A),
+        "UpdateLastLine 4 key a\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(400ms), KbdFlags::NoFlags, Scancode::A),
+        "NewLine 0 sleep 400ms\n"
+        "NewLine 0 key {a down}\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(), KbdFlags::Release, Scancode::A),
+        "UpdateLastLine 4 key a\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(400ms), KbdFlags::NoFlags, Scancode::A),
+        "NewLine 0 sleep 400ms\n"
+        "NewLine 0 key {a down}\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(2s), KbdFlags::Release, Scancode::A),
+        "NewLine 0 sleep 2s\n"
+        "NewLine 0 key {a up}\n"_av);
+    CHECK_INPUT(cmd.scancode(next_time(1200ms), KbdFlags::Release, Scancode::A),
+        "NewLine 0 sleep 1s 200ms\n"
+        "NewLine 0 key {a up}\n"_av);
+
 #undef CHECK_INPUT
 }
