@@ -351,6 +351,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
 RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
+    force_paris_timezone();
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
@@ -378,6 +379,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
 RED_AUTO_TEST_CASE(TestResizingCapture)
 {
+    force_paris_timezone();
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
@@ -519,6 +521,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
 
 RED_AUTO_TEST_CASE(TestResizingCapture1)
 {
+    force_paris_timezone();
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
@@ -656,6 +659,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 
 RED_AUTO_TEST_CASE(TestPattern)
 {
+    force_paris_timezone();
     CapturePattern cap_pattern{
         CapturePattern::Filters{.is_ocr = true, .is_kbd = false},
         CapturePattern::PatternType::reg,
@@ -712,6 +716,7 @@ namespace
 
 RED_AUTO_TEST_CASE(TestSessionMeta)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
@@ -762,6 +767,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
 
 RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
@@ -802,6 +808,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
 
 RED_AUTO_TEST_CASE(TestSessionMeta2)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
@@ -839,6 +846,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
 
 RED_AUTO_TEST_CASE(TestSessionMeta3)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
@@ -894,6 +902,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
 RED_AUTO_TEST_CASE(TestSessionMeta4)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
@@ -945,6 +954,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
 RED_AUTO_TEST_CASE(TestSessionMeta5)
 {
+    force_paris_timezone();
     BufTransport trans;
 
     {
@@ -1355,6 +1365,7 @@ const char expected_stripped_wrm[] =
 
 RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 {
+    force_paris_timezone();
     Rect screen_rect(0, 0, 800, 600);
     CheckTransport trans(cstr_array_view(expected_stripped_wrm));
     TestGraphicToFile tgtf(trans, screen_rect, false);
@@ -1515,6 +1526,7 @@ const char expected_stripped_wrm2[] =
 
 RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 {
+    force_paris_timezone();
     Rect screen_rect(0, 0, 800, 600);
     CheckTransport trans(cstr_array_view(expected_stripped_wrm2));
     TestGraphicToFile tgtf(trans, screen_rect, false);
@@ -1538,6 +1550,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
 RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 {
+    force_paris_timezone();
     Rect screen_rect(0, 0, 800, 600);
 
     BufTransport trans;
@@ -1652,6 +1665,7 @@ const char expected_Red_on_Blue_wrm[] =
 
 RED_AUTO_TEST_CASE(TestSaveCache)
 {
+    force_paris_timezone();
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(cstr_array_view(expected_Red_on_Blue_wrm));
     trans.disable_remaining_error();
@@ -1762,6 +1776,7 @@ const char expected_reset_rect_wrm[] =
 
 RED_AUTO_TEST_CASE(TestSaveOrderStates)
 {
+    force_paris_timezone();
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(cstr_array_view(expected_reset_rect_wrm));
     TestGraphicToFile tgtf(trans, scr, true);
@@ -1857,6 +1872,7 @@ const char expected_continuation_wrm[] =
 
 RED_AUTO_TEST_CASE(TestImageChunk)
 {
+    force_paris_timezone();
     const char expected_stripped_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 3, width = 20, height=10, bpp=24
@@ -1915,6 +1931,7 @@ RED_AUTO_TEST_CASE(TestImageChunk)
 
 RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 {
+    force_paris_timezone();
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
@@ -1990,6 +2007,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
+    force_paris_timezone();
     const char expected[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 3, width = 20, height=10, bpp=24
@@ -2068,6 +2086,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
 RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
 {
+    force_paris_timezone();
     auto source_png =
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
         "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
@@ -2196,6 +2215,7 @@ const char source_wrm_png[] =
 
 RED_AUTO_TEST_CASE(TestReload)
 {
+    force_paris_timezone();
     struct Test
     {
         char const* name;
@@ -2234,6 +2254,7 @@ RED_AUTO_TEST_CASE(TestReload)
 
 RED_AUTO_TEST_CASE(TestUtf8KbdBuffer)
 {
+    force_paris_timezone();
     Utf8KbdBuffer buffer;
     constexpr auto str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"_av;
     static_assert(str.size() == 62);
@@ -2259,6 +2280,7 @@ RED_AUTO_TEST_CASE(TestUtf8KbdBuffer)
 
 RED_AUTO_TEST_CASE(TestKbdCapture)
 {
+    force_paris_timezone();
     SessionLogTest report_message;
 
     MonotonicTimePoint const time {};
@@ -2302,6 +2324,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
 RED_AUTO_TEST_CASE(TestKbdCapture2)
 {
+    force_paris_timezone();
     SessionLogTest report_message;
 
     MonotonicTimePoint now{};
@@ -2331,6 +2354,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
+    force_paris_timezone();
     SessionLogTest report_message;
 
     CapturePattern cap_pattern{
@@ -2365,6 +2389,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
+    force_paris_timezone();
     SessionLogTest report_message;
 
     CapturePattern cap_pattern{
@@ -2390,6 +2415,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
 RED_AUTO_TEST_CASE(TestKbdEnableWithoutPattern)
 {
+    force_paris_timezone();
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
@@ -2408,6 +2434,7 @@ RED_AUTO_TEST_CASE(TestKbdEnableWithoutPattern)
 
 RED_AUTO_TEST_CASE(TestSample0WRM)
 {
+    force_paris_timezone();
     int fd = ::open(FIXTURES_PATH "/sample0.wrm", O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
 
@@ -2430,6 +2457,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
 RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 {
+    force_paris_timezone();
     auto source_png =
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
@@ -2482,6 +2510,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 {
+    force_paris_timezone();
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
