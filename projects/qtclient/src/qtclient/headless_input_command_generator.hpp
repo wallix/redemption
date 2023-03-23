@@ -51,7 +51,7 @@ struct HeadlessInputCommandGenerator
 
     void mouse(MonotonicTimePoint now, uint16_t device_flags, uint16_t x, uint16_t y);
 
-    void synchronize(MonotonicTimePoint now, KeyLocks locks);
+    void keylocks(MonotonicTimePoint now, KeyLocks locks);
 
 private:
     enum class CmdType : uint8_t;
@@ -132,7 +132,7 @@ struct DispatchRdpInputCommandGenerator : RdpInput
     void rdp_input_synchronize(KeyLocks locks) override
     {
         rdp_input.rdp_input_synchronize(locks);
-        command_generator.synchronize(MonotonicTimePoint::clock::now(), locks);
+        command_generator.keylocks(MonotonicTimePoint::clock::now(), locks);
     }
 
     void rdp_input_invalidate(Rect r) override

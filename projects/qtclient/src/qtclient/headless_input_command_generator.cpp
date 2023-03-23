@@ -538,13 +538,23 @@ void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t devic
     }
 }
 
-void HeadlessInputCommandGenerator::synchronize(MonotonicTimePoint now, KeyLocks locks)
+void HeadlessInputCommandGenerator::keylocks(MonotonicTimePoint now, KeyLocks locks)
 {
-    (void)now;
-    (void)locks;
-    // lines.emplace_back(str_concat(
-    //     "lock "_av,
-    //     int_to_fixed_hexadecimal_upper_chars(underlying_cast(locks))
-    // ));
-    // notifier(Status::NewLine, lines.back());
+    _synchronize_cmd(CmdType::Lock, now, {});
+
+    char buf[32] = "lock";
+    char *it = buf + 4;
+
+    auto cpy = [&](chars_view av) {
+        memcpy(it, av.data(), av.size());
+        it += av.size();
+    };
+
+    if (!bool(locks)) cpy(" None"_av);
+    if (bool(locks & KeyLocks::CapsLock)) cpy(" Caps"_av);
+    if (bool(locks & KeyLocks::NumLock)) cpy(" Num"_av);
+    if (bool(locks & KeyLocks::ScrollLock)) cpy(" Scroll"_av);
+    if (bool(locks & KeyLocks::KanaLock)) cpy(" Kana"_av);
+
+    notifier(Status::NewLine, chars_view(buf, it), 0);
 }

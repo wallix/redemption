@@ -17,7 +17,7 @@ struct HeadlessInputCommandGeneratorTextCtx
     using Status = HeadlessInputCommandGenerator::Status;
     using Scancode = kbdtypes::Scancode;
     using KbdFlags = kbdtypes::KbdFlags;
-    // using KeyLocks = kbdtypes::KeyLocks;
+    using KeyLocks = kbdtypes::KeyLocks;
 
     std::string input;
     HeadlessInputCommandGenerator cmd;
@@ -254,6 +254,22 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputUnicodeEvent, HeadlessInputCommandGenerat
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 0xDE80), ""_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 'd'), "UpdateLastLine 11 text ab🚀d\n"_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 'd'), ""_av);
+}
+
+
+RED_FIXTURE_TEST_CASE(TestGenerateInputKeyLocksEvent, HeadlessInputCommandGeneratorTextCtx)
+{
+    // click sequence
+    CHECK_INPUT(cmd.start(now), ""_av);
+    CHECK_INPUT(cmd.keylocks(next_time(), KeyLocks::NoLocks),
+        "NewLine 0 sleep 1ms\n"
+        "NewLine 0 lock None\n"_av);
+    CHECK_INPUT(cmd.keylocks(next_time(), KeyLocks::NumLock),
+        "NewLine 0 sleep 1ms\n"
+        "NewLine 0 lock Num\n"_av);
+    CHECK_INPUT(cmd.keylocks(next_time(), KeyLocks::NumLock | KeyLocks::CapsLock),
+        "NewLine 0 sleep 1ms\n"
+        "NewLine 0 lock Caps Num\n"_av);
 }
 
 
