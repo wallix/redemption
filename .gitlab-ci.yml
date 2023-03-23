@@ -54,7 +54,8 @@ build-analyze:
   script:
     - ./tools/gitlab-analyze.sh ${FULL} | tee report.txt
   artifacts:
-    - report.txt
+    paths:
+      - report.txt
 
 sonarqube-check:
   stage: analysis
