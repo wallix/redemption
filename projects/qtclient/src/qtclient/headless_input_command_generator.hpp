@@ -47,7 +47,7 @@ struct HeadlessInputCommandGenerator
 
     void scancode(MonotonicTimePoint now, KbdFlags flags, Scancode scancode);
 
-    void unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t unicode);
+    void unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t utf16);
 
     void mouse(MonotonicTimePoint now, uint16_t device_flags, uint16_t x, uint16_t y);
 
@@ -73,8 +73,7 @@ private:
 
         struct Uni
         {
-            KbdFlags flags;
-            uint16_t unicode;
+            uint16_t high_surrogate;
         };
 
         struct Whell

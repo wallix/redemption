@@ -408,17 +408,60 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
     notifier(status, cmd, status == Status::UpdateLastLine ? previous_sc.previous_len : 0);
 }
 
-void HeadlessInputCommandGenerator::unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t unicode)
+void HeadlessInputCommandGenerator::unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t utf16)
 {
-    (void)now;
-    (void)flag;
-    (void)unicode;
-    // lines.emplace_back(str_concat(
-    //     "uni "_av,
-    //     int_to_fixed_hexadecimal_upper_chars(unicode), ',',
-    //     int_to_fixed_hexadecimal_upper_chars(underlying_cast(flag))
-    // ));
-    // notifier(Status::NewLine, lines.back());
+    // only key press
+    if (bool(flag & KbdFlags::Release)) {
+        return;
+    }
+
+    auto oldtype = _synchronize_cmd(CmdType::Unicode, now, max_key_delay);
+    auto status = Status::UpdateLastLine;
+    auto previous_len = cmd.size();
+
+    if (oldtype != CmdType::Unicode) {
+        previous_len = 0;
+        status = Status::NewLine;
+        previous_values.unicode = PreviousValues::Uni();
+        cmd = "text ";
+    }
+
+    uint8_t buf[4];
+    uint8_t* it = buf;
+
+    // is high surrogate
+    if (REDEMPTION_UNLIKELY((utf16 & 0xFC00) == 0xD800)) {
+        previous_values.unicode.high_surrogate = utf16;
+        return;
+    }
+    // assume that utf16 is low surrogate
+    else if (REDEMPTION_UNLIKELY(previous_values.unicode.high_surrogate)) {
+        uint32_t high = previous_values.unicode.high_surrogate;
+        uint32_t utf32 = (high << 10) + utf16 - 0x35FDC00u;
+        // https://en.wikipedia.org/wiki/UTF-8#Examples
+        *it++ = 0b11110'000 | ((utf32 >> 18) & 0x07);
+        *it++ = 0b10'000000 | ((utf32 >> 12) & 0x3F);
+        *it++ = 0b10'000000 | ((utf32 >>  6) & 0x3F);
+        *it++ = 0b10'000000 | ((utf32      ) & 0x3F);
+    }
+    else if (REDEMPTION_UNLIKELY(utf16 & 0xF800)) {
+        uint16_t high = previous_values.unicode.high_surrogate;
+        *it++ = 0b1110'0000 | ((high >> 4) & 0x0F);
+        *it++ = 0b10'000000 | (((high & 0x0F) << 2) & 0xFF) | ((utf16 >> 6) & 0xFF);
+        *it++ = 0b10'000000 | (utf16 & 0x3F);
+    }
+    else if (utf16 & 0xFF80) {
+        uint16_t high = previous_values.unicode.high_surrogate;
+        *it++ = 0b110'00000 | ((high << 2) & 0x1C) | ((utf16 >> 6) & 3);
+        *it++ = 0b10'000000 | (utf16 & 0x3F);
+    }
+    else {
+        *it++ = utf16 & 0x7F;
+    }
+
+    previous_values.unicode.high_surrogate = 0;
+    str_append(cmd, chars_view(char_ptr_cast(buf), char_ptr_cast(it)));
+    notifier(status, cmd, previous_len);
 }
 
 void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t device_flags, uint16_t x, uint16_t y)
@@ -466,6 +509,7 @@ void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t devic
         auto prefix = negative ? "-"_av : ""_av;
 
         if (oldtype != type) {
+            previous_len = 0;
             status = Status::NewLine;
             previous_values.whell = PreviousValues::Whell();
 
@@ -476,7 +520,6 @@ void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t devic
                 cmd = "hscroll ";
             }
 
-            previous_len = 0;
             previous_values.whell.previous_len = cmd.size();
         }
         else if (previous_values.whell.negative_flag == negative) {

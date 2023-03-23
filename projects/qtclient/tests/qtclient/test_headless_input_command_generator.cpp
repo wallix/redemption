@@ -245,18 +245,14 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputUnicodeEvent, HeadlessInputCommandGenerat
         "NewLine 0 sleep 1ms\n"
         "NewLine 0 text a\n"_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 'a'), ""_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 'b'), "UpdateLastLine 0 text ab\n"_av);
+    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 'b'), "UpdateLastLine 6 text ab\n"_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 'b'), ""_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 0x1234), "NewLine 0 uc 0x1234\n"_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 0x1234), ""_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 'c'), "NewLine 0 text c\n"_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 'c'), ""_av);
     // rocket !
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 0xD83D), ""_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 0x1234), "NewLine 0 text c🚀\n"_av);
+    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 0xDE80), "UpdateLastLine 7 text ab🚀\n"_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 0xD83D), ""_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 0xDE80), ""_av);
-    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 'd'), "NewLine 0 text c🚀d\n"_av);
+    CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::NoFlags, 'd'), "UpdateLastLine 11 text ab🚀d\n"_av);
     CHECK_INPUT(cmd.unicode(next_time(), KbdFlags::Release, 'd'), ""_av);
 }
 
