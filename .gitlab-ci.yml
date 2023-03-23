@@ -7,7 +7,6 @@ variables:
 stages:
   - build-docker-images
   - build
-  - analysis
 
 build-analyze-image:
   stage: build-docker-images
@@ -58,7 +57,8 @@ build-analyze:
       - report.txt
 
 sonarqube-check:
-  stage: analysis
+  stage: build
+  needs: [build-project]
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
