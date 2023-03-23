@@ -487,24 +487,56 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     //@}
 
 
-    // delay
+    // repeat
     //@{
     RED_CHECK(cmd_ctx.repeat_delay == -1);
     RED_CHECK(cmd_ctx.delay.count() == -1);
-    check_cmd_ex("delay 5000 my command", "", "", CmdResult::Delay);
+    check_cmd_ex("repeat 5000 my command", "", "", CmdResult::RepetitionCommand);
     RED_CHECK(cmd_ctx.output_message == "my command"_av);
     RED_CHECK(cmd_ctx.repeat_delay == -1);
     RED_CHECK(cmd_ctx.delay.count() == 5000);
-    check_cmd_ex("delay 5000 6 my new command", "", "", CmdResult::Delay);
+    check_cmd_ex("repeat 5000 6 my new command", "", "", CmdResult::RepetitionCommand);
     RED_CHECK(cmd_ctx.output_message == "my new command"_av);
     RED_CHECK(cmd_ctx.repeat_delay == 6);
     RED_CHECK(cmd_ctx.delay.count() == 5000);
-    check_cmd_ex("delay -5000", "", "", CmdResult::Delay);
+    check_cmd_ex("repeat -5000", "", "", CmdResult::RepetitionCommand);
     RED_CHECK(cmd_ctx.output_message == ""_av);
     RED_CHECK(cmd_ctx.repeat_delay == -1);
     RED_CHECK(cmd_ctx.delay.count() == -5000);
-    check_cmd("delay a", "index_param=1 param='a' type=InvalidFormat", "");
-    check_cmd("delay", "index_param=1 param='expected delay number' type=MissingArgument", "");
+    check_cmd("repeat a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("repeat", "index_param=1 param='expected delay number' type=MissingArgument", "");
+    //@}
+
+    // sleep
+    //@{
+    cmd_ctx.delay = std::chrono::milliseconds(-3);
+    check_cmd_ex("sleep", "", "", CmdResult::Ok);
+    check_cmd_ex("sleep 0", "", "", CmdResult::Ok);
+    check_cmd_ex("sleep 2", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2);
+    check_cmd_ex("sleep 2.4", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2);
+    check_cmd_ex("sleep 5/2", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2);
+    check_cmd_ex("sleep 1/4", "", "", CmdResult::Ok);
+    check_cmd_ex("sleep 2s", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2000);
+    check_cmd_ex("sleep 2.5s", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2500);
+    check_cmd_ex("sleep 1/4s", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 250);
+    check_cmd_ex("sleep 2min", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000);
+    check_cmd_ex("sleep 1min54s6000ms", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000);
+    check_cmd_ex("sleep 2m3", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000 + 3000);
+    check_cmd_ex("sleep 2m3s", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000 + 3000);
+    check_cmd_ex("sleep 2m3ms", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000 + 3);
+    check_cmd("sleep -3", "index_param=1 param='-3' type=InvalidFormat", "");
+    check_cmd("repeat a", "index_param=1 param='a' type=InvalidFormat", "");
     //@}
 
 

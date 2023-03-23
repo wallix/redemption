@@ -100,6 +100,7 @@ struct Repl
     bool disconnection = false;
     bool has_delay_cmd = false;
 
+    MonotonicTimePoint::duration cmd_delay;
     std::string delayed_cmd;
     HeadlessRepl repl;
 
@@ -138,9 +139,19 @@ struct Repl
 
     bool execute_command(HeadlessFront& front, RdpInput& mod)
     {
+        return execute_command(front, mod, repl.read_command());
+    }
+
+    bool execute_delayed_command(HeadlessFront& front, RdpInput& mod)
+    {
+        return execute_command(front, mod, delayed_cmd);
+    }
+
+    bool execute_command(HeadlessFront& front, RdpInput& mod, chars_view cmd_line)
+    {
         HeadlessCommand& cmd_ctx = front.command();
 
-        switch (cmd_ctx.execute_command(repl.read_command(), mod)) {
+        switch (cmd_ctx.execute_command(cmd_line, mod)) {
             case HeadlessCommand::Result::Ok:
                 break;
 
@@ -179,7 +190,8 @@ struct Repl
                 }
                 break;
 
-            case HeadlessCommand::Result::Delay:
+            case HeadlessCommand::Result::RepetitionCommand:
+                cmd_delay = front.command().delay;
                 delayed_cmd = front.command().output_message.as<std::string_view>();
                 has_delay_cmd = true;
                 break;
@@ -366,20 +378,19 @@ int main(int argc, char const** argv)
                 }
 
                 repl.has_delay_cmd = false;
-                if (!repl.delayed_cmd.empty() && cmd_ctx.delay.count() >= 0) {
-                    auto delay = std::chrono::duration_cast<MonotonicTimePoint::duration>(cmd_ctx.delay);
+                if (!repl.delayed_cmd.empty() && repl.cmd_delay.count() >= 0) {
                     auto repeat = (cmd_ctx.repeat_delay < 0)
                         ? ~uint64_t(0) // infinite loop
                         : static_cast<uint64_t>(cmd_ctx.repeat_delay);
 
-                    auto fn = [delay, repeat, &repl, &front, &mod](Event& ev) mutable {
+                    auto fn = [repeat, &repl, &front, &mod](Event& ev) mutable {
                         if (--repeat == 0) {
                             ev.garbage = true;
                             return;
                         }
 
-                        ev.add_timeout_delay(delay);
-                        repl.execute_command(front, *mod);
+                        ev.add_timeout_delay(repl.cmd_delay);
+                        repl.execute_delayed_command(front, *mod);
                         if (repl.has_delay_cmd) {
                             repl.has_delay_cmd = false;
                             ev.garbage = true;
@@ -387,7 +398,7 @@ int main(int argc, char const** argv)
                     };
 
                     delayed_cmd_ref = event_container.event_creator()
-                        .create_event_timeout("delayed_cmd", nullptr, delay, fn);
+                        .create_event_timeout("delayed_cmd", nullptr, repl.cmd_delay, fn);
                 }
                 else {
                     delayed_cmd_ref.garbage();

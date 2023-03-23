@@ -646,6 +646,129 @@ struct KbdLockParser
     }
 };
 
+struct DelayParser
+{
+    std::chrono::milliseconds delay;
+
+    // (number '.' number | number ('/' number)?) unit?
+    bool parse(chars_view str)
+    {
+        unsigned next_factor = 0;
+        unsigned next_no_unit_factor = 1;
+
+        if (str.empty()) {
+            return true;
+        }
+
+        for (;;) {
+            unsigned d1 = 0;
+            unsigned d2 = 0;
+            bool real = false;
+            bool fraction = false;
+
+            auto r = decimal_chars_to_int(str, d1);
+            if (r.ec != std::errc()) {
+                if (r.ec != std::errc::invalid_argument || str[0] != '.') {
+                    return false;
+                }
+            }
+
+            if (r.ptr != str.end() && (r.ptr[0] == '/' || r.ptr[0] == '.')) {
+                auto* ptr = r.ptr + 1;
+                auto* end = str.end();
+
+                if (r.ptr[0] == '.') {
+                    real = true;
+                    // maximum 3 digits
+                    if (end - ptr > 3) {
+                        end = ptr + 3;
+                    }
+                }
+                else {
+                    fraction = true;
+                }
+
+                r = decimal_chars_to_int(chars_view(ptr, end), d2);
+
+                if (r.ec != std::errc()) {
+                    if (fraction) {
+                        return false;
+                    }
+                    r.ptr = ptr;
+                }
+
+                if (real) {
+                    // 0.1 => d = 1 -> d = 100
+                    if (r.ptr - ptr == 1) {
+                        d2 *= 100;
+                    }
+                    // 0.12 => d = 12 -> d = 120
+                    else if (r.ptr - ptr == 2) {
+                        d2 *= 10;
+                    }
+                    // ptr - r.ptr >= 3
+                    else {
+                        // skip digit greater than 3 significant numbers
+                        while (r.ptr != str.end() && is_decimal_char(*r.ptr)) {
+                            ++r.ptr;
+                        }
+                    }
+                }
+            }
+
+            unsigned factor = next_factor;
+            unsigned unit_factor = next_no_unit_factor;
+            next_factor = 0;
+            next_no_unit_factor = 0;
+
+            if (r.ptr != str.end()) {
+                if (r.ptr[0] == 's') {
+                    factor = 1;
+                    next_factor = 0;
+                    unit_factor = 1000;
+                    next_no_unit_factor = 1;
+                    r.ptr += 1;
+                }
+                else if (r.ptr[0] == 'm') {
+                    // m / min
+                    if (str.end() - r.ptr <= 1 || r.ptr[1] != 's') {
+                        factor = 600;
+                        next_factor = 1000;
+                        unit_factor = 60 * 1000;
+                        next_no_unit_factor = 1000;
+                        bool is_long = (str.end() - r.ptr > 2 && r.ptr[1] == 'i' && r.ptr[2] == 'n');
+                        r.ptr += is_long ? 3 : 1;
+                    }
+                    else {
+                        unit_factor = 1;
+                        r.ptr += 2;
+                    }
+                }
+                else if (r.ptr[0] == '.') {
+                    return false;
+                }
+            }
+
+            d1 *= unit_factor;
+
+            if (fraction) {
+                d1 /= d2;
+            }
+            else if (real) {
+                d1 += d2 * factor;
+            }
+
+            delay += std::chrono::milliseconds(d1);
+
+            if (r.ptr == str.end()) {
+                return true;
+            }
+
+            str = chars_view(r.ptr, str.end());
+        }
+    }
+};
+
 using kbdtypes::KbdFlags;
 using kbdtypes::Scancode;
 
@@ -1040,6 +1163,23 @@ N(kbd) {P(en)|P(fr)}
     Use C(help kbd) for listed mapping.
 
 
+N(keydelay) [P(delay)...]
+N(mousedelay) [P(delay)...]
+
+    Set a delay between two keyboard or mouse event.
+    Keyboard events are N(scancode), N(unicode), N(key), N(text), N(textln) and N(lock).
+    Mouse events are N(mouse), N(move), N(scroll) and N(hscroll).
+
+    See C(help delay) for format (default unit is milliseconds).
+
+
+N(sleep) [P(delay)...]
+
+    Add a delay before executing the next command.
+
+    See C(help delay) for format (default unit is milliseconds).
+
+
 N(username) P(username)
 alias: user
 
@@ -1113,11 +1253,13 @@ alias: h and ?
     List named value.
 
 
-N(delay) P(milliseconds) [P(repeat)] P(cmd)
+N(repeat) P(delay) [P(number_or_repeatitions)] P(cmd)
 
     Repeat a command with a delay.
-    Stop timer when milliseconds is negative.
-    Infinite loop when repeat is negative.
+    Stop timer when P(delay) is negative.
+    Infinite loop when N(number_or_repeatitions) is negative.
+
+    See C(help delay) for format (default unit is milliseconds).
 
 
 N(quit)
@@ -1131,6 +1273,20 @@ N(#)
     A comment, is ignored.
 )"
     ""_av;
+
+constexpr auto help_delay = R"(Delay format:
+delay: P(number)[P(unit)]
+number: P([0-9]) | [P([0-9])].P([0-9]) | P([0-9])/P([0-9])
+
+- unit are:
+    V(s) for seconds
+    V(ms) for milliseconds (default unit)
+    V(m) or V(min) for minutes
+
+Exemple:
+    C(sleep 1/4h) == C(sleep 0.25h) == C(sleep 15min) == C(sleep 900000)
+    C(sleep 1min3s) == C(sleep 1min 3s) == C(sleep 63s)
+)"_av;
 
 constexpr std::size_t count_help_replacement(chars_view str)
 {
@@ -1151,16 +1307,14 @@ constexpr std::size_t count_help_replacement(chars_view str)
     return n;
 }
 
-constexpr auto make_colorized_help()
+template<std::size_t nrep, std::size_t len>
+constexpr auto make_colorized_string(chars_view string)
 {
-    constexpr std::size_t nrep = count_help_replacement(help_commands);
-    constexpr std::size_t len = help_commands.size() + nrep * 8;
-
-    std::array<char, len+1> colorized_help {};
+    std::array<char, len + nrep * 8 + 1> colorized_help {};
     char* p = colorized_help.data();
 
-    auto first = help_commands.begin();
-    auto last = help_commands.end();
+    auto first = string.begin();
+    auto last = string.end();
 
     auto push_color = [&](char const* styles) {
         // skip (
@@ -1207,7 +1361,13 @@ constexpr auto make_colorized_help()
     return colorized_help;
 }
 
-constexpr auto colorized_help = make_colorized_help();
+constexpr auto colorized_help = make_colorized_string<
+    count_help_replacement(help_commands), help_commands.size()
+>(help_commands);
+
+constexpr auto colorized_help_delay = make_colorized_string<
+    count_help_replacement(help_delay), help_delay.size()
+>(help_delay);
 
 std::vector<char> help_sc_param_en;
 std::vector<char> help_sc_param_fr;
@@ -1301,6 +1461,10 @@ chars_view cmd_help(std::string_view name, bool is_kbdmap_en)
             "off 0\n"
             "on  1"
             ""_av;
+    }
+
+    if (name == "delay") {
+        return chars_view{colorized_help_delay};
     }
 
     return {};
@@ -1506,6 +1670,20 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         });
     }
 
+    else if (cmd_name == "sleep" || cmd_name == "keydelay" || cmd_name == "mousedelay") {
+        delay = {};
+        auto res = parse_sequence(DelayParser(), [&](DelayParser parser) {
+            delay += parser.delay;
+        });
+        if (res == Result::Ok) {
+            if (cmd_name[0] == 's') {
+                return delay.count() <= 0 ? res : Result::Sleep;
+            }
+            return (cmd_name[0] == 'k') ? Result::KeyDelay : Result::MouseDelay;
+        }
+        return res;
+    }
+
     else if (cmd_name == "scroll") {
         return scroll_sequence(MOUSE_FLAG_WHEEL);
     }
@@ -1650,7 +1828,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         return Result::ConfigStr;
     }
 
-    else if (cmd_name == "delay") {
+    else if (cmd_name == "repeat") {
         if (++first == last) {
             return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected delay number"_av);
         }
@@ -1666,7 +1844,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         if (++first == last) {
             repeat_delay = -1;
             output_message = {cmd.end(), cmd.end()};
-            return Result::Delay;
+            return Result::RepetitionCommand;
         }
 
         // parse repetition
@@ -1680,7 +1858,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         // parse cmd
         auto* begin = (first != last) ? first->begin() : cmd.end();
         output_message = {begin, cmd.end()};
-        return Result::Delay;
+        return Result::RepetitionCommand;
     }
 
     else if (cmd_name == "q" || cmd_name == "quit") {

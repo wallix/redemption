@@ -63,7 +63,9 @@ struct HeadlessCommand
     std::string username;
     std::string password;
 
+    // Sleep, RepetitionCommand, KeyDelay, MouseDelay
     std::chrono::milliseconds delay {-1};
+
     int repeat_delay = -1;
 
     enum class [[nodiscard]] Result
@@ -78,7 +80,10 @@ struct HeadlessCommand
         PrintScreen,
         ConfigFile,
         ConfigStr,
-        Delay,
+        RepetitionCommand,
+        Sleep,
+        KeyDelay,
+        MouseDelay,
         Quit,
     };
 
@@ -101,10 +106,14 @@ struct HeadlessCommand
     //      | ('basename' | 'sid') (ws filename)?
     //      | ('configfile' | 'conff' | 'f') ws filename
     //      | ('configstr' | 'conf') ws str
-    //      | 'delay' ws decimal decimal? cmd
+    //      | 'repeat' ws decimal decimal? cmd
+    //      | 'sleep' delay*
+    //      | 'keydelay' delay*
+    //      | 'mousedelay' delay*
     //      | ('quit' | 'q')
     //      | '#' .*
     // ws := ' '
+    // delay := (decimal ('/' decimal) | decimal? '.' decimal) ('ms'|'s'|'m'|'min')?
     // mod := 'R'? 'S' 'hift'?
     //      | 'R'? 'C' 'trl'?
     //      | 'R'? 'M' 'eta'?
