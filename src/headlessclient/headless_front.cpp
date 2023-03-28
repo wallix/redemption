@@ -38,7 +38,6 @@ gdi::GraphicApi& HeadlessFront::prepare_gd()
 
 void HeadlessFront::dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y)
 {
-    LOG(LOG_DEBUG, "start cap %s %d %d %d", filename, mouse_x, mouse_y, bool(drawable));
     if (drawable) {
         drawable->dump_png(filename, mouse_x, mouse_y);
     }

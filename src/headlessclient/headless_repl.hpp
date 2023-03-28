@@ -16,7 +16,7 @@ struct HeadlessRepl
         return is_eof_;
     }
 
-    chars_view read_command();
+    chars_view read_command(int fd);
 
     struct CommandBuffer : private noncopyable
     {
@@ -40,7 +40,7 @@ struct HeadlessRepl
             end_buffer = start_line;
         }
 
-        Result read_line(int fd = 0);
+        Result read_line(int fd);
 
     private:
         char* end_buffer;

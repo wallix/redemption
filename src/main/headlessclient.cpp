@@ -37,7 +37,7 @@ static void show_prompt()
     write(1, ">>> ", 4);
 }
 
-static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_manager)
+static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_manager, int ignored_fd = -1)
 {
     const auto now = MonotonicTimePoint::clock::now();
     event_manager.get_writable_time_base().monotonic_time = now;
@@ -47,8 +47,10 @@ static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_mana
     io_fd_zero(rfds);
 
     event_manager.for_each_fd([&](int fd){
-        io_fd_set(fd, rfds);
-        max = std::max(max, fd);
+        if (fd != ignored_fd) {
+            io_fd_set(fd, rfds);
+            max = std::max(max, fd);
+        }
     });
 
     const bool nodelay = trans.has_tls_pending_data();
@@ -93,6 +95,64 @@ static KeyLayout const& get_layout(KeyLayout::KbdId keylayout)
 namespace
 {
 
+struct BatchInput : RdpInput
+{
+    enum class InputType
+    {
+        Scancode,
+        Unicode,
+        KeyLock,
+        Mouse,
+    };
+
+    struct InputData
+    {
+        InputType type;
+        uint16_t flags_or_locks;
+        uint16_t sc_or_uc_or_x;
+        uint16_t y;
+    };
+
+    // TODO
+    Keymap const* keymap = nullptr;
+
+    std::vector<InputData> inputs;
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
+    {
+        (void)keymap;
+        (void)event_time;
+        this->keymap = &keymap;
+        inputs.push_back(InputData{InputType::Scancode, underlying_cast(flags), underlying_cast(scancode), 0});
+    }
+
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
+    {
+        inputs.push_back(InputData{InputType::Unicode, underlying_cast(flag), unicode, 0});
+    }
+
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        inputs.push_back(InputData{InputType::Mouse, device_flags, x, y});
+    }
+
+    void rdp_input_synchronize(KeyLocks locks) override
+    {
+        inputs.push_back(InputData{InputType::KeyLock, underlying_cast(locks), 0, 0});
+    }
+
+    void rdp_input_invalidate(Rect r) override
+    {
+        (void)r;
+    }
+
+    void rdp_gdi_up_and_running() override
+    {}
+
+    void rdp_gdi_down() override
+    {}
+};
+
 struct Repl
 {
     bool quit = false;
@@ -100,7 +160,12 @@ struct Repl
     bool disconnection = false;
     bool has_delay_cmd = false;
 
+    int fd = 0;
+
     MonotonicTimePoint::duration cmd_delay;
+    MonotonicTimePoint::duration key_delay;
+    MonotonicTimePoint::duration mouse_delay;
+    MonotonicTimePoint::duration sleep_delay;
     std::string delayed_cmd;
     HeadlessRepl repl;
 
@@ -113,7 +178,6 @@ struct Repl
     {
         null_mod mod;
 
-        int fd = 0;
         fd_set rfds;
         io_fd_zero(rfds);
         io_fd_set(fd, rfds);
@@ -139,7 +203,7 @@ struct Repl
 
     bool execute_command(HeadlessFront& front, RdpInput& mod)
     {
-        return execute_command(front, mod, repl.read_command());
+        return execute_command(front, mod, repl.read_command(fd));
     }
 
     bool execute_delayed_command(HeadlessFront& front, RdpInput& mod)
@@ -190,9 +254,21 @@ struct Repl
                 }
                 break;
 
+            case HeadlessCommand::Result::KeyDelay:
+                key_delay = cmd_ctx.delay;
+                break;
+
+            case HeadlessCommand::Result::MouseDelay:
+                mouse_delay = cmd_ctx.delay;
+                break;
+
+            case HeadlessCommand::Result::Sleep:
+                sleep_delay = cmd_ctx.delay;
+                break;
+
             case HeadlessCommand::Result::RepetitionCommand:
-                cmd_delay = front.command().delay;
-                delayed_cmd = front.command().output_message.as<std::string_view>();
+                cmd_delay = cmd_ctx.delay;
+                delayed_cmd = cmd_ctx.output_message.as<std::string_view>();
                 has_delay_cmd = true;
                 break;
 
@@ -266,9 +342,19 @@ int main(int argc, char const** argv)
     cmd_ctx.username = options.username;
     cmd_ctx.password = options.password;
 
-    std::string ip_address = options.ip_address;
     repl.start_connection = *options.ip_address;
     bool interactive = !repl.start_connection || options.interactive;
+
+    char const* automation_script = options.headless_script_path;
+    bool has_automation_script = automation_script;
+
+    auto input = has_automation_script ? unique_fd(automation_script) : unique_fd(0);
+    repl.fd = input.fd();
+
+    if (has_automation_script && !input) {
+        printf("Automation open error: %s: %s", automation_script, strerror(errno));
+        return 1;
+    }
 
     gdi::GraphicDispatcher gds;
 
@@ -405,21 +491,106 @@ int main(int argc, char const** argv)
                 }
             };
 
-            mk_delayed_cmd_when_available();
+            BatchInput batch;
+            int ignored_fd = -1;
 
-            show_prompt();
+            EventRef time_ev;
+            EventRef input_ev;
+            std::size_t i_input = 0;
+            std::size_t i_line = 0;
 
-            auto read_input = [&](Event&){
-                if (repl.execute_command(front, *mod)) {
-                    mk_delayed_cmd_when_available();
-                    show_prompt();
-                }
-            };
+            if (automation_script) {
+                auto timer_input = [&](Event& e) {
+                    if (repl.sleep_delay.count()) {
+                        ignored_fd = input.fd();
+                        e.add_timeout_delay(repl.sleep_delay);
+                        repl.sleep_delay = repl.sleep_delay.zero();
+                        return;
+                    }
 
-            EventRef input_ev = event_container.event_creator()
-                .create_event_fd_without_timeout("stdin", nullptr, 0, read_input);
+                    if (!batch.inputs.empty()) {
+                        ignored_fd = input.fd();
+                        auto& input = batch.inputs[i_input];
 
-            while (is_actif() && wait_and_draw_event(*sck_trans, event_manager)) {
+                        // send one event to mod
+                        switch (input.type) {
+                            case BatchInput::InputType::Scancode:
+                                mod->rdp_input_scancode(
+                                    checked_int(input.flags_or_locks),
+                                    checked_int(input.sc_or_uc_or_x),
+                                    0,
+                                    *batch.keymap
+                                );
+                                break;
+
+                            case BatchInput::InputType::Unicode:
+                                mod->rdp_input_unicode(
+                                    checked_int(input.flags_or_locks),
+                                    checked_int(input.sc_or_uc_or_x)
+                                );
+                                break;
+
+                            case BatchInput::InputType::KeyLock:
+                                mod->rdp_input_synchronize(checked_int(input.flags_or_locks));
+                                break;
+
+                            case BatchInput::InputType::Mouse:
+                                mod->rdp_input_mouse(
+                                    checked_int(input.flags_or_locks),
+                                    input.sc_or_uc_or_x,
+                                    input.y
+                                );
+                                break;
+                        }
+
+                        ++i_input;
+                        if (i_input < batch.inputs.size()) {
+                            e.add_timeout_delay(input.type == BatchInput::InputType::Mouse
+                                ? repl.mouse_delay
+                                : repl.key_delay
+                            );
+                            return;
+                        }
+
+                        i_input = 0;
+                        batch.inputs.clear();
+                    }
+
+                    ignored_fd = -1;
+                };
+
+                auto read_auto_input = [&](Event&) {
+                    auto line = repl.repl.read_command(repl.fd);
+                    ++i_line;
+                    printf("%zu: %.*s\n", i_line, int(line.size()), line.data());
+                    if (repl.execute_command(front, batch, line)) {
+                        timer_input(*time_ev.get_optional_event());
+                    }
+                };
+
+                time_ev = event_container.event_creator()
+                    .create_event_timeout("script-timer", nullptr, MonotonicTimePoint::duration(), timer_input);
+
+                input_ev = event_container.event_creator()
+                    .create_event_fd_without_timeout("script", nullptr, input.fd(), read_auto_input);
+            }
+            else {
+                show_prompt();
+
+                mk_delayed_cmd_when_available();
+
+                auto read_input = [&](Event&) {
+                    if (repl.execute_command(front, *mod)) {
+                        mk_delayed_cmd_when_available();
+                        show_prompt();
+                    }
+                };
+
+                input_ev = event_container.event_creator()
+                    .create_event_fd_without_timeout("stdin", nullptr, input.fd(), read_input);
+            }
+
+            while (is_actif() && wait_and_draw_event(*sck_trans, event_manager, ignored_fd)) {
             }
 
             if (repl.disconnection) {

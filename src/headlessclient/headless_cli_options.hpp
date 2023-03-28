@@ -46,6 +46,7 @@ struct HeadlessCliOptions
     char const* output_png_path = "output.png";
     char const* output_wrm_path = "output.wrm";
     char const* output_record_transport_path = "output.trans";
+    char const* headless_script_path = nullptr;
 
     char const* load_balance_info = "";
 

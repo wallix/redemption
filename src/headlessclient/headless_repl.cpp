@@ -42,9 +42,9 @@ HeadlessRepl::CommandBuffer::read_line(int fd)
     return Result{ResultType::Incomplete, {inbuf, pos}};
 }
 
-chars_view HeadlessRepl::read_command()
+chars_view HeadlessRepl::read_command(int fd)
 {
-    auto [rtype, cmd] = command_buffer_.read_line();
+    auto [rtype, cmd] = command_buffer_.read_line(fd);
     switch (rtype) {
         case CommandBuffer::ResultType::Extracted:
             if (is_incomplete_) {
