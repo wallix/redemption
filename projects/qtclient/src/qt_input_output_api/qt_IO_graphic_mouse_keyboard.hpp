@@ -24,17 +24,22 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include "qt_input_output_api/graphics.hpp"
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_screen_window.hpp"
 #include "qt_graphics_components/qt_form_window.hpp"
 
-#include "qtclient/graphics/cursor_cache.hpp"
+#include <QtGui/QColor>
+#include <QtGui/QImage>
+#include <QtGui/QPainter>
+
+#include "client/common/rdp_pointer_to_rgba8888.hpp"
 
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QDesktopWidget>
 
-class QImage;
 
 class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
 {
@@ -49,17 +54,14 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
     {
         QtIOGraphicMouseKeyboard & self;
 
-        Graphics(QtIOGraphicMouseKeyboard & self)
-        : self(self)
-        {}
+        Graphics(QtIOGraphicMouseKeyboard & self) noexcept : self(self) {}
 
-        void begin_update() override
-        {
+        void begin_update() override {
+
             ++this->update_counter;
         }
 
-        void end_update() override
-        {
+        void end_update() override {
             assert(this->update_counter);
             --this->update_counter;
             if (this->update_counter != 0){
@@ -79,46 +81,44 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
             }
         }
 
-        void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & pointer) override
+        void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
         {
             if (!cache_idx.is_predefined_pointer()) {
-                cursor_cache.set_rdp_pointer(cache_idx.cache_index(), pointer);
+                this->pointer_cache[cache_idx.cache_index()] = cursor;
             }
         }
 
         void cached_pointer(gdi::CachePointerIndex cache_idx) override
         {
-            QCursor const* cursor;
+            auto const& pointer = cache_idx.is_predefined_pointer()
+                ? predefined_pointer_to_pointer(cache_idx.as_predefined_pointer())
+                : pointer_cache[cache_idx.cache_index()];
 
-            if (!cache_idx.is_predefined_pointer()) {
-                cursor = cursor_cache.get_cursor(cache_idx.cache_index());
-            }
-            else {
-                cursor = qtclient::set_predefined_pointer(shaped_cursor, cache_idx.as_predefined_pointer());
-            }
-
-            if (!cursor) {
-                LOG(LOG_ERR, "Unknown pointer id %d (is_predefined=%d)",
-                    cache_idx.cache_index(), cache_idx.is_predefined_pointer());
-                return;
-            }
+            auto hotspot = pointer.get_hotspot();
+            auto rgba_cursor = redclient::rdp_pointer_to_rgba8888(pointer);
+            QImage cursor_image(
+                rgba_cursor.data(),
+                int(rgba_cursor.width),
+                int(rgba_cursor.height),
+                int(rgba_cursor.bytes_per_line()),
+                QImage::Format_RGBA8888);
+            QCursor cursor(QPixmap::fromImage(cursor_image), hotspot.x, hotspot.x);
 
             if (this->self.config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
                 for (auto && p : this->self.remote_app_screen_map) {
                     if (p.second) {
-                        p.second->setCursor(*cursor);
+                        p.second->setCursor(cursor);
                     }
                 }
             }
             else if (this->self.screen) {
-                this->self.screen->setCursor(*cursor);
+                this->self.screen->setCursor(cursor);
             }
         }
 
     private:
         int update_counter = 0;
-        qtclient::CursorCache cursor_cache;
-        QCursor shaped_cursor;
+        std::array<RdpPointer, gdi::CachePointerIndex::MAX_POINTER_COUNT> pointer_cache;
     };
 
     Graphics graphics;
@@ -187,7 +187,7 @@ public:
         }
     }
 
-    void draw_image(QPoint const& point, QImage const& image)
+    void draw_image(QPoint const& point, QImage& image)
     {
         this->graphics.get_painter().drawImage(point, image);
     }

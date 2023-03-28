@@ -5,9 +5,8 @@
 # run `tools/bjam/gen_targets.py`
 #
 
-exe qtclient :
-  src/qtclient.o
-:
+constant main_qt_client_redemption :
+
   <library>app_path_exe.o
   <library>crypto
   <library>gssapi_krb5
@@ -15,7 +14,6 @@ exe qtclient :
   <library>libQtCore
   <library>libQtGui
   <library>libQtWidgets
-  <library>log.o
   <library>openssl
   <library>png
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
@@ -27,7 +25,6 @@ exe qtclient :
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/qt_input_output_api/graphics.o
   <library>src/qt_input_output_api/qt_input_output_clipboard.o
-  <library>src/qtclient/graphics/cursor_cache.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
@@ -115,97 +112,12 @@ exe qtclient :
   $(MUSL_GETTEXT)
   <define>ZLIB_CONST
 ;
-exe qtclient2 :
-  src/qtclient2.o
-:
-  <library>app_path_exe.o
-  <library>crypto
-  <library>gssapi_krb5
-  <library>krb5
-  <library>libQtCore
-  <library>libQtGui
-  <library>libQtWidgets
-  <library>log.o
-  <library>openssl
-  <library>png
-  <library>src/qt_input_output_api/graphics.o
-  <library>src/qtclient/event_manager.o
-  <library>src/qtclient/graphics/cursor_cache.o
-  <library>src/qtclient/headless_input_command_generator.o
-  <library>src/qtclient/inputs/send_mouse_event.o
-  <library>src/qtclient/inputs/send_scancode.o
-  <library>src/qtclient/profile/cli_parse_profile.o
-  <library>src/qtclient/socket.o
-  <library>src/qtclient/widget/screen_widget.o
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/kv_list_from_strings.o
-  <library>src/capture/fdx_capture.o
-  <library>src/client/common/new_mod_rdp.o
-  <library>src/client/common/rdp_pointer_to_rgba8888.o
-  <library>src/core/RDP/dwt.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/RDP/rlgr.o
-  <library>src/core/channels_authorizations.o
-  <library>src/core/dynamic_channels_authorizations.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/gdi/text_metrics.o
-  <library>src/headlessclient/headless_configuration.o
-  <library>src/keyboard/keylayouts.o
-  <library>src/keyboard/keymap.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/widget/button.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/rdp/channels/cliprdr_channel.o
-  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
-  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexadecimal_string_to_buffer.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
-  <library>src/utils/parse_primary_drawing_orders.o
-  <library>src/utils/primitives/primitives.o
-  <library>src/utils/primitives/primitives_sse2.o
-  <library>src/utils/rle.o
-  <library>src/utils/set_exception_handler_pretty_message.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  $(EXE_DEPENDENCIES)
-  $(MUSL_GETTEXT)
-;
 
 
 test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   tests/client_redemption/client_channels/test_client_cliprdr_channel.cpp
 :
   <library>crypto
-  <library>log.o
   <library>png
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -248,7 +160,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   tests/client_redemption/client_channels/test_client_rdpdr_channel.cpp
 :
   <library>crypto
-  <library>log.o
   <library>png
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -291,7 +202,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   tests/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
 :
   <library>crypto
-  <library>log.o
   <library>png
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -334,7 +244,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   tests/client_redemption/client_channels/test_client_remoteapp_channel.cpp
 :
   <library>crypto
-  <library>log.o
   <library>png
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -373,65 +282,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/qtclient/graphics/test_cursor_cache :
-  tests/qtclient/graphics/test_cursor_cache.cpp
-:
-  <library>libQtGui
-  <library>log.o
-  <library>src/qtclient/graphics/cursor_cache.o
-  <library>src/client/common/rdp_pointer_to_rgba8888.o
-  <library>src/core/RDP/rdp_pointer.o
-  <library>src/core/error.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/qtclient/graphics/test_rdp_painter :
-  tests/qtclient/graphics/test_rdp_painter.cpp
-:
-  <library>crypto
-  <library>libQtGui
-  <library>log.o
-  <library>src/qtclient/graphics/rdp_painter.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/qtclient/profile/test_profile :
-  tests/qtclient/profile/test_profile.cpp
-:
-  <library>log.o
-  <library>src/qtclient/profile/cli_parse_profile.o
-  <library>src/qtclient/profile/persistent_profiles.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-;
-test-run tests/qtclient/profile/test_widget_profile :
-  tests/qtclient/profile/test_widget_profile.cpp
-:
-  <library>libQtGui
-  <library>libQtWidgets
-  <library>src/qtclient/profile/widget_profile.o
-  <library>src/keyboard/keylayouts.o
-;
-test-run tests/qtclient/test_headless_input_command_generator :
-  tests/qtclient/test_headless_input_command_generator.cpp
-:
-  <library>src/qtclient/headless_input_command_generator.o
-  <library>src/utils/strutils.o
-;
-test-run tests/utils/test_config_enum_description_to_array :
-  tests/utils/test_config_enum_description_to_array.cpp
-:
-;
 
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : src/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : src/client_redemption/client_channels/client_rdpdr_channel.cpp ;
@@ -440,21 +290,9 @@ obj src/client_redemption/client_channels/client_remoteapp_channel.o : src/clien
 obj src/client_redemption/client_config/client_redemption_config.o : src/client_redemption/client_config/client_redemption_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_clipboard_config.o : src/client_redemption/client_input_output_api/rdp_clipboard_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_disk_config.o : src/client_redemption/client_input_output_api/rdp_disk_config.cpp ;
+obj src/main_qt_client_redemption.o : src/main_qt_client_redemption.cpp : <define>ZLIB_CONST ;
 obj src/qt_input_output_api/graphics.o : src/qt_input_output_api/graphics.cpp ;
 obj src/qt_input_output_api/qt_input_output_clipboard.o : src/qt_input_output_api/qt_input_output_clipboard.cpp ;
-obj src/qtclient.o : src/qtclient.cpp : <define>ZLIB_CONST ;
-obj src/qtclient/event_manager.o : src/qtclient/event_manager.cpp ;
-obj src/qtclient/graphics/cursor_cache.o : src/qtclient/graphics/cursor_cache.cpp ;
-obj src/qtclient/graphics/rdp_painter.o : src/qtclient/graphics/rdp_painter.cpp ;
-obj src/qtclient/headless_input_command_generator.o : src/qtclient/headless_input_command_generator.cpp ;
-obj src/qtclient/inputs/send_mouse_event.o : src/qtclient/inputs/send_mouse_event.cpp ;
-obj src/qtclient/inputs/send_scancode.o : src/qtclient/inputs/send_scancode.cpp ;
-obj src/qtclient/profile/cli_parse_profile.o : src/qtclient/profile/cli_parse_profile.cpp ;
-obj src/qtclient/profile/persistent_profiles.o : src/qtclient/profile/persistent_profiles.cpp ;
-obj src/qtclient/profile/widget_profile.o : src/qtclient/profile/widget_profile.cpp ;
-obj src/qtclient/socket.o : src/qtclient/socket.cpp ;
-obj src/qtclient/widget/screen_widget.o : src/qtclient/widget/screen_widget.cpp ;
-obj src/qtclient2.o : src/qtclient2.cpp ;
 obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/kv_list_from_strings.o : $(REDEMPTION_SRC_PATH)/acl/kv_list_from_strings.cpp ;
@@ -480,7 +318,6 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
-obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
@@ -536,61 +373,22 @@ obj src/utils/stacktrace.o : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOO
 obj src/utils/strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
-obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : <variant>debug:<define>RED_COMPILE_TYPE=debug <variant>release:<define>RED_COMPILE_TYPE=release <variant>san:<define>RED_COMPILE_TYPE=san $(CXXFLAGS_TEST) ;
 
 alias test_client_cliprdr_channel : tests/client_redemption/client_channels/test_client_cliprdr_channel ;
 alias test_client_rdpdr_channel : tests/client_redemption/client_channels/test_client_rdpdr_channel ;
 alias test_client_rdpsnd_channel : tests/client_redemption/client_channels/test_client_rdpsnd_channel ;
 alias test_client_remoteapp_channel : tests/client_redemption/client_channels/test_client_remoteapp_channel ;
-alias test_cursor_cache : tests/qtclient/graphics/test_cursor_cache ;
-alias test_rdp_painter : tests/qtclient/graphics/test_rdp_painter ;
-alias test_profile : tests/qtclient/profile/test_profile ;
-alias test_widget_profile : tests/qtclient/profile/test_widget_profile ;
-alias test_headless_input_command_generator : tests/qtclient/test_headless_input_command_generator ;
-alias test_config_enum_description_to_array : tests/utils/test_config_enum_description_to_array ;
 alias tests/client_redemption/client_channels.norec :
   tests/client_redemption/client_channels/test_client_cliprdr_channel
   tests/client_redemption/client_channels/test_client_rdpdr_channel
   tests/client_redemption/client_channels/test_client_rdpsnd_channel
   tests/client_redemption/client_channels/test_client_remoteapp_channel
 ;
-alias tests/qtclient/graphics.norec :
-  tests/qtclient/graphics/test_cursor_cache
-  tests/qtclient/graphics/test_rdp_painter
-;
-alias tests/qtclient/profile.norec :
-  tests/qtclient/profile/test_profile
-  tests/qtclient/profile/test_widget_profile
-;
-alias tests/qtclient.norec :
-  tests/qtclient/test_headless_input_command_generator
-;
-alias tests/utils.norec :
-  tests/utils/test_config_enum_description_to_array
-;
 alias tests/client_redemption/client_channels :
   tests/client_redemption/client_channels.norec
 ;
 alias tests/client_redemption :
   tests/client_redemption/client_channels
-;
-alias tests/qtclient/graphics :
-  tests/qtclient/graphics.norec
-;
-alias tests/qtclient :
-  tests/qtclient.norec
-  tests/qtclient/graphics
-  tests/qtclient/profile
-;
-alias tests/qtclient/profile :
-  tests/qtclient/profile.norec
-;
-alias tests :
-  tests/qtclient
-  tests/utils
-;
-alias tests/utils :
-  tests/utils.norec
 ;
 
 explicit
@@ -601,21 +399,9 @@ explicit
   src/client_redemption/client_config/client_redemption_config.o
   src/client_redemption/client_input_output_api/rdp_clipboard_config.o
   src/client_redemption/client_input_output_api/rdp_disk_config.o
+  src/main_qt_client_redemption.o
   src/qt_input_output_api/graphics.o
   src/qt_input_output_api/qt_input_output_clipboard.o
-  src/qtclient.o
-  src/qtclient/event_manager.o
-  src/qtclient/graphics/cursor_cache.o
-  src/qtclient/graphics/rdp_painter.o
-  src/qtclient/headless_input_command_generator.o
-  src/qtclient/inputs/send_mouse_event.o
-  src/qtclient/inputs/send_scancode.o
-  src/qtclient/profile/cli_parse_profile.o
-  src/qtclient/profile/persistent_profiles.o
-  src/qtclient/profile/widget_profile.o
-  src/qtclient/socket.o
-  src/qtclient/widget/screen_widget.o
-  src/qtclient2.o
   projects/redemption_configs/redemption_src/configs/config.o
   src/RAIL/client_execute.o
   src/acl/kv_list_from_strings.o
@@ -641,7 +427,6 @@ explicit
   src/gdi/protected_graphics.o
   src/gdi/screen_functions.o
   src/gdi/text_metrics.o
-  src/headlessclient/headless_configuration.o
   src/keyboard/keylayouts.o
   src/keyboard/keymap.o
   src/keyboard/keymapsym.o
@@ -697,7 +482,6 @@ explicit
   src/utils/strutils.o
   src/utils/sugar/multisz.o
   src/utils/utf.o
-  tests/includes/test_only/test_framework/working_directory.o
 ;
 
 explicit
@@ -705,28 +489,13 @@ explicit
   test_client_rdpdr_channel
   test_client_rdpsnd_channel
   test_client_remoteapp_channel
-  test_cursor_cache
-  test_rdp_painter
-  test_profile
-  test_widget_profile
-  test_headless_input_command_generator
-  test_config_enum_description_to_array
 ;
 
 explicit
   tests/client_redemption/client_channels.norec
-  tests/qtclient/graphics.norec
-  tests/qtclient/profile.norec
-  tests/qtclient.norec
-  tests/utils.norec
 ;
 
 explicit
   tests/client_redemption/client_channels
   tests/client_redemption
-  tests/qtclient/graphics
-  tests/qtclient
-  tests/qtclient/profile
-  tests
-  tests/utils
 ;

@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #pragma once
 
-#include "qt_input_output_api/graphics.hpp"
+#include "qtclient/graphics/graphics.hpp"
 #include "qtclient/graphics/cursor_cache.hpp"
 
 #include <QtWidgets/QWidget>

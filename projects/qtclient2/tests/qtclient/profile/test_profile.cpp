@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestCliParser)
     RED_CHECK(profile.screen_info.height == 600);
     RED_CHECK(profile.screen_info.bpp == BitsPerPixel::BitsPP16);
 
-    qtclient::cli_parse_profile(argv, std::size(argv), profile);
+    qtclient::cli_parse_profile(std::size(argv), argv, profile);
 
     RED_CHECK(profile.user_name == "user"_av);
     RED_CHECK(profile.user_password == "password"_av);

@@ -29,6 +29,7 @@
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
 
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -47,76 +48,6 @@
 #ifndef CLIENT_REDEMPTION_MAIN_PATH
 #define CLIENT_REDEMPTION_MAIN_PATH ""
 #endif
-
-namespace qtclient
-{
-
-struct Profile
-{
-    std::string profile_name;
-
-    std::string user_name;
-    std::string user_password;
-    std::string target_address;
-    uint16_t target_port = 3389;
-    bool is_rdp_mod = true;
-
-    RDPVerbose rdp_verbose = RDPVerbose();
-
-    bool is_spanning = false;
-    bool enable_recording = false;
-    bool enable_clipboard = true;
-
-    bool enable_nla = false;
-    bool enable_tls = true;
-    bool enable_sound = false;
-
-    bool enable_remote_app = true;
-    std::string remote_app_cmd;
-    std::string remote_app_working_directory;
-
-    bool enable_drive= true;
-    std::string drive_path;
-
-    uint32_t tls_min_level = 0;
-    uint32_t tls_max_level = 0;
-    std::string cipher_string;
-
-    uint32_t rdp5_performance_flags = 0x00000040;
-
-    ScreenInfo screen_info = {800, 600, BitsPerPixel::BitsPP16};
-    KeyLayout::KbdId key_layout = KeyLayout::KbdId();
-};
-
-struct Profiles : std::vector<Profile>
-{
-    Profiles();
-
-    Profile& add_profile(std::string_view name, bool selected = false);
-
-    bool choice_profile(std::size_t id) noexcept;
-    bool choice_profile(std::string_view name) noexcept;
-
-    Profile* find(std::string_view name) noexcept;
-
-    Profile& current_profile() noexcept
-    {
-        return operator[](current_index);
-    }
-
-    Profile const& current_profile() const noexcept
-    {
-        return operator[](current_index);
-    }
-
-    std::size_t current_index = 0;
-};
-
-Profiles load_profiles(char const* filename);
-bool save_profiles(char const* filename, Profiles const& profiles);
-bool parse_options(int argc, char const* const argv[], Profile& profile);
-
-} // namespace qtclient
 
 
 struct UserProfil {
@@ -271,11 +202,16 @@ struct ClientRedemptionConfig
     RDPSoundConfig     rDPSoundConfig;
     RDPRemoteAppConfig rDPRemoteAppConfig;
 
+    bool quick_connection_test = true;
+
+    bool persist = false;
+
+    std::chrono::milliseconds time_out_disconnection = std::chrono::milliseconds(5000);
     int keep_alive_freq = 100;
 
     WindowsData windowsData;
 
-    std::string profilName;
+    std::vector<UserProfil> userProfils;
 
     ModRDPParamsData modRDPParamsData;
     TLSClientParamsData tls_client_params_data;
@@ -328,10 +264,13 @@ struct ClientRedemptionConfig
 
 namespace ClientConfig {
 
+void setDefaultConfig(ClientRedemptionConfig & config);
 void setUserProfil(ClientRedemptionConfig & config);
+void setClientInfo(ClientRedemptionConfig & config);
 void setAccountData(ClientRedemptionConfig & config);
 void openWindowsData(ClientRedemptionConfig & config);
 
+void parse_options(int argc, char const* const argv[], ClientRedemptionConfig & config);
 void set_config(int argc, char const* const argv[], ClientRedemptionConfig & config);
 
 void writeWindowsData(WindowsData & config);

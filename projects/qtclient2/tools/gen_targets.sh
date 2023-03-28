@@ -3,7 +3,7 @@
 set -e
 
 cd "$(dirname "$0")/../../.."
-dirbase=projects/qtclient
+dirbase=projects/qtclient2
 
 ./tools/bjam/gen_targets.py \
     --implicit tests \
@@ -18,11 +18,6 @@ dirbase=projects/qtclient
     --user-lib-flags 'src/utils/log.hpp:;' \
     $(find $dirbase/src -mindepth 1 -type d | sed 's/^/--src /') \
 | sed -E '
-    /^exe main_qt_client_redemption/,/^:/{
-        s/^exe /constant /
-        /\.o$/d
-        s/^://
-    }
     s#'"$dirbase"'/?##g;t
     s# src/([-_/\w]+\.cpp)# $(REDEMPTION_SRC_PATH)/\1#g
     s# tests/([-_/\w.]+\.cpp)# $(REDEMPTION_TEST_PATH)/\1#g

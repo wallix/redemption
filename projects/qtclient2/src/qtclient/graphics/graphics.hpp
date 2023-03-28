@@ -1,21 +1,7 @@
 /*
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2010-2020
-Author(s): Jonathan Poelen
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #pragma once
@@ -32,7 +18,7 @@ namespace qtclient
 class Graphics : public gdi::GraphicApi
 {
 public:
-    Graphics() {}
+    Graphics() noexcept = default;
 
     void resize(int width, int height);
 
@@ -54,18 +40,23 @@ public:
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
-    void draw(const RDP::FrameMarker & order) override;
+
+    void draw(const RDP::FrameMarker & order) override
+    {
+        (void)order;
+    }
+
     void draw(const RDPSetSurfaceCommand & cmd) override;
     void draw(const RDPSetSurfaceCommand & cmd, RDPSurfaceContent const & content) override;
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
-    void draw(const RDP::RAIL::WindowIcon & ) override {}
-    void draw(const RDP::RAIL::CachedIcon & ) override {}
-    void draw(const RDP::RAIL::DeletedWindow & ) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow &) override {}
+    void draw(const RDP::RAIL::WindowIcon &) override {}
+    void draw(const RDP::RAIL::CachedIcon &) override {}
+    void draw(const RDP::RAIL::DeletedWindow &) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons &) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop &) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop &) override {}
 
     void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override
     {
@@ -78,10 +69,20 @@ public:
         (void)cache_idx;
     }
 
+    Rect get_and_reset_updated_rect()
+    {
+        auto tmp = updated_rect;
+        updated_rect = Rect();
+        return tmp;
+    }
+
     QPixmap& get_pixmap() noexcept { return this->cache; }
     QPainter& get_painter() noexcept { return this->painter; }
 
 private:
+    uint16_t width = 0;
+    uint16_t height = 0;
+    Rect updated_rect;
     QPixmap cache;
     QPainter painter;
 };

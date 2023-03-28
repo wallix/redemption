@@ -66,7 +66,8 @@ public:
     }
 
 
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
+    {
         (void) front_channel_name;
         (void) length;
         (void) flags;
@@ -78,15 +79,24 @@ public:
         }
     }
 
-    void rdp_gdi_up_and_running() override {}
+    void rdp_gdi_up_and_running() override
+    {}
 
-    void rdp_gdi_down() override {}
+    void rdp_gdi_down() override
+    {}
 
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override {
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
+    {
         (void)flags;
         (void)scancode;
         (void)event_time;
         (void)keymap;
+    }
+
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
+    {
+        (void)flag;
+        (void)unicode;
     }
 
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override

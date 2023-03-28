@@ -26,12 +26,9 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/cli.hpp"
-#include "utils/cli_screen_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/int_to_chars.hpp"
-#include "utils/sugar/split.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/sugar/finally.hpp"
 #include "utils/redemption_info_version.hpp"
 
 #include <iostream>
@@ -112,9 +109,12 @@ void ClientConfig::writeWindowsData(WindowsData & config)
     }
 }
 
-static auto make_options(qtclient::Profile& config)
+void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedemptionConfig & config)
 {
-    return cli::options(
+    config.info.screen_info.width = 800;
+    config.info.screen_info.height = 600;
+
+     auto options = cli::options(
         cli::helper("Client ReDemPtion Help menu."),
 
         cli::option('h', "help").help("Show help")
@@ -123,117 +123,254 @@ static auto make_options(qtclient::Profile& config)
         cli::option('v', "version").help("Show version")
         .parser(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
 
-
         cli::helper("========= Connection ========="),
 
         cli::option('u', "username").help("Set target session user name")
-        .parser(cli::arg_location(config.user_name)),
+        .parser(cli::arg([&config](std::string s) {
+            config.user_name = std::move(s);
+            config.connection_info_cmd_complete |= ClientRedemptionConfig::NAME_GOT;
+        })),
 
         cli::option('p', "password").help("Set target session user password")
-        .parser(cli::arg_location(config.user_password)),
+        .parser(cli::arg([&config](std::string s) {
+            config.user_password = std::move(s);
+            config.connection_info_cmd_complete |= ClientRedemptionConfig::PWD_GOT;
+        })),
 
-        cli::option('t', "target").help("Set target IP address")
-        .parser(cli::arg_location(config.target_address)),
+        cli::option('i', "ip").help("Set target IP address")
+        .parser(cli::arg([&config](std::string s) {
+            config.target_IP = std::move(s);
+            config.connection_info_cmd_complete |= ClientRedemptionConfig::IP_GOT;
+        })),
 
         cli::option('P', "port").help("Set port to use on target")
-        .parser(cli::arg_location(config.target_port)),
+        .parser(cli::arg([&config](int n) {
+            config.port = n;
+            config.connection_info_cmd_complete |= ClientRedemptionConfig::PORT_GOT;
+        })),
+
+        cli::helper("========= Verbose ========="),
+
+        cli::option("rdpdr").help("Active rdpdr logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::rdpdr>(config.verbose)),
+
+        cli::option("rdpsnd").help("Active rdpsnd logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::rdpsnd>(config.verbose)),
+
+        cli::option("cliprdr").help("Active cliprdr logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::cliprdr>(config.verbose)),
+
+        cli::option("graphics").help("Active graphics logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::graphics>(config.verbose)),
+
+        cli::option("printer").help("Active printer logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::printer>(config.verbose)),
+
+        cli::option("rdpdr-dump").help("Actives rdpdr logs and dump brute rdpdr PDU")
+        .parser(cli::on_off_bit_location<RDPVerbose::rdpdr_dump>(config.verbose)),
+
+        cli::option("cliprd-dump").help("Actives cliprdr logs and dump brute cliprdr PDU")
+        .parser(cli::on_off_bit_location<RDPVerbose::cliprdr_dump>(config.verbose)),
+
+        cli::option("basic-trace").help("Active basic-trace logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::basic_trace>(config.verbose)),
+
+        cli::option("connection").help("Active connection logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::connection>(config.verbose)),
+
+        cli::option("rail-order").help("Active rail-order logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::rail_order>(config.verbose)),
+
+        cli::option("asynchronous-task").help("Active asynchronous-task logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::asynchronous_task>(config.verbose)),
+
+        cli::option("capabilities").help("Active capabilities logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::capabilities>(config.verbose)),
+
+        cli::option("rail").help("Active rail logs")
+        .parser(cli::on_off_bit_location<RDPVerbose::rail>(config.verbose)),
+
+        cli::option("rail-dump").help("Actives rail logs and dump brute rail PDU")
+        .parser(cli::on_off_bit_location<RDPVerbose::rail_dump>(config.verbose)),
 
 
         cli::helper("========= Protocol ========="),
 
         cli::option("vnc").help("Set connection mod to VNC")
-        .parser(cli::trigger([&config]{
-            config.is_rdp_mod = false;
-            config.target_port = 5900;
+        .parser(cli::trigger([&config]() {
+            config.mod_state = ClientRedemptionConfig::MOD_VNC;
+            if (!bool(config.connection_info_cmd_complete & ClientRedemptionConfig::PORT_GOT)) {
+                config.port = 5900;
+            }
         })),
 
         cli::option("rdp").help("Set connection mod to RDP (default).")
-        .parser(cli::trigger([&config]{
-            config.is_rdp_mod = true;
-            config.target_port = 3389;
+        .parser(cli::trigger([&config]() {
+            config.mod_state = ClientRedemptionConfig::MOD_RDP;
+            config.port = 3389;
         })),
 
-        cli::option("size").help("Screen size")
-        .parser(cli::arg_location(config.screen_info)),
+        cli::option("remote-app").help("Connection as remote application.")
+        .parser(cli::on_off_bit_location<ClientRedemptionConfig::MOD_RDP_REMOTE_APP>(config.mod_state)),
+
+        cli::option("remote-exe").help("Connection as remote application and set the line command.")
+        .argname("command")
+        .parser(cli::arg([&config](std::string_view line) {
+            config.mod_state = ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
+            config.modRDPParamsData.enable_shared_remoteapp = true;
+            auto pos(line.find(' '));
+            if (pos == std::string::npos) {
+                config.rDPRemoteAppConfig.source_of_ExeOrFile = line;
+                config.rDPRemoteAppConfig.source_of_Arguments.clear();
+            }
+            else {
+                config.rDPRemoteAppConfig.source_of_ExeOrFile = line.substr(0, pos);
+                config.rDPRemoteAppConfig.source_of_Arguments = line.substr(pos + 1);
+            }
+        })),
 
         cli::option("span").help("Span the screen size on local screen")
         .parser(cli::on_off_location(config.is_spanning)),
 
-        cli::option("enable-clipboard").help("Enable clipboard")
-        .parser(cli::on_off_location(config.enable_clipboard)),
-
-        cli::option("tls-min-level").help("Minimal TLS protocol level")
-        .parser(cli::arg_location(config.tls_min_level)),
-
-        cli::option("tls-max-level").help("Maximal TLS protocol level allowed")
-        .parser(cli::arg_location(config.tls_max_level)),
-
-        cli::option("cipher").help("Set TLS Cipher allowed for TLS <= 1.2")
-        .parser(cli::arg_location(config.cipher_string)),
-
-
-        cli::helper("========= RDP ========="),
-
-        cli::option("enable-sound").help("Enable sound")
-        .parser(cli::on_off_location(config.enable_sound)),
-
-        cli::option("rdp-performance-flags").help(
-            "Set RDP performanceflags "
-            "(https://learn.microsoft.com/en-us/windows/win32/termserv/imsrdpclientadvancedsettings-performanceflags)")
-        .parser(cli::arg_location(config.rdp5_performance_flags)),
+        cli::option("enable-clipboard").help("Enable clipboard sharing")
+        .parser(cli::on_off_location(config.enable_shared_clipboard)),
 
         cli::option("enable-nla").help("Enable NLA protocol")
-        .parser(cli::on_off_location(config.enable_nla)),
+        .parser(cli::on_off_location(config.modRDPParamsData.enable_nla)),
 
         cli::option("enable-tls").help("Enable TLS protocol")
-        .parser(cli::on_off_location(config.enable_tls)),
+        .parser(cli::on_off_location(config.modRDPParamsData.enable_tls)),
 
-        cli::option("rdp-verbose")
-        .parser(cli::arg_location(config.rdp_verbose)),
+        cli::option("tls-min-level").help("Minimal TLS protocol level")
+        .parser(cli::arg_location(config.tls_client_params_data.tls_min_level)),
 
+        cli::option("tls-max-level").help("Maximal TLS protocol level allowed")
+        .parser(cli::arg_location(config.tls_client_params_data.tls_max_level)),
 
-        cli::helper("========= Remote App ========="),
+        cli::option("show_common_cipher_list").help("Show TLS Cipher List")
+        .parser(cli::on_off_location(config.tls_client_params_data.show_common_cipher_list)),
 
-        cli::option("remote-app").help("Connection as remote application.")
-        .parser(cli::on_off_location(config.enable_remote_app)),
-
-        cli::option("remote-cmd").help("Set the command line of remote application.")
-        .argname("command")
-        .parser(cli::arg_location(config.remote_app_cmd)),
-
-        cli::option("remote-dir").help("Remote working directory")
-        .argname("directory")
-        .parser(cli::arg_location(config.remote_app_working_directory)),
-
-
-        cli::helper("========= Shared directory App ========="),
-
-        cli::option("enable-drive").help("Enable shared local disk")
-        .parser(cli::on_off_location(config.enable_drive)),
-
-        cli::option("drive-dir").help("Set directory path on local disk to share with your session.")
-        .argname("directory")
-        .parser(cli::arg_location(config.drive_path)),
-
-        cli::option("home-drive").help("Set $HOME to share with your session.")
-        .parser(cli::trigger([&config]{
-            char const* home = getenv("HOME");
-            if (home) {
-                config.drive_path = home;
-                config.enable_drive = true;
-            }
+        cli::option("cipher_string").help("Set TLS Cipher allowed for TLS <= 1.2")
+        .parser(cli::arg([&config](std::string s){
+            config.tls_client_params_data.cipher_string = std::move(s);
         })),
+
+        cli::option("enable-sound").help("Enable sound")
+        .parser(cli::on_off_location(config.modRDPParamsData.enable_sound)),
+
+        cli::option("enable-fullwindowdrag").help("Enable full window draging")
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_FULLWINDOWDRAG>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("enable-menuanimations").help("Enable menu animations")
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_MENUANIMATIONS>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("enable-theming").help("Enable theming")
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_THEMING>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("enable-cursor-shadow").help("Enable cursor shadow")
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_CURSOR_SHADOW>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("enable-cursorsettings").help("Enable cursor settings")
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_CURSORSETTINGS>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("enable-font-smoothing").help("Enable font smoothing")
+        .parser(cli::on_off_bit_location<PERF_ENABLE_FONT_SMOOTHING>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("enable-desktop-composition").help("Enable desktop composition")
+        .parser(cli::on_off_bit_location<PERF_ENABLE_DESKTOP_COMPOSITION>(
+            config.info.rdp5_performanceflags)),
+
+        cli::option("vnc-applekeyboard").help("Set keyboard compatibility mod with apple VNC server")
+        .parser(cli::on_off_location(config.modVNCParamsData.is_apple)),
+
+        cli::option("keep_alive_frequence")
+        .help("Set timeout to send keypress to keep the session alive")
+        .parser(cli::arg([&](int t){ config.keep_alive_freq = t; })),
+
+        cli::option("remotefx").help("enable remotefx")
+        .parser(cli::on_off_location(config.enable_remotefx)),
 
 
         cli::helper("========= Client ========="),
 
-        cli::option("layout").help("Set windows keylayout")
-        .parser(cli::arg_location(config.key_layout)),
+        cli::option("width").help("Set screen width")
+        .parser(cli::arg_location(config.info.screen_info.width)),
 
-        cli::option("enable-recording").help("Enable session recording as .wrm movie")
-        .parser(cli::on_off_location(config.enable_recording))
+        cli::option("height").help("Set screen height")
+        .parser(cli::arg_location(config.info.screen_info.height)),
+
+        cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24, 32)")
+        .argname("bit_per_pixel")
+        .parser(cli::arg([&config](int x) {
+            config.info.screen_info.bpp = checked_int(x);
+        })),
+
+        cli::option("keylayout").help("Set windows keylayout")
+        .parser(cli::arg_location(config.info.keylayout)),
+
+        cli::option("enable-record").help("Enable session recording as .wrm movie")
+        .parser(cli::on_off_location(config.is_recording)),
+
+        cli::option("persist").help("Set connection to persist")
+        .parser(cli::trigger([&config]() {
+            config.quick_connection_test = false;
+            config.persist = true;
+        })),
+
+        cli::option("timeout").help("Set timeout response before to disconnect in millisecond")
+        .argname("time")
+        .parser(cli::arg([&](long time){
+            config.quick_connection_test = false;
+            config.time_out_disconnection = std::chrono::milliseconds(time);
+        })),
+
+        cli::option("share-dir").help("Set directory path on local disk to share with your session.")
+        .argname("directory")
+        .parser(cli::arg([&config](std::string s) {
+            config.modRDPParamsData.enable_shared_virtual_disk = !s.empty();
+            config.SHARE_DIR = std::move(s);
+        })),
+
+        cli::option("remote-dir").help("Remote working directory")
+        .argname("directory")
+        .parser(cli::arg_location(config.rDPRemoteAppConfig.source_of_WorkingDir))
     );
+
+    auto cli_result = cli::parse(options, argc, argv);
+    switch (cli_result.res) {
+        case cli::Res::Ok:
+            break;
+        case cli::Res::Exit:
+            // TODO return 0;
+            break;
+        case cli::Res::Help:
+            config.help_mode = true;
+            cli::print_help(options, std::cout);
+            // TODO return 0;
+            break;
+        case cli::Res::BadFormat:
+        case cli::Res::BadOption:
+        case cli::Res::NotOption:
+        case cli::Res::StopParsing:
+            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
+            if (cli_result.opti < cli_result.argc) {
+                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
+            }
+            std::cerr << "\n";
+            // TODO return 1;
+            break;
+    }
+    if (bool(RDPVerbose::rail & config.verbose)) {
+        config.verbose = config.verbose | RDPVerbose::rail_order;
+    }
 }
+
 
 // TODO PERF very inneficient. replace to append_file_contents()
 bool ClientConfig::read_line(const int fd, std::string & line) {
@@ -424,8 +561,149 @@ void ClientConfig::deleteCurrentProtile(ClientRedemptionConfig & config)  {
 }
 
 
-void ClientConfig::setUserProfil(ClientRedemptionConfig & config)
-{
+
+void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
+
+    unique_fd file = unique_fd(config.USER_CONF_PATH.c_str(), O_WRONLY| O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    if(file.is_open()) {
+
+        std::string to_write = str_concat(
+            "current_user_profil_id ", int_to_decimal_chars(config.current_user_profil), '\n');
+
+        bool not_reading_current_profil = true;
+        std::string ligne;
+        while(read_line(file.fd(), ligne)) {
+            if (!ligne.empty()) {
+                std::size_t pos = ligne.find(' ');
+
+                if (ligne.compare(pos+1, std::string::npos, "id") == 0) {
+                    to_write += '\n';
+                    int read_id = std::stoi(ligne);
+                    not_reading_current_profil = !(read_id == config.current_user_profil);
+                }
+
+                if (not_reading_current_profil) {
+                    str_append(to_write, '\n', ligne);
+                }
+            }
+        }
+
+        str_append(
+            to_write,
+            "\nid ", int_to_decimal_chars(config.userProfils[config.current_user_profil].id), "\n"
+            "name ", config.userProfils[config.current_user_profil].name, "\n"
+            "keylayout ", int_to_decimal_chars(underlying_cast(config.info.keylayout)), "\n"
+            "brush_cache_code ", int_to_decimal_chars(config.info.brush_cache_code), "\n"
+            "bpp ", int_to_decimal_chars(underlying_cast(config.info.screen_info.bpp)), "\n"
+            "width ", int_to_decimal_chars(config.info.screen_info.width), "\n"
+            "height ", int_to_decimal_chars(config.info.screen_info.height), "\n"
+            "rdp5_performanceflags ", int_to_decimal_chars(config.info.rdp5_performanceflags), "\n"
+            "monitorCount ", int_to_decimal_chars(config.info.cs_monitor.monitorCount), "\n"
+            "span ", int_to_decimal_chars(config.is_spanning), "\n"
+            "record ", int_to_decimal_chars(config.is_recording),"\n"
+            "tls ", int_to_decimal_chars(config.modRDPParamsData.enable_tls), "\n"
+            "nla ", int_to_decimal_chars(config.modRDPParamsData.enable_nla), "\n"
+            "tls-min-level ", int_to_decimal_chars(config.tls_client_params_data.tls_min_level), "\n"
+            "tls-max-level ", int_to_decimal_chars(config.tls_client_params_data.tls_max_level), "\n"
+            "tls-cipher-string ", config.tls_client_params_data.cipher_string, "\n"
+            "show_common_cipher_list ", int_to_decimal_chars(config.tls_client_params_data.show_common_cipher_list), "\n"
+            "sound ", int_to_decimal_chars(config.modRDPParamsData.enable_sound), "\n"
+            "console_mode ", int_to_decimal_chars(config.info.console_session), "\n"
+            "remotefx ", int_to_decimal_chars(config.enable_remotefx), "\n"
+            "enable_shared_clipboard ", int_to_decimal_chars(config.enable_shared_clipboard), "\n"
+            "enable_shared_virtual_disk ", int_to_decimal_chars(config.modRDPParamsData.enable_shared_virtual_disk), "\n"
+            "enable_shared_remoteapp ", int_to_decimal_chars(config.modRDPParamsData.enable_shared_remoteapp), "\n"
+            "share-dir ", config.SHARE_DIR, "\n"
+            "remote-exe ", config.rDPRemoteAppConfig.full_cmd_line, "\n"
+            "remote-dir ", config.rDPRemoteAppConfig.source_of_WorkingDir, "\n"
+            "vnc-applekeyboard ", int_to_decimal_chars(config.modVNCParamsData.is_apple), "\n"
+            "mod ", int_to_decimal_chars(config.mod_state) , "\n"
+        );
+
+        ::write(file.fd(), to_write.c_str(), to_write.length());
+    }
+}
+
+
+void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
+    //config.current_user_profil = 0;
+    config.info.build = 420;
+    config.info.keylayout = KeyLayout::KbdId(0x040C);// 0x40C FR, 0x409 USA
+    config.info.brush_cache_code = 0;
+    config.info.screen_info.bpp = BitsPerPixel{24};
+    config.info.screen_info.width  = 800;
+    config.info.screen_info.height = 600;
+    config.info.console_session = false;
+    config.info.rdp5_performanceflags   = PERF_DISABLE_WALLPAPER;
+    config.info.cs_monitor.monitorCount = 1;
+    config.is_spanning = false;
+    config.is_recording = false;
+    config.modRDPParamsData.enable_tls = true;
+    config.modRDPParamsData.enable_nla = true;
+    config.tls_client_params_data.tls_min_level = 0;
+    config.tls_client_params_data.tls_max_level = 0;
+    // config.tls_client_params_data.cipher_string;
+    config.tls_client_params_data.show_common_cipher_list = false;
+    config.enable_shared_clipboard = true;
+    config.modRDPParamsData.enable_shared_virtual_disk = true;
+    config.SHARE_DIR = "/home";
+    //config.info.encryptionLevel = 1;
+
+    config.rDPRemoteAppConfig.source_of_ExeOrFile  = "C:\\Windows\\system32\\notepad.exe";
+    config.rDPRemoteAppConfig.source_of_WorkingDir = "C:\\Users\\user1";
+
+    config.rDPRemoteAppConfig.full_cmd_line = config.rDPRemoteAppConfig.source_of_ExeOrFile + " " + config.rDPRemoteAppConfig.source_of_Arguments;
+
+    if (!config.MAIN_DIR.empty()) {
+        for (auto* pstr : {
+            &config.DATA_DIR,
+            &config.REPLAY_DIR,
+            &config.CB_TEMP_DIR,
+            &config.DATA_CONF_DIR,
+            &config.SOUND_TEMP_DIR
+            // &config.WINDOWS_CONF
+        }) {
+            if (!pstr->empty()) {
+                if (!file_exist(pstr->c_str())) {
+                    LOG(LOG_INFO, "Create file \"%s\".", pstr->c_str());
+                    mkdir(pstr->c_str(), 0775);
+                }
+            }
+        }
+    }
+
+    // Set RDP CLIPRDR config
+    config.rDPClipboardConfig.arbitrary_scale = 40;
+    config.rDPClipboardConfig.server_use_long_format_names = true;
+    config.rDPClipboardConfig.cCapabilitiesSets = 1;
+    config.rDPClipboardConfig.generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
+    config.rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, Cliprdr::formats::file_group_descriptor_w);
+    config.rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, Cliprdr::formats::file_contents);
+    config.rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT);
+    config.rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT);
+    config.rDPClipboardConfig.path = config.CB_TEMP_DIR;
+
+    // Set RDP RDPDR config
+    config.rDPDiskConfig.add_drive(config.SHARE_DIR, rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.rDPDiskConfig.enable_drive_type = true;
+    config.rDPDiskConfig.enable_printer_type = true;
+
+    // Set RDP SND config
+    config.rDPSoundConfig.dwFlags = rdpsnd::TSSNDCAPS_ALIVE | rdpsnd::TSSNDCAPS_VOLUME;
+    config.rDPSoundConfig.dwVolume = 0x7fff7fff;
+    config.rDPSoundConfig.dwPitch = 0;
+    config.rDPSoundConfig.wDGramPort = 0;
+    config.rDPSoundConfig.wNumberOfFormats = 1;
+    config.rDPSoundConfig.wVersion = 0x06;
+
+    config.userProfils.emplace_back(0, "Default");
+
+    std::fill(std::begin(config.info.order_caps.orderSupport), std::end(config.info.order_caps.orderSupport), 1);
+    config.info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
+}
+
+void ClientConfig::setUserProfil(ClientRedemptionConfig & config)  {
     unique_fd fd = unique_fd(config.USER_CONF_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
     if(fd.is_open()) {
         std::string line;
@@ -437,236 +715,127 @@ void ClientConfig::setUserProfil(ClientRedemptionConfig & config)
     }
 }
 
-namespace qtclient
-{
+void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
+    config.windowsData.config_file_path = config.WINDOWS_CONF;
 
-Profiles::Profiles()
-: std::vector<Profile>(1)
-{
-    front().profile_name = "Default";
-}
+    config.userProfils.clear();
+    config.userProfils.emplace_back(0, "Default");
 
-Profile& Profiles::add_profile(std::string_view name, bool selected)
-{
-    if (selected) {
-        current_index = size();
-    }
+    unique_fd fd = unique_fd(config.USER_CONF_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-    auto& profile = emplace_back();
-    profile.profile_name = name;
-    return profile;
-}
+    if (fd.is_open()) {
 
-bool Profiles::choice_profile(std::size_t id) noexcept
-{
-    if (id < current_index) {
-        current_index = id;
-        return true;
-    }
-    return false;
-}
+        int read_id(-1);
+        std::string line;
 
-bool Profiles::choice_profile(std::string_view name) noexcept
-{
-    for (auto const& profile : *this) {
-        if (profile.profile_name == name) {
-            current_index = checked_int(&profile - data());
-            return true;
-        }
-    }
-    return false;
-}
+        while(read_line(fd.fd(), line)) {
 
-Profile* Profiles::find(std::string_view name) noexcept
-{
-    for (auto& profile : *this) {
-        if (profile.profile_name == name) {
-            return &profile;
-        }
-    }
-    return nullptr;
-}
+            auto pos(line.find(' '));
+            std::string info = line.substr(pos + 1);
+            std::string tag = line.substr(0, pos);
+            if (tag == "id") {
+                read_id = std::stoi(info);
+            } else
+            if (tag == "name") {
+                if (read_id) {
+                    config.userProfils.emplace_back(read_id, info);
+                }
+            } else
+            if (config.current_user_profil == read_id) {
 
-
-bool parse_options(int argc, char const* const argv[], Profile& profile)
-{
-    auto options = make_options(profile);
-
-    auto cli_result = cli::parse(options, argc, argv);
-    switch (cli_result.res) {
-        case cli::Res::Ok:
-            return true;
-        case cli::Res::Exit:
-            return false;
-        case cli::Res::Help:
-            cli::print_help(options, std::cout);
-            return false;
-        case cli::Res::BadFormat:
-        case cli::Res::BadOption:
-        case cli::Res::NotOption:
-        case cli::Res::StopParsing:
-            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
-            if (cli_result.opti < cli_result.argc) {
-                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-            }
-            std::cerr << "\n";
-    }
-    return false;
-}
-
-bool save_profiles(char const* filename, Profiles const& profiles)
-{
-    unique_fd file = unique_fd(filename, O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
-
-    if (file.is_open()) {
-        return false;
-    }
-
-    std::string str;
-    str.reserve(512);
-
-    str_append(str, "current-profile ", profiles.current_profile().profile_name, '\n');
-
-    auto to_str = [](auto const& value) {
-        using T = std::decay_t<decltype(value)>;
-        /**/ if constexpr (std::is_same_v<bool, T>) return value ? '1' : '0';
-        else if constexpr (std::is_integral_v<T>) return int_to_decimal_chars(value);
-        else if constexpr (std::is_enum_v<T>) return int_to_decimal_chars(underlying_cast(value));
-        else return value;
-    };
-
-    for (auto const& profile : profiles) {
-        str_append(
-            str, "\n"
-            "name ", profile.profile_name, "\n"
-            "is_rdp ", to_str(profile.is_rdp_mod), "\n"
-            "port ", to_str(profile.target_port), "\n"
-            "size ",
-                to_str(profile.screen_info.width), 'x',
-                to_str(profile.screen_info.height), 'x',
-                to_str(profile.screen_info.bpp), "\n"
-            "span ", to_str(profile.is_spanning), "\n"
-            "enable-clipboard ", to_str(profile.enable_clipboard), "\n"
-            "tls-min-level ", to_str(profile.tls_min_level), "\n"
-            "tls-max-level ", to_str(profile.tls_max_level), "\n"
-            "cipher ", profile.cipher_string, "\n"
-            "enable-sound ", to_str(profile.enable_sound),"\n"
-            "rdp-performance-flags ", to_str(profile.rdp5_performance_flags), "\n"
-            "enable-nla ", to_str(profile.enable_nla), "\n"
-            "enable-tls ", to_str(profile.enable_tls), "\n"
-            "rdp-verbose ", to_str(profile.rdp_verbose), "\n"
-            "remote-app ", to_str(profile.enable_remote_app), "\n"
-            "remote-cmd ", profile.remote_app_cmd, "\n"
-            "remote-dir ", profile.remote_app_working_directory, "\n"
-            "enable-drive ", to_str(profile.enable_drive), "\n"
-            "drive-dir ", profile.drive_path, "\n"
-            "layout ", to_str(profile.key_layout), "\n"
-            "enable-recording ", to_str(profile.enable_recording), "\n"
-        );
-    }
-
-    chars_view data = str;
-    ssize_t n = 0;
-    while (0 < (n = ::write(file.fd(), data.data(), data.size()))) {
-        data = data.drop_front(checked_int(n));
-        if (data.empty()) {
-            return true;
-        }
-    }
-    return false;
-}
-
-Profiles load_profiles(char const* filename)
-{
-    Profiles profiles;
-
-    auto* profile = &profiles.front();
-
-    std::string contents;
-    switch (append_file_contents(filename, contents, 0xffff)) {
-        case FileContentsError::None: {
-            if (contents.empty()) {
-                break;
-            }
-
-            // reserve a new line for '\0' transformation
-            if (contents.back() != '\n') {
-                contents += '\n';
-            }
-
-            auto options = make_options(*profile);
-
-            auto parse_option = [](std::string_view name, cli::ParseResult& pr, auto const& opt, cli::Res& res){
-                if constexpr (!std::is_same_v<cli::Helper const&, decltype(opt)>) {
-                    if constexpr (!std::is_same_v<cli::detail::uninit_t, decltype(opt._long_name)>) {
-                        if (opt._long_name != name) {
-                            return true;
-                        }
-                        #ifndef IN_IDE_PARSER
-                        res = opt._parser(pr);
-                        #endif
-                        return false;
+                if (tag == "keylayout") {
+                    config.info.keylayout = KeyLayout::KbdId(std::stoi(info));
+                } else
+                if (tag == "console_session") {
+                    config.info.console_session = std::stoi(info);
+                } else
+                if (tag == "remotefx") {
+                    config.enable_remotefx = std::stoi(info);
+                } else
+                if (tag == "brush_cache_code") {
+                    config.info.brush_cache_code = std::stoi(info);
+                } else
+                if (tag == "bpp") {
+                    config.info.screen_info.bpp = checked_int(std::stoi(info));
+                } else
+                if (tag == "width") {
+                    config.info.screen_info.width = std::stoi(info);
+                } else
+                if (tag == "height") {
+                    config.info.screen_info.height = std::stoi(info);
+                } else
+                if (tag == "monitorCount") {
+                    config.info.cs_monitor.monitorCount = std::stoi(info);
+                } else
+                if (tag == "span") {
+                    config.is_spanning = bool(std::stoi(info));
+                } else
+                if (tag == "record") {
+                    config.is_recording = bool(std::stoi(info));
+                } else
+                if (tag == "tls") {
+                    config.modRDPParamsData.enable_tls = bool(std::stoi(info));
+                } else
+                if (tag == "tls-min-level") {
+                    config.tls_client_params_data.tls_min_level = std::stoi(info);
+                } else
+                if (tag == "tls-max-level") {
+                    config.tls_client_params_data.tls_max_level = std::stoi(info);
+                } else
+                if (tag == "tls-cipher-string") {
+                    config.tls_client_params_data.cipher_string = info;
+                } else
+                if (tag == "show_common_cipher_list") {
+                    config.tls_client_params_data.show_common_cipher_list = bool(std::stoi(info));
+                } else
+                if (tag == "nla") {
+                    config.modRDPParamsData.enable_nla = bool(std::stoi(info));
+                } else
+                if (tag == "sound") {
+                    config.modRDPParamsData.enable_sound = bool(std::stoi(info));
+                } else
+                if (tag == "console_mode") {
+                    config.info.console_session = (std::stoi(info) > 0);
+                } else
+                if (tag == "enable_shared_clipboard") {
+                    config.enable_shared_clipboard = bool(std::stoi(info));
+                } else
+                if (tag == "enable_shared_remoteapp") {
+                    config.modRDPParamsData.enable_shared_remoteapp = bool(std::stoi(info));
+                } else
+                if (tag == "enable_shared_virtual_disk") {
+                    config.modRDPParamsData.enable_shared_virtual_disk = bool(std::stoi(info));
+                } else
+                if (tag == "share-dir") {
+                    config.SHARE_DIR = info;
+                } else
+                if (tag == "remote-exe") {
+                    config.rDPRemoteAppConfig.full_cmd_line = info;
+                    auto arfs_pos(info.find(' '));
+                    if (arfs_pos == 0) {
+                        config.rDPRemoteAppConfig.source_of_ExeOrFile = info;
+                        config.rDPRemoteAppConfig.source_of_Arguments.clear();
                     }
-                }
-                return true;
-            };
-
-            int iline = 0;
-            cli::ParseResult pr {};
-            std::string_view current_profile;
-
-            for (auto line : get_lines(contents)) {
-                ++iline;
-
-                if (line.empty()) {
-                    continue;
-                }
-
-                auto p = std::find(line.begin(), line.end(), ' ');
-
-                // replace '\n'
-                *line.end() = '\0';
-                auto key = chars_view(line.begin(), p).as<std::string_view>();
-                auto value = chars_view(p + (line.end() != p), line.end()).as<std::string_view>();
-
-                using namespace std::string_view_literals;
-
-                if (key == "name"sv) {
-                    if (!(profile = profiles.find(value))) {
-                        profile = &profiles.add_profile(value);
+                    else {
+                        config.rDPRemoteAppConfig.source_of_ExeOrFile = info.substr(0, arfs_pos);
+                        config.rDPRemoteAppConfig.source_of_Arguments = info.substr(arfs_pos + 1);
                     }
-                    continue;
-                }
+                } else
+                if (tag == "remote-dir") {
+                    config.rDPRemoteAppConfig.source_of_WorkingDir = info;
+                } else
+                if (tag == "rdp5_performanceflags") {
+                    config.info.rdp5_performanceflags = std::stoi(info);
+                } else
+                if (tag == "vnc-applekeyboard ") {
+                    config.modVNCParamsData.is_apple = bool(std::stoi(info));
+                } else
+                if (tag == "mod") {
+                    config.mod_state = std::stoi(info);
 
-                if (key == "current-profile"sv) {
-                    current_profile = value;
-                    continue;
-                }
-
-                using cli::Res;
-                auto parser = [&](auto const&... opts) {
-                    Res r = Res::Ok;
-                    pr.str = value.data();
-                    return (... && (r == Res::Ok && parse_option(key, pr, opts, r))) ? Res::BadOption : r;
-                };
-
-                if (options(parser) != Res::Ok) {
-                    LOG(LOG_WARNING, "Parse error %s:%d: \"%s\".", filename, iline, line.data());
+                    read_id = -1;
                 }
             }
-
-            profiles.choice_profile(current_profile);
-            break;
         }
-
-        case FileContentsError::Read:
-        case FileContentsError::Open:
-        case FileContentsError::Stat:
-            LOG(LOG_WARNING, "Parse error %s: %s", filename, strerror(errno));
-            break;
     }
-
-    return profiles;
-}
-
 }

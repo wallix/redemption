@@ -7,7 +7,20 @@ REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
+
+EXE_DEPENDENCIES +=
+    <define>CLIENT_REDEMPTION_MAIN_PATH='\"$(CLIENT_REDEMPTION_MAIN_PATH)\"'
+    <define>REDEMPTION_QT_VERSION=$(qtversion)
+    <library>log_as_logprint.o
+    # TODO $(BOOST_STACKTRACE_LINKFLAGS)
+;
+constant NO_FFMPEG : 1 ;
+
+include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
+include $(JAM_INCLUDE_PATH)/includes.jam ;
+include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 # qt5: bjam -sqt=5
 # qt6: bjam -sqt=6
@@ -31,7 +44,7 @@ if ! $(qtversion)
         else
         {
             qtversion = 5 ;
-            echo "Assume Qt$(qtversion). (bjam -s qt5)" ;
+            echo "Assume Qt$(qtversion). (bjam -s qt=5)" ;
         }
     }
 }
@@ -51,17 +64,11 @@ constant QT_PHONON_INCLUDE : [ setvar QT_PHONON_INCLUDE : /usr/include/phonon4qt
 constant QT_LIB_PATH : [ setvar QT_LIB_PATH : "" ] ;
 constant QT_TOOLS_PATH : [ setvar QT_TOOLS_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
 
-include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
-include $(JAM_INCLUDE_PATH)/includes.jam ;
-include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
-
-constant NO_FFMPEG : 1 ;
-include $(JAM_INCLUDE_PATH)/libs.jam ;
-
 
 constant SHELL_PWD : $(REDEMPTION_PUBLIC_PATH)/projects/qtclient ; # rule location
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
 
+# TODO remove?
 # for `Q_UNUSED(_a);` within moc_*.cpp
 REDEMPTION_CXXFLAGS += <toolset>clang:<cxxflags>-Wno-extra-semi-stmt ;
 
@@ -70,16 +77,19 @@ project qtclient
 
     <conditional>@flags
 
-    <define>REDEMPTION_QT_VERSION=$(qtversion)
-
     $(REDEMPTION_CXXFLAGS)
     $(REDEMPTION_FFMPEG_FLAGS)
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
     $(BOOST_STACKTRACE_CXXFLAGS)
 
+    # extract name / bit on enum
+    <include>$(REDEMPTION_CONFIG_PATH)/autogen/src/include
+
     # <cxxflags>-fPIC
     <define>QT_NO_KEYWORDS
+    <define>QT_DISABLE_DEPRECATED_BEFORE=0x051500
 
+    # TODO remove
     <cxxflags>-isystem$(QT_INCLUDE)
     <cxxflags>-isystem$(QT_PHONON_INCLUDE)
 
@@ -88,30 +98,6 @@ project qtclient
     <toolset>gcc:<cxxflags>-Wno-missing-include-dirs
 
    : default-build release
-;
-
-explicit install instexe install-bin ;
-
-alias instexe : install-bin ;
-alias install : install-bin ;
-
-install install-bin
-    : qtclient
-    : <install-type>EXE <install-dependencies>on
-    : <location>$(INSTALLDIR)/usr/local/bin
-    ;
-
-obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
-    <conditional>@defines
-    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
-    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
-;
-
-obj log_as_logprint.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
-
-constant EXE_DEPENDENCIES :
-    <define>CLIENT_REDEMPTION_MAIN_PATH='\"$(CLIENT_REDEMPTION_MAIN_PATH)\"'
-    $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
 include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
@@ -131,7 +117,13 @@ alias libQtCore : /qt$(qtversion)//QtCore ;
 alias libQtGui : /qt$(qtversion)//QtGui libQtCore ;
 alias libQtWidgets : /qt$(qtversion)//QtWidgets libQtGui ;
 
-lib libphonon : : <name>phonon4qt$(qtversion) <link>shared ;
+obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
+    <conditional>@defines
+    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
+;
+
+obj log_as_logprint.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
 
 include targets.jam ;
@@ -144,22 +136,13 @@ actions gen_targets
 explicit targets.jam ;
 make targets.jam : : @gen_targets ;
 
-exe qtclient :
-    src/main_qt_client_redemption.cpp
-    src/qt_input_output_api/qt_output_sound.hpp
-    src/qt_input_output_api/qt_input_output_clipboard.cpp
-    src/qt_input_output_api/qt_input_output_clipboard.hpp
-    src/qt_input_output_api/qt_input_socket.hpp
-    src/qt_graphics_components/qt_progress_bar_window.hpp
-    src/qt_graphics_components/qt_options_window.hpp
-    src/qt_graphics_components/qt_screen_window.hpp
-    src/qt_graphics_components/qt_form_window.hpp
-:
-    # TODO: disable phonon requirement when compiling with -D_NO_SOUND
-    <library>libphonon
-    <library>log_as_logprint.o
-    $(main_qt_client_redemption)
-    # disable moc warnings
-    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-    <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
-;
+explicit install instexe install-bin ;
+
+alias instexe : install-bin ;
+alias install : install-bin ;
+
+install install-bin
+    : qtclient2
+    : <install-type>EXE <install-dependencies>on
+    : <location>$(INSTALLDIR)/usr/local/bin
+    ;

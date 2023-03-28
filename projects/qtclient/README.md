@@ -74,7 +74,7 @@ To compile ReDemPtion you need the following packages:
 
 ### Compilation
 
-Pour le compiler il faut se placer dans le dossier `redemption/project/ClientQtGraphicAPI` (dossier de ce `README.md`):
+Pour le compiler il faut se placer dans le dossier `redemption/project/qtclient` (dossier de ce `README.md`):
 
 Pour compiler avec la bibliothèque Qt5:
 
@@ -101,7 +101,7 @@ Le client Qt RDP implémente plusieurs sous protocoles RDP passant par des canna
 - Le canal du partage de l'imprimante (n'est pas fonctionnel mais les logs sont implémentés)
 
 
-### Lancement en ligne de commande de l'exe qtclient4
+### Lancement en ligne de commande de l'exe qtclient
 
 Commandes de connexion:
 
