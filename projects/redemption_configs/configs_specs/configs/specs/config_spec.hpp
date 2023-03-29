@@ -212,7 +212,9 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"enable_wab_integration"}, set((CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
 
+        // TODO move to [client]
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"allow_using_multiple_monitors"}, set(true));
+        // TODO move to [client] / [mod_rdp]
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"allow_scale_factor"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_refresh_rect"}, desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
