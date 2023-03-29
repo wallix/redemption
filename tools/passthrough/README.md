@@ -1,19 +1,29 @@
-# Shared table (ACLPassthrough.shared / kv)
+rdpproxy communicates with a server to know which module when a user connects. The most common module is RDP which represents a connection to an RDP server, but there are others like VNC, selector, interactive_target, etc. `passthrough.py` is a minimal implementation of this server and offers interactive authentication to a remote target.
 
-- Only with module selector (i.e. `kv[u'module'] = 'selector'`): `target_login`, `target_device` and `proto_dest` fields are value lists separated by a `\x01` character (i.e. `kv[u'target_device'] = 'target 1\x01target 2\x01target 3...'`).
-
-List of modules in `src/acl/module_manager/enums.hpp` (see `STRMODULE_*`).
+Feel free to modify it to fit your needs. For example, to enable recording, uncomment the line `kv['is_rec'] = '1'`.
 
 
-- To know what modules and `passthrough.py` can communicate, you can look at the beginning of `src/mod/internal/*.hpp` files:
+# General structure
+
+`passthrough.py` contains essentially 2 classes:
+
+- `AuthentifierSharedData` which is used to receive and send data to rdpproxy. The `shared` member represents a dictionary of exchanged values. It is updated when `receive_data()` or `send_data()` is called. A direct modification of the `shared` member does not send any data to the proxy.
+- The `ACLPassthrough` class is the main class that takes care of selecting and configuring the module used by rdpproxy. The `start()` function is the one you should modify.
+
+
+# Modules
+
+List of modules in `src/acl/module_manager/enums.hpp` (see `ModuleName::*`).
+
+To know what modules and `passthrough.py` can communicate, you can look at the beginning of `src/mod/internal/*.hpp` files:
 
 ```cpp
 // src/mod/internal/flat_login_mod.hpp
 // vcfg::var<field_name_in_the_proxy>
 // vcfg::accessmode: what does the module do with the field
-// - ::set = send the value
-// - ::get = read the value
-// - ::ask = ask the value
+// - ::set = module can write the value
+// - ::get = module can read the value
+// - ::ask = module can request the value (verified with AuthentifierSharedData.is_asked() in passthrough.py)
 using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user, vcfg::accessmode::set>,
     // ...
@@ -29,3 +39,9 @@ cfg::globals::auth_user <-> login   [std::string]
 ```
 
 This line means that the `login` field of `passthrough.py` matches the name `cfg::globals::auth_user` in the proxy.
+
+## Selector
+
+The `selector` module (i.e. `kv[u'module'] = 'selector'`) allows the proxy to display a list of targets. At this time, `target_login`, `target_device` and `proto_dest` fields are value lists separated by a `\x01` character (i.e. `kv[u'target_device'] = 'target 1\x01target 2\x01target 3...'`).
+
+A commented example is available in the `start()` function.

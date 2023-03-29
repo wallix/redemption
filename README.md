@@ -27,8 +27,8 @@ The project also contains 2 RDP clients:
     3. [Compile from source](#compile-from-source)
     4. [Run tests](#run-tests)
         1. [Verbose tests](#verbose-tests)
-        2. [Error in test_snappy.cpp](#error-in-test_snappycpp)
-        3. [Error in test_video_capture.cpp](#error-in-test_video_capturecpp)
+        2. [Compilation error in test_snappy.cpp](#compilation-error-in-test_snappycpp)
+        3. [Runtime error in test_video_capture.cpp](#runtime-error-in-test_video_capturecpp)
     5. [Modes and options](#modes-and-options)
         1. [Setting build variables](#setting-build-variables)
             1. [Local installation](#local-installation)
@@ -188,28 +188,25 @@ In debug mode and if the `BOOST_STACKTRACE` option is set, the `Error` construct
 - `REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC` filter specific errors (see `src/core/error.hpp`).
 
 
-### Error in test_snappy.cpp
+### Compilation error in test_snappy.cpp
 
 Under some versions of Ubuntu, Snappy dev files are broken and `SNAPPY_MAJOR`, `SNAPPY_MINOR` and `SNAPPY_PATCHLEVEL` macros are not defined.
 The simplest way to fix that is editing `/usr/include/snappy-stubs-public.h` and define these above `SNAPPY_VERSION`.
 
 Like below (change values depending on your snappy package).
 
-```bash
-$ apt show libsnappy-dev | grep Version
-Version: 1.1.7-1
-```
-
 ```C
+// apt show libsnappy-dev | grep Version
+// Version: 1.1.7-1
 #define SNAPPY_MAJOR 1
 #define SNAPPY_MINOR 1
 #define SNAPPY_PATCHLEVEL 7
-#define SNAPPY_VERSION \
-    ((SNAPPY_MAJOR << 16) | (SNAPPY_MINOR << 8) | SNAPPY_PATCHLEVEL)
 ```
 
 
-### Error in test_video_capture.cpp
+### Runtime error in test_video_capture.cpp
+
+These errors should only occur after an FFmpeg update or regression.
 
 The tests on the video generation check the size of the output files. This way of doing is not perfect and the result depends on the version of ffmpeg and the quality of the encoders. There is no other way than to change the range of possible values.
 
@@ -220,16 +217,16 @@ Bjam is configured to offer 3 compilation modes:
 
 - `release`: default
 - `debug`: Compile in debug mode
-- `san`: Compile in debug mode + sanitizers (asan, lsan, usan)
+- `san`: Compile in debug mode + sanitizers (asan, lsan, ubsan)
 
-The mode is selected by adding `variant=${mode}` or simple `${mode}` to the bjam command line.
+The mode is selected by adding `variant=${mode}` or simply `${mode}` to the bjam command line.
 
 There are also several variables for setting compiler options:
 
-- `-s cxx_color`: default auto never always
-- `-s cxx_lto`: off on fat linker-plugin
-- `-s cxx_relro`: default off on full
-- `-s cxx_stack_protector`: off on strong all
+- `-s cxx-color`: default auto never always
+- `-s cxx-lto`: off on fat linker-plugin
+- `-s cxx-relro`: default off on full
+- `-s cxx-stack-protector`: off on strong all
 - ...
 
 Complete list with `bjam cxx_help`.
@@ -237,7 +234,7 @@ Complete list with `bjam cxx_help`.
 Finally, `bjam` provides `cxxflags` and `linkflags` to add options to the compiler and linker. This is useful for example to remove warnings with the latest openssl versions.
 
 ```sh
-bjam variant=debug -s lto=on cxxflags='-Wno-deprecated-declarations' targets...
+bjam variant=debug -s cxx-lto=on cxxflags='-Wno-deprecated-declarations' targets...
 ```
 
 By default, `bjam` compiles everything into a folder named `bin`, you can change this with `--build-dir=new-path`.
@@ -262,7 +259,7 @@ bjam ....
 
 #### Local installation
 
-If you have already compiled anything before this step, it is best to delete your `bin` folder (everything will be recompiled) or the `app_path_exe.o` file inside.
+If you have already compiled anything before this step, it is best to delete your `bin` folder (everything will be recompiled) or remove `app_path_exe.o` file inside.
 
 The paths to the installed files can be listed with `bjam env_help`. The minimum requirement is the following (change the `install_path` variable to your liking).
 
@@ -284,9 +281,7 @@ bjam -s MUSL_LIBC=1 ....
 
 ## Add .cpp file
 
-The compiled files are referenced in `targets.jam`. This is a file that is automatically generated via `./tools/bjam/gen_targets.py` and is updated with `bjam targets.jam` or `./tools/bjam/gen_targets.py > targets.jam`.
-
-`bjam targets.jam` also updated `projects/qtclient/redemption_deps.jam`.
+The compiled files are referenced in `targets.jam`. This is a file that is generated via `./tools/bjam/gen_targets.py` and is updated with `bjam targets.jam` or `./tools/bjam/gen_targets.py > targets.jam`.
 
 When you added a .cpp file or there is a link error, remember to run `bjam targets.jam`.
 
@@ -340,12 +335,20 @@ With default passthrough.py at least internal services should work. Try login `i
 xfreerdp /v:127.0.0.1 /u:internal@bouncer2
 ```
 
-`passthrough.py` is made to be edited and only provides the bare minimum.
+`passthrough.py` is made to be edited and only provides the bare minimum. Here is a diagram that shows the basic interaction between these components:
+
+```mermaid
+flowchart LR
+    client[RDP Client] --> rdpproxy[rdpproxy -nf]
+    rdpproxy --> |user info|passthrough.py
+    passthrough.py --> |"remote target info:<br/>username, password<br/> ..."|rdpproxy
+    rdpproxy --> server[RDP Server]
+```
 
 
 # Session recording
 
-To enable session recording, the line containing `is_rec` in `passthrough.py` must be uncommented.
+To enable session recording, the line `kv['is_rec'] = '1'` in `passthrough.py` must be uncommented.
 
 
 ## Convert .mwrm/.wrm capture to video

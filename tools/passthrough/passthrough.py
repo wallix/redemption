@@ -16,13 +16,13 @@ from datetime import datetime
 from logger import Logger
 
 from struct import unpack_from, pack
-from select     import select
+from select import select
 import socket
 
 import uuid # for random rec_path and .log
 
 
-MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
+MAGICASK = 'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 DEBUG = True
 
 if DEBUG:
@@ -35,27 +35,27 @@ class AuthentifierSharedData():
     def __init__(self, conn):
         self.proxy_conx = conn
         self.shared = {
-            u'module':                  u'login',
-            u'selector_group_filter':   u'',
-            u'selector_device_filter':  u'',
-            u'selector_proto_filter':   u'',
-            u'selector':                u'False',
-            u'selector_current_page':   u'1',
-            u'selector_lines_per_page': u'0',
+            'module':                  'login',
+            'selector_group_filter':   '',
+            'selector_device_filter':  '',
+            'selector_proto_filter':   '',
+            'selector':                'False',
+            'selector_current_page':   '1',
+            'selector_lines_per_page': '0',
 
-            u'target_login':    MAGICASK,
-            u'target_device':   MAGICASK,
-            u'target_host':     MAGICASK,
-            u'login':           "admin",
-            u'ip_client':       MAGICASK,
-            u'proto_dest':      MAGICASK,
+            'target_login':    MAGICASK,
+            'target_device':   MAGICASK,
+            'target_host':     MAGICASK,
+            'login':           "admin",
+            'ip_client':       MAGICASK,
+            'proto_dest':      MAGICASK,
         }
 
     def send_data(self, data):
-        u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
+        """ NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
         if DEBUG:
-            Logger().info(u'================> send_data (update) =\n%s' % (pprint.pformat(data)))
+            Logger().info('================> send_data (update) =\n%s' % (pprint.pformat(data)))
 
         self.shared.update(data)
 
@@ -87,14 +87,14 @@ class AuthentifierSharedData():
         _list.sort()
 
         if DEBUG:
-            Logger().info(u'send_data (on the wire) length = %s' % len(_list))
+            Logger().info('send_data (on the wire) length = %s' % len(_list))
 
         _r_data = b''.join(t[2] for t in _list)
         self.proxy_conx.sendall(pack('>H', len(_list)))
         self.proxy_conx.sendall(_r_data)
 
     def receive_data(self):
-        u""" NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
+        """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
 
         def read_sck():
             try:
@@ -106,7 +106,7 @@ class AuthentifierSharedData():
 
             except Exception:
                 # Logger().info("%s <<<%s>>>" % (
-                #     u"Failed to read data from rdpproxy authentifier socket",
+                #     "Failed to read data from rdpproxy authentifier socket",
                 #     traceback.format_exc())
                 # )
                 raise AuthentifierSocketClosed()
@@ -183,8 +183,6 @@ class AuthentifierSharedData():
             Logger().info("receive_data (is asked): =\n%s" % (pprint.pformat(
                 [e[0] for e in self.shared.items()])))
 
-        return True, u''
-
     def get(self, key, default=None):
         return self.shared.get(key, default)
 
@@ -199,39 +197,32 @@ class ACLPassthrough():
         self.shared = AuthentifierSharedData(conn)
 
     def interactive_target(self, data_to_send):
-        data_to_send.update({ u'module' : u'interactive_target' })
+        data_to_send.update({ 'module' : 'interactive_target' })
         self.shared.send_data(data_to_send)
-        _status, _error = self.shared.receive_data()
-        if self.shared.get(u'display_message') != u'True':
-            _status, _error = False, u'Connection closed by client'
-        return _status, _error
-
-    def receive_data(self):
-        status, error = self.shared.receive_data()
-        if not status:
-            raise Exception(error)
-
+        self.shared.receive_data()
+        if self.shared.get('display_message') != 'True':
+            raise Exception('Connection closed by client')
 
     def selector_target(self, data_to_send):
         self.shared.send_data({
-            u'module': u'selector',
-            u'selector': '1',
-            u'login': self.shared.get(u'target_login')
+            'module': 'selector',
+            'selector': '1',
+            'login': self.shared.get('target_login')
         })
-        self.receive_data()
+        self.shared.receive_data()
         self.shared.send_data(data_to_send)
-        self.receive_data()
-        if self.shared.is_asked(u'proto_dest'):
-            target = self.shared.get(u'login').split(':')
+        self.shared.receive_data()
+        if self.shared.is_asked('proto_dest'):
+            target = self.shared.get('login').split(':')
             target_device = target[0]
             target_login = target[1]
             # login = target[2]
-            self.shared.shared[u'target_login'] = target_login
-            self.shared.shared[u'target_host'] = target_device
-            self.shared.shared[u'target_device'] = target_device
-            self.shared.shared[u'real_target_device'] = target_device
-            # self.shared.shared[u'target_password'] = '...'
-            # self.shared.shared[u'proto_dest'] = 'RDP'
+            self.shared.shared['target_login'] = target_login
+            self.shared.shared['target_host'] = target_device
+            self.shared.shared['target_device'] = target_device
+            self.shared.shared['real_target_device'] = target_device
+            # self.shared.shared['target_password'] = '...'
+            # self.shared.shared['proto_dest'] = 'RDP'
         else:
             # selector_current_page, .....
             pass
@@ -242,9 +233,9 @@ class ACLPassthrough():
         _status, _error = self.shared.receive_data()
 
         device = "<host>$<application path>$<working dir>$<args> for Application"
-        login = self.shared.get(u'login', MAGICASK) or MAGICASK
-        host = self.shared.get(u'real_target_device', MAGICASK) or MAGICASK
-        password = self.shared.get(u'password', MAGICASK) or MAGICASK
+        login = self.shared.get('login', MAGICASK) or MAGICASK
+        host = self.shared.get('real_target_device', MAGICASK) or MAGICASK
+        password = self.shared.get('password', MAGICASK) or MAGICASK
         splitted = login.split('@', 1)
         if len(splitted) == 2:
             login = splitted[0]
@@ -253,10 +244,10 @@ class ACLPassthrough():
             password = ''
 
         interactive_data = {
-            u'target_password': password,
-            u'target_host': host,
-            u'target_login': login,
-            u'target_device': device
+            'target_password': password,
+            'target_host': host,
+            'target_login': login,
+            'target_device': device
         }
 
         kv = {}
@@ -264,43 +255,44 @@ class ACLPassthrough():
         if MAGICASK in (device, login, host, password):
             _status, _error = self.interactive_target(interactive_data)
         else:
-            self.shared.shared[u'login'] = login
-            self.shared.shared[u'target_login'] = login
-            self.shared.shared[u'target_password'] = password
-            self.shared.shared[u'target_host'] = host
-            self.shared.shared[u'target_device'] = host
-            self.shared.shared[u'real_target_device'] = host
+            self.shared.shared['login'] = login
+            self.shared.shared['target_login'] = login
+            self.shared.shared['target_password'] = password
+            self.shared.shared['target_host'] = host
+            self.shared.shared['target_device'] = host
+            self.shared.shared['real_target_device'] = host
             kv = interactive_data
 
+        # uncomment the following to get the selector module
         # selector_data = {
-        #     u'target_login': 'Proxy\\Administrator\x01login 2\x01login 3',
-        #     u'target_device': '10.10.44.27\x01device 2\x01device 3',
-        #     u'proto_dest': 'RDP\x01VNC\x01RDP',
+        #     'target_login': 'Proxy\\Administrator\x01login 2\x01login 3',
+        #     'target_device': '10.10.44.27\x01device 2\x01device 3',
+        #     'proto_dest': 'RDP\x01VNC\x01RDP',
         # }
         # self.selector_target(selector_data)
 
         kv = {}
-        # kv[u'is_rec'] = u'1'
-        kv[u'record_filebase'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
-        kv[u'login'] = self.shared.get(u'target_login')
-        kv[u'proto_dest'] = "RDP"
-        kv[u'target_port'] = "3389"
-        kv[u'session_id'] = str(datetime.now())
-        kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else host
-        kv[u'target_password'] = self.shared.get(u'target_password')
-        kv[u'target_login'] = self.shared.get(u'target_login')
-        kv[u'target_host'] = self.shared.get(u'target_host')
-        kv[u'target_device'] = self.shared.get(u'target_host')
+        # kv['is_rec'] = '1'  # Enable recording
+        kv['record_filebase'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
+        kv['login'] = self.shared.get('target_login')
+        kv['proto_dest'] = "RDP"
+        kv['target_port'] = "3389"
+        kv['session_id'] = str(datetime.now())
+        kv['module'] = 'RDP' if self.shared.get('login') != 'internal' else host
+        kv['target_password'] = self.shared.get('target_password')
+        kv['target_login'] = self.shared.get('target_login')
+        kv['target_host'] = self.shared.get('target_host')
+        kv['target_device'] = self.shared.get('target_host')
 
-        if '$' in kv[u'target_host']:
-            app_params = kv[u'target_host']
+        if '$' in kv['target_host']:
+            app_params = kv['target_host']
             list_params = app_params.split('$', 3)
-            kv[u'target_host'] = list_params[0]
+            kv['target_host'] = list_params[0]
             if len(list_params) > 3:
-                kv[u'alternate_shell'] = list_params[1]
-                kv[u'shell_working_directory'] = list_params[2]
-                kv[u'target_application'] = list_params[1]
-                kv[u'shell_arguments'] = list_params[3]
+                kv['alternate_shell'] = list_params[1]
+                kv['shell_working_directory'] = list_params[2]
+                kv['target_application'] = list_params[1]
+                kv['shell_arguments'] = list_params[3]
 
         self.shared.send_data(kv)
 
@@ -312,7 +304,7 @@ class ACLPassthrough():
             # Looping on keepalived socket
             while True:
                 r = []
-                Logger().info(u"Waiting on proxy")
+                Logger().info("Waiting on proxy")
                 got_signal = False
                 try:
                     r, w, x = select([self.proxy_conx], [], [], 60)
@@ -328,37 +320,37 @@ class ACLPassthrough():
                 if self.proxy_conx in r:
                     _status, _error = self.shared.receive_data();
 
-                    if self.shared.is_asked(u'keepalive'):
-                        self.shared.send_data({u'keepalive': u'True'})
+                    if self.shared.is_asked('keepalive'):
+                        self.shared.send_data({'keepalive': 'True'})
                 # r can be empty
                 else: # (if self.proxy_conx in r)
-                    Logger().info(u'Missing Keepalive')
-                    Logger().error(u'break connection')
-                    release_reason = u'Break connection'
+                    Logger().info('Missing Keepalive')
+                    Logger().error('break connection')
+                    release_reason = 'Break connection'
                     break
-            Logger().debug(u"End Of Keep Alive")
+            Logger().debug("End Of Keep Alive")
 
 
         except AuthentifierSocketClosed:
             if DEBUG:
                 import traceback
-                Logger().info(u"RDP/VNC connection terminated by client")
+                Logger().info("RDP/VNC connection terminated by client")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc())
         except Exception:
             if DEBUG:
                 import traceback
-                Logger().info(u"RDP/VNC connection terminated by client")
+                Logger().info("RDP/VNC connection terminated by client")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc())
 
         try:
-            Logger().info(u"Close connection ...")
+            Logger().info("Close connection ...")
 
             self.proxy_conx.close()
 
-            Logger().info(u"Close connection done.")
+            Logger().info("Close connection done.")
         except IOError:
             if DEBUG:
-                Logger().info(u"Close connection: Exception")
+                Logger().info("Close connection: Exception")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc())
     # END METHOD - START
 
@@ -370,22 +362,16 @@ class ACLPassthrough():
 
     def kill(self):
         try:
-            Logger().info(u"Closing a RDP/VNC connection")
+            Logger().info("Closing a RDP/VNC connection")
             self.proxy_conx.close()
         except Exception:
             pass
 
 
 
-from socket import fromfd
-from socket import AF_UNIX
-from socket import AF_INET
-from socket import SOCK_STREAM
-from socket import SOL_SOCKET
-from socket import SO_REUSEADDR
-from select import select
-from logger import Logger
+from socket import (fromfd, AF_UNIX, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR)
 
+# if this value changes, it should be synchronized with `[globals] authfile` in rdpproxy.ini
 socket_path = '/tmp/redemption-sesman-sock'
 
 def standalone():
