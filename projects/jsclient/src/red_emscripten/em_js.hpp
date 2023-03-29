@@ -27,16 +27,18 @@ Author(s): Jonathan Poelen
 # include <emscripten/emscripten.h> /* fix with 1.39.16 */
 # include <emscripten/em_js.h>
 # include "cxx/diagnostic.hpp"
-# define RED_EM_JS(return_type, name, params, ...)              \
-    REDEMPTION_DIAGNOSTIC_PUSH()                                \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes")  \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier") \
-    EM_JS(return_type, name, params, __VA_ARGS__)               \
+# define RED_EM_JS(return_type, name, params, ...)                 \
+    REDEMPTION_DIAGNOSTIC_PUSH()                                   \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes")     \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunknown-warning-option") \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier")    \
+    EM_JS(return_type, name, params, __VA_ARGS__)                  \
     REDEMPTION_DIAGNOSTIC_POP()
-# define RED_EM_ASYNC_JS(return_type, name, params, ...)        \
-    REDEMPTION_DIAGNOSTIC_PUSH()                                \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes")  \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier") \
-    EM_ASYNC_JS(return_type, name, params, __VA_ARGS__)         \
+# define RED_EM_ASYNC_JS(return_type, name, params, ...)           \
+    REDEMPTION_DIAGNOSTIC_PUSH()                                   \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes")     \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunknown-warning-option") \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier")    \
+    EM_ASYNC_JS(return_type, name, params, __VA_ARGS__)            \
     REDEMPTION_DIAGNOSTIC_POP()
 #endif

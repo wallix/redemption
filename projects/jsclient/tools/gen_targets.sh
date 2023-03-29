@@ -26,7 +26,6 @@ for f in \
     src/mod/rdp/params/rdp_session_probe_params.hpp \
     src/utils/fileutils.hpp \
     src/utils/cfgloader.hpp \
-    src/utils/keyboard_shortcut_blocker.hpp \
     src/utils/primitives/primitives_sse2.hpp \
     src/utils/i18n/*.hpp \
     src/transport/file_transport.hpp ;
@@ -41,9 +40,9 @@ done
     --src $d/src/red_channels \
     --src $d/src/redjs \
     --src $d/src/system \
-    --deps-src src/mod/rdp/new_mod_rdp.hpp,$d/src/red_channels/\*.cpp \
+    --deps-src src/client/common/new_mod_rdp.hpp,$d/src/red_channels/\*.cpp \
     --deps-src $d/src/redjs/graphics.hpp,$d/src/redjs/image_conversions.cpp \
-    --include $d/src/ \
+    --include $d/src \
     --src-system emscripten \
     --lib '' \
     --test $d/tests \

@@ -307,10 +307,7 @@ using js_function_ptr_t = typename js_function_ptr<PtrFunc>::type;
         };                                                                   \
     }                                                                        \
                                                                              \
-    REDEMPTION_DIAGNOSTIC_PUSH()                                             \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier")              \
     EMSCRIPTEN_BINDINGS(test_channel_)                                       \
-    REDEMPTION_DIAGNOSTIC_POP()                                              \
     {                                                                        \
         namespace structs = test_channel_data::ChannelType ## _structs;      \
         using Class = test_channel_data::ChannelType ## _js;                 \
@@ -395,17 +392,8 @@ struct Variant
 };
 
 template<class ChannelData, class Datas>
-struct TestBindingCallback : Callback
+struct TestBindingCallback : NullCallback
 {
-    void rdp_input_invalidate(Rect /*unused*/) override {}
-    void rdp_input_mouse(uint16_t /*unused*/, uint16_t /*unused*/, uint16_t /*unused*/) override {}
-    void rdp_input_scancode(
-        KbdFlags /*flags*/, Scancode /*scancode*/,
-        uint32_t /*event_time*/, Keymap const& /*keymap*/) override {}
-    void rdp_input_synchronize(KeyLocks /*locks*/) override {}
-    void rdp_gdi_down() override {}
-    void rdp_gdi_up_and_running() override {}
-
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags) override

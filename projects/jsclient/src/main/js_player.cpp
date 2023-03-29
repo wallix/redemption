@@ -353,7 +353,7 @@ struct WrmPlayer
 
                 auto cache_idx = this->in_stream.in_uint8();
 
-                if (cache_idx < safe_cast<uint8_t>(PredefinedPointer::COUNT)) {
+                if (cache_idx < predefined_pointer_count) {
                     this->gd.cached_pointer(PredefinedPointer(cache_idx));
                 }
                 else {

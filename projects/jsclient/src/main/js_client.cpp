@@ -27,7 +27,7 @@ Author(s): Jonathan Poelen
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/channels_authorizations.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
+#include "client/common/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/genrandom.hpp"

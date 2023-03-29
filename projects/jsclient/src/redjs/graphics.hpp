@@ -100,7 +100,7 @@ private:
     uint16_t height;
     emscripten::val callbacks;
     std::array<uint32_t, 3> image_data_index {0};
-    std::array<bool, unsigned(PredefinedPointer::COUNT)> is_cached_pointers {};
+    std::array<bool, predefined_pointer_count> is_cached_pointers {};
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 };
