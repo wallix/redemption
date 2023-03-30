@@ -226,6 +226,7 @@ exe headlessclient :
   <library>src/headlessclient/headless_graphics.o
   <library>src/headlessclient/headless_repl.o
   <library>src/headlessclient/headless_session_log.o
+  <library>src/headlessclient/input_collector.o
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
   <library>src/keyboard/keymapsym.o
@@ -2159,6 +2160,15 @@ test-run tests/headlessclient/test_headless_repl :
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
+;
+test-run tests/headlessclient/test_input_collector :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_input_collector.cpp
+:
+  <library>src/headlessclient/input_collector.o
+  <library>src/keyboard/keymap.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/mod/accumulate_input_mod.o
+  <library>tests/includes/test_only/session_log_test.o
 ;
 test-run tests/keyboard/test_keymap :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymap.cpp
@@ -4771,6 +4781,7 @@ obj src/headlessclient/headless_front.o : $(REDEMPTION_SRC_PATH)/headlessclient/
 obj src/headlessclient/headless_graphics.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_graphics.cpp ;
 obj src/headlessclient/headless_repl.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_repl.cpp ;
 obj src/headlessclient/headless_session_log.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_session_log.cpp ;
+obj src/headlessclient/input_collector.o : $(REDEMPTION_SRC_PATH)/headlessclient/input_collector.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
@@ -5042,6 +5053,7 @@ alias test_compute_headless_wrm_path : tests/headlessclient/test_compute_headles
 alias test_headless_command : tests/headlessclient/test_headless_command ;
 alias test_headless_configuration : tests/headlessclient/test_headless_configuration ;
 alias test_headless_repl : tests/headlessclient/test_headless_repl ;
+alias test_input_collector : tests/headlessclient/test_input_collector ;
 alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_credis : tests/lib/test_credis ;
@@ -5395,6 +5407,7 @@ alias tests/headlessclient.norec :
   tests/headlessclient/test_headless_command
   tests/headlessclient/test_headless_configuration
   tests/headlessclient/test_headless_repl
+  tests/headlessclient/test_input_collector
 ;
 alias tests/keyboard.norec :
   tests/keyboard/test_keymap
@@ -5853,6 +5866,7 @@ explicit
   src/headlessclient/headless_graphics.o
   src/headlessclient/headless_repl.o
   src/headlessclient/headless_session_log.o
+  src/headlessclient/input_collector.o
   src/keyboard/keylayouts.o
   src/keyboard/keymap.o
   src/keyboard/keymapsym.o
@@ -6126,6 +6140,7 @@ explicit
   test_headless_command
   test_headless_configuration
   test_headless_repl
+  test_input_collector
   test_keymap
   test_keymapsym
   test_credis

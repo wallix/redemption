@@ -115,7 +115,15 @@ int main(int argc, char** argv)
         case qtclient::CliResult::Error: return 1;
     }
 
-    LOG(LOG_DEBUG, "%s %d", profile.target_address, profile.target_port);
+    if (profile.target_port == -1) {
+        switch (profile.protocol)
+        {
+            case qtclient::ProtocolMod::RDP: profile.target_port = 3389; break;
+            case qtclient::ProtocolMod::VNC: profile.target_port = 5900; break;
+        }
+    }
+
+    LOG(LOG_DEBUG, "add: %s  port: %d", profile.target_address, profile.target_port);
 
     qtclient::SocketIO socket(
         "Client"_sck_name,
@@ -185,6 +193,7 @@ int main(int argc, char** argv)
     auto* screen = new qtclient::ScreenWidget();
     QtFront front(*screen);
 
+    // TODO new_mod_vnc
     auto mod = new_mod_rdp(
         socket, *screen, osd, event_manager.event_container,
         session_log, front, client_info, redir_info, rnd,
@@ -199,6 +208,7 @@ int main(int argc, char** argv)
         MonotonicTimePoint const& monotonic_time;
         std::size_t old_len {};
         std::string buf {};
+        char last_char {};
     };
     NotifierData d{event_manager.monotonic_time()};
     std::unique_ptr<DispatchRdpInputCommandGenerator> script_generator;
@@ -213,11 +223,12 @@ int main(int argc, char** argv)
                 if (status == HeadlessInputCommandGenerator::Status::UpdateLastLine) {
                     auto removed = d.old_len - updated_column;
                     auto inserted = line.size() - updated_column;
-                    d.buf.clear();
-                    d.buf.resize(removed, '\b');
-                    printf("%.*s%.*s",
-                        int(d.buf.size()), d.buf.data(),
-                        int(inserted), line.data() + updated_column
+                    printf("\x1b[%dD\x1b[m%.*s\x1b[4m%.*s\x1b[m",
+                        int(d.old_len),
+                        int(updated_column),
+                        line.data(),
+                        int(inserted),
+                        line.data() + updated_column
                     );
 
                     if (inserted < removed) {
@@ -228,13 +239,13 @@ int main(int argc, char** argv)
                         d.buf.resize(removed - inserted, '\b');
                         printf("%.*s", int(d.buf.size()), d.buf.data());
                     }
-
-                    d.old_len = line.size();
                 }
                 else {
                     printf("\n%.*s", int(line.size()), line.data());
-                    d.old_len = line.size();
+                    d.last_char = line.back();
                 }
+
+                d.old_len = line.size();
 
                 fflush(stdout);
             }

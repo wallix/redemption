@@ -2656,8 +2656,8 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
             " up=%s  down=%s  block_invalid_file_up=%d block_invalid_file_down=%d",
             p.validator_params.up_target_name,
             p.validator_params.down_target_name,
-            params.validator_params.block_invalid_file_up,
-            params.validator_params.block_invalid_file_down);
+            p.validator_params.block_invalid_file_up,
+            p.validator_params.block_invalid_file_down);
     }
     return p;
 }())

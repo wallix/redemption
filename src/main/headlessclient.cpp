@@ -17,6 +17,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_front.hpp"
 #include "headlessclient/headless_repl.hpp"
 #include "headlessclient/headless_session_log.hpp"
+#include "headlessclient/input_collector.hpp"
+#include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "mod/null/null.hpp"
 #include "RAIL/client_execute.hpp"
@@ -94,64 +96,6 @@ static KeyLayout const& get_layout(KeyLayout::KbdId keylayout)
 
 namespace
 {
-
-struct BatchInput : RdpInput
-{
-    enum class InputType
-    {
-        Scancode,
-        Unicode,
-        KeyLock,
-        Mouse,
-    };
-
-    struct InputData
-    {
-        InputType type;
-        uint16_t flags_or_locks;
-        uint16_t sc_or_uc_or_x;
-        uint16_t y;
-    };
-
-    // TODO
-    Keymap const* keymap = nullptr;
-
-    std::vector<InputData> inputs;
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
-    {
-        (void)keymap;
-        (void)event_time;
-        this->keymap = &keymap;
-        inputs.push_back(InputData{InputType::Scancode, underlying_cast(flags), underlying_cast(scancode), 0});
-    }
-
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
-    {
-        inputs.push_back(InputData{InputType::Unicode, underlying_cast(flag), unicode, 0});
-    }
-
-    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
-    {
-        inputs.push_back(InputData{InputType::Mouse, device_flags, x, y});
-    }
-
-    void rdp_input_synchronize(KeyLocks locks) override
-    {
-        inputs.push_back(InputData{InputType::KeyLock, underlying_cast(locks), 0, 0});
-    }
-
-    void rdp_input_invalidate(Rect r) override
-    {
-        (void)r;
-    }
-
-    void rdp_gdi_up_and_running() override
-    {}
-
-    void rdp_gdi_down() override
-    {}
-};
 
 struct Repl
 {
@@ -491,12 +435,12 @@ int main(int argc, char const** argv)
                 }
             };
 
-            BatchInput batch;
+            InputCollector input_collector;
+            Keymap null_keymap(KeyLayout::null_layout());
             int ignored_fd = -1;
 
             EventRef time_ev;
             EventRef input_ev;
-            std::size_t i_input = 0;
             std::size_t i_line = 0;
 
             if (automation_script) {
@@ -508,62 +452,27 @@ int main(int argc, char const** argv)
                         return;
                     }
 
-                    if (!batch.inputs.empty()) {
-                        ignored_fd = input.fd();
-                        auto& input = batch.inputs[i_input];
-
-                        // send one event to mod
-                        switch (input.type) {
-                            case BatchInput::InputType::Scancode:
-                                mod->rdp_input_scancode(
-                                    checked_int(input.flags_or_locks),
-                                    checked_int(input.sc_or_uc_or_x),
-                                    0,
-                                    *batch.keymap
-                                );
-                                break;
-
-                            case BatchInput::InputType::Unicode:
-                                mod->rdp_input_unicode(
-                                    checked_int(input.flags_or_locks),
-                                    checked_int(input.sc_or_uc_or_x)
-                                );
-                                break;
-
-                            case BatchInput::InputType::KeyLock:
-                                mod->rdp_input_synchronize(checked_int(input.flags_or_locks));
-                                break;
-
-                            case BatchInput::InputType::Mouse:
-                                mod->rdp_input_mouse(
-                                    checked_int(input.flags_or_locks),
-                                    input.sc_or_uc_or_x,
-                                    input.y
-                                );
-                                break;
-                        }
-
-                        ++i_input;
-                        if (i_input < batch.inputs.size()) {
-                            e.add_timeout_delay(input.type == BatchInput::InputType::Mouse
-                                ? repl.mouse_delay
-                                : repl.key_delay
-                            );
-                            return;
-                        }
-
-                        i_input = 0;
-                        batch.inputs.clear();
+                    switch (input_collector.send_next_input(*mod, null_keymap))
+                    {
+                        case InputCollector::ConsumedInput::None:
+                            ignored_fd = -1;
+                            break;
+                        case InputCollector::ConsumedInput::KeyEvent:
+                            e.add_timeout_delay(repl.key_delay);
+                            ignored_fd = input.fd();
+                            break;
+                        case InputCollector::ConsumedInput::MouseEvent:
+                            e.add_timeout_delay(repl.mouse_delay);
+                            ignored_fd = input.fd();
+                            break;
                     }
-
-                    ignored_fd = -1;
                 };
 
                 auto read_auto_input = [&](Event&) {
                     auto line = repl.repl.read_command(repl.fd);
                     ++i_line;
                     printf("%zu: %.*s\n", i_line, int(line.size()), line.data());
-                    if (repl.execute_command(front, batch, line)) {
+                    if (repl.execute_command(front, input_collector, line)) {
                         timer_input(*time_ev.get_optional_event());
                     }
                 };
