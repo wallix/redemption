@@ -1890,8 +1890,6 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
 #ifndef __EMSCRIPTEN__
     bool const session_probe_start_launch_timeout_timer_only_after_logon;
-
-    FileValidatorService * file_validator_service;
 #endif
 
     struct PrivateRdpNegociation
@@ -2024,7 +2022,6 @@ public:
         , allow_session_reconnection_by_shortcut(mod_rdp_params.allow_session_reconnection_by_shortcut)
         #ifndef __EMSCRIPTEN__
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
-        , file_validator_service(file_validator_service)
         #endif
         , save_session_info_pdu(mod_rdp_params.save_session_info_pdu)
     {

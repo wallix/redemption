@@ -30,10 +30,13 @@
 class CliprdrUnexpectedPDUFilter :
     public RemovableVirtualChannelFilter<CliprdrVirtualChannelProcessor>
 {
-    bool verbose = false;
+    // bool verbose = false;
 
 public:
-    CliprdrUnexpectedPDUFilter(bool verbose) : verbose(verbose) {}
+    CliprdrUnexpectedPDUFilter(bool verbose)
+    {
+        (void)verbose;
+    }
 
 private:
     enum class InitializationState : uint8_t
