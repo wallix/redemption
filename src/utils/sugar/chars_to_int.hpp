@@ -652,31 +652,21 @@ constexpr parsed_chars_to_int_result<Int> parse_decimal_chars(char const* s) noe
 {
     using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
     auto r = detail::decimal_chars_to_int_impl<integral_type>(s, detail::unchecked_char_iterator());
-    parsed_chars_to_int_result<Int> result;
     if (r.ec == std::errc() && !*r.ptr) {
-        result.value = Int(r.val);
-        result.has_value = true;
+        return {Int(r.val), true};
     }
-    else {
-        result.has_value = false;
-    }
-    return result;
+    return {};
 }
 
 template<class Int>
 constexpr parsed_chars_to_int_result<Int> parse_decimal_chars(chars_view av) noexcept
 {
     using integral_type = typename detail::chars_to_int_traits<Int>::integral_type;
-    parsed_chars_to_int_result<Int> result;
     auto r = detail::decimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
     if (r.ec == std::errc() && r.ptr == av.end()) {
-        result.value = Int(r.val);
-        result.has_value = true;
+        return {Int(r.val), true};
     }
-    else {
-        result.has_value = false;
-    }
-    return result;
+    return {};
 }
 
 template<class Int, class View, class>
@@ -836,31 +826,21 @@ constexpr parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(char const* s
 {
     using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
     auto r = detail::hexadecimal_chars_to_int_impl<integral_type>(s, detail::unchecked_char_iterator());
-    parsed_chars_to_int_result<UInt> result;
     if (r.ec == std::errc() && !*r.ptr) {
-        result.value = UInt(r.val);
-        result.has_value = true;
+        return {UInt(r.val), true};
     }
-    else {
-        result.has_value = false;
-    }
-    return result;
+    return {};
 }
 
 template<class UInt>
 constexpr parsed_chars_to_int_result<UInt> parse_hexadecimal_chars(chars_view av) noexcept
 {
     using integral_type = typename detail::chars_to_int_traits<UInt>::integral_type;
-    parsed_chars_to_int_result<UInt> result;
     auto r = detail::hexadecimal_chars_to_int_impl<integral_type>(av.begin(), av.end());
     if (r.ec == std::errc() && r.ptr == av.end()) {
-        result.value = UInt(r.val);
-        result.has_value = true;
+        return {UInt(r.val), true};
     }
-    else {
-        result.has_value = false;
-    }
-    return result;
+    return {};
 }
 
 template<class UInt, class View, class>
