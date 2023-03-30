@@ -503,7 +503,7 @@ constexpr chars_to_int_result<UInt> hexadecimal_chars_to_int_impl(char const* fi
     auto x = +UInt();
     constexpr auto risky_value = +std::numeric_limits<UInt>::max() / 16;
 
-    unsigned char c;
+    unsigned char c = 0;
     if (first != last && 0xff != (c = hexadecimal_char_to_int(*first))) {
         do {
             x = (x * 16) + c;

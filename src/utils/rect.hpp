@@ -372,10 +372,10 @@ class DeltaRect {
 
     constexpr bool fully_relative() const noexcept
     {
-        return (abs(this->dleft) < 128)
-            && (abs(this->dtop) < 128)
-            && (abs(this->dwidth) < 128)
-            && (abs(this->dheight) < 128)
+        return (this->dleft < 128 && this->dleft > -128)
+            && (this->dtop < 128 && this->dtop > -128)
+            && (this->dwidth < 128 && this->dwidth > -128)
+            && (this->dheight < 128 && this->dheight > -128)
             ;
     }
 };
