@@ -553,7 +553,8 @@ private:
         return std::make_unique<ToClientSender>(front, *channel, this->has_dump_verbose(channel_name));
     }
 
-    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc, FileValidatorService * file_validator_service) {
+    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc)
+    {
         assert(!this->clipboard_to_client_sender
             && !this->clipboard_to_server_sender);
 
@@ -595,7 +596,7 @@ private:
                 this->events,
                 this->osd,
                 std::move(cvc_params),
-                file_validator_service,
+                this->file_validator_service,
                 ClipboardVirtualChannel::FileStorage{
                     this->mod_rdp_factory.get_fdx_capture(),
                     this->mod_rdp_factory.always_file_storage,
@@ -790,7 +791,7 @@ public:
         SessionProbeVariables vars,
         FrontAPI& front,
         ServerTransportContext stc,
-        rdp_api& rdp, const Language & lang,
+        rdp_api& rdp, const Language lang,
         const bool bogus_refresh_rect,
         const uint32_t monitor_count,
         GeneralCaps const & client_general_caps,
@@ -899,11 +900,10 @@ public:
     void process_cliprdr_event(
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
-        ServerTransportContext & stc,
-        FileValidatorService * file_validator_service)
+        ServerTransportContext & stc)
     {
         if (!this->cliprdr_client_simulator && !this->cliprdr_unexpected_pdu_filter) {
-            this->create_clipboard_virtual_channel(front, stc, file_validator_service);
+            this->create_clipboard_virtual_channel(front, stc);
         }
 
         this->cliprdr_vc_filter.get_previous_filter_ptr()->process_server_message(
@@ -1115,7 +1115,7 @@ public:
                             FrontAPI& front,
                             ServerTransportContext & stc) {
         if (!this->cliprdr_client_simulator && !this->cliprdr_unexpected_pdu_filter) {
-            this->create_clipboard_virtual_channel(front, stc, this->file_validator_service);
+            this->create_clipboard_virtual_channel(front, stc);
         }
 
         this->cliprdr_vc_filter.get_next_filter_ptr()->process_client_message(
@@ -1602,8 +1602,7 @@ public:
         const char (& client_name)[128],
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
-        const Language & lang,
-        FileValidatorService * file_validator_service)
+        const Language lang)
     {
         assert(this->session_probe.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
@@ -3019,7 +3018,7 @@ public:
             else if (mod_channel.name == channel_names::cliprdr) {
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service);
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc);
             }
             else if (mod_channel.name == channel_names::rail) {
                 ServerTransportContext stc{
@@ -3225,8 +3224,8 @@ public:
                                         this->client_name,
                                         this->monitor_count,
                                         this->bogus_refresh_rect,
-                                        this->lang,
-                                        this->file_validator_service);
+                                        this->lang
+                                    );
                                 }
 #endif
                                 this->already_upped_and_running = true;
