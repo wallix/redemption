@@ -1502,7 +1502,13 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     using kbdtypes::KbdFlags;
     using kbdtypes::Scancode;
 
-    if (cmd.empty()) {
+    // skip left whitespaces
+    while (!cmd.empty() && (cmd.front() == ' ' || cmd.front() == '\t')) {
+        cmd = cmd.drop_front(1);
+    }
+
+    // empty line or commentary
+    if (cmd.empty() || cmd.front() == '#') {
         return Result::Ok;
     }
 
@@ -1701,10 +1707,6 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
             mod.rdp_input_synchronize(kbdtypes::KeyLocks(locks));
         }
         return result;
-    }
-
-    else if (cmd_name == "#") {
-        return Result::Ok;
     }
 
     else if (cmd_name == "h" || cmd_name == "?" || cmd_name == "help") {

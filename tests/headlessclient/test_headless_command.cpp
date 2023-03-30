@@ -52,6 +52,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     check_cmd("", "", "");
     check_cmd("xx", "index_param=0 param='xx' type=UnknownCommand", "");
+    check_cmd(" xx", "index_param=0 param='xx' type=UnknownCommand", "");
 
 
     // scancode
@@ -557,7 +558,10 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     // comment
     //@{
+    check_cmd("#", "", "");
+    check_cmd("#bla bla", "", "");
     check_cmd("# bla bla", "", "");
+    check_cmd("  # bla bla", "", "");
     //@}
 
 
