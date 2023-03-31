@@ -31,23 +31,24 @@ REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
   REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-identifier")
 #endif
 
-inline void io_fd_zero(fd_set & rfds)
+inline void io_fd_zero(fd_set & fds)
 {
-    FD_ZERO(&rfds); /*NOLINT*/
+    FD_ZERO(&fds); /*NOLINT*/
 }
 
-inline void io_fd_set(int const fd, fd_set & rfds)
+inline void io_fd_set(int const fd, fd_set & fds)
 {
-    FD_SET(fd, &rfds); /*NOLINT*/
+    FD_SET(fd, &fds); /*NOLINT*/
 }
 
-inline void io_fd_clr(int const fd, fd_set & rfds)
+inline void io_fd_clr(int const fd, fd_set & fds)
 {
-    FD_CLR(fd, &rfds);
+    FD_CLR(fd, &fds);
 }
 
-inline int io_fd_isset(int const fd, fd_set const & rfds)
+inline int io_fd_isset(int const fd, fd_set const & fds)
 {
-    return FD_ISSET(fd, &rfds);
+    return FD_ISSET(fd, &fds);
 }
+
 REDEMPTION_DIAGNOSTIC_POP()

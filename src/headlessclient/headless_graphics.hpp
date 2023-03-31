@@ -33,7 +33,8 @@ struct HeadlessGraphics final : gdi::GraphicApiForwarder<RDPDrawable>, gdi::Resi
         sink.resize(width, height);
     }
 
-    void dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y);
+    /// \return message error or nullptr
+    char const* dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y);
 
     void cached_pointer(gdi::CachePointerIndex cache_idx) override;
 

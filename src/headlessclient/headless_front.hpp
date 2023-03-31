@@ -39,7 +39,7 @@ struct HeadlessFront final : FrontAPI
 
     gdi::GraphicApi& prepare_gd();
 
-    void dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y);
+    char const* dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y);
 
     bool can_be_start_capture(SessionLogApi& session_log) override;
 

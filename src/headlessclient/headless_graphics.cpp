@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_graphics.hpp"
 #include "utils/drawable_pointer.hpp"
 #include "utils/png.hpp"
+#include "utils/file.hpp"
 
 
 HeadlessGraphics::HeadlessGraphics()
@@ -24,7 +25,7 @@ HeadlessGraphics::HeadlessGraphics(uint16_t width, uint16_t height)
 
 HeadlessGraphics::~HeadlessGraphics() = default;
 
-void HeadlessGraphics::dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y)
+char const* HeadlessGraphics::dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y)
 {
     DrawablePointer::BufferSaver buffer;
     auto& gd = sink.impl();
@@ -34,11 +35,19 @@ void HeadlessGraphics::dump_png(zstring_view filename, uint16_t mouse_x, uint16_
         current_pointer->trace_mouse(gd, buffer);
     }
 
-    dump_png24(filename, gd, true);
+    int err = 0;
+    if (File f{filename, "wb"}) {
+        dump_png24(f.get(), gd, true);
+    }
+    else {
+        err = errno;
+    }
 
     if (current_pointer) {
         current_pointer->clear_mouse(gd, buffer);
     }
+
+    return err ? strerror(err) : nullptr;
 }
 
 void HeadlessGraphics::cached_pointer(gdi::CachePointerIndex cache_idx)

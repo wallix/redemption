@@ -36,11 +36,12 @@ gdi::GraphicApi& HeadlessFront::prepare_gd()
     return gdi::null_gd();
 }
 
-void HeadlessFront::dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y)
+char const* HeadlessFront::dump_png(zstring_view filename, uint16_t mouse_x, uint16_t mouse_y)
 {
     if (drawable) {
-        drawable->dump_png(filename, mouse_x, mouse_y);
+        return drawable->dump_png(filename, mouse_x, mouse_y);
     }
+    return "Png capture is disabled";
 }
 
 bool HeadlessFront::can_be_start_capture(SessionLogApi& session_log)

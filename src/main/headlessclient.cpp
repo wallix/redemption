@@ -39,7 +39,7 @@ static void show_prompt()
     write(1, ">>> ", 4);
 }
 
-static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_manager, int ignored_fd = -1)
+static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_manager)
 {
     const auto now = MonotonicTimePoint::clock::now();
     event_manager.get_writable_time_base().monotonic_time = now;
@@ -49,13 +49,13 @@ static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_mana
     io_fd_zero(rfds);
 
     event_manager.for_each_fd([&](int fd){
-        if (fd != ignored_fd) {
-            io_fd_set(fd, rfds);
-            max = std::max(max, fd);
-        }
+        io_fd_set(fd, rfds);
+        max = std::max(max, fd);
     });
 
     const bool nodelay = trans.has_tls_pending_data();
+
+    // TODO trans.has_data_to_write();
 
     const auto next_timeout = event_manager.next_timeout();
     timeval timeout = {};
@@ -189,14 +189,26 @@ struct Repl
                 front.read_config_file();
                 break;
 
-            case HeadlessCommand::Result::PrintScreen:
+            case HeadlessCommand::Result::PrintScreen: {
+                char const* err = nullptr;
                 try {
-                    front.dump_png(cmd_ctx.png_path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
+                    err = front.dump_png(cmd_ctx.png_path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
+                }
+                catch (Error const& e) {
+                    LOG(LOG_ERR, "%s: %s", cmd_ctx.png_path, e.errmsg());
+                    if (e.errnum) {
+                        err = strerror(e.errnum);
+                    }
                 }
                 catch (...) {
-                    // ignore error
+                    err = strerror(errno);
+                }
+
+                if (err) {
+                    LOG(LOG_ERR, "%s: %s", cmd_ctx.png_path, err);
                 }
                 break;
+            }
 
             case HeadlessCommand::Result::KeyDelay:
                 key_delay = cmd_ctx.delay;
@@ -437,16 +449,14 @@ int main(int argc, char const** argv)
 
             InputCollector input_collector;
             Keymap null_keymap(KeyLayout::null_layout());
-            int ignored_fd = -1;
 
             EventRef time_ev;
             EventRef input_ev;
-            std::size_t i_line = 0;
 
-            if (automation_script) {
+            if (has_automation_script) {
                 auto timer_input = [&](Event& e) {
                     if (repl.sleep_delay.count()) {
-                        ignored_fd = input.fd();
+                        input_ev.get_optional_event()->fd = -1;
                         e.add_timeout_delay(repl.sleep_delay);
                         repl.sleep_delay = repl.sleep_delay.zero();
                         return;
@@ -455,23 +465,23 @@ int main(int argc, char const** argv)
                     switch (input_collector.send_next_input(*mod, null_keymap))
                     {
                         case InputCollector::ConsumedInput::None:
-                            ignored_fd = -1;
+                            input_ev.get_optional_event()->fd = input.fd();
                             break;
                         case InputCollector::ConsumedInput::KeyEvent:
+                            input_ev.get_optional_event()->fd = -1;
                             e.add_timeout_delay(repl.key_delay);
-                            ignored_fd = input.fd();
                             break;
                         case InputCollector::ConsumedInput::MouseEvent:
+                            input_ev.get_optional_event()->fd = -1;
                             e.add_timeout_delay(repl.mouse_delay);
-                            ignored_fd = input.fd();
                             break;
                     }
                 };
 
-                auto read_auto_input = [&](Event&) {
+                auto read_auto_input = [&, line_number = std::size_t()](Event&) mutable {
                     auto line = repl.repl.read_command(repl.fd);
-                    ++i_line;
-                    printf("%zu: %.*s\n", i_line, int(line.size()), line.data());
+                    ++line_number;
+                    LOG(LOG_INFO, "L.%zu: %.*s", line_number, int(line.size()), line.data());
                     if (repl.execute_command(front, input_collector, line)) {
                         timer_input(*time_ev.get_optional_event());
                     }
@@ -479,6 +489,7 @@ int main(int argc, char const** argv)
 
                 time_ev = event_container.event_creator()
                     .create_event_timeout("script-timer", nullptr, MonotonicTimePoint::duration(), timer_input);
+                time_ev.get_optional_event()->active_timer = false;
 
                 input_ev = event_container.event_creator()
                     .create_event_fd_without_timeout("script", nullptr, input.fd(), read_auto_input);
@@ -499,7 +510,7 @@ int main(int argc, char const** argv)
                     .create_event_fd_without_timeout("stdin", nullptr, input.fd(), read_input);
             }
 
-            while (is_actif() && wait_and_draw_event(*sck_trans, event_manager, ignored_fd)) {
+            while (is_actif() && wait_and_draw_event(*sck_trans, event_manager)) {
             }
 
             if (repl.disconnection) {

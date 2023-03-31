@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 namespace qtclient
 {
 
+// replace to QAbstractEventDispatcher ? (https://github.com/svalaskevicius/qt-event-dispatcher-libuv)
 struct EventManager
 {
     EventManager();
