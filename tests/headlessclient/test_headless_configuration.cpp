@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 RED_AUTO_TEST_CASE(TestHeadlessConfiguration)
 {
-    ClientInfo client_info;
+    ClientInfo client_info {};
     Inifile ini;
 
     client_info.glyph_cache_caps.GlyphCache[0].CacheEntries = 10;

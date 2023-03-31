@@ -240,7 +240,7 @@ int main(int argc, char const** argv)
         case HeadlessCliOptions::Result::Ok: break;
     }
 
-    ClientInfo client_info;
+    ClientInfo client_info {};
     headless_init_client_info(client_info);
     client_info.screen_info = options.screen_info;
     client_info.keylayout = options.keylayout;
