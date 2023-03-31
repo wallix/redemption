@@ -648,13 +648,14 @@ struct KbdLockParser
 
 struct DelayParser
 {
-    std::chrono::milliseconds delay;
+    unsigned default_unit_factor;
+    std::chrono::milliseconds delay {};
 
     // (number '.' number | number ('/' number)?) unit?
     bool parse(chars_view str)
     {
-        unsigned next_factor = 0;
-        unsigned next_no_unit_factor = 1;
+        unsigned next_factor = (default_unit_factor == 1000u) ? 1 : 0;
+        unsigned next_no_unit_factor = default_unit_factor;
 
         if (str.empty()) {
             return true;
@@ -740,6 +741,7 @@ struct DelayParser
                         r.ptr += is_long ? 3 : 1;
                     }
                     else {
+                        factor = 0;
                         unit_factor = 1;
                         r.ptr += 2;
                     }
@@ -1177,7 +1179,7 @@ N(sleep) [P(delay)...]
 
     Add a delay before executing the next command.
 
-    See C(help delay) for format (default unit is milliseconds).
+    See C(help delay) for format (default unit is seconds).
 
 
 N(username) P(username)
@@ -1256,10 +1258,10 @@ alias: h and ?
 N(repeat) P(delay) [P(number_or_repeatitions)] P(cmd)
 
     Repeat a command with a delay.
-    Stop timer when P(delay) is negative.
+    Stop timer when P(delay) is 0.
     Infinite loop when N(number_or_repeatitions) is negative.
 
-    See C(help delay) for format (default unit is milliseconds).
+    See C(help delay) for format (default unit is seconds).
 
 
 N(quit)
@@ -1280,11 +1282,11 @@ number: P([0-9]) | [P([0-9])].P([0-9]) | P([0-9])/P([0-9])
 
 - unit are:
     V(s) for seconds
-    V(ms) for milliseconds (default unit)
+    V(ms) for milliseconds
     V(m) or V(min) for minutes
 
 Exemple:
-    C(sleep 1/4h) == C(sleep 0.25h) == C(sleep 15min) == C(sleep 900000)
+    C(sleep 1/4h) == C(sleep 0.25h) == C(sleep 15min) == C(sleep 900)
     C(sleep 1min3s) == C(sleep 1min 3s) == C(sleep 63s)
 )"_av;
 
@@ -1678,7 +1680,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     else if (cmd_name == "sleep" || cmd_name == "keydelay" || cmd_name == "mousedelay") {
         delay = {};
-        auto res = parse_sequence(DelayParser(), [&](DelayParser parser) {
+        auto res = parse_sequence(DelayParser{cmd_name == "sleep" ? 1000u : 1u}, [&](DelayParser parser) {
             delay += parser.delay;
         });
         if (res == Result::Ok) {
@@ -1836,11 +1838,11 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         }
 
         // parse delay
-        std::chrono::milliseconds::rep ms_delay;
-        if (!parse_decimal(OutParam{ms_delay}, first->as<std::string_view>())) {
+        DelayParser delay_parser{1000};
+        if (!delay_parser.parse(first->as<std::string_view>())) {
             return set_param_error(*this, ErrorType::InvalidFormat, index_param + 1, *first);
         }
-        delay = std::chrono::milliseconds(ms_delay);
+        delay = delay_parser.delay;
 
         // parse cmd when no repetition parameter
         if (++first == last) {

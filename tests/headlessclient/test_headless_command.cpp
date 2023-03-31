@@ -492,18 +492,19 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     //@{
     RED_CHECK(cmd_ctx.repeat_delay == -1);
     RED_CHECK(cmd_ctx.delay.count() == -1);
-    check_cmd_ex("repeat 5000 my command", "", "", CmdResult::RepetitionCommand);
+    check_cmd_ex("repeat 5 my command", "", "", CmdResult::RepetitionCommand);
     RED_CHECK(cmd_ctx.output_message == "my command"_av);
     RED_CHECK(cmd_ctx.repeat_delay == -1);
     RED_CHECK(cmd_ctx.delay.count() == 5000);
-    check_cmd_ex("repeat 5000 6 my new command", "", "", CmdResult::RepetitionCommand);
+    check_cmd_ex("repeat 5000ms 6 my new command", "", "", CmdResult::RepetitionCommand);
     RED_CHECK(cmd_ctx.output_message == "my new command"_av);
     RED_CHECK(cmd_ctx.repeat_delay == 6);
     RED_CHECK(cmd_ctx.delay.count() == 5000);
-    check_cmd_ex("repeat -5000", "", "", CmdResult::RepetitionCommand);
+    check_cmd_ex("repeat 0ms", "", "", CmdResult::RepetitionCommand);
     RED_CHECK(cmd_ctx.output_message == ""_av);
     RED_CHECK(cmd_ctx.repeat_delay == -1);
-    RED_CHECK(cmd_ctx.delay.count() == -5000);
+    RED_CHECK(cmd_ctx.delay.count() == 0);
+    check_cmd("repeat -1", "index_param=1 param='-1' type=InvalidFormat", "");
     check_cmd("repeat a", "index_param=1 param='a' type=InvalidFormat", "");
     check_cmd("repeat", "index_param=1 param='expected delay number' type=MissingArgument", "");
     //@}
@@ -514,12 +515,17 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     check_cmd_ex("sleep", "", "", CmdResult::Ok);
     check_cmd_ex("sleep 0", "", "", CmdResult::Ok);
     check_cmd_ex("sleep 2", "", "", CmdResult::Sleep);
-    RED_CHECK(cmd_ctx.delay.count() == 2);
+    RED_CHECK(cmd_ctx.delay.count() == 2000);
     check_cmd_ex("sleep 2.4", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 2400);
+    check_cmd_ex("sleep 2.4ms", "", "", CmdResult::Sleep);
     RED_CHECK(cmd_ctx.delay.count() == 2);
     check_cmd_ex("sleep 5/2", "", "", CmdResult::Sleep);
-    RED_CHECK(cmd_ctx.delay.count() == 2);
-    check_cmd_ex("sleep 1/4", "", "", CmdResult::Ok);
+    RED_CHECK(cmd_ctx.delay.count() == 2500);
+    check_cmd_ex("sleep 1/4ms", "", "", CmdResult::Ok);
+    RED_CHECK(cmd_ctx.delay.count() == 0);
+    check_cmd_ex("sleep 1/4", "", "", CmdResult::Sleep);
+    RED_CHECK(cmd_ctx.delay.count() == 250);
     check_cmd_ex("sleep 2s", "", "", CmdResult::Sleep);
     RED_CHECK(cmd_ctx.delay.count() == 2000);
     check_cmd_ex("sleep 2.5s", "", "", CmdResult::Sleep);
