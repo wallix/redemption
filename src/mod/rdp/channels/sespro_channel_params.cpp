@@ -161,7 +161,7 @@ OutboundConnectionMonitorRules::Rule const* OutboundConnectionMonitorRules::get(
 std::string OutboundConnectionMonitorRules::to_string() const
 {
     std::string r;
-    constexpr chars_view type_s[]{
+    static constexpr chars_view type_s[]{
         "Notify"_av,
         "Deny"_av,
         "Allow"_av,
@@ -237,7 +237,7 @@ ProcessMonitorRules::Rule const* ProcessMonitorRules::get(size_t index) const
 std::string ProcessMonitorRules::to_string() const
 {
     std::string r;
-    constexpr chars_view type_s[]{
+    static constexpr chars_view type_s[]{
         "Notify"_av,
         "Deny"_av,
     };
