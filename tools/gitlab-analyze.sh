@@ -73,7 +73,7 @@ rm_nofast() {
 echo -e "
 using gcc : : g++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
-using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
+using clang : 13 : clang++-13 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
 " > project-config.jam
 valgrind_compiler=gcc-8
 toolset_gcc=toolset=gcc
@@ -212,7 +212,7 @@ if (( $fast == 0 )); then
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy \
+    CLANG_TIDY=clang-tidy-13 \
       ./tools/c++-analyzer/clang-tidy | sed -E '/^(.+\/|)modules\//,/\^/d'
 
     show_duration clang-tidy

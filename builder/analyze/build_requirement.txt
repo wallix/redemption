@@ -2,14 +2,15 @@ libboost-tools-dev
 libboost-test-dev
 g++
 g++-8
-clang
-clang-tidy
+clang-13
+clang-tidy-13
 valgrind
 lua50
 luarocks
 gettext
 git
 python3
+time
 zlib1g-dev
 libssl-dev
 libkrb5-dev
