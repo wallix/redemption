@@ -29,43 +29,34 @@ show_duration()
 
 
 # lua analyzer
-if (( $fast == 0 )); then
-    ./tools/c++-analyzer/redemption-analyzer.sh
-    show_duration redemption-analyzer.sh
+./tools/c++-analyzer/redemption-analyzer.sh
+show_duration redemption-analyzer.sh
 
 
-    # Python tests
-    # @{
-    python_test()
-    {
-        pushd "$1"
-        python3 -m unittest discover -t . tests
-        popd
-    }
-
-    python_test tools/sesman
-    python_test tools/conf_migration_tool
-
-    show_duration "python tests"
-    # @}
-
-
-    # Lua tests
-    # @{
-    eval "$(luarocks path)"
-
-    ./tools/cpp2ctypes/test.sh
-
-    show_duration "lua tests"
-    # @}
-fi
-
-
-rm_nofast() {
-    if (( $fast == 0 )); then
-        rm -r "$@"
-    fi
+# Python tests
+# @{
+python_test()
+{
+    pushd "$1"
+    python3 -m unittest discover -t . tests
+    popd
 }
+
+python_test tools/sesman
+python_test tools/conf_migration_tool
+
+show_duration "python tests"
+# @}
+
+
+# Lua tests
+# @{
+eval "$(luarocks path)"
+
+./tools/cpp2ctypes/test.sh
+
+show_duration "lua tests"
+# @}
 
 
 
@@ -126,18 +117,18 @@ beforerun=$(rootlist)
 # release for -Warray-bounds and not assert
 # build $toolset_wab cxxflags=-g
 # multi-thread
-big_mem='exe libs
-  tests/capture
-  tests/lib
-  tests/server
-  tests/client_mods
-  tests/mod/rdp.norec
-  tests/mod/vnc.norec'
-build $toolset_wab cxxflags=-g -j2 ocr_tools
-build $toolset_wab cxxflags=-g $big_mem
-build $toolset_wab cxxflags=-g -j2
+build $toolset_wab -j4 cxxflags=-g
 
 show_duration $toolset_wab
+
+# Warn new files created by tests.
+set -o pipefail
+diff <(echo "$beforerun") <(rootlist) | while read l ; do
+    echo "Jenkins:${diffline:-0}:0: warnings: $l [directory integrity]"
+    ((++diffline))
+done || echo "Directory integrity error: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+set +o pipefail
+
 
 if (( $fast == 0 )); then
     # valgrind
@@ -148,38 +139,15 @@ if (( $fast == 0 )); then
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
 
     show_duration valgrind
-fi
 
-rm_nofast bin/gcc*
+    build $toolset_clang -j2 -sNO_FFMPEG=1 san -s FAST_CHECK=1
+    rm -rf bin/clang*
 
-
-# Warn new files created by tests.
-set -o pipefail
-diff <(echo "$beforerun") <(rootlist) | while read l ; do
-    echo "Jenkins:${diffline:-0}:0: warnings: $l [directory integrity]"
-    ((++diffline))
-done || if (( $fast == 1 )); then
-    # error with fast compilation
-    echo "Directory integrity error: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-    exit 1
-fi
-set +o pipefail
-
-build_all() {
-    build "$@" -j3 ocr_tools
-    build "$@" $big_mem
-    build "$@" -j2
-}
-
-build_all $toolset_clang -sNO_FFMPEG=1 san -s FAST_CHECK=1
-rm_nofast bin/clang*
-
-show_duration $toolset_clang
+    show_duration $toolset_clang
 
 
-if (( $fast == 0 )); then
     # debug with coverage
-    build_all $toolset_gcc debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
+    build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
     while read -a a ; do
         echo "gcov: lines: ${a[1]}  exec: ${a[2]}  cover: ${a[3]}"
         declare -i cover=${a[3]:0:-1} i=0
