@@ -588,13 +588,14 @@ struct MouseParser
 
 struct MousePositionParser
 {
-    int32_t value;
-    int32_t relative = 0;
+    int32_t screen_value;
+    int32_t mouse_value;
 
     // format: ('+' | '-')?\d
-    bool parse(chars_view str)
+    bool parse(OutParam<uint16_t> mouse_axis, chars_view str)
     {
         int32_t negate = 1;
+        int32_t relative = 0;
         if (str.size() > 1 && (str[0] == '+' || str[0] == '-')) {
             relative = 1;
             negate = (str[0] == '-') ? -1 : 1;
@@ -606,14 +607,12 @@ struct MousePositionParser
             return false;
         }
 
-        value = uvalue * negate;
-        return true;
-    }
+        int32_t value = uvalue * negate;
+        value = std::min(screen_value, mouse_value * relative + value);
 
-    uint16_t compute_axis(int32_t mouse_value) const
-    {
-        int32_t max_len = 0xffff;
-        return checked_int(std::max(int32_t(), std::min(max_len, mouse_value * relative + value)));
+        mouse_axis.out_value = checked_int(std::max(int32_t(), value));
+
+        return true;
     }
 };
 
@@ -653,6 +652,11 @@ struct DelayParser
 
     // (number '.' number | number ('/' number)?) unit?
     bool parse(chars_view str)
+    {
+        return parse(OutParam{delay}, str);
+    }
+
+    bool parse(OutParam<std::chrono::milliseconds> delay, chars_view str)
     {
         unsigned next_factor = (default_unit_factor == 1000u) ? 1 : 0;
         unsigned next_no_unit_factor = default_unit_factor;
@@ -760,7 +764,7 @@ struct DelayParser
                 d1 += d2 * factor;
             }
 
-            delay += std::chrono::milliseconds(d1);
+            delay.out_value += std::chrono::milliseconds(d1);
 
             if (r.ptr == str.end()) {
                 return true;
@@ -768,6 +772,24 @@ struct DelayParser
 
             str = chars_view(r.ptr, str.end());
         }
+    }
+};
+
+struct KbdNameParser
+{
+    bool parse(OutParam<bool> is_en, chars_view str)
+    {
+        if (str.size() == 2) {
+            if ((str[0] == 'e' || str[0] == 'E') && (str[1] == 'n' || str[1] == 'N')) {
+                is_en.out_value = true;
+                return true;
+            }
+            if ((str[0] == 'f' || str[0] == 'F') && (str[1] == 'r' || str[1] == 'R')) {
+                is_en.out_value = false;
+                return true;
+            }
+        }
+        return false;
     }
 };
 
@@ -1214,27 +1236,53 @@ N(reconnect)
 alias: reco
 
 
-N(wrm) <P(boolean) [P(path)] | P(path)>
+N(wrm) [P(boolean)] [P(path)]
 
     Enable or disable wrm capture.
     When boolean is not specified, only the wrm path is modified.
 
 
-N(record-transport) <P(boolean) [P(path)] | P(path)>
+N(record-transport) [P(boolean)] [P(path)]
 
     Enable or disable transport recording.
 
 
-N(png) [P(boolean)] [P(path)]
+N(png) [P(path)]
 alias: p
 
-    Set png filename and save screen to png file (when boolean is on).
+    Set png filename and save screen to png file.
 
 
-N(filename) [P(filename)]
+N(ipng) P(delay) [P(suffix-name)]
+alias: pp
+
+    On each P(delay), save png with a incremental number in P(directory) (specified with C(ipng-dir)).
+    Stoped when P(delay) is 0.
+
+    See C(help delay) for format (default unit is seconds).
+
+
+N(ipng-directory) P(directory)
+alias: ipng-dir and ppd
+
+    Reset counter of C(ipng) and set directory for C(ipng) and C(png) commands.
+
+
+N(enable-png) [P(bool)]
+
+    Enable or disable C(png) and C(ipng).
+
+
+N(basename) [P(filename)]
 alias: sid
 
-    Basename for N(wrm) when it is a directory.
+    Basename for N(wrm), N(record-transport) and N(png) when the name is never specified.
+
+
+N(directory) [P(directory)]
+alias: sid
+
+    Directory output for N(wrm), N(record-transport) and N(png).
 
 
 N(configfile) [P(filename)]
@@ -1255,7 +1303,7 @@ alias: h and ?
     List named value.
 
 
-N(repeat) P(delay) [P(number_or_repeatitions)] P(cmd)
+N(repeat) P(delay) [P(number_or_repetitions)] P(cmd)
 
     Repeat a command with a delay.
     Stop timer when P(delay) is 0.
@@ -1472,11 +1520,14 @@ chars_view cmd_help(std::string_view name, bool is_kbdmap_en)
     return {};
 }
 
-HeadlessCommand::Result set_param_error(HeadlessCommand& cmd, HeadlessCommand::ErrorType error_type, unsigned index, chars_view param)
+HeadlessCommand::Result set_param_error(
+    HeadlessCommand& cmd, HeadlessCommand::ErrorType error_type,
+    unsigned index, chars_view param, chars_view expected_arg)
 {
     cmd.error_type = error_type;
     cmd.index_param_error = index;
     cmd.output_message = param;
+    cmd.expected_arg = expected_arg;
     return HeadlessCommand::Result::Fail;
 }
 
@@ -1495,6 +1546,186 @@ chars_view HeadlessCommand::help(chars_view cmd) const
     }
 
     return cmd_help(cmd.as<std::string_view>(), is_kbdmap_en);
+}
+
+namespace
+{
+
+template<class T>
+struct DecimalParser
+{
+    bool parse(OutParam<T> n, chars_view str)
+    {
+        return parse_decimal(n, str);
+    }
+};
+
+struct BoolParser
+{
+    bool parse(OutParam<bool> b, chars_view str)
+    {
+        return parse_boolean(b, str.as<std::string_view>());
+    }
+};
+
+struct CharsParser
+{
+    bool parse(OutParam<chars_view> s, chars_view str)
+    {
+        s.out_value = str;
+        return true;
+    }
+};
+
+
+REDEMPTION_DIAGNOSTIC_PUSH()
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
+template<class T, class U>
+U get_output_type(bool(T::*)(OutParam<U>, chars_view));
+REDEMPTION_DIAGNOSTIC_POP()
+
+template<class Parser>
+using get_output_type_t = decltype(get_output_type(&Parser::parse));
+
+template<class T>
+using arg_value_t = std::conditional_t<std::is_same_v<T, std::string>, chars_view, T>;
+
+template<class Parser>
+struct CmdArgParser
+{
+    static constexpr bool is_optional = false;
+    static constexpr bool remaining_parser = false;
+
+    using value_type = get_output_type_t<Parser>;
+
+    Parser parser;
+    OutParam<value_type> out_param;
+    chars_view expected_arg;
+    arg_value_t<value_type> value {};
+
+    void move_to_out_param()
+    {
+        if constexpr (std::is_same_v<value_type, std::string>) {
+            out_param.out_value = value.template as<std::string_view>();
+        }
+        else {
+            out_param.out_value = std::move(value);
+        }
+    }
+};
+
+template<class Parser, class... Ts>
+CmdArgParser(Parser, Ts&&...) -> CmdArgParser<Parser>;
+
+template<class Parser>
+struct CmdArgOptionalParser : CmdArgParser<Parser>
+{
+    static constexpr bool is_optional = true;
+};
+
+template<class Parser, class... Ts>
+CmdArgOptionalParser(Parser, Ts&&...) -> CmdArgOptionalParser<Parser>;
+
+struct CmdArgRemaining
+{
+    static constexpr bool is_optional = false;
+    static constexpr bool remaining_parser = true;
+
+    OutParam<chars_view> out_param;
+    chars_view expected_arg;
+    chars_view value = ""_av;
+
+    void move_to_out_param()
+    {
+        out_param.out_value = value;
+    }
+};
+
+struct CmdArgOptionalRemaining : CmdArgRemaining
+{
+    static constexpr bool is_optional = true;
+};
+
+template<class T>
+CmdArgOptionalParser<DecimalParser<T>> optional_decimal_parser(OutParam<T> n, chars_view expected_arg, T default_value = {})
+{
+    return {DecimalParser<T>(), n, expected_arg, default_value};
+}
+
+template<class It, class Parser, class... Parsers>
+bool cmd_parse_impl(
+    OutParam<HeadlessCommand::Result> result,
+    HeadlessCommand& cmd,
+    unsigned int index_param,
+    It& first, It& last, char const* cmd_end,
+    Parser& parser, Parsers&... parsers)
+{
+    if (first == last) {
+        if constexpr (Parser::is_optional) {
+            return true;
+        }
+        else {
+            result.out_value = set_param_error(
+                cmd, HeadlessCommand::ErrorType::MissingArgument,
+                index_param, "missing parameter"_av, parser.expected_arg
+            );
+            return false;
+        }
+    }
+
+    if constexpr (Parser::remaining_parser) {
+        static_assert(Parser::remaining_parser && !sizeof...(parsers), "remaining parser followed with parser");
+        parser.value = {first->data(), cmd_end};
+        return true;
+    }
+    else {
+        if (!parser.parser.parse(OutParam{parser.value}, *first)) {
+            if constexpr (!Parser::is_optional || !sizeof...(parsers)) {
+                result.out_value = set_param_error(
+                    cmd, HeadlessCommand::ErrorType::InvalidFormat,
+                    index_param, *first, parser.expected_arg
+                );
+                return false;
+            }
+            else {
+                return cmd_parse_impl(result, cmd, index_param, first, last, cmd_end, parsers...);
+            }
+        }
+
+        ++first;
+        ++index_param;
+        if constexpr (sizeof...(parsers)) {
+            return cmd_parse_impl(result, cmd, index_param, first, last, cmd_end, parsers...);
+        }
+        else if (first == last) {
+            return true;
+        }
+        else {
+            result.out_value = set_param_error(
+                cmd, HeadlessCommand::ErrorType::TooManyArgument,
+                index_param, *first, ""_av
+            );
+            return false;
+        }
+    }
+}
+
+template<class It, class... Parsers>
+HeadlessCommand::Result cmd_parse(
+    HeadlessCommand::Result result,
+    HeadlessCommand& cmd,
+    unsigned int index_param,
+    It& first, It& last, char const* cmd_end,
+    Parsers&&... parsers)
+{
+    ++first;
+    ++index_param;
+    if (cmd_parse_impl(OutParam{result}, cmd, index_param, first, last, cmd_end, parsers...)) {
+        (parsers.move_to_out_param(), ...);
+    }
+    return result;
+}
+
 }
 
 HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInput& mod)
@@ -1520,7 +1751,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     unsigned index_param = 0;
 
-    auto parse_sequence = [&](const auto parser, auto fn){
+    auto parse_sequence = [&](const auto parser, chars_view expected_arg, auto fn){
         while (++first != last) {
             // ignore multi spaces
             if (first->empty()) {
@@ -1530,7 +1761,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
             ++index_param;
             auto cp_parser = parser;
             if (!cp_parser.parse(*first)) {
-                return set_param_error(*this, ErrorType::InvalidFormat, index_param, *first);
+                return set_param_error(*this, ErrorType::InvalidFormat, index_param, *first, expected_arg);
             }
 
             fn(cp_parser);
@@ -1540,7 +1771,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     auto scroll_sequence = [&](uint16_t flag){
         int nseq = 0;
-        auto res = parse_sequence(ScrollParser(), [&](ScrollParser scroll) {
+        auto res = parse_sequence(ScrollParser(), "step"_av, [&](ScrollParser scroll) {
             ++nseq;
             uint16_t flags = flag | scroll.flag;
             for (uint8_t i = 0; i < scroll.step; ++i) {
@@ -1555,44 +1786,17 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     auto too_many_argument_or = [&](Result result){
         if (++first != last) {
-            return set_param_error(*this, ErrorType::TooManyArgument, index_param + 1, *first);
+            return set_param_error(*this, ErrorType::TooManyArgument, index_param + 1, *first, ""_av);
         }
 
         return result;
-    };
-
-    auto extract_remaining_string = [&](OutParam<std::string> str, Result result){
-        if (++first != last) {
-            str.out_value.assign(first->data(), cmd.end());
-        }
-        else {
-            str.out_value.clear();
-        }
-        return result;
-    };
-
-    auto extract_bool_optional_str = [&](OutParam<bool> enable, OutParam<std::string> path){
-        if (++first == last) {
-            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected boolean or path"_av);
-        }
-
-        if (parse_boolean(OutParam{enable.out_value}, first->as<std::string_view>())) {
-            if (++first != last) {
-                path.out_value = {first->begin(), cmd.end()};
-            }
-            return Result::Ok;
-        }
-
-        enable.out_value = true;
-        path.out_value = {first->begin(), cmd.end()};
-        return Result::Ok;
     };
 
     auto cmd_name = first->as<std::string_view>();
 
     if (cmd_name == "sc" || cmd_name == "scancode") {
         auto* names_scancodes = is_kbdmap_en ? &paramlists::scancodes_en : &paramlists::scancodes_fr;
-        return parse_sequence(ScancodeParser{names_scancodes}, [&](ScancodeParser const& sc_and_flags) {
+        return parse_sequence(ScancodeParser{names_scancodes}, "scancode"_av, [&](ScancodeParser const& sc_and_flags) {
             send_scancode(mod, sc_and_flags);
         });
     }
@@ -1607,7 +1811,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
                 chars_view remaining {p, cmd.end()};
                 KeyParser parser{names_scancodes};
                 if (!parser.parse(remaining)) {
-                    return set_param_error(*this, ErrorType::InvalidFormat, checked_int(p - start), remaining);
+                    return set_param_error(*this, ErrorType::InvalidFormat, checked_int(p - start), remaining, "key"_av);
                 }
                 send_scancode(mod, parser);
                 p = parser.endp;
@@ -1617,7 +1821,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "m" || cmd_name == "mouse") {
-        return parse_sequence(MouseParser(), [&](MouseParser mouse) {
+        return parse_sequence(MouseParser(), "mouse flags"_av, [&](MouseParser mouse) {
             if (has_acquire_flag(mouse.flags)) {
                 mod.rdp_input_mouse(mouse.mouse_flags | MOUSE_FLAG_DOWN, mouse_x, mouse_y);
             }
@@ -1629,31 +1833,14 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "mv" || cmd_name == "move") {
-        MousePositionParser x;
-        MousePositionParser y;
-
-        for (auto* parser : {&x, &y}) {
-            ++index_param;
-
-            if (++first == last) {
-                return set_param_error(*this, ErrorType::MissingArgument, index_param,
-                    &x == parser ? "expected x position"_av : "expected y position"_av
-                );
-            }
-
-            if (!parser->parse(*first)) {
-                return set_param_error(*this, ErrorType::InvalidFormat, index_param, *first);
-            }
+        auto res = cmd_parse(Result::Ok, *this, index_param, first, last, cmd.end(),
+            CmdArgParser{MousePositionParser{screen_width, mouse_x}, OutParam{mouse_x}, "x position"_av},
+            CmdArgParser{MousePositionParser{screen_height, mouse_y}, OutParam{mouse_y}, "y position"_av}
+        );
+        if (res == Result::Ok) {
+            mod.rdp_input_mouse(MOUSE_FLAG_MOVE, mouse_x, mouse_y);
         }
-
-        if (++first != last) {
-            return set_param_error(*this, ErrorType::TooManyArgument, index_param + 1, *first);
-        }
-
-        mouse_x = std::min(screen_width, x.compute_axis(mouse_x));
-        mouse_y = std::min(screen_height, y.compute_axis(mouse_y));
-        mod.rdp_input_mouse(MOUSE_FLAG_MOVE, mouse_x, mouse_y);
-        return Result::Ok;
+        return res;
     }
 
     else if (cmd_name == "t" || cmd_name == "text") {
@@ -1673,20 +1860,23 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "uc" || cmd_name == "unicode") {
-        return parse_sequence(UnicodeParser(), [&](UnicodeParser unicode) {
+        return parse_sequence(UnicodeParser(), "unicode char or hexadecimal code"_av, [&](UnicodeParser unicode) {
             send_unicode(mod, unicode);
         });
     }
 
     else if (cmd_name == "sleep" || cmd_name == "keydelay" || cmd_name == "mousedelay") {
         delay = {};
-        auto res = parse_sequence(DelayParser{cmd_name == "sleep" ? 1000u : 1u}, [&](DelayParser parser) {
+        unsigned unit = cmd_name == "sleep" ? 1000u : 1u;
+        auto res = parse_sequence(DelayParser{unit}, "delay"_av, [&](DelayParser parser) {
             delay += parser.delay;
         });
         if (res == Result::Ok) {
+            // sleep command
             if (cmd_name[0] == 's') {
                 return delay.count() <= 0 ? res : Result::Sleep;
             }
+            // keydelay or mousedelay command
             return (cmd_name[0] == 'k') ? Result::KeyDelay : Result::MouseDelay;
         }
         return res;
@@ -1702,7 +1892,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     else if (cmd_name == "lock") {
         uint8_t locks = 0;
-        auto result = parse_sequence(KbdLockParser(), [&](KbdLockParser sync) {
+        auto result = parse_sequence(KbdLockParser(), "lock flags"_av, [&](KbdLockParser sync) {
             locks |= sync.locks;
         });
         if (result == Result::Ok) {
@@ -1722,48 +1912,17 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "kbd") {
-        if (++first == last) {
-            return set_param_error(*this, ErrorType::MissingArgument, index_param, "expected fr or en"_av);
-        }
-
-        is_kbdmap_en = (first->as<std::string_view>() == "en");
-        return too_many_argument_or(Result::Ok);
+        return cmd_parse(Result::Ok, *this, index_param, first, last, cmd.end(),
+            CmdArgParser{KbdNameParser{}, OutParam{is_kbdmap_en}, "keyboard name"_av}
+        );
     }
 
     else if (cmd_name == "co" || cmd_name == "connect" || cmd_name == "rdp" || cmd_name == "vnc") {
-        if (++first == last) {
-            return Result::Connect;
-        }
-
-        auto addr = *first;
-        bool has_port = false;
-
-        if (++first != last) {
-            auto port_av = *first;
-
-            if (++first != last) {
-                return set_param_error(*this, ErrorType::TooManyArgument, index_param + 3, *first);
-            }
-
-            if (!parse_decimal(OutParam{port}, port_av)) {
-                return set_param_error(*this, ErrorType::InvalidFormat, index_param + 2, *first);
-            }
-
-            has_port = true;
-        }
-
-        if (cmd_name == "rdp") {
-            is_rdp = true;
-            port = has_port ? port : 3389;
-        }
-        else if (cmd_name == "vnc") {
-            is_rdp = false;
-            port = has_port ? port : 5900;
-        }
-
-        ip_address = {addr.begin(), addr.end()};
-
-        return Result::Connect;
+        auto default_port = (cmd_name == "rdp") ? 3389u : (cmd_name == "vnc") ? 5900u : port;
+        return cmd_parse(Result::Connect, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalParser{CharsParser{}, OutParam{output_message}, "address"_av},
+            optional_decimal_parser(OutParam{port}, "port"_av, default_port)
+        );
     }
 
     else if (cmd_name == "disco" || cmd_name == "disconnect") {
@@ -1775,56 +1934,72 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "wrm") {
-        return extract_bool_optional_str(OutParam{enable_wrm}, OutParam{wrm_path});
+        return cmd_parse(Result::WrmPath, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalParser{BoolParser{}, OutParam{output_bool}, "boolean"_av, true},
+            CmdArgOptionalRemaining{OutParam{output_message}, "filepath"_av}
+        );
     }
 
     else if (cmd_name == "record-transport") {
-        return extract_bool_optional_str(OutParam{enable_record_transport}, OutParam{record_transport_path});
+        return cmd_parse(Result::RecordTarnsportPath, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalParser{BoolParser{}, OutParam{output_bool}, "boolean"_av, true},
+            CmdArgOptionalRemaining{OutParam{output_message}, "filepath"_av}
+        );
     }
 
     else if (cmd_name == "p" || cmd_name == "png") {
-        if (++first == last) {
-            enable_png = true;
-            return Result::PrintScreen;
-        }
+        return cmd_parse(Result::Screen, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalRemaining{OutParam{output_message}, "filepath"_av}
+        );
+    }
 
-        // parse on/off
-        if (parse_boolean(OutParam{enable_png}, first->as<std::string_view>())) {
-            if (++first != last) {
-                png_path = {first->begin(), cmd.end()};
-            }
-            return enable_png ? Result::PrintScreen : Result::Ok;
-        }
+    else if (cmd_name == "pp" || cmd_name == "ipng") {
+        return cmd_parse(Result::ScreenRepetition, *this, index_param, first, last, cmd.end(),
+            CmdArgParser{DelayParser{}, OutParam{delay}, "delay"_av},
+            CmdArgOptionalRemaining{OutParam{output_message}, "filepath"_av}
+        );
+    }
 
-        // parse filename
-        enable_png = true;
-        png_path = {first->begin(), cmd.end()};
-        return Result::PrintScreen;
+    else if (cmd_name == "ppd" || cmd_name == "ipng-dir" || cmd_name == "ipng-directory") {
+        return cmd_parse(Result::ScreenDirectory, *this, index_param, first, last, cmd.end(),
+            CmdArgParser{CharsParser{}, OutParam{output_message}, "dirname"_av}
+        );
+    }
+
+    else if (cmd_name == "enable-png") {
+        return cmd_parse(Result::EnableScreen, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalParser{BoolParser{}, OutParam{output_bool}, "boolean"_av, true}
+        );
     }
 
     else if (cmd_name == "user" || cmd_name == "username") {
-        return extract_remaining_string(OutParam{username}, Result::Ok);
+        return cmd_parse(Result::Username, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalRemaining{OutParam{output_message}, "username"_av}
+        );
     }
 
     else if (cmd_name == "pass" || cmd_name == "password") {
-        return extract_remaining_string(OutParam{password}, Result::Ok);
+        return cmd_parse(Result::Password, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalRemaining{OutParam{output_message}, "password"_av}
+        );
     }
 
     else if (cmd_name == "sid" || cmd_name == "basename") {
-        if (++first == last) {
-            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected basename"_av);
-        }
+        return cmd_parse(Result::Basename, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalRemaining{OutParam{output_message}, "basename"_av}
+        );
+    }
 
-        session_id = {first->begin(), cmd.end()};
-        return Result::Ok;
+    else if (cmd_name == "dir" || cmd_name == "directory") {
+        return cmd_parse(Result::Directory, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalRemaining{OutParam{output_message}, "directory"_av}
+        );
     }
 
     else if (cmd_name == "f" || cmd_name == "conff" || cmd_name == "configfile") {
-        if (cmd_name.size() + 1 < cmd.size()) {
-            output_message = cmd.drop_front(cmd_name.size() + 1);
-            return Result::ConfigFile;
-        }
-        return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected filename"_av);
+        return cmd_parse(Result::ConfigFile, *this, index_param, first, last, cmd.end(),
+            CmdArgRemaining{OutParam{output_message}, "config filename"_av}
+        );
     }
 
     else if (cmd_name == "conf" || cmd_name == "confstr" || cmd_name == "configstr") {
@@ -1833,36 +2008,11 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "repeat") {
-        if (++first == last) {
-            return set_param_error(*this, ErrorType::MissingArgument, index_param + 1, "expected delay number"_av);
-        }
-
-        // parse delay
-        DelayParser delay_parser{1000};
-        if (!delay_parser.parse(first->as<std::string_view>())) {
-            return set_param_error(*this, ErrorType::InvalidFormat, index_param + 1, *first);
-        }
-        delay = delay_parser.delay;
-
-        // parse cmd when no repetition parameter
-        if (++first == last) {
-            repeat_delay = -1;
-            output_message = {cmd.end(), cmd.end()};
-            return Result::RepetitionCommand;
-        }
-
-        // parse repetition
-        if (parse_decimal(OutParam{repeat_delay}, first->as<std::string_view>())) {
-            ++first;
-        }
-        else {
-            repeat_delay = -1;
-        }
-
-        // parse cmd
-        auto* begin = (first != last) ? first->begin() : cmd.end();
-        output_message = {begin, cmd.end()};
-        return Result::RepetitionCommand;
+        return cmd_parse(Result::RepetitionCommand, *this, index_param, first, last, cmd.end(),
+            CmdArgParser{DelayParser{1000u}, OutParam{delay}, "delay"_av, std::chrono::milliseconds()},
+            optional_decimal_parser(OutParam{repeat_delay}, "repetition"_av, -1),
+            CmdArgOptionalRemaining{OutParam{output_message}, "command"_av}
+        );
     }
 
     else if (cmd_name == "q" || cmd_name == "quit") {
@@ -1870,6 +2020,6 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else {
-        return set_param_error(*this, ErrorType::UnknownCommand, 0, *first);
+        return set_param_error(*this, ErrorType::UnknownCommand, 0, *first, "command"_av);
     }
 }

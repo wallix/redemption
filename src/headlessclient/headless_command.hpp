@@ -16,7 +16,7 @@ class RdpInput;
 
 struct HeadlessCommand
 {
-    enum class ErrorType : unsigned
+    enum class ErrorType : uint8_t
     {
         TooManyArgument,
         MissingArgument,
@@ -42,42 +42,42 @@ struct HeadlessCommand
     uint16_t screen_height = 600;
 
     bool is_kbdmap_en = true;
-    bool is_rdp = true;
-    bool enable_wrm = false;
-    bool enable_png = false;
-    bool enable_record_transport = false;
     unsigned port = 3389;
 
-    ErrorType error_type;
     unsigned index_param_error;
+    ErrorType error_type;
+    bool output_bool = false;
 
     // parameter value with Result::Fail
     // message with Result::OutputResult (for help command)
     chars_view output_message;
-
-    std::string session_id;
-    std::string png_path;
-    std::string wrm_path;
-    std::string record_transport_path;
-    std::string ip_address;
-    std::string username;
-    std::string password;
+    chars_view expected_arg;
 
     // Sleep, RepetitionCommand, KeyDelay, MouseDelay
     std::chrono::milliseconds delay {-1};
 
     int repeat_delay = -1;
 
-    enum class [[nodiscard]] Result
+    enum class [[nodiscard]] Result : uint8_t
     {
         Fail,
         Ok,
         OutputResult,
 
+        Basename,
+        Directory,
+        Username,
+        Password,
         Connect,
         Reconnect,
         Disconnect,
-        PrintScreen,
+        Screen,
+        SetScreenFile,
+        ScreenDirectory,
+        ScreenRepetition,
+        WrmPath,
+        RecordTarnsportPath,
+        EnableScreen,
         ConfigFile,
         ConfigStr,
         RepetitionCommand,
@@ -103,7 +103,11 @@ struct HeadlessCommand
     //      | ('disconnect'|'disco' | 'reconnect'|'reco')
     //      | ('wrm' | 'record-transport') ws bool (ws filename)?
     //      | ('png' | 'p') (ws filename)?
+    //      | ('ipng' | 'pp') ws delay (ws suffix-name)?
+    //      | ('ipng-directory' | 'ipng-dir' | 'ppd') directory
+    //      | 'enable-png' wd bool
     //      | ('basename' | 'sid') (ws filename)?
+    //      | ('directory' | 'dir') (ws directory)?
     //      | ('configfile' | 'conff' | 'f') ws filename
     //      | ('configstr' | 'conf') ws str
     //      | 'repeat' ws decimal decimal? cmd

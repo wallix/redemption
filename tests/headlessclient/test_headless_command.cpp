@@ -29,6 +29,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
         return str_concat(
             "index_param="_av, int_to_decimal_chars(cmd.index_param_error), ' ',
             "param='"_av, cmd.output_message, "' "_av,
+            "expected='"_av, cmd.expected_arg, "' "_av,
             "type="_av, type
         );
     };
@@ -51,13 +52,13 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
 
     check_cmd("", "", "");
-    check_cmd("xx", "index_param=0 param='xx' type=UnknownCommand", "");
-    check_cmd(" xx", "index_param=0 param='xx' type=UnknownCommand", "");
+    check_cmd("xx", "index_param=0 param='xx' expected='command' type=UnknownCommand", "");
+    check_cmd(" xx", "index_param=0 param='xx' expected='command' type=UnknownCommand", "");
 
 
     // scancode
     //@{
-    check_cmd("sc qq", "index_param=1 param='qq' type=InvalidFormat", "");
+    check_cmd("sc qq", "index_param=1 param='qq' expected='scancode' type=InvalidFormat", "");
 
     check_cmd("sc q", "",
         "{KbdFlags=0x0000, Scancode=0x10}, "
@@ -133,7 +134,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
         "{KbdFlags=0x0000, Scancode=0x10}, "
         "{KbdFlags=0x8000, Scancode=0x10}");
 
-    check_cmd("key {q", "index_param=0 param='{q' type=InvalidFormat", "");
+    check_cmd("key {q", "index_param=0 param='{q' expected='key' type=InvalidFormat", "");
 
     check_cmd("key abcA B", "",
         // a
@@ -238,7 +239,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
         "{KbdFlags=0x8000, Unicode=0xD83D}, {KbdFlags=0x8000, Unicode=0xDE80}");
     check_cmd("uc 42", "",
         "{KbdFlags=0x0000, Unicode=0x002A}, {KbdFlags=0x8000, Unicode=0x002A}");
-    check_cmd("uc a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("uc a", "index_param=1 param='a' expected='unicode char or hexadecimal code' type=InvalidFormat", "");
     //@}
 
 
@@ -315,7 +316,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     // mouse
     //@{
-    check_cmd("m b8", "index_param=1 param='b8' type=InvalidFormat", "");
+    check_cmd("m b8", "index_param=1 param='b8' expected='mouse flags' type=InvalidFormat", "");
     check_cmd("m b1", "", "{flags=0x9000, x=0, y=0}, {flags=0x1000, x=0, y=0}");
     check_cmd("m b1,1", "", "{flags=0x9000, x=0, y=0}");
     check_cmd("m b1,0", "", "{flags=0x1000, x=0, y=0}");
@@ -327,10 +328,10 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     // move
     //@{
-    check_cmd("move 100", "index_param=2 param='expected y position' type=MissingArgument", "");
+    check_cmd("move 100", "index_param=2 param='missing parameter' expected='y position' type=MissingArgument", "");
     check_cmd("move 110 195", "", "{flags=0x0800, x=110, y=195}");
-    check_cmd("move 100 200 300", "index_param=3 param='300' type=TooManyArgument", "");
-    check_cmd("move 100 x", "index_param=2 param='x' type=InvalidFormat", "");
+    check_cmd("move 100 200 300", "index_param=3 param='300' expected='' type=TooManyArgument", "");
+    check_cmd("move 100 x", "index_param=2 param='x' expected='y position' type=InvalidFormat", "");
 
     check_cmd("mv -10 +5", "", "{flags=0x0800, x=100, y=200}");
     //@}
@@ -338,9 +339,9 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     // scroll
     //@{
-    check_cmd("scroll -", "index_param=1 param='-' type=InvalidFormat", "");
-    check_cmd("scroll 0x", "index_param=1 param='0x' type=InvalidFormat", "");
-    check_cmd("scroll a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("scroll -", "index_param=1 param='-' expected='step' type=InvalidFormat", "");
+    check_cmd("scroll 0x", "index_param=1 param='0x' expected='step' type=InvalidFormat", "");
+    check_cmd("scroll a", "index_param=1 param='a' expected='step' type=InvalidFormat", "");
     check_cmd("scroll", "",   "{flags=0x0300, x=100, y=200}");
     check_cmd("scroll 1", "", "{flags=0x0300, x=100, y=200}");
     check_cmd("scroll -1", "", "{flags=0x02FF, x=100, y=200}");
@@ -357,9 +358,9 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     // hscroll
     //@{
-    check_cmd("hscroll -", "index_param=1 param='-' type=InvalidFormat", "");
-    check_cmd("hscroll 0x", "index_param=1 param='0x' type=InvalidFormat", "");
-    check_cmd("hscroll a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("hscroll -", "index_param=1 param='-' expected='step' type=InvalidFormat", "");
+    check_cmd("hscroll 0x", "index_param=1 param='0x' expected='step' type=InvalidFormat", "");
+    check_cmd("hscroll a", "index_param=1 param='a' expected='step' type=InvalidFormat", "");
     check_cmd("hscroll",   "", "{flags=0x0500, x=100, y=200}");
     check_cmd("hscroll 1", "", "{flags=0x0500, x=100, y=200}");
     check_cmd("hscroll -1", "", "{flags=0x04FF, x=100, y=200}");
@@ -379,95 +380,87 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     check_cmd("lock 0", "", "{KeyLocks=0x00}");
     check_cmd("lock 0x02 0x04", "", "{KeyLocks=0x06}");
     check_cmd("lock num scroll", "", "{KeyLocks=0x03}");
-    check_cmd("lock num scroll nm kana", "index_param=3 param='nm' type=InvalidFormat", "");
-    //@}
-
-
-    // locks
-    //@{
-    check_cmd("lock 0", "", "{KeyLocks=0x00}");
-    check_cmd("lock 0x02 0x04", "", "{KeyLocks=0x06}");
-    check_cmd("lock num scroll", "", "{KeyLocks=0x03}");
-    check_cmd("lock num scroll nm kana", "index_param=3 param='nm' type=InvalidFormat", "");
+    check_cmd("lock num scroll nm kana", "index_param=3 param='nm' expected='lock flags' type=InvalidFormat", "");
     //@}
 
 
     // connect
     //@{
     check_cmd_ex("connect ::1",     "", "", CmdResult::Connect);
-    RED_CHECK(cmd_ctx.ip_address == "::1"_av);
+    RED_CHECK(cmd_ctx.output_message == "::1"_av);
     RED_CHECK(cmd_ctx.port == 3389);
     check_cmd_ex("connect ::2 123", "", "", CmdResult::Connect);
-    RED_CHECK(cmd_ctx.ip_address == "::2"_av);
+    RED_CHECK(cmd_ctx.output_message == "::2"_av);
     RED_CHECK(cmd_ctx.port == 123);
     check_cmd_ex("connect ::3",     "", "", CmdResult::Connect);
-    RED_CHECK(cmd_ctx.ip_address == "::3"_av);
+    RED_CHECK(cmd_ctx.output_message == "::3"_av);
     RED_CHECK(cmd_ctx.port == 123);
     check_cmd_ex("connect",     "", "", CmdResult::Connect);
-    RED_CHECK(cmd_ctx.ip_address == "::3"_av);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
     RED_CHECK(cmd_ctx.port == 123);
-    check_cmd("connect ::1 ::2", "index_param=2 param='::2' type=InvalidFormat", "");
-    check_cmd("connect ::2 123 ::3", "index_param=3 param='::3' type=TooManyArgument", "");
+    check_cmd("connect ::1 ::2", "index_param=2 param='::2' expected='port' type=InvalidFormat", "");
+    check_cmd("connect ::2 123 ::3", "index_param=3 param='::3' expected='' type=TooManyArgument", "");
     //@}
 
 
     // connect
     //@{
     check_cmd_ex("disconnect", "", "", CmdResult::Disconnect);
-    check_cmd("disconnect abc", "index_param=1 param='abc' type=TooManyArgument", "");
+    check_cmd("disconnect abc", "index_param=1 param='abc' expected='' type=TooManyArgument", "");
     //@}
 
 
     // wrm
     //@{
-    cmd_ctx.wrm_path = "default";
-    cmd_ctx.enable_wrm = true;
-    check_cmd_ex("wrm 0", "", "", CmdResult::Ok);
-    RED_CHECK(!cmd_ctx.enable_wrm);
-    check_cmd_ex("wrm 1", "", "", CmdResult::Ok);
-    RED_CHECK(cmd_ctx.enable_wrm);
-    RED_CHECK(cmd_ctx.wrm_path == "default"_av);
-    check_cmd_ex("wrm off", "", "", CmdResult::Ok);
-    RED_CHECK(!cmd_ctx.enable_wrm);
-    check_cmd_ex("wrm on", "", "", CmdResult::Ok);
-    RED_CHECK(cmd_ctx.enable_wrm);
-    RED_CHECK(cmd_ctx.wrm_path == "default"_av);
-    check_cmd_ex("wrm on dsadjsdsa.mwrm", "", "", CmdResult::Ok);
-    RED_CHECK(cmd_ctx.enable_wrm);
-    RED_CHECK(cmd_ctx.wrm_path == "dsadjsdsa.mwrm"_av);
-    check_cmd_ex("wrm newfile.mwrm", "", "", CmdResult::Ok);
-    RED_CHECK(cmd_ctx.enable_wrm);
-    RED_CHECK(cmd_ctx.wrm_path == "newfile.mwrm"_av);
-    check_cmd("wrm", "index_param=1 param='expected boolean or path' type=MissingArgument", "");
+    check_cmd_ex("wrm 0", "", "", CmdResult::WrmPath);
+    RED_CHECK(!cmd_ctx.output_bool);
+    check_cmd_ex("wrm 1", "", "", CmdResult::WrmPath);
+    RED_CHECK(cmd_ctx.output_bool);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
+    check_cmd_ex("wrm off", "", "", CmdResult::WrmPath);
+    RED_CHECK(!cmd_ctx.output_bool);
+    check_cmd_ex("wrm on", "", "", CmdResult::WrmPath);
+    RED_CHECK(cmd_ctx.output_bool);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
+    check_cmd_ex("wrm on dsadjsdsa.mwrm", "", "", CmdResult::WrmPath);
+    RED_CHECK(cmd_ctx.output_bool);
+    RED_CHECK(cmd_ctx.output_message == "dsadjsdsa.mwrm"_av);
+    check_cmd_ex("wrm newfile.mwrm", "", "", CmdResult::WrmPath);
+    RED_CHECK(cmd_ctx.output_bool);
+    RED_CHECK(cmd_ctx.output_message == "newfile.mwrm"_av);
+    check_cmd_ex("wrm", "", "", CmdResult::WrmPath);
+    RED_CHECK(cmd_ctx.output_bool);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
     //@}
 
 
     // png
     //@{
-    cmd_ctx.png_path = "default";
-    cmd_ctx.enable_png = false;
-    check_cmd_ex("png", "", "", CmdResult::PrintScreen);
-    RED_CHECK(cmd_ctx.enable_png);
-    RED_CHECK(cmd_ctx.png_path == "default"_av);
-    check_cmd_ex("png abcde fg.png", "", "", CmdResult::PrintScreen);
-    RED_CHECK(cmd_ctx.enable_png);
-    RED_CHECK(cmd_ctx.png_path == "abcde fg.png"_av);
-    check_cmd_ex("png 0", "", "", CmdResult::Ok);
-    RED_CHECK(!cmd_ctx.enable_png);
-    RED_CHECK(cmd_ctx.png_path == "abcde fg.png"_av);
-    check_cmd_ex("png 0 abc.png", "", "", CmdResult::Ok);
-    RED_CHECK(!cmd_ctx.enable_png);
-    RED_CHECK(cmd_ctx.png_path == "abc.png"_av);
+    check_cmd_ex("png", "", "", CmdResult::Screen);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
+    check_cmd_ex("png abcde fg.png", "", "", CmdResult::Screen);
+    RED_CHECK(cmd_ctx.output_message == "abcde fg.png"_av);
+    //@}
+
+
+    // enable-png
+    //@{
+    check_cmd_ex("enable-png", "", "", CmdResult::EnableScreen);
+    RED_CHECK(cmd_ctx.output_bool);
+    check_cmd_ex("enable-png 0", "", "", CmdResult::EnableScreen);
+    RED_CHECK(!cmd_ctx.output_bool);
+    check_cmd_ex("enable-png 1", "", "", CmdResult::EnableScreen);
+    RED_CHECK(cmd_ctx.output_bool);
+    check_cmd("enable-png 1 1", "index_param=2 param='1' expected='' type=TooManyArgument", "");
     //@}
 
 
     // sid
     //@{
-    cmd_ctx.session_id = "default";
-    check_cmd("sid", "index_param=1 param='expected basename' type=MissingArgument", "");
-    RED_CHECK(cmd_ctx.session_id == "default"_av);
-    check_cmd_ex("sid abcde fg", "", "", CmdResult::Ok);
-    RED_CHECK(cmd_ctx.session_id == "abcde fg"_av);
+    check_cmd_ex("sid", "", "", CmdResult::Basename);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
+    check_cmd_ex("sid abcde fg", "", "", CmdResult::Basename);
+    RED_CHECK(cmd_ctx.output_message == "abcde fg"_av);
     //@}
 
 
@@ -475,7 +468,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     //@{
     check_cmd_ex("f myfile.ini", "", "", CmdResult::ConfigFile);
     RED_CHECK(cmd_ctx.output_message == "myfile.ini"_av);
-    check_cmd_ex("f", "index_param=1 param='expected filename' type=MissingArgument", "", CmdResult::Fail);
+    check_cmd_ex("f", "index_param=1 param='missing parameter' expected='config filename' type=MissingArgument", "", CmdResult::Fail);
     //@}
 
 
@@ -504,9 +497,9 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     RED_CHECK(cmd_ctx.output_message == ""_av);
     RED_CHECK(cmd_ctx.repeat_delay == -1);
     RED_CHECK(cmd_ctx.delay.count() == 0);
-    check_cmd("repeat -1", "index_param=1 param='-1' type=InvalidFormat", "");
-    check_cmd("repeat a", "index_param=1 param='a' type=InvalidFormat", "");
-    check_cmd("repeat", "index_param=1 param='expected delay number' type=MissingArgument", "");
+    check_cmd("repeat -1", "index_param=1 param='-1' expected='delay' type=InvalidFormat", "");
+    check_cmd("repeat a", "index_param=1 param='a' expected='delay' type=InvalidFormat", "");
+    check_cmd("repeat", "index_param=1 param='missing parameter' expected='delay' type=MissingArgument", "");
     //@}
 
     // sleep
@@ -542,8 +535,8 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000 + 3000);
     check_cmd_ex("sleep 2m3ms", "", "", CmdResult::Sleep);
     RED_CHECK(cmd_ctx.delay.count() == 2 * 60 * 1000 + 3);
-    check_cmd("sleep -3", "index_param=1 param='-3' type=InvalidFormat", "");
-    check_cmd("repeat a", "index_param=1 param='a' type=InvalidFormat", "");
+    check_cmd("sleep -3", "index_param=1 param='-3' expected='delay' type=InvalidFormat", "");
+    check_cmd("repeat a", "index_param=1 param='a' expected='delay' type=InvalidFormat", "");
     //@}
 
 
