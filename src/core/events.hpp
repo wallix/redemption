@@ -715,6 +715,8 @@ struct EventRef
 
     Event* get_optional_event() noexcept { return has_event() ? event_ : nullptr; }
 
+    Event* raw_event() noexcept { return event_; }
+
     bool operator == (EventRef const& other) const { return event_ == other.event_; }
     bool operator != (EventRef const& other) const { return event_ != other.event_; }
 
@@ -823,7 +825,7 @@ struct EventRef
 
     char const* name() const
     {
-        return has_event() ? event_->name : nullptr;
+        return has_event() ? event_->name : "null";
     }
 
 private:

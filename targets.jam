@@ -222,10 +222,8 @@ exe headlessclient :
   <library>src/headlessclient/headless_cli_options.o
   <library>src/headlessclient/headless_command.o
   <library>src/headlessclient/headless_configuration.o
-  <library>src/headlessclient/headless_front.o
   <library>src/headlessclient/headless_graphics.o
   <library>src/headlessclient/headless_repl.o
-  <library>src/headlessclient/headless_session_log.o
   <library>src/headlessclient/input_collector.o
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
@@ -293,6 +291,7 @@ exe headlessclient :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   $(MUSL_GETTEXT)
+  <define>ZLIB_CONST
 ;
 exe rdpinichecker :
   src/main/ini_checker.o
@@ -4777,10 +4776,8 @@ obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
 obj src/headlessclient/headless_cli_options.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_cli_options.cpp ;
 obj src/headlessclient/headless_command.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_command.cpp ;
 obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
-obj src/headlessclient/headless_front.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_front.cpp : <define>ZLIB_CONST ;
 obj src/headlessclient/headless_graphics.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_graphics.cpp ;
 obj src/headlessclient/headless_repl.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_repl.cpp ;
-obj src/headlessclient/headless_session_log.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_session_log.cpp ;
 obj src/headlessclient/input_collector.o : $(REDEMPTION_SRC_PATH)/headlessclient/input_collector.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
@@ -4788,7 +4785,7 @@ obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/credis.o : $(REDEMPTION_SRC_PATH)/lib/credis.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
-obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp ;
+obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp ;
@@ -5862,10 +5859,8 @@ explicit
   src/headlessclient/headless_cli_options.o
   src/headlessclient/headless_command.o
   src/headlessclient/headless_configuration.o
-  src/headlessclient/headless_front.o
   src/headlessclient/headless_graphics.o
   src/headlessclient/headless_repl.o
-  src/headlessclient/headless_session_log.o
   src/headlessclient/input_collector.o
   src/keyboard/keylayouts.o
   src/keyboard/keymap.o

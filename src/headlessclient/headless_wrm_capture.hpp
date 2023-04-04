@@ -43,7 +43,7 @@ struct HeadlessWrmCapture
         return graphic_to_file;
     }
 
-    void unpdate_timestamp(MonotonicTimePoint now)
+    void update_timestamp(MonotonicTimePoint now)
     {
         graphic_to_file.sync();
         graphic_to_file.timestamp(now);
