@@ -1912,17 +1912,30 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "kbd") {
-        return cmd_parse(Result::Ok, *this, index_param, first, last, cmd.end(),
+        auto old = is_kbdmap_en;
+        auto res = cmd_parse(Result::Ok, *this, index_param, first, last, cmd.end(),
             CmdArgParser{KbdNameParser{}, OutParam{is_kbdmap_en}, "keyboard name"_av}
         );
+        if (res == Result::Ok && old != is_kbdmap_en) {
+            return Result::KbdChange;
+        }
+        return res;
     }
 
     else if (cmd_name == "co" || cmd_name == "connect" || cmd_name == "rdp" || cmd_name == "vnc") {
-        auto default_port = (cmd_name == "rdp") ? 3389u : (cmd_name == "vnc") ? 5900u : port;
-        return cmd_parse(Result::Connect, *this, index_param, first, last, cmd.end(),
+        enum class Mode { RDP, VNC, NoSpecified };
+        auto mode = (cmd_name == "rdp") ? Mode::RDP : (cmd_name == "vnc") ? Mode::VNC : Mode::NoSpecified;
+        auto default_port = (mode == Mode::RDP) ? 3389u : (mode == Mode::VNC) ? 5900u : port;
+        auto res = cmd_parse(Result::Connect, *this, index_param, first, last, cmd.end(),
             CmdArgOptionalParser{CharsParser{}, OutParam{output_message}, "address"_av},
             optional_decimal_parser(OutParam{port}, "port"_av, default_port)
         );
+
+        if (res == Result::Connect && mode != Mode::NoSpecified) {
+            is_rdp = (mode == Mode::RDP);
+        }
+
+        return res;
     }
 
     else if (cmd_name == "disco" || cmd_name == "disconnect") {
@@ -1941,7 +1954,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     }
 
     else if (cmd_name == "record-transport") {
-        return cmd_parse(Result::RecordTarnsportPath, *this, index_param, first, last, cmd.end(),
+        return cmd_parse(Result::RecordTransportPath, *this, index_param, first, last, cmd.end(),
             CmdArgOptionalParser{BoolParser{}, OutParam{output_bool}, "boolean"_av, true},
             CmdArgOptionalRemaining{OutParam{output_message}, "filepath"_av}
         );
@@ -1956,12 +1969,12 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
     else if (cmd_name == "pp" || cmd_name == "ipng") {
         return cmd_parse(Result::ScreenRepetition, *this, index_param, first, last, cmd.end(),
             CmdArgParser{DelayParser{}, OutParam{delay}, "delay"_av},
-            CmdArgOptionalRemaining{OutParam{output_message}, "filepath"_av}
+            CmdArgOptionalRemaining{OutParam{output_message}, "suffix"_av}
         );
     }
 
     else if (cmd_name == "ppd" || cmd_name == "ipng-dir" || cmd_name == "ipng-directory") {
-        return cmd_parse(Result::ScreenDirectory, *this, index_param, first, last, cmd.end(),
+        return cmd_parse(Result::ScreenRepetitionDirectory, *this, index_param, first, last, cmd.end(),
             CmdArgParser{CharsParser{}, OutParam{output_message}, "dirname"_av}
         );
     }

@@ -42,6 +42,7 @@ struct HeadlessCommand
     uint16_t screen_height = 600;
 
     bool is_kbdmap_en = true;
+    bool is_rdp = true;
     unsigned port = 3389;
 
     unsigned index_param_error;
@@ -64,6 +65,7 @@ struct HeadlessCommand
         Ok,
         OutputResult,
 
+        Sleep,
         Basename,
         Directory,
         Username,
@@ -71,19 +73,18 @@ struct HeadlessCommand
         Connect,
         Reconnect,
         Disconnect,
-        Screen,
-        SetScreenFile,
-        ScreenDirectory,
-        ScreenRepetition,
-        WrmPath,
-        RecordTarnsportPath,
         EnableScreen,
+        Screen,
+        ScreenRepetition,
+        ScreenRepetitionDirectory,
+        WrmPath,
+        RecordTransportPath,
         ConfigFile,
         ConfigStr,
         RepetitionCommand,
-        Sleep,
         KeyDelay,
         MouseDelay,
+        KbdChange,
         Quit,
     };
 

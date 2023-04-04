@@ -207,7 +207,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
 
     // kbd
     //@{
-    check_cmd("kbd fr", "", "");
+    check_cmd_ex("kbd fr", "", "", CmdResult::KbdChange);
     check_cmd("sc q", "",
         "{KbdFlags=0x0000, Scancode=0x1E}, "
         "{KbdFlags=0x8000, Scancode=0x1E}");
@@ -215,7 +215,7 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
         "{KbdFlags=0x0000, Scancode=0x1E}, "
         "{KbdFlags=0x8000, Scancode=0x1E}");
 
-    check_cmd("kbd en", "", "");
+    check_cmd_ex("kbd en", "", "", CmdResult::KbdChange);
     check_cmd("sc q", "",
         "{KbdFlags=0x0000, Scancode=0x10}, "
         "{KbdFlags=0x8000, Scancode=0x10}");
@@ -389,21 +389,42 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     check_cmd_ex("connect ::1",     "", "", CmdResult::Connect);
     RED_CHECK(cmd_ctx.output_message == "::1"_av);
     RED_CHECK(cmd_ctx.port == 3389);
+    RED_CHECK(cmd_ctx.is_rdp);
     check_cmd_ex("connect ::2 123", "", "", CmdResult::Connect);
     RED_CHECK(cmd_ctx.output_message == "::2"_av);
     RED_CHECK(cmd_ctx.port == 123);
+    RED_CHECK(cmd_ctx.is_rdp);
     check_cmd_ex("connect ::3",     "", "", CmdResult::Connect);
     RED_CHECK(cmd_ctx.output_message == "::3"_av);
     RED_CHECK(cmd_ctx.port == 123);
+    RED_CHECK(cmd_ctx.is_rdp);
     check_cmd_ex("connect",     "", "", CmdResult::Connect);
     RED_CHECK(cmd_ctx.output_message == ""_av);
     RED_CHECK(cmd_ctx.port == 123);
+    RED_CHECK(cmd_ctx.is_rdp);
     check_cmd("connect ::1 ::2", "index_param=2 param='::2' expected='port' type=InvalidFormat", "");
     check_cmd("connect ::2 123 ::3", "index_param=3 param='::3' expected='' type=TooManyArgument", "");
+
+    check_cmd_ex("rdp ::1",     "", "", CmdResult::Connect);
+    RED_CHECK(cmd_ctx.output_message == "::1"_av);
+    RED_CHECK(cmd_ctx.port == 3389);
+    RED_CHECK(cmd_ctx.is_rdp);
+    check_cmd_ex("vnc ::1",     "", "", CmdResult::Connect);
+    RED_CHECK(cmd_ctx.output_message == "::1"_av);
+    RED_CHECK(cmd_ctx.port == 5900);
+    RED_CHECK(!cmd_ctx.is_rdp);
+    check_cmd_ex("vnc ::1 5901",     "", "", CmdResult::Connect);
+    RED_CHECK(cmd_ctx.output_message == "::1"_av);
+    RED_CHECK(cmd_ctx.port == 5901);
+    RED_CHECK(!cmd_ctx.is_rdp);
+    check_cmd_ex("connect ::1",     "", "", CmdResult::Connect);
+    RED_CHECK(cmd_ctx.output_message == "::1"_av);
+    RED_CHECK(cmd_ctx.port == 5901);
+    RED_CHECK(!cmd_ctx.is_rdp);
     //@}
 
 
-    // connect
+    // disconnect
     //@{
     check_cmd_ex("disconnect", "", "", CmdResult::Disconnect);
     check_cmd("disconnect abc", "index_param=1 param='abc' expected='' type=TooManyArgument", "");
