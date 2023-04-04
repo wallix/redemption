@@ -735,6 +735,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 256
 #_hidden
+#application_driver_firefox_uia_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
 #application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
 
 # Keep known server certificates on WAB

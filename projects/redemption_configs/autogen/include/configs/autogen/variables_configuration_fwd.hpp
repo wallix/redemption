@@ -180,6 +180,7 @@ namespace cfg
         struct application_driver_script_argument;
         struct application_driver_chrome_dt_script;
         struct application_driver_chrome_uia_script;
+        struct application_driver_firefox_uia_script;
         struct application_driver_ie_script;
         struct server_cert_store;
         struct server_cert_check;
