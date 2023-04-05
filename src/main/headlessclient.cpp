@@ -112,6 +112,8 @@ struct Repl final : FrontAPI, SessionLogApi
     bool start_connection = false;
     bool disconnection = false;
     bool has_delay_cmd = false;
+    bool first_png = true;
+    bool gd_is_ready = false;
 
     int fd = 0;
 
@@ -210,6 +212,18 @@ struct Repl final : FrontAPI, SessionLogApi
                 password = cmd_ctx.output_message.as<std::string_view>();
                 break;
 
+            case HeadlessCommand::Result::WrmPath:
+                wrm_path = cmd_ctx.output_message.as<std::string_view>();
+                break;
+
+            case HeadlessCommand::Result::RecordTransportPath:
+                record_transport_path = cmd_ctx.output_message.as<std::string_view>();
+                break;
+
+            case HeadlessCommand::Result::ScreenRepetitionDirectory:
+                screen_repetition_output_directory = cmd_ctx.output_message.as<std::string_view>();
+                break;
+
             case HeadlessCommand::Result::OutputResult:
                 fprintf(stderr, "%.*s\n", int(cmd_ctx.output_message.size()), cmd_ctx.output_message.data());
                 break;
@@ -268,8 +282,15 @@ struct Repl final : FrontAPI, SessionLogApi
                         err = strerror(errno);
                     }
                 }
-                else {
+                else if (!gd_is_ready) {
+                    err = "Graphics is not ready";
+                }
+                else if (first_png) {
                     err = "Png capture is disabled";
+                    first_png = false;
+                }
+                else {
+                    break;
                 }
 
                 LOG(LOG_ERR, "%s: %s", png_path, err);
@@ -278,22 +299,11 @@ struct Repl final : FrontAPI, SessionLogApi
 
             case HeadlessCommand::Result::EnableScreen:
                 enable_png = cmd_ctx.output_bool;
+                first_png = true;
                 break;
 
             case HeadlessCommand::Result::ScreenRepetition:
                 // TODO delay, suffix
-                screen_repetition_output_directory = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::WrmPath:
-                wrm_path = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::RecordTransportPath:
-                record_transport_path = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::ScreenRepetitionDirectory:
                 screen_repetition_output_directory = cmd_ctx.output_message.as<std::string_view>();
                 break;
 
@@ -323,6 +333,8 @@ struct Repl final : FrontAPI, SessionLogApi
 
     gdi::GraphicApi& prepare_gd()
     {
+        first_png = true;
+
         if (enable_wrm || enable_png) {
             if (!drawable) {
                 drawable = std::make_unique<HeadlessGraphics>(cmd_ctx.screen_width, cmd_ctx.screen_height);
@@ -366,6 +378,8 @@ struct Repl final : FrontAPI, SessionLogApi
     {
         (void)session_log;
 
+        gd_is_ready = true;
+
         if (enable_wrm && drawable) {
             auto& time_base = event_manager.get_writable_time_base();
             time_base = TimeBase::now();
@@ -403,6 +417,8 @@ struct Repl final : FrontAPI, SessionLogApi
 
     bool must_be_stop_capture() override
     {
+        gd_is_ready = false;
+
         gds.clear();
 
         if (wrm_gd) {
