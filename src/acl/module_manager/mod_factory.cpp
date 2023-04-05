@@ -43,7 +43,6 @@
 #include "mod/internal/close_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/dialog_mod.hpp"
-#include "mod/internal/dialog_mod2.hpp"
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
@@ -174,25 +173,20 @@ struct ModFactory::Impl
         return mod_pack_from_widget(new_mod);
     }
 
-    static ModPack create_dialog(
-        ModFactory& self, const char* button, const char* caption,
-        ChallengeOpt challenge)
+    static ModPack create_dialog(ModFactory& self, const char* cancel, const char* caption)
     {
         auto new_mod = new DialogMod(
             self.ini,
             self.graphics,
-            self.front,
             self.client_info.screen_info.width,
             self.client_info.screen_info.height,
             self.rail_client_execute.adjust_rect(self.client_info.get_widget_rect()),
             caption,
             self.ini.get<cfg::context::message>().c_str(),
-            button,
+            cancel,
             self.rail_client_execute,
             self.glyphs,
-            self.theme,
-            copy_paste(self),
-            challenge
+            self.theme
         );
         return mod_pack_from_widget(new_mod);
     }
@@ -321,37 +315,49 @@ void ModFactory::create_interactive_target_mod()
 
 void ModFactory::create_valid_message_mod()
 {
-    const char * button = TR(trkeys::refused, language(this->ini));
+    const char * cancel = TR(trkeys::refused, language(this->ini));
     const char * caption = "Information";
-    auto mod_pack = Impl::create_dialog(*this, button, caption, NO_CHALLENGE);
+    auto mod_pack = Impl::create_dialog(*this, cancel, caption);
     Impl::set_mod(*this, ModuleName::valid, mod_pack, false);
 }
 
 void ModFactory::create_display_message_mod()
 {
-    const char * button = nullptr;
+    const char * cancel = nullptr;
     const char * caption = "Information";
-    auto mod_pack = Impl::create_dialog(*this, button, caption, NO_CHALLENGE);
+    auto mod_pack = Impl::create_dialog(*this, cancel, caption);
     Impl::set_mod(*this, ModuleName::confirm, mod_pack, false);
 }
 
 void ModFactory::create_dialog_challenge_mod()
 {
-    const char * button = nullptr;
     const char * caption = "Challenge";
-    const ChallengeOpt challenge = this->ini.get<cfg::context::authentication_challenge>()
-        ? CHALLENGE_ECHO
-        : CHALLENGE_HIDE;
-    auto mod_pack = Impl::create_dialog(*this, button, caption, challenge);
-    Impl::set_mod(*this, ModuleName::challenge, mod_pack, false);
+    const auto challenge = this->ini.get<cfg::context::authentication_challenge>()
+        ? DialogWithChallengeMod::ChallengeOpt::Echo
+        : DialogWithChallengeMod::ChallengeOpt::Hide;
+    auto new_mod = new DialogWithChallengeMod(
+        this->ini,
+        this->graphics,
+        this->front,
+        this->client_info.screen_info.width,
+        this->client_info.screen_info.height,
+        this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
+        caption,
+        this->ini.get<cfg::context::message>().c_str(),
+        this->rail_client_execute,
+        this->glyphs,
+        this->theme,
+        Impl::copy_paste(*this),
+        challenge
+    );
+    Impl::set_mod(*this, ModuleName::challenge, mod_pack_from_widget(new_mod), false);
 }
 
 void ModFactory::create_display_link_mod()
 {
     const char * caption = "URL Redirection";
     const char * link_label = "Copy to clipboard: ";
-    // return Impl::create_dialog(*this, button, caption, NO_CHALLENGE);
-    auto new_mod = new DialogMod2(
+    auto new_mod = new WidgetDialogWithCopyableLinkMod(
         this->ini,
         this->graphics,
         this->client_info.screen_info.width,

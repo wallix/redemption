@@ -34,34 +34,57 @@
 
 namespace
 {
-    struct DialogModContextTest
+
+struct DialogModContextTestBase
+{
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
+    FakeFront front{screen_info};
+    WindowListCaps window_list_caps;
+    TimeBase time_base;
+    ClientExecute client_execute{time_base, front.gd(), front, window_list_caps, false};
+
+    Inifile ini;
+    Theme theme;
+
+    Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
+
+    mod_api* mod;
+
+    void keydown(uint8_t scancode)
     {
-        ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-        FakeFront front{screen_info};
-        WindowListCaps window_list_caps;
-        TimeBase time_base;
-        ClientExecute client_execute{time_base, front.gd(), front, window_list_caps, false};
-        CopyPaste copy_paste{false};
+        keymap.event(Keymap::KbdFlags(), Keymap::Scancode(scancode));
+        mod->rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(scancode), 0, keymap);
+    }
+};
 
-        Inifile ini;
-        Theme theme;
+struct DialogModContextTest : DialogModContextTestBase
+{
+    DialogMod d;
 
-        DialogMod d;
-        Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
+    DialogModContextTest(char const* button_text)
+    : d(ini, front.gd(), screen_info.width, screen_info.height,
+        Rect(0, 0, 799, 599), "Title", "Hello, World", button_text,
+        client_execute, global_font(), theme)
+    {
+        mod = &d;
+    }
+};
 
-        DialogModContextTest(char const* button_text, ChallengeOpt has_challenge = NO_CHALLENGE)
-        : d(ini, front.gd(), front, screen_info.width, screen_info.height,
-            Rect(0, 0, 799, 599), "Title", "Hello, World", button_text,
-            client_execute, global_font(), theme, copy_paste, has_challenge)
-        {
-        }
+struct DialogChallengeModContextTest : DialogModContextTestBase
+{
+    CopyPaste copy_paste{false};
+    DialogWithChallengeMod d;
+    Keymap keymap{*find_layout_by_id(KeyLayout::KbdId(0x040C))};
 
-        void keydown(uint8_t scancode)
-        {
-            keymap.event(Keymap::KbdFlags(), Keymap::Scancode(scancode));
-            d.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(scancode), 0, keymap);
-        }
-    };
+    DialogChallengeModContextTest(DialogWithChallengeMod::ChallengeOpt has_challenge)
+    : d(ini, front.gd(), front, screen_info.width, screen_info.height,
+        Rect(0, 0, 799, 599), "Title", "Hello, World",
+        client_execute, global_font(), theme, copy_paste, has_challenge)
+    {
+        mod = &d;
+    }
+};
+
 } // anonymous namespace
 
 
@@ -81,7 +104,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge)
 {
-    DialogModContextTest dialog("Cancel", CHALLENGE_ECHO);
+    DialogChallengeModContextTest dialog(DialogWithChallengeMod::ChallengeOpt::Echo);
     dialog.keydown(0x11); // 'z'
     dialog.keydown(0x12); // 'e'
     dialog.keydown(0x10); // 'a'

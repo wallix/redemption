@@ -38,6 +38,11 @@ const CHANNELS::ChannelDefArray & FakeFront::get_channel_list() const
     return d->cl;
 }
 
+CHANNELS::ChannelDefArray & FakeFront::get_writable_channel_list()
+{
+    return d->cl;
+}
+
 void FakeFront::add_channel(CHANNELS::ChannelNameId name_id, uint32_t flags, uint16_t chanid)
 {
     this->d->cl.push_back({name_id, flags, chanid});

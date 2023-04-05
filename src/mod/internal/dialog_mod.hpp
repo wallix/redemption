@@ -30,11 +30,9 @@
 class CopyPaste;
 
 using DialogModVariables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
-    vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
-    vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
-    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
-    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>
+    vcfg::var<cfg::context::accept_message,  vcfg::accessmode::set>,
+    vcfg::var<cfg::context::display_message, vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,    vcfg::accessmode::get>
 >;
 
 
@@ -44,11 +42,10 @@ public:
     DialogMod(
         DialogModVariables vars,
         gdi::GraphicApi & drawable,
-        FrontAPI & front, uint16_t width, uint16_t height,
+        uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, ClientExecute & rail_client_execute,
-        Font const& font, Theme const& theme, CopyPaste& copy_paste,
-        ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
+        Font const& font, Theme const& theme);
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
@@ -58,12 +55,75 @@ public:
     void acl_update(AclFieldMask const&/* acl_fields*/) override {}
 
 private:
-    void accepted();
-
-    void refused();
-
-    LanguageButton language_button;
     WidgetDialog dialog_widget;
 
     DialogModVariables vars;
+};
+
+
+using DialogWithChallengeModVariables = vcfg::variables<
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::accessmode::get>,
+    vcfg::var<cfg::context::password,                 vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,             vcfg::accessmode::get>
+>;
+
+
+class DialogWithChallengeMod : public RailInternalModBase
+{
+public:
+    using ChallengeOpt = WidgetDialogWithChallenge::ChallengeOpt;
+
+    DialogWithChallengeMod(
+        DialogWithChallengeModVariables vars,
+        gdi::GraphicApi & drawable,
+        FrontAPI & front, uint16_t width, uint16_t height,
+        Rect const widget_rect, const char * caption, const char * message,
+        ClientExecute & rail_client_execute,
+        Font const& font, Theme const& theme, CopyPaste& copy_paste,
+        ChallengeOpt challenge);
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
+    {
+        this->dialog_widget.move_size_widget(left, top, width, height);
+    }
+
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
+private:
+    LanguageButton language_button;
+    WidgetDialogWithChallenge dialog_widget;
+
+    DialogWithChallengeModVariables vars;
+};
+
+
+using WidgetDialogWithCopyableLinkModVariables = vcfg::variables<
+    vcfg::var<cfg::context::display_message, vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,    vcfg::accessmode::get>
+>;
+
+
+class WidgetDialogWithCopyableLinkMod : public RailInternalModBase
+{
+public:
+    WidgetDialogWithCopyableLinkMod(
+        WidgetDialogWithCopyableLinkModVariables vars,
+        gdi::GraphicApi & drawable,
+        uint16_t width, uint16_t height,
+        Rect const widget_rect, const char * caption, const char * message,
+        const char * link_value, const char * link_label,
+        ClientExecute & rail_client_execute,
+        Font const& font, Theme const& theme, CopyPaste& copy_paste);
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
+    {
+        this->dialog_widget.move_size_widget(left, top, width, height);
+    }
+
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
+private:
+    WidgetDialogWithCopyableLink dialog_widget;
+
+    WidgetDialogWithCopyableLinkModVariables vars;
 };

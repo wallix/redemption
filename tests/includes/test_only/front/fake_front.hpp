@@ -44,6 +44,7 @@ public:
     bool is_capture_in_progress() const override { return false; }
     void must_flush_capture() override {}
 
+    CHANNELS::ChannelDefArray & get_writable_channel_list();
     const CHANNELS::ChannelDefArray & get_channel_list() const override;
     void add_channel(CHANNELS::ChannelNameId name_id, uint32_t flags, uint16_t chanid);
 

@@ -70,7 +70,6 @@ exe rdpproxy :
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
-  <library>src/mod/internal/dialog_mod2.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_mod_base.o
@@ -84,7 +83,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/dialog.o
-  <library>src/mod/internal/widget/dialog2.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/form.o
@@ -2380,6 +2378,7 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/mod/internal/rail_mod_base.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/dialog.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/image.o
@@ -2732,6 +2731,7 @@ test-run tests/mod/internal/widget/test_dialog :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/button.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/dialog.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/image.o
@@ -2750,6 +2750,7 @@ test-run tests/mod/internal/widget/test_dialog :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4795,7 +4796,6 @@ obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bounce
 obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod.cpp ;
-obj src/mod/internal/dialog_mod2.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod2.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
 obj src/mod/internal/login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/login_mod.cpp ;
 obj src/mod/internal/rail_mod_base.o : $(REDEMPTION_SRC_PATH)/mod/internal/rail_mod_base.cpp ;
@@ -4809,7 +4809,6 @@ obj src/mod/internal/widget/button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widge
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
 obj src/mod/internal/widget/delegated_copy.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/delegated_copy.cpp ;
 obj src/mod/internal/widget/dialog.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/dialog.cpp ;
-obj src/mod/internal/widget/dialog2.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/dialog2.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;
 obj src/mod/internal/widget/form.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/form.cpp ;
@@ -5878,7 +5877,6 @@ explicit
   src/mod/internal/close_mod.o
   src/mod/internal/copy_paste.o
   src/mod/internal/dialog_mod.o
-  src/mod/internal/dialog_mod2.o
   src/mod/internal/interactive_target_mod.o
   src/mod/internal/login_mod.o
   src/mod/internal/rail_mod_base.o
@@ -5892,7 +5890,6 @@ explicit
   src/mod/internal/widget/composite.o
   src/mod/internal/widget/delegated_copy.o
   src/mod/internal/widget/dialog.o
-  src/mod/internal/widget/dialog2.o
   src/mod/internal/widget/edit.o
   src/mod/internal/widget/edit_valid.o
   src/mod/internal/widget/form.o

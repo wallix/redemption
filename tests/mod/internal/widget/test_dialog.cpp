@@ -21,6 +21,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/check_img.hpp"
+#include "test_only/front/fake_front.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/mod/internal/widget/notify_trace.hpp"
@@ -31,14 +32,17 @@
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "utils/theme.hpp"
+#include "core/channel_list.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/dialog/"
 
+namespace
+{
+
 struct TestWidgetDialogCtx
 {
     TestGraphic drawable;
-    CopyPaste copy_paste{false};
     NotifyTrace onsubmit;
     NotifyTrace oncancel;
     WidgetDialog flat_dialog;
@@ -46,23 +50,21 @@ struct TestWidgetDialogCtx
     TestWidgetDialogCtx(
         uint16_t w, uint16_t h,
         const char* caption, const char * text,
-        ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : TestWidgetDialogCtx(
-        w, h, w, h, caption, text, has_challenge, logo_path)
+        w, h, w, h, caption, text, logo_path)
     {}
 
     TestWidgetDialogCtx(
         uint16_t w, uint16_t h,
         uint16_t dialogW, uint16_t dialogH,
         const char* caption, const char * text,
-        ChallengeOpt has_challenge = NO_CHALLENGE,
         char const* logo_path = nullptr)
     : drawable{w, h}
     , flat_dialog(
-        drawable, copy_paste, {0, 0, dialogW, dialogH},
-        {onsubmit, oncancel, WidgetEventNotifier()},
-        caption, text, /*extra_button=*/nullptr,
+        drawable, {0, 0, dialogW, dialogH},
+        {onsubmit, oncancel},
+        caption, text,
         [logo_path]{
             Theme colors;
             colors.global.bgcolor = DARK_BLUE_BIS;
@@ -72,11 +74,76 @@ struct TestWidgetDialogCtx
                 colors.global.logo_path = logo_path;
             }
             return colors;
-        }(), global_font_deja_vu_14(), "Ok", "Cancel", has_challenge)
+        }(), global_font_deja_vu_14(), "Ok", "Cancel")
     {
         flat_dialog.init_focus();
     }
 };
+
+struct TestWidgetDialogWithChallengeCtx
+{
+    TestGraphic drawable;
+    CopyPaste copy_paste{false};
+    NotifyTrace onsubmit;
+    NotifyTrace oncancel;
+    WidgetDialogWithChallenge flat_dialog;
+
+    TestWidgetDialogWithChallengeCtx(
+        uint16_t w, uint16_t h,
+        const char* caption, const char * text,
+        WidgetDialogWithChallenge::ChallengeOpt challenge,
+        char const* logo_path = nullptr)
+    : drawable{w, h}
+    , flat_dialog(
+        drawable, {0, 0, w, h},
+        {onsubmit, oncancel, WidgetEventNotifier()},
+        caption, text, /*extra_button=*/nullptr, "Ok",
+        global_font_deja_vu_14(),
+        [logo_path]{
+            Theme colors;
+            colors.global.bgcolor = DARK_BLUE_BIS;
+            colors.global.fgcolor = WHITE;
+            if (logo_path) {
+                colors.global.enable_theme = true;
+                colors.global.logo_path = logo_path;
+            }
+            return colors;
+        }(), copy_paste, challenge)
+    {
+        flat_dialog.init_focus();
+    }
+};
+
+struct TestWidgetDialogWithCopyableLinkCtx
+{
+    TestGraphic drawable;
+    CopyPaste copy_paste{false};
+    NotifyTrace onsubmit;
+    NotifyTrace oncancel;
+    WidgetDialogWithCopyableLink flat_dialog;
+
+    TestWidgetDialogWithCopyableLinkCtx(uint16_t w, uint16_t h, const char* caption, const char * text)
+    : drawable{w, h}
+    , flat_dialog(
+        drawable, {0, 0, w, h}, {onsubmit, oncancel},
+        caption, text, "value", "name", "Ok", global_font_deja_vu_14(),
+        []{
+            Theme colors;
+            colors.global.bgcolor = DARK_BLUE_BIS;
+            colors.global.fgcolor = WHITE;
+            return colors;
+        }(), copy_paste)
+    {
+        flat_dialog.init_focus();
+    }
+};
+
+} // anonymous namespace
+
+
+/*
+ * WidgetDialog
+ */
 
 RED_AUTO_TEST_CASE(TraceWidgetDialog)
 {
@@ -259,9 +326,28 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     RED_CHECK(ctx.oncancel.get_and_reset() == 1);
 }
 
+RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
+{
+    TestWidgetDialogCtx ctx(800, 600, "test1",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4",
+        FIXTURES_PATH "/wablogoblue-transparent.png");
+
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_13.png");
+}
+
+/*
+ * WidgetDialogWithChallenge
+ */
+
 RED_AUTO_TEST_CASE(EventWidgetChallenge)
 {
-    TestWidgetDialogCtx ctx(800, 600, "test6",
+    TestWidgetDialogWithChallengeCtx ctx(800, 600, "test6",
         "Lorem ipsum dolor sit amet, consectetur\n"
         "adipiscing elit. Nam purus lacus, luctus sit\n"
         "amet suscipit vel, posuere quis turpis. Sed\n"
@@ -276,7 +362,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
         "erat ut ligula. Fusce sit amet mauris neque.\n"
         "Sed orci augue, luctus in ornare sed,\n"
         "adipiscing et arcu.",
-        CHALLENGE_ECHO);
+        WidgetDialogWithChallenge::ChallengeOpt::Echo);
 
     ctx.flat_dialog.challenge->set_text("challenge_test");
 
@@ -284,7 +370,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
-    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_12.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_challenge_1.png");
 
     Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
     keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x1c)); // enter
@@ -293,17 +379,103 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 }
 
-RED_AUTO_TEST_CASE(TraceWidgetDialog_transparent_png_with_theme_color)
+/*
+ * WidgetDialogWithCopyableLink
+ */
+
+RED_AUTO_TEST_CASE(TraceWidgetDialogWithCopyableLink)
 {
-    TestWidgetDialogCtx ctx(800, 600, "test1",
+    TestWidgetDialogWithCopyableLinkCtx ctx(800, 600, "test1",
         "line 1\n"
         "line 2\n"
         "\n"
         "line 3, blah blah\n"
-        "line 4", NO_CHALLENGE,
-        FIXTURES_PATH "/wablogoblue-transparent.png");
+        "line 4");
+
+    // ask to widget to redraw at it's current position
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
+}
+
+RED_AUTO_TEST_CASE(EventWidgetDialogWithCopyableLinkOkLink)
+{
+    TestWidgetDialogWithCopyableLinkCtx ctx(800, 600, "test1",
+        "line 1\n"
+        "line 2\n"
+        "\n"
+        "line 3, blah blah\n"
+        "line 4");
+
+    int x = ctx.flat_dialog.ok.x() + ctx.flat_dialog.ok.cx() / 2 ;
+    int y = ctx.flat_dialog.ok.y() + ctx.flat_dialog.ok.cy() / 2 ;
+    ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
+
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_2.png");
+
+
+    ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
 
-    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_13.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
+
+    // link click
+
+    ScreenInfo screen_info{ctx.drawable.width(), ctx.drawable.height(), BitsPerPixel::BitsPP24};
+    FakeFront front{screen_info};
+    front.get_writable_channel_list().push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
+    ctx.copy_paste.ready(front);
+
+    struct PastedWidget : Widget
+    {
+        using Widget::Widget;
+
+        void clipboard_insert_utf8(zstring_view text) override
+        {
+            str = text;
+        }
+
+        void rdp_input_invalidate(Rect rect) override
+        {
+            (void)rect;
+        }
+
+        zstring_view str;
+    };
+
+    PastedWidget pasted(ctx.drawable, Widget::Focusable::No);
+
+    ctx.copy_paste.paste(pasted);
+    RED_CHECK(pasted.str == ""_av);
+
+    x = ctx.flat_dialog.link->copy.x() + ctx.flat_dialog.link->copy.cx() / 2 ;
+    y = ctx.flat_dialog.link->copy.y() + ctx.flat_dialog.link->copy.cy() / 2 ;
+    ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
+    ctx.copy_paste.paste(pasted);
+    RED_CHECK(pasted.str == "value"_av);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 0);
+
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
+
+    ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
+
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
+
+    // exit
+
+    Keymap keymap(*find_layout_by_id(KeyLayout::KbdId(0x040C)));
+    keymap.event(Keymap::KbdFlags(), Keymap::Scancode(0x01)); // esc
+    ctx.flat_dialog.rdp_input_scancode(Keymap::KbdFlags(), Keymap::Scancode(0x01), 0, keymap);
+    RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
+    RED_CHECK(ctx.oncancel.get_and_reset() == 1);
 }

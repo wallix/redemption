@@ -25,65 +25,120 @@
 #include "mod/internal/widget/edit.hpp"
 #include "utils/translation.hpp"
 
+namespace
+{
+
+void init_dialog_mod(WidgetScreen& screen, Widget& dialog_widget)
+{
+    screen.add_widget(dialog_widget, WidgetComposite::HasFocus::Yes);
+    screen.init_focus();
+    screen.rdp_input_invalidate(screen.get_rect());
+}
+
+}
 
 DialogMod::DialogMod(
     DialogModVariables vars,
     gdi::GraphicApi & drawable,
-    FrontAPI & front, uint16_t width, uint16_t height,
+    uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     const char * cancel_text, ClientExecute & rail_client_execute,
+    Font const& font, Theme const& theme
+)
+    : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, nullptr)
+    , dialog_widget(
+        drawable, widget_rect,
+        cancel_text
+            ? WidgetDialog::Events{
+                .onsubmit = [this]{
+                    this->vars.set_acl<cfg::context::accept_message>(true);
+                    this->set_mod_signal(BACK_EVENT_NEXT);
+                },
+                .oncancel = [this]{
+                    this->vars.set_acl<cfg::context::accept_message>(false);
+                    this->set_mod_signal(BACK_EVENT_NEXT);
+                },
+            }
+            : WidgetDialog::Events{
+                .onsubmit = [this]{
+                    this->vars.set_acl<cfg::context::display_message>(true);
+                    this->set_mod_signal(BACK_EVENT_NEXT);
+                },
+                .oncancel = [this]{
+                    this->vars.set_acl<cfg::context::display_message>(false);
+                    this->set_mod_signal(BACK_EVENT_NEXT);
+                },
+            },
+        caption, message, theme, font,
+        TR(trkeys::OK, language(vars)),
+        cancel_text)
+    , vars(vars)
+{
+    init_dialog_mod(this->screen, this->dialog_widget);
+}
+
+
+DialogWithChallengeMod::DialogWithChallengeMod(
+    DialogWithChallengeModVariables vars,
+    gdi::GraphicApi & drawable,
+    FrontAPI & front, uint16_t width, uint16_t height,
+    Rect const widget_rect, const char * caption, const char * message,
+    ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, CopyPaste& copy_paste,
-    ChallengeOpt has_challenge
+    ChallengeOpt challenge
 )
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
     , dialog_widget(
-        drawable, copy_paste, widget_rect,
-        {
-            .onsubmit = [this]{ this->accepted(); },
-            .oncancel = [this]{ this->refused(); },
+        drawable, widget_rect,
+        WidgetDialogWithChallenge::Events{
+            .onsubmit = [this]{
+                this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            },
+            .oncancel = [this]{
+                this->vars.set_acl<cfg::context::password>("");
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            },
             .onctrl_shift = [this]{ this->language_button.next_layout(); },
         },
-        caption, message, &this->language_button, theme, font,
+        caption, message,
+        &this->language_button,
         TR(trkeys::OK, language(vars)),
-        cancel_text, has_challenge)
+        font, theme, copy_paste, challenge)
     , vars(vars)
 {
-    this->screen.add_widget(this->dialog_widget, WidgetComposite::HasFocus::Yes);
-    this->screen.init_focus();
-    this->screen.rdp_input_invalidate(this->screen.get_rect());
+    init_dialog_mod(this->screen, this->dialog_widget);
 }
 
-// TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-void DialogMod::accepted()
-{
-    if (this->dialog_widget.challenge) {
-        this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
-    }
-    else if (this->dialog_widget.cancel) {
-        this->vars.set_acl<cfg::context::accept_message>(true);
-    }
-    else {
-        this->vars.set_acl<cfg::context::display_message>(true);
-    }
-    this->set_mod_signal(BACK_EVENT_NEXT);
-    // throw Error(ERR_BACK_EVENT_NEXT);
-}
 
-// TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-void DialogMod::refused()
+WidgetDialogWithCopyableLinkMod::WidgetDialogWithCopyableLinkMod(
+    WidgetDialogWithCopyableLinkModVariables vars,
+    gdi::GraphicApi & drawable,
+    uint16_t width, uint16_t height,
+    Rect const widget_rect, const char * caption, const char * message,
+    const char * link_value, const char * link_label,
+    ClientExecute & rail_client_execute,
+    Font const& font, Theme const& theme, CopyPaste& copy_paste
+)
+    : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
+    , dialog_widget(
+        drawable, widget_rect,
+        {
+            .onsubmit = [this]{
+                this->vars.set_acl<cfg::context::display_message>(true);
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            },
+            .oncancel = [this]{
+                this->vars.set_acl<cfg::context::display_message>(false);
+                this->set_mod_signal(BACK_EVENT_NEXT);
+            }
+        },
+        caption, message, link_value, link_label, TR(trkeys::OK, language(vars)),
+        font, theme, copy_paste)
+    , vars(vars)
 {
-    if (this->dialog_widget.challenge) {
-        this->vars.set_acl<cfg::context::password>("");
-    }
-    else if (this->dialog_widget.cancel) {
-        this->vars.set_acl<cfg::context::accept_message>(false);
-    }
-    else {
-        this->vars.set_acl<cfg::context::display_message>(false);
-    }
-    this->set_mod_signal(BACK_EVENT_NEXT);
-    // throw Error(ERR_BACK_EVENT_NEXT);
+    init_dialog_mod(this->screen, this->dialog_widget);
 }

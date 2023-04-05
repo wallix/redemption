@@ -45,14 +45,7 @@ struct CopyPasteFront : FakeFront
     : FakeFront(info)
     , copy_paste(copy_paste)
     {
-        CHANNELS::ChannelDef def;
-        def.name = channel_names::cliprdr;
-        this->channel_def_array.push_back(def);
-    }
-
-    const CHANNELS::ChannelDefArray& get_channel_list() const override
-    {
-        return this->channel_def_array;
+        this->get_writable_channel_list().push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
     }
 
     void send_to_channel(
@@ -125,7 +118,6 @@ private:
 //        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
 //    }
 
-    CHANNELS::ChannelDefArray channel_def_array;
     CopyPaste & copy_paste;
     std::string str;
 };

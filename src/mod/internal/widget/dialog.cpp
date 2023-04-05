@@ -24,6 +24,7 @@
 #include "mod/internal/widget/dialog.hpp"
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/edit.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap.hpp"
 #include "gdi/graphic_api.hpp"
@@ -33,13 +34,13 @@ enum {
     WIDGET_MULTILINE_BORDER_Y = 4
 };
 
-WidgetDialog::WidgetDialog(
-    gdi::GraphicApi & drawable, CopyPaste & copy_paste, Rect const widget_rect,
-    Events events,
-    const char* caption, const char * text,
-    WidgetButton * extra_button,
+WidgetDialogBase::WidgetDialogBase(
+    gdi::GraphicApi & drawable, Rect widget_rect, Events events,
+    const char* caption, const char * text, WidgetButton * extra_button,
     Theme const & theme, Font const & font, const char * ok_text,
-    const char * cancel_text, ChallengeOpt has_challenge
+    std::unique_ptr<WidgetButton> cancel_,
+    std::unique_ptr<WidgetEdit> challenge_,
+    WidgetLink* link
 )
     : WidgetComposite(drawable, Focusable::Yes)
     , onctrl_shift(events.onctrl_shift)
@@ -49,16 +50,12 @@ WidgetDialog::WidgetDialog(
     , dialog(drawable, text,
              theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
              font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , challenge(nullptr)
-    , ok(drawable, ok_text ? ok_text : "Ok", events.onsubmit,
+    , link(link)
+    , challenge(std::move(challenge_))
+    , ok(drawable, ok_text, events.onsubmit,
         theme.global.fgcolor, theme.global.bgcolor,
         theme.global.focus_color, 2, font, 6, 2)
-    , cancel(cancel_text
-        ? std::make_unique<WidgetButton>(
-            drawable, cancel_text, events.oncancel,
-            theme.global.fgcolor, theme.global.bgcolor,
-            theme.global.focus_color, 2, font, 6, 2)
-        : std::unique_ptr<WidgetButton>())
+    , cancel(std::move(cancel_))
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
@@ -73,42 +70,35 @@ WidgetDialog::WidgetDialog(
     this->add_widget(this->separator);
     this->add_widget(this->dialog);
 
-    if (has_challenge) {
-        if (CHALLENGE_ECHO == has_challenge) {
-            this->challenge = std::make_unique<WidgetEdit>(
-                this->drawable, copy_paste, nullptr, events.onsubmit,
-                theme.edit.fgcolor, theme.edit.bgcolor,
-                theme.edit.focus_color, font, -1u, 1, 1
-            );
-        }
-        else {
-            this->challenge = std::make_unique<WidgetPassword>(
-                this->drawable, copy_paste, nullptr, events.onsubmit,
-                theme.edit.fgcolor, theme.edit.bgcolor,
-                theme.edit.focus_color, font, -1u, 1, 1
-            );
-        }
-        this->add_widget(*this->challenge, HasFocus::Yes);
+    if (link) {
+        this->add_widget(link->label);
+        this->add_widget(link->copy);
+        this->add_widget(link->show);
     }
 
-    this->add_widget(this->ok, has_challenge ? HasFocus::No : HasFocus::Yes);
+    if (this->challenge) {
+        this->add_widget(*this->challenge, HasFocus::Yes);
+        this->add_widget(this->ok, HasFocus::No);
+    }
+    else {
+        this->add_widget(this->ok, HasFocus::Yes);
+    }
+
 
     if (this->cancel) {
         this->add_widget(*this->cancel);
     }
 
-    if (has_challenge) {
-        if (extra_button) {
-            this->add_widget(*extra_button);
-        }
+    if (this->challenge && extra_button) {
+        this->add_widget(*extra_button);
     }
 
     this->move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
 }
 
-WidgetDialog::~WidgetDialog() = default;
+WidgetDialogBase::~WidgetDialogBase() = default;
 
-void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+void WidgetDialogBase::move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
 {
     this->set_xy(left, top);
     this->set_wh(width, height);
@@ -130,7 +120,18 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
         }
     }
 
-    const int total_width = std::max(this->dialog.cx(), this->title.cx());
+    uint16_t total_width = std::max(this->dialog.cx(), this->title.cx());
+
+    if (this->link) {
+        this->link->show.set_wh(width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, height / 2);
+
+        auto dim = this->link->show.get_optimal_dim();
+        if (dim.h < this->link->show.cy()) {
+            this->link->show.set_wh(dim.w, dim.h);
+        }
+
+        total_width = std::max(this->link->show.cx(), total_width);
+    }
 
     this->separator.set_wh(total_width, 2);
     this->separator.set_xy(left + (width - total_width) / 2, y + 3);
@@ -153,6 +154,29 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     }
 
     y += 5;
+
+    if (this->link) {
+        // to activate
+        this->link->show.set_xy(this->separator.x(), y);
+
+        y            += this->link->show.cy() + 10;
+        total_height += this->link->show.cy() + 10;
+
+        y += 5;
+
+        dim = this->link->label.get_optimal_dim();
+        this->link->label.set_wh(dim);
+        this->link->label.set_xy(this->separator.x() + WIDGET_MULTILINE_BORDER_X, y);
+
+        dim = this->link->copy.get_optimal_dim();
+        this->link->copy.set_wh(dim);
+        this->link->copy.set_xy(this->link->label.x() + this->link->label.cx(), y);
+
+        y            += this->link->label.cy() + 10;
+        total_height += this->link->label.cy() + 10;
+
+        y += 5;
+    }
 
     dim = this->ok.get_optimal_dim();
     this->ok.set_wh(dim);
@@ -186,7 +210,7 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     }
 }
 
-void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
+void WidgetDialogBase::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
@@ -218,4 +242,84 @@ void WidgetDialog::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_
             break;
     }
     REDEMPTION_DIAGNOSTIC_POP()
+}
+
+
+WidgetDialog::WidgetDialog(
+    gdi::GraphicApi& drawable, Rect widget_rect,
+    Events events,
+    const char* caption, const char* text,
+    const Theme& theme, const Font& font,
+    const char* ok_text, const char* cancel_text)
+: WidgetDialogBase(
+    drawable, widget_rect,
+    {.onsubmit = events.onsubmit, .oncancel = events.oncancel},
+    caption, text, nullptr, theme, font, ok_text,
+    cancel_text
+        ? std::make_unique<WidgetButton>(
+            drawable, cancel_text, events.oncancel,
+            theme.global.fgcolor, theme.global.bgcolor,
+            theme.global.focus_color, 2, font, 6, 2
+        )
+        : std::unique_ptr<WidgetButton>(),
+    nullptr, nullptr
+)
+{}
+
+
+WidgetDialogWithChallenge::WidgetDialogWithChallenge(
+    gdi::GraphicApi& drawable, Rect widget_rect,
+    Events events,
+    const char* caption, const char * text,
+    WidgetButton * extra_button,
+    const char * ok_text,
+    Font const & font, Theme const & theme, CopyPaste & copy_paste,
+    ChallengeOpt challenge_opt)
+: WidgetDialogBase(
+    drawable, widget_rect, events,
+    caption, text, extra_button, theme, font,
+    ok_text,
+    nullptr,
+    (ChallengeOpt::Echo == challenge_opt)
+        ? std::make_unique<WidgetEdit>(
+            drawable, copy_paste, nullptr, events.onsubmit,
+            theme.edit.fgcolor, theme.edit.bgcolor,
+            theme.edit.focus_color, font, -1u, 1, 1
+        )
+        :  std::make_unique<WidgetPassword>(
+            drawable, copy_paste, nullptr, events.onsubmit,
+            theme.edit.fgcolor, theme.edit.bgcolor,
+            theme.edit.focus_color, font, -1u, 1, 1
+        ),
+    nullptr
+)
+{}
+
+
+WidgetDialogWithCopyableLink::WidgetDialogWithCopyableLink(
+    gdi::GraphicApi & drawable, Rect widget_rect, Events events,
+    const char* caption, const char * text,
+    const char * link_value, const char * link_label,
+    const char * ok_text,
+    Font const & font, Theme const & theme, CopyPaste & copy_paste
+)
+: WidgetLink{
+    .label = WidgetLabel(drawable, link_label, theme.global.fgcolor, theme.global.bgcolor, font),
+    .show = WidgetVerticalScrollText(drawable, link_value,
+                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
+                font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y),
+    .copy = WidgetDelegatedCopy(
+        drawable, [this]{ this->copy_paste.copy(this->link_value); },
+        theme.global.fgcolor, theme.global.bgcolor,
+        theme.global.focus_color, font, 2, 2, WidgetDelegatedCopy::MouseButton::Both)
+}
+, WidgetDialogBase(
+    drawable, widget_rect,
+    {.onsubmit = events.onsubmit, .oncancel = events.oncancel},
+    caption, text, nullptr, theme, font,
+    ok_text, nullptr, nullptr, this
+)
+, link_value(link_value)
+, copy_paste(copy_paste)
+{
 }
