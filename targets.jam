@@ -2134,6 +2134,12 @@ test-run tests/headlessclient/test_headless_command :
   <library>tests/includes/test_only/mod/accumulate_input_mod.o
   <library>tests/includes/test_only/session_log_test.o
 ;
+test-run tests/headlessclient/test_headless_command_generator :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_command_generator.cpp
+:
+  <library>src/headlessclient/headless_command_generator.o
+  <library>src/utils/strutils.o
+;
 test-run tests/headlessclient/test_headless_configuration :
   $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_configuration.cpp
 :
@@ -4776,6 +4782,7 @@ obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
 obj src/headlessclient/headless_cli_options.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_cli_options.cpp ;
 obj src/headlessclient/headless_command.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_command.cpp ;
+obj src/headlessclient/headless_command_generator.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_command_generator.cpp ;
 obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
 obj src/headlessclient/headless_graphics.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_graphics.cpp ;
 obj src/headlessclient/headless_repl.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_repl.cpp ;
@@ -5047,6 +5054,7 @@ alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
 alias test_compute_headless_wrm_path : tests/headlessclient/test_compute_headless_wrm_path ;
 alias test_headless_command : tests/headlessclient/test_headless_command ;
+alias test_headless_command_generator : tests/headlessclient/test_headless_command_generator ;
 alias test_headless_configuration : tests/headlessclient/test_headless_configuration ;
 alias test_headless_repl : tests/headlessclient/test_headless_repl ;
 alias test_input_collector : tests/headlessclient/test_input_collector ;
@@ -5401,6 +5409,7 @@ alias tests/gdi.norec :
 alias tests/headlessclient.norec :
   tests/headlessclient/test_compute_headless_wrm_path
   tests/headlessclient/test_headless_command
+  tests/headlessclient/test_headless_command_generator
   tests/headlessclient/test_headless_configuration
   tests/headlessclient/test_headless_repl
   tests/headlessclient/test_input_collector
@@ -5857,6 +5866,7 @@ explicit
   src/gdi/text_metrics.o
   src/headlessclient/headless_cli_options.o
   src/headlessclient/headless_command.o
+  src/headlessclient/headless_command_generator.o
   src/headlessclient/headless_configuration.o
   src/headlessclient/headless_graphics.o
   src/headlessclient/headless_repl.o
@@ -6130,6 +6140,7 @@ explicit
   test_text_metrics
   test_compute_headless_wrm_path
   test_headless_command
+  test_headless_command_generator
   test_headless_configuration
   test_headless_repl
   test_input_collector

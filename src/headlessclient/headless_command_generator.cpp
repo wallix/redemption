@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #include "headlessclient/headless_command_values.hpp"
-#include "qtclient/headless_input_command_generator.hpp"
+#include "headlessclient/headless_command_generator.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/bounded_array_view.hpp"
 #include "utils/strutils.hpp"
@@ -165,7 +165,7 @@ constexpr std::array<char, 32> key_table_for_mod_mask = []{
 } // anonymous namespace
 
 
-enum class HeadlessInputCommandGenerator::CmdType : uint8_t
+enum class HeadlessCommandGenerator::CmdType : uint8_t
 {
     Default,
     Scancode,
@@ -182,49 +182,87 @@ enum class HeadlessInputCommandGenerator::CmdType : uint8_t
     Disconnect,
 };
 
-void HeadlessInputCommandGenerator::start(MonotonicTimePoint now)
+void HeadlessCommandGenerator::start(MonotonicTimePoint now)
 {
     previous_time = now;
     cmd_type = CmdType::Default;
-    cmd.clear();
+    cmd_buffer.clear();
 }
 
-void HeadlessInputCommandGenerator::set_kbd_fr(bool enable)
+void HeadlessCommandGenerator::set_kbd_fr(bool enable)
 {
     is_en_kbd = !enable;
     notifier(Status::NewLine, enable ? "kbd fr"_av : "kbd en"_av, 0);
     cmd_type = CmdType::Default;
-    cmd.clear();
+    cmd_buffer.clear();
 }
 
-void HeadlessInputCommandGenerator::set_key_delay(DelayConfig key_delay)
+void HeadlessCommandGenerator::set_key_delay(DelayConfig key_delay)
 {
     notifier(Status::NewLine, make_cmd_delay("keydelay "_sized_av, key_delay.delay), 0);
     max_key_delay = std::chrono::duration_cast<MonotonicTimePoint::duration>(key_delay.delay + key_delay.threshold);
     cmd_type = CmdType::Default;
-    cmd.clear();
+    cmd_buffer.clear();
 }
 
-HeadlessInputCommandGenerator::CmdType
-HeadlessInputCommandGenerator::_synchronize_cmd(
+void HeadlessCommandGenerator::set_mouse_delay(DelayConfig mouse_delay)
+{
+    notifier(Status::NewLine, make_cmd_delay("mousedelay "_sized_av, mouse_delay.delay), 0);
+    max_mouse_delay = std::chrono::duration_cast<MonotonicTimePoint::duration>(mouse_delay.delay + mouse_delay.threshold);
+    cmd_type = CmdType::Default;
+    cmd_buffer.clear();
+}
+
+HeadlessCommandGenerator::CmdType
+HeadlessCommandGenerator::_synchronize_cmd(
     CmdType new_type, MonotonicTimePoint now, MonotonicTimePoint::duration max_delay)
 {
     bool use_synchronize_cmd = (cmd_type != new_type || now > previous_time + max_delay);
     auto old_type = std::exchange(cmd_type, new_type);
 
     if (use_synchronize_cmd) {
-        notifier(Status::NewLine, make_cmd_delay("sleep "_sized_av, now - previous_time), 0);
+        auto sleep_delay = now - previous_time;
+        if (sleep_delay != sleep_delay.zero()) {
+            notifier(Status::NewLine, make_cmd_delay("sleep "_sized_av, now - previous_time), 0);
+        }
         old_type = CmdType::Default;
     }
 
-    if (mouse_is_moved) {
-        notifier(Status::NewLine,
-            static_str_concat<128>("move "_sized_av,
-                                   int_to_decimal_chars(mouse_x), ' ',
-                                   int_to_decimal_chars(mouse_y)),
-            0
-        );
-        mouse_is_moved = false;
+    if (mouse_x != mouse_x_old || mouse_y != mouse_y_old) {
+        switch (mouse_position_type)
+        {
+            case MousePositionType::FirstCallIsAbsolute:
+                mouse_position_type = MousePositionType::Relative;
+                [[fallthrough]];
+
+            case MousePositionType::Absolute:
+                notifier(Status::NewLine,
+                    static_str_concat<128>("move "_sized_av,
+                                           int_to_decimal_chars(mouse_x), ' ',
+                                           int_to_decimal_chars(mouse_y)),
+                    0
+                );
+                break;
+
+            case MousePositionType::Relative: {
+                char sx = (mouse_x < mouse_x_old) ? '-' : '+';
+                char sy = (mouse_y < mouse_y_old) ? '-' : '+';
+                uint16_t x = (mouse_x < mouse_x_old) ? mouse_x_old - mouse_x : mouse_x - mouse_x_old;
+                uint16_t y = (mouse_y < mouse_y_old) ? mouse_y_old - mouse_y : mouse_y - mouse_y_old;
+
+                notifier(Status::NewLine,
+                    static_str_concat<128>("move "_sized_av,
+                                           sx, int_to_decimal_chars(x), ' ',
+                                           sy, int_to_decimal_chars(y)),
+                    0
+                );
+
+                break;
+            }
+        }
+
+        mouse_x_old = mouse_x;
+        mouse_y_old = mouse_y;
         old_type = CmdType::Default;
     }
 
@@ -232,7 +270,7 @@ HeadlessInputCommandGenerator::_synchronize_cmd(
     return old_type;
 }
 
-void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags flags, Scancode scancode)
+void HeadlessCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags flags, Scancode scancode)
 {
     auto const oldtype = _synchronize_cmd(CmdType::Scancode, now, max_key_delay);
 
@@ -240,7 +278,7 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
     if (oldtype != CmdType::Scancode) {
         status = Status::NewLine;
         previous_values.scancode = PreviousValues::Sc();
-        cmd = "key ";
+        cmd_buffer = "key ";
     }
 
     auto& previous_sc = previous_values.scancode;
@@ -308,7 +346,7 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
     if (same_key && released) {
         // {sc down} + {sc up} => sc
         if (previous_sc.repetition == 1) {
-            cmd.resize(previous_sc.previous_len);
+            cmd_buffer.resize(previous_sc.previous_len);
 
             if (scancode == Scancode::Space && flags == KbdFlags::Release) {
                 format = Format{
@@ -334,7 +372,7 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
         // {sc down repetition} + {sc up} => {sc repetition}
         else {
             previous_sc.mods = 0;
-            cmd.resize(previous_sc.previous_len);
+            cmd_buffer.resize(previous_sc.previous_len);
 
             int_to_decimal_chars(rep_buffer, previous_sc.repetition);
             set_format("{"_av, " "_av, rep_buffer, "}"_av);
@@ -347,7 +385,7 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
         previous_sc.mods = 0;
         ++previous_sc.repetition;
 
-        cmd.resize(previous_sc.previous_len);
+        cmd_buffer.resize(previous_sc.previous_len);
 
         int_to_decimal_chars(rep_buffer, previous_sc.repetition);
         set_format("{"_av, " down "_av, rep_buffer, "}"_av);
@@ -364,22 +402,25 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
         ) {
             auto previous_len = previous_sc.previous_len;
             auto mod_len = key_len_table_for_mod_mask[modmask];
-            auto p = cmd.begin() + checked_int(previous_len);
+            auto p = cmd_buffer.begin() + checked_int(previous_len);
             auto end = p;
             // upper case for shift: {LShift down} x => X
-            if (modmask == modmasks::LShift && cmd.size() - previous_len == 1 && ascii_is_lower(cmd[previous_len])) {
-                cmd[previous_len - mod_len] = ascii_to_upper(cmd[previous_len]);
+            if (modmask == modmasks::LShift
+             && cmd_buffer.size() - previous_len == 1
+             && ascii_is_lower(cmd_buffer[previous_len])
+            ) {
+                cmd_buffer[previous_len - mod_len] = ascii_to_upper(cmd_buffer[previous_len]);
                 ++end;
             }
             else {
-                cmd[previous_len - mod_len] = key_table_for_mod_mask[modmask];
+                cmd_buffer[previous_len - mod_len] = key_table_for_mod_mask[modmask];
             }
             previous_sc.previous_len = previous_len - mod_len;
-            cmd.erase(p - checked_int(mod_len) + 1, end);
+            cmd_buffer.erase(p - checked_int(mod_len) + 1, end);
             previous_sc.mods = (previous_sc.mods >> 10) << 5;
         }
         else {
-            previous_sc.previous_len = cmd.size();
+            previous_sc.previous_len = cmd_buffer.size();
 
             // previous key have no mod, reset all mod
             if (released || !(previous_sc.mods & 0b11111)) {
@@ -401,29 +442,29 @@ void HeadlessInputCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags fl
         }
     }
 
-    str_append(cmd, format.open, format.sc, format.flag, format.rep, format.close);
+    str_append(cmd_buffer, format.open, format.sc, format.flag, format.rep, format.close);
 
     previous_sc.flags = flags;
     previous_sc.scancode = scancode;
-    notifier(status, cmd, status == Status::UpdateLastLine ? previous_sc.previous_len : 0);
+    notifier(status, cmd_buffer, status == Status::UpdateLastLine ? previous_sc.previous_len : 0);
 }
 
-void HeadlessInputCommandGenerator::unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t utf16)
+void HeadlessCommandGenerator::unicode(MonotonicTimePoint now, KbdFlags flag, uint16_t utf16)
 {
-    // only key press
+    // only key press, ignore release
     if (bool(flag & KbdFlags::Release)) {
         return;
     }
 
     auto oldtype = _synchronize_cmd(CmdType::Unicode, now, max_key_delay);
     auto status = Status::UpdateLastLine;
-    auto previous_len = cmd.size();
+    auto previous_len = cmd_buffer.size();
 
     if (oldtype != CmdType::Unicode) {
         previous_len = 0;
         status = Status::NewLine;
         previous_values.unicode = PreviousValues::Uni();
-        cmd = "text ";
+        cmd_buffer = "text ";
     }
 
     uint8_t buf[4];
@@ -460,16 +501,15 @@ void HeadlessInputCommandGenerator::unicode(MonotonicTimePoint now, KbdFlags fla
     }
 
     previous_values.unicode.high_surrogate = 0;
-    str_append(cmd, chars_view(char_ptr_cast(buf), char_ptr_cast(it)));
-    notifier(status, cmd, previous_len);
+    str_append(cmd_buffer, chars_view(char_ptr_cast(buf), char_ptr_cast(it)));
+    notifier(status, cmd_buffer, previous_len);
 }
 
-void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t device_flags, uint16_t x, uint16_t y)
+void HeadlessCommandGenerator::mouse(MonotonicTimePoint now, uint16_t device_flags, uint16_t x, uint16_t y)
 {
     if (device_flags == MOUSE_FLAG_MOVE) {
         mouse_x = x;
         mouse_y = y;
-        mouse_is_moved = true;
     }
     else if (device_flags == MOUSE_FLAG_BUTTON1
           || device_flags == MOUSE_FLAG_BUTTON2
@@ -477,13 +517,15 @@ void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t devic
           || device_flags == MOUSE_FLAG_BUTTON4
           || device_flags == MOUSE_FLAG_BUTTON5
     ) {
+        //TODO MOUSE_FLAG_DOWN
+
         auto oldtype = _synchronize_cmd(CmdType::Click, now, max_mouse_delay);
         auto status = Status::UpdateLastLine;
-        auto previous_len = cmd.size();
+        auto previous_len = cmd_buffer.size();
 
         if (oldtype != CmdType::Click) {
             status = Status::NewLine;
-            cmd = "mouse";
+            cmd_buffer = "mouse";
             previous_len = 0;
         }
 
@@ -496,8 +538,8 @@ void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t devic
             case MOUSE_FLAG_BUTTON5: btn = " b5"_av; break;
         }
 
-        str_append(cmd, btn);
-        notifier(status, cmd, previous_len);
+        str_append(cmd_buffer, btn);
+        notifier(status, cmd_buffer, previous_len);
     }
     else if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         unsigned negative = (device_flags & MOUSE_FLAG_WHEEL_NEGATIVE);
@@ -514,31 +556,31 @@ void HeadlessInputCommandGenerator::mouse(MonotonicTimePoint now, uint16_t devic
             previous_values.whell = PreviousValues::Whell();
 
             if (is_vscroll) {
-                cmd = "scroll ";
+                cmd_buffer = "scroll ";
             }
             else {
-                cmd = "hscroll ";
+                cmd_buffer = "hscroll ";
             }
 
-            previous_values.whell.previous_len = cmd.size();
+            previous_values.whell.previous_len = cmd_buffer.size();
         }
         else if (previous_values.whell.negative_flag == negative) {
-            cmd.resize(previous_values.whell.previous_len);
+            cmd_buffer.resize(previous_values.whell.previous_len);
         }
         else {
             previous_values.whell.step = 0;
-            previous_values.whell.previous_len = cmd.size() + 1;
+            previous_values.whell.previous_len = cmd_buffer.size() + 1;
             prefix = negative ? " -"_av : " "_av;
         }
 
         previous_values.whell.negative_flag = negative;
         ++previous_values.whell.step;
-        str_append(cmd, prefix, int_to_decimal_chars(previous_values.whell.step));
-        notifier(status, cmd, previous_len);
+        str_append(cmd_buffer, prefix, int_to_decimal_chars(previous_values.whell.step));
+        notifier(status, cmd_buffer, previous_len);
     }
 }
 
-void HeadlessInputCommandGenerator::keylocks(MonotonicTimePoint now, KeyLocks locks)
+void HeadlessCommandGenerator::keylocks(MonotonicTimePoint now, KeyLocks locks)
 {
     _synchronize_cmd(CmdType::Lock, now, {});
 

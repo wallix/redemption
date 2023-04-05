@@ -28,8 +28,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "qtclient/profile/profile.hpp"
 #include "qtclient/profile/cli_parse_profile.hpp"
 #include "qtclient/widget/screen_widget.hpp"
-#include "qtclient/headless_input_command_generator.hpp"
 #include "headlessclient/headless_configuration.hpp"
+#include "headlessclient/headless_command_generator.hpp"
 
 #include <QtWidgets/QApplication>
 
@@ -211,16 +211,16 @@ int main(int argc, char** argv)
         char last_char {};
     };
     NotifierData d{event_manager.monotonic_time()};
-    std::unique_ptr<DispatchRdpInputCommandGenerator> script_generator;
+    std::unique_ptr<RdpInputHeadlessCommandGenerator> script_generator;
     if (profile.enable_headless_script_assistance) {
-        script_generator = std::make_unique<DispatchRdpInputCommandGenerator>(
-            *mod, [&](HeadlessInputCommandGenerator::Status status, chars_view line, std::size_t updated_column) {
+        script_generator = std::make_unique<RdpInputHeadlessCommandGenerator>(
+            *mod, [&](HeadlessCommandGenerator::Status status, chars_view line, std::size_t updated_column) {
                 // printf("%ld %d %zu %.*s\n",
                 //     std::chrono::duration_cast<std::chrono::milliseconds>(d.monotonic_time.time_since_epoch()).count(),
                 //     int(status), updated_column, int(line.size()), line.data());
                 // return;
 
-                if (status == HeadlessInputCommandGenerator::Status::UpdateLastLine) {
+                if (status == HeadlessCommandGenerator::Status::UpdateLastLine) {
                     auto removed = d.old_len - updated_column;
                     auto inserted = line.size() - updated_column;
                     printf("\x1b[%dD\x1b[m%.*s\x1b[4m%.*s\x1b[m",

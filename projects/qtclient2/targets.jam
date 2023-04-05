@@ -20,7 +20,6 @@ exe qtclient2 :
   <library>src/qtclient/event_manager.o
   <library>src/qtclient/graphics/cursor_cache.o
   <library>src/qtclient/graphics/graphics.o
-  <library>src/qtclient/headless_input_command_generator.o
   <library>src/qtclient/inputs/send_mouse_event.o
   <library>src/qtclient/inputs/send_scancode.o
   <library>src/qtclient/profile/cli_parse_profile.o
@@ -48,6 +47,7 @@ exe qtclient2 :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
+  <library>src/headlessclient/headless_command_generator.o
   <library>src/headlessclient/headless_configuration.o
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
@@ -136,12 +136,6 @@ test-run tests/qtclient/profile/test_widget_profile :
   <library>src/qtclient/profile/widget_profile.o
   <library>src/keyboard/keylayouts.o
 ;
-test-run tests/qtclient/test_headless_input_command_generator :
-  tests/qtclient/test_headless_input_command_generator.cpp
-:
-  <library>src/qtclient/headless_input_command_generator.o
-  <library>src/utils/strutils.o
-;
 test-run tests/utils/test_config_enum_description_to_array :
   tests/utils/test_config_enum_description_to_array.cpp
 :
@@ -151,7 +145,6 @@ obj src/qtclient/event_manager.o : src/qtclient/event_manager.cpp ;
 obj src/qtclient/graphics/cursor_cache.o : src/qtclient/graphics/cursor_cache.cpp ;
 obj src/qtclient/graphics/graphics.o : src/qtclient/graphics/graphics.cpp ;
 obj src/qtclient/graphics/rdp_painter.o : src/qtclient/graphics/rdp_painter.cpp ;
-obj src/qtclient/headless_input_command_generator.o : src/qtclient/headless_input_command_generator.cpp ;
 obj src/qtclient/inputs/send_mouse_event.o : src/qtclient/inputs/send_mouse_event.cpp ;
 obj src/qtclient/inputs/send_scancode.o : src/qtclient/inputs/send_scancode.cpp ;
 obj src/qtclient/profile/cli_parse_profile.o : src/qtclient/profile/cli_parse_profile.cpp ;
@@ -181,6 +174,7 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
+obj src/headlessclient/headless_command_generator.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_command_generator.cpp ;
 obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
@@ -223,7 +217,6 @@ alias test_cursor_cache : tests/qtclient/graphics/test_cursor_cache ;
 alias test_rdp_painter : tests/qtclient/graphics/test_rdp_painter ;
 alias test_profile : tests/qtclient/profile/test_profile ;
 alias test_widget_profile : tests/qtclient/profile/test_widget_profile ;
-alias test_headless_input_command_generator : tests/qtclient/test_headless_input_command_generator ;
 alias test_config_enum_description_to_array : tests/utils/test_config_enum_description_to_array ;
 alias tests/qtclient/graphics.norec :
   tests/qtclient/graphics/test_cursor_cache
@@ -233,9 +226,6 @@ alias tests/qtclient/profile.norec :
   tests/qtclient/profile/test_profile
   tests/qtclient/profile/test_widget_profile
 ;
-alias tests/qtclient.norec :
-  tests/qtclient/test_headless_input_command_generator
-;
 alias tests/utils.norec :
   tests/utils/test_config_enum_description_to_array
 ;
@@ -243,19 +233,17 @@ alias tests/qtclient/graphics :
   tests/qtclient/graphics.norec
 ;
 alias tests/qtclient :
-  tests/qtclient.norec
   tests/qtclient/graphics
   tests/qtclient/profile
 ;
 alias tests/qtclient/profile :
   tests/qtclient/profile.norec
 ;
-alias tests :
-  tests/qtclient
-  tests/utils
-;
 alias tests/utils :
   tests/utils.norec
+;
+alias tests :
+  tests/utils
 ;
 
 explicit
@@ -263,7 +251,6 @@ explicit
   src/qtclient/graphics/cursor_cache.o
   src/qtclient/graphics/graphics.o
   src/qtclient/graphics/rdp_painter.o
-  src/qtclient/headless_input_command_generator.o
   src/qtclient/inputs/send_mouse_event.o
   src/qtclient/inputs/send_scancode.o
   src/qtclient/profile/cli_parse_profile.o
@@ -293,6 +280,7 @@ explicit
   src/gdi/protected_graphics.o
   src/gdi/screen_functions.o
   src/gdi/text_metrics.o
+  src/headlessclient/headless_command_generator.o
   src/headlessclient/headless_configuration.o
   src/keyboard/keylayouts.o
   src/keyboard/keymap.o
@@ -337,14 +325,12 @@ explicit
   test_rdp_painter
   test_profile
   test_widget_profile
-  test_headless_input_command_generator
   test_config_enum_description_to_array
 ;
 
 explicit
   tests/qtclient/graphics.norec
   tests/qtclient/profile.norec
-  tests/qtclient.norec
   tests/utils.norec
 ;
 
@@ -352,6 +338,6 @@ explicit
   tests/qtclient/graphics
   tests/qtclient
   tests/qtclient/profile
-  tests
   tests/utils
+  tests
 ;

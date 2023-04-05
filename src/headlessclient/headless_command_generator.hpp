@@ -15,12 +15,19 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <string>
 
 
-struct HeadlessInputCommandGenerator
+struct HeadlessCommandGenerator
 {
     enum Status : uint8_t
     {
         UpdateLastLine,
         NewLine,
+    };
+
+    enum class MousePositionType : uint8_t
+    {
+        FirstCallIsAbsolute,
+        Absolute,
+        Relative,
     };
 
     using Scancode = kbdtypes::Scancode;
@@ -35,11 +42,36 @@ struct HeadlessInputCommandGenerator
         std::chrono::milliseconds threshold;
     };
 
-    HeadlessInputCommandGenerator(Notifier notifier)
+    HeadlessCommandGenerator(Notifier notifier)
     : notifier(notifier)
     {}
 
+    void reset_line()
+    {
+        cmd_type = {};
+    }
+
+    void set_mouse_position_type(MousePositionType mouse_position_type)
+    {
+        this->mouse_position_type = mouse_position_type;
+    }
+
+    void set_mouse_position(uint16_t mouse_x, uint16_t mouse_y)
+    {
+        this->mouse_x = mouse_x;
+        this->mouse_y = mouse_y;
+        this->mouse_x_old = mouse_x;
+        this->mouse_y_old = mouse_y;
+    }
+
+    void set_previous_time(MonotonicTimePoint now)
+    {
+        previous_time = now;
+    }
+
     void set_key_delay(DelayConfig key_delay);
+
+    void set_mouse_delay(DelayConfig key_delay);
 
     void set_kbd_fr(bool enable = true);
 
@@ -94,19 +126,21 @@ private:
     MonotonicTimePoint::duration max_key_delay{std::chrono::milliseconds(1000)};
     MonotonicTimePoint::duration max_mouse_delay{std::chrono::milliseconds(200)};
     Notifier notifier;
-    std::string cmd;
+    std::string cmd_buffer;
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
-    CmdType cmd_type = CmdType();
+    uint16_t mouse_x_old = 0;
+    uint16_t mouse_y_old = 0;
+    CmdType cmd_type {};
+    MousePositionType mouse_position_type = MousePositionType::FirstCallIsAbsolute;
     bool is_en_kbd = true;
-    bool mouse_is_moved = false;
     PreviousValues previous_values;
 };
 
 
-struct DispatchRdpInputCommandGenerator : RdpInput
+struct RdpInputHeadlessCommandGenerator : RdpInput
 {
-    DispatchRdpInputCommandGenerator(RdpInput& rdp_input, HeadlessInputCommandGenerator::Notifier notifier)
+    RdpInputHeadlessCommandGenerator(RdpInput& rdp_input, HeadlessCommandGenerator::Notifier notifier)
     : command_generator(notifier)
     , rdp_input(rdp_input)
     {}
@@ -150,7 +184,7 @@ struct DispatchRdpInputCommandGenerator : RdpInput
         rdp_input.rdp_gdi_down();
     }
 
-    HeadlessInputCommandGenerator command_generator;
+    HeadlessCommandGenerator command_generator;
 
 private:
     RdpInput& rdp_input;

@@ -6,27 +6,27 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "qtclient/headless_input_command_generator.hpp"
+#include "headlessclient/headless_command_generator.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"
 
 using namespace std::chrono_literals;
 
-struct HeadlessInputCommandGeneratorTextCtx
+struct HeadlessCommandGeneratorTextCtx
 {
-    using Status = HeadlessInputCommandGenerator::Status;
+    using Status = HeadlessCommandGenerator::Status;
     using Scancode = kbdtypes::Scancode;
     using KbdFlags = kbdtypes::KbdFlags;
     using KeyLocks = kbdtypes::KeyLocks;
 
     std::string input;
-    HeadlessInputCommandGenerator cmd;
+    HeadlessCommandGenerator cmd;
 
     MonotonicTimePoint now{};
 
     std::string ctx;
 
-    HeadlessInputCommandGeneratorTextCtx()
+    HeadlessCommandGeneratorTextCtx()
     : cmd([this](Status status, chars_view str, std::size_t updated_column){
         auto st = (status == Status::NewLine) ? "NewLine " : "UpdateLastLine ";
         str_append(input, st, int_to_decimal_chars(updated_column), ' ', str, '\n');
@@ -48,7 +48,7 @@ struct HeadlessInputCommandGeneratorTextCtx
     }                                       \
 } while(0)
 
-RED_FIXTURE_TEST_CASE(TestGenerateInputScancodeEvent, HeadlessInputCommandGeneratorTextCtx)
+RED_FIXTURE_TEST_CASE(TestGenerateInputScancodeEvent, HeadlessCommandGeneratorTextCtx)
 {
     // normal sequence
     CHECK_INPUT(cmd.start(now), ""_av);
@@ -237,7 +237,7 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputScancodeEvent, HeadlessInputCommandGenera
 }
 
 
-RED_FIXTURE_TEST_CASE(TestGenerateInputUnicodeEvent, HeadlessInputCommandGeneratorTextCtx)
+RED_FIXTURE_TEST_CASE(TestGenerateInputUnicodeEvent, HeadlessCommandGeneratorTextCtx)
 {
     // click sequence
     CHECK_INPUT(cmd.start(now), ""_av);
@@ -257,7 +257,7 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputUnicodeEvent, HeadlessInputCommandGenerat
 }
 
 
-RED_FIXTURE_TEST_CASE(TestGenerateInputKeyLocksEvent, HeadlessInputCommandGeneratorTextCtx)
+RED_FIXTURE_TEST_CASE(TestGenerateInputKeyLocksEvent, HeadlessCommandGeneratorTextCtx)
 {
     // click sequence
     CHECK_INPUT(cmd.start(now), ""_av);
@@ -273,7 +273,7 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputKeyLocksEvent, HeadlessInputCommandGenera
 }
 
 
-RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessInputCommandGeneratorTextCtx)
+RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessCommandGeneratorTextCtx)
 {
     // click sequence
     CHECK_INPUT(cmd.start(now), ""_av);
@@ -289,8 +289,12 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessInputCommandGenerator
         "UpdateLastLine 13 mouse Left b4 Right\n"_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 4, 1), ""_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2, 4, 1),
-        "NewLine 0 move 4 1\n"
+        "NewLine 0 move +0 -4\n"
         "NewLine 0 mouse Right\n"_av);
+
+    /*
+     * scroll
+     */
 
     ctx.clear();
     // scroll
@@ -312,6 +316,33 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessInputCommandGenerator
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_HWHEEL, 3, 6),
         "NewLine 0 sleep 1ms\n"
         "NewLine 0 hscroll 1\n"_av);
+
+    /*
+     * move
+     */
+
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 5, 6), ""_av);
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
+        "NewLine 0 move +1 +5\n"
+        "NewLine 0 mouse Left\n"_av);
+
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 3, 2), ""_av);
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
+        "NewLine 0 move -2 -4\n"
+        "NewLine 0 mouse Left\n"_av);
+
+    cmd.set_mouse_position_type(HeadlessCommandGenerator::MousePositionType::Absolute);
+
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 1, 6), ""_av);
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
+        "NewLine 0 move 1 6\n"
+        "NewLine 0 mouse Left\n"_av);
+
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 0, 2), ""_av);
+    CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
+        "NewLine 0 move 0 2\n"
+        "NewLine 0 mouse Left\n"_av);
+
 }
 
 #undef CHECK_INPUT
