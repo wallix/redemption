@@ -125,6 +125,7 @@ template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_exe_or_f
 template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_script_argument> { using type = ::configs::spec_types::fixed_string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_chrome_dt_script> { using type = ::configs::spec_types::fixed_string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_chrome_uia_script> { using type = ::configs::spec_types::fixed_string; };
+template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_firefox_uia_script> { using type = ::configs::spec_types::fixed_string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_ie_script> { using type = ::configs::spec_types::fixed_string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::hide_client_name> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel> { using type = bool; };

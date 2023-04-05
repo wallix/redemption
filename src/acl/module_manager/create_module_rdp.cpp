@@ -723,7 +723,11 @@ ModPack create_mod_rdp(
     else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_EDGE_CHROMIUM_UIA__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
-        application_driver_script_argument_extra  = " /e:UseEdgeChromium=Yes";
+        application_driver_script_argument_extra = " /e:UseEdgeChromium=Yes";
+    }
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_FIREFOX_UIA__")) {
+        application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script                = ini.get<cfg::mod_rdp::application_driver_firefox_uia_script>();
     }
     if (CHANNELS::ChannelNameId("wablnch") != mod_rdp_params.auth_channel) {
         application_driver_script_argument_extra += " /v:";
