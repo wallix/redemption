@@ -140,7 +140,7 @@ if (( $fast == 0 )); then
 
     show_duration valgrind
 
-    build $toolset_clang -j2 -sNO_FFMPEG=1 san -s FAST_CHECK=1
+    build $toolset_clang -j2 -sNO_FFMPEG=1 san # -s FAST_CHECK=1
     rm -rf bin/clang*
 
     show_duration $toolset_clang
