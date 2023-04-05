@@ -303,7 +303,7 @@ WidgetDialogWithCopyableLink::WidgetDialogWithCopyableLink(
     const char * ok_text,
     Font const & font, Theme const & theme, CopyPaste & copy_paste
 )
-: WidgetLink{
+: WidgetDialogBase::WidgetLink{
     .label = WidgetLabel(drawable, link_label, theme.global.fgcolor, theme.global.bgcolor, font),
     .show = WidgetVerticalScrollText(drawable, link_value,
                 theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
