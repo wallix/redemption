@@ -135,6 +135,7 @@ namespace cfg
         struct application_driver_script_argument;
         struct application_driver_chrome_dt_script;
         struct application_driver_chrome_uia_script;
+        struct application_driver_firefox_uia_script;
         struct application_driver_ie_script;
         struct hide_client_name;
         struct bogus_ios_rdpdr_virtual_channel;

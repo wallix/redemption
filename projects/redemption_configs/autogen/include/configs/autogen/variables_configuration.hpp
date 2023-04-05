@@ -1522,6 +1522,16 @@ namespace cfg
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT };
     };
     /// type: char[257] <br/>
+    /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT <br/>
+    struct mod_rdp::application_driver_firefox_uia_script {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = char[257];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+        using mapped_type = sesman_and_spec_type;
+        type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT };
+    };
+    /// type: char[257] <br/>
     /// default: REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT <br/>
     struct mod_rdp::application_driver_ie_script {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5750,6 +5760,7 @@ struct mod_rdp
 , cfg::mod_rdp::application_driver_script_argument
 , cfg::mod_rdp::application_driver_chrome_dt_script
 , cfg::mod_rdp::application_driver_chrome_uia_script
+, cfg::mod_rdp::application_driver_firefox_uia_script
 , cfg::mod_rdp::application_driver_ie_script
 , cfg::mod_rdp::hide_client_name
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
