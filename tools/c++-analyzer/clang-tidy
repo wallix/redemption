@@ -150,7 +150,6 @@ $(find tests/ -name 'test_*.cpp' \
 -DREDEMPTION_DECL_LOG_TEST \
 -DBOOST_AUTO_TEST_MAIN \
 -DBOOST_TEST_DYN_LINK \
--DFAST_CHECK=1 \
 -DCLANG_TIDY
 
 # highlighting
