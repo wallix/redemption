@@ -53,6 +53,7 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<chars_to_int_result<T>>
         REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << +value.val << ", \"" << value.ptr << "\"}";
     }
 };
+#endif
 
 // std::from_chars_result == std::from_chars_result only from C++20
 static ut::assertion_result from_chars_result_EQ(std::from_chars_result a, std::from_chars_result b)
@@ -66,7 +67,6 @@ static ut::assertion_result from_chars_result_EQ(std::from_chars_result a, std::
 }
 
 RED_TEST_DISPATCH_COMPARISON_EQ((), (std::from_chars_result), (std::from_chars_result), ::from_chars_result_EQ)
-#endif
 
 RED_AUTO_TEST_CASE(TestParseDecimalChars)
 {
