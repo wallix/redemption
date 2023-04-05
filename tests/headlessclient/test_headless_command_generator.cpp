@@ -43,7 +43,7 @@ struct HeadlessCommandGeneratorTextCtx
 #define CHECK_INPUT(cmd, s) do {            \
     ctx += &"\n    " #cmd[ctx.empty() * 5]; \
     RED_TEST_CONTEXT(ctx) {                 \
-        RED_CHECK((void(cmd), input) == s); \
+        RED_CHECK((cmd, input) == s); \
         input.clear();                      \
     }                                       \
 } while(0)
