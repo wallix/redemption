@@ -116,6 +116,10 @@ PatternSearcher::PatternSearcher(
     });
     transformed_str_len += str_len;
 
+    if (!len) {
+        return ;
+    }
+
     static_assert(sizeof(char*) >= sizeof(unsigned));
 
     struct CompileArrays
@@ -256,24 +260,23 @@ PatternSearcher::PatternSearcher(
             hs_free_compile_error(compileErr);
             return;
         }
-        else {
-            auto pos = static_cast<unsigned>(compileErr->expression);
-            LOG(LOG_ERR, "PatternsSearcher::PatternsSearcher(): '%s' failed compilation with error: %s",
-                compile_arrays.expressions[pos], compileErr->message);
-            hs_free_compile_error(compileErr);
 
-            // remove malformed pattern
-            --d->nb_pattern;
-            memmove(compile_arrays.expressions+pos, compile_arrays.expressions+pos+1, d->nb_pattern - pos);
-            compile_arrays.expressions[pos] = compile_arrays.expressions[d->nb_pattern];
-            d->internal_scan_results[pos] = d->internal_scan_results[d->nb_pattern];
-            if (pos < d->nb_pattern_kill) {
-                --d->nb_pattern_kill;
-            }
+        auto pos = static_cast<unsigned>(compileErr->expression);
+        LOG(LOG_ERR, "PatternsSearcher::PatternsSearcher(): '%s' failed compilation with error: %s",
+            compile_arrays.expressions[pos], compileErr->message);
+        hs_free_compile_error(compileErr);
 
-            err = hs_compile_multi(compile_arrays.expressions, compile_arrays.flags, compile_arrays.ids,
-                                   d->nb_pattern, reg_mode, nullptr, &d->db, &compileErr);
+        // remove malformed pattern
+        --d->nb_pattern;
+        memmove(compile_arrays.expressions+pos, compile_arrays.expressions+pos+1, d->nb_pattern - pos);
+        compile_arrays.expressions[pos] = compile_arrays.expressions[d->nb_pattern];
+        d->internal_scan_results[pos] = d->internal_scan_results[d->nb_pattern];
+        if (pos < d->nb_pattern_kill) {
+            --d->nb_pattern_kill;
         }
+
+        err = hs_compile_multi(compile_arrays.expressions, compile_arrays.flags, compile_arrays.ids,
+                               d->nb_pattern, reg_mode, nullptr, &d->db, &compileErr);
     }
 
     // init scratch
@@ -318,11 +321,12 @@ PatternSearcher::~PatternSearcher()
 
 bool PatternSearcher::has_pattern() const
 {
-    return d->nb_pattern > 0;
+    return d && d->nb_pattern > 0;
 }
 
 void PatternSearcher::reset_kbd_streams()
 {
+    assert(d);
     auto* scratch = d->scratch;
     for (hs_stream_t* stream : d->av_streams()) {
         hs_reset_stream(stream, 0, scratch, nullptr, nullptr);
@@ -331,6 +335,7 @@ void PatternSearcher::reset_kbd_streams()
 
 array_view<PatternSearcher::PatternFound> PatternSearcher::scan(chars_view str)
 {
+    assert(d);
     struct Ctx
     {
         unsigned long long call_id;
