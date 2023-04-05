@@ -1,0 +1,8 @@
+clang-13
+clang-tidy-13
+gawk
+lua50
+luarocks
+parallel
+time
+valgrind
