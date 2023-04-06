@@ -135,7 +135,7 @@ struct Repl final : FrontAPI, SessionLogApi
     std::string password;
 
     std::string session_id;
-    std::string output_directory;
+    std::string prefix_path;
     std::string screen_repetition_output_directory;
 
     ClientInfo client_info {};
@@ -196,12 +196,8 @@ struct Repl final : FrontAPI, SessionLogApi
                 sleep_delay = cmd_ctx.delay;
                 break;
 
-            case HeadlessCommand::Result::Basename:
-                session_id = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::Directory:
-                output_directory = cmd_ctx.output_message.as<std::string_view>();
+            case HeadlessCommand::Result::PrefixPath:
+                prefix_path = cmd_ctx.output_message.as<std::string_view>();
                 break;
 
             case HeadlessCommand::Result::Username:
@@ -263,7 +259,7 @@ struct Repl final : FrontAPI, SessionLogApi
                 break;
 
             case HeadlessCommand::Result::Screen: {
-                // TODO use output_directory / session_id
+                // TODO use prefix_path / session_id
                 char const* err = nullptr;
                 if (drawable) {
                     try {
@@ -316,7 +312,7 @@ struct Repl final : FrontAPI, SessionLogApi
                 break;
 
             case HeadlessCommand::Result::RepetitionCommand:
-                // TODO use output_directory / session_id
+                // TODO use prefix_path / session_id
                 cmd_delay = cmd_ctx.delay;
                 delayed_cmd = cmd_ctx.output_message.as<std::string_view>();
                 has_delay_cmd = true;
@@ -384,7 +380,7 @@ struct Repl final : FrontAPI, SessionLogApi
             auto& time_base = event_manager.get_writable_time_base();
             time_base = TimeBase::now();
 
-            // TODO use output_directory / session_id
+            // TODO use prefix_path / session_id
 
             auto filename = compute_headless_wrm_path(wrm_path, session_id, time_base.real_time);
             auto fd = unique_fd(filename, O_WRONLY | O_CREAT, 0664);

@@ -66,8 +66,7 @@ struct HeadlessCommand
         OutputResult,
 
         Sleep,
-        Basename,
-        Directory,
+        PrefixPath,
         Username,
         Password,
         Connect,
@@ -107,8 +106,7 @@ struct HeadlessCommand
     //      | ('ipng' | 'pp') ws delay (ws suffix-name)?
     //      | ('ipng-directory' | 'ipng-dir' | 'ppd') directory
     //      | 'enable-png' wd bool
-    //      | ('basename' | 'sid') (ws filename)?
-    //      | ('directory' | 'dir') (ws directory)?
+    //      | 'prefix-path' (ws path)?
     //      | ('configfile' | 'conff' | 'f') ws filename
     //      | ('configstr' | 'conf') ws str
     //      | 'repeat' ws decimal decimal? cmd

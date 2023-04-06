@@ -476,11 +476,11 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     //@}
 
 
-    // sid
+    // prefix-path
     //@{
-    check_cmd_ex("sid", "", "", CmdResult::Basename);
+    check_cmd_ex("prefix", "", "", CmdResult::PrefixPath);
     RED_CHECK(cmd_ctx.output_message == ""_av);
-    check_cmd_ex("sid abcde fg", "", "", CmdResult::Basename);
+    check_cmd_ex("prefix abcde fg", "", "", CmdResult::PrefixPath);
     RED_CHECK(cmd_ctx.output_message == "abcde fg"_av);
     //@}
 

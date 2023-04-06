@@ -1241,16 +1241,22 @@ N(wrm) [P(boolean)] [P(path)]
     Enable or disable wrm capture.
     When boolean is not specified, only the wrm path is modified.
 
+    Some characters of P(path) are special, see C(help path) for more details.
+
 
 N(record-transport) [P(boolean)] [P(path)]
 
     Enable or disable transport recording.
+
+    Some characters of P(path) are special, see C(help path) for more details.
 
 
 N(png) [P(path)]
 alias: p
 
     Set png filename and save screen to png file.
+
+    Some characters are special, see C(help path) for more details.
 
 
 N(ipng) P(delay) [P(suffix-name)]
@@ -1267,22 +1273,21 @@ alias: ipng-dir and ppd
 
     Reset counter of C(ipng) and set directory for C(ipng) and C(png) commands.
 
+    Some characters of P(directory) are special, see C(help path) for more details.
+
 
 N(enable-png) [P(bool)]
 
     Enable or disable C(png) and C(ipng).
 
 
-N(basename) [P(filename)]
-alias: sid
+N(prefix-path) [P(path)]
+alias: prefix
 
-    Basename for N(wrm), N(record-transport) and N(png) when the name is never specified.
+    Prefix for N(wrm), N(record-transport), N(png) and N(ipng).
+    The prefix is ignored when the filename by the above commands starts with V(/).
 
-
-N(directory) [P(directory)]
-alias: sid
-
-    Directory output for N(wrm), N(record-transport) and N(png).
+    Some characters are special, see C(help path) for more details.
 
 
 N(configfile) [P(filename)]
@@ -1490,6 +1495,21 @@ chars_view cmd_help(std::string_view name, bool is_kbdmap_en)
             "RShift         | RS       0x36\n"
             "RCtrl          | RC       0x11D\n"
             "RMeta  | RWin  | RM | RW  0x15C"
+            ""_av;
+    }
+
+    if (name == "path") {
+        return
+            "filename or directory with special characters\n"
+            " - '%%': single % \n"
+            " - '%i': auto-incremented counter of file type\n"
+            " - '%I': auto-incremented global counter of file\n"
+            " - '%d': time in YYYY-mm-dd format\n"
+            " - '%h': time in HH:MM:SS format\n"
+            " - '%e': file extension\n"
+            " - '%E': file extension if no extension is present\n"
+            " - '%s': filename for prefix-path command\n"
+            " - '~': if at the beginning of the path, is replaced by the environment variable $HOME\n"
             ""_av;
     }
 
@@ -1975,7 +1995,7 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     else if (cmd_name == "ppd" || cmd_name == "ipng-dir" || cmd_name == "ipng-directory") {
         return cmd_parse(Result::ScreenRepetitionDirectory, *this, index_param, first, last, cmd.end(),
-            CmdArgParser{CharsParser{}, OutParam{output_message}, "dirname"_av}
+            CmdArgParser{CharsParser{}, OutParam{output_message}, "path"_av}
         );
     }
 
@@ -1997,15 +2017,9 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         );
     }
 
-    else if (cmd_name == "sid" || cmd_name == "basename") {
-        return cmd_parse(Result::Basename, *this, index_param, first, last, cmd.end(),
-            CmdArgOptionalRemaining{OutParam{output_message}, "basename"_av}
-        );
-    }
-
-    else if (cmd_name == "dir" || cmd_name == "directory") {
-        return cmd_parse(Result::Directory, *this, index_param, first, last, cmd.end(),
-            CmdArgOptionalRemaining{OutParam{output_message}, "directory"_av}
+    else if (cmd_name == "prefix" || cmd_name == "prefix-path") {
+        return cmd_parse(Result::PrefixPath, *this, index_param, first, last, cmd.end(),
+            CmdArgOptionalRemaining{OutParam{output_message}, "path"_av}
         );
     }
 
