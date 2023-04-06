@@ -108,6 +108,11 @@ private:
             uint16_t high_surrogate;
         };
 
+        struct Click
+        {
+            uint16_t flags;
+        };
+
         struct Whell
         {
             unsigned negative_flag;
@@ -117,6 +122,7 @@ private:
 
         Sc scancode;
         Uni unicode;
+        Click click;
         Whell whell;
     };
 

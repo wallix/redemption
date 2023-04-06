@@ -279,18 +279,33 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessCommandGeneratorTextC
     CHECK_INPUT(cmd.start(now), ""_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 3, 6), ""_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 4, 5), ""_av);
-    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON1, 3, 6),
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 3, 6),
         "NewLine 0 sleep 3ms\n"
         "NewLine 0 move 4 5\n"
-        "NewLine 0 mouse Left\n"_av);
+        "NewLine 0 mouse Left,down\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON1, 3, 6),
+        "UpdateLastLine 10 mouse Left\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, 3, 6),
+        "UpdateLastLine 10 mouse Left b4,down\n"_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON4, 3, 6),
-        "UpdateLastLine 10 mouse Left b4\n"_av);
+        "UpdateLastLine 13 mouse Left b4\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, 3, 6),
+        "UpdateLastLine 13 mouse Left b4 Right,down\n"_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2, 3, 6),
-        "UpdateLastLine 13 mouse Left b4 Right\n"_av);
+        "UpdateLastLine 19 mouse Left b4 Right\n"_av);
     CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_MOVE, 4, 1), ""_av);
-    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2, 4, 1),
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, 4, 1),
         "NewLine 0 move +0 -4\n"
-        "NewLine 0 mouse Right\n"_av);
+        "NewLine 0 mouse Right,down\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 3, 6),
+        "UpdateLastLine 16 mouse Right,down Left,down\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON2, 4, 1),
+        "UpdateLastLine 26 mouse Right,down Left,down Right,up\n"_av);
+    CHECK_INPUT(cmd.mouse(next_time(), MOUSE_FLAG_BUTTON1, 4, 1),
+        "UpdateLastLine 35 mouse Right,down Left,down Right,up Left,up\n"_av);
+    // unknown click
+    CHECK_INPUT(cmd.mouse(next_time(), 0xBC, 4, 1),
+        "UpdateLastLine 43 mouse Right,down Left,down Right,up Left,up 0xBC\n"_av);
 
     /*
      * scroll
@@ -324,24 +339,24 @@ RED_FIXTURE_TEST_CASE(TestGenerateInputMouseEvent, HeadlessCommandGeneratorTextC
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 5, 6), ""_av);
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
         "NewLine 0 move +1 +5\n"
-        "NewLine 0 mouse Left\n"_av);
+        "NewLine 0 mouse Left,up\n"_av);
 
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 3, 2), ""_av);
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
         "NewLine 0 move -2 -4\n"
-        "NewLine 0 mouse Left\n"_av);
+        "NewLine 0 mouse Left,up\n"_av);
 
     cmd.set_mouse_position_type(HeadlessCommandGenerator::MousePositionType::Absolute);
 
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 1, 6), ""_av);
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
         "NewLine 0 move 1 6\n"
-        "NewLine 0 mouse Left\n"_av);
+        "NewLine 0 mouse Left,up\n"_av);
 
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_MOVE, 0, 2), ""_av);
     CHECK_INPUT(cmd.mouse(now, MOUSE_FLAG_BUTTON1, 0, 0),
         "NewLine 0 move 0 2\n"
-        "NewLine 0 mouse Left\n"_av);
+        "NewLine 0 mouse Left,up\n"_av);
 
 }
 

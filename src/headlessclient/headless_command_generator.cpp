@@ -172,7 +172,7 @@ enum class HeadlessCommandGenerator::CmdType : uint8_t
     Unicode,
     Key,
     Text,
-    Click,
+    Mouse,
     Move,
     VScroll,
     HScroll,
@@ -511,34 +511,48 @@ void HeadlessCommandGenerator::mouse(MonotonicTimePoint now, uint16_t device_fla
         mouse_x = x;
         mouse_y = y;
     }
-    else if (device_flags == MOUSE_FLAG_BUTTON1
-          || device_flags == MOUSE_FLAG_BUTTON2
-          || device_flags == MOUSE_FLAG_BUTTON3
-          || device_flags == MOUSE_FLAG_BUTTON4
-          || device_flags == MOUSE_FLAG_BUTTON5
+    else if ((device_flags | MOUSE_FLAG_DOWN) == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)
+          || (device_flags | MOUSE_FLAG_DOWN) == (MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN)
+          || (device_flags | MOUSE_FLAG_DOWN) == (MOUSE_FLAG_BUTTON3 | MOUSE_FLAG_DOWN)
+          || (device_flags | MOUSE_FLAG_DOWN) == (MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN)
+          || (device_flags | MOUSE_FLAG_DOWN) == (MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN)
     ) {
-        //TODO MOUSE_FLAG_DOWN
-
-        auto oldtype = _synchronize_cmd(CmdType::Click, now, max_mouse_delay);
+        auto oldtype = _synchronize_cmd(CmdType::Mouse, now, max_mouse_delay);
         auto status = Status::UpdateLastLine;
         auto previous_len = cmd_buffer.size();
+        bool remove_down_flag = false;
 
-        if (oldtype != CmdType::Click) {
+        if (oldtype != CmdType::Mouse) {
             status = Status::NewLine;
+            previous_values.click = PreviousValues::Click();
             cmd_buffer = "mouse";
             previous_len = 0;
         }
-
-        chars_view btn;
-        switch (device_flags) {
-            case MOUSE_FLAG_BUTTON1: btn = " Left"_av; break;
-            case MOUSE_FLAG_BUTTON2: btn = " Right"_av; break;
-            case MOUSE_FLAG_BUTTON3: btn = " Middle"_av; break;
-            case MOUSE_FLAG_BUTTON4: btn = " b4"_av; break;
-            case MOUSE_FLAG_BUTTON5: btn = " b5"_av; break;
+        else {
+            // previous is down, current is up
+            remove_down_flag = (device_flags == (previous_values.click.flags & ~MOUSE_FLAG_DOWN))
+                            && (previous_values.click.flags & MOUSE_FLAG_DOWN);
         }
 
-        str_append(cmd_buffer, btn);
+        if (remove_down_flag) {
+            // remove ",down"
+            previous_len -= 5;
+            cmd_buffer.resize(previous_len);
+        }
+        else {
+            chars_view btn {};
+            switch (device_flags & ~MOUSE_FLAG_DOWN) {
+                case MOUSE_FLAG_BUTTON1: btn = " Left"_av; break;
+                case MOUSE_FLAG_BUTTON2: btn = " Right"_av; break;
+                case MOUSE_FLAG_BUTTON3: btn = " Middle"_av; break;
+                case MOUSE_FLAG_BUTTON4: btn = " b4"_av; break;
+                case MOUSE_FLAG_BUTTON5: btn = " b5"_av; break;
+            }
+            auto btnflag = (device_flags & MOUSE_FLAG_DOWN) ? ",down"_av : ",up"_av;
+            str_append(cmd_buffer, btn, btnflag);
+        }
+
+        previous_values.click.flags = device_flags;
         notifier(status, cmd_buffer, previous_len);
     }
     else if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
@@ -576,6 +590,21 @@ void HeadlessCommandGenerator::mouse(MonotonicTimePoint now, uint16_t device_fla
         previous_values.whell.negative_flag = negative;
         ++previous_values.whell.step;
         str_append(cmd_buffer, prefix, int_to_decimal_chars(previous_values.whell.step));
+        notifier(status, cmd_buffer, previous_len);
+    }
+    else {
+        auto oldtype = _synchronize_cmd(CmdType::Mouse, now, max_mouse_delay);
+        auto status = Status::UpdateLastLine;
+        auto previous_len = cmd_buffer.size();
+
+        if (oldtype != CmdType::Mouse) {
+            status = Status::NewLine;
+            previous_values.click = PreviousValues::Click();
+            cmd_buffer = "mouse";
+            previous_len = 0;
+        }
+
+        str_append(cmd_buffer, " 0x"_av, int_to_hexadecimal_upper_chars(device_flags));
         notifier(status, cmd_buffer, previous_len);
     }
 }
