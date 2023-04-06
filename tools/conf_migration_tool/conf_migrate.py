@@ -419,7 +419,7 @@ def migrate_file(version: RedemptionVersion,
 
 if __name__ == '__main__':
     if len(sys.argv) != 4 or sys.argv[1] not in ('-s', '-f'):
-        print(f'{sys.argv[0]} {{-s|-f}} version ini_filename\n'
+        print(f'{sys.argv[0]} {{-s|-f}} old_version ini_filename\n'
               '  -s   <version> is a output format of redemption --version\n'
               '  -f   <version> is a version of redemption from file',
               file=sys.stderr)

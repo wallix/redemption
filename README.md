@@ -17,7 +17,7 @@ The project also contains 2 RDP clients:
 - A web client in `projects/jsclient` that uses a websocket (option that must be enabled in the proxy configuration).
 
 
-<!-- https://github.com/jonathanpoelen/gh-md-toc -->
+<!-- generated with https://github.com/jonathanpoelen/gh-md-toc -->
 <!-- toc -->
 1. [Compilation](#compilation)
     1. [Dependencies](#dependencies)
@@ -35,15 +35,14 @@ The project also contains 2 RDP clients:
             2. [Musl libc](#musl-libc)
     6. [Add .cpp file](#add-cpp-file)
 2. [Run Redemption](#run-redemption)
-3. [Session recording](#session-recording)
+3. [Setting Redemption](#setting-redemption)
+    1. [Migrate the configuration to the next version](#migrate-the-configuration-to-the-next-version)
+4. [Session recording](#session-recording)
     1. [Convert .mwrm/.wrm capture to video](#convert-mwrmwrm-capture-to-video)
-4. [Compile proxy_recorder](#compile-proxy_recorder)
-5. [Packaging](#packaging)
-6. [Tag and Version](#tag-and-version)
-7. [Test files](#test-files)
-8. [FAQ](#faq)
-    1. [Q - Why do you use bjam for Redemption instead of make, cmake, scons, etc ?](#q---why-do-you-use-bjam-for-redemption-instead-of-make-cmake-scons-etc-)
-    2. [Q - How to add configuration variables in rdpproxy.ini ?](#q---how-to-add-configuration-variables-in-rdpproxyini-)
+5. [Compile proxy_recorder](#compile-proxy_recorder)
+6. [Packaging](#packaging)
+7. [Tag and Version](#tag-and-version)
+8. [Test files](#test-files)
 <!-- /toc -->
 
 
@@ -312,7 +311,7 @@ This is referenced as "authentifier" in proxy logs.
 Now, at that point you'll just have two servers waiting for connections
 not much fun. You still have to run some RDP client to connect to proxy. Choose
 whichever you like xfreerdp, rdesktop, remmina, tsclient on Linux or of course
-mstsc.exe if you are on windows. All are supposed to work. If some problem
+mstsc.exe if you are on Windows. All are supposed to work. If some problem
 occurs just report it to us so that we can correct it.
 
 Examples with freerdp when the proxy runs on the same host as the client:
@@ -323,13 +322,13 @@ xfreerdp /v:127.0.0.1
 
 A dialog box should open in which you can type a device ip, username and a password.
 
-These 3 fields can be pre-filled by configuring the connection identifiers sent by your RDP client. The target ip must be put with the login in the form `username@target_ip`:
+These 3 fields can be pre-filled by configuring the connection identifiers sent by your RDP client. With the default passthrough.py, the target address must be put with the login in the form `username@target_ip`:
 
 ```sh
 xfreerdp /v:127.0.0.1 /u:username@10.10.43.11 /p:password
 ```
 
-With default passthrough.py at least internal services should work. Try login `internal@bouncer2` or `internal@card`.
+With the default passthrough.py at least internal services should work. Try login `internal@bouncer2` or `internal@card`.
 
 ```sh
 xfreerdp /v:127.0.0.1 /u:internal@bouncer2
@@ -344,6 +343,21 @@ flowchart LR
     passthrough.py --> |"remote target info:<br/>username, password<br/> ..."|rdpproxy
     rdpproxy --> server[RDP Server]
 ```
+
+# Setting Redemption
+
+Redemption's configuration can be found in a `rdpproxy.ini` file that is not installed (you will have to create it yourself) or via the `--config-file=<path>` option.
+
+The default location of `rdpproxy.ini` can be found with the command `rdpproxy -c |& grep rdpproxy.ini` or `rdpinichecker`.
+
+`rdpproxy` also has a `--print-default-ini` which displays all the default options and values in comments. You can use `rdpinihecker -p` to get a condensed display.
+
+Some of these options can be modified by `passthrough.py` by filling in the dictionary sent to `send_data()`. See `tools/passthrough/README.md`.
+
+
+## Migrate the configuration to the next version
+
+Between 2 versions, some options can be moved or deleted. `tools/conf_migration_tool/conf_migrate.py` allows to automatically migrate a file from an old version.
 
 
 # Session recording
@@ -397,27 +411,3 @@ Exemple call line for proxy_recorder:
 # Test files
 
 See [test_framework directory](tests/includes/test_only/test_framework).
-
-
-# FAQ
-
-## Q - Why do you use bjam for Redemption instead of make, cmake, scons, etc ?
-
-It is simple, more that could be thought at first sight, and bjam has the major
-feature over make to keep source directories clean, all build related
-informations for all architecture are kept together in bin directory.
-
-The main drawback of bjam is the smaller user base.
-
-But keeping in mind the complexity of make (or worse autotools + make), bjam is
-a great help. We also used to have an alternative cmake build system, but it was
-more complex than bjam and not maintained, so was removed.
-
-## Q - How to add configuration variables in rdpproxy.ini ?
-
-Just edit config_spec.hpp (`projects/redemption_configs/configs_specs/configs/specs/config_spec.hpp`).
-
-The necessary changes should be simple using the surrounding code as exemple.
-
-Then enter directory `projects/redemption_configs` and type `bjam`
-the needed files will be generated.
