@@ -207,6 +207,7 @@ namespace cfg
     };
     /// Warning: Service will be automatically restarted and active sessions will be disconnected <br/>
     /// The port set in this field must not be already used, otherwise the service will not run. <br/>
+    /// Changing the port number will prevent WALLIX Access Manager from working properly. <br/>
     /// type: unsigned <br/>
     /// default: 3389 <br/>
     struct globals::port {
