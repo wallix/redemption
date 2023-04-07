@@ -11,6 +11,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warning: Service will be automatically restarted and active sessions will be disconnected
 # The port set in this field must not be already used, otherwise the service will not run.
+# Changing the port number will prevent WALLIX Access Manager from working properly.
 # min = 0
 #_iptables
 #_advanced
