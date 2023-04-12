@@ -55,6 +55,7 @@ build-analyze:
   artifacts:
     paths:
       - report.txt
+  timeout: 4h 30m
 
 sonarqube-check:
   stage: build
