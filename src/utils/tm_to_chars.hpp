@@ -48,13 +48,12 @@ namespace detail
 
 namespace dateformats
 {
-    // "YYYY-mm-dd HH:MM:SS"
-    //            ^ timesep
-    struct YYYY_mm_dd_HH_MM_SS
+    // "YYYY-mm-dd"
+    struct YYYY_mm_dd
     {
-        static constexpr std::size_t output_length = 19;
+        static constexpr std::size_t output_length = 10;
 
-        static char* to_chars(char* p, struct tm tm, char timesep = ' ') noexcept
+        static char* to_chars(char* p, struct tm const& tm) noexcept
         {
             p = detail::push_2digits(p, (1900 + tm.tm_year) / 100);
             p = detail::push_2digits(p, (1900 + tm.tm_year) % 100);
@@ -62,7 +61,18 @@ namespace dateformats
             p = detail::push_2digits(p, tm.tm_mon + 1);
             *p++ = '-';
             p = detail::push_2digits(p, tm.tm_mday);
-            *p++ = timesep;
+
+            return p;
+        }
+    };
+
+    // "HH:MM:SS"
+    struct HH_MM_SS
+    {
+        static constexpr std::size_t output_length = 8;
+
+        static char* to_chars(char* p, struct tm const& tm) noexcept
+        {
             p = detail::push_2digits(p, tm.tm_hour);
             *p++ = ':';
             p = detail::push_2digits(p, tm.tm_min);
@@ -73,12 +83,28 @@ namespace dateformats
         }
     };
 
+    // "YYYY-mm-dd HH:MM:SS"
+    //            ^ timesep
+    struct YYYY_mm_dd_HH_MM_SS
+    {
+        static constexpr std::size_t output_length = 19;
+
+        static char* to_chars(char* p, struct tm const& tm, char timesep = ' ') noexcept
+        {
+            p = YYYY_mm_dd::to_chars(p, tm);
+            *p++ = timesep;
+            p = HH_MM_SS::to_chars(p, tm);
+
+            return p;
+        }
+    };
+
     // "MMM dd YYYY HH:MM:SS"
     struct MMM_dd_YYYY_HH_MM_SS
     {
         static constexpr std::size_t output_length = 20;
 
-        static char* to_chars(char* p, struct tm tm) noexcept
+        static char* to_chars(char* p, struct tm const& tm) noexcept
         {
             char const* months =
                 "Jan "
@@ -102,11 +128,7 @@ namespace dateformats
             p = detail::push_2digits(p, (1900 + tm.tm_year) / 100);
             p = detail::push_2digits(p, (1900 + tm.tm_year) % 100);
             *p++ = ' ';
-            p = detail::push_2digits(p, tm.tm_hour);
-            *p++ = ':';
-            p = detail::push_2digits(p, tm.tm_min);
-            *p++ = ':';
-            p = detail::push_2digits(p, tm.tm_sec);
+            p = HH_MM_SS::to_chars(p, tm);
 
             return p;
         }

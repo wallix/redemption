@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "utils/sugar/array_view.hpp"
 
-#include <string>
 #include <chrono>
 
 
@@ -75,7 +74,7 @@ struct HeadlessCommand
         EnableScreen,
         Screen,
         ScreenRepetition,
-        ScreenRepetitionDirectory,
+        ScreenRepetitionPrefixPath,
         WrmPath,
         RecordTransportPath,
         ConfigFile,
@@ -104,7 +103,7 @@ struct HeadlessCommand
     //      | ('wrm' | 'record-transport') ws bool (ws filename)?
     //      | ('png' | 'p') (ws filename)?
     //      | ('ipng' | 'pp') ws delay (ws suffix-name)?
-    //      | ('ipng-directory' | 'ipng-dir' | 'ppd') directory
+    //      | ('ipng-prefix-path' | 'ipng-prefix' | 'ippp') path
     //      | 'enable-png' wd bool
     //      | 'prefix-path' (ws path)?
     //      | ('configfile' | 'conff' | 'f') ws filename

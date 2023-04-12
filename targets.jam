@@ -221,6 +221,7 @@ exe headlessclient :
   <library>src/headlessclient/headless_command.o
   <library>src/headlessclient/headless_configuration.o
   <library>src/headlessclient/headless_graphics.o
+  <library>src/headlessclient/headless_path.o
   <library>src/headlessclient/headless_repl.o
   <library>src/headlessclient/input_collector.o
   <library>src/keyboard/keylayouts.o
@@ -2119,11 +2120,6 @@ test-run tests/gdi/test_text_metrics :
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/headlessclient/test_compute_headless_wrm_path :
-  $(REDEMPTION_TEST_PATH)/headlessclient/test_compute_headless_wrm_path.cpp
-:
-  <library>src/utils/strutils.o
-;
 test-run tests/headlessclient/test_headless_command :
   $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_command.cpp
 :
@@ -2155,6 +2151,12 @@ test-run tests/headlessclient/test_headless_configuration :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run tests/headlessclient/test_headless_path :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_path.cpp
+:
+  <library>src/headlessclient/headless_path.o
+  <library>src/utils/strutils.o
 ;
 test-run tests/headlessclient/test_headless_repl :
   $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_repl.cpp
@@ -4785,6 +4787,7 @@ obj src/headlessclient/headless_command.o : $(REDEMPTION_SRC_PATH)/headlessclien
 obj src/headlessclient/headless_command_generator.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_command_generator.cpp ;
 obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
 obj src/headlessclient/headless_graphics.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_graphics.cpp ;
+obj src/headlessclient/headless_path.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_path.cpp ;
 obj src/headlessclient/headless_repl.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_repl.cpp ;
 obj src/headlessclient/input_collector.o : $(REDEMPTION_SRC_PATH)/headlessclient/input_collector.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
@@ -5052,10 +5055,10 @@ alias test_front : tests/front/test_front ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_text_metrics : tests/gdi/test_text_metrics ;
-alias test_compute_headless_wrm_path : tests/headlessclient/test_compute_headless_wrm_path ;
 alias test_headless_command : tests/headlessclient/test_headless_command ;
 alias test_headless_command_generator : tests/headlessclient/test_headless_command_generator ;
 alias test_headless_configuration : tests/headlessclient/test_headless_configuration ;
+alias test_headless_path : tests/headlessclient/test_headless_path ;
 alias test_headless_repl : tests/headlessclient/test_headless_repl ;
 alias test_input_collector : tests/headlessclient/test_input_collector ;
 alias test_keymap : tests/keyboard/test_keymap ;
@@ -5407,10 +5410,10 @@ alias tests/gdi.norec :
   tests/gdi/test_text_metrics
 ;
 alias tests/headlessclient.norec :
-  tests/headlessclient/test_compute_headless_wrm_path
   tests/headlessclient/test_headless_command
   tests/headlessclient/test_headless_command_generator
   tests/headlessclient/test_headless_configuration
+  tests/headlessclient/test_headless_path
   tests/headlessclient/test_headless_repl
   tests/headlessclient/test_input_collector
 ;
@@ -5869,6 +5872,7 @@ explicit
   src/headlessclient/headless_command_generator.o
   src/headlessclient/headless_configuration.o
   src/headlessclient/headless_graphics.o
+  src/headlessclient/headless_path.o
   src/headlessclient/headless_repl.o
   src/headlessclient/input_collector.o
   src/keyboard/keylayouts.o
@@ -6138,10 +6142,10 @@ explicit
   test_graphic_cmd_color
   test_protected_graphics
   test_text_metrics
-  test_compute_headless_wrm_path
   test_headless_command
   test_headless_command_generator
   test_headless_configuration
+  test_headless_path
   test_headless_repl
   test_input_collector
   test_keymap

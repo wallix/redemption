@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include <cassert>
 #include <cstring>
 
 
@@ -166,6 +167,24 @@ namespace detail
         auto p = str.data() + ipos;
         (..., void(p = append_from_av_or_char(p, strs)));
     }
+
+#ifndef NDEBUG
+    inline char const* get_ptr_data(chars_view av) noexcept
+    {
+        return av.data();
+    }
+
+    inline char const* get_ptr_data(char /*c*/) noexcept
+    {
+        return nullptr;
+    }
+
+    template<class... StringsOrChars>
+    inline bool inputs_contains_output(char const* p, StringsOrChars&&... strs) noexcept
+    {
+        return ((p == get_ptr_data(strs)) || ...);
+    }
+#endif
 } // namespace detail
 
 
@@ -191,6 +210,7 @@ std::string str_concat(std::string&& str, Strings const&... strs)
 template<class... Strings>
 inline void str_append(std::string& str, Strings const&... strs)
 {
+    assert(!detail::inputs_contains_output(str.data(), detail::to_string_view_or_char(strs, 1)...));
     detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }
 
@@ -198,6 +218,8 @@ inline void str_append(std::string& str, Strings const&... strs)
 template<class... Strings>
 inline void str_assign(std::string& str, Strings const&... strs)
 {
+    assert(!detail::inputs_contains_output(str.data(), detail::to_string_view_or_char(strs, 1)...));
+
     str.clear();
     detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }
@@ -206,6 +228,7 @@ inline void str_assign(std::string& str, Strings const&... strs)
 template<class... Strings>
 inline void str_append(std::vector<char>& str, Strings const&... strs)
 {
+    assert(!detail::inputs_contains_output(str.data(), detail::to_string_view_or_char(strs, 1)...));
     detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }
 

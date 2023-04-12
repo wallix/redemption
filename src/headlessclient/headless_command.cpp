@@ -18,6 +18,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <vector>
 #include <memory>
+#include <cstring>
 
 
 namespace
@@ -37,7 +38,7 @@ bool parameter_name_compare(std::string_view a, std::string_view b)
 template<class Pair>
 struct ParameterList
 {
-    // tp_uppercase + sort
+    // to_uppercase + sort
     explicit ParameterList(array_view<Pair> seq)
     : len(seq.size())
     {
@@ -1268,12 +1269,10 @@ alias: pp
     See C(help delay) for format (default unit is seconds).
 
 
-N(ipng-directory) P(directory)
-alias: ipng-dir and ppd
+N(ipng-prefix-path) P(path)
+alias: ipng-prefix and ippp
 
-    Reset counter of C(ipng) and set directory for C(ipng) and C(png) commands.
-
-    Some characters of P(directory) are special, see C(help path) for more details.
+    Some characters of P(path) are special, see C(help path) for more details.
 
 
 N(enable-png) [P(bool)]
@@ -1507,8 +1506,8 @@ chars_view cmd_help(std::string_view name, bool is_kbdmap_en)
             " - '%d': time in YYYY-mm-dd format\n"
             " - '%h': time in HH:MM:SS format\n"
             " - '%e': file extension\n"
-            " - '%E': file extension if no extension is present\n"
-            " - '%s': filename for prefix-path command\n"
+            " - '%E': add dot and file extension if no extension is present\n"
+            " - '%s': suffix (for ipng command)\n"
             " - '~': if at the beginning of the path, is replaced by the environment variable $HOME\n"
             ""_av;
     }
@@ -1993,8 +1992,8 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
         );
     }
 
-    else if (cmd_name == "ppd" || cmd_name == "ipng-dir" || cmd_name == "ipng-directory") {
-        return cmd_parse(Result::ScreenRepetitionDirectory, *this, index_param, first, last, cmd.end(),
+    else if (cmd_name == "ippp" || cmd_name == "ipng-prefix" || cmd_name == "ipng-prefix-path") {
+        return cmd_parse(Result::ScreenRepetitionPrefixPath, *this, index_param, first, last, cmd.end(),
             CmdArgParser{CharsParser{}, OutParam{output_message}, "path"_av}
         );
     }

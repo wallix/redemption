@@ -22,8 +22,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_graphics.hpp"
 #include "headlessclient/headless_command.hpp"
 #include "headlessclient/headless_repl.hpp"
+#include "headlessclient/headless_path.hpp"
 #include "headlessclient/input_collector.hpp"
-#include "headlessclient/compute_headless_wrm_path.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
 #include "mod/null/null.hpp"
@@ -121,27 +121,77 @@ struct Repl final : FrontAPI, SessionLogApi
     MonotonicTimePoint::duration key_delay;
     MonotonicTimePoint::duration mouse_delay;
     MonotonicTimePoint::duration sleep_delay;
+    MonotonicTimePoint::duration ipng_delay;
     std::string delayed_cmd;
     HeadlessRepl repl;
 
     bool enable_wrm = false;
     bool enable_png = false;
     bool enable_record_transport = false;
+    bool is_regular_png_path = false;
+
+    struct Counters
+    {
+        unsigned wrm = 0;
+        unsigned png = 0;
+        unsigned ipng = 0;
+        unsigned total = 0;
+    };
+
+    Counters counters;
+
     std::string png_path;
+    std::string ipng_suffix;
     std::string wrm_path;
     std::string record_transport_path;
     std::string ip_address;
     std::string username;
     std::string password;
+    std::string home_variable;
 
-    std::string session_id;
-    std::string prefix_path;
-    std::string screen_repetition_output_directory;
+    HeadlessPath prefix_path;
+    HeadlessPath screen_repetition_prefix_path;
 
     ClientInfo client_info {};
     Inifile ini;
     EventManager event_manager;
     HeadlessCommand cmd_ctx;
+
+    struct SessionEventGuard : noncopyable
+    {
+        SessionEventGuard(Repl& repl, RdpInput& mod)
+        : repl(repl)
+        {
+            repl.make_ipng_capture_event();
+            repl.make_repetition_command_event(mod);
+            repl.session_event = this;
+        }
+
+        ~SessionEventGuard()
+        {
+            repl.session_event = nullptr;
+        }
+
+    private:
+        friend class Repl;
+
+        Repl& repl;
+
+        EventRef repetition_cmd_event{};
+        EventRef ipng_event{};
+    };
+
+    SessionEventGuard* session_event = nullptr;
+
+    void init_paths()
+    {
+        auto* home = getenv("HOME");
+        if (home && *home) {
+            str_assign(home_variable, home, '/');
+        }
+
+        screen_repetition_prefix_path.compile("%i%s%E"_av);
+    }
 
     bool is_eof() const
     {
@@ -197,7 +247,12 @@ struct Repl final : FrontAPI, SessionLogApi
                 break;
 
             case HeadlessCommand::Result::PrefixPath:
-                prefix_path = cmd_ctx.output_message.as<std::string_view>();
+                prefix_path.compile(cmd_ctx.output_message);
+                is_regular_png_path = false;
+                break;
+
+            case HeadlessCommand::Result::ScreenRepetitionPrefixPath:
+                screen_repetition_prefix_path.compile(cmd_ctx.output_message);
                 break;
 
             case HeadlessCommand::Result::Username:
@@ -214,10 +269,6 @@ struct Repl final : FrontAPI, SessionLogApi
 
             case HeadlessCommand::Result::RecordTransportPath:
                 record_transport_path = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::ScreenRepetitionDirectory:
-                screen_repetition_output_directory = cmd_ctx.output_message.as<std::string_view>();
                 break;
 
             case HeadlessCommand::Result::OutputResult:
@@ -259,37 +310,28 @@ struct Repl final : FrontAPI, SessionLogApi
                 break;
 
             case HeadlessCommand::Result::Screen: {
-                // TODO use prefix_path / session_id
-                char const* err = nullptr;
-                if (drawable) {
-                    try {
-                        err = drawable->dump_png(png_path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
-                        if (!err) {
-                            break;
+                screenshot([&]{
+                    zstring_view path = png_path;
+                    if (!is_regular_png_path) {
+                        auto ctx = HeadlessPath::Context{
+                            .counter = ++counters.png,
+                            .global_counter = ++counters.total,
+                            .real_time = event_manager.get_time_base().real_time,
+                            .extension = ".png"_av,
+                            .filename = path,
+                            .suffix = ""_av,
+                            .home = home_variable,
+                        };
+                        auto computed_path = prefix_path.compute_path(ctx);
+                        is_regular_png_path = computed_path.is_regular;
+                        path = computed_path.path;
+                        // str_assign use .clear() before assignment
+                        if (is_regular_png_path && png_path.data() != path.data()) {
+                            str_assign(png_path, path);
                         }
                     }
-                    catch (Error const& e) {
-                        LOG(LOG_ERR, "%s: %s", png_path, e.errmsg());
-                        if (e.errnum) {
-                            err = strerror(e.errnum);
-                        }
-                    }
-                    catch (...) {
-                        err = strerror(errno);
-                    }
-                }
-                else if (!gd_is_ready) {
-                    err = "Graphics is not ready";
-                }
-                else if (first_png) {
-                    err = "Png capture is disabled";
-                    first_png = false;
-                }
-                else {
-                    break;
-                }
-
-                LOG(LOG_ERR, "%s: %s", png_path, err);
+                    return path;
+                });
                 break;
             }
 
@@ -299,8 +341,18 @@ struct Repl final : FrontAPI, SessionLogApi
                 break;
 
             case HeadlessCommand::Result::ScreenRepetition:
-                // TODO delay, suffix
-                screen_repetition_output_directory = cmd_ctx.output_message.as<std::string_view>();
+                ipng_delay = cmd_ctx.delay;
+                ipng_suffix = cmd_ctx.output_message.as<std::string_view>();
+                if (!make_ipng_capture_event()) {
+                    if (session_event) {
+                        session_event->ipng_event.garbage();
+                    }
+
+                    if (!drawable) {
+                        // just for logging message
+                        screenshot([]{ return ""_zv; });
+                    }
+                }
                 break;
 
             case HeadlessCommand::Result::KeyDelay:
@@ -312,10 +364,18 @@ struct Repl final : FrontAPI, SessionLogApi
                 break;
 
             case HeadlessCommand::Result::RepetitionCommand:
-                // TODO use prefix_path / session_id
-                cmd_delay = cmd_ctx.delay;
-                delayed_cmd = cmd_ctx.output_message.as<std::string_view>();
-                has_delay_cmd = true;
+                if (cmd_ctx.delay.count()) {
+                    cmd_delay = cmd_ctx.delay;
+                    delayed_cmd = cmd_ctx.output_message.as<std::string_view>();
+                    has_delay_cmd = true;
+                    make_repetition_command_event(mod);
+                }
+                else {
+                    has_delay_cmd = false;
+                    if (session_event) {
+                        session_event->repetition_cmd_event.garbage();
+                    }
+                }
                 break;
 
             case HeadlessCommand::Result::Quit:
@@ -380,9 +440,17 @@ struct Repl final : FrontAPI, SessionLogApi
             auto& time_base = event_manager.get_writable_time_base();
             time_base = TimeBase::now();
 
-            // TODO use prefix_path / session_id
+            auto ctx = HeadlessPath::Context{
+                .counter = ++counters.wrm,
+                .global_counter = ++counters.total,
+                .real_time = time_base.real_time,
+                .extension = ".wrm"_av,
+                .filename = wrm_path,
+                .suffix = ""_av,
+                .home = home_variable,
+            };
+            auto filename = prefix_path.compute_path(ctx).path;
 
-            auto filename = compute_headless_wrm_path(wrm_path, session_id, time_base.real_time);
             auto fd = unique_fd(filename, O_WRONLY | O_CREAT, 0664);
             if (!fd) {
                 int errnum = errno;
@@ -474,6 +542,108 @@ struct Repl final : FrontAPI, SessionLogApi
     {}
 
 private:
+    template<class MakePath>
+    void screenshot(MakePath make_path)
+    {
+        char const* err = nullptr;
+        if (drawable) {
+            zstring_view path = make_path();
+
+            try {
+                err = drawable->dump_png(path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
+                if (!err) {
+                    return;
+                }
+            }
+            catch (Error const& e) {
+                LOG(LOG_ERR, "%s: %s", path, e.errmsg());
+                if (e.errnum) {
+                    err = strerror(e.errnum);
+                }
+            }
+            catch (...) {
+                err = strerror(errno);
+            }
+        }
+        else if (!gd_is_ready) {
+            err = "Graphics is not ready";
+        }
+        else if (first_png) {
+            err = "Png capture is disabled";
+            first_png = false;
+        }
+        else {
+            return;
+        }
+
+        LOG(LOG_ERR, "%s: %s", png_path, err);
+    }
+
+    bool make_ipng_capture_event()
+    {
+        if (!session_event || !drawable || !ipng_delay.count()) {
+            return false;
+        }
+
+        auto event_fn = [this](Event& ev) {
+            screenshot([this]{
+                auto ctx = HeadlessPath::Context{
+                    .counter = ++counters.ipng,
+                    .global_counter = ++counters.total,
+                    .real_time = event_manager.get_time_base().real_time,
+                    .extension = ".png"_av,
+                    .filename = ""_zv,
+                    .suffix = ipng_suffix,
+                    .home = home_variable,
+                };
+                auto computed_path = screen_repetition_prefix_path.compute_path(ctx);
+                ctx.filename = computed_path.path;
+                return prefix_path.compute_path(ctx).path;
+            });
+            ev.add_timeout_delay(ipng_delay);
+        };
+
+        session_event->ipng_event.set_timeout_or_create_event(
+            ipng_delay, event_manager.get_events(), "ipng", this, event_fn
+        );
+
+        return true;
+    }
+
+    void make_repetition_command_event(RdpInput& mod)
+    {
+        if (!session_event || !has_delay_cmd) {
+            return;
+        }
+
+        has_delay_cmd = false;
+
+        auto repeat = (cmd_ctx.repeat_delay < 0)
+            ? ~uint64_t(0) // infinite loop
+            : static_cast<uint64_t>(cmd_ctx.repeat_delay);
+
+        auto event_fn = [repeat, &mod, this](Event& ev) mutable {
+            if (--repeat == 0) {
+                ev.garbage = true;
+                return;
+            }
+
+            ev.add_timeout_delay(cmd_delay);
+            execute_delayed_command(mod);
+
+            // recursive creation, remove event
+            if (has_delay_cmd) {
+                has_delay_cmd = false;
+                ev.garbage = true;
+            }
+        };
+
+        session_event->repetition_cmd_event.set_timeout_or_create_event(
+            ipng_delay, event_manager.get_events(), "repetition_cmd", this, event_fn
+        );
+    }
+
+
     CHANNELS::ChannelDefArray cl;
     UninitDynamicBuffer buffer;
     // capture variable members
@@ -554,6 +724,8 @@ int main(int argc, char const** argv)
 
     repl.start_connection = *options.ip_address;
     bool interactive = !repl.start_connection || options.interactive;
+
+    repl.init_paths();
 
     FrontAPI& front = repl;
     SessionLogApi& session_log = repl;
@@ -656,41 +828,7 @@ int main(int argc, char const** argv)
             /*
              * Mod is ready
              */
-
-            EventRef delayed_cmd_ref;
-            auto mk_delayed_cmd_when_available = [&]{
-                if (!repl.has_delay_cmd) {
-                    return;
-                }
-
-                repl.has_delay_cmd = false;
-                if (!repl.delayed_cmd.empty() && repl.cmd_delay.count() >= 0) {
-                    auto repeat = (cmd_ctx.repeat_delay < 0)
-                        ? ~uint64_t(0) // infinite loop
-                        : static_cast<uint64_t>(cmd_ctx.repeat_delay);
-
-                    auto fn = [repeat, &repl, &mod](Event& ev) mutable {
-                        if (--repeat == 0) {
-                            ev.garbage = true;
-                            return;
-                        }
-
-                        ev.add_timeout_delay(repl.cmd_delay);
-                        repl.execute_delayed_command(*mod);
-                        // recursive creation, remove timer
-                        if (repl.has_delay_cmd) {
-                            repl.has_delay_cmd = false;
-                            ev.garbage = true;
-                        }
-                    };
-
-                    delayed_cmd_ref = event_container.event_creator()
-                        .create_event_timeout("delayed_cmd", nullptr, repl.cmd_delay, fn);
-                }
-                else {
-                    delayed_cmd_ref.garbage();
-                }
-            };
+            Repl::SessionEventGuard repl_session_guard{repl, *mod};
 
             InputCollector input_collector;
             Keymap null_keymap(KeyLayout::null_layout());
@@ -744,11 +882,8 @@ int main(int argc, char const** argv)
             else {
                 show_prompt();
 
-                mk_delayed_cmd_when_available();
-
                 auto read_input = [&](Event&) {
                     if (repl.execute_command(*mod)) {
-                        mk_delayed_cmd_when_available();
                         show_prompt();
                     }
                 };
