@@ -236,7 +236,7 @@ public:
         //@}
         global_channel  = 0x0000'2000,
         sec_decrypted   = 0x0000'4000,
-        keymap          = 0x0000'8004,
+        keymap          = 0x0000'8000,
 
         keymap_and_basic_trace3 = keymap | basic_trace3,
 
