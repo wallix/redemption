@@ -483,7 +483,7 @@ public:
     }
 
     void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-        auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
+        auto get_delta = [] (RDPGlyphIndex const& cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
                 Parse stream(cmd.data + i);

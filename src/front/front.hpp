@@ -1063,7 +1063,8 @@ public:
         }
 
         if (this->client_info.screen_info.width != screen_server.width
-         || this->client_info.screen_info.height != screen_server.height) {
+         || this->client_info.screen_info.height != screen_server.height
+        ) {
             if (!this->ini.get<cfg::context::rail_module_host_mod_is_active>()) {
                 /* older client can't resize */
                 if (client_info.build <= 419) {

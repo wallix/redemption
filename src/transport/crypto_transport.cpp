@@ -360,6 +360,7 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
     if (this->eof){
         return 0;
     }
+
     if (this->encrypted){
         // If we do not have any clear data available read some
         if (!this->raw_size) {
@@ -419,7 +420,7 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
         return copiable_size;
     }
 
-    if (this->raw_size - this->clear_pos > len){
+    if (this->raw_size - this->clear_pos > len) {
         ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], len);
         this->clear_pos += len;
         this->current_len += len;
@@ -428,14 +429,16 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
         }
         return len;
     }
+
     size_t remaining_len = len;
-    if (this->raw_size - this->clear_pos > 0){
+    if (this->raw_size - this->clear_pos > 0) {
         ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
         remaining_len -= this->raw_size - this->clear_pos;
         this->raw_size = 0;
         this->clear_pos = 0;
     }
-    while(remaining_len){
+
+    while (remaining_len) {
         ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
         if (res <= 0){
             if (res == 0) {

@@ -1956,7 +1956,8 @@ int do_main(int argc, char const ** argv,
                      max_screen_dim,
                      rnd);
 
-        } catch (const Error & e) {
+        }
+        catch (const Error & e) {
             std::cout << "decrypt failed: with id=" << e.id << std::endl;
         }
     break;

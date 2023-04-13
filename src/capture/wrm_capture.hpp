@@ -684,8 +684,7 @@ class WrmCaptureImpl final : WrmCaptureDataImpl,
     void update_timestamp(MonotonicTimePoint now)
     {
         this->sink.timestamp(now);
-        const auto timer = this->sink.current_timer();
-        const auto tp = this->original_monotonic_to_real.to_real_time_point(timer);
+        const auto tp = this->original_monotonic_to_real.to_real_time_point(now);
         this->out.timestamp(tp);
     }
 
