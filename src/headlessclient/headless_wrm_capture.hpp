@@ -45,8 +45,13 @@ struct HeadlessWrmCapture
 
     void update_timestamp(MonotonicTimePoint now)
     {
-        graphic_to_file.sync();
         graphic_to_file.timestamp(now);
+        graphic_to_file.send_timestamp_chunk();
+    }
+
+    void resized()
+    {
+        graphic_to_file.breakpoint();
     }
 
 private:

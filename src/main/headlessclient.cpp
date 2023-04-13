@@ -48,6 +48,12 @@ static void show_prompt()
     write(1, ">>> ", 4);
 }
 
+static void update_times(EventManager& em)
+{
+    auto& tb = em.get_writable_time_base();
+    tb = tb.now();
+}
+
 static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_manager)
 {
     const auto now = MonotonicTimePoint::clock::now();
@@ -79,6 +85,7 @@ static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_mana
     }
 
     const int num = select(max + 1, &rfds, nullptr, nullptr, timeout_ptr);
+    update_times(event_manager);
 
     if (num < 0) {
         LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -89,7 +96,6 @@ static bool wait_and_draw_event(SocketTransport& trans, EventManager& event_mana
         io_fd_set(trans.get_fd(), rfds);
     }
 
-    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
     event_manager.execute_events([&rfds](int fd){
         return io_fd_isset(fd, rfds);
     }, false);
@@ -451,7 +457,7 @@ struct Repl final : FrontAPI, SessionLogApi
             };
             auto filename = prefix_path.compute_path(ctx).path;
 
-            auto fd = unique_fd(filename, O_WRONLY | O_CREAT, 0664);
+            auto fd = unique_fd(filename, O_WRONLY | O_CREAT | O_TRUNC, 0664);
             if (!fd) {
                 int errnum = errno;
                 LOG(LOG_ERR, "Open wrm file error (%s): %s", filename, strerror(errnum));
@@ -475,7 +481,9 @@ struct Repl final : FrontAPI, SessionLogApi
     void must_flush_capture() override
     {
         if (wrm_gd) {
-            wrm_gd->update_timestamp(event_manager.get_time_base().monotonic_time);
+            auto& time_base = event_manager.get_time_base();
+            // TODO wrm_gd->mouse(x, y);
+            wrm_gd->update_timestamp(time_base.monotonic_time);
         }
     }
 
@@ -486,7 +494,7 @@ struct Repl final : FrontAPI, SessionLogApi
         gds.clear();
 
         if (wrm_gd) {
-            wrm_gd->update_timestamp(event_manager.get_time_base().monotonic_time);
+            must_flush_capture();
             wrm_gd.reset();
         }
 
@@ -506,7 +514,13 @@ struct Repl final : FrontAPI, SessionLogApi
     {
         if (drawable) {
             drawable->resize(screen_server.width, screen_server.height);
+
+            if (wrm_gd) {
+                wrm_gd->resized();
+            }
         }
+
+
         return ResizeResult::instant_done;
     }
 
@@ -576,7 +590,7 @@ private:
             return;
         }
 
-        LOG(LOG_ERR, "%s: %s", png_path, err);
+        LOG(LOG_ERR, "Screenshot error: %s: %s", png_path, err);
     }
 
     bool make_ipng_capture_event()
@@ -731,6 +745,7 @@ int main(int argc, char const** argv)
     SessionLogApi& session_log = repl;
 
     while (!repl.quit && (!repl.is_eof() || (repl.start_connection && options.persist))) {
+        update_times(event_manager);
         front.must_be_stop_capture();
 
         /*
@@ -938,6 +953,7 @@ int main(int argc, char const** argv)
         options.persist = false;
     }
 
+    update_times(event_manager);
     front.must_be_stop_capture();
 
     return 0;
