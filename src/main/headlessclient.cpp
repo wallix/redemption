@@ -112,57 +112,8 @@ static KeyLayout const& get_layout(KeyLayout::KbdId keylayout)
 namespace
 {
 
-struct Repl final : FrontAPI, SessionLogApi
+struct Repl final : FrontAPI, SessionLogApi, private RdpInput
 {
-    bool quit = false;
-    bool start_connection = false;
-    bool disconnection = false;
-    bool has_delay_cmd = false;
-    bool first_png = true;
-    bool gd_is_ready = false;
-
-    int fd = 0;
-
-    MonotonicTimePoint::duration cmd_delay;
-    MonotonicTimePoint::duration key_delay;
-    MonotonicTimePoint::duration mouse_delay;
-    MonotonicTimePoint::duration sleep_delay;
-    MonotonicTimePoint::duration ipng_delay;
-    std::string delayed_cmd;
-    HeadlessRepl repl;
-
-    bool enable_wrm = false;
-    bool enable_png = false;
-    bool enable_record_transport = false;
-    bool is_regular_png_path = false;
-
-    struct Counters
-    {
-        unsigned wrm = 0;
-        unsigned png = 0;
-        unsigned ipng = 0;
-        unsigned total = 0;
-    };
-
-    Counters counters;
-
-    std::string png_path;
-    std::string ipng_suffix;
-    std::string wrm_path;
-    std::string record_transport_path;
-    std::string ip_address;
-    std::string username;
-    std::string password;
-    std::string home_variable;
-
-    HeadlessPath prefix_path;
-    HeadlessPath screen_repetition_prefix_path;
-
-    ClientInfo client_info {};
-    Inifile ini;
-    EventManager event_manager;
-    HeadlessCommand cmd_ctx;
-
     struct SessionEventGuard : noncopyable
     {
         SessionEventGuard(Repl& repl, RdpInput& mod)
@@ -178,6 +129,30 @@ struct Repl final : FrontAPI, SessionLogApi
             repl.session_event = nullptr;
         }
 
+        bool execute_timer(Event& e, InputCollector& input_collector, Keymap& keymap)
+        {
+            if (repl.sleep_delay.count()) {
+                e.add_timeout_delay(repl.sleep_delay);
+                repl.sleep_delay = repl.sleep_delay.zero();
+                return true;
+            }
+
+            repl.input_mod = &input_collector;
+            switch (input_collector.send_next_input(repl, keymap))
+            {
+                case InputCollector::ConsumedInput::None:
+                    return false;
+                case InputCollector::ConsumedInput::KeyEvent:
+                    e.add_timeout_delay(repl.key_delay);
+                    return true;
+                case InputCollector::ConsumedInput::MouseEvent:
+                    e.add_timeout_delay(repl.mouse_delay);
+                    return true;
+            }
+
+            REDEMPTION_UNREACHABLE();
+        }
+
     private:
         friend class Repl;
 
@@ -186,8 +161,6 @@ struct Repl final : FrontAPI, SessionLogApi
         EventRef repetition_cmd_event{};
         EventRef ipng_event{};
     };
-
-    SessionEventGuard* session_event = nullptr;
 
     void init_paths()
     {
@@ -231,9 +204,14 @@ struct Repl final : FrontAPI, SessionLogApi
         return true;
     }
 
+    chars_view read_command()
+    {
+        return repl.read_command(fd);
+    }
+
     bool execute_command(RdpInput& mod)
     {
-        return execute_command(mod, repl.read_command(fd));
+        return execute_command(mod, read_command());
     }
 
     bool execute_delayed_command(RdpInput& mod)
@@ -243,7 +221,9 @@ struct Repl final : FrontAPI, SessionLogApi
 
     bool execute_command(RdpInput& mod, chars_view cmd_line)
     {
-        switch (cmd_ctx.execute_command(cmd_line, mod)) {
+        input_mod = &mod;
+
+        switch (cmd_ctx.execute_command(cmd_line, *this)) {
             case HeadlessCommand::Result::KbdChange:
             case HeadlessCommand::Result::Ok:
                 break;
@@ -465,7 +445,7 @@ struct Repl final : FrontAPI, SessionLogApi
             }
 
             wrm_gd.reset(new HeadlessWrmCapture(
-                std::move(fd), drawable->drawable(),
+                std::move(fd), drawable->drawable(), drawable->get_pointer_cache(),
                 time_base.monotonic_time, time_base.real_time,
                 client_info.screen_info.bpp, client_info.remote_program,
                 ini.get<cfg::video::wrm_compression_algorithm>(),
@@ -482,8 +462,7 @@ struct Repl final : FrontAPI, SessionLogApi
     {
         if (wrm_gd) {
             auto& time_base = event_manager.get_time_base();
-            // TODO wrm_gd->mouse(x, y);
-            wrm_gd->update_timestamp(time_base.monotonic_time);
+            wrm_gd->update_timestamp_and_mouse_position(time_base.monotonic_time, mouse_x, mouse_y);
         }
     }
 
@@ -658,6 +637,107 @@ private:
     }
 
 
+    /*
+     * RdpInput
+     */
+
+    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
+    {
+        input_mod->rdp_input_scancode(flags, scancode, event_time, keymap);
+    }
+
+    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
+    {
+        input_mod->rdp_input_unicode(flag, unicode);
+    }
+
+    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        LOG(LOG_DEBUG, "%d %d", x, y);
+        mouse_x = x;
+        mouse_y = y;
+        input_mod->rdp_input_mouse(device_flags, x, y);
+    }
+
+    void rdp_input_synchronize(KeyLocks locks) override
+    {
+        input_mod->rdp_input_synchronize(locks);
+    }
+
+    void rdp_input_invalidate(Rect /*r*/) override
+    {}
+
+    void rdp_gdi_up_and_running() override
+    {}
+
+    void rdp_gdi_down() override
+    {}
+
+public:
+    bool quit = false;
+    bool start_connection = false;
+    bool disconnection = false;
+private:
+    bool has_delay_cmd = false;
+    bool first_png = true;
+    bool gd_is_ready = false;
+
+public:
+    bool enable_wrm = false;
+    bool enable_png = false;
+    bool enable_record_transport = false;
+private:
+    bool is_regular_png_path = false;
+
+public:
+    int fd = 0;
+
+private:
+    MonotonicTimePoint::duration cmd_delay;
+    MonotonicTimePoint::duration key_delay;
+    MonotonicTimePoint::duration mouse_delay;
+    MonotonicTimePoint::duration sleep_delay;
+    MonotonicTimePoint::duration ipng_delay;
+    std::string delayed_cmd;
+    HeadlessRepl repl;
+
+    struct Counters
+    {
+        unsigned wrm = 0;
+        unsigned png = 0;
+        unsigned ipng = 0;
+        unsigned total = 0;
+    };
+
+    Counters counters;
+
+public:
+    std::string png_path;
+    std::string ipng_suffix;
+    std::string wrm_path;
+    std::string record_transport_path;
+    std::string ip_address;
+    std::string username;
+    std::string password;
+    std::string home_variable;
+
+    HeadlessPath prefix_path;
+    HeadlessPath screen_repetition_prefix_path;
+
+public:
+    ClientInfo client_info {};
+    Inifile ini;
+    EventManager event_manager;
+
+    HeadlessCommand cmd_ctx;
+
+private:
+    SessionEventGuard* session_event = nullptr;
+
+    uint16_t mouse_x = 0;
+    uint16_t mouse_y = 0;
+    RdpInput* input_mod;
+
     CHANNELS::ChannelDefArray cl;
     UninitDynamicBuffer buffer;
     // capture variable members
@@ -690,7 +770,6 @@ int main(int argc, char const** argv)
     bool has_automation_script = automation_script;
 
     auto input = has_automation_script ? unique_fd(automation_script) : unique_fd(0);
-    repl.fd = input.fd();
 
     if (has_automation_script && !input) {
         printf("Automation open error: %s: %s", automation_script, strerror(errno));
@@ -735,6 +814,7 @@ int main(int argc, char const** argv)
     repl.ip_address = options.ip_address;
     repl.username = options.username;
     repl.password = options.password;
+    repl.fd = input.fd();
 
     repl.start_connection = *options.ip_address;
     bool interactive = !repl.start_connection || options.interactive;
@@ -855,31 +935,12 @@ int main(int argc, char const** argv)
 
             if (has_automation_script) {
                 auto timer_input = [&](Event& e) {
-                    if (repl.sleep_delay.count()) {
-                        input_ev.raw_event()->fd = -1;
-                        e.add_timeout_delay(repl.sleep_delay);
-                        repl.sleep_delay = repl.sleep_delay.zero();
-                        return;
-                    }
-
-                    switch (input_collector.send_next_input(*mod, null_keymap))
-                    {
-                        case InputCollector::ConsumedInput::None:
-                            input_ev.raw_event()->fd = input.fd();
-                            break;
-                        case InputCollector::ConsumedInput::KeyEvent:
-                            input_ev.raw_event()->fd = -1;
-                            e.add_timeout_delay(repl.key_delay);
-                            break;
-                        case InputCollector::ConsumedInput::MouseEvent:
-                            input_ev.raw_event()->fd = -1;
-                            e.add_timeout_delay(repl.mouse_delay);
-                            break;
-                    }
+                    bool has_timer = repl_session_guard.execute_timer(e, input_collector, null_keymap);
+                    input_ev.raw_event()->fd = has_timer ? -1 : input.fd();
                 };
 
                 auto read_auto_input = [&, line_number = std::size_t()](Event&) mutable {
-                    auto line = repl.repl.read_command(repl.fd);
+                    auto line = repl.read_command();
                     ++line_number;
                     LOG(LOG_INFO, "L.%zu: %.*s", line_number, int(line.size()), line.data());
                     if (repl.execute_command(input_collector, line)) {

@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <memory>
 
 #include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/caches/pointercache.hpp"
 #include "gdi/resize_api.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 
@@ -28,6 +29,11 @@ struct HeadlessGraphics final : gdi::GraphicApiForwarder<RDPDrawable>, gdi::Resi
         return sink.impl();
     }
 
+    PointerCache::SourcePointersView get_pointer_cache() const
+    {
+        return pointer_cache.source_pointers_view();
+    }
+
     void resize(uint16_t width, uint16_t height) override
     {
         sink.resize(width, height);
@@ -43,4 +49,5 @@ struct HeadlessGraphics final : gdi::GraphicApiForwarder<RDPDrawable>, gdi::Resi
 private:
     std::unique_ptr<DrawablePointer[]> pointers;
     DrawablePointer* current_pointer = nullptr;
+    PointerCache pointer_cache;
 };

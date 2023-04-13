@@ -19,6 +19,7 @@ HeadlessGraphics::HeadlessGraphics()
 HeadlessGraphics::HeadlessGraphics(uint16_t width, uint16_t height)
 : gdi::GraphicApiForwarder<RDPDrawable>(std::min(uint16_t(1), width), std::min(uint16_t(1), height))
 , pointers(new DrawablePointer[pointer_cache_entries + 1u])
+, pointer_cache(gdi::CachePointerIndex::MAX_POINTER_COUNT)
 {
     pointers[0].set_cursor(normal_pointer());
 }
@@ -61,11 +62,15 @@ void HeadlessGraphics::cached_pointer(gdi::CachePointerIndex cache_idx)
     else {
         if (cache_idx.as_predefined_pointer() == PredefinedPointer::SystemNormal) {
             current_pointer = &pointers[0];
+            return;
         }
         else if (cache_idx.as_predefined_pointer() == PredefinedPointer::Null) {
             current_pointer = nullptr;
+            return;
         }
     }
+
+    (void)pointer_cache.use(cache_idx);
 }
 
 void HeadlessGraphics::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor)
@@ -75,4 +80,6 @@ void HeadlessGraphics::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerV
     if (idx < pointer_cache_entries) {
         pointers[idx + 1u].set_cursor(cursor);
     }
+
+    this->pointer_cache.insert(cache_idx, cursor);
 }

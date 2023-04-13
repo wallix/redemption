@@ -14,6 +14,7 @@ struct HeadlessWrmCapture
     HeadlessWrmCapture(
         unique_fd&& fd,
         CRef<Drawable> drawable,
+        PointerCache::SourcePointersView pointer_cache,
         MonotonicTimePoint now,
         RealTimePoint real_now,
         BitsPerPixel bits_per_pixel,
@@ -32,8 +33,7 @@ struct HeadlessWrmCapture
     , graphic_to_file(
         now, real_now, this->out, bits_per_pixel, remote_program,
         Rect{0, 0, drawable.get().width(), drawable.get().height()},
-        this->bmp_cache, this->gly_cache,
-        this->pointer_cache.source_pointers_view(),
+        this->bmp_cache, this->gly_cache, pointer_cache,
         drawable, wrm_compression_algorithm, verbosity)
     {
     }
@@ -43,8 +43,9 @@ struct HeadlessWrmCapture
         return graphic_to_file;
     }
 
-    void update_timestamp(MonotonicTimePoint now)
+    void update_timestamp_and_mouse_position(MonotonicTimePoint now, uint16_t mouse_x, uint16_t mouse_y)
     {
+        graphic_to_file.mouse(mouse_x, mouse_y);
         graphic_to_file.timestamp(now);
         graphic_to_file.send_timestamp_chunk();
     }
@@ -80,7 +81,6 @@ private:
         OutFileTransport out;
     };
 
-    PointerCache pointer_cache{gdi::CachePointerIndex::MAX_POINTER_COUNT};
     BmpCache bmp_cache;
     GlyphCache gly_cache;
     OutTransport out;
