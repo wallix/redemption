@@ -315,7 +315,8 @@ public:
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list() const override {
+    CHANNELS::ChannelDefArrayView get_channel_list() const override
+    {
         return this->cl;
     }
 

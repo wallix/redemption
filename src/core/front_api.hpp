@@ -27,16 +27,12 @@
 #include "acl/auth_api.hpp"
 #include "gdi/screen_info.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "core/channel_list.hpp"
 #include "keyboard/kbdtypes.hpp"
 #include "keyboard/keylayout.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
-
-namespace CHANNELS {
-    class ChannelDefArray;
-    class ChannelDef;
-}
 
 class MonitorLayoutPDU;
 
@@ -45,10 +41,10 @@ class FrontAPI : public gdi::CaptureProbeApi /*, private noncopyable*/
 public:
     virtual bool can_be_start_capture(SessionLogApi & session_log) = 0;
     virtual bool must_be_stop_capture() = 0;
-    [[nodiscard]] virtual bool is_capture_in_progress() const = 0;
+    virtual bool is_capture_in_progress() const = 0;
     virtual void must_flush_capture() = 0;
 
-    [[nodiscard]] virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
+    virtual CHANNELS::ChannelDefArrayView get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                                 , std::size_t total_length, uint32_t flags) = 0;
 

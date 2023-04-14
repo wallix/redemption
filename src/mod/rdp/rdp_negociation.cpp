@@ -921,7 +921,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             }
             // ------------------------------------------------------------
 
-            const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
+            CHANNELS::ChannelDefArrayView channel_list = this->front.get_channel_list();
             size_t num_channels = channel_list.size();
             if ((num_channels > 0)
             || this->enable_auth_channel
@@ -935,8 +935,6 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 bool has_cliprdr_channel = false;
                 bool has_rdpdr_channel   = false;
                 bool has_rdpsnd_channel  = false;
-
-
 
                 for (size_t index = 0, adjusted_index = 0; index < num_channels; index++) {
                     const CHANNELS::ChannelDef & channel_item = channel_list[index];

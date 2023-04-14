@@ -25,6 +25,7 @@
 #pragma once
 
 #include "core/channel_names.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/log.hpp"
 
 #include <cassert>
@@ -71,6 +72,66 @@ namespace CHANNELS {
         {
             LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = 0x%8X, chanid = %u)",
                 index, this->name, this->flags, this->chanid);
+        }
+    };
+
+    class ChannelDefArrayView
+    {
+        array_view<ChannelDef> channels;
+
+    public:
+        ChannelDefArrayView() = default;
+
+        ChannelDefArrayView(array_view<ChannelDef> channels)
+        : channels(channels)
+        {}
+
+        const ChannelDef & operator[](size_t index) const
+        {
+            return this->channels[index];
+        }
+
+        size_t size() const
+        {
+            return this->channels.size();
+        }
+
+        const ChannelDef * begin() const
+        {
+            return this->channels.begin();
+        }
+
+        const ChannelDef * end() const
+        {
+            return this->channels.begin();
+        }
+
+        const ChannelDef * get_by_name(ChannelNameId name) const
+        {
+            for (ChannelDef const& chann : this->channels) {
+                if (name == chann.name) {
+                    return &chann;
+                }
+            }
+            return nullptr;
+        }
+
+        const ChannelDef * get_by_id(uint16_t chanid) const
+        {
+            for (ChannelDef const& chann : this->channels) {
+                if (chanid == chann.chanid) {
+                    return &chann;
+                }
+            }
+            return nullptr;
+        }
+
+        void log(char const * name) const
+        {
+            LOG(LOG_INFO, "%s channels %zu channels defined", name, this->channels.size());
+            for (uint16_t index = 0; index < this->channels.size(); ++index) {
+                this->channels[index].log(index);
+            }
         }
     };
 
@@ -124,34 +185,35 @@ namespace CHANNELS {
             this->channelCount++;
         }
 
+        ChannelDefArrayView view() const&& = delete;
+
+        ChannelDefArrayView view() const&
+        {
+            return ChannelDefArrayView(array_view{items, channelCount});
+        }
+
+        operator ChannelDefArrayView() const&& = delete;
+
+        operator ChannelDefArrayView() const&
+        {
+            return view();
+        }
+
         [[nodiscard]]
         const ChannelDef * get_by_name(ChannelNameId name) const
         {
-            for (ChannelDef const& chann : *this) {
-                if (name == chann.name) {
-                    return &chann;
-                }
-            }
-            return nullptr;
+            return view().get_by_name(name);
         }
 
         [[nodiscard]]
         const ChannelDef * get_by_id(uint16_t chanid) const
         {
-            for (ChannelDef const& chann : *this) {
-                if (chanid == chann.chanid) {
-                    return &chann;
-                }
-            }
-            return nullptr;
+            return view().get_by_id(chanid);
         }
 
         void log(char const * name) const
         {
-            LOG(LOG_INFO, "%s channels %zu channels defined", name, this->channelCount);
-            for (uint16_t index = 0; index < this->channelCount; ++index) {
-                this->items[index].log(index);
-            }
+            view().log(name);
         }
     };
 

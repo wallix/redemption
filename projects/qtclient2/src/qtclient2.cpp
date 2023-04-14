@@ -66,7 +66,7 @@ struct QtFront final : FrontAPI
         return ResizeResult::instant_done;
     }
 
-    const CHANNELS::ChannelDefArray& get_channel_list() const override
+    CHANNELS::ChannelDefArrayView get_channel_list() const override
     {
         return cl;
     }

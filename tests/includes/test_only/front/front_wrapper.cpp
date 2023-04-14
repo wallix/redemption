@@ -49,7 +49,7 @@ struct FrontWrapper::D
     TpduBuffer rbuf {};
 };
 
-const CHANNELS::ChannelDefArray & FrontWrapper::get_channel_list() const
+CHANNELS::ChannelDefArrayView FrontWrapper::get_channel_list() const
 {
     return d->front.get_channel_list();
 }

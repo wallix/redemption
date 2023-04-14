@@ -503,9 +503,9 @@ struct Repl final : FrontAPI, SessionLogApi, private RdpInput
         return ResizeResult::instant_done;
     }
 
-    const CHANNELS::ChannelDefArray& get_channel_list() const override
+    CHANNELS::ChannelDefArrayView get_channel_list() const override
     {
-        return cl;
+        return CHANNELS::ChannelDefArrayView();
     }
 
     void send_to_channel(
@@ -677,6 +677,7 @@ public:
     bool quit = false;
     bool start_connection = false;
     bool disconnection = false;
+
 private:
     bool has_delay_cmd = false;
     bool first_png = true;
@@ -719,6 +720,7 @@ public:
     std::string ip_address;
     std::string username;
     std::string password;
+private:
     std::string home_variable;
 
     HeadlessPath prefix_path;
@@ -738,7 +740,6 @@ private:
     uint16_t mouse_y = 0;
     RdpInput* input_mod;
 
-    CHANNELS::ChannelDefArray cl;
     UninitDynamicBuffer buffer;
     // capture variable members
     // -----------------

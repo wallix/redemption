@@ -513,9 +513,7 @@ private:
             return nullptr;
         }
 
-        const CHANNELS::ChannelDefArray& front_channel_list = front.get_channel_list();
-
-        const CHANNELS::ChannelDef* channel = front_channel_list.get_by_name(channel_name);
+        const CHANNELS::ChannelDef* channel = front.get_channel_list().get_by_name(channel_name);
         if (!channel)
         {
             return nullptr;

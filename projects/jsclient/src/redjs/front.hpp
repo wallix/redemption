@@ -57,7 +57,7 @@ public:
 
     ResizeResult server_resize(ScreenInfo screen_server) override;
 
-    const CHANNELS::ChannelDefArray & get_channel_list() const override
+    CHANNELS::ChannelDefArrayView get_channel_list() const override
     {
         return cl;
     }

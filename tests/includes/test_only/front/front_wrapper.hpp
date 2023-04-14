@@ -51,7 +51,7 @@ public:
     bool is_capture_in_progress() const override { return false; }
     void must_flush_capture() override {}
 
-    const CHANNELS::ChannelDefArray & get_channel_list() const override;
+    CHANNELS::ChannelDefArrayView get_channel_list() const override;
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                         , std::size_t total_length, uint32_t flags) override;

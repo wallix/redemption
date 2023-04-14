@@ -54,8 +54,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.add_channel_receiver(redjs::make_channel_receiver<&Chann::test>(channel_name, &chann));
 
-    CHANNELS::ChannelDefArray const& cl = front.get_channel_list();
-    CHANNELS::ChannelDef const* chann_ptr = cl.get_by_name(channel_name);
+    CHANNELS::ChannelDef const* chann_ptr = front.get_channel_list().get_by_name(channel_name);
 
     RED_REQUIRE(chann_ptr);
 
