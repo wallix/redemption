@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestCLI_parse_short_required_option)
         cli::ParseResult pr = mk_pr(5);
         auto res = cli::Res::Ok;
         RED_CHECK(!cli::detail::parse_short_option(argv[5]+1, pr, opt, res));
-        RED_CHECK(res == cli::Res::BadFormat);
+        RED_CHECK(res == cli::Res::BadValueFormat);
         RED_CHECK(pr.opti == 5);
     }
 }
@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE(TestCLI_parse_short_novalue_option)
         cli::ParseResult pr = mk_pr(3);
         auto res = cli::Res::Ok;
         RED_CHECK(!cli::detail::parse_short_option(argv[3]+1, pr, opt, res));
-        RED_CHECK(res == cli::Res::BadFormat);
+        RED_CHECK(res == cli::Res::NotValueWithValue);
     }
 }
 
@@ -280,13 +280,13 @@ RED_AUTO_TEST_CASE(TestCLI_parse_required_option_at_end)
     {
         char const* argv[] {"progname", "-x", nullptr};
         const int argc = int(std::size(argv))-1;
-        RED_CHECK(cli::parse(opt, argc, argv) == (cli::ParseResult{1, argc, argv, nullptr, cli::Res::BadFormat}));
+        RED_CHECK(cli::parse(opt, argc, argv) == (cli::ParseResult{1, argc, argv, nullptr, cli::Res::MissingValue}));
     }
 
     {
         char const* argv[] {"progname", "--xxx", nullptr};
         const int argc = int(std::size(argv))-1;
-        RED_CHECK(cli::parse(opt, argc, argv) == (cli::ParseResult{1, argc, argv, nullptr, cli::Res::BadFormat}));
+        RED_CHECK(cli::parse(opt, argc, argv) == (cli::ParseResult{1, argc, argv, nullptr, cli::Res::MissingValue}));
     }
 }
 
@@ -373,7 +373,7 @@ RED_AUTO_TEST_CASE(TestCLI_parse_long_novalue_option)
         cli::ParseResult pr = mk_pr(3);
         auto res = cli::Res::Ok;
         RED_CHECK(!cli::detail::parse_long_option({argv[3]+2, 3}, pr, opt, res));
-        RED_CHECK(res == cli::Res::BadOption);
+        RED_CHECK(res == cli::Res::NotValueWithValue);
     }
 }
 

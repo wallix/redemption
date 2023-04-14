@@ -42,25 +42,12 @@ static auto make_options(qtclient::Profile& config)
 qtclient::CliResult qtclient::cli_parse_profile(int argc, char const* const argv[], Profile& profile)
 {
     auto options = make_options(profile);
-
-    auto cli_result = cli::parse(options, argc, argv);
-    switch (cli_result.res) {
-        case cli::Res::Ok:
-            return CliResult::Ok;
-        case cli::Res::Exit:
-            return CliResult::Exit;
-        case cli::Res::Help:
-            cli::print_help(options, std::cout);
-            return CliResult::Exit;
-        case cli::Res::BadFormat:
-        case cli::Res::BadOption:
-        case cli::Res::NotOption:
-        case cli::Res::StopParsing:
-            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
-            if (cli_result.opti < cli_result.argc) {
-                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-            }
-            std::cerr << "\n";
+    switch (cli::check_result(options, cli::parse(options, argc, argv), std::cout, std::cerr))
+    {
+        case cli::CheckResult::Ok: return CliResult::Ok;
+        case cli::CheckResult::Exit: return CliResult::Exit;
+        case cli::CheckResult::Error:;
     }
+
     return CliResult::Error;
 }

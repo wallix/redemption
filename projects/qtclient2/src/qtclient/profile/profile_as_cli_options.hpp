@@ -43,7 +43,7 @@ struct cli::arg_parsers::arg_parse_traits<::qtclient::ProtocolMod>
             return cli::Res::Ok;
         }
 
-        return cli::Res::BadFormat;
+        return cli::Res::BadValueFormat;
     }
 };
 

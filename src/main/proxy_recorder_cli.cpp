@@ -319,25 +319,11 @@ int main(int argc, char *argv[])
         cli::option('V', "verbose").parser(cli::arg_location(verbosity)).argname("<verbosity>")
     );
 
-    auto cli_result = cli::parse(options, argc, argv);
-    switch (cli_result.res) {
-        case cli::Res::Ok:
-            break;
-        case cli::Res::Exit:
-            return 0;
-        case cli::Res::Help:
-            cli::print_help(options, std::cout);
-            return 0;
-        case cli::Res::BadFormat:
-        case cli::Res::BadOption:
-        case cli::Res::NotOption:
-        case cli::Res::StopParsing:
-            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
-            if (cli_result.opti < cli_result.argc) {
-                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-            }
-            std::cerr << "\n";
-            return 1;
+    switch (cli::check_result(options, cli::parse(options, argc, argv), std::cout, std::cerr))
+    {
+        case cli::CheckResult::Ok: break;
+        case cli::CheckResult::Exit: return 0;
+        case cli::CheckResult::Error: return 1;
     }
 
     if (!target_host) {

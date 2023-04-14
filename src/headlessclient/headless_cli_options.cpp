@@ -18,7 +18,7 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
 {
     auto positive_duration_location = [](std::chrono::milliseconds& ms){
         return cli::arg_location(ms, [](std::chrono::milliseconds& ms){
-            return ms < std::chrono::milliseconds::zero() ? cli::Res::BadFormat : cli::Res::Ok;
+            return ms < std::chrono::milliseconds::zero() ? cli::Res::BadValueFormat : cli::Res::Ok;
         });
     };
 
@@ -99,7 +99,7 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
                     keylayout = kbdid;
                     return cli::Res::Ok;
                 }
-                return cli::Res::BadOption;
+                return cli::Res::BadValueFormat;
             })),
 
 
@@ -129,7 +129,7 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
                     is_cmd_kbdmap_en = true;
                 }
                 else {
-                    return cli::Res::BadOption;
+                    return cli::Res::BadValueFormat;
                 }
                 return cli::Res::Ok;
             })),
@@ -156,30 +156,11 @@ HeadlessCliOptions::Result HeadlessCliOptions::parse(int argc, const char ** arg
         cli::helper("")
     );
 
-    auto cli_result = cli::parse(options, argc, argv);
-    switch (cli_result.res) {
-    case cli::Res::Ok:
-        return Result::Ok;
-    case cli::Res::Exit:
-        return Result::Exit;
-    case cli::Res::Help:
-        // std::cout.sync_with_stdio(false);
-        cli::print_help(options, std::cout);
-        return Result::Exit;
-    case cli::Res::BadFormat:
-    case cli::Res::BadOption:
-    case cli::Res::NotOption:
-    case cli::Res::StopParsing:
-        printf("Bad %s at parameter %d",
-            (cli_result.res == cli::Res::BadFormat) ? "format" : "option",
-            cli_result.opti);
-        if (cli_result.opti < cli_result.argc) {
-            printf(" (%s)\n", cli_result.argv[cli_result.opti]);
-        }
-        else {
-            printf("\n");
-        }
-        return Result::Error;
+    switch (cli::check_result(options, cli::parse(options, argc, argv), std::cout, std::cerr))
+    {
+        case cli::CheckResult::Ok: return Result::Ok;
+        case cli::CheckResult::Exit: return Result::Exit;
+        case cli::CheckResult::Error: return Result::Error;
     }
 
     return Result::Error;

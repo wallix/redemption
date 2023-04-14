@@ -201,12 +201,11 @@ int main(int ac, char ** av)
             case cli::Res::Help:
                 usage(std::cout);
                 return 0;
-            case cli::Res::BadFormat:
-            case cli::Res::BadOption:
-                std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
-                if (cli_result.opti < cli_result.argc) {
-                    std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-                }
+            case cli::Res::BadValueFormat:
+            case cli::Res::MissingValue:
+            case cli::Res::UnknownOption:
+            case cli::Res::NotValueWithValue:
+                cli::print_error(cli_result, std::cerr);
                 std::cerr << "\n";
                 return 1;
             case cli::Res::StopParsing:

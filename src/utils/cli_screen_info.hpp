@@ -63,7 +63,7 @@ namespace cli::arg_parsers
                 out = checked_int(n);
                 return cli::Res::Ok;
             default:
-                return cli::Res::BadFormat;
+                return cli::Res::BadValueFormat;
             }
         }
     };
@@ -79,7 +79,7 @@ namespace cli::arg_parsers
             if (rw.ec == std::errc() && *rw.ptr == 'x') {
                 auto rh = decimal_chars_to_int<uint16_t>(rw.ptr+1);
                 if (rh.ec != std::errc()) {
-                    return cli::Res::BadFormat;
+                    return cli::Res::BadValueFormat;
                 }
                 if (*rh.ptr) {
                     arg_parse_traits<BitsPerPixel>().parse(out.bpp, rh.ptr);
@@ -89,7 +89,7 @@ namespace cli::arg_parsers
                 return cli::Res::Ok;
             }
 
-            return cli::Res::BadFormat;
+            return cli::Res::BadValueFormat;
         }
     };
 } // namespace cli::arg_parsers

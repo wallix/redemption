@@ -229,7 +229,7 @@ Profiles load_profiles(char const* filename)
                 auto parser = [&](auto const&... opts) {
                     Res r = Res::Ok;
                     pr.str = value.data();
-                    return (... && (r == Res::Ok && parse_option(key, pr, opts, r))) ? Res::BadOption : r;
+                    return (... && (r == Res::Ok && parse_option(key, pr, opts, r))) ? Res::UnknownOption : r;
                 };
 
                 if (rebuildable_options.u.options(parser) != Res::Ok) {

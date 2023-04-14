@@ -336,14 +336,13 @@ int main(int argc, char** argv)
             std::cout << "Usage: rdpproxy [options]\n\n";
             cli::print_help(options, std::cout);
             return 0;
-        case cli::Res::BadFormat:
-        case cli::Res::BadOption:
+        case cli::Res::BadValueFormat:
+        case cli::Res::MissingValue:
+        case cli::Res::UnknownOption:
+        case cli::Res::NotValueWithValue:
         case cli::Res::NotOption:
         case cli::Res::StopParsing:
-            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
-            if (cli_result.opti < cli_result.argc) {
-                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-            }
+            cli::print_error(cli_result, std::cerr);
             std::cerr << "\n";
             return 17;
     }

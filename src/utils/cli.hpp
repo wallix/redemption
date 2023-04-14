@@ -39,10 +39,15 @@ enum class Res
     Ok,
     Exit,
     Help,
-    NotOption,
-    BadOption,
-    BadFormat,
+    // for "--"
     StopParsing,
+    // for "-"
+    NotOption,
+    UnknownOption,
+    MissingValue,
+    // for --flag=... / -f=...
+    NotValueWithValue,
+    BadValueFormat,
 };
 
 struct ParseResult
@@ -339,7 +344,7 @@ namespace detail
                     ++inc;
                 }
                 else {
-                    res = Res::BadFormat;
+                    res = Res::MissingValue;
                     return false;
                 }
 
@@ -366,7 +371,7 @@ namespace detail
             }
             // is no_value
             else if (s[1] == '=') {
-                res = Res::BadFormat;
+                res = Res::NotValueWithValue;
             }
             else {
                 res = opt._parser(pr);
@@ -401,7 +406,7 @@ namespace detail
                             pr.str = pr.argv[pr.opti+1];
                         }
                         else {
-                            res = Res::BadFormat;
+                            res = Res::MissingValue;
                             return false;
                         }
                     }
@@ -415,17 +420,15 @@ namespace detail
                     }
                 }
                 else if constexpr (parsers::is_no_value<decltype(opt._parser)>) {
-                    res = Res::BadOption;
+                    res = Res::NotValueWithValue;
                 }
-                else if (*s == '=') {
+                else {
+                    assert(*s == '=');
                     pr.str = s + 1;
                     res = opt._parser(pr);
                     if (res == Res::Ok) {
                         ++pr.opti;
                     }
-                }
-                else {
-                    res = Res::BadOption;
                 }
 
                 return false;
@@ -439,14 +442,14 @@ namespace detail
     Res parse_short_options(char const * s, ParseResult& pr, Opts const&... opts)
     {
         Res r = Res::Ok;
-        return (... && (r == Res::Ok && parse_short_option(s, pr, opts, r))) ? Res::BadOption : r;
+        return (... && (r == Res::Ok && parse_short_option(s, pr, opts, r))) ? Res::UnknownOption : r;
     }
 
     template<class... Opts>
     Res parse_long_options(std::string_view s, ParseResult& pr, Opts const&... opts)
     {
         Res r = Res::Ok;
-        return (... && (r == Res::Ok && parse_long_option(s, pr, opts, r))) ? Res::BadOption : r;
+        return (... && (r == Res::Ok && parse_long_option(s, pr, opts, r))) ? Res::UnknownOption : r;
     }
 
     template<class... Opts>
@@ -455,7 +458,7 @@ namespace detail
         while (pr.opti < pr.argc) {
             auto * s = pr.argv[pr.opti];
             if (s[0] == '-' && s[1]) {
-                Res res = Res::BadFormat;
+                Res res;
                 if (s[1] == '-') {
                     if (s[2]) {
                         char const* begin = s+2;
@@ -573,7 +576,7 @@ namespace detail
             result = r.val;
             return Res::Ok;
         }
-        return Res::BadFormat;
+        return Res::BadValueFormat;
     }
 } // namespace detail
 
@@ -794,7 +797,7 @@ namespace parsers
                 std::string_view str = pr.str;
                 on = str == "on"sv || str == "1"sv;
                 if (!on && pr.str != "off"sv && pr.str != "0"sv) {
-                    return Res::BadFormat;
+                    return Res::BadValueFormat;
                 }
             }
 
@@ -1050,6 +1053,59 @@ void print_help(Tuple const& t, std::ostream& out, int maxlen = 32)
         int max = std::min(maxlen, *std::max_element(p, std::end(lengths)));
         (..., print_help(out, opts, std::max(max + 4 - *p++, 2)));
     });
+}
+
+inline void print_error(ParseResult const& cli_result, std::ostream& out)
+{
+    if (Res::BadValueFormat == cli_result.res) {
+        out << "Bad value at parameter ";
+    }
+    else if (Res::MissingValue == cli_result.res) {
+        out << "Value is missing at parameter ";
+    }
+    else if (Res::UnknownOption == cli_result.res) {
+        out << "Unknown option at parameter ";
+    }
+    else {
+        out << "Bad option at parameter ";
+    }
+
+    out << cli_result.opti;
+
+    if (cli_result.opti < cli_result.argc) {
+        out << " (" << cli_result.argv[cli_result.opti] << ")";
+    }
+}
+
+enum class CheckResult
+{
+    Error,
+    Exit,
+    Ok,
+};
+
+template<class Tuple>
+CheckResult check_result(Tuple const& options, ParseResult const& cli_result, std::ostream& out, std::ostream& out_err)
+{
+    switch (cli_result.res) {
+    case cli::Res::Ok:
+        return CheckResult::Ok;
+    case cli::Res::Exit:
+        return CheckResult::Exit;
+    case cli::Res::Help:
+        // std::cout.sync_with_stdio(false);
+        cli::print_help(options, out);
+        return CheckResult::Exit;
+    case cli::Res::BadValueFormat:
+    case cli::Res::MissingValue:
+    case cli::Res::UnknownOption:
+    case cli::Res::NotValueWithValue:
+    case cli::Res::NotOption:
+    case cli::Res::StopParsing:
+        cli::print_error(cli_result, out_err);
+        out_err << "\n";
+        return CheckResult::Error;
+    }
 }
 
 } // namespace cli

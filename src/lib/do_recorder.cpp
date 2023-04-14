@@ -1428,7 +1428,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
 
                 msg_error = "Invalide png geometry";
-                return cli::Res::BadFormat;
+                return cli::Res::BadValueFormat;
             })).argname("<geometry>"),
 
         cli::option('m', "meta").help("show file metadata")
@@ -1457,7 +1457,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
                 else {
                     msg_error = "Unknown wrm compression algorithm";
-                    return cli::Res::BadFormat;
+                    return cli::Res::BadValueFormat;
                 }
 
                 return cli::Res::Ok;
@@ -1477,7 +1477,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
                 else {
                     msg_error = "Unknown wrm color depth";
-                    return cli::Res::BadFormat;
+                    return cli::Res::BadValueFormat;
                 }
 
                 return cli::Res::Ok;
@@ -1497,7 +1497,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
                 else {
                     msg_error = "Unknown wrm encryption parameter";
-                    return cli::Res::BadFormat;
+                    return cli::Res::BadValueFormat;
                 }
 
                 return cli::Res::Ok;
@@ -1540,14 +1540,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             std::cout << "Usage: redrec [options]\n\n";
             cli::print_help(options, std::cout);
             return ClRes::Exit;
-        case cli::Res::BadFormat:
-        case cli::Res::BadOption:
+        case cli::Res::BadValueFormat:
+        case cli::Res::MissingValue:
+        case cli::Res::UnknownOption:
+        case cli::Res::NotValueWithValue:
         case cli::Res::NotOption:
         case cli::Res::StopParsing:
-            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
-            if (cli_result.opti < cli_result.argc) {
-                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-            }
+            cli::print_error(cli_result, std::cerr);
             if (msg_error.data()) {
                 std::cerr << "\n" << msg_error;
                 cl_error(msg_error);
