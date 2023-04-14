@@ -226,17 +226,14 @@ public:
     }
 
 private:
-    Transport::TlsResult final_check_certificate(X509& x509)
+    bool extract_public_key(X509* px509)
     {
-        auto* px509 = &x509;
-
         LOG(LOG_INFO, "TLSContext::X509_get_pubkey()");
+
         // extract the public key
         EVP_PKEY* pkey = X509_get_pubkey(px509);
-        if (!pkey)
-        {
-            LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
-            return Transport::TlsResult::Fail;
+        if (!pkey) {
+            return false;
         }
 
         LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
@@ -248,16 +245,24 @@ private:
         // the length of the encoded data.
 
         // export the public key to DER format
-        this->public_key_length = i2d_PublicKey(pkey, nullptr);
+        this->public_key_length = checked_int(i2d_PublicKey(pkey, nullptr));
         this->public_key = std::make_unique<uint8_t[]>(this->public_key_length);
         // hexdump_c(this->public_key, this->public_key_length);
 
-        {
-            uint8_t * tmp = this->public_key.get();
-            i2d_PublicKey(pkey, &tmp);
-        }
+        uint8_t * tmp = this->public_key.get();
+        i2d_PublicKey(pkey, &tmp);
 
         EVP_PKEY_free(pkey);
+
+        return true;
+    }
+
+    Transport::TlsResult final_check_certificate(X509& x509)
+    {
+        if (!extract_public_key(&x509)) {
+            LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
+            return Transport::TlsResult::Fail;
+        }
 
         this->io = this->allocated_ssl;
 
@@ -601,33 +606,10 @@ public:
 
         this->allocated_ssl = SSL_new(ctx);
 
-        // get public_key
-        {
-            X509* px509 = SSL_get_certificate(this->allocated_ssl);
-            LOG(LOG_INFO, "TLSContext::X509_get_pubkey()");
-            // extract the public key
-            EVP_PKEY* pkey = X509_get_pubkey(px509);
-            if (!pkey)
-            {
-                tls_ctx_print_error("X509_get_pubkey()", "failed", nullptr);
-                BIO_free(sbio);
-                return false;
-            }
-
-            LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
-
-            // export the public key to DER format
-            this->public_key_length = i2d_PublicKey(pkey, nullptr);
-            this->public_key = std::make_unique<uint8_t[]>(this->public_key_length);
-            LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
-            // hexdump_c(this->public_key, this->public_key_length);
-
-            {
-                uint8_t * tmp = this->public_key.get();
-                i2d_PublicKey(pkey, &tmp);
-            }
-
-            EVP_PKEY_free(pkey);
+        if (!extract_public_key(SSL_get_certificate(this->allocated_ssl))) {
+            tls_ctx_print_error("X509_get_pubkey()", "failed", nullptr);
+            BIO_free(sbio);
+            return false;
         }
 
         SSL_set_bio(this->allocated_ssl, sbio, sbio);
@@ -675,7 +657,7 @@ public:
                     return 0;
 
                 case SSL_ERROR_WANT_READ:
-//                    LOG(LOG_INFO, "recv_tls WANT READ");
+                    // LOG(LOG_INFO, "recv_tls WANT READ");
                     return 0;
 
                 case SSL_ERROR_WANT_CONNECT:
