@@ -9,14 +9,23 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/array_view.hpp"
 
-struct HeadlessRepl
+struct HeadlessCommandReader
 {
+    HeadlessCommandReader(int fd)
+    : fd_(fd)
+    {}
+
     bool is_eof() const
     {
         return is_eof_;
     }
 
-    chars_view read_command(int fd);
+    int fd() const
+    {
+        return fd_;
+    }
+
+    chars_view read_command();
 
     struct CommandBuffer : private noncopyable
     {
@@ -34,13 +43,13 @@ struct HeadlessRepl
             chars_view cmd;
         };
 
-        CommandBuffer()
+        CommandBuffer() noexcept
         {
             start_line = inbuf;
             end_buffer = start_line;
         }
 
-        Result read_line(int fd);
+        Result read_line(int fd) noexcept;
 
     private:
         char* end_buffer;
@@ -51,5 +60,6 @@ struct HeadlessRepl
 private:
     bool is_eof_ = false;
     bool is_incomplete_ = false;
+    int fd_;
     CommandBuffer command_buffer_;
 };

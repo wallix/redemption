@@ -7,11 +7,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <cstring>
 #include <unistd.h>
 
-#include "headlessclient/headless_repl.hpp"
+#include "headlessclient/headless_command_reader.hpp"
 
 
-HeadlessRepl::CommandBuffer::Result
-HeadlessRepl::CommandBuffer::read_line(int fd)
+HeadlessCommandReader::CommandBuffer::Result HeadlessCommandReader::CommandBuffer::read_line(int fd) noexcept
 {
     char * pos = std::find(start_line, end_buffer, '\n');
 
@@ -42,9 +41,9 @@ HeadlessRepl::CommandBuffer::read_line(int fd)
     return Result{ResultType::Incomplete, {inbuf, pos}};
 }
 
-chars_view HeadlessRepl::read_command(int fd)
+chars_view HeadlessCommandReader::read_command()
 {
-    auto [rtype, cmd] = command_buffer_.read_line(fd);
+    auto [rtype, cmd] = command_buffer_.read_line(fd_);
     switch (rtype) {
         case CommandBuffer::ResultType::Extracted:
             if (is_incomplete_) {

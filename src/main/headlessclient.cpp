@@ -21,7 +21,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_wrm_capture.hpp"
 #include "headlessclient/headless_graphics.hpp"
 #include "headlessclient/headless_command.hpp"
-#include "headlessclient/headless_repl.hpp"
+#include "headlessclient/headless_command_reader.hpp"
 #include "headlessclient/headless_path.hpp"
 #include "headlessclient/input_collector.hpp"
 #include "keyboard/keymap.hpp"
@@ -162,6 +162,10 @@ struct Repl final : FrontAPI, SessionLogApi, private RdpInput
         EventRef ipng_event{};
     };
 
+    Repl(int fd)
+    : reader(fd)
+    {}
+
     void init_paths()
     {
         auto* home = getenv("HOME");
@@ -174,7 +178,7 @@ struct Repl final : FrontAPI, SessionLogApi, private RdpInput
 
     bool is_eof() const
     {
-        return repl.is_eof();
+        return reader.is_eof();
     }
 
     bool wait_connect()
@@ -183,12 +187,12 @@ struct Repl final : FrontAPI, SessionLogApi, private RdpInput
 
         fd_set rfds;
         io_fd_zero(rfds);
-        io_fd_set(fd, rfds);
+        io_fd_set(reader.fd(), rfds);
 
         do {
             show_prompt();
 
-            const int num = select(fd + 1, &rfds, nullptr, nullptr, nullptr);
+            const int num = select(reader.fd() + 1, &rfds, nullptr, nullptr, nullptr);
             // end of file
             if (num < 0) {
                 LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -199,14 +203,14 @@ struct Repl final : FrontAPI, SessionLogApi, private RdpInput
             if (!execute_command(mod)) {
                 return false;
             }
-        } while (!repl.is_eof());
+        } while (!reader.is_eof());
 
         return true;
     }
 
     chars_view read_command()
     {
-        return repl.read_command(fd);
+        return reader.read_command();
     }
 
     bool execute_command(RdpInput& mod)
@@ -690,17 +694,13 @@ public:
 private:
     bool is_regular_png_path = false;
 
-public:
-    int fd = 0;
-
-private:
     MonotonicTimePoint::duration cmd_delay;
     MonotonicTimePoint::duration key_delay;
     MonotonicTimePoint::duration mouse_delay;
     MonotonicTimePoint::duration sleep_delay;
     MonotonicTimePoint::duration ipng_delay;
     std::string delayed_cmd;
-    HeadlessRepl repl;
+    HeadlessCommandReader reader;
 
     struct Counters
     {
@@ -762,11 +762,6 @@ int main(int argc, char const** argv)
         case HeadlessCliOptions::Result::Ok: break;
     }
 
-    Repl repl;
-    auto& client_info = repl.client_info;
-    auto& ini = repl.ini;
-    auto& event_manager = repl.event_manager;
-
     char const* automation_script = options.headless_script_path;
     bool has_automation_script = automation_script;
 
@@ -776,6 +771,11 @@ int main(int argc, char const** argv)
         printf("Automation open error: %s: %s", automation_script, strerror(errno));
         return 1;
     }
+
+    Repl repl{input.fd()};
+    auto& client_info = repl.client_info;
+    auto& ini = repl.ini;
+    auto& event_manager = repl.event_manager;
 
     headless_init_client_info(client_info);
     client_info.screen_info = options.screen_info;
@@ -815,7 +815,6 @@ int main(int argc, char const** argv)
     repl.ip_address = options.ip_address;
     repl.username = options.username;
     repl.password = options.password;
-    repl.fd = input.fd();
 
     repl.start_connection = *options.ip_address;
     bool interactive = !repl.start_connection || options.interactive;

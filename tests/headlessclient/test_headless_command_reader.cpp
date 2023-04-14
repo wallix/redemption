@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
-#include "headlessclient/headless_repl.hpp"
+#include "headlessclient/headless_command_reader.hpp"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 RED_AUTO_TEST_CASE_WF(TestHeadlessCommandBuffer, wf)
 {
-    HeadlessRepl::CommandBuffer cmd_buffer;
+    HeadlessCommandReader::CommandBuffer cmd_buffer;
     auto buffer =
         "\n"
         "a\n"
@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE_WF(TestHeadlessCommandBuffer, wf)
     int fd = open(wf, O_RDONLY);
     RED_REQUIRE(fd != -1);
 
-    using Type = HeadlessRepl::CommandBuffer::ResultType;
+    using Type = HeadlessCommandReader::CommandBuffer::ResultType;
 
 #define check_line(rtype, rcmd) do {   \
     auto r = cmd_buffer.read_line(fd); \
