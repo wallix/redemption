@@ -42,7 +42,7 @@ namespace
         std::chrono::milliseconds recv_timeout);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
     ssize_t socket_send_partial(TLSContext* tls, int sck, const uint8_t * data, size_t len);
-}
+} // anonymous namespace
 
 SocketTransport::SocketTransport(
     Name name, unique_fd sck, chars_view ip_address, int port,
@@ -211,7 +211,7 @@ bool SocketTransport::connect()
 
 size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
-    LOG_IF(bool(this->verbose & Verbose::dump), LOG_INFO,
+    LOG_IF(bool(this->verbose & (Verbose::meta | Verbose::dump)), LOG_INFO,
         "Socket %s (%d) asking for %zu bytes", this->name, this->sck, len);
 
     ssize_t const res = this->tls
@@ -226,10 +226,12 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
     if (res >= 0) {
         this->total_received += res;
 
-        if (bool(this->verbose & Verbose::dump)) {
+        if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
             LOG(LOG_INFO, "Recv done on %s (%d) got %zd bytes", this->name, this->sck, res);
-            hexdump_c(buffer, res);
-            LOG(LOG_INFO, "Dump done on %s (%d) of %zd bytes", this->name, this->sck, res);
+            if (bool(this->verbose & Verbose::dump)) {
+                hexdump_c(buffer, res);
+                LOG(LOG_INFO, "Dump done on %s (%d) of %zd bytes", this->name, this->sck, res);
+            }
         }
     }
 
@@ -238,11 +240,10 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 
 SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
-    LOG_IF(bool(this->verbose & Verbose::dump), LOG_INFO,
+    LOG_IF(bool(this->verbose & (Verbose::meta | Verbose::dump)), LOG_INFO,
         "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
 
     ssize_t res = this->tls ? tls_recv_all(*this->tls, buffer, len) : socket_recv_all(this->sck, this->name, buffer, len, this->recv_timeout);
-    //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
 
     // we properly reached end of file on a block boundary
     if (res == 0){
@@ -255,10 +256,12 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
     }
 
-    if (bool(this->verbose & Verbose::dump)) {
+    if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
         LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
-        hexdump_c(buffer, len);
-        LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
+        if (bool(this->verbose & Verbose::dump)) {
+            hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
+        }
     }
 
     this->total_received += len;
@@ -285,10 +288,12 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
         return;
     }
 
-    if (bool(this->verbose & Verbose::dump)) {
+    if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
         LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
-        hexdump_c(buffer, len);
-        LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
+        if (bool(this->verbose & Verbose::dump)) {
+            hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
+        }
     }
 
     ssize_t res = socket_send_partial(this->tls.get(), this->sck, buffer, len);

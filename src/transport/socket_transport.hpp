@@ -89,6 +89,7 @@ public:
         basic    = 0x0001,
         dump     = 0x0002,
         watchdog = 0x0004,
+        meta     = 0x0008,
     };
 
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
