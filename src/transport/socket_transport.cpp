@@ -42,6 +42,17 @@ namespace
         std::chrono::milliseconds recv_timeout);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
     ssize_t socket_send_partial(TLSContext* tls, int sck, const uint8_t * data, size_t len);
+
+    void socket_transport_log(
+        char const* meta_prefix, char const* dump_message_prefix,
+        SocketTransport::Verbose verbose, bytes_view data, char const* name, int sck)
+    {
+        LOG(LOG_INFO, "%s on %s (%d) got %zu bytes", meta_prefix, name, sck, data.size());
+        if (bool(verbose & SocketTransport::Verbose::dump)) {
+            hexdump_c(data);
+            LOG(LOG_INFO, " %s on %s (%d) of %zu bytes", dump_message_prefix, name, sck, data.size());
+        }
+    }
 } // anonymous namespace
 
 SocketTransport::SocketTransport(
@@ -78,7 +89,7 @@ SocketTransport::~SocketTransport()
     this->tls.reset();
 
     LOG_IF(bool(verbose & Verbose::basic), LOG_INFO
-      , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
+      , "%s (%d): total_received=%lld, total_sent=%lld"
       , this->name, this->sck, this->total_received, this->total_sent);
 }
 
@@ -218,24 +229,20 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
       ? this->tls->privpartial_recv_tls(buffer, len)
       : socket_recv_partial(this->sck, buffer, len);
 
-    if (res < 0){
-        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket %s!", this->name);
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
+    if (REDEMPTION_UNLIKELY(res < 0)) {
+        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR,
+            "SocketTransport::do_partial_read: Failed to read from socket %s!", this->name);
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, checked_int(this->sck));
     }
 
-    if (res >= 0) {
-        this->total_received += res;
+    this->total_received += res;
+    std::size_t result_len = static_cast<std::size_t>(res);
 
-        if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
-            LOG(LOG_INFO, "Recv done on %s (%d) got %zd bytes", this->name, this->sck, res);
-            if (bool(this->verbose & Verbose::dump)) {
-                hexdump_c(buffer, res);
-                LOG(LOG_INFO, "Dump done on %s (%d) of %zd bytes", this->name, this->sck, res);
-            }
-        }
+    if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
+        socket_transport_log("Recv done", "Dump done", this->verbose, {buffer, result_len}, this->name, this->sck);
     }
 
-    return res;
+    return result_len;
 }
 
 SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t len)
@@ -243,28 +250,26 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
     LOG_IF(bool(this->verbose & (Verbose::meta | Verbose::dump)), LOG_INFO,
         "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
 
-    ssize_t res = this->tls ? tls_recv_all(*this->tls, buffer, len) : socket_recv_all(this->sck, this->name, buffer, len, this->recv_timeout);
+    ssize_t res = this->tls
+      ? tls_recv_all(*this->tls, buffer, len)
+      : socket_recv_all(this->sck, this->name, buffer, len, this->recv_timeout);
 
     // we properly reached end of file on a block boundary
-    if (res == 0){
+    if (res == 0) {
         return Read::Eof;
     }
 
-    if (res < 0 || static_cast<size_t>(res) < len) {
+    if (REDEMPTION_UNLIKELY(res < 0 || static_cast<size_t>(res) < len)) {
         LOG(LOG_ERR, "SocketTransport::do_atomic_read: %s to read from socket %s!",
             (res < 0) ? "Failed" : "Insufficient data", this->name);
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, checked_int(this->sck));
     }
 
     if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
-        LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
-        if (bool(this->verbose & Verbose::dump)) {
-            hexdump_c(buffer, len);
-            LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
-        }
+        socket_transport_log("Recv done", "Dump done", this->verbose, {buffer, len}, this->name, this->sck);
     }
 
-    this->total_received += len;
+    this->total_received += res;
     return Read::Ok;
 }
 
@@ -289,24 +294,22 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
     }
 
     if (REDEMPTION_UNLIKELY(bool(this->verbose & (Verbose::meta | Verbose::dump)))) {
-        LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
-        if (bool(this->verbose & Verbose::dump)) {
-            hexdump_c(buffer, len);
-            LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
-        }
+        socket_transport_log("Sending", "Sent dumped", this->verbose, {buffer, len}, this->name, this->sck);
     }
 
     ssize_t res = socket_send_partial(this->tls.get(), this->sck, buffer, len);
 
-    if (res < 0) {
+    if (REDEMPTION_UNLIKELY(res < 0)) {
         LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
-        throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
+        throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, checked_int(this->sck));
     }
 
-    if (res < static_cast<ssize_t>(len)) {
-        this->async_buffers.emplace_back(buffer + res, len - res);
+    std::size_t result_len = static_cast<std::size_t>(res);
+
+    if (result_len < len) {
+        this->async_buffers.emplace_back(buffer + res, len - result_len);
     }
 
     this->total_sent += res;
@@ -320,8 +323,8 @@ void SocketTransport::send_waiting_data()
     auto last = end(this->async_buffers);
 
     for (; first != last; ++first) {
-        size_t const len = first->e - first->p;
-        ssize_t res = socket_send_partial(this->tls.get(), this->sck, first->p, len);
+        ssize_t const len = first->e - first->p;
+        ssize_t res = socket_send_partial(this->tls.get(), this->sck, first->p, checked_int(len));
 
         // socket closed
         if (res == 0 && first == this->async_buffers.begin()) {
@@ -332,12 +335,12 @@ void SocketTransport::send_waiting_data()
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
                 this->name, this->sck, errno, strerror(errno));
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, checked_int(this->sck));
         }
 
         this->total_sent += res;
 
-        if (res != static_cast<ssize_t>(len)) {
+        if (res != len) {
             first->p += res;
             break;
         }
@@ -354,22 +357,22 @@ namespace
         while (remaining_len > 0) {
             ssize_t const res = tls.privpartial_recv_tls(data, remaining_len);
 
-            if (res <= 0) {
+            if (REDEMPTION_UNLIKELY(res <= 0)) {
                 if (res == 0) {
                     if (len != remaining_len) {
                         LOG(LOG_WARNING, "TLS receive for %zu bytes, ZERO RETURN got %zu",
                             len, len - remaining_len);
                     }
-                    return remaining_len - len;
+                    return checked_int(remaining_len - len);
                 }
                 return res;
             }
 
-            remaining_len -= res;
+            remaining_len -= static_cast<std::size_t>(res);
             data += res;
         }
 
-        return len;
+        return checked_int(len);
     }
 
     ssize_t socket_recv_all(
@@ -380,58 +383,69 @@ namespace
 
         while (remaining_len > 0) {
             ssize_t res = ::recv(sck, data, remaining_len, 0);
-            switch (res) {
-                case -1: /* error, maybe EAGAIN */
-                    if (try_again(errno)) {
-                        fd_set fds;
-                        struct timeval time = { 0, 100000 };
-                        io_fd_zero(fds);
-                        io_fd_set(sck, fds);
-                        ::select(sck + 1, &fds, nullptr, nullptr, &time);
-                        continue;
-                    }
-                    if (len != remaining_len) {
-                        return len - remaining_len;
-                    }
-                    // TODO replace this with actual error management, EOF is not even an option for sockets
-                    return -1;
-                case 0: /* no data received, socket closed */
+
+            if (REDEMPTION_UNLIKELY(res <= 0)) {
+                // no data received, socket closed
+                if (res == 0) {
                     // if we were not able to receive the amount of data required, this is an error
                     // not need to process the received data as it will end badly
                     return -1;
-                default: /* some data received */
-                    remaining_len -= res;
-                    data += res;
-                    if (remaining_len) {
-                        fd_set fds;
-                        struct timeval time = to_timeval(recv_timeout);
-                        io_fd_zero(fds);
-                        io_fd_set(sck, fds);
-                        int ret = ::select(sck + 1, &fds, nullptr, nullptr, &time);
-                        if ((ret < 1) ||
-                            !io_fd_isset(sck, fds)) {
-                            LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes, ret=%d", name, sck, remaining_len, ret);
-                            return -1;
-                        }
-                    }
-                    break;
+                }
+
+                // error, maybe EAGAIN
+                if (try_again(errno)) {
+                    fd_set fds;
+                    struct timeval time = { 0, 100000 };
+                    io_fd_zero(fds);
+                    io_fd_set(sck, fds);
+                    ::select(sck + 1, &fds, nullptr, nullptr, &time);
+                    continue;
+                }
+
+                if (len != remaining_len) {
+                    return checked_int(len - remaining_len);
+                }
+
+                // TODO replace this with actual error management, EOF is not even an option for sockets
+                return -1;
+            }
+
+            // some data received
+
+            remaining_len -= static_cast<std::size_t>(res);
+            data += res;
+            if (remaining_len) {
+                fd_set fds;
+                struct timeval time = to_timeval(recv_timeout);
+                io_fd_zero(fds);
+                io_fd_set(sck, fds);
+                int ret = ::select(sck + 1, &fds, nullptr, nullptr, &time);
+                if ((ret < 1) ||
+                    !io_fd_isset(sck, fds)) {
+                    LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes, ret=%d", name, sck, remaining_len, ret);
+                    return -1;
+                }
             }
         }
 
-        return len;
+        return static_cast<ssize_t>(len);
     }
 
     ssize_t socket_recv_partial(int sck, uint8_t* data, size_t const len)
     {
         ssize_t const res = ::recv(sck, data, len, 0);
-        switch (res) {
-            case -1: /* error, maybe EAGAIN */
+
+        if (REDEMPTION_UNLIKELY(res <= 0)) {
+            // error, maybe EAGAIN
+            if (res == -1) {
                 return try_again(errno) ? 0 : -1;
-            case 0: /* no data received, socket closed */
-                return -1;
-            default: /* some data received */
-                return res;
+            }
+
+            // no data received, socket closed
+            return -1;
         }
+
+        return res;
     }
 
     ssize_t socket_send_partial(TLSContext* tls, int sck, const uint8_t* data, size_t len)

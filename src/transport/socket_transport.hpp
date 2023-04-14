@@ -51,8 +51,8 @@ public:
     };
 
 private:
-    size_t total_sent = 0;
-    size_t total_received = 0;
+    long long total_sent = 0;
+    long long total_received = 0;
 
     int sck;
 
