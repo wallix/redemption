@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE(TestHeadlessPath)
     auto ctx = HeadlessPath::Context{
         .counter = 12,
         .global_counter = 3456789,
-        .real_time {std::chrono::seconds(1681225418)},
+        .real_time = RealTimePoint{std::chrono::seconds(1681225418)},
         .extension = ".png"_av,
         .filename = "${FILENAME}"_zv,
         .suffix = "-suffix"_av,
