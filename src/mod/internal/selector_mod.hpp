@@ -78,8 +78,6 @@ private:
     SelectorModVariables ini;
 
     gdi::OsdApi& osd;
-    FrontAPI& front;
-    CopyPaste& copy_paste;
 
     LanguageButton language_button;
 

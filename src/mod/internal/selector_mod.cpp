@@ -71,8 +71,6 @@ SelectorMod::SelectorMod(
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , ini(ini)
     , osd(osd)
-    , front(front)
-    , copy_paste(copy_paste)
     , language_button(
         ini.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
