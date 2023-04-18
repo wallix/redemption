@@ -21,6 +21,8 @@
    with recording traffic abilities
 */
 
+#pragma once
+
 #include "transport/socket_transport.hpp"
 
 struct TraceTransport final : public Transport
