@@ -51,7 +51,7 @@ build-analyze:
     GIT_SUBMODULE_STRATEGY: recursive
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
   script:
-    - ./tools/gitlab-analyze.sh ${FULL} | tee report.txt
+    - ./tools/gitlab-analyze.sh ${FULL} > report.txt
   artifacts:
     paths:
       - report.txt
