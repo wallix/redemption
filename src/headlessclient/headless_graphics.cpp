@@ -17,7 +17,7 @@ HeadlessGraphics::HeadlessGraphics()
 }
 
 HeadlessGraphics::HeadlessGraphics(uint16_t width, uint16_t height)
-: gdi::GraphicApiForwarder<RDPDrawable>(std::min(uint16_t(1), width), std::min(uint16_t(1), height))
+: gdi::GraphicApiForwarder<RDPDrawable>(std::max(uint16_t(1), width), std::max(uint16_t(1), height))
 , pointers(new DrawablePointer[pointer_cache_entries + 1u])
 , pointer_cache(gdi::CachePointerIndex::MAX_POINTER_COUNT)
 {

@@ -23,6 +23,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "headlessclient/headless_command.hpp"
 #include "headlessclient/headless_command_reader.hpp"
 #include "headlessclient/headless_path.hpp"
+#include "headlessclient/headless_repl.hpp"
 #include "headlessclient/input_collector.hpp"
 #include "keyboard/keymap.hpp"
 #include "keyboard/keylayouts.hpp"
@@ -109,647 +110,6 @@ static KeyLayout const& get_layout(KeyLayout::KbdId keylayout)
     return playout ? *playout : KeyLayout::null_layout();
 }
 
-namespace
-{
-
-struct Repl final : FrontAPI, SessionLogApi, private RdpInput
-{
-    struct SessionEventGuard : noncopyable
-    {
-        SessionEventGuard(Repl& repl, RdpInput& mod)
-        : repl(repl)
-        {
-            repl.make_ipng_capture_event();
-            repl.make_repetition_command_event(mod);
-            repl.session_event = this;
-        }
-
-        ~SessionEventGuard()
-        {
-            repl.session_event = nullptr;
-        }
-
-        bool execute_timer(Event& e, InputCollector& input_collector, Keymap& keymap)
-        {
-            if (repl.sleep_delay.count()) {
-                e.add_timeout_delay(repl.sleep_delay);
-                repl.sleep_delay = repl.sleep_delay.zero();
-                return true;
-            }
-
-            repl.input_mod = &input_collector;
-            switch (input_collector.send_next_input(repl, keymap))
-            {
-                case InputCollector::ConsumedInput::None:
-                    return false;
-                case InputCollector::ConsumedInput::KeyEvent:
-                    e.add_timeout_delay(repl.key_delay);
-                    return true;
-                case InputCollector::ConsumedInput::MouseEvent:
-                    e.add_timeout_delay(repl.mouse_delay);
-                    return true;
-            }
-
-            REDEMPTION_UNREACHABLE();
-        }
-
-    private:
-        friend class Repl;
-
-        Repl& repl;
-
-        EventRef repetition_cmd_event{};
-        EventRef ipng_event{};
-    };
-
-    Repl(int fd)
-    : reader(fd)
-    {}
-
-    void init_paths()
-    {
-        auto* home = getenv("HOME");
-        if (home && *home) {
-            str_assign(home_variable, home, '/');
-        }
-
-        screen_repetition_prefix_path.compile("%i%s%E"_av);
-    }
-
-    bool is_eof() const
-    {
-        return reader.is_eof();
-    }
-
-    bool wait_connect()
-    {
-        null_mod mod;
-
-        fd_set rfds;
-        io_fd_zero(rfds);
-        io_fd_set(reader.fd(), rfds);
-
-        do {
-            show_prompt();
-
-            const int num = select(reader.fd() + 1, &rfds, nullptr, nullptr, nullptr);
-            // end of file
-            if (num < 0) {
-                LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
-                quit = true;
-                return false;
-            }
-
-            if (!execute_command(mod)) {
-                return false;
-            }
-        } while (!reader.is_eof());
-
-        return true;
-    }
-
-    chars_view read_command()
-    {
-        return reader.read_command();
-    }
-
-    bool execute_command(RdpInput& mod)
-    {
-        return execute_command(mod, read_command());
-    }
-
-    bool execute_delayed_command(RdpInput& mod)
-    {
-        return execute_command(mod, delayed_cmd);
-    }
-
-    bool execute_command(RdpInput& mod, chars_view cmd_line)
-    {
-        input_mod = &mod;
-
-        switch (cmd_ctx.execute_command(cmd_line, *this)) {
-            case HeadlessCommand::Result::KbdChange:
-            case HeadlessCommand::Result::Ok:
-                break;
-
-            case HeadlessCommand::Result::Sleep:
-                sleep_delay = cmd_ctx.delay;
-                break;
-
-            case HeadlessCommand::Result::PrefixPath:
-                prefix_path.compile(cmd_ctx.output_message);
-                is_regular_png_path = false;
-                break;
-
-            case HeadlessCommand::Result::ScreenRepetitionPrefixPath:
-                screen_repetition_prefix_path.compile(cmd_ctx.output_message);
-                break;
-
-            case HeadlessCommand::Result::Username:
-                username = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::Password:
-                password = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::WrmPath:
-                wrm_path = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::RecordTransportPath:
-                record_transport_path = cmd_ctx.output_message.as<std::string_view>();
-                break;
-
-            case HeadlessCommand::Result::OutputResult:
-                fprintf(stderr, "%.*s\n", int(cmd_ctx.output_message.size()), cmd_ctx.output_message.data());
-                break;
-
-            case HeadlessCommand::Result::Fail:
-                fprintf(stderr, "%s at index %u: %.*s\n",
-                    HeadlessCommand::error_to_cstring(cmd_ctx.error_type), cmd_ctx.index_param_error,
-                    int(cmd_ctx.output_message.size()), cmd_ctx.output_message.data()
-                );
-                break;
-
-            case HeadlessCommand::Result::Connect:
-                if (!cmd_ctx.output_message.empty())
-                    ip_address = cmd_ctx.output_message.as<std::string_view>();
-                [[fallthrough]];
-            case HeadlessCommand::Result::Reconnect:
-                disconnection = true;
-                start_connection = true;
-                return false;
-
-            case HeadlessCommand::Result::Disconnect:
-                disconnection = true;
-                return false;
-
-            case HeadlessCommand::Result::ConfigStr:
-                load_headless_config_from_string(
-                    ini, client_info,
-                    static_string<1024>(truncated_bounded_array_view(cmd_ctx.output_message)).data()
-                );
-                break;
-
-            case HeadlessCommand::Result::ConfigFile:
-                load_headless_config_from_file(
-                    ini, client_info,
-                    static_string<1024>(truncated_bounded_array_view(cmd_ctx.output_message)).c_str()
-                );
-                break;
-
-            case HeadlessCommand::Result::Screen: {
-                screenshot([&]{
-                    zstring_view path = png_path;
-                    if (!is_regular_png_path) {
-                        auto ctx = HeadlessPath::Context{
-                            .counter = ++counters.png,
-                            .global_counter = ++counters.total,
-                            .real_time = event_manager.get_time_base().real_time,
-                            .extension = ".png"_av,
-                            .filename = path,
-                            .suffix = ""_av,
-                            .home = home_variable,
-                        };
-                        auto computed_path = prefix_path.compute_path(ctx);
-                        is_regular_png_path = computed_path.is_regular;
-                        path = computed_path.path;
-                        // str_assign use .clear() before assignment
-                        if (is_regular_png_path && png_path.data() != path.data()) {
-                            str_assign(png_path, path);
-                        }
-                    }
-                    return path;
-                });
-                break;
-            }
-
-            case HeadlessCommand::Result::EnableScreen:
-                enable_png = cmd_ctx.output_bool;
-                first_png = true;
-                break;
-
-            case HeadlessCommand::Result::ScreenRepetition:
-                ipng_delay = cmd_ctx.delay;
-                ipng_suffix = cmd_ctx.output_message.as<std::string_view>();
-                if (!make_ipng_capture_event()) {
-                    if (session_event) {
-                        session_event->ipng_event.garbage();
-                    }
-
-                    if (!drawable) {
-                        // just for logging message
-                        screenshot([]{ return ""_zv; });
-                    }
-                }
-                break;
-
-            case HeadlessCommand::Result::KeyDelay:
-                key_delay = cmd_ctx.delay;
-                break;
-
-            case HeadlessCommand::Result::MouseDelay:
-                mouse_delay = cmd_ctx.delay;
-                break;
-
-            case HeadlessCommand::Result::RepetitionCommand:
-                if (cmd_ctx.delay.count()) {
-                    cmd_delay = cmd_ctx.delay;
-                    delayed_cmd = cmd_ctx.output_message.as<std::string_view>();
-                    has_delay_cmd = true;
-                    make_repetition_command_event(mod);
-                }
-                else {
-                    has_delay_cmd = false;
-                    if (session_event) {
-                        session_event->repetition_cmd_event.garbage();
-                    }
-                }
-                break;
-
-            case HeadlessCommand::Result::Quit:
-                disconnection = true;
-                quit = true;
-                return false;
-        }
-
-        return true;
-    }
-
-    gdi::GraphicApi& prepare_gd()
-    {
-        first_png = true;
-
-        if (enable_wrm || enable_png) {
-            if (!drawable) {
-                drawable = std::make_unique<HeadlessGraphics>(cmd_ctx.screen_width, cmd_ctx.screen_height);
-                gds.add_graphic(*drawable);
-            }
-            return gds;
-        }
-
-        return gdi::null_gd();
-    }
-
-
-    /*
-     * SessionLogApi
-     */
-
-    void log6(LogId id, KVLogList kv_list) override
-    {
-        std::size_t len = safe_size_for_log_format_append_info(id, kv_list);
-        char* p = buffer.grow_without_copy(len).as_charp();
-        char* end = log_format_append_info(p, id, kv_list);
-        fprintf(stderr, "[headless] %.*s\n", int(end - p), p);
-    }
-
-    void report(const char * reason, const char * message) override
-    {
-        fprintf(stderr, "Report: %s: %s\n", reason, message);
-    }
-
-    void set_control_owner_ctx(chars_view name) override
-    {
-        (void)name;
-    }
-
-
-    /*
-     * FrontApi
-     */
-
-    bool can_be_start_capture(SessionLogApi& session_log) override
-    {
-        (void)session_log;
-
-        gd_is_ready = true;
-
-        if (enable_wrm && drawable) {
-            auto& time_base = event_manager.get_writable_time_base();
-            time_base = TimeBase::now();
-
-            auto ctx = HeadlessPath::Context{
-                .counter = ++counters.wrm,
-                .global_counter = ++counters.total,
-                .real_time = time_base.real_time,
-                .extension = ".wrm"_av,
-                .filename = wrm_path,
-                .suffix = ""_av,
-                .home = home_variable,
-            };
-            auto filename = prefix_path.compute_path(ctx).path;
-
-            auto fd = unique_fd(filename, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-            if (!fd) {
-                int errnum = errno;
-                LOG(LOG_ERR, "Open wrm file error (%s): %s", filename, strerror(errnum));
-                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errnum);
-            }
-
-            wrm_gd.reset(new HeadlessWrmCapture(
-                std::move(fd), drawable->drawable(), drawable->get_pointer_cache(),
-                time_base.monotonic_time, time_base.real_time,
-                client_info.screen_info.bpp, client_info.remote_program,
-                ini.get<cfg::video::wrm_compression_algorithm>(),
-                safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>())
-            ));
-
-            gds.add_graphic(wrm_gd->gd());
-        }
-
-        return bool(drawable);
-    }
-
-    void must_flush_capture() override
-    {
-        if (wrm_gd) {
-            auto& time_base = event_manager.get_time_base();
-            wrm_gd->update_timestamp_and_mouse_position(time_base.monotonic_time, mouse_x, mouse_y);
-        }
-    }
-
-    bool must_be_stop_capture() override
-    {
-        gd_is_ready = false;
-
-        gds.clear();
-
-        if (wrm_gd) {
-            must_flush_capture();
-            wrm_gd.reset();
-        }
-
-        if (drawable) {
-            drawable.reset();
-        }
-
-        return true;
-    }
-
-    bool is_capture_in_progress() const override
-    {
-        return false;
-    }
-
-    ResizeResult server_resize(ScreenInfo screen_server) override
-    {
-        if (drawable) {
-            drawable->resize(screen_server.width, screen_server.height);
-
-            if (wrm_gd) {
-                wrm_gd->resized();
-            }
-        }
-
-
-        return ResizeResult::instant_done;
-    }
-
-    CHANNELS::ChannelDefArrayView get_channel_list() const override
-    {
-        return CHANNELS::ChannelDefArrayView();
-    }
-
-    void send_to_channel(
-        CHANNELS::ChannelDef const& channel_def, bytes_view chunk_data,
-        std::size_t total_data_len, uint32_t flags) override
-    {
-        (void)channel_def;
-        (void)chunk_data;
-        (void)total_data_len;
-        (void)flags;
-    }
-
-    void update_pointer_position(uint16_t x, uint16_t y) override
-    {
-        cmd_ctx.mouse_x = x;
-        cmd_ctx.mouse_y = y;
-    }
-
-    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
-    {
-        (void)now;
-        (void)id;
-        (void)kv_list;
-    }
-
-    void possible_active_window_change() override
-    {}
-
-private:
-    template<class MakePath>
-    void screenshot(MakePath make_path)
-    {
-        char const* err = nullptr;
-        if (drawable) {
-            zstring_view path = make_path();
-
-            try {
-                err = drawable->dump_png(path, cmd_ctx.mouse_x, cmd_ctx.mouse_y);
-                if (!err) {
-                    return;
-                }
-            }
-            catch (Error const& e) {
-                LOG(LOG_ERR, "%s: %s", path, e.errmsg());
-                if (e.errnum) {
-                    err = strerror(e.errnum);
-                }
-            }
-            catch (...) {
-                err = strerror(errno);
-            }
-        }
-        else if (!gd_is_ready) {
-            err = "Graphics is not ready";
-        }
-        else if (first_png) {
-            err = "Png capture is disabled";
-            first_png = false;
-        }
-        else {
-            return;
-        }
-
-        LOG(LOG_ERR, "Screenshot error: %s: %s", png_path, err);
-    }
-
-    bool make_ipng_capture_event()
-    {
-        if (!session_event || !drawable || !ipng_delay.count()) {
-            return false;
-        }
-
-        auto event_fn = [this](Event& ev) {
-            screenshot([this]{
-                auto ctx = HeadlessPath::Context{
-                    .counter = ++counters.ipng,
-                    .global_counter = ++counters.total,
-                    .real_time = event_manager.get_time_base().real_time,
-                    .extension = ".png"_av,
-                    .filename = ""_zv,
-                    .suffix = ipng_suffix,
-                    .home = home_variable,
-                };
-                auto computed_path = screen_repetition_prefix_path.compute_path(ctx);
-                ctx.filename = computed_path.path;
-                return prefix_path.compute_path(ctx).path;
-            });
-            ev.add_timeout_delay(ipng_delay);
-        };
-
-        session_event->ipng_event.set_timeout_or_create_event(
-            ipng_delay, event_manager.get_events(), "ipng", this, event_fn
-        );
-
-        return true;
-    }
-
-    void make_repetition_command_event(RdpInput& mod)
-    {
-        if (!session_event || !has_delay_cmd) {
-            return;
-        }
-
-        has_delay_cmd = false;
-
-        auto repeat = (cmd_ctx.repeat_delay < 0)
-            ? ~uint64_t(0) // infinite loop
-            : static_cast<uint64_t>(cmd_ctx.repeat_delay);
-
-        auto event_fn = [repeat, &mod, this](Event& ev) mutable {
-            if (--repeat == 0) {
-                ev.garbage = true;
-                return;
-            }
-
-            ev.add_timeout_delay(cmd_delay);
-            execute_delayed_command(mod);
-
-            // recursive creation, remove event
-            if (has_delay_cmd) {
-                has_delay_cmd = false;
-                ev.garbage = true;
-            }
-        };
-
-        session_event->repetition_cmd_event.set_timeout_or_create_event(
-            ipng_delay, event_manager.get_events(), "repetition_cmd", this, event_fn
-        );
-    }
-
-
-    /*
-     * RdpInput
-     */
-
-    void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override
-    {
-        input_mod->rdp_input_scancode(flags, scancode, event_time, keymap);
-    }
-
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override
-    {
-        input_mod->rdp_input_unicode(flag, unicode);
-    }
-
-    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
-    {
-        LOG(LOG_DEBUG, "%d %d", x, y);
-        mouse_x = x;
-        mouse_y = y;
-        input_mod->rdp_input_mouse(device_flags, x, y);
-    }
-
-    void rdp_input_synchronize(KeyLocks locks) override
-    {
-        input_mod->rdp_input_synchronize(locks);
-    }
-
-    void rdp_input_invalidate(Rect /*r*/) override
-    {}
-
-    void rdp_gdi_up_and_running() override
-    {}
-
-    void rdp_gdi_down() override
-    {}
-
-public:
-    bool quit = false;
-    bool start_connection = false;
-    bool disconnection = false;
-
-private:
-    bool has_delay_cmd = false;
-    bool first_png = true;
-    bool gd_is_ready = false;
-
-public:
-    bool enable_wrm = false;
-    bool enable_png = false;
-    bool enable_record_transport = false;
-private:
-    bool is_regular_png_path = false;
-
-    MonotonicTimePoint::duration cmd_delay;
-    MonotonicTimePoint::duration key_delay;
-    MonotonicTimePoint::duration mouse_delay;
-    MonotonicTimePoint::duration sleep_delay;
-    MonotonicTimePoint::duration ipng_delay;
-    std::string delayed_cmd;
-    HeadlessCommandReader reader;
-
-    struct Counters
-    {
-        unsigned wrm = 0;
-        unsigned png = 0;
-        unsigned ipng = 0;
-        unsigned total = 0;
-    };
-
-    Counters counters;
-
-public:
-    std::string png_path;
-    std::string ipng_suffix;
-    std::string wrm_path;
-    std::string record_transport_path;
-    std::string ip_address;
-    std::string username;
-    std::string password;
-private:
-    std::string home_variable;
-
-    HeadlessPath prefix_path;
-    HeadlessPath screen_repetition_prefix_path;
-
-public:
-    ClientInfo client_info {};
-    Inifile ini;
-    EventManager event_manager;
-
-    HeadlessCommand cmd_ctx;
-
-private:
-    SessionEventGuard* session_event = nullptr;
-
-    uint16_t mouse_x = 0;
-    uint16_t mouse_y = 0;
-    RdpInput* input_mod;
-
-    UninitDynamicBuffer buffer;
-    // capture variable members
-    // -----------------
-    gdi::GraphicDispatcher gds;
-    std::unique_ptr<HeadlessGraphics> drawable;
-    std::unique_ptr<HeadlessWrmCapture> wrm_gd;
-};
-
-}
-
 
 int main(int argc, char const** argv)
 {
@@ -772,7 +132,9 @@ int main(int argc, char const** argv)
         return 1;
     }
 
-    Repl repl{input.fd()};
+    auto* home = getenv("HOME");
+    HeadlessRepl repl{(home && *home) ? std::string_view(home) : std::string_view()};
+
     auto& client_info = repl.client_info;
     auto& ini = repl.ini;
     auto& event_manager = repl.event_manager;
@@ -819,12 +181,13 @@ int main(int argc, char const** argv)
     repl.start_connection = *options.ip_address;
     bool interactive = !repl.start_connection || options.interactive;
 
-    repl.init_paths();
-
+    null_mod mod;
     FrontAPI& front = repl;
     SessionLogApi& session_log = repl;
 
-    while (!repl.quit && (!repl.is_eof() || (repl.start_connection && options.persist))) {
+    HeadlessCommandReader reader(input.fd());
+
+    while (!repl.quit && (!reader.is_eof() || (repl.start_connection && options.persist))) {
         update_times(event_manager);
         front.must_be_stop_capture();
 
@@ -836,7 +199,26 @@ int main(int argc, char const** argv)
                 break;
             }
 
-            repl.wait_connect();
+            fd_set rfds;
+            io_fd_zero(rfds);
+            io_fd_set(reader.fd(), rfds);
+
+            do {
+                show_prompt();
+
+                const int num = select(reader.fd() + 1, &rfds, nullptr, nullptr, nullptr);
+                // end of file
+                if (num < 0) {
+                    LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
+                    repl.quit = true;
+                    break;
+                }
+
+                if (!repl.execute_command(mod, reader.read_command())) {
+                    break;
+                }
+            } while (!reader.is_eof());
+
             continue;
         }
 
@@ -900,7 +282,7 @@ int main(int argc, char const** argv)
             repl.disconnection = false;
 
             auto is_actif = [&]{
-                return (!repl.is_eof() || options.persist)
+                return (!reader.is_eof() || options.persist)
                     && !repl.disconnection
                     && mod->get_mod_signal() == BACK_EVENT_NONE;
             };
@@ -923,15 +305,13 @@ int main(int argc, char const** argv)
             /*
              * Mod is ready
              */
-            Repl::SessionEventGuard repl_session_guard{repl, *mod};
+            HeadlessRepl::SessionEventGuard repl_session_guard{repl, *mod};
 
             InputCollector input_collector;
             Keymap null_keymap(KeyLayout::null_layout());
 
             EventRef time_ev;
             EventRef input_ev;
-
-            // TODO ipng
 
             if (has_automation_script) {
                 auto timer_input = [&](Event& e) {
@@ -940,7 +320,7 @@ int main(int argc, char const** argv)
                 };
 
                 auto read_auto_input = [&, line_number = std::size_t()](Event&) mutable {
-                    auto line = repl.read_command();
+                    auto line = reader.read_command();
                     ++line_number;
                     LOG(LOG_INFO, "L.%zu: %.*s", line_number, int(line.size()), line.data());
                     if (repl.execute_command(input_collector, line)) {
@@ -959,7 +339,7 @@ int main(int argc, char const** argv)
                 show_prompt();
 
                 auto read_input = [&](Event&) {
-                    if (repl.execute_command(*mod)) {
+                    if (repl.execute_command(*mod, reader.read_command())) {
                         show_prompt();
                     }
                 };

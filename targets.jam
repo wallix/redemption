@@ -223,6 +223,7 @@ exe headlessclient :
   <library>src/headlessclient/headless_configuration.o
   <library>src/headlessclient/headless_graphics.o
   <library>src/headlessclient/headless_path.o
+  <library>src/headlessclient/headless_repl.o
   <library>src/headlessclient/input_collector.o
   <library>src/keyboard/keylayouts.o
   <library>src/keyboard/keymap.o
@@ -2165,6 +2166,56 @@ test-run tests/headlessclient/test_headless_path :
 :
   <library>src/headlessclient/headless_path.o
   <library>src/utils/strutils.o
+;
+test-run tests/headlessclient/test_headless_repl :
+  $(REDEMPTION_TEST_PATH)/headlessclient/test_headless_repl.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/headlessclient/headless_command.o
+  <library>src/headlessclient/headless_configuration.o
+  <library>src/headlessclient/headless_graphics.o
+  <library>src/headlessclient/headless_path.o
+  <library>src/headlessclient/headless_repl.o
+  <library>src/headlessclient/input_collector.o
+  <library>src/keyboard/keymap.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/drawable.o
+  <library>src/utils/drawable_pointer.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexadecimal_string_to_buffer.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/uninit_buffer.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/mod/accumulate_input_mod.o
+  <library>tests/includes/test_only/session_log_test.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  <library>z
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <define>ZLIB_CONST
 ;
 test-run tests/headlessclient/test_input_collector :
   $(REDEMPTION_TEST_PATH)/headlessclient/test_input_collector.cpp
@@ -4789,6 +4840,7 @@ obj src/headlessclient/headless_command_reader.o : $(REDEMPTION_SRC_PATH)/headle
 obj src/headlessclient/headless_configuration.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_configuration.cpp ;
 obj src/headlessclient/headless_graphics.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_graphics.cpp ;
 obj src/headlessclient/headless_path.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_path.cpp ;
+obj src/headlessclient/headless_repl.o : $(REDEMPTION_SRC_PATH)/headlessclient/headless_repl.cpp : <define>ZLIB_CONST ;
 obj src/headlessclient/input_collector.o : $(REDEMPTION_SRC_PATH)/headlessclient/input_collector.cpp ;
 obj src/keyboard/keylayouts.o : $(REDEMPTION_SRC_PATH)/keyboard/keylayouts.cpp ;
 obj src/keyboard/keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap.cpp ;
@@ -5060,6 +5112,7 @@ alias test_headless_command_generator : tests/headlessclient/test_headless_comma
 alias test_headless_command_reader : tests/headlessclient/test_headless_command_reader ;
 alias test_headless_configuration : tests/headlessclient/test_headless_configuration ;
 alias test_headless_path : tests/headlessclient/test_headless_path ;
+alias test_headless_repl : tests/headlessclient/test_headless_repl ;
 alias test_input_collector : tests/headlessclient/test_input_collector ;
 alias test_keymap : tests/keyboard/test_keymap ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
@@ -5415,6 +5468,7 @@ alias tests/headlessclient.norec :
   tests/headlessclient/test_headless_command_reader
   tests/headlessclient/test_headless_configuration
   tests/headlessclient/test_headless_path
+  tests/headlessclient/test_headless_repl
   tests/headlessclient/test_input_collector
 ;
 alias tests/keyboard.norec :
@@ -5874,6 +5928,7 @@ explicit
   src/headlessclient/headless_configuration.o
   src/headlessclient/headless_graphics.o
   src/headlessclient/headless_path.o
+  src/headlessclient/headless_repl.o
   src/headlessclient/input_collector.o
   src/keyboard/keylayouts.o
   src/keyboard/keymap.o
@@ -6147,6 +6202,7 @@ explicit
   test_headless_command_reader
   test_headless_configuration
   test_headless_path
+  test_headless_repl
   test_input_collector
   test_keymap
   test_keymapsym

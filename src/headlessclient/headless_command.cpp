@@ -589,7 +589,6 @@ struct MouseParser
 
 struct MousePositionParser
 {
-    int32_t screen_value;
     int32_t mouse_value;
 
     // format: ('+' | '-')?\d
@@ -609,7 +608,7 @@ struct MousePositionParser
         }
 
         int32_t value = uvalue * negate;
-        value = std::min(screen_value, mouse_value * relative + value);
+        value = std::min(int32_t(0xFFFF), mouse_value * relative + value);
 
         mouse_axis.out_value = checked_int(std::max(int32_t(), value));
 
@@ -1853,8 +1852,8 @@ HeadlessCommand::Result HeadlessCommand::execute_command(chars_view cmd, RdpInpu
 
     else if (cmd_name == "mv" || cmd_name == "move") {
         auto res = cmd_parse(Result::Ok, *this, index_param, first, last, cmd.end(),
-            CmdArgParser{MousePositionParser{screen_width, mouse_x}, OutParam{mouse_x}, "x position"_av},
-            CmdArgParser{MousePositionParser{screen_height, mouse_y}, OutParam{mouse_y}, "y position"_av}
+            CmdArgParser{MousePositionParser{mouse_x}, OutParam{mouse_x}, "x position"_av},
+            CmdArgParser{MousePositionParser{mouse_y}, OutParam{mouse_y}, "y position"_av}
         );
         if (res == Result::Ok) {
             mod.rdp_input_mouse(MOUSE_FLAG_MOVE, mouse_x, mouse_y);

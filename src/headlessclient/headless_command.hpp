@@ -37,9 +37,6 @@ struct HeadlessCommand
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
 
-    uint16_t screen_width = 800;
-    uint16_t screen_height = 600;
-
     bool is_kbdmap_en = true;
     bool is_rdp = true;
     unsigned port = 3389;

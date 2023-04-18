@@ -461,6 +461,8 @@ RED_AUTO_TEST_CASE(TestExecuteCommand)
     RED_CHECK(cmd_ctx.output_message == ""_av);
     check_cmd_ex("png abcde fg.png", "", "", CmdResult::Screen);
     RED_CHECK(cmd_ctx.output_message == "abcde fg.png"_av);
+    check_cmd_ex("png ", "", "", CmdResult::Screen);
+    RED_CHECK(cmd_ctx.output_message == ""_av);
     //@}
 
 
