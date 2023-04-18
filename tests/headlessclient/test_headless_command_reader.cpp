@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "test_only/test_framework/working_directory.hpp"
 #include "headlessclient/headless_command_reader.hpp"
 
-#include <stdio.h>
+#include <cstdio>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

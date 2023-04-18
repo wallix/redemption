@@ -71,7 +71,7 @@ struct HeadlessCommandGenerator
 
     void set_key_delay(DelayConfig key_delay);
 
-    void set_mouse_delay(DelayConfig key_delay);
+    void set_mouse_delay(DelayConfig mouse_delay);
 
     void set_kbd_fr(bool enable = true);
 

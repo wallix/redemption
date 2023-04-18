@@ -98,7 +98,6 @@ void HeadlessPath::compile(chars_view path)
 
     bool add_ext = false;
 
-    previous_text_index = 0;
     for (std::size_t i = 0; i < path.size(); ++i) {
         if (path[i] == '%' && i + 1 < path.size()) {
             switch (path[i+1]) {
@@ -155,7 +154,7 @@ void HeadlessPath::compile(chars_view path)
     output_buffer_.clear();
 
     // pre-compute first text (general case)
-    if (components_.size() >= 1 && components_[0] == ComponentType::Text) {
+    if (!components_.empty() && components_[0] == ComponentType::Text) {
         output_buffer_.reserve(texts_[0].size() + 64);
         output_buffer_.assign(texts_[0].begin(), texts_[0].end());
     }

@@ -59,15 +59,13 @@ void HeadlessGraphics::cached_pointer(gdi::CachePointerIndex cache_idx)
             current_pointer = &pointers[idx + 1u];
         }
     }
-    else {
-        if (cache_idx.as_predefined_pointer() == PredefinedPointer::SystemNormal) {
-            current_pointer = &pointers[0];
-            return;
-        }
-        else if (cache_idx.as_predefined_pointer() == PredefinedPointer::Null) {
-            current_pointer = nullptr;
-            return;
-        }
+    else if (cache_idx.as_predefined_pointer() == PredefinedPointer::SystemNormal) {
+        current_pointer = &pointers[0];
+        return;
+    }
+    else if (cache_idx.as_predefined_pointer() == PredefinedPointer::Null) {
+        current_pointer = nullptr;
+        return;
     }
 
     (void)pointer_cache.use(cache_idx);

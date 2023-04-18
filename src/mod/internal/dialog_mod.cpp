@@ -35,7 +35,7 @@ void init_dialog_mod(WidgetScreen& screen, Widget& dialog_widget)
     screen.rdp_input_invalidate(screen.get_rect());
 }
 
-}
+} // anonymous namespace
 
 DialogMod::DialogMod(
     DialogModVariables vars,

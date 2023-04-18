@@ -1090,22 +1090,27 @@ CheckResult check_result(Tuple const& options, ParseResult const& cli_result, st
     switch (cli_result.res) {
     case cli::Res::Ok:
         return CheckResult::Ok;
+
     case cli::Res::Exit:
         return CheckResult::Exit;
+
     case cli::Res::Help:
         // std::cout.sync_with_stdio(false);
         cli::print_help(options, out);
         return CheckResult::Exit;
+
     case cli::Res::BadValueFormat:
     case cli::Res::MissingValue:
     case cli::Res::UnknownOption:
     case cli::Res::NotValueWithValue:
     case cli::Res::NotOption:
     case cli::Res::StopParsing:
-        cli::print_error(cli_result, out_err);
-        out_err << "\n";
-        return CheckResult::Error;
+        break;
     }
+
+    cli::print_error(cli_result, out_err);
+    out_err << "\n";
+    return CheckResult::Error;
 }
 
 } // namespace cli
