@@ -19,7 +19,7 @@ Copyright (C) Wallix 2010-2020
 
 #include "utils/strutils.hpp"
 
-#include <boost/test/framework.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <algorithm>
 #include <string>

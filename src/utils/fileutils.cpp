@@ -384,15 +384,9 @@ FileContentsError append_file_contents(const char * filename, std::string& buffe
         buffer.resize(buffer.size() + remaining);
         auto* p = buffer.data() + buffer.size() - remaining;
         ssize_t r;
-        for (;;) {
-            r = read(ufd.fd(), p, remaining);
-            if (r > 0) {
-                remaining -= r;
-                p += r;
-            }
-            else {
-                break;
-            }
+        while (0 < (r = read(ufd.fd(), p, remaining))) {
+            remaining -= r;
+            p += r;
         }
 
         if (remaining || r < 0) {

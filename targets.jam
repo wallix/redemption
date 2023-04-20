@@ -511,6 +511,83 @@ test-run tests/RAIL/test_client_execute :
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run tests/acl/module_manager/test_create_module_rdp :
+  $(REDEMPTION_TEST_PATH)/acl/module_manager/test_create_module_rdp.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/RAIL/client_execute.o
+  <library>src/acl/kv_list_from_strings.o
+  <library>src/acl/module_manager/create_module_rail.o
+  <library>src/capture/fdx_capture.o
+  <library>src/core/RDP/dwt.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keylayouts.o
+  <library>src/keyboard/keymap.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/rail_mod_base.o
+  <library>src/mod/internal/rail_module_host_mod.o
+  <library>src/mod/internal/widget/button.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/module_host.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/scroll.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdp_session_probe_wrapper.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/channels/sespro_clipboard_based_launcher.o
+  <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexadecimal_string_to_buffer.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
+  <library>src/utils/primitives/primitives.o
+  <library>src/utils/primitives/primitives_sse2.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(MUSL_GETTEXT)
+;
 test-run tests/acl/test_acl_field_mask :
   $(REDEMPTION_TEST_PATH)/acl/test_acl_field_mask.cpp
 :
@@ -1952,6 +2029,7 @@ test-run tests/core/test_pid_file :
   <library>src/core/pid_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
 ;
 test-run tests/core/test_session_events :
   $(REDEMPTION_TEST_PATH)/core/test_session_events.cpp
@@ -4968,6 +5046,7 @@ obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_T
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
 
 alias test_client_execute : tests/RAIL/test_client_execute ;
+alias test_create_module_rdp : tests/acl/module_manager/test_create_module_rdp ;
 alias test_acl_field_mask : tests/acl/test_acl_field_mask ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_kv_list_from_strings : tests/acl/test_kv_list_from_strings ;
@@ -5276,6 +5355,9 @@ alias test_zlib : tests/utils/test_zlib ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
 alias tests/RAIL.norec :
   tests/RAIL/test_client_execute
+;
+alias tests/acl/module_manager.norec :
+  tests/acl/module_manager/test_create_module_rdp
 ;
 alias tests/acl.norec :
   tests/acl/test_acl_field_mask
@@ -5691,8 +5773,12 @@ alias tests :
   tests/transport
   tests/utils
 ;
+alias tests/acl/module_manager :
+  tests/acl/module_manager.norec
+;
 alias tests/acl :
   tests/acl.norec
+  tests/acl/module_manager
 ;
 alias tests/capture/ocr/locale :
   tests/capture/ocr/locale.norec
@@ -6058,6 +6144,7 @@ explicit
 
 explicit
   test_client_execute
+  test_create_module_rdp
   test_acl_field_mask
   test_acl_serializer
   test_kv_list_from_strings
@@ -6368,6 +6455,7 @@ explicit
 
 explicit
   tests/RAIL.norec
+  tests/acl/module_manager.norec
   tests/acl.norec
   tests/capture/ocr/locale.norec
   tests/capture.norec
@@ -6417,6 +6505,7 @@ explicit
 explicit
   tests/RAIL
   tests
+  tests/acl/module_manager
   tests/acl
   tests/capture/ocr/locale
   tests/capture/ocr

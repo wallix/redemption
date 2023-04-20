@@ -23,10 +23,13 @@ obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <define>CFG_PATH='\"$(ETC_PREFIX)\"'
 ;
 
-obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
-    <conditional>@defines-for-test
+obj app_path_test.o : $(REDEMPTION_TEST_PATH)/includes/test_only/app_path_test.cpp :
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+    <include>$(REDEMPTION_TEST_PATH)/includes
+    <variant>san:<define>RED_COMPILE_TYPE=san
+    <variant>debug:<define>RED_COMPILE_TYPE=debug
+    <variant>release:<define>RED_COMPILE_TYPE=release
 ;
 
 explicit log_print.o log.o app_path_exe.o app_path_test.o ;

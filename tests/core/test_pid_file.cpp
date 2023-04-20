@@ -19,53 +19,56 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
 #include "core/pid_file.hpp"
 #include "core/app_path.hpp"
 #include "utils/strutils.hpp"
-
-#include <charconv>
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <sys/types.h>
 #include <unistd.h>
 
 
-RED_AUTO_TEST_CASE(TestPidFile)
+RED_AUTO_TEST_CASE_WD(TestPidFile, wd)
 {
     const int pid = getpid();
-    char session_id[32];
-    auto r = std::to_chars(std::begin(session_id), std::end(session_id), pid);
-    auto dirname = app_path(AppPath::LockDir);
-    chars_view s_pid{session_id, r.ptr};
+    auto const s_pid = int_to_decimal_chars(pid);
+    auto const dirname = app_path(AppPath::LockDir);
 
     recursive_create_directory(dirname.c_str(), 0755);
 
-    auto filename = str_concat(dirname, "/session_", s_pid, ".pid");
+    auto subdir = wd.create_subdirectory("LockDir");
+    auto filename = str_concat("session_"_av, s_pid, ".pid"_av);
+    auto file = subdir.add_file(filename);
+    auto path = file.string();
 
     {
-        RED_TEST(!ut::fexists(filename));
+        RED_TEST(!ut::fexists(path));
         PidFile pid_file(pid);
         RED_TEST(pid_file.is_open());
-        RED_TEST(ut::fexists(filename));
+        RED_TEST(ut::fexists(path));
     }
 
     {
-        RED_TEST(!ut::fexists(filename));
+        RED_TEST(!ut::fexists(path));
         PidFile pid_file(pid);
         RED_TEST(pid_file.is_open());
-        RED_TEST(ut::fexists(filename));
+        RED_TEST(ut::fexists(path));
 
-        auto new_filename = str_concat(dirname, "/session_abc.pid");
+        auto new_path = str_concat(dirname, "/session_abc.pid");
         pid_file.rename("abc"_av);
-        RED_TEST(!ut::fexists(filename));
-        RED_TEST(ut::fexists(new_filename));
+        RED_TEST(!ut::fexists(path));
+        RED_TEST(ut::fexists(new_path));
 
-        filename = str_concat(dirname, "/session_xyz.pid");
+        path = str_concat(dirname, "/session_xyz.pid");
         pid_file.rename("xyz"_av);
-        RED_TEST(!ut::fexists(new_filename));
-        RED_TEST(ut::fexists(filename));
+        RED_TEST(!ut::fexists(new_path));
+        RED_TEST(ut::fexists(path));
     }
 
-    RED_TEST(!ut::fexists(filename));
+    RED_TEST(!ut::fexists(path));
+
+    subdir.remove_files({std::string_view(filename)});
 }

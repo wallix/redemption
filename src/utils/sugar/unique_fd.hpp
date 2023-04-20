@@ -27,6 +27,7 @@
 
 #include <utility>
 #include <string>
+#include <cassert>
 
 
 /// \brief close a file descriptor automatically
@@ -50,7 +51,9 @@ struct unique_fd
 
     explicit unique_fd(char const * pathname, int flags = O_RDONLY) noexcept /*NOLINT*/
     : fd_(::open(pathname, flags))
-    {}
+    {
+        assert(!(flags & O_CREAT));
+    }
 
     explicit unique_fd(char const * pathname, int flags, mode_t mode) noexcept
     : fd_(::open(pathname, flags, mode))

@@ -572,6 +572,7 @@ def cpp_to_obj(f):
     return unprefixed_file(f)+'.o'
 
 app_path_cpp = all_files['src/core/app_path.cpp']
+app_path_cpp_test = all_files.get('tests/includes/test_only/app_path_test.cpp')
 #log_hpp = all_files['src/utils/log.hpp']
 
 def get_sources_deps(f, cat, exclude):
@@ -635,7 +636,7 @@ def inject_variable_prefix(path):
 def generate_obj(files):
     objs = []
     for f in files:
-        if f.type == 'C' and f != app_path_cpp:
+        if f.type == 'C' and f != app_path_cpp and f != app_path_cpp_test:
             name = cpp_to_obj(f)
             objs.append(name)
             print('obj', name, ':', inject_variable_prefix(f.path), end='')
@@ -740,7 +741,7 @@ if not filter_targets and not has_set_arg:
     unused = []
     movetotest = []
     for f in all_files.values():
-        if not f.used and f.type == 'C':
+        if not f.used and f.type == 'C' and f != app_path_cpp_test:
             unused.append(f.path)
 
         for finc in f.user_includes:
