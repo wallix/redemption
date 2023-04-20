@@ -5863,7 +5863,7 @@ public:
         drawable.cached_pointer(pointer_idx);
 
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
-            LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
+            LOG_INFO, "mod_rdp::process_cached_pointer_pdu done, pointer_idx=%u", pointer_idx);
     }
 
 
@@ -5933,12 +5933,14 @@ public:
     void process_new_pointer_pdu(BitsPerPixel data_bpp, InStream & stream) {
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "mod_rdp::process_new_pointer_pdu");
 
-        //::hexdump_d(stream.get_current(), stream.in_remain());
-
         uint16_t pointer_idx = stream.in_uint16_le();
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
             LOG_INFO, "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
             data_bpp, pointer_idx);
+
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
+            ::hexdump_d(stream.get_current(), stream.in_remain());
+        }
 
         auto cursor = pointer_loader_new(data_bpp, stream);
 
