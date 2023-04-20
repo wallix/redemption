@@ -237,8 +237,7 @@ objjs _log_print.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 objjs _log_level.bc : src/redjs/log_level.cpp ;
 alias log_print.bc : _log_print.bc _log_level.bc ;
 
-objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
-    <conditional>@defines-for-test
+objjs app_path_test.bc : src/core/app_path.cpp :
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 ;
