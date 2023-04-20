@@ -18,6 +18,8 @@ Copyright (C) Wallix 2022
 Author(s): Proxies Team
 */
 
+#pragma once
+
 #include "utils/rect.hpp"
 
 #include <array>
