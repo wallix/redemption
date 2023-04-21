@@ -272,9 +272,19 @@ struct TaggedString
 
     template<class U>
     friend constexpr detail::enable_if_same_tag_t<U, Tag, bool>
-    operator !=(TaggedString const& a, U const& b) noexcept
+    operator!=(TaggedString const& a, U const& b) noexcept
     {
         return a.sv() != b.sv();
+    }
+
+    template<class U>
+    constexpr detail::enable_if_same_tag_t<U, Tag, bool>
+    starts_with(U const& other) noexcept
+    {
+        if (other.size() <= size()) {
+            return std::string_view(data(), other.size()) == other.sv();
+        }
+        return false;
     }
 };
 

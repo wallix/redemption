@@ -87,6 +87,20 @@ RED_AUTO_TEST_CASE(TestLower)
     RED_CHECK(!ascii_contains_lower("AA'Z0"_av));
 }
 
+RED_AUTO_TEST_CASE(TestStartsWith)
+{
+    using namespace std::string_view_literals;
+
+    using StrUpper = TaggedStringView<UpperTag>;
+    RED_CHECK(!StrUpper{"ABC"}.starts_with(StrUpper{"BCD"}));
+    RED_CHECK(!StrUpper{"ABC"}.starts_with(StrUpper{"ABCD"}));
+    RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 3)}));
+    RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 2)}));
+    RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 1)}));
+    RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 0)}));
+    RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{}));
+}
+
 
 std::true_type to_tagged_string_view(TaggedStringView<UpperTag>);
 
