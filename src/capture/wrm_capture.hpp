@@ -531,9 +531,13 @@ public:
 
     void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
     {
-        (void)cache_idx;
-        (void)cursor;
         // assume that ptr_cache is updated from the outside
+        (void)cursor;
+
+        if (!cache_idx.is_predefined_pointer()) {
+            const auto idx = cache_idx.cache_index();
+            ptr_cached[idx] = false;
+        }
     }
 
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list)
