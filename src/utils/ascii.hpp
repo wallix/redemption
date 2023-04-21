@@ -381,25 +381,25 @@ chars_to_tagged_zstring_array(chars_view str, To&& to)
 template<std::size_t N>
 constexpr TaggedStringArray<UpperTag, N> ascii_to_limited_upper(chars_view str) noexcept
 {
-    return chars_to_tagged_string_array<N>(str, ascii_to_upper);
+    return chars_to_tagged_string_array<N>(str, ascii_to_upper_with_table);
 }
 
 template<std::size_t N>
 constexpr TaggedZStringArray<UpperTag, N> ascii_to_limited_zupper(chars_view str) noexcept
 {
-    return chars_to_tagged_zstring_array<N>(str, ascii_to_upper);
+    return chars_to_tagged_zstring_array<N>(str, ascii_to_upper_with_table);
 }
 
 template<std::size_t N>
 constexpr TaggedStringArray<LowerTag, N> ascii_to_limited_lower(chars_view str) noexcept
 {
-    return chars_to_tagged_string_array<N>(str, ascii_to_lower);
+    return chars_to_tagged_string_array<N>(str, ascii_to_lower_with_table);
 }
 
 template<std::size_t N>
 constexpr TaggedZStringArray<LowerTag, N> ascii_to_limited_zlower(chars_view str) noexcept
 {
-    return chars_to_tagged_zstring_array<N>(str, ascii_to_lower);
+    return chars_to_tagged_zstring_array<N>(str, ascii_to_lower_with_table);
 }
 
 REDEMPTION_DIAGNOSTIC_PUSH()
