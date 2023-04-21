@@ -297,7 +297,8 @@ public:
             AsynchronousTaskContainer& asynchronous_tasks,
             RDPVerbose verbose)
         : use_application_driver(
-            !::strncasecmp(application_params.alternate_shell.c_str(), "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
+            insensitive_starts_with(application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe"_ascii_upper)
+          )
         , proxy_managed_prefix(drive_params.proxy_managed_prefix)
         , file_system_drive_manager(asynchronous_tasks, verbose)
         {

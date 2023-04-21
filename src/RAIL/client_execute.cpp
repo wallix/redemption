@@ -43,6 +43,7 @@
 #include "core/RDP/slowpath.hpp"
 #include "utils/sugar/create_enum_map.hpp"
 #include "utils/timebase.hpp"
+#include "utils/ascii.hpp"
 
 
 constexpr uint32_t INTERNAL_MODULE_WINDOW_ID = 40000;
@@ -1835,11 +1836,7 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
                     cepdu.log(LOG_INFO);
                 }
 
-                const char* exe_of_file = cepdu.get_windows_execute_shell_params().exe_or_file.c_str();
-
-                if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)
-                 && exe_of_file != ::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":")
-                ) {
+                if (!is_dummy_remote_app(cepdu.get_windows_execute_shell_params().exe_or_file)) {
                     this->windows_execute_shell_params = cepdu.get_windows_execute_shell_params();
                 }
                 this->should_ignore_first_client_execute_ = false;

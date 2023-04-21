@@ -279,12 +279,18 @@ struct TaggedString
 
     template<class U>
     constexpr detail::enable_if_same_tag_t<U, Tag, bool>
-    starts_with(U const& other) noexcept
+    starts_with(U const& prefix) noexcept
     {
-        if (other.size() <= size()) {
-            return std::string_view(data(), other.size()) == other.sv();
-        }
-        return false;
+        return prefix.size() <= size()
+            && std::string_view(data(), prefix.size()) == prefix.sv();
+    }
+
+    template<class U>
+    constexpr detail::enable_if_same_tag_t<U, Tag, bool>
+    ends_with(U const& suffix) noexcept
+    {
+        return suffix.size() <= size()
+            && std::string_view(data() + size() - suffix.size(), suffix.size()) == suffix.sv();
     }
 };
 
@@ -426,10 +432,6 @@ namespace detail
     {
         static_assert(std::is_same_v<typename TagOfConverterTraits<To>::type, Tag>);
 
-        if (sv.size() != tagged_str.sv().size()) {
-            return false;
-        }
-
         for (std::size_t i = 0; i < tagged_str.sv().size(); ++i) {
             if (tagged_str.sv()[i] != to(sv[i])) {
                 return false;
@@ -439,14 +441,38 @@ namespace detail
     }
 } // namespace detail
 
-template<class To = ascii_to_upper_t>
-inline bool insensitive_eq(chars_view sv, TaggedStringView<UpperTag> upper, To&& to = To())
+inline bool insensitive_eq(chars_view sv, TaggedStringView<UpperTag> upper)
 {
-    return detail::tagged_string_equal_with_transform(sv, upper, to);
+    return sv.size() == upper.size()
+        && detail::tagged_string_equal_with_transform(sv, upper, ascii_to_upper_with_table_t());
 }
 
-template<class To = ascii_to_lower_t>
-inline bool insensitive_eq(chars_view sv, TaggedStringView<LowerTag> lower, To&& to = To())
+inline bool insensitive_eq(chars_view sv, TaggedStringView<LowerTag> lower)
 {
-    return detail::tagged_string_equal_with_transform(sv, lower, to);
+    return sv.size() == lower.size()
+        && detail::tagged_string_equal_with_transform(sv, lower, ascii_to_lower_with_table_t());
+}
+
+inline bool insensitive_starts_with(chars_view sv, TaggedStringView<UpperTag> prefix)
+{
+    return sv.size() >= prefix.size()
+        && detail::tagged_string_equal_with_transform(sv.first(prefix.size()), prefix, ascii_to_upper_with_table_t());
+}
+
+inline bool insensitive_starts_with(chars_view sv, TaggedStringView<LowerTag> prefix)
+{
+    return sv.size() >= prefix.size()
+        && detail::tagged_string_equal_with_transform(sv.first(prefix.size()), prefix, ascii_to_lower_with_table_t());
+}
+
+inline bool insensitive_ends_with(chars_view sv, TaggedStringView<UpperTag> prefix)
+{
+    return sv.size() >= prefix.size()
+        && detail::tagged_string_equal_with_transform(sv.last(prefix.size()), prefix, ascii_to_upper_with_table_t());
+}
+
+inline bool insensitive_ends_with(chars_view sv, TaggedStringView<LowerTag> prefix)
+{
+    return sv.size() >= prefix.size()
+        && detail::tagged_string_equal_with_transform(sv.last(prefix.size()), prefix, ascii_to_lower_with_table_t());
 }

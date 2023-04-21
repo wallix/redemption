@@ -92,6 +92,7 @@ RED_AUTO_TEST_CASE(TestStartsWith)
     using namespace std::string_view_literals;
 
     using StrUpper = TaggedStringView<UpperTag>;
+    RED_CHECK(!StrUpper{"ABC"}.starts_with(StrUpper{"B"}));
     RED_CHECK(!StrUpper{"ABC"}.starts_with(StrUpper{"BCD"}));
     RED_CHECK(!StrUpper{"ABC"}.starts_with(StrUpper{"ABCD"}));
     RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 3)}));
@@ -99,6 +100,76 @@ RED_AUTO_TEST_CASE(TestStartsWith)
     RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 1)}));
     RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{std::string_view("ABCD", 0)}));
     RED_CHECK(StrUpper{"ABC"}.starts_with(StrUpper{}));
+}
+
+RED_AUTO_TEST_CASE(TestEndsWith)
+{
+    using namespace std::string_view_literals;
+
+    using StrUpper = TaggedStringView<UpperTag>;
+    RED_CHECK(!StrUpper{"ABC"}.ends_with(StrUpper{"A"}));
+    RED_CHECK(!StrUpper{"ABC"}.ends_with(StrUpper{"ABCD"}));
+    RED_CHECK(!StrUpper{"ABC"}.ends_with(StrUpper{"xBC"}));
+    RED_CHECK(StrUpper{"ABC"}.ends_with(StrUpper{"ABC"}));
+    RED_CHECK(StrUpper{"ABC"}.ends_with(StrUpper{"BC"}));
+    RED_CHECK(StrUpper{"ABC"}.ends_with(StrUpper{"C"}));
+    RED_CHECK(StrUpper{"ABC"}.ends_with(StrUpper{""}));
+}
+
+RED_AUTO_TEST_CASE(TestInsensitiveEq)
+{
+    RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_lower));
+    RED_CHECK(insensitive_eq("abc"_av, "abc"_ascii_upper));
+    RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_lower));
+    RED_CHECK(insensitive_eq("ABC"_av, "abc"_ascii_upper));
+    RED_CHECK(!insensitive_eq("xabc"_av, "abc"_ascii_lower));
+    RED_CHECK(!insensitive_eq("xabc"_av, "abc"_ascii_upper));
+    RED_CHECK(!insensitive_eq("xABC"_av, "abc"_ascii_lower));
+    RED_CHECK(!insensitive_eq("xABC"_av, "abc"_ascii_upper));
+    RED_CHECK(!insensitive_eq("abc"_av, "abcx"_ascii_lower));
+    RED_CHECK(!insensitive_eq("abc"_av, "abcx"_ascii_upper));
+    RED_CHECK(!insensitive_eq("ABC"_av, "abcx"_ascii_lower));
+    RED_CHECK(!insensitive_eq("ABC"_av, "abcx"_ascii_upper));
+}
+
+RED_AUTO_TEST_CASE(TestInsensitiveStartsWith)
+{
+    RED_CHECK(!insensitive_starts_with("abc"_av, "abcd"_ascii_lower));
+    RED_CHECK(!insensitive_starts_with("abc"_av, "abd"_ascii_lower));
+    RED_CHECK(!insensitive_starts_with("abc"_av, "ad"_ascii_lower));
+    RED_CHECK(insensitive_starts_with("abc"_av, "abc"_ascii_lower));
+    RED_CHECK(insensitive_starts_with("abc"_av, "ab"_ascii_lower));
+    RED_CHECK(insensitive_starts_with("abc"_av, "a"_ascii_lower));
+    RED_CHECK(insensitive_starts_with("abc"_av, ""_ascii_lower));
+
+    RED_CHECK(!insensitive_starts_with("abc"_av, "abcd"_ascii_upper));
+    RED_CHECK(!insensitive_starts_with("abc"_av, "abd"_ascii_upper));
+    RED_CHECK(!insensitive_starts_with("abc"_av, "ad"_ascii_upper));
+    RED_CHECK(insensitive_starts_with("abc"_av, "abc"_ascii_upper));
+    RED_CHECK(insensitive_starts_with("abc"_av, "ab"_ascii_upper));
+    RED_CHECK(insensitive_starts_with("abc"_av, "a"_ascii_upper));
+    RED_CHECK(insensitive_starts_with("abc"_av, ""_ascii_upper));
+}
+
+RED_AUTO_TEST_CASE(TestInsensitiveEndsWith)
+{
+    RED_CHECK(!insensitive_ends_with("abc"_av, "aabc"_ascii_lower));
+    RED_CHECK(!insensitive_ends_with("abc"_av, "bbc"_ascii_lower));
+    RED_CHECK(!insensitive_ends_with("abc"_av, "a"_ascii_lower));
+    RED_CHECK(!insensitive_ends_with("abc"_av, "ab"_ascii_lower));
+    RED_CHECK(insensitive_ends_with("abc"_av, "abc"_ascii_lower));
+    RED_CHECK(insensitive_ends_with("abc"_av, "bc"_ascii_lower));
+    RED_CHECK(insensitive_ends_with("abc"_av, "c"_ascii_lower));
+    RED_CHECK(insensitive_ends_with("abc"_av, ""_ascii_lower));
+
+    RED_CHECK(!insensitive_ends_with("abc"_av, "aabc"_ascii_upper));
+    RED_CHECK(!insensitive_ends_with("abc"_av, "bbc"_ascii_upper));
+    RED_CHECK(!insensitive_ends_with("abc"_av, "a"_ascii_upper));
+    RED_CHECK(!insensitive_ends_with("abc"_av, "ab"_ascii_upper));
+    RED_CHECK(insensitive_ends_with("abc"_av, "abc"_ascii_upper));
+    RED_CHECK(insensitive_ends_with("abc"_av, "bc"_ascii_upper));
+    RED_CHECK(insensitive_ends_with("abc"_av, "c"_ascii_upper));
+    RED_CHECK(insensitive_ends_with("abc"_av, ""_ascii_upper));
 }
 
 

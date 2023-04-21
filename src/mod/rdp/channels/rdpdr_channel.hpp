@@ -35,6 +35,7 @@
 #include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"
+#include "utils/ascii.hpp"
 #include "core/file_system_virtual_channel_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 #include <deque>
@@ -1569,79 +1570,78 @@ public:
                     rdpdr::RDPDR_DTYP const device_type =
                         this->device_redirection_manager.get_device_type(
                             this->server_device_io_request.DeviceId());
-                    if ((rdpdr::RDPDR_DTYP_FILESYSTEM == device_type) &&
-                        (target_iter->for_reading != target_iter->for_writing)) {
-                        auto const DESKTOP_INI_FILENAME = "/desktop.ini"_av;
-                        if (target_iter->sequential_access_offset &&
-                            !::utils::ends_case_with(file_path, DESKTOP_INI_FILENAME)) {
-                            if (target_iter->for_reading) {
-                                if (target_iter->sequential_access_offset == target_iter->end_of_file) {
-                                    uint8_t digest[SslSha256::DIGEST_LENGTH];
-                                    target_iter->sha256.final(make_writable_sized_array_view(digest));
+                    if (rdpdr::RDPDR_DTYP_FILESYSTEM == device_type
+                     && target_iter->for_reading != target_iter->for_writing
+                     && target_iter->sequential_access_offset
+                     && !insensitive_ends_with(file_path, "/desktop.ini"_ascii_upper)
+                    ) {
+                        if (target_iter->for_reading) {
+                            if (target_iter->sequential_access_offset == target_iter->end_of_file) {
+                                uint8_t digest[SslSha256::DIGEST_LENGTH];
+                                target_iter->sha256.final(make_writable_sized_array_view(digest));
 
-                                    auto const digest_str
-                                        = static_array_to_hexadecimal_lower_zchars(digest);
-                                    auto const file_size_str
-                                        = int_to_decimal_zchars(target_iter->end_of_file);
+                                auto const digest_str
+                                    = static_array_to_hexadecimal_lower_zchars(digest);
+                                auto const file_size_str
+                                    = int_to_decimal_zchars(target_iter->end_of_file);
 
-                                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
-                                        "FileSystemVirtualChannel::process_client_drive_io_response:"
-                                        " File reading. Length=%s SHA-256=%s",
-                                        file_size_str, digest_str);
+                                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                                    "FileSystemVirtualChannel::process_client_drive_io_response:"
+                                    " File reading. Length=%s SHA-256=%s",
+                                    file_size_str, digest_str);
 
-                                    this->session_log.log6(
-                                        LogId::DRIVE_REDIRECTION_READ_EX, {
-                                        KVLog("file_name"_av, file_path),
-                                        KVLog("size"_av, file_size_str),
-                                        KVLog("sha256"_av, digest_str),
-                                    });
+                                this->session_log.log6(
+                                    LogId::DRIVE_REDIRECTION_READ_EX, {
+                                    KVLog("file_name"_av, file_path),
+                                    KVLog("size"_av, file_size_str),
+                                    KVLog("sha256"_av, digest_str),
+                                });
 
-                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                        "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
-                                        "size=%s sha256=%s",
-                                        file_path, file_size_str, digest_str);
-                                }
-                                else {
-                                    this->session_log.log6(
-                                        LogId::DRIVE_REDIRECTION_READ, {
-                                        KVLog("file_name"_av, file_path),
-                                    });
-
-                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                        "type=DRIVE_REDIRECTION_READ file_name=%s", file_path);
-                                }
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
+                                    "size=%s sha256=%s",
+                                    file_path, file_size_str, digest_str);
                             }
-                            else if (target_iter->for_writing) {
-                                if (target_iter->sequential_access_offset >= target_iter->end_of_file) {
-                                    uint8_t digest[SslSha256::DIGEST_LENGTH];
-                                    target_iter->sha256.final(make_writable_sized_array_view(digest));
+                            else {
+                                this->session_log.log6(
+                                    LogId::DRIVE_REDIRECTION_READ, {
+                                    KVLog("file_name"_av, file_path),
+                                });
 
-                                    auto const digest_str
-                                        = static_array_to_hexadecimal_lower_zchars(digest);
-                                    auto const file_size_str
-                                        = int_to_decimal_zchars(target_iter->end_of_file);
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_READ file_name=%s", file_path);
+                            }
+                        }
+                        else if (target_iter->for_writing) {
+                            if (target_iter->sequential_access_offset >= target_iter->end_of_file) {
+                                uint8_t digest[SslSha256::DIGEST_LENGTH];
+                                target_iter->sha256.final(make_writable_sized_array_view(digest));
 
-                                    this->session_log.log6(
-                                        LogId::DRIVE_REDIRECTION_WRITE_EX, {
-                                        KVLog("file_name"_av, file_path),
-                                        KVLog("size"_av, file_size_str),
-                                        KVLog("sha256"_av, digest_str),
-                                    });
+                                auto const digest_str
+                                    = static_array_to_hexadecimal_lower_zchars(digest);
+                                auto const file_size_str
+                                    = int_to_decimal_zchars(target_iter->end_of_file);
 
-                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                        "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
-                                        "size=%s sha256=%s",
-                                        file_path, file_size_str, digest_str);
-                                }
-                                else if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    this->session_log.log6(
-                                        LogId::DRIVE_REDIRECTION_WRITE, {
-                                        KVLog("file_name"_av, file_path),
-                                    });
+                                this->session_log.log6(
+                                    LogId::DRIVE_REDIRECTION_WRITE_EX, {
+                                    KVLog("file_name"_av, file_path),
+                                    KVLog("size"_av, file_size_str),
+                                    KVLog("sha256"_av, digest_str),
+                                });
 
-                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                        "type=DRIVE_REDIRECTION_WRITE file_name=%s", file_path);
-                                }
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
+                                    "size=%s sha256=%s",
+                                    file_path, file_size_str, digest_str);
+                            }
+                            else if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                this->session_log.log6(
+                                    LogId::DRIVE_REDIRECTION_WRITE, {
+                                    KVLog("file_name"_av, file_path),
+                                });
+
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_WRITE file_name=%s", file_path);
                             }
                         }
                     }

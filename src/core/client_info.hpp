@@ -242,10 +242,7 @@ struct ClientInfo
         this->remote_program          = (infoPacket.flags & INFO_RAIL);
         this->remote_program_enhanced = (infoPacket.flags & INFO_HIDEF_RAIL_SUPPORTED);
 
-        if (0 != ::strcasecmp(infoPacket.zAlternateShell().c_str(), DUMMY_REMOTEAPP)
-         && ::strcasestr(infoPacket.zAlternateShell().c_str(), DUMMY_REMOTEAPP ":")
-            != infoPacket.zAlternateShell().c_str()
-        ) {
+        if (!is_dummy_remote_app(infoPacket.zAlternateShell())) {
             utils::strlcpy(this->alternate_shell, infoPacket.zAlternateShell().to_av());
             utils::strlcpy(this->working_dir, infoPacket.zWorkingDirectory().to_av());
         }

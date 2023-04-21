@@ -30,25 +30,6 @@
 namespace utils
 {
 
-bool starts_with(chars_view str, chars_view prefix) noexcept
-{
-    return str.size() >= prefix.size()
-        && strncmp(str.data(), prefix.data(), prefix.size()) == 0;
-}
-
-bool ends_with(chars_view str, chars_view suffix) noexcept
-{
-    return str.size() >= suffix.size()
-        && strncmp(str.data() + str.size() - suffix.size(), suffix.data(), suffix.size()) == 0;
-}
-
-bool ends_case_with(chars_view str, chars_view suffix) noexcept
-{
-    return str.size() >= suffix.size()
-        && strncasecmp(str.data() + str.size() - suffix.size(), suffix.data(), suffix.size()) == 0;
-}
-
-
 std::size_t strlcpy(char* dest, chars_view src, std::size_t buflen) noexcept
 {
     auto const nsrc = src.size();

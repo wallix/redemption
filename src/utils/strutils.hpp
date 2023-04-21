@@ -45,9 +45,17 @@ void str_assign(std::string& str, Strings const&... strs);
 namespace utils
 {
 
-bool starts_with(chars_view str, chars_view prefix) noexcept;
-bool ends_with(chars_view str, chars_view suffix) noexcept;
-bool ends_case_with(chars_view str, chars_view suffix) noexcept;
+inline bool starts_with(chars_view str, chars_view prefix) noexcept
+{
+    return str.size() >= prefix.size()
+        && str.first(prefix.size()).as<std::string_view>() == prefix.as<std::string_view>();
+}
+
+inline bool ends_with(chars_view str, chars_view suffix) noexcept
+{
+    return str.size() >= suffix.size()
+        && str.last(suffix.size()).as<std::string_view>() == suffix.as<std::string_view>();
+}
 
 /**
  * Copies up to \c buflen - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.

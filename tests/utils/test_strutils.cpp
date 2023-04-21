@@ -22,6 +22,7 @@
 
 #include "utils/strutils.hpp"
 #include <string_view>
+#include <utility>
 #include <cstring>
 
 using namespace std::string_view_literals;
@@ -55,27 +56,6 @@ RED_AUTO_TEST_CASE(TestStartsWith)
     RED_CHECK(utils::starts_with("ini"sv, "ini"sv));
     RED_CHECK(utils::starts_with("init"sv, "i"sv));
     RED_CHECK(utils::starts_with(""sv, ""sv));
-}
-
-RED_AUTO_TEST_CASE(TestEndsCaseWith)
-{
-    RED_CHECK(!utils::ends_case_with(""sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("ni"sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("NI"sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("init"sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("INIT"sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("rdpproxy.conf"sv, "ini"sv));
-    RED_CHECK(!utils::ends_case_with("RDPPROXY.CONF"sv, "ini"sv));
-
-    RED_CHECK(utils::ends_case_with("ini"sv, "ini"sv));
-    RED_CHECK(utils::ends_case_with("Ini"sv, "ini"sv));
-    RED_CHECK(utils::ends_case_with(".ini"sv, "ini"sv));
-    RED_CHECK(utils::ends_case_with(".INI"sv, "ini"sv));
-    RED_CHECK(utils::ends_case_with("rdpproxy.ini"sv, "ini"sv));
-    RED_CHECK(utils::ends_case_with("RDPPROXY.INI"sv, "ini"sv));
-
-    RED_CHECK(utils::ends_case_with("RDPPROXY.INI"sv, ""sv));
-    RED_CHECK(utils::ends_case_with(""sv, ""sv));
 }
 
 RED_AUTO_TEST_CASE(Teststrlcpy)

@@ -20,4 +20,15 @@
 
 #pragma once
 
+#include "utils/ascii.hpp"
+
 #define DUMMY_REMOTEAPP "||WABRemoteApp"
+
+inline bool is_dummy_remote_app(chars_view exe_or_file)
+{
+    auto dummy_remoteapp_upper = DUMMY_REMOTEAPP ""_ascii_upper;
+
+    return exe_or_file.size() >= dummy_remoteapp_upper.size()
+        && insensitive_eq(exe_or_file.first(dummy_remoteapp_upper.size()), dummy_remoteapp_upper)
+        && (exe_or_file.size() == dummy_remoteapp_upper.size() || exe_or_file[dummy_remoteapp_upper.size()] == ':');
+}

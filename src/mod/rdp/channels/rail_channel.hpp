@@ -32,6 +32,7 @@
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/stream_throw_helpers.hpp"
 #include "utils/uninit_checked.hpp"
+#include "utils/ascii.hpp"
 
 
 class FrontAPI;
@@ -280,25 +281,25 @@ private:
             return false;
         }
 
-        const char* exe_of_file = cepdu.get_windows_execute_shell_params().exe_or_file.c_str();
+        chars_view exe_of_file = cepdu.get_windows_execute_shell_params().exe_or_file;
+        auto exe_of_file_upper = ascii_to_limited_upper<32>(exe_of_file);
+        static_assert(sizeof(DUMMY_REMOTEAPP ":") <= 16);
 
-
-        // TODO: code below means startwith, code can likely be simplified
-        if (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") == exe_of_file)
+        if (exe_of_file_upper.starts_with(DUMMY_REMOTEAPP ":"_ascii_upper))
         {
-            const char* remoteapplicationprogram =
-                (exe_of_file + sizeof(DUMMY_REMOTEAPP ":") - 1);
+            auto remoteapplicationprogram = exe_of_file.drop_front(sizeof(DUMMY_REMOTEAPP ":") - 1)
+              .as<std::string_view>();
 
             LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
                 "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
-                    "remoteapplicationprogram=\"%s\"",
-                remoteapplicationprogram);
+                    "remoteapplicationprogram=\"%.*s\"",
+                int(remoteapplicationprogram.size()), remoteapplicationprogram.data());
 
             this->vars.set_acl<cfg::context::auth_notify>("rail_exec");
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.get_windows_execute_shell_params().flags);
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_exe_or_file>(remoteapplicationprogram);
         }
-        else if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)) {
+        else if (exe_of_file_upper != DUMMY_REMOTEAPP ""_ascii_upper) {
             return true;
         }
 

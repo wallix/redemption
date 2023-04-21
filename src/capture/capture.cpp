@@ -45,6 +45,7 @@
 #include "utils/utf.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "utils/tm_to_chars.hpp"
+#include "utils/ascii.hpp"
 
 #include "transport/file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
@@ -851,10 +852,6 @@ bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
             }
 
             if (bool(meta_params.log_only_relevant_clipboard_activities)) {
-                auto is = [&](chars_view format){
-                    return format.size() > kv_list[0].value.size()
-                        && 0 == strncasecmp(format.data(), kv_list[0].value.data(), format.size());
-                };
                 switch (id)
                 {
                     case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION:
@@ -862,8 +859,9 @@ bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
                     case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX:
                     case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX:
                         if (not kv_list.empty()
-                         && (is("Preferred DropEffect("_av)
-                          || is("FileGroupDescriptorW("_av))
+                         && (insensitive_starts_with(kv_list[0].value, "Preferred DropEffect("_ascii_upper)
+                          || insensitive_starts_with(kv_list[0].value, "FileGroupDescriptorW("_ascii_upper)
+                            )
                         ) {
                             return false;
                         }
