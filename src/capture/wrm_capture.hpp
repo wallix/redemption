@@ -440,7 +440,7 @@ private:
     {
         assert(cursor.xor_bits_per_pixel() != BitsPerPixel{0});
 
-        StaticOutStream<32+RdpPointer::MAX_WIDTH*RdpPointer::MAX_HEIGHT*::nbbytes(RdpPointer::MAX_BPP)> payload;
+        StaticOutStream<32 + RdpPointer::DATA_SIZE + RdpPointer::MASK_SIZE> payload;
 
         payload.out_uint16_le(safe_int(cursor.xor_bits_per_pixel()));
 
