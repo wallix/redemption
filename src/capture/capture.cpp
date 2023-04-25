@@ -1936,6 +1936,8 @@ void Capture::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const
         for (gdi::GraphicApi & gd : this->gds) {
             gd.new_pointer(cache_idx, cursor);
         }
+
+        this->drawable_pointer->set_cursor(cursor);
     }
 }
 

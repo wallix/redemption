@@ -726,7 +726,6 @@ void FileToGraphic::interpret_order()
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->new_pointer(cache_idx, cursor);
-                gd->cached_pointer(cache_idx);
             }
 
             this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
