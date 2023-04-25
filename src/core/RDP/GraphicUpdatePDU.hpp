@@ -873,17 +873,19 @@ public:
             auto result_cache = this->pointer_cache.use(cache_idx);
             auto idx = result_cache.destination_idx;
 
-            if (!result_cache.is_cached) {
+            if (result_cache.is_cached) {
+                this->cached_pointer_update(idx);
+            }
+            else {
                 this->send_pointer(idx, this->pointer_cache.pointer(cache_idx));
             }
-
-            this->cached_pointer_update(idx);
         }
     }
 
     void new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor) override
     {
-        this->pointer_cache.insert(cache_idx, cursor);
+        auto idx = this->pointer_cache.insert_and_use(cache_idx, cursor);
+        this->send_pointer(idx, cursor);
     }
 
     void send_set_surface_command(RDPSetSurfaceCommand const & cmd) {
