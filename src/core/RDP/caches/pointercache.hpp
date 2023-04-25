@@ -78,6 +78,16 @@ public:
         cache.insert(idx);
     }
 
+    /// \return cache index destination
+    [[nodiscard]]
+    uint16_t insert_and_use(gdi::CachePointerIndex cache_idx, RdpPointerView const& cursor)
+    {
+        insert(cache_idx, cursor);
+        auto result_cache = cache.use(cache_idx.cache_index());
+        assert(!result_cache.is_cached);
+        return result_cache.destination_idx;
+    }
+
     CacheResult use(gdi::CachePointerIndex cache_idx) noexcept
     {
         auto idx = cache_idx.cache_index();
