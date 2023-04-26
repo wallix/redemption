@@ -320,7 +320,7 @@ void HeadlessCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags flags, 
         chars_view rep;
         chars_view close;
     };
-    Format format {};
+    Format format {""_av, ""_av, ""_av, ""_av, ""_av};
 
     auto set_format = [&](chars_view open, chars_view flag, chars_view rep, chars_view close){
         if (has_named_sc()) {
@@ -349,13 +349,7 @@ void HeadlessCommandGenerator::scancode(MonotonicTimePoint now, KbdFlags flags, 
             cmd_buffer.resize(previous_sc.previous_len);
 
             if (scancode == Scancode::Space && flags == KbdFlags::Release) {
-                format = Format{
-                    .open = ""_av,
-                    .sc = " "_av,
-                    .flag = ""_av,
-                    .rep = ""_av,
-                    .close = ""_av,
-                };
+                format.sc = " "_av;
             }
             else {
                 bool escaped = true;
