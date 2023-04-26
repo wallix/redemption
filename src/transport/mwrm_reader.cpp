@@ -282,6 +282,7 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
     }
 
     if (err) {
+        LOG(LOG_ERR, "mwrm read line v1: invalid hash");
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
@@ -310,6 +311,7 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
     }
 
     if (err) {
+        LOG(LOG_ERR, "mwrm read line v1: invalid format");
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
@@ -405,6 +407,7 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
     err |= (*pline != '\n' && *pline != '\0');
 
     if (err) {
+        LOG(LOG_ERR, "mwrm read line v2: invalid format");
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
