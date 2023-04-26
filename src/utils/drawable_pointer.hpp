@@ -39,18 +39,22 @@ class DrawablePointer : noncopyable
     uint16_t height = 0;
 
     // * 4 bytes per pixel (32 bits)
-    uint8_t data[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 4];
+    // static constexpr std::size_t max_data_size_without_mask = RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 4;
+    // * 3 bytes per pixel (24 bits)
+    static constexpr std::size_t max_data_size_with_mask = RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3;
     // * 3 bytes per pixel (mask is not used when 32 bits)
-    uint8_t mask[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3];
+    static constexpr std::size_t max_mask_size = RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3;
 
-    ImageView image_data_view_data;
-    ImageView image_data_view_mask;
+    uint8_t data[max_data_size_with_mask + max_mask_size];
+
+    ImageView image_data_view_data = ImageView::create_null_view();
+    ImageView image_data_view_mask = ImageView::create_null_view();
 
 public:
     // buffer on Drawable
     using BufferSaver = uint8_t[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3];
 
-    DrawablePointer();
+    DrawablePointer() = default;
 
     DrawablePointer(RdpPointerView const& cursor);
 

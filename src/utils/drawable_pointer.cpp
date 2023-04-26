@@ -29,13 +29,6 @@ Author(s): Proxies Team
 #include <cstring>
 
 
-DrawablePointer::DrawablePointer() :
-    image_data_view_data(ImageView::create_null_view()),
-    image_data_view_mask(ImageView::create_null_view())
-{
-    static_assert(std::size_t(RdpPointer::DATA_SIZE) == sizeof(this->data));
-}
-
 DrawablePointer::DrawablePointer(RdpPointerView const& cursor)
     : DrawablePointer()
 {
@@ -165,7 +158,8 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
     const unsigned int mask_line_bytes = RdpPointerView::compute_mask_line_size(
         this->width, BitsPerPixel(1));
 
-    auto* mask_ptr = this->mask;
+    uint8_t* mask = this->data + max_data_size_with_mask;
+    uint8_t* mask_ptr = mask;
     for (unsigned int y = 0; y < this->height; ++y)
     {
         for (unsigned int x = 0; x < this->width; ++x)
@@ -182,7 +176,7 @@ void DrawablePointer::set_cursor(RdpPointerView const& cursor)
     /* xorMask doesn't contain alpha channel info,
         so we will skip the 4th byte on each pixel
         on reading with BytesPerPixel{3} rather than BytesPerPixel{4} */
-    this->image_data_view_mask = ImageView(this->mask,
+    this->image_data_view_mask = ImageView(mask,
                                            this->width,
                                            this->height,
                                            this->width * 3,
