@@ -882,3 +882,20 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
         RED_CHECK_IMG(gd, IMG_TEST_PATH "add_mouse_clear.png");
     }
 }
+
+RED_AUTO_TEST_CASE(TestOverflowPointer)
+{
+    // 24 bits
+    uint8_t data[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3] {};
+    uint8_t mask[(RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT + 7) / 8] {};
+
+    DrawablePointer gd_pointer;
+
+    gd_pointer.set_cursor(RdpPointerView(
+        CursorSize{RdpPointer::MAX_WIDTH, RdpPointer::MAX_HEIGHT},
+        Hotspot{0, 0},
+        BitsPerPixel{24},
+        buffer_view(data),
+        buffer_view(mask)
+    ));
+}
