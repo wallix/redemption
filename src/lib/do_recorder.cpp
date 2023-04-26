@@ -864,7 +864,7 @@ struct CaptureTimes
     {
         // begin or end relative to end of trace
         {
-            Seconds const duration ( stop_time - start_time);
+            Seconds const duration (stop_time - start_time);
 
             if (begin_cap.count() < 0) {
                 begin_cap = std::max(begin_cap + duration, Seconds(0));
@@ -973,7 +973,7 @@ static inline int replay(
     Dimension max_screen_dim,
     Random & rnd)
 {
-    using Seconds = std::chrono::seconds;
+    using Seconds = CaptureTimes::Seconds;
 
     int file_count = 0;
 
@@ -983,7 +983,7 @@ static inline int replay(
         auto first = wrm_lines.begin();
         auto last = wrm_lines.end();
 
-        while (first < last && capture_times.begin_cap >= Seconds(first->stop_time)) {
+        while (first < last && capture_times.begin_cap >= first->stop_time) {
             ++first;
         }
 
@@ -994,8 +994,8 @@ static inline int replay(
         file_count = checked_int{first - wrm_lines.begin() + 1};
     }
 
-    std::chrono::seconds begin_record = Seconds(wrm_lines.front().start_time);
-    std::chrono::seconds end_record   = Seconds(wrm_lines.back().stop_time);
+    std::chrono::seconds begin_record = wrm_lines.front().start_time;
+    std::chrono::seconds end_record   = wrm_lines.back().stop_time;
     unsigned count_wrm_file = wrm_lines.size();
     // TODO wrm_lines.size() ?
     uint64_t total_wrm_file_len = 0;
@@ -1881,8 +1881,7 @@ int do_main(int argc, char const ** argv,
         // consumes the first wrm
         if (capture_times.begin_cap.count()) {
             auto it = std::find_if(wrms.begin(), wrms.end(), [&](MetaLine const& meta_line){
-                using Seconds = std::chrono::seconds;
-                return Seconds(meta_line.stop_time) > capture_times.begin_cap;
+                return meta_line.stop_time > capture_times.begin_cap;
             });
             if (it != wrms.end()) {
                 wrms.erase(wrms.begin(), it);
@@ -1936,9 +1935,7 @@ int do_main(int argc, char const ** argv,
             raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
         }
 
-        capture_times.adjust_time(
-            std::chrono::seconds(wrms.back().start_time),
-            std::chrono::seconds(wrms.front().stop_time));
+        capture_times.adjust_time(wrms.back().start_time, wrms.front().stop_time);
 
         InMultiCryptoTransport in_wrm_trans(
             std::move(wrm_filenames),

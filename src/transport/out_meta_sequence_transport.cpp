@@ -128,8 +128,7 @@ OutMetaSequenceTransport::~OutMetaSequenceTransport()
 void OutMetaSequenceTransport::timestamp(RealTimePoint tp)
 {
     auto dur = tp.time_since_epoch();
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(dur);
-    this->stop_sec_ = seconds.count();
+    this->stop_sec_ = std::chrono::duration_cast<std::chrono::seconds>(dur);
 }
 
 bool OutMetaSequenceTransport::next()
@@ -189,11 +188,12 @@ void OutMetaSequenceTransport::next_meta_file()
     }
 
     MwrmWriterBuf mwrm_file_buf;
+    auto next_time = this->stop_sec_ + std::chrono::seconds(1);
     mwrm_file_buf.write_line(
         filename, stat,
-        this->start_sec_, this->stop_sec_ + 1,
+        this->start_sec_, next_time,
         this->cctx.get_with_checksum(), qhash, fhash);
     this->meta_buf_encrypt_transport.send(mwrm_file_buf.buffer());
 
-    this->start_sec_ = this->stop_sec_+1;
+    this->start_sec_ = next_time;
 }

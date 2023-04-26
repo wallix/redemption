@@ -44,7 +44,10 @@ RED_AUTO_TEST_CASE(TestMwrmWriterBuf)
         FilenameWriter(char const* filename)
         {
             struct stat st{};
-            this->mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
+            this->mwrm_buf.write_line(
+                filename, st, std::chrono::seconds(), std::chrono::seconds(),
+                false, dummy_hash, dummy_hash
+            );
         }
     };
 
@@ -130,8 +133,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
         "wab-5-0-0.yourdomain,7681-000000.wrm"sv);
     RED_CHECK_EQUAL(meta_line.size, 0);
-    RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+    RED_CHECK_EQUAL(meta_line.start_time.count(), 1455815820);
+    RED_CHECK_EQUAL(meta_line.stop_time.count(), 1455816422);
     RED_CHECK(not meta_line.with_hash);
 }
 
@@ -153,8 +156,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
         "wab-5-0-0.yourdomain,7681-000000.wrm"sv);
     RED_CHECK(meta_line.size == 181826);
-    RED_CHECK(meta_line.start_time == 1455815820);
-    RED_CHECK(meta_line.stop_time == 1455816422);
+    RED_CHECK(meta_line.start_time.count() == 1455815820);
+    RED_CHECK(meta_line.stop_time.count() == 1455816422);
     RED_CHECK(not meta_line.with_hash);
 }
 
@@ -173,8 +176,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Ok);
     RED_CHECK(meta_line.filename == "./tests/fixtures/sample0.wrm"sv);
     RED_CHECK(meta_line.size == 1);
-    RED_CHECK(meta_line.start_time == 1352304810);
-    RED_CHECK(meta_line.stop_time == 1352304870);
+    RED_CHECK(meta_line.start_time.count() == 1352304810);
+    RED_CHECK(meta_line.stop_time.count() == 1352304870);
     RED_CHECK(meta_line.with_hash);
     RED_CHECK(
         make_array_view(meta_line.hash1) ==
@@ -235,8 +238,8 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
         "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
         "-192304,wab-4-2-4.yourdomain,5560-000000.wrm"sv);
     RED_CHECK(meta_line.size == 0);
-    RED_CHECK(meta_line.start_time == 1477416187);
-    RED_CHECK(meta_line.stop_time == 1477416298);
+    RED_CHECK(meta_line.start_time.count() == 1477416187);
+    RED_CHECK(meta_line.stop_time.count() == 1477416298);
     RED_CHECK(meta_line.with_hash);
     RED_CHECK(make_array_view(meta_line.hash1) ==
       "\x32\xd7\xbb\xef\x41\xa7\xc1\x53\x47\xc9\xe8\xab\xc1\xec\xe0\x3b"
@@ -304,8 +307,8 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
         "/toto@10.10.43.13,Administrateur@QA@cible,"
         "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm"sv);
     RED_CHECK(meta_line.size == 163032);
-    RED_CHECK(meta_line.start_time == 1455816611);
-    RED_CHECK(meta_line.stop_time == 1455816633);
+    RED_CHECK(meta_line.start_time.count() == 1455816611);
+    RED_CHECK(meta_line.stop_time.count() == 1455816633);
     RED_CHECK(meta_line.with_hash);
     RED_CHECK(make_array_view(meta_line.hash1) ==
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"

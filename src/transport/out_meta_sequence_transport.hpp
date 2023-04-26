@@ -91,8 +91,8 @@ private:
 
     MetaFilename mf_;
     MetaFilename hf_;
-    time_t start_sec_;
-    time_t stop_sec_;
+    std::chrono::seconds start_sec_;
+    std::chrono::seconds stop_sec_;
 
     CryptoContext & cctx;
 

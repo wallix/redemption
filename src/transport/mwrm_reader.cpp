@@ -297,14 +297,14 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
     chars_to_int_result<long long> r;
 
     r = decimal_chars_to_int<long long>(e1.base());
-    meta_line.stop_time = r.val;
+    meta_line.stop_time = std::chrono::seconds(r.val);
     err |= (*r.ptr != (has_hash ? ' ' : '\n'));
     if (e1 != last) {
         ++e1;
     }
 
     r = decimal_chars_to_int<long long>(e2.base());
-    meta_line.start_time = r.val;
+    meta_line.start_time = std::chrono::seconds(r.val);
     err |= (*r.ptr != ' ');
     if (e2 != last) {
         *e2 = 0;
@@ -384,12 +384,12 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
     meta_line.ctime = consume_ll();
 
     if (file_type == FileType::Mwrm) {
-        meta_line.start_time = consume_ll();
-        meta_line.stop_time  = consume_ll();
+        meta_line.start_time = std::chrono::seconds(consume_ll());
+        meta_line.stop_time  = std::chrono::seconds(consume_ll());
     }
     else {
-        meta_line.start_time = 0;
-        meta_line.stop_time  = 0;
+        meta_line.start_time = std::chrono::seconds();
+        meta_line.stop_time  = std::chrono::seconds();
     }
 
     meta_line.with_hash = (file_type == FileType::Mwrm)
@@ -434,7 +434,7 @@ struct PrivateMwrmWriterBuf
     template<class Stat>
     void mwrm_write_line(
         char const * filename, Stat const & stat,
-        bool with_time, time_t start_time, time_t stop_time,
+        bool with_time, std::chrono::seconds start_time, std::chrono::seconds stop_time,
         bool with_hash, MwrmWriterBuf::HashArray const & qhash, MwrmWriterBuf::HashArray const & fhash
     ) noexcept
     {
@@ -508,14 +508,14 @@ private:
         );
     }
 
-    void write_start_and_stop(time_t start, time_t stop) noexcept
+    void write_start_and_stop(std::chrono::seconds start, std::chrono::seconds stop) noexcept
     {
         using ll = long long;
         writer.len += std::sprintf(
             writer.mes + writer.len,
             " %lld %lld",
-            ll(start),
-            ll(stop)
+            ll(start.count()),
+            ll(stop.count())
         );
     }
 
@@ -553,7 +553,8 @@ void MwrmWriterBuf::write_line(MetaLine const & meta_line) noexcept
 }
 
 void MwrmWriterBuf::write_line(
-    char const * filename, struct stat const & stat, time_t start_time, time_t stop_time,
+    char const * filename, struct stat const & stat,
+    std::chrono::seconds start_time, std::chrono::seconds stop_time,
     bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept
 {
     this->reset_buf();
@@ -568,7 +569,7 @@ void MwrmWriterBuf::write_hash_file(MetaLine const & meta_line) noexcept
     PrivateMwrmWriterBuf{*this}.write_hash_header();
     PrivateMwrmWriterBuf{*this}.mwrm_write_line(
         meta_line.filename, meta_line,
-        false, 0, 0,
+        false, std::chrono::seconds(), std::chrono::seconds(),
         meta_line.with_hash, meta_line.hash1, meta_line.hash2);
 }
 
@@ -579,7 +580,7 @@ void MwrmWriterBuf::write_hash_file(
     PrivateMwrmWriterBuf{*this}.write_hash_header();
     PrivateMwrmWriterBuf{*this}.mwrm_write_line(
         filename, stat,
-        false, 0, 0,
+        false, std::chrono::seconds(), std::chrono::seconds(),
         with_hash, qhash, fhash);
 }
 

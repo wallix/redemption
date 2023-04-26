@@ -25,6 +25,7 @@
 #include "utils/sugar/std_stream_proto.hpp"
 
 #include <limits>
+#include <chrono>
 
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h> // PATH_MAX
@@ -83,9 +84,8 @@ struct MetaLine
     time_t  mtime {};
     time_t  ctime {};
     //@}
-    // TODO std::chrono::seconds
-    time_t  start_time {};
-    time_t  stop_time {};
+    std::chrono::seconds start_time {};
+    std::chrono::seconds stop_time {};
     // always true with header.version = 2 and header.has_checksum = true
     bool with_hash {};
     uint8_t hash1[MD_HASH::DIGEST_LENGTH] {};
@@ -175,7 +175,8 @@ struct MwrmWriterBuf
     void write_line(MetaLine const & meta_line) noexcept;
     // reset buf then write{filename, stat, start_and_stop, hashs};
     void write_line(
-        char const * filename, struct stat const & stat, time_t start_time, time_t stop_time,
+        char const * filename, struct stat const & stat,
+        std::chrono::seconds start_time, std::chrono::seconds stop_time,
         bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
 
     [[nodiscard]] chars_view buffer() const noexcept;

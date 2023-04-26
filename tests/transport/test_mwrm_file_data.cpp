@@ -47,16 +47,16 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     RED_TEST(mwrm_data.header.has_checksum == false);
     RED_REQUIRE(mwrm_data.wrms.size() == 3);
     RED_CHECK("./tests/fixtures/sample0.wrm"sv == mwrm_data.wrms[0].filename);
-    RED_CHECK(1352304810 == mwrm_data.wrms[0].start_time);
-    RED_CHECK(1352304870 == mwrm_data.wrms[0].stop_time);
+    RED_CHECK(1352304810 == mwrm_data.wrms[0].start_time.count());
+    RED_CHECK(1352304870 == mwrm_data.wrms[0].stop_time.count());
     RED_CHECK(0 == mwrm_data.wrms[0].size);
     RED_CHECK("./tests/fixtures/sample1.wrm"sv == mwrm_data.wrms[1].filename);
-    RED_CHECK(1352304870 == mwrm_data.wrms[1].start_time);
-    RED_CHECK(1352304930 == mwrm_data.wrms[1].stop_time);
+    RED_CHECK(1352304870 == mwrm_data.wrms[1].start_time.count());
+    RED_CHECK(1352304930 == mwrm_data.wrms[1].stop_time.count());
     RED_CHECK(0 == mwrm_data.wrms[1].size);
     RED_CHECK("./tests/fixtures/sample2.wrm"sv == mwrm_data.wrms[2].filename);
-    RED_CHECK(1352304930 == mwrm_data.wrms[2].start_time);
-    RED_CHECK(1352304990 == mwrm_data.wrms[2].stop_time);
+    RED_CHECK(1352304930 == mwrm_data.wrms[2].start_time.count());
+    RED_CHECK(1352304990 == mwrm_data.wrms[2].stop_time.count());
     RED_CHECK(0 == mwrm_data.wrms[2].size);
 
     RED_TEST(is_not_encrypted == load_mwrm_file_data(
@@ -73,16 +73,16 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     RED_TEST(mwrm_data.header.has_checksum == false);
     RED_REQUIRE(mwrm_data.wrms.size() == 3);
     RED_CHECK("./tests/fixtures/sample0.wrm"sv == mwrm_data.wrms[0].filename);
-    RED_CHECK(1352304810 == mwrm_data.wrms[0].start_time);
-    RED_CHECK(1352304870 == mwrm_data.wrms[0].stop_time);
+    RED_CHECK(1352304810 == mwrm_data.wrms[0].start_time.count());
+    RED_CHECK(1352304870 == mwrm_data.wrms[0].stop_time.count());
     RED_CHECK(1 == mwrm_data.wrms[0].size);
     RED_CHECK("./tests/fixtures/sample1.wrm"sv == mwrm_data.wrms[1].filename);
-    RED_CHECK(1352304870 == mwrm_data.wrms[1].start_time);
-    RED_CHECK(1352304930 == mwrm_data.wrms[1].stop_time);
+    RED_CHECK(1352304870 == mwrm_data.wrms[1].start_time.count());
+    RED_CHECK(1352304930 == mwrm_data.wrms[1].stop_time.count());
     RED_CHECK(9 == mwrm_data.wrms[1].size);
     RED_CHECK("./tests/fixtures/sample2.wrm"sv == mwrm_data.wrms[2].filename);
-    RED_CHECK(1352304930 == mwrm_data.wrms[2].start_time);
-    RED_CHECK(1352304990 == mwrm_data.wrms[2].stop_time);
+    RED_CHECK(1352304930 == mwrm_data.wrms[2].start_time.count());
+    RED_CHECK(1352304990 == mwrm_data.wrms[2].stop_time.count());
     RED_CHECK(16 == mwrm_data.wrms[2].size);
 }
 
@@ -96,16 +96,16 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2_checksumed)
     RED_TEST(mwrm_data.header.has_checksum == true);
     RED_REQUIRE(mwrm_data.wrms.size() == 3);
     RED_CHECK("./tests/fixtures/sample0.wrm"sv == mwrm_data.wrms[0].filename);
-    RED_CHECK(1352304810 == mwrm_data.wrms[0].start_time);
-    RED_CHECK(1352304870 == mwrm_data.wrms[0].stop_time);
+    RED_CHECK(1352304810 == mwrm_data.wrms[0].start_time.count());
+    RED_CHECK(1352304870 == mwrm_data.wrms[0].stop_time.count());
     RED_CHECK(1 == mwrm_data.wrms[0].size);
     RED_CHECK("./tests/fixtures/sample1.wrm"sv == mwrm_data.wrms[1].filename);
-    RED_CHECK(1352304870 == mwrm_data.wrms[1].start_time);
-    RED_CHECK(1352304930 == mwrm_data.wrms[1].stop_time);
+    RED_CHECK(1352304870 == mwrm_data.wrms[1].start_time.count());
+    RED_CHECK(1352304930 == mwrm_data.wrms[1].stop_time.count());
     RED_CHECK(9 == mwrm_data.wrms[1].size);
     RED_CHECK("./tests/fixtures/sample2.wrm"sv == mwrm_data.wrms[2].filename);
-    RED_CHECK(1352304930 == mwrm_data.wrms[2].start_time);
-    RED_CHECK(1352304990 == mwrm_data.wrms[2].stop_time);
+    RED_CHECK(1352304930 == mwrm_data.wrms[2].start_time.count());
+    RED_CHECK(1352304990 == mwrm_data.wrms[2].stop_time.count());
     RED_CHECK(16 == mwrm_data.wrms[2].size);
 }
 
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM_encrypted)
     RED_TEST(mwrm_data.header.has_checksum == true);
     RED_REQUIRE(mwrm_data.wrms.size() == 1);
     RED_CHECK("/var/wab/recorded/rdp/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm"sv == mwrm_data.wrms[0].filename);
-    RED_CHECK(1455816611 == mwrm_data.wrms[0].start_time);
-    RED_CHECK(1455816633 == mwrm_data.wrms[0].stop_time);
+    RED_CHECK(1455816611 == mwrm_data.wrms[0].start_time.count());
+    RED_CHECK(1455816633 == mwrm_data.wrms[0].stop_time.count());
     RED_CHECK(163032 == mwrm_data.wrms[0].size);
 }
