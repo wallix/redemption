@@ -41,7 +41,7 @@ class DrawablePointer : noncopyable
     // * 4 bytes per pixel (32 bits)
     uint8_t data[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 4];
     // * 3 bytes per pixel (mask is not used when 32 bits)
-    uint8_t mask[(RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3 + 7) / 8];
+    uint8_t mask[RdpPointer::MAX_WIDTH * RdpPointer::MAX_HEIGHT * 3];
 
     ImageView image_data_view_data;
     ImageView image_data_view_mask;
