@@ -202,8 +202,8 @@ namespace
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        if (dimensions.width >= RdpPointer::MAX_WIDTH
-         || dimensions.height >= RdpPointer::MAX_HEIGHT
+        if (dimensions.width > RdpPointer::MAX_WIDTH
+         || dimensions.height > RdpPointer::MAX_HEIGHT
          || dlen > RdpPointer::DATA_SIZE
          || mlen > RdpPointer::MASK_SIZE
         ) {
@@ -272,7 +272,7 @@ RdpPointerView pointer_loader_32x32(InStream & stream)
     const uint8_t hsx       = stream.in_uint8();
     const uint8_t hsy       = stream.in_uint8();
     const uint16_t dlen     = 32 * 32 * nb_bytes_per_pixel(data_bpp);
-    uint16_t mlen           = 32 * ::nbbytes(32);
+    const uint16_t mlen     = 32 * ::nbbytes(32);
 
     return load_rdp_pointer(
         CursorSize{width, height},
