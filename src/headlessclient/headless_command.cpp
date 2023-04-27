@@ -608,7 +608,7 @@ struct MousePositionParser
         }
 
         int32_t value = uvalue * negate;
-        value = std::min(int32_t(0xFFFF), mouse_value * relative + value);
+        value = std::min<int32_t>(0xFFFF, mouse_value * relative + value);
 
         mouse_axis.out_value = checked_int(std::max(int32_t(), value));
 
