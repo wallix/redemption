@@ -637,3 +637,21 @@ RED_AUTO_TEST_CASE(TestCLI_help)
         "  -e=<milliseconds>\n"
         "  -f=<C>\n"_av);
 }
+
+RED_AUTO_TEST_CASE(TestCLIParseChronoSeconds)
+{
+    using parser = cli::arg_parsers::arg_parse_traits<std::chrono::seconds>;
+    std::chrono::seconds sec;
+
+    RED_CHECK(cli::Res::Ok == parser::parse(sec, "12345"));
+    RED_CHECK(sec.count() == 12345);
+
+    RED_CHECK(cli::Res::Ok == parser::parse(sec, "2:55"));
+    RED_CHECK(sec.count() == 2 * 60 + 55);
+
+    RED_CHECK(cli::Res::Ok == parser::parse(sec, "3:2:55"));
+    RED_CHECK(sec.count() == 3 * 3600 + 2 * 60 + 55);
+
+    RED_CHECK(cli::Res::BadValueFormat == parser::parse(sec, "3:"));
+    RED_CHECK(cli::Res::BadValueFormat == parser::parse(sec, "3h55"));
+}

@@ -78,12 +78,37 @@ namespace cli::arg_parsers
 
         static Res parse(value_type& result, char const* s)
         {
-            Rep rep;
-            Res r = arg_parse_traits<Rep>::parse(rep, s);
-            if (r == Res::Ok) {
-                result = value_type(rep);
+            auto r = decimal_chars_to_int<Rep>(s);
+
+            if (r.ec == std::errc()) {
+                if (!*r.ptr) {
+                    result = value_type(r.val);
+                    return Res::Ok;
+                }
+
+                // format MM:SS / HH:MM:SS with seconds
+                if constexpr (std::is_same_v<std::chrono::seconds, std::chrono::duration<Rep, Period>>) {
+                    if (*r.ptr == ':') {
+                        auto r2 = decimal_chars_to_int<Rep>(r.ptr + 1);
+                        if (r2.ec == std::errc()) {
+                            if (!*r2.ptr) {
+                                result = value_type(r.val * 60 + r2.val);
+                                return Res::Ok;
+                            }
+
+                            if (*r2.ptr == ':') {
+                                auto r3 = decimal_chars_to_int<Rep>(r2.ptr + 1);
+                                if (r3.ec == std::errc() && !*r3.ptr) {
+                                    result = value_type(r.val * 3600 + r2.val * 60 + r3.val);
+                                    return Res::Ok;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            return r;
+
+            return Res::BadValueFormat;
         }
     };
 } // namespace cli::arg_parsers

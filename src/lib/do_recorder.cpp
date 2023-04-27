@@ -1358,10 +1358,10 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         cli::option('S', "ignore-file-size").help("ignore file size mismatch")
             .parser(cli::on_off_location(recorder.ignore_file_size)),
 
-        cli::option('b', "begin").help("begin capture time (in seconds)")
+        cli::option('b', "begin").help("begin capture time. Format: HH:MM:SS with 'HH:' or 'HH:MM:' optional")
             .parser(cli::arg_location(recorder.begin_cap)).argname("<seconds>"),
 
-        cli::option('e', "end").help("end capture time (in seconds)")
+        cli::option('e', "end").help("end capture time. Format: HH:MM:SS with 'HH:' or 'HH:MM:' optional")
             .parser(cli::arg_location(recorder.end_cap)).argname("<seconds>"),
 
         cli::option('n', "png-interval")
