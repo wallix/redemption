@@ -164,12 +164,12 @@ VideoCaptureCtx::VideoCaptureCtx(
     ImageByInterval image_by_interval,
     unsigned frame_rate,
     Drawable & drawable,
-    DrawablePointer const & drawable_pointer,
+    LazyDrawablePointer & lazy_drawable_pointer,
     Rect crop_rect,
     array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
 )
 : drawable(drawable)
-, drawable_pointer(drawable_pointer)
+, lazy_drawable_pointer(lazy_drawable_pointer)
 , monotonic_last_time_capture(monotonic_now)
 , monotonic_to_real(monotonic_now, real_now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
@@ -189,7 +189,9 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
     DrawablePointer::BufferSaver buffer_saver;
 
-    this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+    auto& drawable_pointer = this->lazy_drawable_pointer.drawable_pointer();
+
+    drawable_pointer.trace_mouse(this->drawable, buffer_saver);
 
     auto image = this->prepare_image_frame();
 
@@ -203,7 +205,7 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
         this->timestamp_tracer.clear(image);
     }
 
-    this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+    drawable_pointer.clear_mouse(this->drawable, buffer_saver);
 }
 
 WritableImageView VideoCaptureCtx::prepare_image_frame() noexcept
@@ -278,7 +280,8 @@ WritableImageView VideoCaptureCtx::acquire_image_for_dump(
     DrawablePointer::BufferSaver& buffer_saver,
     const tm& now)
 {
-    this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+    auto& drawable_pointer = this->lazy_drawable_pointer.drawable_pointer();
+    drawable_pointer.trace_mouse(this->drawable, buffer_saver);
 
     auto image = this->prepare_image_frame();
 
@@ -297,7 +300,8 @@ void VideoCaptureCtx::release_image_for_dump(
         this->timestamp_tracer.clear(image);
     }
 
-    this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+    auto& drawable_pointer = this->lazy_drawable_pointer.drawable_pointer();
+    drawable_pointer.clear_mouse(this->drawable, buffer_saver);
 }
 
 tm VideoCaptureCtx::get_tm() const
@@ -325,7 +329,8 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         DrawablePointer::BufferSaver buffer_saver;
 
         if (update_pointer) {
-            this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+            auto& drawable_pointer = this->lazy_drawable_pointer.drawable_pointer();
+            drawable_pointer.trace_mouse(this->drawable, buffer_saver);
         }
 
         auto image = WritableImageView::create_null_view();
@@ -430,7 +435,8 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         }
 
         if (update_pointer) {
-            this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+            auto& drawable_pointer = this->lazy_drawable_pointer.drawable_pointer();
+            drawable_pointer.clear_mouse(this->drawable, buffer_saver);
         }
     }
     return WaitingTimeBeforeNextSnapshot(frame_interval - tick);
@@ -454,7 +460,7 @@ static void log_video_params(VideoParams const& video_params)
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     CaptureParams const & capture_params,
     Drawable & drawable,
-    DrawablePointer const & drawable_pointer,
+    LazyDrawablePointer & lazy_drawable_pointer,
     Rect crop_rect,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : video_cap_ctx(
@@ -462,7 +468,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     video_params_to_image_by_interval(
         video_params.no_timestamp,
         full_video_params.bogus_vlc_frame_rate),
-    video_params.frame_rate, drawable, drawable_pointer, crop_rect,
+    video_params.frame_rate, drawable, lazy_drawable_pointer, crop_rect,
     video_params.updatable_frame_marker_end_bitset_view)
 , recorder(
     str_concat(
@@ -619,7 +625,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     CaptureParams const & capture_params,
     unsigned png_width, unsigned png_height,
     Drawable & drawable,
-    DrawablePointer const & drawable_pointer,
+    LazyDrawablePointer & lazy_drawable_pointer,
     Rect crop_rect,
     VideoParams const & video_params,
     SequencedVideoParams const& sequenced_video_params,
@@ -630,7 +636,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     capture_params.now, capture_params.real_now,
     video_params_to_image_by_interval(
         video_params.no_timestamp, sequenced_video_params.bogus_vlc_frame_rate),
-    video_params.frame_rate, drawable, drawable_pointer, crop_rect,
+    video_params.frame_rate, drawable, lazy_drawable_pointer, crop_rect,
     video_params.updatable_frame_marker_end_bitset_view)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
 , ic_filename_generator(capture_params.record_path, capture_params.basename, "png")

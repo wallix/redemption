@@ -56,7 +56,7 @@ class RedisParams;
 class SequencedVideoParams;
 class VideoParams;
 class WrmParams;
-class DrawablePointer;
+class LazyDrawablePointer;
 
 class Capture final
 : public gdi::GraphicApi
@@ -230,8 +230,7 @@ private:
 
     RDPDrawable& gd_drawable;
 
-    std::unique_ptr<DrawablePointer> drawable_pointer;
-    PointerCache::SourcePointersView ptr_cache;
+    std::unique_ptr<LazyDrawablePointer> lazy_drawable_pointer;
 
     struct MouseTrace
     {

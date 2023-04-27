@@ -24,6 +24,7 @@
 #include "capture/video_params.hpp"
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
+#include "capture/lazy_drawable_pointer.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/updatable_graphics.hpp"
 #include "transport/file_transport.hpp"
@@ -40,7 +41,6 @@
 class CaptureParams;
 class FullVideoParams;
 class SequencedVideoParams;
-class DrawablePointer;
 class Drawable;
 
 
@@ -60,7 +60,7 @@ struct VideoCaptureCtx : noncopyable
         ImageByInterval image_by_interval,
         unsigned frame_rate,
         Drawable & drawable,
-        DrawablePointer const & drawable_pointer,
+        LazyDrawablePointer & lazy_drawable_pointer,
         Rect crop_rect,
         array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
     );
@@ -122,7 +122,7 @@ private:
     };
 
     Drawable & drawable;
-    DrawablePointer const & drawable_pointer;
+    LazyDrawablePointer & lazy_drawable_pointer;
     MonotonicTimePoint monotonic_last_time_capture;
     MonotonicTimeToRealTime monotonic_to_real;
     MonotonicTimePoint::duration frame_interval;
@@ -152,7 +152,7 @@ public:
     FullVideoCaptureImpl(
         CaptureParams const & capture_params,
         Drawable & drawable,
-        DrawablePointer const & drawable_pointer,
+        LazyDrawablePointer & lazy_drawable_pointer,
         Rect crop_rect,
         VideoParams const & video_params,
         FullVideoParams const & full_video_params
@@ -193,7 +193,7 @@ public:
         CaptureParams const & capture_params,
         unsigned png_width, unsigned png_height,
         Drawable & drawable,
-        DrawablePointer const & drawable_pointer,
+        LazyDrawablePointer & lazy_drawable_pointer,
         Rect crop_rect,
         VideoParams const& video_params,
         SequencedVideoParams const& sequenced_video_params,

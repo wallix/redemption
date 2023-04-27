@@ -69,6 +69,7 @@
 #include "capture/redis_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "capture/lazy_drawable_pointer.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
@@ -536,10 +537,10 @@ struct PngCaptureData
 {
     PngCaptureData(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Drawable& drawable, LazyDrawablePointer & lazy_drawable_pointer,
         Rect cropping)
     : drawable(drawable)
-    , drawable_pointer(drawable_pointer)
+    , lazy_drawable_pointer(lazy_drawable_pointer)
     , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , monotonic_to_real(capture_params.now, capture_params.real_now)
@@ -582,7 +583,9 @@ struct PngCaptureData
     void dump_png(time_t t, Transport& trans)
     {
         DrawablePointer::BufferSaver buffer_saver;
-        this->drawable_pointer.trace_mouse(this->drawable, buffer_saver);
+
+        auto& drawable_pointer = this->lazy_drawable_pointer.drawable_pointer();
+        drawable_pointer.trace_mouse(this->drawable, buffer_saver);
 
         auto writable_image = gdi::get_writable_image_view(this->drawable)
             .mutable_sub_view(this->cropping);
@@ -594,12 +597,12 @@ struct PngCaptureData
         this->scaled_png.dump_png24(trans, writable_image, true);
 
         this->timestamp_tracer.clear(writable_image);
-        this->drawable_pointer.clear_mouse(this->drawable, buffer_saver);
+        drawable_pointer.clear_mouse(this->drawable, buffer_saver);
     }
 
 private:
     Drawable& drawable;
-    DrawablePointer const & drawable_pointer;
+    LazyDrawablePointer & lazy_drawable_pointer;
     MonotonicTimePoint last_time_capture;
     const MonotonicTimePoint::duration frame_interval;
     const MonotonicTimeToRealTime monotonic_to_real;
@@ -617,9 +620,9 @@ class Capture::PngCapture final : public gdi::CaptureApi
 public:
     PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Drawable& drawable, LazyDrawablePointer & lazy_drawable_pointer,
         Rect cropping)
-    : png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
+    : png_data(capture_params, png_params, drawable, lazy_drawable_pointer, cropping)
     , trans(
         capture_params.record_tmp_path,
         png_params.real_basename,
@@ -651,10 +654,10 @@ class Capture::PngCaptureRT final : public gdi::CaptureApi
 public:
     explicit PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Drawable& drawable, LazyDrawablePointer & lazy_drawable_pointer,
         Rect cropping)
     : png_limit(png_params.png_limit)
-    , png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
+    , png_data(capture_params, png_params, drawable, lazy_drawable_pointer, cropping)
     , trans(
         capture_params.record_tmp_path,
         png_params.real_basename,
@@ -729,9 +732,9 @@ class Capture::PngCaptureRTRedis final : public gdi::CaptureApi
 public:
     explicit PngCaptureRTRedis(
         const CaptureParams & capture_params, const PngParams & png_params,
-        Drawable& drawable, DrawablePointer const & drawable_pointer,
+        Drawable& drawable, LazyDrawablePointer & lazy_drawable_pointer,
         Rect cropping)
-    : png_data(capture_params, png_params, drawable, drawable_pointer, cropping)
+    : png_data(capture_params, png_params, drawable, lazy_drawable_pointer, cropping)
     , redis_cmd(png_params.redis_key_name, [&]{
         auto expiration_delay = png_params.png_interval * 2;
         if (expiration_delay < 2min) {
@@ -1317,7 +1320,6 @@ Capture::Capture(
     const CropperInfo cropper_info,
     const Rect rail_window_rect)
 : gd_drawable(drawable_params.rdp_drawable)
-, ptr_cache(drawable_params.ptr_cache)
 , update_progress_data(update_progress_data)
 , mouse_info{
     capture_params.now,
@@ -1391,9 +1393,9 @@ Capture::Capture(
     if (this->capture_drawable) {
         this->gds.emplace_back(this->gd_drawable);
 
-        this->drawable_pointer = std::make_unique<DrawablePointer>(normal_pointer());
-        drawable_pointer->set_position(this->gd_drawable.width() / 2,
-                                       this->gd_drawable.height() / 2);
+        this->lazy_drawable_pointer = std::make_unique<LazyDrawablePointer>(drawable_params.ptr_cache);
+        this->lazy_drawable_pointer->set_position(this->gd_drawable.width() / 2,
+                                                  this->gd_drawable.height() / 2);
 
         if (capture_png) {
             if (png_params.real_time_image_capture) {
@@ -1402,7 +1404,7 @@ Capture::Capture(
                         capture_params,
                         png_params,
                         this->gd_drawable.impl(),
-                        *this->drawable_pointer,
+                        *this->lazy_drawable_pointer,
                         real_crop_rect
                     );
                 }
@@ -1411,7 +1413,7 @@ Capture::Capture(
                         capture_params,
                         png_params,
                         this->gd_drawable.impl(),
-                        *this->drawable_pointer,
+                        *this->lazy_drawable_pointer,
                         real_crop_rect
                     );
                 }
@@ -1421,7 +1423,7 @@ Capture::Capture(
                     capture_params,
                     png_params,
                     this->gd_drawable.impl(),
-                    *this->drawable_pointer,
+                    *this->lazy_drawable_pointer,
                     real_crop_rect
                 );
             }
@@ -1442,13 +1444,13 @@ Capture::Capture(
             }
             this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
                 capture_params, png_params.png_width, png_params.png_height,
-                this->gd_drawable.impl(), *this->drawable_pointer,
+                this->gd_drawable.impl(), *this->lazy_drawable_pointer,
                 real_crop_rect, video_params, sequenced_video_params, notifier);
         }
 
         if (capture_video_full) {
             this->full_video_capture_obj = std::make_unique<FullVideoCaptureImpl>(
-                capture_params, this->gd_drawable.impl(), *this->drawable_pointer,
+                capture_params, this->gd_drawable.impl(), *this->lazy_drawable_pointer,
                 real_crop_rect, video_params, full_video_params);
         }
 #else
@@ -1604,8 +1606,8 @@ void Capture::relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
 
 void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
 {
-    if (this->drawable_pointer) {
-        this->drawable_pointer->set_position(cursor_x, cursor_y);
+    if (this->lazy_drawable_pointer) {
+        this->lazy_drawable_pointer->set_position(cursor_x, cursor_y);
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
@@ -1767,8 +1769,8 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
     MonotonicTimePoint now,
     uint16_t cursor_x, uint16_t cursor_y
 ) {
-    if (this->drawable_pointer) {
-        this->drawable_pointer->set_position(cursor_x, cursor_y);
+    if (this->lazy_drawable_pointer) {
+        this->lazy_drawable_pointer->set_position(cursor_x, cursor_y);
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
@@ -1926,7 +1928,7 @@ void Capture::cached_pointer(gdi::CachePointerIndex cache_idx)
             gd.cached_pointer(cache_idx);
         }
 
-        this->drawable_pointer->set_cursor(this->ptr_cache.pointer(cache_idx));
+        this->lazy_drawable_pointer->set_cache_id(cache_idx);
     }
 }
 
@@ -1937,7 +1939,7 @@ void Capture::new_pointer(gdi::CachePointerIndex cache_idx, RdpPointerView const
             gd.new_pointer(cache_idx, cursor);
         }
 
-        this->drawable_pointer->set_cursor(cursor);
+        this->lazy_drawable_pointer->set_cache_id(cache_idx);
     }
 }
 
