@@ -7,11 +7,22 @@ lib libpng : : <name>png ;
 lib openssl : : <name>ssl ;
 lib snappy ;
 lib z ;
-lib hyperscan : : <name>hs ;
 alias png : libpng z ;
 
-explicit bz2 crypto dl gssapi_krb5 krb5 libpng openssl snappy z hyperscan png ;
+explicit bz2 crypto dl gssapi_krb5 krb5 libpng openssl snappy z png ;
 
+## hyperscan {
+if $(NO_HYPERSCAN) = 0
+{
+    lib hyperscan : : <name>hs ;
+}
+else
+{
+    alias hyperscan : ;
+    REDEMPTION_HYPERSCAN_FLAGS += <define>REDEMPTION_NO_HYPERSCAN=1 ;
+}
+explicit hyperscan ;
+## }
 
 # gettext with musl
 if $(MUSL_LIBC) != 0

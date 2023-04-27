@@ -116,7 +116,8 @@ sys_lib_assoc = dict((
     ('libintl.h', Dep(
         linkflags=['$(MUSL_GETTEXT)'])),
     ('hs/hs.h', Dep(
-        linkflags=['<library>hyperscan'])),
+        linkflags=['<library>hyperscan'],
+        cxxflags=['$(REDEMPTION_HYPERSCAN_FLAGS)'])),
 ))
 
 sys_lib_prefix = [

@@ -23,10 +23,10 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 
+#ifndef REDEMPTION_NO_HYPERSCAN
+
 #include <cstring>
-
 #include <hs/hs.h>
-
 
 struct PatternSearcher::D
 {
@@ -408,3 +408,37 @@ array_view<PatternSearcher::PatternFound> PatternSearcher::scan(chars_view str)
 
     return {d->scan_results, ctx.scan_results};
 }
+
+#else
+PatternSearcher::PatternSearcher(
+    array_view<CapturePattern> cap_patterns_kill,
+    array_view<CapturePattern> cap_patterns_notify,
+    CapturePattern::CaptureType cap_type)
+{
+    (void)cap_patterns_kill;
+    (void)cap_patterns_notify;
+    (void)cap_type;
+
+    if (!cap_patterns_kill.empty() || !cap_patterns_notify.empty()) {
+        LOG(LOG_ERR, "not compiled with Hyperscan");
+        throw Error(ERR_MEMORY_ALLOCATION_FAILED);
+    }
+}
+
+PatternSearcher::~PatternSearcher() = default;
+
+bool PatternSearcher::has_pattern() const
+{
+    return false;
+}
+
+void PatternSearcher::reset_kbd_streams()
+{
+}
+
+array_view<PatternSearcher::PatternFound> PatternSearcher::scan(chars_view str)
+{
+    (void)str;
+    return {};
+}
+#endif
