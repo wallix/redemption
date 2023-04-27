@@ -862,31 +862,14 @@ struct CaptureTimes
     // start and stop as timestamp
     void adjust_time(Seconds start_time, Seconds stop_time)
     {
-        // begin or end relative to end of trace
-        {
-            Seconds const duration (stop_time - start_time);
+        Seconds const duration (stop_time - start_time);
 
-            if (begin_cap.count() < 0) {
-                begin_cap = std::max(begin_cap + duration, Seconds(0));
-            }
-
-            if (end_cap.count() < 0) {
-                end_cap = std::max(end_cap + duration, Seconds(0));
-            }
+        if (begin_cap.count() < 0) {
+            begin_cap = std::max(begin_cap + duration, Seconds(0));
         }
 
-        // begin or end relative to start of trace
-        {
-            // less than 1 year, it is relative not absolute timestamp
-            auto relative_time_barrier = 31536000s;
-
-            if (begin_cap.count() && begin_cap < relative_time_barrier) {
-                begin_cap += start_time;
-            }
-
-            if (end_cap.count() && end_cap < relative_time_barrier) {
-                end_cap += start_time;
-            }
+        if (end_cap.count() < 0) {
+            end_cap = std::max(end_cap + duration, Seconds(0));
         }
     }
 };
@@ -1876,7 +1859,15 @@ int do_main(int argc, char const ** argv,
             );
         }
 
-        CaptureTimes capture_times {rp.begin_cap, rp.end_cap};
+        auto normalize_time = [&](std::chrono::seconds t){
+            // less than 1 year, it is relative not absolute timestamp
+            if (t.count() && t < 31536000s) {
+                return t + wrms.front().start_time;
+            }
+            return t;
+        };
+
+        CaptureTimes capture_times {normalize_time(rp.begin_cap), normalize_time(rp.end_cap)};
 
         // consumes the first wrm
         if (capture_times.begin_cap.count()) {
@@ -1935,7 +1926,7 @@ int do_main(int argc, char const ** argv,
             raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
         }
 
-        capture_times.adjust_time(wrms.back().start_time, wrms.front().stop_time);
+        capture_times.adjust_time(wrms.front().start_time, wrms.back().stop_time);
 
         InMultiCryptoTransport in_wrm_trans(
             std::move(wrm_filenames),
