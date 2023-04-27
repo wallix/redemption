@@ -1,5 +1,3 @@
-#!/usr/bin/python -O
-# -*- coding: utf-8 -*-
 ##
 # Copyright (c) 2017 WALLIX. All rights reserved.
 # Licensed computer software. Property of WALLIX.
@@ -9,9 +7,6 @@
 # URL: $URL$
 # Module description:  Sesman Worker
 ##
-from __future__ import with_statement
-from __future__ import absolute_import
-
 import random
 import os
 import signal

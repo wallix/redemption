@@ -1,10 +1,6 @@
-#!/usr/bin/python3 -O
-# -*- coding: iso-8859-1 -*-
-#
 # Copyright (c) 2021 WALLIX, SAS. All rights reserved.
 #
 # Licensed computer software. Property of WALLIX.
-
 
 import os
 import fcntl

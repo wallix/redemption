@@ -1,5 +1,5 @@
 # Information Structs
-class Challenge(object):
+class Challenge:
     def __init__(self, challenge_type, title, message, fields, echos,
                  username=None, challenge=None, token=None, link=None,
                  timeout=None, first_password=False, recall=False):
@@ -28,10 +28,8 @@ def has_echo(auth_challenge):
     if echo is not None:
         return echo
     prompt = auth_challenge.get("prompt", "") or ""
-    return any(
-        (keyword in prompt.lower().split()
-         for keyword in ECHO_KEYWORDS)
-    )
+    words = prompt.lower().split()
+    return any(keyword in words for keyword in ECHO_KEYWORDS)
 
 
 def ac_to_challenge(ac, check_state=False):

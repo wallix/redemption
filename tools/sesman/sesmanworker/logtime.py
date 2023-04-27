@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2020 WALLIX, SAS. All rights reserved.
 # Licensed computer software. Property of WALLIX.

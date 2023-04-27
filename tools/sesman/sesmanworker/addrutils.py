@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import ipaddress
 import socket
 from logger import Logger
@@ -38,9 +35,9 @@ def _get_adapted_device_ipaddr_from_subnet(device: str, subnet_ipaddr: IPAddress
                     return adapted_device_ipaddr
 
             Logger().debug(f"Cannot adapt '{device}' device to ipv4 format")
-            return None
+        else:
+            return device_ipaddr
 
-        return device_ipaddr
     except (ValueError, ipaddress.AddressValueError) as e:
         Logger().debug(f"Invalid IP address of device '{device}' : {e}")
 

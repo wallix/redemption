@@ -1,4 +1,3 @@
-#!/usr/bin/python -O
 # -*- coding: iso-8859-1 -*-
 #
 # Copyright (c) 2021 WALLIX, SAS. All rights reserved.
@@ -44,8 +43,7 @@ def parse_param(param: str, forced_device: Optional[str] = None) -> Optional[Acc
             return None
         device_name = (forced_device or parsed[2]) if len(parsed) == 3 else None
         return account_name, domain_name, device_name
-    else:
-        return None
+    return None
 
 
 def replace_token(param: str, replace_dict: Dict[str, str]) -> str:

@@ -1,7 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import
 from logger import Logger
 
 from wabengine.common.exception import (
@@ -101,7 +97,7 @@ def _read_message(filename: str, default_msg: str, format_terminal: bool) -> str
     return msg
 
 
-class Engine(object):
+class Engine:
     def __init__(self):
         self.wabengine = None
         self.checkout = None
@@ -139,7 +135,7 @@ class Engine(object):
 
         self.authenticated = False
 
-    def keepalive(self, timeout, close=True):
+    def keepalive(self, timeout):
         if self.avatar_id:
             with manage_transaction(self.wabengine):
                 self.wabengine.save_session(self.avatar_id, timeout=timeout)
@@ -545,7 +541,7 @@ class Engine(object):
         for target_info in self.displaytargets:
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
-            if (not target_info.protocol == "APP"
+            if (target_info.protocol != "APP"
                 and (target_info.target_name == 'autotest'
                      or target_info.target_name == 'bouncer2'
                      or target_info.target_name == 'widget2_message'
@@ -764,11 +760,10 @@ class Engine(object):
 
     def filter_app_rights(self, app_rights, account_name, domain_name,
                           app_name):
-        _rs = [r for r in app_rights if (
+        return [r for r in app_rights if (
             r['account_name'] == account_name
             and (not domain_name or r['domain_cn'] == domain_name)
             and r['application_cn'] == app_name)]
-        return _rs
 
     def get_proxy_rights(self, protocols, target_device=None,
                          target_context=None):
@@ -1423,7 +1418,7 @@ class Engine(object):
         return True
 
     def record(self, data):
-        """ Factorized record method to be used if isRecorded == True """
+        """ Factorized record method to be used if is_recorded == True """
         if self.session_record:
             self.session_record.writeframe(data)
 
@@ -1508,10 +1503,10 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return None
-        isRecorded = target['auth_is_recorded']
-        isCritical = target['auth_is_critical']
-        hasApproval = target['auth_has_approval']
-        return ExtraInfo(isRecorded, isCritical, hasApproval)
+        is_recorded = target['auth_is_recorded']
+        is_critical = target['auth_is_critical']
+        has_approval = target['auth_has_approval']
+        return ExtraInfo(is_recorded, is_critical, has_approval)
 
     def get_deconnection_time(self, selected_target=None):
         target = selected_target or self.target_right
@@ -1527,8 +1522,7 @@ class Engine(object):
             return {}
 
         conn_policy_data = self.get_target_conn_options(target)
-        server_pubkey_options = conn_policy_data.get('server_pubkey', {})
-        return server_pubkey_options
+        return conn_policy_data.get('server_pubkey', {})
 
     def get_target_auth_methods(self, selected_target=None):
         target = selected_target or self.target_right
@@ -1661,7 +1655,7 @@ class Engine(object):
         return resolve_scenario_account(self, param, force_device)
 
     def get_crypto_methods(self):
-        class crypto_methods(object):
+        class crypto_methods:
             def __init__(self, proxy):
                 self.proxy = proxy
 
@@ -1691,7 +1685,7 @@ class Engine(object):
         return sharing_type
 
 
-class TargetContext(object):
+class TargetContext:
     def __init__(self, host=None, dnsname=None, login=None, service=None,
                  group=None, show=None):
         self.host = host
@@ -1709,7 +1703,7 @@ class TargetContext(object):
         return not (self.host or self.login or self.service or self.group)
 
 
-class DisplayInfo(object):
+class DisplayInfo:
     __slots__ = ("target_login", "target_name", "service_name", "protocol",
                  "group", "subprotocols", "service_login", "host")
 
@@ -1748,7 +1742,7 @@ SHARING_CONN_POLICY = {
 }
 
 
-class ProtocolInfo(object):
+class ProtocolInfo:
     __slots__ = (
         "protocol", "subprotocols",
     )
@@ -1758,7 +1752,7 @@ class ProtocolInfo(object):
         self.subprotocols = subprotocols
 
 
-class ExtraInfo(object):
+class ExtraInfo:
     __slots__ = (
         "is_recorded", "is_critical", "has_approval",
     )
@@ -1769,7 +1763,7 @@ class ExtraInfo(object):
         self.has_approval = has_approval
 
 
-class PhysicalTarget(object):
+class PhysicalTarget:
     __slots__ = (
         "device_host", "account_login", "service_port", "device_id",
         "sharing_host",
@@ -1784,7 +1778,7 @@ class PhysicalTarget(object):
         self.sharing_host = sharing_host
 
 
-class LoginInfo(object):
+class LoginInfo:
     __slots__ = (
         "account_login", "account_name", "domain_name", "service_name",
         "target_name", "auth_name", "user_group_name", "target_group_name",

@@ -1,2 +1,2 @@
-def parse_conf_file(confi, path):
+def parse_conf_file(config, path):
     pass

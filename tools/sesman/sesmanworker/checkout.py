@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import json
 from logger import Logger
 
@@ -88,16 +87,14 @@ class CheckoutEngine:
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
                                                            ({}, {}))
-        login = credentials.get(CRED_DATA_LOGIN)
-        return login
+        return credentials.get(CRED_DATA_LOGIN)
 
     def get_target_domain(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
                                                            ({}, {}))
-        domain = credentials.get(CRED_DATA_DOMAIN)
-        return domain
+        return credentials.get(CRED_DATA_DOMAIN)
 
     def get_target_passwords(self, right: RightType) -> List[str]:
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
@@ -105,19 +102,17 @@ class CheckoutEngine:
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
                                                            ({}, {}))
-        passwords = credentials.get(CRED_TYPE_PASSWORD, [])
-        return passwords
+        return credentials.get(CRED_TYPE_PASSWORD, [])
 
     def get_target_privkeys(self, right: RightType):
         # Logger().debug("CHECKOUTENGINE get_target_privkeys")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
                                                            ({}, {}))
-        privkeys = [(cred.get(CRED_DATA_PRIVATE_KEY),
-                     cred.get("passphrase"),
-                     cred.get(CRED_DATA_SSH_CERTIFICATE))
-                    for cred in credentials.get(CRED_TYPE_SSH_KEY, [])]
-        return privkeys
+        return [(cred.get(CRED_DATA_PRIVATE_KEY),
+                 cred.get("passphrase"),
+                 cred.get(CRED_DATA_SSH_CERTIFICATE))
+                for cred in credentials.get(CRED_TYPE_SSH_KEY, [])]
 
     def get_primary_password(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_primary_password")
@@ -152,11 +147,10 @@ class CheckoutEngine:
             return None
         from collections import namedtuple
         account_infos = namedtuple('account_infos', 'passwords login')
-        a_infos = account_infos(
+        return account_infos(
             creds.get(CRED_TYPE_PASSWORD, []),
             creds.get(CRED_DATA_LOGIN, None)
         )
-        return a_infos
 
     def check_target(self, right: RightType, request_ticket: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:
         """
@@ -280,12 +274,11 @@ class CheckoutEngine:
                        cred.get("passphrase"),
                        cred.get(CRED_DATA_SSH_CERTIFICATE))
 
-        a_infos = {
+        return {
             'password': passwords[0] if passwords else None,
             'login': creds.get(CRED_DATA_LOGIN, None),
             'ssh_key': ssh_key
         }
-        return a_infos
 
     def _update_creds_with_account_by_type(self, account_name: str, domain_name: str,
                                            device_name: str, account_type: AccountType = None) -> bool:

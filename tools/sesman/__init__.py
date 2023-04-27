@@ -1,5 +1,3 @@
-#!/usr/bin/python -O
-
 ##
 # Copyright (c) 2010 WALLIX, SARL. All rights reserved.
 # Licensed computer software. Property of WALLIX.
