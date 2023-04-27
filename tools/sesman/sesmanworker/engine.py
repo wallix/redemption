@@ -410,7 +410,7 @@ class Engine(object):
                 'time': time
             }
 
-            if not (url is None):
+            if url is not None:
                 notif_data['url'] = url
 
             Notify(self.wabengine, CX_EQUIPMENT, notif_data)
@@ -556,15 +556,15 @@ class Engine(object):
                     ':INTERNAL', 1)
                 temp_resource_service_protocol_cn = 'INTERNAL'
 
-            if (not fc(group_filter) in fc(target_info.group)
-                or not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
+            if (fc(group_filter) not in fc(target_info.group)
+                or fc(protocol_filter) not in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
 
             if selector_filter_mode == taf.SelectorFilterMode.NORMAL:
                 # apply target global filter mode
 
-                if not fc(device_filter) in fc(temp_service_login):
+                if fc(device_filter) not in fc(temp_service_login):
                     item_filtered = True
                     continue
             elif selector_filter_mode == taf.SelectorFilterMode.ADVANCED:

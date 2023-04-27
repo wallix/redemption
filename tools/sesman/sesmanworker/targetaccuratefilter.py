@@ -173,10 +173,5 @@ def get_filter_pattern_dict(filter_patterns):
     return filter_pattern_dict
 
 def is_filterable(filter_pattern_dict, target_field_dict):
-    filter_is_applicable = lambda fk, fv, d : fk in d and fv in d[fk]
-
-    return all(filter_is_applicable(filter_keyword,
-                                    filter_value,
-                                    target_field_dict)
-               for filter_keyword, filter_value
-               in filter_pattern_dict.items())
+    return all(kw in target_field_dict and value in target_field_dict[kw]
+               for kw, value in filter_pattern_dict.items())

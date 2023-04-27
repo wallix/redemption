@@ -29,7 +29,7 @@ from datetime import datetime
 import socket
 from socket import gethostname
 from ipaddress import ip_network
-from typing import Iterable, Any, Tuple, Generator, Optional
+from typing import Iterable, Any, Tuple, Generator, Optional, Dict
 
 from .addrutils import check_hostname_in_subnet, is_device_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
@@ -59,8 +59,6 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
 import syslog
 
 from .logtime import logtimer, logtime_function_pause
-
-from typing import Dict, Any, Tuple
 
 
 def print_exception_caught(func):
@@ -1746,7 +1744,7 @@ class Sesman():
             tries = tries - 1
             if _status is None and tries > 0:
                 login = mundane(self.shared.get('login'))
-                ip_client = mundane(self.shared.get(f'ip_client'))
+                ip_client = mundane(self.shared.get('ip_client'))
                 Logger().info(
                     f"Bastion user '{login}' authentication "
                     f"from {ip_client} failed [{tries} tries remains]"
@@ -2167,7 +2165,6 @@ class Sesman():
                     )
                     if extra_info.is_critical:
                         Logger().info("CRITICAL CONNECTION")
-                        import socket
                         self.engine.NotifyConnectionToCriticalEquipment(
                             ('APP' if application else proto_info.protocol),
                             self.shared.get('login'),
