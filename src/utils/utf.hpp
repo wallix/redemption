@@ -65,37 +65,37 @@ std::size_t UTF8toUTF16(bytes_view source, writable_bytes_view target) noexcept;
 std::size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, std::size_t t_len) noexcept;
 
 template<class ResizableArray>
-void UTF8toResizableUTF16(bytes_view utf16_source, ResizableArray& utf8_target)
+void UTF8toResizableUTF16(bytes_view utf8_source, ResizableArray& utf16_target)
 {
-    utf8_target.resize(utf16_source.size() * 4);
-    auto len = UTF8toUTF16(utf16_source, make_writable_array_view(utf8_target));
-    utf8_target.resize(len);
+    utf16_target.resize(utf8_source.size() * 4);
+    auto len = UTF8toUTF16(utf8_source, make_writable_array_view(utf16_target));
+    utf16_target.resize(len);
 }
 
 template<class ResizableArray>
-ResizableArray UTF8toResizableUTF16(bytes_view utf16_source)
+ResizableArray UTF8toResizableUTF16(bytes_view utf8_source)
 {
-    ResizableArray utf8_target;
-    UTF8toResizableUTF16(utf16_source, utf8_target);
-    return utf8_target;
+    ResizableArray utf16_target;
+    UTF8toResizableUTF16(utf8_source, utf16_target);
+    return utf16_target;
 }
 
 template<class ResizableArray>
-void UTF8toResizableUTF16_zstring(bytes_view utf16_source, ResizableArray& utf8_target)
+void UTF8toResizableUTF16_zstring(bytes_view utf8_source, ResizableArray& utf16_target)
 {
-    utf8_target.resize(utf16_source.size() * 4);
-    auto len = UTF8toUTF16(utf16_source, make_writable_array_view(utf8_target));
-    utf8_target[len    ] = '\0';
-    utf8_target[len + 1] = '\0';
-    utf8_target.resize(len + 2);
+    utf16_target.resize(utf8_source.size() * 4);
+    auto len = UTF8toUTF16(utf8_source, make_writable_array_view(utf16_target));
+    utf16_target[len    ] = '\0';
+    utf16_target[len + 1] = '\0';
+    utf16_target.resize(len + 2);
 }
 
 template<class ResizableArray>
-ResizableArray UTF8toResizableUTF16_zstring(bytes_view utf16_source)
+ResizableArray UTF8toResizableUTF16_zstring(bytes_view utf8_source)
 {
-    ResizableArray utf8_target;
-    UTF8toResizableUTF16_zstring(utf16_source, utf8_target);
-    return utf8_target;
+    ResizableArray utf16_target;
+    UTF8toResizableUTF16_zstring(utf8_source, utf16_target);
+    return utf16_target;
 }
 
 
