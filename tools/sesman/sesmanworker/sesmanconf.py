@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # from fileconf import parse_conf_file
 
 from typing import Dict
@@ -24,7 +22,7 @@ def TR(key: str) -> str:
     return message
 
 
-class Sesmsg(object):
+class Sesmsg:
     SESSION_CLOSED_S = 'session_closed_at %s'
     LICENCE_BLOCKER = 'licence_blocker'
     AUTH_FAILED_WAB_S = 'auth_failed_wab %s'

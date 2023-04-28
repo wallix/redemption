@@ -53,7 +53,7 @@ except Exception:
             key = key.encode('utf-8')
         os.write(prk_fd, key)
         os.close(prk_fd)
-        command = "{} -f {} -p".format(SSH_KEYGEN, prk_path)
+        command = f"{SSH_KEYGEN} -f {prk_path} -p"
         new_passphrase = ".*Enter new passphrase.*"
         confirm_passphrase = ".*Enter same passphrase again:"
         ssh_keygen = pexpect.spawn(command)
@@ -72,7 +72,7 @@ except Exception:
         ssh_keygen.expect([pexpect.EOF])
         if ssh_keygen.isalive():
             ssh_keygen.wait()
-        with open(prk_path, 'r') as f:
+        with open(prk_path) as f:
             pem_key = f.read()
         os.remove(prk_path)
         return pem_key
@@ -378,10 +378,7 @@ def ssh_tunneling_vnc(local_usocket_name: str,
     remove_file(local_usocket_name)
     Logger().debug(f"ssh_tunneling_vnc {tunneling_command}")
     try:
-        if use_pexpect:
-            process_fn = pexpect_prompt_ssh
-        else:
-            process_fn = popen_sshpass_ssh
+        process_fn = pexpect_prompt_ssh if use_pexpect else popen_sshpass_ssh
         process = process_fn(
             tunneling_command,
             ssh_password,

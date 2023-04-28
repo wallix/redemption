@@ -13,7 +13,6 @@ import signal
 import traceback
 import json
 import re
-import sys
 import itertools
 from logger import Logger
 
@@ -23,10 +22,9 @@ from time import time, ctime, mktime
 from datetime import datetime
 import socket
 from socket import gethostname
-from ipaddress import ip_network
-from typing import Iterable, Any, Tuple, Generator, Optional, Dict
+from typing import Iterable, Any, Tuple, Generator, Dict
 
-from .addrutils import check_hostname_in_subnet, is_device_in_subnet
+from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
 from . import engine
 from .sesmanconnpolicyspec import cp_spec
@@ -113,7 +111,7 @@ KEYMAPPING = {
 EXPECTING_KEYS = list(KEYMAPPING.keys())
 
 
-class RdpProxyLog(object):
+class RdpProxyLog:
     def __init__(self):
         syslog.openlog('rdpproxy')
         self._context = '[rdpproxy] '
@@ -301,10 +299,10 @@ class AuthentifierSocketClosed(Exception):
 
 class BastionSignal(Exception):
     def __init__(self, message="BastionSignal"):
-        super(BastionSignal, self).__init__(message)
+        super().__init__(message)
 
 
-class RTManager(object):
+class RTManager:
     __slots__ = ("sesman", "time_limit", "last_start")
 
     def __init__(self, sesman, time_limit):
@@ -898,7 +896,7 @@ class Sesman():
               for interactive password
         """
         keylist = ['target_password', 'target_login', 'target_host']
-        extkv = dict((x, kv.get(x)) for x in keylist if kv.get(x) is not None)
+        extkv = {x: kv.get(x) for x in keylist if kv.get(x) is not None}
         tries = 3
         _status, _error = None, None
         while (tries > 0) and (_status is None):
@@ -1020,10 +1018,10 @@ class Sesman():
             target_info = None
             if (target_login
                 and target_device
-                and not target_login == MAGICASK
-                and not target_device == MAGICASK):
+                and target_login != MAGICASK
+                and target_device != MAGICASK):
                 if (self.target_service_name
-                    and not self.target_service_name == MAGICASK):
+                    and self.target_service_name != MAGICASK):
                     target_info_str = f"{target_login}@{target_device}:{self.target_service_name}"
                 else:
                     target_info_str = f"{target_login}@{target_device}"
@@ -2295,12 +2293,10 @@ class Sesman():
                                 if self.shared.get('keepalive') == MAGICASK:
                                     self.send_data({'keepalive': 'True'})
                             # r can be empty
-                            else:
-                                # (if self.proxy_conx in r)
-                                if not self.internal_target and not got_signal:
-                                    Logger().info('Missing Keepalive')
-                                    Logger().error('break connection')
-                                    break
+                            elif not self.internal_target and not got_signal:
+                                Logger().info('Missing Keepalive')
+                                Logger().error('break connection')
+                                break
                         if self.shared.get('module') == "close":
                             close_box = True
                         Logger().debug("End Of Keep Alive")

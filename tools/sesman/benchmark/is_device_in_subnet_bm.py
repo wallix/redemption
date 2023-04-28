@@ -4,7 +4,6 @@ import sys
 import os
 import timeit
 import importlib
-import inspect
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(os.path.join(os.path.dirname(__file__), "../sesmanworker"))

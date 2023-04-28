@@ -8,4 +8,4 @@
 # Module description: init script for RDPWorker Module
 ##
 
-from sesman import * # pyflakes:ignore
+from sesman import *  # pyflakes:ignore
