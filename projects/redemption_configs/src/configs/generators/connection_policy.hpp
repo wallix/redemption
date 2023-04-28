@@ -209,9 +209,7 @@ struct ConnectionPolicyWriterBase
     {
         std::ofstream out(this->remap_filename);
 
-        out <<
-            "# -*- coding: utf-8 -*-\n#\n"
-            << python_comment(do_not_edit, 0) << "\n"
+        out << python_comment(do_not_edit, 0) << "\n"
             << "cp_spec = {\n"
         ;
 

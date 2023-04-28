@@ -199,11 +199,7 @@ public:
     void do_init()
     {
         out.open(filename);
-        out <<
-            "#!/usr/bin/env python3\n"
-            "# -*- coding: utf-8 -*-\n\n"
-            << python_comment(do_not_edit, 0) << "\n"
-        ;
+        out << python_comment(do_not_edit, 0) << "\n";
     }
 
     int do_finish()
