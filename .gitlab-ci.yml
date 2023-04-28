@@ -30,7 +30,7 @@ build-project:
     - DEBIAN_FRONTEND=noninteractive apt-get -y install g++ libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libgssglue-dev libsnappy-dev libpng-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libbz2-dev gettext git libhyperscan-dev
     - git submodule update --init
     - mkdir -p "$TESTDIR"
-    - bjam -j4 -s TMPDIR_TEST="$TESTDIR" linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
+    - TMPDIR_TEST="$TESTDIR" bjam -j4 linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
   artifacts:
     when: always
     name: "$CI_JOB_NAME"
