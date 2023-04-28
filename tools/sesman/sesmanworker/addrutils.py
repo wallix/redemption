@@ -35,8 +35,9 @@ def _get_adapted_device_ipaddr_from_subnet(device: str, subnet_ipaddr: IPAddress
                     return adapted_device_ipaddr
 
             Logger().debug(f"Cannot adapt '{device}' device to ipv4 format")
-        else:
-            return device_ipaddr
+            return None
+
+        return device_ipaddr
 
     except (ValueError, ipaddress.AddressValueError) as e:
         Logger().debug(f"Invalid IP address of device '{device}' : {e}")
