@@ -54,16 +54,6 @@ import syslog
 from .logtime import logtimer, Steps as LogSteps, logtime_function_pause
 
 
-def print_exception_caught(func):
-    def method_wrapper(self, *args, **kwargs):
-        try:
-            return func(self, *args, **kwargs)
-        except Exception:
-            Logger().info(traceback.format_exc())
-            raise
-    return method_wrapper
-
-
 def collection_has_more(
         iterable: Iterable[Any]
 ) -> Generator[Tuple[Any, bool], None, None]:
