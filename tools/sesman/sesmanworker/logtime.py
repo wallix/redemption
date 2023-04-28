@@ -8,20 +8,20 @@
 #
 
 from time import time as get_time
+from enum import Enum
 
 from typing import Optional, Dict
 
 
-STEPS = {
-    "PRIMARY_CONN": "primary_connection",
-    "PRIMARY_AUTH": "primary_authentication",
-    "FETCH_RIGHTS": "fetch_rights",
-    "CHECKOUT_TARGET": "checkout_target",
-    "TARGET_CONN": "target_connection",
-}
-
-
 DEBUG = False
+
+
+class Steps(Enum):
+    PRIMARY_CONN = "primary_connection"
+    PRIMARY_AUTH = "primary_authentication"
+    FETCH_RIGHTS = "fetch_rights"
+    CHECKOUT_TARGET = "checkout_target"
+    TARGET_CONN = "target_connection"
 
 
 if DEBUG:
@@ -33,8 +33,8 @@ else:
 
 
 class Logtime:
-    saved_times: Dict[str, float]
-    current_step: Optional[str]
+    saved_times: Dict[Steps, float]
+    current_step: Optional[Steps]
     last_time: float
     step_time: float
     paused: bool
@@ -60,7 +60,7 @@ class Logtime:
         self.saved_times[self.current_step] = round(self.step_time, 3)
         self._reset()
 
-    def start(self, step: str, current_time: float = 0) -> None:
+    def start(self, step: Steps, current_time: float = 0) -> None:
         current_time = current_time or get_time()
         print_debug(f">>>>> START {step}")
         if self.current_step == step:
@@ -74,7 +74,7 @@ class Logtime:
         self.current_step = step
         self.last_time = current_time
 
-    def stop(self, step: Optional[str] = None, current_time: float = 0) -> None:
+    def stop(self, step: Optional[Steps] = None, current_time: float = 0) -> None:
         print_debug(f">>>>> STOP {step or self.current_step}")
         if step is not None and step != self.current_step:
             return
@@ -84,7 +84,7 @@ class Logtime:
                 self._add_time(current_time)
             self._save_time()
 
-    def pause(self, step: Optional[str] = None, current_time: float = 0) -> None:
+    def pause(self, step: Optional[Steps] = None, current_time: float = 0) -> None:
         print_debug(f">>>>> PAUSE {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
@@ -93,9 +93,9 @@ class Logtime:
             current_time = current_time or get_time()
             self._add_time(current_time)
             self.paused = True
-        print_debug(self.get_metrics())
+        print_debug(self.saved_times)
 
-    def resume(self, step: Optional[str] = None, current_time: float = 0) -> None:
+    def resume(self, step: Optional[Steps] = None, current_time: float = 0) -> None:
         print_debug(f">>>>> RESUME {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
@@ -108,13 +108,10 @@ class Logtime:
     def is_paused(self) -> bool:
         return self.paused
 
-    def is_started(self, step=None) -> bool:
+    def is_started(self, step: Optional[Steps] = None) -> bool:
         if step is None:
             return self.current_step is not None
         return self.current_step == step
-
-    def get_metrics(self) -> Dict[str, float]:
-        return self.saved_times
 
     def total_metrics(self) -> float:
         total = sum(self.saved_times.values())
@@ -122,14 +119,13 @@ class Logtime:
 
     def report_metrics(self) -> Dict[str, float]:
         metrics = {
-            STEPS[step]: value
+            step.value: value
             for step, value in self.saved_times.items()
-            if step in STEPS
         }
         metrics['total'] = self.total_metrics()
         return metrics
 
-    def add_step_time(self, step: str, step_time: float) -> None:
+    def add_step_time(self, step: Steps, step_time: float) -> None:
         self.saved_times[step] = round(step_time, 3)
 
 
@@ -138,9 +134,9 @@ logtimer = Logtime()
 
 def logtime_prim_auth(func):
     def cb_auth_wrapper(*args, **kwargs):
-        logtimer.resume("PRIMARY_AUTH")
+        logtimer.resume(Steps.PRIMARY_AUTH)
         res = func(*args, **kwargs)
-        logtimer.pause("PRIMARY_AUTH")
+        logtimer.pause(Steps.PRIMARY_AUTH)
         return res
     return cb_auth_wrapper
 

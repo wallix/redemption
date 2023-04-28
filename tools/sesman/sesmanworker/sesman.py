@@ -51,7 +51,7 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
 
 import syslog
 
-from .logtime import logtimer, logtime_function_pause
+from .logtime import logtimer, Steps as LogSteps, logtime_function_pause
 
 
 def print_exception_caught(func):
@@ -1710,7 +1710,7 @@ class Sesman():
 
             # AUTHENTIFY
             # [ LOGIN ]
-            logtimer.start("PRIMARY_AUTH")
+            logtimer.start(LogSteps.PRIMARY_AUTH)
             _status, _error = self.authentify()
 
             if _status is None and self.engine.get_challenge():
@@ -1794,27 +1794,27 @@ class Sesman():
                 _status = None
                 while _status is None:
                     # [ SELECTOR ]
-                    logtimer.start("FETCH_RIGHTS")
+                    logtimer.start(LogSteps.FETCH_RIGHTS)
                     _status, _error = self.get_service()
                     Logger().info(f"get_service end: {_status}")
                     if not _status:
                         # logout or error in selector
                         self.engine.reset_proxy_rights()
-                        logtimer.stop("FETCH_RIGHTS")
+                        logtimer.stop(LogSteps.FETCH_RIGHTS)
                         break
-                    logtimer.start("CHECKOUT_TARGET")
+                    logtimer.start(LogSteps.CHECKOUT_TARGET)
                     selected_target, _status, _error = self.select_target()
                     Logger().info(f"select_target end: {_status}")
                     if not _status:
                         # target not available
                         self.engine.reset_proxy_rights()
-                        logtimer.stop("CHECKOUT_TARGET")
+                        logtimer.stop(LogSteps.CHECKOUT_TARGET)
                         break
                     # [ WAIT INFO ]
                     _status, _error = self.check_target(selected_target)
                     Logger().info(f"check_target end: {_status}")
                     if not _status:
-                        logtimer.stop("CHECKOUT_TARGET")
+                        logtimer.stop(LogSteps.CHECKOUT_TARGET)
                         if _status is None:
                             continue
                         self.engine.reset_proxy_rights()
@@ -2212,7 +2212,7 @@ class Sesman():
 
                     try_next = True
                     self.shared['module'] = ''
-                    logtimer.stop("CHECKOUT_TARGET")
+                    logtimer.stop(LogSteps.CHECKOUT_TARGET)
                     try:
                         ###########
                         # SEND KV #
@@ -2545,8 +2545,8 @@ class Sesman():
             try:
                 tct = int(self.shared.get("target_connection_time", 0))
                 fct = int(self.shared.get("front_connection_time", 0))
-                logtimer.add_step_time("TARGET_CONN", tct / 1000.0)
-                logtimer.add_step_time("PRIMARY_CONN", fct / 1000.0)
+                logtimer.add_step_time(LogSteps.TARGET_CONN, tct / 1000.0)
+                logtimer.add_step_time(LogSteps.PRIMARY_CONN, fct / 1000.0)
                 metrics = logtimer.report_metrics()
                 self.rdplog.log("TIME_METRICS",
                                 session_id=self.shared.get('session_id'),
