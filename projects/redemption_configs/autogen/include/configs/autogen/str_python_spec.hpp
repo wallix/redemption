@@ -988,6 +988,7 @@ framerate = integer(min=1, max=120, default=5)
 #_advanced
 ffmpeg_options = string(default='crf=35 preset=superfast')
 
+# Remove the top left banner that adds the date of the video
 #_advanced
 notimestamp = boolean(default=False)
 

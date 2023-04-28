@@ -858,7 +858,7 @@ void config_spec_definition(Writer && W)
             "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
             "/!\\ Some browsers and video decoders don't support crf=0"
         }, set("crf=35 preset=superfast"));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"notimestamp"}, set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"notimestamp"}, set(false), desc{"Remove the top left banner that adds the date of the video"});
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), names{"smart_video_cropping"}, set(SmartVideoCropping::v2));
 

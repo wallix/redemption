@@ -2840,6 +2840,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { "crf=35 preset=superfast" };
     };
+    /// Remove the top left banner that adds the date of the video <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::notimestamp {

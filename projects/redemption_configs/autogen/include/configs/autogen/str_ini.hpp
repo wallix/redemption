@@ -1160,6 +1160,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #ffmpeg_options = crf=35 preset=superfast
 
+# Remove the top left banner that adds the date of the video
 # value: 0 or 1
 #_advanced
 #notimestamp = 0
