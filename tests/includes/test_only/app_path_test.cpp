@@ -5,7 +5,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #include "core/app_path.hpp"
-#include "test_only/test_framework/impl/test_paths.hpp"
+
+#ifndef REDEMPTION_DONT_USE_BOOST_TEST
+# include "test_only/test_framework/impl/test_paths.hpp"
+#endif
 
 #include <array>
 
@@ -30,7 +33,11 @@ zstring_view app_path(AppPath k) noexcept
     auto set_cache = [&](std::string_view str) {
         static std::array<std::string, 32> app_path_buffer {};
         auto i = static_cast<std::size_t>(k);
+#ifndef REDEMPTION_DONT_USE_BOOST_TEST
         auto path = ut_impl::compute_test_path(str);
+#else
+        auto path = str;
+#endif
         // copy, don't move for address consistence
         app_path_buffer[i] = std::string_view(path);
         return zstring_view(app_path_buffer[i]);

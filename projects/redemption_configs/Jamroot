@@ -130,8 +130,9 @@ add_obj strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 add_obj hex2buf.o : $(REDEMPTION_SRC_PATH)/utils/hexadecimal_string_to_buffer.cpp ;
 add_obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 add_obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
-add_obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
-    <conditional>@defines-for-test
+add_obj app_path_test.o : $(REDEMPTION_TEST_PATH)/includes/test_only/app_path_test.cpp :
+    <include>$(REDEMPTION_TEST_PATH)/includes/
+    <define>REDEMPTION_DONT_USE_BOOST_TEST
     <define>SHARE_PATH='\"\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 ;
@@ -160,7 +161,6 @@ rule test-run ( name )
         <library>$(obj_list)
         # <cxxflags>-frtti
         <include>redemption_src
-        <conditional>@defines-for-test
     ;
 }
 
