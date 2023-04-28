@@ -1088,9 +1088,7 @@ static inline int replay(
                     cctx.set_trace_type(rp.encryption_type);
 
                     std::optional<Capture> retarded_capture {};
-                    auto set_capture_consumer = [&](
-                        MonotonicTimePoint now, RealTimePoint real_time
-                    ) mutable {
+                    auto set_capture_consumer = [&]() mutable {
                         DrawableParams const drawable_params{
                             rdp_drawable,
                             player.pointers_view()
@@ -1125,8 +1123,8 @@ static inline int replay(
                         };
 
                         CaptureParams capture_params{
-                            now,
-                            real_time,
+                            player.get_monotonic_time(),
+                            player.get_real_time(),
                             spath.basename.c_str(),
                             record_tmp_path,
                             record_path,
@@ -1168,7 +1166,7 @@ static inline int replay(
                                 return;
                             }
 
-                            this->load_capture(now, RealTimePoint{now.time_since_epoch()});
+                            this->load_capture();
                         }
 
                         // new format starts with time_points
@@ -1181,10 +1179,7 @@ static inline int replay(
                             }
 
                             auto elapsed = monotonic_delay - begin_capture;
-                            this->load_capture(
-                                MonotonicTimePoint(monotonic_delay - elapsed),
-                                real_time - elapsed
-                            );
+                            this->load_capture();
 
                             if (elapsed > 250ms) {
                                 this->retarded_capture->external_times(
@@ -1208,8 +1203,8 @@ static inline int replay(
                     };
 
                     CaptureMaker capture_maker(set_capture_consumer,
-                                                retarded_capture,
-                                                video_start_time);
+                                               retarded_capture,
+                                               video_start_time);
 
                     if (capture_times.begin_cap.count()) {
                         player.add_consumer(
@@ -1217,8 +1212,7 @@ static inline int replay(
                             &capture_maker, nullptr, nullptr);
                     }
                     else {
-                        set_capture_consumer(
-                            player.get_monotonic_time(), player.get_real_time());
+                        set_capture_consumer();
                     }
 
                     if (update_progress_data.is_valid()) {
