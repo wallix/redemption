@@ -367,11 +367,12 @@ To enable session recording, the line `kv['is_rec'] = '1'` in `passthrough.py` m
 
 ## Convert .mwrm/.wrm capture to video
 
-`.mwrm` and `.wrm` are native capture formats in `capture_flags=2` in `rdpproxy.ini`.
+`.mwrm` and `.wrm` are the native capture formats when recording is enabled.
+The following line will transform a recording into an mp4 video:
 
-    redrec -f --video-codec mp4 -i file.mwrm -o output_prefix
+    redrec -u -i file.mwrm -o output_prefix
 
-Note: `rdpproxy --print-default-ini` show a default ini file.
+Note: use `redrec -h` to see the list of options.
 
 
 # Compile proxy_recorder
