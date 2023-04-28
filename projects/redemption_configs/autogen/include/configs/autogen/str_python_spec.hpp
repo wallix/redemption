@@ -1295,7 +1295,7 @@ session = integer(min=0, default=0)
 # - bmp_info        = 0x00000800
 # - global_channel  = 0x00002000
 # - sec_decrypted   = 0x00004000
-# - keymap          = 0x00008004<br/>
+# - keymap          = 0x00008000<br/>
 # 
 # (Serializer)
 # - pointer             = 0x00040000
@@ -1378,6 +1378,7 @@ mod_internal = integer(min=0, default=0)
 # - basic    = 0x0001
 # - dump     = 0x0002
 # - watchdog = 0x0004
+# - meta     = 0x0008
 #_advanced
 #_hex
 sck_mod = integer(min=0, default=0)
@@ -1385,6 +1386,7 @@ sck_mod = integer(min=0, default=0)
 # - basic    = 0x0001
 # - dump     = 0x0002
 # - watchdog = 0x0004
+# - meta     = 0x0008
 #_advanced
 #_hex
 sck_front = integer(min=0, default=0)

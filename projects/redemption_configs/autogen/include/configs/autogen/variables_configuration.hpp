@@ -4679,7 +4679,7 @@ namespace cfg
     /// - bmp_info        = 0x00000800 <br/>
     /// - global_channel  = 0x00002000 <br/>
     /// - sec_decrypted   = 0x00004000 <br/>
-    /// - keymap          = 0x00008004 <br/>
+    /// - keymap          = 0x00008000 <br/>
     ///  <br/>
     /// (Serializer) <br/>
     /// - pointer             = 0x00040000 <br/>
@@ -4778,6 +4778,7 @@ namespace cfg
     /// - basic    = 0x0001 <br/>
     /// - dump     = 0x0002 <br/>
     /// - watchdog = 0x0004 <br/>
+    /// - meta     = 0x0008 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::sck_mod {
@@ -4789,6 +4790,7 @@ namespace cfg
     /// - basic    = 0x0001 <br/>
     /// - dump     = 0x0002 <br/>
     /// - watchdog = 0x0004 <br/>
+    /// - meta     = 0x0008 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::sck_front {
