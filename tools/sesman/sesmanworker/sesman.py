@@ -22,7 +22,7 @@ from time import time, ctime, mktime
 from datetime import datetime
 import socket
 from socket import gethostname
-from typing import Iterable, Any, Tuple, Generator, Dict
+from typing import Iterable, Any, Tuple, Optional, Generator, Dict, Union
 
 from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
@@ -106,10 +106,10 @@ class RdpProxyLog:
         syslog.openlog('rdpproxy')
         self._context = '[rdpproxy] '
 
-    def update_context(self, psid, user):
+    def update_context(self, psid, user) -> None:
         self._context = f'[rdpproxy] psid="{psid}" user="{user}"'
 
-    def log(self, type, **kwargs):
+    def log(self, type, **kwargs) -> None:
         target = kwargs.pop('target', None)
         arg_list = list(kwargs.items())
         if target:
@@ -117,8 +117,7 @@ class RdpProxyLog:
         arg_list[:0] = [('type', type)]
         args = ' '.join(f'{k}="{self.escape_bs_dq(v)}"'
                         for (k, v) in arg_list if v)
-        line = ' '.join((self._context, args))
-        syslog.syslog(syslog.LOG_INFO, line)
+        syslog.syslog(syslog.LOG_INFO, f'{self._context} {args}')
 
     @staticmethod
     def escape_bs_dq(string):
@@ -156,7 +155,7 @@ def truncat_string(item, maxsize=20):
     return (item[:maxsize] + '..') if len(item) > maxsize else item
 
 
-def parse_auth(username):
+def parse_auth(username: str) -> Tuple[str, Optional[Tuple[str, str, str, str]]]:
     """
     Extract actual username and target if provided
     from authentication identity
@@ -194,7 +193,7 @@ def parse_auth(username):
 
 
 # PM Function
-def parse_param(param, current_device=None):
+def parse_param(param: str) -> Optional[Tuple[str, str, Optional[str]]]:
     """
     Extract account representation
 
@@ -212,20 +211,13 @@ def parse_param(param, current_device=None):
     if len(parsed) > 1:
         account_name = parsed[0]
         domain_name = parsed[1]
-        if (len(parsed) == 3
-            and parsed[2]
-            and current_device
-            and (parsed[2] != current_device)):
-            return None
-        device_name = (current_device or parsed[2]) if len(parsed) == 3 \
-            else None
+        device_name = parsed[2] if len(parsed) == 3 else None
         return account_name, domain_name, device_name
-    else:
-        return None
+    return None
 
 
 # PM Function
-def pm_request(engine, request):
+def pm_request(engine, request: str) -> Dict[str, Union[str, int]]:
     Logger().debug(f"pm_request: '{request}'")
     if request and request[0] == '/':
         request = request[1:]
@@ -295,15 +287,15 @@ class BastionSignal(Exception):
 class RTManager:
     __slots__ = ("sesman", "time_limit", "last_start")
 
-    def __init__(self, sesman, time_limit):
+    def __init__(self, sesman, time_limit: float):
         self.sesman = sesman
         self.time_limit = time_limit
         self.last_start = 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.last_start = 0
 
-    def start(self, current_time):
+    def start(self, current_time: float) -> None:
         Logger().debug(f"Start RT Manager at {current_time}")
         self.last_start = current_time
         if not self.sesman.shared.get("rt_display"):
@@ -324,11 +316,11 @@ class RTManager:
                 data['redis_tls_cacert'] = redis_config.get('ssl_ca_certs')
             self.sesman.send_data(data)
 
-    def stop(self):
+    def stop(self) -> None:
         self.last_start = 0
         self.send_rtdisplay(0)
 
-    def check(self, current_time):
+    def check(self, current_time: float) -> bool:
         if (self.last_start
             and (current_time > self.last_start + self.time_limit)):
             Logger().debug(f"Check RT Manager at {current_time} STOP")
@@ -337,7 +329,7 @@ class RTManager:
             return False
         return True
 
-    def send_rtdisplay(self, rt_display):
+    def send_rtdisplay(self, rt_display: int) -> None:
         if self.sesman.shared.get("rt_display") != rt_display:
             Logger().debug(f"sending rt_display={rt_display}")
             self.sesman.send_data({"rt_display": rt_display})
@@ -719,8 +711,16 @@ class Sesman():
 
         return True, ''
 
-    def parse_username(self, wab_login, target_login, target_device,
-                       target_service, target_group):
+    def parse_username(self,
+                       wab_login: str,
+                       target_login: str,
+                       target_device: str,
+                       target_service: str,
+                       target_group: str) -> Tuple[
+                           bool,  # TODO Literal[True] for status
+                           str,  # TODO Literal[''] for error message
+                           str, str, str, str, str, Optional[str],
+                        ]:
         effective_login = None
         wab_login, target_tuple = parse_auth(wab_login)
         if target_tuple is not None:
