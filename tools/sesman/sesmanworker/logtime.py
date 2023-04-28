@@ -7,7 +7,7 @@
 # Compile with:
 #
 
-import time
+from time import time as get_time
 
 from typing import Optional, Dict
 
@@ -22,21 +22,6 @@ STEPS = {
 
 
 DEBUG = False
-
-
-def set_time(func):
-    def wrapper(*args, **kwargs):
-        current_time = kwargs.get('current_time')
-        if current_time is None:
-            kwargs['current_time'] = time.time()
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def get_time(current_time: Optional[float] = None) -> float:
-    if current_time is None:
-        return time.time()
-    return current_time
 
 
 if DEBUG:
@@ -64,21 +49,19 @@ class Logtime:
         self.step_time = 0
         self.paused = False
 
-    @set_time
     def _add_time(self, current_time: float) -> None:
         diff_time = (current_time - self.last_time)
         print_debug(f">>>>> Time ADDED {diff_time} for state {self.current_step}")
         self.step_time += diff_time
         self.last_time = current_time
 
-    @set_time
-    def _save_time(self, current_time: float) -> None:
+    def _save_time(self) -> None:
         print_debug(f">>>>> Time SAVED {self.step_time} for state {self.current_step}")
         self.saved_times[self.current_step] = round(self.step_time, 3)
         self._reset()
 
-    @set_time
-    def start(self, step: str, current_time: float) -> None:
+    def start(self, step: str, current_time: float = 0) -> None:
+        current_time = current_time or get_time()
         print_debug(f">>>>> START {step}")
         if self.current_step == step:
             # step already started
@@ -91,34 +74,34 @@ class Logtime:
         self.current_step = step
         self.last_time = current_time
 
-    def stop(self, step: Optional[str] = None, current_time: Optional[float] = None) -> None:
+    def stop(self, step: Optional[str] = None, current_time: float = 0) -> None:
         print_debug(f">>>>> STOP {step or self.current_step}")
         if step is not None and step != self.current_step:
             return
         if self.current_step is not None:
-            current_time = get_time(current_time)
             if not self.paused:
-                self._add_time(current_time=current_time)
-            self._save_time(current_time=current_time)
+                current_time = current_time or get_time()
+                self._add_time(current_time)
+            self._save_time()
 
-    def pause(self, step: Optional[str] = None, current_time: Optional[float] = None) -> None:
+    def pause(self, step: Optional[str] = None, current_time: float = 0) -> None:
         print_debug(f">>>>> PAUSE {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
             return
         if self.current_step and not self.paused:
-            current_time = get_time(current_time)
-            self._add_time(current_time=current_time)
+            current_time = current_time or get_time()
+            self._add_time(current_time)
             self.paused = True
         print_debug(self.get_metrics())
 
-    def resume(self, step: Optional[str] = None, current_time: Optional[float] = None) -> None:
+    def resume(self, step: Optional[str] = None, current_time: float = 0) -> None:
         print_debug(f">>>>> RESUME {step or self.current_step}")
         if step is not None and step != self.current_step:
             # ignore this call as the step is not concerned
             return
         if self.current_step and self.paused:
-            current_time = get_time(current_time)
+            current_time = current_time or get_time()
             self.last_time = current_time
             self.paused = False
 
