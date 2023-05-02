@@ -24,7 +24,6 @@ import socket
 from socket import gethostname
 from typing import Any, Tuple, Optional, Dict, Union, List
 
-from .utils import collection_has_more
 from .parsers import parse_param, parse_auth, parse_app, parse_duration
 from .proxy_log import RdpProxyLog
 from .addrutils import check_hostname_in_subnet
@@ -1840,9 +1839,10 @@ class Sesman():
         close_box = False
 
         if _status:
-            for physical_target, has_more_physical_target in collection_has_more(
-                self.engine.get_effective_target(selected_target)
-            ):
+            physical_targets = self.engine.get_effective_target(selected_target)
+            last_physical_target_index = len(physical_targets) - 1
+            for itarget, physical_target in enumerate(physical_targets):
+                has_more_physical_target = itarget != last_physical_target_index
                 kv['try_alternate_target'] = "True" if try_next else "False"
                 kv['has_more_target'] = "True" if has_more_physical_target else "False"
 
