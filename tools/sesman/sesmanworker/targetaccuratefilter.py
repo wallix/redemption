@@ -83,7 +83,7 @@ The following examples are forbidden :
 
 """
 
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 FILTER_KEYWORD_LIST = (
     "account",
@@ -139,7 +139,7 @@ def filter_patterns_splitting(filter_patterns: str) -> List[str]:
     return [KEYWORD_PREFIX + filter_pattern if i != 0 else filter_pattern
             for i, filter_pattern in enumerate(word_list)]
 
-def get_filter_pattern_dict(filter_patterns):
+def get_filter_pattern_dict(filter_patterns: str) -> Dict[str, str]:
     filter_pattern_dict = {}
 
     for filter_kv in filter_patterns_splitting(filter_patterns):
@@ -165,6 +165,7 @@ def get_filter_pattern_dict(filter_patterns):
             raise FilterKeywordDuplicateError(filter_keyword)
     return filter_pattern_dict
 
-def is_filterable(filter_pattern_dict, target_field_dict):
+def is_filterable(filter_pattern_dict: Dict[str, str],
+                  target_field_dict: Dict[str, str]) -> bool:
     return all(kw in target_field_dict and value in target_field_dict[kw]
                for kw, value in filter_pattern_dict.items())
