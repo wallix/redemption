@@ -83,12 +83,14 @@ The following examples are forbidden :
 
 """
 
+from typing import Optional, List
 
-FILTER_KEYWORD_LIST = [
+FILTER_KEYWORD_LIST = (
     "account",
     "domain",
     "device",
-    "service"]
+    "service",
+)
 
 KEYWORD_PREFIX = '?'
 FILTER_SEPARATOR = '&?'
@@ -116,7 +118,7 @@ class ParsingError(RuntimeError):
             self,
             f"'keyword{FILTER_KV_SEPARATOR}value' format parsing error with '{bad_string}'")
 
-def get_selector_filter_mode(pattern):
+def get_selector_filter_mode(pattern: str) -> int:
     if not pattern:
         return SelectorFilterMode.NONE
     elif not pattern.startswith(KEYWORD_PREFIX):
@@ -124,7 +126,7 @@ def get_selector_filter_mode(pattern):
     else:
         return SelectorFilterMode.ADVANCED
 
-def try_get_filter_keyword_without_kprefix(filter_keyword):
+def try_get_filter_keyword_without_kprefix(filter_keyword: str) -> Optional[str]:
     if filter_keyword.startswith(KEYWORD_PREFIX):
         filter_keyword_without_kprefix = filter_keyword[1:]
 
@@ -132,7 +134,7 @@ def try_get_filter_keyword_without_kprefix(filter_keyword):
             return filter_keyword_without_kprefix
     return None
 
-def filter_patterns_splitting(filter_patterns):
+def filter_patterns_splitting(filter_patterns: str) -> List[str]:
     word_list = filter_patterns.split(FILTER_SEPARATOR)
     filter_pattern_list = [None] * len(word_list)
     first_filter_pattern = True

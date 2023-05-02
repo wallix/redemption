@@ -28,7 +28,7 @@ from wallixconst.account import AM_IL_DOMAIN
 from wallixconst.trace import LOCAL_TRACE_PATH_RDP
 from wallixredis import redis
 from wallixutils import is_cloud_configuration
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Tuple, Dict, List, Any
 
 from .logtime import logtime_function_pause
 import time
@@ -242,7 +242,7 @@ class Engine:
                 )
             )
 
-    def get_trace_type(self):
+    def get_trace_type(self) -> str:
         try:
             return self.wabengine_conf.get('trace', 'localfile_hashed')
         except Exception:
@@ -253,7 +253,7 @@ class Engine:
                           f"((({traceback.format_exc()})))")
         return 'localfile_hashed'
 
-    def get_selector_banner(self):
+    def get_selector_banner(self) -> Dict[str, Any]:
         try:
             self._selector_banner = self.wabengine_conf.get('banner')
         except Exception:
@@ -264,15 +264,15 @@ class Engine:
                           f"((({traceback.format_exc()})))")
         return self._selector_banner
 
-    def get_trace_encryption_key(self, path, old_scheme=False):
+    def get_trace_encryption_key(self, path: str, old_scheme: bool = False) -> None:
         with manage_transaction(self.wabengine):
             return self.wabengine.get_trace_encryption_key(path, old_scheme)
 
-    def get_trace_sign_key(self):
+    def get_trace_sign_key(self) -> None:
         with manage_transaction(self.wabengine):
             return self.wabengine.get_trace_sign_key()
 
-    def password_expiration_date(self):
+    def password_expiration_date(self) -> Tuple[bool, int]:
         try:
             with manage_transaction(self.wabengine):
                 _data = self.wabengine.check_password_expiration_info()
@@ -285,25 +285,25 @@ class Engine:
                           f"((({traceback.format_exc()})))")
         return False, 0
 
-    def is_x509_connected(self, wab_login: str, ip_client, proxy_type, target,
-                          ip_server):
+    def is_x509_connected(self, wab_login: str, ip_client: str, proxy_type: str, target: str,
+                          ip_server: str) -> bool:
         return self.authenticator.is_x509_connected(
             wab_login, ip_client, proxy_type, target, ip_server
         )
 
-    def is_x509_validated(self):
+    def is_x509_validated(self) -> bool:
         return self.authenticator.is_x509_validated()
 
     @logtime_function_pause
-    def x509_authenticate(self, ip_client=None, ip_server=None):
+    def x509_authenticate(self, ip_client: Optional[str] = None, ip_server: Optional[str] = None) -> bool:
         return self.authenticator.x509_authenticate(
             self, ip_client, ip_server
         )
 
-    def mobile_device_authenticate(self):
+    def mobile_device_authenticate(self) -> bool:
         return self.authenticator.mobile_device_authenticate(self)
 
-    def url_redirect_authenticate(self):
+    def url_redirect_authenticate(self) -> bool:
         return self.authenticator.url_redirect_authenticate(self)
 
     def check_kbdint_auth(self, wab_login: str, ip_client: str, ip_server: str) -> Union[bool, str, None]:
@@ -311,7 +311,7 @@ class Engine:
             self, wab_login, ip_client, ip_server
         )
 
-    def password_authenticate(self, wab_login: str, ip_client, password, ip_server) -> bool:
+    def password_authenticate(self, wab_login: str, ip_client: str, password: str, ip_server: str) -> bool:
         return self.authenticator.password_authenticate(
             self, wab_login, ip_client, password, ip_server
         )
@@ -338,9 +338,16 @@ class Engine:
     def reset_challenge(self) -> None:
         self.authenticator.reset_challenge()
 
-    def resolve_target_host(self, target_device, target_login, target_service,
-                            target_group, real_target_device, target_context,
-                            passthrough_mode, protocols):
+    def resolve_target_host(self,
+                            target_device: str,
+                            target_login: str,
+                            target_service: str,
+                            target_group: str,
+                            real_target_device: str,
+                            target_context: Optional[TargetContext],
+                            passthrough_mode: bool,
+                            protocols: List[str]
+                            ) -> Tuple[Optional[str], Optional[TargetContext]]:
         """ Resolve the right target host to use
         target_context.host will contains the target host.
         target_context.showname() will contains the target_device to show
@@ -395,9 +402,10 @@ class Engine:
                     Logger().info("target_device is not a hostname")
         return target_device, target_context
 
-    def NotifyConnectionToCriticalEquipment(self, protocol, user, source,
-                                            ip_source, login, device, ip,
-                                            time, url):
+    def NotifyConnectionToCriticalEquipment(self, protocol: str, user: str,
+                                            source: str, ip_source: str,
+                                            login: str, device: str, ip: str,
+                                            time: float, url: Optional[str]) -> None:
         try:
             notif_data = {
                 'protocol': protocol,
@@ -419,7 +427,8 @@ class Engine:
             Logger().info("Engine NotifyConnectionToCriticalEquipment failed: "
                           f"((({traceback.format_exc()})))")
 
-    def NotifySecondaryConnectionFailed(self, user, ip, account, device):
+    def NotifySecondaryConnectionFailed(self, user: str, ip: str, account: str,
+                                        device: str) -> None:
         try:
             notif_data = {
                 'user': user,
@@ -434,7 +443,8 @@ class Engine:
             Logger().info("Engine NotifySecondaryConnectionFailed failed: "
                           f"((({traceback.format_exc()})))")
 
-    def NotifyFilesystemIsFullOrUsedAtXPercent(self, filesystem, used):
+    def NotifyFilesystemIsFullOrUsedAtXPercent(self, filesystem: str,
+                                               used: str) -> None:
         try:
             notif_data = {
                 'filesystem': filesystem,
@@ -447,8 +457,9 @@ class Engine:
             Logger().info("Engine NotifyFilesystemIsFullOrUsedAtXPercent "
                           f"failed: ((({traceback.format_exc()})))")
 
-    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user,
-                                   host, cn, service):
+    def NotifyFindPatternInRDPFlow(self, regexp: str, string: str,
+                                   user_login: str, user: str, host: str,
+                                   cn: str, service: str) -> None:
         try:
             notif_data = {
                 'regexp': regexp,
@@ -472,9 +483,10 @@ class Engine:
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
-    def notify_find_connection_rdp(self, rule, deny, app_name, app_cmd_line,
-                                   dst_addr, dst_port, user_login, user,
-                                   host, cn, service):
+    def notify_find_connection_rdp(self, rule: str, deny: str, app_name: str,
+                                   app_cmd_line: str, dst_addr: str,
+                                   dst_port: str, user_login: str, user: str,
+                                   host: str, cn: str, service: str) -> None:
         try:
             notif_data = {
                 'rule': rule,
@@ -500,8 +512,9 @@ class Engine:
             Logger().info("Engine NotifyFindConnectionInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
-    def notify_find_process_rdp(self, regex, deny, app_name, app_cmd_line,
-                                user_login, user, host, cn, service):
+    def notify_find_process_rdp(self: str, regex: str, deny: str, app_name: str,
+                                app_cmd_line: str, user_login: str, user: str,
+                                host: str, cn: str, service: str) -> None:
         try:
             notif_data = {
                 'regex': regex,
@@ -526,9 +539,8 @@ class Engine:
                           f"((({traceback.format_exc()})))")
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter,
-                         case_sensitive):
-        def fc(string):
-            return string if case_sensitive else string.lower()
+                         case_sensitive: bool) -> Tuple[List, bool]:
+        fc = (lambda string: string) if case_sensitive else (lambda string: string.lower())
 
         targets = []
         selector_filter_mode = taf.get_selector_filter_mode(device_filter)
@@ -888,7 +900,7 @@ class Engine:
         return self._find_target_right(target_login, target_device,
                                        target_service, target_group)
 
-    def get_effective_target(self, selected_target):
+    def get_effective_target(self, selected_target) -> List[Dict[str, Any]]:
         application = selected_target['application_cn']
         try:
             if application and not self.is_sharing_session(selected_target):
