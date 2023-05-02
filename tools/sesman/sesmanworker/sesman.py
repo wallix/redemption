@@ -25,6 +25,7 @@ from socket import gethostname
 from typing import Any, Tuple, Optional, Dict, Union
 
 from .utils import collection_has_more, parse_duration
+from .parsers import parse_param
 from .proxy_log import RdpProxyLog
 from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
@@ -136,30 +137,6 @@ def parse_auth(username: str) -> Tuple[str, Optional[Tuple[str, str, str, str]]]
         if sep:
             return primary, (user, dev, service, group)
     return username, None
-
-
-# PM Function
-def parse_param(param: str) -> Optional[Tuple[str, str, Optional[str]]]:
-    """
-    Extract account representation
-
-    string format is <account_name>@<domain_name>[@<device_name>]
-
-    If @<device_name> is absent, <domain_name> is a global domain name
-    Else <domain_name> is a local domain name of the current_device
-
-    if 'current_device' is not None
-    <device_name> should be empty or equal to current_device
-    Else <device_name> can be another device
-
-    """
-    parsed = param.rsplit("@", 2)
-    if len(parsed) > 1:
-        account_name = parsed[0]
-        domain_name = parsed[1]
-        device_name = parsed[2] if len(parsed) == 3 else None
-        return account_name, domain_name, device_name
-    return None
 
 
 # PM Function
