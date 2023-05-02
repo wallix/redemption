@@ -22,8 +22,9 @@ from time import time, ctime, mktime
 from datetime import datetime
 import socket
 from socket import gethostname
-from typing import Iterable, Any, Tuple, Optional, Generator, Dict, Union
+from typing import Any, Tuple, Optional, Dict, Union
 
+from .utils import collection_has_more, parse_duration
 from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
 from . import engine
@@ -52,36 +53,6 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
 import syslog
 
 from .logtime import logtimer, Steps as LogSteps, logtime_function_pause
-
-
-def collection_has_more(
-        iterable: Iterable[Any]
-) -> Generator[Tuple[Any, bool], None, None]:
-    it = iter(iterable)
-    try:
-        cur_item = next(it)
-    except StopIteration:
-        return
-    for item in it:
-        yield cur_item, True
-        cur_item = item
-    yield cur_item, False
-
-
-def parse_duration(duration: str) -> int:
-    """
-    duration format: {hours}h{min}m or {hours}h or {min}m
-    """
-    if duration:
-        mres = re.search(r"(?:(\d+)h)?(?:(\d+)m)?", duration)
-        if mres is not None:
-            d = (
-                60 * 60 * int(mres.group(1) or 0)
-              + 60 * int(mres.group(2) or 0)
-            )
-            return d or 3600
-
-    return 3600
 
 
 _convert_to_int = lambda x: (int(x) if isinstance(x, str) else x)
