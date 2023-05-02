@@ -121,7 +121,7 @@ class Authenticator:
         if self.checker is None:
             self.checker = Checker()
 
-    def _reset_auth(self, remove_auth_state: str = None, cancel: bool = True) -> None:
+    def _reset_auth(self, remove_auth_state: str = '', cancel: bool = True) -> None:
         if remove_auth_state:
             Logger().debug(f">> PA remove state {remove_auth_state}")
             # do not try this auth method again
@@ -140,8 +140,8 @@ class Authenticator:
     def _init_identify(self,
                        ip_source: str,
                        server_ip: str,
-                       login: Optional[str] = None,
-                       auth_state: Optional[str] = None,
+                       login: Optional[str],
+                       auth_state: str,
                        client_name: str = PROXY_CLIENT) -> bool:
         self._init_client()
 

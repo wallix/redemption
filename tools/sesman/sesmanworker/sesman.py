@@ -19,7 +19,7 @@ from logger import Logger
 from struct import unpack_from, pack
 from select import select
 from time import time, ctime, mktime
-from datetime import datetime
+from datetime import datetime, date
 import socket
 from socket import gethostname
 from typing import Any, Tuple, Optional, Dict, Union, List
@@ -1036,7 +1036,7 @@ class Sesman():
 
         return _status, _error
 
-    def get_service(self):
+    def get_service(self) -> Tuple[Union[None, bool], str]:
         """ Send service pages to proxy until the selected service is returned.
         """
 
@@ -1261,7 +1261,7 @@ class Sesman():
         return _status, _error
     # END METHOD - GET_SERVICE
 
-    def check_password_expiration_date(self):
+    def check_password_expiration_date(self) -> StatusError:
         _status, _error = True, ''
         try:
             notify, days = self.engine.password_expiration_date()
@@ -1278,7 +1278,7 @@ class Sesman():
                 Logger().info(f"<<<<{traceback.format_exc()}>>>>")
         return _status, _error
 
-    def create_record_path_directory(self, rec_path):
+    def create_record_path_directory(self, rec_path: str) -> StatusError:
         try:
             os.stat(rec_path)
         except OSError:
@@ -1290,7 +1290,7 @@ class Sesman():
                 return False, TR(Sesmsg.ERROR_RECORD_PATH_S) % rec_path
         return True, ''
 
-    def generate_record_filebase(self, session_id, user, account, start_time):
+    def generate_record_filebase(self, session_id: str, start_time: date) -> str:
         """
         Naming convention :
         {session_id},
@@ -1305,7 +1305,7 @@ class Sesman():
         basename = re.sub(r'[^-A-Za-z0-9_@,.]', "", basename)
         return basename
 
-    def get_trace_keys(self):
+    def get_trace_keys(self) -> Tuple[str, str]:
         derivator = self.record_filebase + ".mwrm"
         encryption_key = self.engine.get_trace_encryption_key(derivator, False)
         formated_encryption_key = encryption_key.hex()
@@ -1313,7 +1313,7 @@ class Sesman():
         formated_sign_key = sign_key.hex()
         return formated_encryption_key, formated_sign_key
 
-    def interactive_ask_recording(self, user):
+    def interactive_ask_recording(self, user: str) -> StatusError:
         message = ("Warning! Your remote session may be recorded and"
                    "kept in electronic format.")
         try:
@@ -1334,7 +1334,7 @@ class Sesman():
             self.engine.set_session_status(result=False, diag=reason)
         return _status, _error
 
-    def load_video_recording(self, rec_path, user):
+    def load_video_recording(self, rec_path: str, user: str) -> StatusError:
         Logger().info("Checking video")
 
         _status, _error = True, ''
@@ -1358,7 +1358,7 @@ class Sesman():
 
         return _status, _error
 
-    def load_session_log_redirection(self, rec_path):
+    def load_session_log_redirection(self, rec_path: str) -> StatusError:
         Logger().info("Checking session log redirection")
 
         data_to_send = {
@@ -1375,7 +1375,7 @@ class Sesman():
 
         return True, ''
 
-    def select_target(self):
+    def select_target(self) -> Tuple[Any, bool, str]:
         """
         FIND TARGET
 
@@ -1413,7 +1413,7 @@ class Sesman():
             return None, _status, _error
         return selected_target, True, ""
 
-    def check_target(self, selected_target):
+    def check_target(self, selected_target) -> Tuple[Union[None, bool], str]:
         """ Checking selected target validity
         """
         ticket = None
@@ -1486,7 +1486,7 @@ class Sesman():
         return False, ""
 
     @staticmethod
-    def _get_tf_flags(ticketfields):
+    def _get_tf_flags(ticketfields: Dict[str, Any]) -> int:
         flag = 0
 
         field = ticketfields.get("description")
@@ -1525,7 +1525,7 @@ class Sesman():
     }
 
     @staticmethod
-    def _get_rf_flags(request_fields):
+    def _get_rf_flags(request_fields: Dict[str, Any]) -> int:
         flag = 0
         if not request_fields:
             return flag
@@ -1537,10 +1537,10 @@ class Sesman():
         return flag
 
     @staticmethod
-    def _get_rf_duration_max(request_fields):
+    def _get_rf_duration_max(request_fields: Dict[str, Any]) -> int:
         return request_fields.get('duration', {}).get('max', 0)
 
-    def interactive_display_waitinfo(self, status, infos):
+    def interactive_display_waitinfo(self, status, infos: Dict[str, Any]) -> None:
         show_message = infos.get('message') or ''
         target = infos.get('target')
         if target:
@@ -1571,7 +1571,7 @@ class Sesman():
         tosend["formflag"] = flag
         self.send_data(tosend)
 
-    def start(self):
+    def start(self) -> None:
         _status, tries = None, 5
         while _status is None and tries > 0:
             self.reset_session_var()
@@ -1716,7 +1716,7 @@ class Sesman():
 
     # END METHOD - START
 
-    def connect_to_target(self, selected_target):
+    def connect_to_target(self, selected_target) -> Tuple[Union[None, bool], str]:
         """
         #####################
         ### START_SESSION ###
@@ -1748,7 +1748,6 @@ class Sesman():
             Logger().info(f"Starting Session, effective login='{self.effective_login}'")
 
             user = self.engine.get_username()
-            uname = self.effective_login or target_login_info.account_login
 
             # Add connection to the observer
             session_id, start_time, error_msg = self.engine.start_session(
@@ -1781,8 +1780,6 @@ class Sesman():
             rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
             self.record_filebase = self.generate_record_filebase(
                 session_id,
-                user,
-                uname,
                 start_time
             )
             kv['record_filebase'] = self.record_filebase
@@ -2231,7 +2228,7 @@ class Sesman():
                 Logger().info(f"<<<<{traceback.format_exc()}>>>>")
         return False, "End of Session"
 
-    def handle_reporting(self):
+    def handle_reporting(self) -> bool:
         _reporting = self.shared.get('reporting')
         _reporting_reason, _, _remains = \
             _reporting.partition(':')
@@ -2404,7 +2401,7 @@ class Sesman():
 
         return False
 
-    def process_target_connection_time(self):
+    def process_target_connection_time(self) -> None:
         if self.shared.get("target_connection_time"):
             try:
                 tct = int(self.shared.get("target_connection_time", 0))
@@ -2419,7 +2416,7 @@ class Sesman():
                 pass
             self.shared["target_connection_time"] = None
 
-    def process_report(self, reason, target, message):
+    def process_report(self, reason: str, target: str, message: str) -> None:
         if reason == 'CLOSE_SESSION_SUCCESSFUL':
             pass
         elif reason == 'CONNECTION_FAILED':
@@ -2512,7 +2509,7 @@ class Sesman():
                 "Unexpected reporting reason: "
                 f'"{reason}" "{target}" "{message}"')
 
-    def handle_auth_channel_target(self, selected_target):
+    def handle_auth_channel_target(self, selected_target) -> None:
         Logger().info(
             f"Auth channel target=\"{self.shared.get('auth_channel_target')}\""
         )
@@ -2545,7 +2542,7 @@ class Sesman():
                 "(GetWabSessionParameters)"
             )
 
-    def handle_shadowing(self):
+    def handle_shadowing(self) -> None:
         if self.shared.get("rd_shadow_available") == 'True':
             self.engine.update_session(shadow_allow=True)
             self.shared["rd_shadow_available"] = 'False'
@@ -2574,7 +2571,7 @@ class Sesman():
             self.shared["rd_shadow_invitation_addr"] = None
             self.shared["rd_shadow_invitation_port"] = None
 
-    def handle_session_sharing(self):
+    def handle_session_sharing(self) -> None:
         if self.shared.get("session_sharing_invitation_error_code"):
             sharing_addr = self.shared.get("session_sharing_invitation_addr")
             if not sharing_addr.startswith("sock://"):
@@ -2602,7 +2599,7 @@ class Sesman():
             self.shared["session_sharing_invitation_id"] = None
             self.shared["session_sharing_invitation_addr"] = None
 
-    def handle_auth_notify(self, physical_target):
+    def handle_auth_notify(self, physical_target) -> None:
         if self.shared.get('auth_notify') == 'rail_exec':
             flags = self.shared.get('auth_notify_rail_exec_flags')
             exe_or_file = self.shared.get('auth_notify_rail_exec_exe_or_file')
@@ -2617,7 +2614,7 @@ class Sesman():
             self.shared['auth_notify_rail_exec_flags'] = ''
             self.shared['auth_notify_rail_exec_exe_or_file'] = ''
 
-    def handle_recording_started(self):
+    def handle_recording_started(self) -> StatusError:
         # write mwrm path to rdptrc (allow real time display)
         Logger().info("Call write trace")
         _status, _error = self.engine.write_trace(self.full_path)
@@ -2627,7 +2624,7 @@ class Sesman():
             self.send_data({'rejected': TR(Sesmsg.ERROR_RECORD_PATH)})
         return _status, _error
 
-    def update_session_data(self, changed_keys):
+    def update_session_data(self, changed_keys: List[str]) -> None:
         data_to_update = {
             acl_key: convert(val) for (acl_key, convert), val in (
                 (KEYMAPPING[key], self.shared[key])
@@ -2709,7 +2706,7 @@ class Sesman():
                     'session_sharing_ttl': sharing_ttl,
                 })
 
-    def parse_app(self, value):
+    def parse_app(self, value: str) -> Tuple[str, str, str]:
         acc_name, sep, app_name = value.rpartition('@')
         if acc_name:
             acc, sep, dom = acc_name.rpartition('@')
@@ -2717,7 +2714,7 @@ class Sesman():
                 return acc, dom, app_name
         return acc_name, '', app_name
 
-    def check_application(self, effective_target, flags, exe_or_file):
+    def check_application(self, effective_target, flags, exe_or_file: str) -> SharedDict:
         kv = {
             'auth_command_rail_exec_flags': flags,
             'auth_command_rail_exec_original_exe_or_file': exe_or_file,
@@ -2773,7 +2770,7 @@ class Sesman():
         kv = self._complete_app_infos(kv, app_right, app_params)
         return kv
 
-    def _complete_app_infos(self, kv, app_right, app_params):
+    def _complete_app_infos(self, kv: SharedDict, app_right, app_params) -> SharedDict:
         app_login_info = self.engine.get_target_login_info(app_right)
 
         kv['auth_command_rail_exec_exe_or_file'] = app_params.program
@@ -2793,12 +2790,12 @@ class Sesman():
                     or ''
         return kv
 
-    def _manage_pm(self):
+    def _manage_pm(self) -> None:
         response = pm_request(self.engine, self.shared.get("pm_request"))
         self.shared["pm_request"] = ""
         self.send_data({'pm_response': json.dumps(response)})
 
-    def _load_selector_banner(self):
+    def _load_selector_banner(self) -> None:
         if not self._selector_banner:
             return
 
@@ -2821,7 +2818,7 @@ class Sesman():
 
             self.send_data(data_to_send)
 
-    def _load_kerberos_armoring_options(self, conn_opts):
+    def _load_kerberos_armoring_options(self, conn_opts) -> SharedDict:
         krb_data = {}
         if 'rdp' in conn_opts:
             rdp_opts = conn_opts.get('rdp', {})
