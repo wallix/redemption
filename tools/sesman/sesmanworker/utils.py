@@ -1,3 +1,7 @@
+##
+# Copyright (c) 2023 WALLIX. All rights reserved.
+# Licensed computer software. Property of WALLIX.
+##
 import re
 
 from typing import Iterable, Any, Tuple, Generator
