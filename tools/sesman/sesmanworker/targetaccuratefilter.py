@@ -136,17 +136,8 @@ def try_get_filter_keyword_without_kprefix(filter_keyword: str) -> Optional[str]
 
 def filter_patterns_splitting(filter_patterns: str) -> List[str]:
     word_list = filter_patterns.split(FILTER_SEPARATOR)
-    filter_pattern_list = [None] * len(word_list)
-    first_filter_pattern = True
-    i = 0
-
-    for filter_pattern in word_list:
-        filter_pattern_list[i] = (
-            KEYWORD_PREFIX + filter_pattern if first_filter_pattern is False
-            else filter_pattern)
-        first_filter_pattern = False
-        i += 1
-    return filter_pattern_list
+    return [KEYWORD_PREFIX + filter_pattern if i != 0 else filter_pattern
+            for i, filter_pattern in enumerate(word_list)]
 
 def get_filter_pattern_dict(filter_patterns):
     filter_pattern_dict = {}
