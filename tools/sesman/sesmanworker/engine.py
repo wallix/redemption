@@ -28,11 +28,13 @@ from wallixconst.account import AM_IL_DOMAIN
 from wallixconst.trace import LOCAL_TRACE_PATH_RDP
 from wallixredis import redis
 from wallixutils import is_cloud_configuration
+from typing import Optional, Union, Tuple, Dict, Any
 
 from .logtime import logtime_function_pause
 import time
 import socket
 from .wallixauth import Authenticator
+from .challenge import Challenge
 from .checkout import CheckoutEngine
 from .checkout import (
     APPROVAL_ACCEPTED,
@@ -135,7 +137,7 @@ class Engine:
 
         self.authenticated = False
 
-    def keepalive(self, timeout):
+    def keepalive(self, timeout: int) -> None:
         if self.avatar_id:
             with manage_transaction(self.wabengine):
                 self.wabengine.save_session(self.avatar_id, timeout=timeout)
@@ -147,13 +149,13 @@ class Engine:
                         timeout=timeout
                     )
 
-    def _post_authentication(self):
+    def _post_authentication(self) -> None:
         self.avatar_id = self.wabengine.connect(timeout=60)
         self.update_user()
         self.checkout = CheckoutEngine(self.wabengine)
         self.authenticated = True
 
-    def update_user(self):
+    def update_user(self) -> None:
         if not self.wabengine:
             return
         with manage_transaction(self.wabengine):
@@ -161,34 +163,34 @@ class Engine:
             self.user_cn = userobj.cn
             self.user_lang = userobj.preferredLanguage
 
-    def get_session_status(self):
+    def get_session_status(self) -> Tuple[bool, str]:
         return self.session_result, self.session_diag
 
-    def set_session_status(self, result=None, diag=None):
+    # NOTE [RDP] calls to set_session_status() always initialize diag
+    def set_session_status(self, result: Optional[bool] = None, diag: str = '') -> None:
         # Logger().info("Engine set session status : result='{result}', diag='{diag}'")
         if result is not None:
             self.session_result = result
-        if diag is not None:
-            self.session_diag = diag
+        self.session_diag = diag
 
-    def get_language(self):
+    def get_language(self) -> str:
         if not self.user_lang:
             self.update_user()
         return self.user_lang or 'en'
 
-    def get_username(self):
+    def get_username(self) -> str:
         if not self.user_cn:
             self.update_user()
         return self.user_cn or ""
 
-    def get_otp_client(self):
+    def get_otp_client(self) -> str:
         try:
             with manage_transaction(self.wabengine):
                 return self.wabengine.get_otp_client()
         except Exception:
             return ''
 
-    def check_license(self):
+    def check_license(self) -> bool:
         with manage_transaction(self.wabengine):
             res = self.wabengine.is_session_management_license()
         if not res:
@@ -196,13 +198,15 @@ class Engine:
                           "Session management License is not available.")
         return res
 
-    def get_banner(self, lang='', format_terminal=False):
+    # NOTE [RDP] calls to get_banner() always initialize lang
+    def get_banner(self, lang: str = '', format_terminal: bool = False) -> str:
         banner = ("Warning! Your remotée session may be recorded and "
                   "kept in electronic format.")
         return _read_message(f'/var/wab/etc/proxys/messages/motd.{lang}',
                              banner, format_terminal)
 
-    def get_warning_message(self, lang='', format_terminal=False):
+    # NOTE [RDP] calls to get_warning_message() always initialize lang
+    def get_warning_message(self, lang: str = '', format_terminal: bool = False):
         if lang == 'fr':
             msg = ("Attention! Toute tentative d'acces sans"
                    " autorisation ou de maintien frauduleux"
@@ -214,7 +218,7 @@ class Engine:
         return _read_message(f'/var/wab/etc/proxys/messages/login.{lang}',
                              msg, format_terminal)
 
-    def get_deconnection_time_msg(self, lang):
+    def get_deconnection_time_msg(self, lang: str) -> str:
         message = ""
         if self.deconnection_time and self.deconnection_time != '-':
             if lang == 'fr':
@@ -225,7 +229,7 @@ class Engine:
                            f"be closed at {self.deconnection_time}.\r\n")
         return message
 
-    def init_timeframe(self, auth):
+    def init_timeframe(self, auth: Dict[str, Any]) -> None:
         deconnection_time = auth['deconnection_time']
         if (deconnection_time
             and deconnection_time != "-"
@@ -281,7 +285,7 @@ class Engine:
                           f"((({traceback.format_exc()})))")
         return False, 0
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type, target,
+    def is_x509_connected(self, wab_login: str, ip_client, proxy_type, target,
                           ip_server):
         return self.authenticator.is_x509_connected(
             wab_login, ip_client, proxy_type, target, ip_server
@@ -302,36 +306,36 @@ class Engine:
     def url_redirect_authenticate(self):
         return self.authenticator.url_redirect_authenticate(self)
 
-    def check_kbdint_auth(self, wab_login, ip_client, ip_server):
+    def check_kbdint_auth(self, wab_login: str, ip_client: str, ip_server: str) -> Union[bool, str, None]:
         return self.authenticator.check_kbdint_authenticate(
             self, wab_login, ip_client, ip_server
         )
 
-    def password_authenticate(self, wab_login, ip_client, password, ip_server):
+    def password_authenticate(self, wab_login: str, ip_client, password, ip_server) -> bool:
         return self.authenticator.password_authenticate(
             self, wab_login, ip_client, password, ip_server
         )
 
-    def passthrough_authenticate(self, wab_login, ip_client, ip_server):
+    def passthrough_authenticate(self, wab_login: str, ip_client: str, ip_server: str) -> bool:
         return self.authenticator.passthrough_authenticate(
             self, wab_login, ip_client, ip_server
         )
 
-    def gssapi_authenticate(self, wab_login, ip_client, ip_server):
+    def gssapi_authenticate(self, wab_login: str, ip_client: str, ip_server: str) -> bool:
         return self.authenticator.gssapi_authenticate(
             self, wab_login, ip_client, ip_server
         )
 
-    def pubkey_authenticate(self, wab_login, ip_client, ip_server,
-                            pubkey, ca_pubkey):
+    def pubkey_authenticate(self, wab_login: str, ip_client: str, ip_server: str,
+                            pubkey, ca_pubkey) -> bool:
         return self.authenticator.pubkey_authenticate(
             self, wab_login, ip_client, ip_server, pubkey, ca_pubkey
         )
 
-    def get_challenge(self):
+    def get_challenge(self) -> Optional[Challenge]:
         return self.authenticator.get_challenge()
 
-    def reset_challenge(self):
+    def reset_challenge(self) -> None:
         self.authenticator.reset_challenge()
 
     def resolve_target_host(self, target_device, target_login, target_service,

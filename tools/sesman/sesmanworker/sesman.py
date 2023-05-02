@@ -362,7 +362,7 @@ class Sesman():
         self.engine.reset_proxy_rights()
         self.rtmanager.reset()
 
-    def load_login_message(self, language) -> None:
+    def load_login_message(self, language: str) -> None:
         try:
             self.login_message = self.engine.get_warning_message(language)
         except Exception:
