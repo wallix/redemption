@@ -1,6 +1,6 @@
 import unittest
 
-from parsers import parse_account, replace_token, parse_param
+from parsers import parse_account, replace_token, parse_param, parse_auth
 
 class Test_parsers(unittest.TestCase):
     def test_param(self):
@@ -40,3 +40,26 @@ class Test_parsers(unittest.TestCase):
                          None)
         self.assertEqual(parse_account('my_account@my_<domain>@DEVICE', replace, True),
                          ('my_account', 'my_DOMAIN', 'DEVICE'))
+
+    def test_parse_auth(self):
+        self.assertEqual(parse_auth('secondaryuser@target:service:group:primaryuser'),
+                         ('primaryuser', ('secondaryuser', 'target', 'service', 'group')))
+        self.assertEqual(parse_auth('secondaryuser:service:group:primaryuser'),
+                         ('secondaryuser:service:group:primaryuser', None))
+        self.assertEqual(parse_auth('secondaryuser@target:service:primaryuser'),
+                         ('primaryuser', ('secondaryuser', 'target', 'service', '')))
+        self.assertEqual(parse_auth('secondaryuser@target:primaryuser'),
+                         ('primaryuser', ('secondaryuser', 'target', '', '')))
+        self.assertEqual(parse_auth('secondaryuser@target'),
+                         ('secondaryuser@target', None))
+
+        self.assertEqual(parse_auth('secondaryuser@target+service+group+primaryuser'),
+                         ('primaryuser', ('secondaryuser', 'target', 'service', 'group')))
+        self.assertEqual(parse_auth('secondaryuser+service+group+primaryuser'),
+                         ('secondaryuser+service+group+primaryuser', None))
+        self.assertEqual(parse_auth('secondaryuser@target+service+primaryuser'),
+                         ('primaryuser', ('secondaryuser', 'target', 'service', '')))
+        self.assertEqual(parse_auth('secondaryuser@target+primaryuser'),
+                         ('primaryuser', ('secondaryuser', 'target', '', '')))
+        self.assertEqual(parse_auth('secondaryuser@target'),
+                         ('secondaryuser@target', None))

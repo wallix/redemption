@@ -25,7 +25,7 @@ from socket import gethostname
 from typing import Any, Tuple, Optional, Dict, Union
 
 from .utils import collection_has_more, parse_duration
-from .parsers import parse_param
+from .parsers import parse_param, parse_auth
 from .proxy_log import RdpProxyLog
 from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
@@ -100,43 +100,6 @@ DEBUG = False
 
 def truncat_string(item, maxsize=20):
     return (item[:maxsize] + '..') if len(item) > maxsize else item
-
-
-def parse_auth(username: str) -> Tuple[str, Optional[Tuple[str, str, str, str]]]:
-    """
-    Extract actual username and target if provided
-    from authentication identity
-
-    string format is <secondaryuser>@<target>:<service>:<group>:<primaryuser>
-    always return primaryuser and either secondary target or None
-
-    Note: primary user can be a path instead when this function
-    is called to parse scp or sftp arguments.
-
-    Because of compatibility issues with some ssh command line tools
-    '+' can be used instead of ':'
-
-    fields can be missing (typically service and group if there is
-    no ambiguity)
-
-    """
-    user_dev_service_group, sep, primary = username.rpartition('+')
-    if not sep:
-        user_dev_service_group, sep, primary = username.rpartition(':')
-    if sep:
-        user_dev_service, sep, group = user_dev_service_group.rpartition(sep)
-        if not sep:
-            # service and group not provided
-            user_at_dev, service, group = user_dev_service_group, '', ''
-        else:
-            user_at_dev, sep, service = user_dev_service.rpartition(sep)
-            if not sep:
-                # group not provided
-                user_at_dev, service, group = user_dev_service, group, ''
-        user, sep, dev = user_at_dev.rpartition('@')
-        if sep:
-            return primary, (user, dev, service, group)
-    return username, None
 
 
 # PM Function

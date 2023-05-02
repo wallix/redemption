@@ -104,3 +104,40 @@ def resolve_scenario_account(enginei, param: str, force_device: bool = True):
             f"Error: Unable to retrieve account info from '{param}'"
         )
     return acc_infos
+
+
+def parse_auth(username: str) -> Tuple[str, Optional[Tuple[str, str, str, str]]]:
+    """
+    Extract actual username and target if provided
+    from authentication identity
+
+    string format is <secondaryuser>@<target>:<service>:<group>:<primaryuser>
+    always return primaryuser and either secondary target or None
+
+    Note: primary user can be a path instead when this function
+    is called to parse scp or sftp arguments.
+
+    Because of compatibility issues with some ssh command line tools
+    '+' can be used instead of ':'
+
+    fields can be missing (typically service and group if there is
+    no ambiguity)
+
+    """
+    user_dev_service_group, sep, primary = username.rpartition('+')
+    if not sep:
+        user_dev_service_group, sep, primary = username.rpartition(':')
+    if sep:
+        user_dev_service, sep, group = user_dev_service_group.rpartition(sep)
+        if not sep:
+            # service and group not provided
+            user_at_dev, service, group = user_dev_service_group, '', ''
+        else:
+            user_at_dev, sep, service = user_dev_service.rpartition(sep)
+            if not sep:
+                # group not provided
+                user_at_dev, service, group = user_dev_service, group, ''
+        user, sep, dev = user_at_dev.rpartition('@')
+        if sep:
+            return primary, (user, dev, service, group)
+    return username, None
