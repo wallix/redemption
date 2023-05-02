@@ -25,7 +25,7 @@ from socket import gethostname
 from typing import Any, Tuple, Optional, Dict, Union, List
 
 from .utils import collection_has_more, parse_duration
-from .parsers import parse_param, parse_auth
+from .parsers import parse_param, parse_auth, parse_app
 from .proxy_log import RdpProxyLog
 from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg
@@ -2706,14 +2706,6 @@ class Sesman():
                     'session_sharing_ttl': sharing_ttl,
                 })
 
-    def parse_app(self, value: str) -> Tuple[str, str, str]:
-        acc_name, sep, app_name = value.rpartition('@')
-        if acc_name:
-            acc, sep, dom = acc_name.rpartition('@')
-            if sep:
-                return acc, dom, app_name
-        return acc_name, '', app_name
-
     def check_application(self, effective_target, flags, exe_or_file: str) -> SharedDict:
         kv = {
             'auth_command_rail_exec_flags': flags,
@@ -2727,7 +2719,7 @@ class Sesman():
             app_right, app_params = app_right_params
             kv = self._complete_app_infos(kv, app_right, app_params)
             return kv
-        acc_name, dom_name, app_name = self.parse_app(exe_or_file)
+        acc_name, dom_name, app_name = parse_app(exe_or_file)
         if not app_name or not acc_name:
             Logger().debug("check_application: Parsing failed")
             return kv

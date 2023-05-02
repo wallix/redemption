@@ -141,3 +141,12 @@ def parse_auth(username: str) -> Tuple[str, Optional[Tuple[str, str, str, str]]]
         if sep:
             return primary, (user, dev, service, group)
     return username, None
+
+
+def parse_app(value: str) -> Tuple[str, str, str]:
+    acc_name, sep, app_name = value.rpartition('@')
+    if acc_name:
+        acc, sep, dom = acc_name.rpartition('@')
+        if sep:
+            return acc, dom, app_name
+    return acc_name, '', app_name

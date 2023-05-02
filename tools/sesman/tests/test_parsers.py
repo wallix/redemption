@@ -1,6 +1,11 @@
 import unittest
 
-from parsers import parse_account, replace_token, parse_param, parse_auth
+from parsers import (parse_account,
+                     replace_token,
+                     parse_param,
+                     parse_auth,
+                     parse_app,
+                     )
 
 class Test_parsers(unittest.TestCase):
     def test_param(self):
@@ -63,3 +68,8 @@ class Test_parsers(unittest.TestCase):
                          ('primaryuser', ('secondaryuser', 'target', '', '')))
         self.assertEqual(parse_auth('secondaryuser@target'),
                          ('secondaryuser@target', None))
+
+    def test_parse_app(self):
+        self.assertEqual(parse_app('aaa@bbb@ccc'), ('aaa', 'bbb', 'ccc'))
+        self.assertEqual(parse_app('aaa@bbb'), ('aaa', '', 'bbb'))
+        self.assertEqual(parse_app('aaa'), ('', '', 'aaa'))
