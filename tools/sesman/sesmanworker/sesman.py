@@ -22,7 +22,7 @@ from time import time, ctime, mktime
 from datetime import datetime
 import socket
 from socket import gethostname
-from typing import Any, Tuple, Optional, Dict, Union
+from typing import Any, Tuple, Optional, Dict, Union, List
 
 from .utils import collection_has_more, parse_duration
 from .parsers import parse_param, parse_auth
@@ -39,11 +39,9 @@ from .sesmanbacktoselector import (
 from .engine import (LOCAL_TRACE_PATH_RDP,
                      SOCK_PATH_DIR,
                      APPROVAL_ACCEPTED,
-                     APPROVAL_REJECTED,
                      APPROVAL_PENDING,
                      APPROVAL_NONE,
                      APPREQ_REQUIRED,
-                     APPREQ_OPTIONAL,
                      PASSWORD_VAULT,
                      PASSWORD_INTERACTIVE,
                      PASSWORD_MAPPING,
@@ -51,8 +49,6 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
                      RDP,
                      VNC
                      )
-
-import syslog
 
 from .logtime import logtimer, Steps as LogSteps, logtime_function_pause
 
@@ -82,6 +78,12 @@ KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL + KEEPALIVE_GRACEDELAY
 
 WORKFLOW_POLL_INTERVAL = 5
 
+FRENCH_LAYOUTS = (0x0000040C,  # French (France)
+                  0x00000C0C,  # French (Canada) Canadian French
+                               #     (Legacy)
+                  0x0000080C,  # French (Belgium)
+                  0x0001080C,  # French (Belgium) Belgian (Comma)
+                  0x0000100C)  # French (Switzerland)
 
 def mundane(value):
     if value == MAGICASK:
@@ -221,14 +223,12 @@ class RTManager:
             self.sesman.send_data({"rt_display": rt_display})
 
 
-class Sesman():
+StatusError = Tuple[bool, str]
+SharedDict = Dict[str, Any]
 
+
+class Sesman():
     def __init__(self, conn, addr):
-        """
-        =======================================================================
-        __INIT__
-        =======================================================================
-        """
         try:
             confwab = engine.read_config_file(
                 modulename='sesman',
@@ -239,6 +239,7 @@ class Sesman():
             # Logger().info(f" WABCONFIG SESMANCONF = '{seswabconfig}'")
         except Exception:
             Logger().info("Failed to load Sesman WabConfig")
+
         # Logger().info(f" SESMANCONF = '{SESMANCONF['sesman']}'")
         if SESMANCONF['sesman'].get('debug', False):
             global DEBUG
@@ -261,7 +262,35 @@ class Sesman():
 
         # shared should be read from sesman but never written
         # except when sending
-        self.shared = {}
+        self.shared = {
+            'module': 'login',
+            'selector_group_filter': '',
+            'selector_device_filter': '',
+            'selector_proto_filter': '',
+            'selector': 'False',
+            'selector_current_page': '1',
+            'selector_lines_per_page': '0',
+            'real_target_device': MAGICASK,
+            'reporting': '',
+            'target_login': MAGICASK,
+            'target_device': MAGICASK,
+            'target_host': MAGICASK,
+            'login': MAGICASK,
+            'ip_client': MAGICASK,
+            'target_protocol': MAGICASK,
+            'keyboard_layout': MAGICASK,
+
+            'auth_channel_answer': '',
+            'auth_channel_target': '',
+
+            'recording_started': 'False',
+
+            'auth_notify': '',
+
+            'login_language': MAGICASK,
+
+            'session_probe_launch_error_message': '',
+        }
         self._changed_keys = []
 
         self._full_user_device_account = 'Unknown'
@@ -269,37 +298,10 @@ class Sesman():
         self.target_group = None
         self.target_context = TargetContext()
 
-        self.shared['module'] = 'login'
-        self.shared['selector_group_filter'] = ''
-        self.shared['selector_device_filter'] = ''
-        self.shared['selector_proto_filter'] = ''
-        self.shared['selector'] = 'False'
-        self.shared['selector_current_page'] = '1'
-        self.shared['selector_lines_per_page'] = '0'
-        self.shared['real_target_device'] = MAGICASK
-        self.shared['reporting'] = ''
-
         self._trace_type = self.engine.get_trace_type()
         self._selector_banner = self.engine.get_selector_banner()
         self.language = None
         self.pid = os.getpid()
-
-        self.shared['target_login'] = MAGICASK
-        self.shared['target_device'] = MAGICASK
-        self.shared['target_host'] = MAGICASK
-        self.shared['login'] = MAGICASK
-        self.shared['ip_client'] = MAGICASK
-        self.shared['target_protocol'] = MAGICASK
-        self.shared['keyboard_layout'] = MAGICASK
-
-        self.shared['auth_channel_answer'] = ''
-        self.shared['auth_channel_target'] = ''
-
-        self.shared['recording_started'] = 'False'
-
-        self.shared['auth_notify'] = ''
-
-        self.shared['login_language'] = MAGICASK
 
         self.internal_target = False
         self.check_session_parameters = False
@@ -323,7 +325,6 @@ class Sesman():
         self.login_message = ("Warning! Unauthorized access to this system "
                               "is forbidden and will be prosecuted by law.")
 
-        self.shared['session_probe_launch_error_message'] = ''
 
         self.rtmanager = RTManager(
             self,
@@ -332,7 +333,7 @@ class Sesman():
         self.tun_process = None
         self.sharing_requests = set()
 
-    def reset_session_var(self):
+    def reset_session_var(self) -> None:
         """
         Proxy Session Vars reset
         """
@@ -343,7 +344,7 @@ class Sesman():
         self.passthrough_target_login = None
         self.target_context = TargetContext()
 
-    def reset_target_session_vars(self):
+    def reset_target_session_vars(self) -> None:
         """
         Target Session Disconnection
         """
@@ -361,39 +362,36 @@ class Sesman():
         self.engine.reset_proxy_rights()
         self.rtmanager.reset()
 
-    def load_login_message(self, language):
+    def load_login_message(self, language) -> None:
         try:
             self.login_message = self.engine.get_warning_message(language)
         except Exception:
             pass
 
-    def set_language_from_keylayout(self):
+    def set_language_from_keylayout(self) -> None:
         self.language = SESMANCONF.language
-        french_layouts = [0x0000040C,  # French (France)
-                          0x00000C0C,  # French (Canada) Canadian French
-                                       #     (Legacy)
-                          0x0000080C,  # French (Belgium)
-                          0x0001080C,  # French (Belgium) Belgian (Comma)
-                          0x0000100C]  # French (Switzerland)
         keylayout = 0
-        if self.shared.get('keyboard_layout') != MAGICASK:
+        keyboard_layout = self.shared.get('keyboard_layout')
+        if keyboard_layout != MAGICASK:
             try:
-                keylayout = int(self.shared.get('keyboard_layout'))
+                keylayout = int(keyboard_layout)
             except Exception:
                 pass
-        if keylayout in french_layouts:
+
+        if keylayout in FRENCH_LAYOUTS:
             self.language = 'fr'
 
-        login_language = (self.shared.get('login_language').lower()
-                          if (self.shared.get('login_language') != MAGICASK
-                              and self.shared.get('login_language') != 'Auto')
+        login_language = self.shared.get('login_language')
+        login_language = (login_language.lower()
+                          if (login_language != MAGICASK
+                              and login_language != 'Auto')
                           else self.language)
 
         self.load_login_message(login_language)
 
     # TODO: is may be possible to delay sending data until the next
     #       input through receive_data
-    def send_data(self, data):
+    def send_data(self, data: SharedDict) -> None:
         """ NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded
         * Packet format:
         uint16                   request_count
@@ -452,9 +450,8 @@ class Sesman():
                 pack(f'>1sB{key_len}s', b'?', key_len, key)
             )
 
-        _list = [(_toval(key, value) if value != MAGICASK else _toask(key))
-                 for key, value in data.items()]
-        _list.sort()
+        _list = sorted((_toval(key, value) if value != MAGICASK else _toask(key))
+                       for key, value in data.items())
 
         if DEBUG:
             Logger().info(f'send_data (on the wire) length = {len(_list)}')
@@ -463,7 +460,7 @@ class Sesman():
         self.proxy_conx.sendall(pack('>H', len(_list)))
         self.proxy_conx.sendall(_r_data)
 
-    def wait_read_proxy_conx(self):
+    def wait_read_proxy_conx(self) -> List[Any]:
         self.proxy_conx.setblocking(False)
         r = []
         while True:
@@ -475,7 +472,7 @@ class Sesman():
         return r
 
     @logtime_function_pause
-    def receive_data(self, expected_list=(), blocking_call=True):
+    def receive_data(self, expected_list=(), blocking_call=True) -> StatusError:
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded
         * Packet format:
         uint16                   request_count
@@ -501,11 +498,11 @@ class Sesman():
         """
 
         if blocking_call:
-            _ = self.wait_read_proxy_conx()
+            self.wait_read_proxy_conx()
 
         self._changed_keys = []
 
-        def read_sck():
+        def read_sck() -> bytes:
             try:
                 d = self.proxy_conx.recv(65536)
                 if len(d):
@@ -529,7 +526,7 @@ class Sesman():
                 self._data = read_sck()
                 self._offset = 0
 
-            def reserve_data(self, n):
+            def reserve_data(self, n: int) -> None:
                 while len(self._data) - self._offset < n:
                     if DEBUG:
                         Logger().info("received_buffer (big packet) "
@@ -538,14 +535,14 @@ class Sesman():
                     self._data = self._data[self._offset:] + read_sck()
                     self._offset = 0
 
-            def extract_string(self, n):
+            def extract_string(self, n: int) -> str:
                 self.reserve_data(n)
                 _name = self._data[self._offset:self._offset + n]
                 _name = _name.decode('utf8')
                 self._offset += n
                 return _name
 
-            def unpack(self, fmt, n):
+            def unpack(self, fmt: str, n: int):
                 self.reserve_data(n)
                 r = unpack_from(fmt, self._data, self._offset)
                 self._offset += n
@@ -629,7 +626,7 @@ class Sesman():
         return (True, "", wab_login, target_login, target_device,
                 target_service, target_group, effective_login)
 
-    def interactive_ask_x509_connection(self):
+    def interactive_ask_x509_connection(self) -> bool:
         """
         Send a message to the proxy to prompt the user to validate x509
         in his browser.
@@ -659,7 +656,7 @@ class Sesman():
 
         return _status
 
-    def interactive_ask_url_redirect(self):
+    def interactive_ask_url_redirect(self) -> bool:
         """
         Send a message to the proxy to prompt the user copy to url redirection
         in his browser.
@@ -701,7 +698,7 @@ class Sesman():
 
         return _status
 
-    def interactive_display_message(self, data_to_send):
+    def interactive_display_message(self, data_to_send: SharedDict) -> StatusError:
         """ NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
         # TODO: we should not have to care about target login or device
         #       to display messages we should be able to send messages before
@@ -716,7 +713,7 @@ class Sesman():
 
         return _status, _error
 
-    def interactive_accept_message(self, data_to_send):
+    def interactive_accept_message(self, data_to_send: SharedDict) -> StatusError:
         data_to_send.update({'module': 'valid'})
         self.send_data(data_to_send)
 
@@ -726,7 +723,7 @@ class Sesman():
 
         return _status, _error
 
-    def check_deconnection_time(self, selected_target):
+    def check_deconnection_time(self, selected_target) -> Tuple[Optional[int], bool, str]:
         Logger().info("Checking timeframe")
         _status, _error = True, ""
         timeclose = None
@@ -753,7 +750,7 @@ class Sesman():
             )
         return timeclose, _status, _error
 
-    def interactive_target(self, data_to_send):
+    def interactive_target(self, data_to_send: SharedDict) -> StatusError:
         data_to_send.update({'module': 'interactive_target'})
         self.send_data(data_to_send)
         _status, _error = self.receive_data()
@@ -761,8 +758,10 @@ class Sesman():
             _status, _error = False, TR(Sesmsg.CONNECTION_CLOSED_BY_CLIENT)
         return _status, _error
 
-    def complete_target_info(self, kv, allow_interactive_password,
-                             allow_interactive_login):
+    def complete_target_info(self,
+                             kv: SharedDict,
+                             allow_interactive_password: bool,
+                             allow_interactive_login: bool) -> Tuple[SharedDict, bool, str]:
         """
         This procedure show interactive screen to enter target host,
         target login and target password if needed:
@@ -771,7 +770,7 @@ class Sesman():
         * password is asked if it is missing and it is allowed to ask
               for interactive password
         """
-        keylist = ['target_password', 'target_login', 'target_host']
+        keylist = ('target_password', 'target_login', 'target_host')
         extkv = {x: kv.get(x) for x in keylist if kv.get(x) is not None}
         tries = 3
         _status, _error = None, None
@@ -838,7 +837,7 @@ class Sesman():
                 _status, _error = True, "OK"
         return extkv, _status, _error
 
-    def interactive_close(self, target, message):
+    def interactive_close(self, target: str, message: str) -> StatusError:
         data_to_send = {
             'error_message': message,
             'trans_ok': 'OK',
@@ -852,11 +851,9 @@ class Sesman():
         # closed by the other end
         # No need to return some warning message if that happen
         self.send_data(data_to_send)
-        _status, _error = self.receive_data()
+        return self.receive_data()
 
-        return _status, _error
-
-    def authentify(self):
+    def authentify(self) -> Tuple[Union[None, bool], str]:
         """ Authentify the user through password engine and then retreive his rights
              The user preferred language will be set as the language to use in
              interactive messages
@@ -1033,7 +1030,6 @@ class Sesman():
 
         except Exception:
             if DEBUG:
-                import traceback
                 Logger().info(f"<<<{traceback.format_exc()}>>>")
             _status, _error = None, TR(Sesmsg.AUTH_FAILED_WAB_S) % wab_login
             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
@@ -1214,7 +1210,6 @@ class Sesman():
                     except Exception:
                         _emsg = "Unexpected error in selector pagination"
                         if DEBUG:
-                            import traceback
                             Logger().info(f"{_emsg} {traceback.format_exc()}")
 
                         return False, _emsg
@@ -1280,7 +1275,6 @@ class Sesman():
                 })
         except Exception:
             if DEBUG:
-                import traceback
                 Logger().info(f"<<<<{traceback.format_exc()}>>>>")
         return _status, _error
 
@@ -1329,7 +1323,6 @@ class Sesman():
             )
         except Exception:
             if DEBUG:
-                import traceback
                 Logger().debug(traceback.format_exc())
             _status, _error = False, TR(Sesmsg.CONNECTION_CLOSED_BY_CLIENT)
         target_login = self.shared.get('target_login')
@@ -1467,7 +1460,6 @@ class Sesman():
                 logtimer.resume()
                 if DEBUG:
                     Logger().info(f"exception: '{e}'")
-                    import traceback
                     Logger().info(f"<<<<{traceback.format_exc()}>>>>")
                 raise
             if self.proxy_conx in r:
@@ -1814,7 +1806,6 @@ class Sesman():
                     kv['encryption_key'] = encryption_key
                     kv['sign_key'] = sign_key
             except Exception:
-                import traceback
                 Logger().debug(traceback.format_exc())
                 _status, _error = False, TR(Sesmsg.CONNECTION_CLOSED_BY_CLIENT)
 
@@ -2112,7 +2103,6 @@ class Sesman():
                             except Exception as e:
                                 if DEBUG:
                                     Logger().info(f"exception: '{e}'")
-                                    import traceback
                                     Logger().info(f"<<<<{traceback.format_exc()}>>>>")
                                 raise
                             self.engine.keepalive(timeout=KEEPALIVE_TIMEOUT)
@@ -2179,14 +2169,12 @@ class Sesman():
 
                     except AuthentifierSocketClosed:
                         if DEBUG:
-                            import traceback
                             Logger().info(
                                 "RDP/VNC connection terminated by client"
                             )
                             Logger().info(f"<<<{traceback.format_exc()}>>>")
                     except Exception:
                         if DEBUG:
-                            import traceback
                             Logger().info(
                                 "RDP/VNC connection terminated by client"
                             )
@@ -2859,7 +2847,7 @@ class Sesman():
                 effective_krb_armoring_password
         return krb_data
 
-    def _load_vnc_over_ssh_options(self, kv: Dict[str, Any], opts: Dict[str, Any]) -> Tuple[bool, str]:
+    def _load_vnc_over_ssh_options(self, kv: SharedDict, opts: SharedDict) -> StatusError:
         from .tunneling_process import check_tunneling
         Logger().debug("VNC over SSH Tunneling")
         try:
@@ -2879,7 +2867,6 @@ class Sesman():
                     return status, "No Error"
 
         except Exception:
-            import traceback
             Logger().debug(traceback.format_exc())
 
         return False, "VNC over SSH Tunneling Error"
